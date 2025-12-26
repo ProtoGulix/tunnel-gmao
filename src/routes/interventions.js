@@ -126,7 +126,10 @@ router.put('/:id', async (req, res) => {
 // Delete an intervention
 router.delete('/:id', async (req, res) => {
   try {
-    await run('DELETE FROM interventions WHERE id = ?', [req.params.id]);
+    const result = await run('DELETE FROM interventions WHERE id = ?', [req.params.id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Intervention not found' });
+    }
     res.json({ message: 'Intervention deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

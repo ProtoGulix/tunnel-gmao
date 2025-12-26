@@ -76,7 +76,10 @@ router.put('/:id', async (req, res) => {
 // Delete a request
 router.delete('/:id', async (req, res) => {
   try {
-    await run('DELETE FROM requests WHERE id = ?', [req.params.id]);
+    const result = await run('DELETE FROM requests WHERE id = ?', [req.params.id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
     res.json({ message: 'Request deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

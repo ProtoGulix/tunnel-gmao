@@ -89,7 +89,10 @@ router.put('/:id', async (req, res) => {
 // Delete a purchase
 router.delete('/:id', async (req, res) => {
   try {
-    await run('DELETE FROM purchases WHERE id = ?', [req.params.id]);
+    const result = await run('DELETE FROM purchases WHERE id = ?', [req.params.id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Purchase not found' });
+    }
     res.json({ message: 'Purchase deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

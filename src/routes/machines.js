@@ -66,7 +66,10 @@ router.put('/:id', async (req, res) => {
 // Delete a machine
 router.delete('/:id', async (req, res) => {
   try {
-    await run('DELETE FROM machines WHERE id = ?', [req.params.id]);
+    const result = await run('DELETE FROM machines WHERE id = ?', [req.params.id]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Machine not found' });
+    }
     res.json({ message: 'Machine deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
