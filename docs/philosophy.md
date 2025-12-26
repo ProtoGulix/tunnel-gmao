@@ -8,11 +8,20 @@ L'outil sert à enregistrer ce qui se passe, suivre les demandes, planifier les 
 
 Les décisions importantes (prioriser, arbitrer, analyser) restent entre les mains des utilisateurs. Le logiciel ne prétend pas les remplacer par des algorithmes ou des KPI sophistiqués.
 
+**Concrètement, cela signifie :**
+
+- Interface simple et directe, pas de menu à rallonge
+- Temps de chargement rapides, même sur vieux matériel
+- Fonctionnement sur tablette et mobile (responsive)
+- Pas de connexion internet nécessaire en production
+- Formulaires courts avec seulement les infos essentielles
+
 ## Refus de la complexité inutile
 
 Une GMAO ne doit pas devenir un projet informatique à plein temps.
 
 Tunnel GMAO refuse délibérément :
+
 - Les fonctionnalités qui nécessitent un paramétrage complexe
 - Les workflows rigides qui enferment plus qu'ils n'aident
 - Les analyses automatiques qui donnent l'illusion de comprendre sans réellement aider
@@ -45,6 +54,17 @@ Tunnel GMAO vise la stabilité et la durabilité, pas l'innovation permanente.
 Le code reste simple, la stack technique limitée, les dépendances réduites au minimum.
 
 Cela facilite la maintenance long terme, réduit les risques de sécurité, et permet à l'entreprise de garder le contrôle du logiciel.
+
+**Choix techniques guidés par la sobriété :**
+
+- Stack JavaScript/Node.js unifiée (moins de langages à maîtriser)
+- React stable (pas de framework expérimental)
+- PostgreSQL (base de données éprouvée depuis 30 ans)
+- Docker pour simplifier le déploiement (pas de dépendances système complexes)
+- Pas de microservices (monolithe modulaire plus simple à maintenir)
+- Architecture simple : API REST + application web responsive
+
+Ces choix privilégient la **maintenabilité** sur la **mode technologique**.
 
 ## Modèle économique honnête
 

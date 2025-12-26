@@ -2,85 +2,139 @@
 
 ## Fonctionnalités incluses
 
-### Gestion des machines
-- Enregistrer les machines présentes dans l'atelier
-- Associer une localisation, un type, un état
-- Lier des documents techniques (notices, plans, etc.)
+### 1. Gestion des machines (Équipements)
 
-### Demandes d'intervention
-- Créer une demande depuis le terrain (web, mobile)
-- Décrire le problème, indiquer l'urgence
-- Assigner à une personne ou une équipe
+- Enregistrer les machines présentes dans l'atelier (nom, type, numéro de série)
+- Associer une localisation physique (atelier, zone, emplacement)
+- Indiquer l'état opérationnel (en service, hors service, en maintenance)
+- Lier des documents techniques (notices, plans PDF, photos)
+- Historique des interventions sur chaque machine
 
-### Interventions et actions
-- Enregistrer les actions menées sur une machine
-- Suivre le temps passé par type d'action (réglage, dépannage, préventif, etc.)
-- Associer des pièces utilisées, des observations techniques
+### 2. Demandes d'intervention
 
-### Demandes d'achat et achats
-- Demander un achat de pièce ou consommable
-- Suivre le statut (demandé, commandé, reçu)
+- Créer une demande depuis le terrain (interface web responsive)
+- Décrire le problème observé (texte libre + photos optionnelles)
+- Indiquer le niveau d'urgence (bas, moyen, élevé, critique)
+- Assigner à une personne ou une équipe de maintenance
+- Suivre le statut (nouvelle, en cours, terminée, annulée)
+- Notifications simples par email (optionnel)
+
+### 3. Interventions et actions
+
+- Enregistrer les actions menées sur une machine (rattachées à une demande)
+- Suivre le temps passé par type d'action (diagnostic, réglage, dépannage, préventif, nettoyage)
+- Associer des pièces utilisées lors de l'intervention
+- Ajouter des observations techniques (texte libre)
+- Indiquer si l'intervention est clôturée ou nécessite un suivi
+
+### 4. Demandes d'achat et stock
+
+- Créer une demande d'achat de pièce détachée ou consommable
+- Indiquer la référence, la quantité, le fournisseur suggéré
+- Suivre le statut (demandé, validé, commandé, reçu, installé)
 - Lier un achat à une intervention ou une machine
+- Stock basique : voir les pièces disponibles, alertes si seuil minimum atteint
 
-### Suivi des retards
-- Voir les demandes d'intervention non traitées
-- Identifier les achats en attente
-- Relancer si nécessaire
+### 5. Suivi des retards et tableaux de bord
 
-### Analyse basique du temps
-- Visualiser le temps passé par type d'action
-- Comparer les machines ou les périodes
-- Exporter les données pour analyse externe (CSV, etc.)
+- Vue d'ensemble : demandes en attente, interventions en cours
+- Identifier les demandes d'intervention non traitées depuis X jours
+- Identifier les achats bloqués ou en attente de réception
+- Relancer manuellement si nécessaire (pas d'automatisation)
+- Filtres simples : par machine, par technicien, par période
+
+### 6. Analyse basique du temps
+
+- Visualiser le temps passé par type d'action (graphiques simples)
+- Comparer les machines entre elles (temps d'intervention moyen)
+- Comparer les périodes (ce mois vs mois dernier)
+- Export des données brutes en CSV pour analyse externe (Excel, BI)
+- Pas de calcul automatique de KPI complexes (MTBF, MTTR, TRS)
 
 ## Fonctionnalités refusées
 
-### Pas de SaaS
+### ❌ Pas de SaaS multi-tenant
+
 Tunnel GMAO ne sera jamais proposé en mode service hébergé multi-tenant.
 
 Chaque installation est indépendante, sur les infrastructures choisies par l'utilisateur.
 
-### Pas d'ERP
-Tunnel GMAO ne gère pas :
-- La comptabilité
-- La paie
-- Les commandes clients
-- Les stocks complets (uniquement pièces détachées liées aux interventions)
-- La production (ordre de fabrication, gammes, etc.)
+**Raison** : garantir la propriété des données et l'indépendance de l'entreprise.
 
-### Pas de KPI complexes
-Tunnel GMAO ne calcule pas :
+### ❌ Pas d'ERP
+
+Tunnel GMAO ne gère pas :
+
+- La comptabilité générale
+- La paie et les RH
+- Les commandes clients et la facturation
+- Les stocks généraux (uniquement pièces détachées maintenance)
+- La production (ordres de fabrication, gammes opératoires, MES)
+- Les achats généraux (seulement achats liés à la maintenance)
+
+**Raison** : rester focalisé sur la maintenance, pas remplacer un ERP complet.
+
+### ❌ Pas de KPI complexes automatiques
+
+Tunnel GMAO ne calcule pas automatiquement :
+
 - MTBF (Mean Time Between Failures)
 - MTTR (Mean Time To Repair)
 - TRS (Taux de Rendement Synthétique)
 - OEE (Overall Equipment Effectiveness)
+- Taux de disponibilité prédictif
+- Coûts de maintenance par machine (complexe à calculer correctement)
 
-Si ces indicateurs sont nécessaires, ils peuvent être calculés en dehors de Tunnel GMAO à partir des données exportées.
+**Raison** : ces indicateurs nécessitent des hypothèses métier et des contextes spécifiques. Les données brutes peuvent être exportées pour calcul externe.
 
-### Pas d'automatisations lourdes
+### ❌ Pas d'automatisations lourdes
+
 Tunnel GMAO ne propose pas :
-- Génération automatique de préventif basée sur des modèles prédictifs
-- Intégration automatique avec l'ERP, le MES ou la supervision
-- Workflows d'approbation complexes avec délégations en cascade
 
-### Pas de reporting avancé
+- Génération automatique de préventif basée sur machine learning
+- Intégration temps réel avec l'ERP, le MES ou la supervision
+- Workflows d'approbation complexes avec délégations en cascade
+- Envoi automatique de bons de commande aux fournisseurs
+- Génération automatique de rapports hebdomadaires (peut se faire manuellement)
+
+**Raison** : éviter la complexité de configuration et les dépendances externes fragiles.
+
+### ❌ Pas de reporting avancé
+
 Tunnel GMAO ne remplace pas un outil de Business Intelligence.
 
-Les rapports fournis sont simples : listes, totaux, moyennes, exports CSV.
+Les rapports fournis sont simples : listes filtrées, totaux, moyennes, graphiques basiques.
 
-Si des analyses plus poussées sont nécessaires, elles doivent se faire avec un outil externe alimenté par les exports de Tunnel GMAO.
+Si des analyses plus poussées sont nécessaires (tableaux croisés dynamiques, prévisions, dataviz complexe), elles doivent se faire avec un outil externe (Excel, Power BI, Tableau, etc.) alimenté par les exports CSV de Tunnel GMAO.
 
-### Pas de multi-tenant
-Chaque installation de Tunnel GMAO sert une seule entreprise.
+**Raison** : ne pas réinventer les outils BI existants et rester simple.
+
+### ❌ Pas de multi-tenant
+
+Chaque installation de Tunnel GMAO sert **une seule entreprise**.
 
 Il n'y a pas de gestion de clients, de comptes séparés, d'espaces isolés.
 
-Si plusieurs entreprises veulent utiliser Tunnel GMAO, elles doivent chacune installer leur propre instance.
+Si plusieurs entreprises (ou sites distincts) veulent utiliser Tunnel GMAO, elles doivent chacune installer leur propre instance.
+
+**Raison** : simplicité de déploiement et de sécurité.
+
+### ❌ Pas de gestion des utilisateurs externes
+
+Tunnel GMAO ne permet pas :
+
+- De donner des accès à des sous-traitants externes avec portail dédié
+- De créer des profils clients pour suivi de SAV
+- De gérer des accès temporaires avec droits limités par projet
+
+**Raison** : complexité de gestion des permissions. Si nécessaire, créer des comptes utilisateurs normaux.
 
 ## Évolutions futures
 
 Le périmètre ci-dessus est volontairement limité.
 
 De nouvelles fonctionnalités pourront être ajoutées si elles respectent la philosophie du projet :
+
 - Utilité directe pour le terrain
 - Simplicité de mise en œuvre
 - Pas de dépendance externe supplémentaire
