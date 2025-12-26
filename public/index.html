@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tunnel GMAO - Gestion de Maintenance</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Tunnel GMAO</h1>
+            <p class="subtitle">Gestion de Maintenance Assistée par Ordinateur</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-button active" data-tab="dashboard">Tableau de bord</button>
+            <button class="tab-button" data-tab="machines">Machines</button>
+            <button class="tab-button" data-tab="requests">Demandes</button>
+            <button class="tab-button" data-tab="interventions">Interventions</button>
+            <button class="tab-button" data-tab="purchases">Achats</button>
+        </nav>
+
+        <main>
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2>Tableau de bord</h2>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>Interventions en retard</h3>
+                        <div id="delayed-count" class="stat-number">-</div>
+                        <button onclick="showDelayed()">Voir les retards</button>
+                    </div>
+                    <div class="card">
+                        <h3>Demandes en attente</h3>
+                        <div id="pending-requests" class="stat-number">-</div>
+                    </div>
+                    <div class="card">
+                        <h3>Machines actives</h3>
+                        <div id="active-machines" class="stat-number">-</div>
+                    </div>
+                    <div class="card">
+                        <h3>Analyse du temps</h3>
+                        <div id="time-stats"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Machines Tab -->
+            <div id="machines" class="tab-content">
+                <div class="section-header">
+                    <h2>Machines</h2>
+                    <button onclick="showMachineForm()">+ Ajouter une machine</button>
+                </div>
+                <div id="machines-list" class="items-list"></div>
+            </div>
+
+            <!-- Requests Tab -->
+            <div id="requests" class="tab-content">
+                <div class="section-header">
+                    <h2>Demandes d'intervention</h2>
+                    <button onclick="showRequestForm()">+ Nouvelle demande</button>
+                </div>
+                <div id="requests-list" class="items-list"></div>
+            </div>
+
+            <!-- Interventions Tab -->
+            <div id="interventions" class="tab-content">
+                <div class="section-header">
+                    <h2>Interventions</h2>
+                    <button onclick="showInterventionForm()">+ Nouvelle intervention</button>
+                </div>
+                <div id="interventions-list" class="items-list"></div>
+            </div>
+
+            <!-- Purchases Tab -->
+            <div id="purchases" class="tab-content">
+                <div class="section-header">
+                    <h2>Achats et demandes d'achat</h2>
+                    <button onclick="showPurchaseForm()">+ Nouvelle demande d'achat</button>
+                </div>
+                <div id="purchases-list" class="items-list"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>
+                Tunnel GMAO - Logiciel libre sous licence 
+                <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">AGPL-3.0</a>
+            </p>
+            <p class="footer-note">
+                Utilisable gratuitement • Services professionnels disponibles
+            </p>
+        </footer>
+    </div>
+
+    <!-- Modal for forms -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
