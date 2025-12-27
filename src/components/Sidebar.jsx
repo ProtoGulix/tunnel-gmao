@@ -12,12 +12,15 @@ import { LogOut, LogIn } from 'lucide-react';
 // 4. Utils
 import { checkServerStatus } from '@/lib/serverStatus';
 
-// 5. Config
+// 5. Components
+import SidebarActionButton from '@/components/common/SidebarActionButton';
+import BrandLogo from '@/components/common/BrandLogo';
+
+// 6. Config
 import { getMenuSections } from '@/config/menuConfig';
 import { MOBILE_BREAKPOINT, SIDEBAR_WIDTH, MOBILE_HEADER_HEIGHT } from '@/config/layoutConfig';
 import COLOR_PALETTE from '@/config/colorPalette';
 import { version as APP_VERSION } from '@/../package.json';
-import SidebarActionButton from '@/components/common/SidebarActionButton';
 
 // ===== MAIN COMPONENT =====
 /**
@@ -53,8 +56,6 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
     accentSoft: '#6D7F97', // primary lightened ~35% for dark backgrounds
     border: 'rgba(255,255,255,0.08)'
   };
-
-  const LOGO_SRC = '/brand/sidebar-mark-duotone.svg';
 
   const statusColorMap = {
     ok: 'rgba(46, 125, 50, 0.6)',
@@ -168,20 +169,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
               {menuOpen ? '✕' : '☰'}
             </button>
             
-            <div style={{ 
-              fontWeight: '600', 
-              fontSize: '1.1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}>
-              <img
-                src={LOGO_SRC}
-                alt="Tunnel GMAO"
-                style={{ width: '28px', height: '28px', objectFit: 'contain' }}
-              />
-              <span style={{ letterSpacing: '0.5px' }}>TUNNEL</span>
-            </div>
+            <BrandLogo size="mobile" showTitle={true} />
 
             <div style={{ width: '40px' }} />
           </div>
@@ -224,19 +212,12 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
           <div style={{ 
             padding: '1rem', 
             borderBottom: `1px solid ${COLORS.border}`,
-            fontWeight: '600',
-            fontSize: '1.1rem'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <img
-                  src={LOGO_SRC}
-                  alt="Tunnel GMAO"
-                  style={{ width: '32px', height: '32px', objectFit: 'contain' }}
-                />
-                <span style={{ letterSpacing: '0.6px' }}>TUNNEL GMAO</span>
-              </div>
-            </div>
+            <BrandLogo size="desktop" showTitle={true} />
           </div>
         )}
 

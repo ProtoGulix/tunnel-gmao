@@ -1,32 +1,46 @@
 // ===== IMPORTS =====
-import { useState, useEffect } from "react";
+// 1. React core
+import { useState, useEffect, useCallback } from "react";
+
+// 2. React Router
 import { useNavigate } from "react-router-dom";
+
+// 3. Radix UI
 import {
   Box,
   Card,
   Container,
   Flex,
-  Heading,
   Text,
   TextField,
   Button,
   Callout,
   Separator
 } from "@radix-ui/themes";
+
+// 4. Custom Components
 import ServerStatus from "@/components/ServerStatus";
+import BrandLogo from "@/components/common/BrandLogo";
+
+// 5. Custom Hooks
 import { useAuth } from "@/auth/AuthContext";
 
-// ===== COMPONENT =====
+// ===== MAIN COMPONENT =====
 /**
- * Login page with authentication and redirect handling.
- * Manages user authentication and redirects to the intended page after login.
- * Includes server status monitoring and offline mode information.
- *
+ * Page de connexion avec gestion d'authentification et redirection.
+ * 
+ * Fonctionnalités :
+ * - Authentification utilisateur (email + mot de passe)
+ * - Redirection post-login vers destination prévue ou /interventions
+ * - Monitoring statut serveur (offline mode)
+ * - Gestion erreurs réseau et authentification
+ * - Stockage redirection en localStorage
+ * 
  * @component
- * @returns {JSX.Element} Login page with authentication form
- *
+ * @returns {JSX.Element} Page login avec formulaire et logo
+ * 
  * @example
- * // Routed in App.jsx as public route
+ * // Route publique dans App.jsx
  * <Route path="/login" element={<Login />} />
  */
 export default function Login() {
@@ -36,27 +50,34 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ----- Router Hooks -----
+  // ----- Router & Hooks -----
   const navigate = useNavigate();
-
-  // ----- Custom Hooks -----
   const { login, isAuthenticated } = useAuth();
+
+  // ===== HELPERS =====
+  /**
+   * Redirige après authentification réussie vers destination prévue ou défaut
+   * @private
+   */
+  const handleRedirectAfterLogin = useCallback(() => {
+    const redirectUrl = localStorage.getItem("redirect_after_login");
+    if (redirectUrl) {
+      localStorage.removeItem("redirect_after_login");
+      navigate(decodeURIComponent(redirectUrl), { replace: true });
+    } else {
+      navigate("/interventions", { replace: true });
+    }
+  }, [navigate]);
 
   // ----- Effects -----
   useEffect(() => {
-    // Redirect authenticated users to their intended destination or default page
+    // Rediriger utilisateurs déjà authentifiés vers destination prévue
     if (isAuthenticated) {
-      const redirectUrl = localStorage.getItem("redirect_after_login");
-      if (redirectUrl) {
-        localStorage.removeItem("redirect_after_login");
-        navigate(decodeURIComponent(redirectUrl), { replace: true });
-      } else {
-        navigate("/interventions", { replace: true });
-      }
+      handleRedirectAfterLogin();
     }
-  }, [isAuthenticated, navigate]);
+  }, [handleRedirectAfterLogin, isAuthenticated, navigate]);
 
-  // ----- Handlers -----
+  // ===== HANDLERS =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -64,15 +85,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      
-      // Redirect to saved URL or default page after successful login
-      const redirectUrl = localStorage.getItem("redirect_after_login");
-      if (redirectUrl) {
-        localStorage.removeItem("redirect_after_login");
-        navigate(decodeURIComponent(redirectUrl), { replace: true });
-      } else {
-        navigate("/interventions", { replace: true });
-      }
+      handleRedirectAfterLogin(); // Réutilise la même logique
     } catch (err) {
       console.error("Erreur de connexion:", err);
       
@@ -88,7 +101,7 @@ export default function Login() {
     }
   };
 
-  // ----- Main Render -----
+  // ===== RENDER =====
   return (
     <Box
       style={{
@@ -103,51 +116,32 @@ export default function Login() {
       <Container size="1" style={{ maxWidth: "420px" }}>
           <Card size="4">
             <Flex direction="column" gap="4">
-              {/* Header */}
-              <Flex direction="column" align="center" gap="2">
-                <Box
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, var(--accent-9), var(--purple-9))",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "2rem"
-                  }}
-                >
-                  ⚙️
-                </Box>
-                <Heading size="6" align="center">
-                  TUNNEL GMAO
-                </Heading>
-                <Text size="2" color="gray" align="center">
-                  Gestion de Maintenance Assistée par Ordinateur
-                </Text>
+              {/* Logo */}
+              <Flex direction="column" align="center" gap="2" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+                <BrandLogo size="desktop" showTitle={true} logoSizeOverride="400" showSubtitle={true}/>
               </Flex>
-
               <Separator size="4" />
 
               {/* Server Status */}
-              <ServerStatus showDetails={true} />
+              <ServerStatus showDetails={false} />
 
               {/* Error Message */}
               {error && (
-                <Callout.Root color="red" size="1">
+                <Callout.Root color="red" size="1" id="form-error" role="alert" aria-live="polite">
                   <Callout.Icon>⚠️</Callout.Icon>
                   <Callout.Text>{error}</Callout.Text>
                 </Callout.Root>
               )}
 
               {/* Login Form */}
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} role="form" aria-label="Formulaire de connexion">
                 <Flex direction="column" gap="3">
                   <Box>
-                    <Text size="2" weight="medium" as="label" mb="1" style={{ display: "block" }}>
+                    <Text size="2" weight="medium" as="label" htmlFor="email" style={{ display: "block", marginBottom: "0.5rem" }}>
                       Email
                     </Text>
                     <TextField.Root
+                      id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -155,14 +149,17 @@ export default function Login() {
                       placeholder="votre@email.com"
                       autoComplete="email"
                       disabled={loading}
-                      size="3" />
+                      size="3"
+                      aria-describedby={error ? "form-error" : undefined}
+                    />
                   </Box>
 
                   <Box>
-                    <Text size="2" weight="medium" as="label" mb="1" style={{ display: "block" }}>
+                    <Text size="2" weight="medium" as="label" htmlFor="password" style={{ display: "block", marginBottom: "0.5rem" }}>
                       Mot de passe
                     </Text>
                     <TextField.Root
+                      id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -170,7 +167,9 @@ export default function Login() {
                       placeholder="••••••••"
                       autoComplete="current-password"
                       disabled={loading}
-                      size="3" />
+                      size="3"
+                      aria-describedby={error ? "form-error" : undefined}
+                    />
                   </Box>
 
                   <Button
@@ -225,3 +224,8 @@ export default function Login() {
     </Box>
   );
 }
+
+// ===== PROP TYPES =====
+Login.propTypes = {
+  // Login page a aucune props (route publique)
+};
