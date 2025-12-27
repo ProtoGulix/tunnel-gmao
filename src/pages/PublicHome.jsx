@@ -1,34 +1,38 @@
 // ===== IMPORTS =====
-// 1. React Router
+// 1. React core
+import PropTypes from 'prop-types';
+
+// 2. React Router
 import { useNavigate } from 'react-router-dom';
 
-// 2. UI Libraries (Radix)
+// 3. UI Libraries (Radix)
 import { Box, Flex, Grid, Card, Text, Button, Heading, Container } from '@radix-ui/themes';
 
-// 3. Icons
-import { ShoppingCart, ClipboardList, LogIn, Wrench } from 'lucide-react';
+// 4. Icons
+import { ShoppingCart, ClipboardList } from 'lucide-react';
 
-// ===== COMPONENT =====
+// ===== MAIN COMPONENT =====
 /**
- * Public home page with access to public services.
- * Provides forms for purchase requests and intervention requests without authentication.
- * Staff members can navigate to the login page from here.
+ * Page d'accueil publique avec accès aux services publics.
+ * 
+ * Permet aux utilisateurs externes de soumettre :
+ * - Demandes d'achat (pièces, équipements)
+ * - Demandes d'intervention (signalement pannes, maintenance)
+ * 
+ * Le personnel autorisé peut se connecter via la sidebar.
  *
  * @component
- * @returns {JSX.Element} Public landing page with service cards
+ * @returns {JSX.Element} Page d'accueil sobre avec 2 cartes CTA
  *
  * @example
+ * // Route publique dans App.jsx
  * <Route path="/" element={<PublicHome />} />
  */
 export default function PublicHome() {
   // ----- Router Hooks -----
   const navigate = useNavigate();
 
-  // ----- Handlers -----
-  const handleLogin = () => {
-    navigate('/login');
-  };
-
+  // ===== HANDLERS =====
   const handlePurchaseRequest = () => {
     navigate('/public/purchase-request');
   };
@@ -37,57 +41,39 @@ export default function PublicHome() {
     navigate('/public/intervention-request');
   };
 
-  // ----- Main Render -----
+  // ===== RENDER =====
   return (
-    <Box style={{ minHeight: '100vh', background: 'var(--gray-2)' }}>
-      {/* Header */}
-      <Box 
-        style={{ 
-          background: 'linear-gradient(135deg, var(--accent-9) 0%, var(--accent-10) 100%)',
-          padding: '2rem 0',
-          marginBottom: '3rem'
-        }}
-      >
-        <Container size="4">
-          <Flex justify="between" align="center">
-            <Flex direction="column" gap="2">
-              <Heading size="8" style={{ color: 'white' }}>
-                <Wrench size={32} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-                GMAO MVP
-              </Heading>
-              <Text size="4" style={{ color: 'white', opacity: 0.9 }}>
-                Maintenance Management System
-              </Text>
-            </Flex>
-            <Button 
-              size="3" 
-              variant="surface"
-              onClick={handleLogin}
-            >
-              <LogIn size={18} />
-              Staff Login
-            </Button>
-          </Flex>
-        </Container>
-      </Box>
-
-      {/* Main Content */}
-      <Container size="4">
+    <Box style={{ minHeight: '100vh', background: 'var(--gray-1)' }}>
+      <Container size="3" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
         <Flex direction="column" gap="6">
-          {/* Welcome Section */}
+          {/* Hero Section */}
           <Box>
-            <Heading size="6" mb="2">Welcome</Heading>
-            <Text color="gray" size="3">
-              You can submit a purchase request or an intervention request using the forms below.
+            <Heading size="7" mb="3">
+              Comment pouvons-nous vous aider ?
+            </Heading>
+            <Text size="3" color="gray">
+              Soumettez une demande d'achat ou d'intervention ci-dessous.
             </Text>
           </Box>
 
           {/* Public Services Cards */}
-          <Grid columns={{ initial: '1', sm: '2' }} gap="4">
+          <Grid columns={{ initial: '1', sm: '2' }} gap="4" style={{ marginTop: '2rem' }}>
             {/* Purchase Request Card */}
             <Card 
-              style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+              style={{ 
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                border: '1px solid var(--gray-7)'
+              }}
               onClick={handlePurchaseRequest}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               <Flex direction="column" gap="3" align="center" p="4">
                 <Box 
@@ -102,20 +88,37 @@ export default function PublicHome() {
                 >
                   <ShoppingCart size={48} color="var(--blue-9)" />
                 </Box>
-                <Heading size="5" align="center">Purchase Request</Heading>
+                <Heading size="5" align="center">Demande d'achat</Heading>
                 <Text color="gray" align="center" size="2">
-                  Submit a purchase request for parts or equipment
+                  Pièces, équipements ou fournitures
                 </Text>
-                <Button variant="soft" size="2" style={{ width: '100%' }}>
-                  Access Form
+                <Button 
+                  variant="soft" 
+                  size="2" 
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                  onClick={handlePurchaseRequest}
+                >
+                  Accéder au formulaire
                 </Button>
               </Flex>
             </Card>
 
             {/* Intervention Request Card */}
             <Card 
-              style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+              style={{ 
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                border: '1px solid var(--gray-7)'
+              }}
               onClick={handleInterventionRequest}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               <Flex direction="column" gap="3" align="center" p="4">
                 <Box 
@@ -130,29 +133,28 @@ export default function PublicHome() {
                 >
                   <ClipboardList size={48} color="var(--amber-9)" />
                 </Box>
-                <Heading size="5" align="center">Intervention Request</Heading>
+                <Heading size="5" align="center">Demande d'intervention</Heading>
                 <Text color="gray" align="center" size="2">
-                  Report an issue or request a maintenance intervention
+                  Signaler une panne ou demander une maintenance
                 </Text>
-                <Button variant="soft" size="2" style={{ width: '100%' }}>
-                  Access Form
+                <Button 
+                  variant="soft" 
+                  size="2" 
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                  onClick={handleInterventionRequest}
+                >
+                  Accéder au formulaire
                 </Button>
               </Flex>
             </Card>
           </Grid>
-
-          {/* Info Section */}
-          <Card mt="4">
-            <Flex direction="column" gap="2" p="3">
-              <Heading size="4">Authorized Staff</Heading>
-              <Text color="gray" size="2">
-                If you are part of the maintenance staff, click on the &quot;Staff Login&quot; 
-                button at the top right to access all management features.
-              </Text>
-            </Flex>
-          </Card>
         </Flex>
       </Container>
     </Box>
   );
 }
+
+// ===== PROP TYPES =====
+PublicHome.propTypes = {
+  // PublicHome a aucune props (route publique)
+};
