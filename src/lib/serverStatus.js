@@ -6,6 +6,7 @@ export async function checkServerStatus() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+    const startedAt = performance.now();
 
     const response = await axios.get(`${BASE_URL}/server/ping`, {
       signal: controller.signal,
@@ -14,10 +15,16 @@ export async function checkServerStatus() {
 
     clearTimeout(timeoutId);
 
+    const latencyHeader = response.headers['x-response-time'];
+    const measuredLatency = Math.max(0, performance.now() - startedAt);
+    const latencyMs = latencyHeader ? Number(latencyHeader) || measuredLatency : measuredLatency;
+
     return {
       online: response.status === 200,
       message: 'Serveur accessible',
-      latency: response.headers['x-response-time'] || 'N/A',
+      latencyMs,
+      lastChecked: new Date().toISOString(),
+      health: 'ok',
     };
   } catch (error) {
     if (error.code === 'ECONNABORTED' || error.name === 'AbortError') {
@@ -25,6 +32,9 @@ export async function checkServerStatus() {
         online: false,
         message: 'Timeout - Serveur ne répond pas',
         error: 'TIMEOUT',
+        latencyMs: null,
+        lastChecked: new Date().toISOString(),
+        health: 'degraded',
       };
     }
 
@@ -33,6 +43,9 @@ export async function checkServerStatus() {
         online: false,
         message: 'Serveur inaccessible - Vérifiez votre connexion',
         error: 'NETWORK_ERROR',
+        latencyMs: null,
+        lastChecked: new Date().toISOString(),
+        health: 'down',
       };
     }
 
@@ -40,6 +53,9 @@ export async function checkServerStatus() {
       online: false,
       message: `Erreur: ${error.message}`,
       error: error.code || 'UNKNOWN',
+      latencyMs: null,
+      lastChecked: new Date().toISOString(),
+      health: 'down',
     };
   }
 }

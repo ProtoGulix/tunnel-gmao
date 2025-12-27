@@ -24,6 +24,11 @@ import axios from 'axios';
 // CONFIGURATION
 // ==============================
 const BASE_URL = import.meta.env.VITE_DATA_API_URL || 'http://localhost:8055';
+const BLOCK_API = import.meta.env.VITE_BLOCK_API === 'true';
+const BLOCK_API_ENDPOINTS = (import.meta.env.VITE_BLOCK_API_ENDPOINTS || '/items/machine')
+  .split(',')
+  .map((endpoint) => endpoint.trim())
+  .filter(Boolean);
 
 /**
  * Preconfigured axios instance for API calls.
@@ -160,6 +165,14 @@ export const clearAllCache = () => {
  */
 api.interceptors.request.use(
   (config) => {
+    if (BLOCK_API) {
+      const url = config.url || '';
+      const blocked = BLOCK_API_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+      if (blocked) {
+        return Promise.reject(new axios.Cancel(`API blocked (${url})`));
+      }
+    }
+
     // Prefer generic token; fallback to legacy directus token
     const token =
       localStorage.getItem('auth_access_token') || localStorage.getItem('directus_token');

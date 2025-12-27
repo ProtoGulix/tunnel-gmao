@@ -15,7 +15,9 @@ import { checkServerStatus } from '@/lib/serverStatus';
 // 5. Config
 import { getMenuSections } from '@/config/menuConfig';
 import { MOBILE_BREAKPOINT, SIDEBAR_WIDTH, MOBILE_HEADER_HEIGHT } from '@/config/layoutConfig';
+import COLOR_PALETTE from '@/config/colorPalette';
 import { version as APP_VERSION } from '@/../package.json';
+import SidebarActionButton from '@/components/common/SidebarActionButton';
 
 // ===== MAIN COMPONENT =====
 /**
@@ -30,9 +32,36 @@ import { version as APP_VERSION } from '@/../package.json';
 export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isMobileProp }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [serverOnline, setServerOnline] = useState(true);
+  const [serverStatus, setServerStatus] = useState({
+    online: true,
+    health: 'ok',
+    latencyMs: null,
+    lastChecked: null,
+  });
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobileInternal, setIsMobileInternal] = useState(window.innerWidth < MOBILE_BREAKPOINT);
+
+  const COLORS = {
+    background: '#2E2E2E',
+    text: '#E5E9EF',
+    textMuted: '#A0A8B5',
+    hoverBg: 'rgba(255,255,255,0.1)',
+    activeBg: '#3B4F70',
+    activeText: '#F8FAFD',
+    accent: COLOR_PALETTE.primary,
+    accentSoft: '#6D7F97', // primary lightened ~35% for dark backgrounds
+    border: 'rgba(255,255,255,0.08)'
+  };
+
+  const LOGO_SRC = '/brand/sidebar-mark-duotone.svg';
+
+  const statusColorMap = {
+    ok: 'rgba(46, 125, 50, 0.6)',
+    degraded: 'rgba(237, 108, 2, 0.6)',
+    down: 'rgba(198, 40, 40, 0.65)',
+    unknown: 'rgba(160, 168, 181, 0.6)',
+  };
 
   // Utiliser prop isMobile si fournie, sinon state interne
   const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileInternal;
@@ -64,7 +93,12 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   useEffect(() => {
     const checkStatus = async () => {
       const status = await checkServerStatus();
-      setServerOnline(status.online);
+      setServerStatus({
+        online: status.online,
+        health: status.health || (status.online ? 'ok' : 'down'),
+        latencyMs: typeof status.latencyMs === 'number' ? status.latencyMs : null,
+        lastChecked: status.lastChecked || new Date().toISOString(),
+      });
     };
 
     checkStatus();
@@ -75,6 +109,23 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
 
   // Récupérer les sections du menu selon l'état d'authentification
   const menuSections = getMenuSections(isAuthenticated);
+
+  const latencyLabel = serverStatus.latencyMs !== null ? `${Math.round(serverStatus.latencyMs)} ms` : 'N/A';
+  const lastCheckedLabel = serverStatus.lastChecked ? new Date(serverStatus.lastChecked).toLocaleString() : 'N/A';
+  const statusColor = statusColorMap[serverStatus.health] || statusColorMap.unknown;
+  const statusHaloColor = statusColor.startsWith('rgba')
+    ? statusColor.replace(/0\.\d+\)$/,'0.08)')
+    : statusColor;
+  const statusTooltip = `Latence: ${latencyLabel} | API: ${serverStatus.online ? 'OK' : 'KO'} | Dernier check: ${lastCheckedLabel}`;
+
+  const handleLogoutClick = () => {
+    if (logoutConfirm) {
+      onLogout();
+      return;
+    }
+    setLogoutConfirm(true);
+    setTimeout(() => setLogoutConfirm(false), 2500);
+  };
 
   return (
     <>
@@ -88,8 +139,8 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
             left: 0,
             right: 0,
             height: '56px',
-            background: '#2E2E2E',
-            color: 'white',
+            background: COLORS.background,
+            color: COLORS.text,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -102,7 +153,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'white',
+                color: COLORS.text,
                 fontSize: '1.5rem',
                 cursor: 'pointer',
                 padding: '0.5rem',
@@ -122,18 +173,14 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
               fontSize: '1.1rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.75rem'
             }}>
-              TUNNEL
-              <div
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: serverOnline ? '#2E7D32' : '#C62828',
-                }}
-                title={serverOnline ? 'Serveur en ligne' : 'Serveur hors ligne'}
+              <img
+                src={LOGO_SRC}
+                alt="Tunnel GMAO"
+                style={{ width: '28px', height: '28px', objectFit: 'contain' }}
               />
+              <span style={{ letterSpacing: '0.5px' }}>TUNNEL</span>
             </div>
 
             <div style={{ width: '40px' }} />
@@ -160,8 +207,8 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
       {/* Sidebar */}
       <aside style={{
         width: `${SIDEBAR_WIDTH}px`,
-        background: '#2E2E2E',
-        color: 'white',
+        background: COLORS.background,
+        color: COLORS.text,
         display: 'flex',
         flexDirection: 'column',
         position: 'fixed',
@@ -176,21 +223,19 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
         {!isMobile && (
           <div style={{ 
             padding: '1rem', 
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: `1px solid ${COLORS.border}`,
             fontWeight: '600',
             fontSize: '1.1rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              TUNNEL GMAO
-              <div
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: serverOnline ? '#2E7D32' : '#C62828',
-                }}
-                title={serverOnline ? 'Serveur en ligne' : 'Serveur hors ligne'}
-              />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <img
+                  src={LOGO_SRC}
+                  alt="Tunnel GMAO"
+                  style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+                />
+                <span style={{ letterSpacing: '0.6px' }}>TUNNEL GMAO</span>
+              </div>
             </div>
           </div>
         )}
@@ -208,15 +253,17 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
                     alignItems: 'center',
                     gap: '0.75rem',
                     padding: '0.75rem 1rem',
-                  color: location.pathname === item.path ? '#1F3A5F' : '#ecf0f1',
-                  background: location.pathname === item.path ? 'rgba(31, 58, 95, 0.15)' : 'transparent',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s',
-                  borderLeft: location.pathname === item.path ? '3px solid #1F3A5F' : '3px solid transparent',
+                    color: location.pathname === item.path ? COLORS.activeText : COLORS.text,
+                    background: location.pathname === item.path ? COLORS.activeBg : 'transparent',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                    borderLeft: location.pathname === item.path ? `4px solid ${COLORS.accent}` : '4px solid transparent',
+                    fontWeight: location.pathname === item.path ? 700 : 500,
+                    boxShadow: location.pathname === item.path ? `inset 0 0 0 1px ${COLORS.border}` : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (location.pathname !== item.path) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.background = COLORS.hoverBg;
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -239,13 +286,13 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
                 <>
                   <div style={{ 
                     margin: '0.5rem 1rem', 
-                    borderTop: '1px solid rgba(255,255,255,0.1)' 
+                    borderTop: `1px solid ${COLORS.border}` 
                   }} />
                   
                   <div style={{ 
                     padding: '0 1rem 0.5rem 1rem', 
                     fontSize: '0.75rem', 
-                    color: '#95a5a6',
+                    color: COLORS.textMuted,
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px'
                   }}>
@@ -263,15 +310,17 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
                     alignItems: 'center',
                     gap: '0.75rem',
                     padding: '0.75rem 1rem',
-                    color: location.pathname === item.path ? '#1F3A5F' : '#ecf0f1',
-                    background: location.pathname === item.path ? 'rgba(31, 58, 95, 0.15)' : 'transparent',
+                    color: location.pathname === item.path ? COLORS.activeText : COLORS.text,
+                    background: location.pathname === item.path ? COLORS.activeBg : 'rgba(255,255,255,0.02)',
                     textDecoration: 'none',
                     transition: 'all 0.2s',
-                    borderLeft: location.pathname === item.path ? '3px solid #1F3A5F' : '3px solid transparent',
+                    borderLeft: location.pathname === item.path ? `4px solid ${COLORS.accent}` : '4px solid transparent',
+                    fontWeight: location.pathname === item.path ? 700 : 500,
+                    boxShadow: location.pathname === item.path ? `inset 0 0 0 1px ${COLORS.border}` : 'none',
                   }}
                   onMouseEnter={(e) => {
                     if (location.pathname !== item.path) {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.background = COLORS.hoverBg;
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -291,66 +340,32 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
         {/* Footer - Connexion ou Déconnexion */}
         <div style={{ 
           padding: '1rem', 
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          borderTop: `1px solid ${COLORS.border}`,
           fontSize: '0.85rem'
         }}>
           {isAuthenticated ? (
             // Mode connecté - afficher user et déconnexion
             <>
-              <div style={{ marginBottom: '0.5rem', color: '#bdc3c7' }}>
+              <div style={{ marginBottom: '0.5rem', color: COLORS.textMuted }}>
                 {user?.first_name} {user?.last_name}
               </div>
-              <button
-                onClick={onLogout}
-                style={{
-                  width: '100%',
-                  background: '#C62828',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  transition: 'background 0.2s',
-                  marginBottom: '0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#B71C1C'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#C62828'}
-              >
-                <LogOut size={16} />
-                Déconnexion
-              </button>
+              <SidebarActionButton
+                label={logoutConfirm ? 'Confirmer' : 'Déconnexion'}
+                icon={LogOut}
+                onClick={handleLogoutClick}
+                variant='neutral'
+                colors={COLORS}
+              />
             </>
           ) : (
             // Mode public - afficher bouton connexion
-            <button
+            <SidebarActionButton
+              label='Connexion'
+              icon={LogIn}
               onClick={() => navigate('/login')}
-              style={{
-                width: '100%',
-                background: '#1F3A5F',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: '500',
-                transition: 'background 0.2s',
-                marginBottom: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#152B47'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#1F3A5F'}
-            >
-              <LogIn size={16} />
-              Connexion Personnel
-            </button>
+              variant='primary'
+              colors={COLORS}
+            />
           )}
 
           {/* Version */}
@@ -360,12 +375,24 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
             justifyContent: 'center',
             gap: '0.75rem',
             paddingTop: '0.75rem',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            color: '#95a5a6',
+            borderTop: `1px solid ${COLORS.border}`,
+            color: COLORS.textMuted,
             fontSize: '0.85rem',
             marginBottom: '0.5rem'
           }}>
             <span>v{APP_VERSION}</span>
+            <span
+              title={statusTooltip}
+              aria-label={statusTooltip}
+              style={{
+                width: '9px',
+                height: '9px',
+                borderRadius: '50%',
+                background: statusColor,
+                boxShadow: `0 0 0 4px ${statusHaloColor}`,
+                opacity: 0.7
+              }}
+            />
             <a
               href='https://github.com/ProtoGulix/tunnel-gmao'
               target='_blank'
@@ -373,14 +400,14 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                color: '#1F3A5F',
+                color: COLORS.textMuted,
                 textDecoration: 'none',
                 transition: 'color 0.2s',
                 fontSize: '1.2rem',
                 lineHeight: '1'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#152B47'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#1F3A5F'}
+              onMouseEnter={(e) => e.currentTarget.style.color = COLORS.accent}
+              onMouseLeave={(e) => e.currentTarget.style.color = COLORS.textMuted}
               title='GitHub Repository'
             >
               <svg width='18' height='18' viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'>
@@ -393,7 +420,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
           <div style={{ 
             textAlign: 'center',
             fontSize: '0.65rem',
-            color: '#7f8c8d',
+            color: COLORS.textMuted,
             fontStyle: 'italic',
             letterSpacing: '0.3px'
           }}>

@@ -8,20 +8,20 @@ import {
   Package,
   FileText,
   LayoutList,
-} from "lucide-react";
+} from 'lucide-react';
 
 // Imports des composants pages
-import PublicHome from "../pages/PublicHome";
-import PurchaseRequestForm from "../pages/public/PurchaseRequestForm";
-import InterventionRequestForm from "../pages/public/InterventionRequestForm";
-import Login from "../pages/Login";
-import InterventionsList from "../pages/InterventionsList";
-import InterventionDetail from "../pages/InterventionDetail";
-import InterventionCreate from "../pages/InterventionCreate";
-import MachineList from "../pages/MachineList";
-import MachineDetail from "../pages/MachineDetail";
-import ActionsPage from "../pages/ActionsPage";
-import StockManagement from "../pages/StockManagement";
+import PublicHome from '../pages/PublicHome';
+import PurchaseRequestForm from '../pages/public/PurchaseRequestForm';
+import InterventionRequestForm from '../pages/public/InterventionRequestForm';
+import Login from '../pages/Login';
+import InterventionsList from '../pages/InterventionsList';
+import InterventionDetail from '../pages/InterventionDetail';
+import InterventionCreate from '../pages/InterventionCreate';
+import MachineList from '../pages/MachineList';
+import MachineDetail from '../pages/MachineDetail';
+import ActionsPage from '../pages/ActionsPage';
+import StockManagement from '../pages/StockManagement';
 
 /**
  * Configuration complète des pages de l'application
@@ -44,31 +44,31 @@ import StockManagement from "../pages/StockManagement";
 export const PAGES_CONFIG = [
   // Pages publiques
   {
-    id: "home",
-    path: "/",
+    id: 'home',
+    path: '/',
     component: PublicHome,
-    label: "Accueil",
+    label: 'Accueil',
     icon: Home,
-    pageTitle: "Accueil",
+    pageTitle: 'Accueil',
     pageSubtitle: "Bienvenue dans l'application GMAO",
     publicOnly: true,
     requiresAuth: false,
   },
   {
-    id: "login",
-    path: "/login",
+    id: 'login',
+    path: '/login',
     component: Login,
-    label: "Connexion",
+    label: 'Connexion',
     icon: Home,
-    pageTitle: "Connexion",
-    pageSubtitle: "Connectez-vous à votre compte",
+    pageTitle: 'Connexion',
+    pageSubtitle: 'Connectez-vous à votre compte',
     publicOnly: true,
     requiresAuth: false,
     showInMenu: false,
   },
   {
-    id: "intervention-request",
-    path: "/public/intervention-request",
+    id: 'intervention-request',
+    path: '/public/intervention-request',
     component: InterventionRequestForm,
     label: "Demande d'intervention",
     icon: Wrench,
@@ -78,8 +78,8 @@ export const PAGES_CONFIG = [
     requiresAuth: false,
   },
   {
-    id: "purchase-request",
-    path: "/public/purchase-request",
+    id: 'purchase-request',
+    path: '/public/purchase-request',
     component: PurchaseRequestForm,
     label: "Demande d'achat",
     icon: ShoppingCart,
@@ -91,31 +91,31 @@ export const PAGES_CONFIG = [
 
   // Pages privées
   {
-    id: "interventions",
-    path: "/interventions",
+    id: 'interventions',
+    path: '/interventions',
     component: InterventionsList,
-    label: "Interventions",
+    label: 'Interventions',
     icon: ClipboardList,
-    pageTitle: "Gestion des interventions",
-    pageSubtitle: "Suivi et gestion de toutes les interventions",
+    pageTitle: 'Gestion des interventions',
+    pageSubtitle: 'Suivi et gestion de toutes les interventions',
     requiresAuth: true,
   },
   {
-    id: "interventions-new",
-    path: "/intervention/new",
+    id: 'interventions-new',
+    path: '/intervention/new',
     component: InterventionCreate,
-    label: "Nouvelle intervention",
+    label: 'Nouvelle intervention',
     icon: Plus,
-    pageTitle: "Créer une intervention",
-    pageSubtitle: "Ajouter une nouvelle intervention",
+    pageTitle: 'Créer une intervention',
+    pageSubtitle: 'Ajouter une nouvelle intervention',
     requiresAuth: true,
     showInMenu: false,
   },
   {
-    id: "intervention-detail",
-    path: "/intervention/:id",
+    id: 'intervention-detail',
+    path: '/intervention/:id',
     component: InterventionDetail,
-    label: "Détail intervention",
+    label: 'Détail intervention',
     icon: FileText,
     pageTitle: "Détail de l'intervention",
     pageSubtitle: null, // Sera défini dynamiquement
@@ -123,49 +123,49 @@ export const PAGES_CONFIG = [
     showInMenu: false, // Ne pas afficher dans le menu
   },
   {
-    id: "actions",
-    path: "/actions",
+    id: 'actions',
+    path: '/actions',
     component: ActionsPage,
-    label: "Actions",
+    label: 'Actions techniques',
     icon: LayoutList,
-    pageTitle: "Gestion des actions",
-    pageSubtitle: "Suivi des actions et analyse de charge",
+    pageTitle: 'Actions techniques',
+    pageSubtitle: 'Suivi des actions techniques et analyse de charge',
     timeFilter: {
       enabled: true,
-      mode: "popover",
-      component: "daterange",
+      mode: 'popover',
+      component: 'daterange',
       triggerLabel: "Période d'analyse",
     },
     requiresAuth: true,
   },
   {
-    id: "machines",
-    path: "/machines",
+    id: 'machines',
+    path: '/machines',
     component: MachineList,
-    label: "Machines",
+    label: 'Machines',
     icon: Settings,
-    pageTitle: "Parc machines",
-    pageSubtitle: "Gestion et suivi des machines",
+    pageTitle: 'Parc machines',
+    pageSubtitle: 'Gestion et suivi des machines',
     requiresAuth: true,
   },
   {
-    id: "machine-detail",
-    path: "/machines/:id",
+    id: 'machine-detail',
+    path: '/machines/:id',
     component: MachineDetail,
-    label: "Détail machine",
+    label: 'Détail machine',
     icon: Settings,
-    pageTitle: "Détail de la machine",
+    pageTitle: 'Détail de la machine',
     pageSubtitle: null, // Sera défini dynamiquement
     requiresAuth: true,
     showInMenu: false,
   },
   {
-    id: "stock",
-    path: "/stock",
+    id: 'stock',
+    path: '/stock',
     component: StockManagement,
-    label: "Stock",
+    label: 'Stock',
     icon: Package,
-    pageTitle: "Gestion du stock",
+    pageTitle: 'Gestion du stock',
     pageSubtitle: "Articles en stock et demandes d'achat",
     requiresAuth: true,
   },
@@ -229,7 +229,7 @@ export function getPageConfig(path) {
   // Si pas trouvé, chercher avec correspondance de pattern (pour les routes dynamiques)
   if (!page) {
     page = PAGES_CONFIG.find((p) => {
-      const pattern = p.path.replace(/:[^/]+/g, "[^/]+");
+      const pattern = p.path.replace(/:[^/]+/g, '[^/]+');
       const regex = new RegExp(`^${pattern}$`);
       return regex.test(path);
     });
