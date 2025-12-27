@@ -24,6 +24,21 @@
   },
   "rules": {
     // ===== ERRORS =====
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/adapters/directus/**"],
+            "message": "Backend code forbidden outside adapters"
+          },
+          {
+            "group": ["axios", "directus"],
+            "message": "HTTP/backend forbidden outside adapters"
+          }
+        ]
+      }
+    ],
     "no-console": [
       "error",
       {
