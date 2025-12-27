@@ -10,7 +10,7 @@ import {
 import { CheckCircle } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { usePageHeaderProps } from '@/hooks/usePageConfig';
-import { createPurchaseRequest } from '@/lib/api';
+import { stock } from '@/lib/api/facade';
 import PurchaseRequestFormBody from '@/components/stock/PurchaseRequestFormBody';
 
 // ===== COMPONENT =====
@@ -29,7 +29,7 @@ export default function PurchaseRequestForm() {
   const handleFormSubmit = async (formData) => {
     try {
       setLoading(true);
-      await createPurchaseRequest(formData);
+      await stock.createPurchaseRequest(formData);
       
       setSuccess(true);
       setTimeout(() => {
@@ -56,7 +56,7 @@ export default function PurchaseRequestForm() {
               <CheckCircle size={20} />
             </Callout.Icon>
             <Callout.Text>
-              Demande d'achat créée avec succès !
+              Demande d&apos;achat créée avec succès !
             </Callout.Text>
           </Callout.Root>
         )}

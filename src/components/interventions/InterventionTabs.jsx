@@ -319,7 +319,7 @@ export const SummaryTab = ({
 
   // Filtrer les demandes d'achat liées à cette intervention
   const interventionRequests = purchaseRequests.filter(
-    req => req.intervention_id === interv.id
+    req => req.interventionId === interv.id
   );
 
   const handleFormSubmit = async (formData) => {

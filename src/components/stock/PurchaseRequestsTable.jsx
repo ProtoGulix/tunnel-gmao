@@ -9,8 +9,8 @@ import SearchSpecsDialog from "./SearchSpecsDialog";
 export default function PurchaseRequestsTable({
   requests,
   expandedRequestId,
-  onToggleExpand,
-  renderExpandedContent,
+  onToggleExpand = () => {},
+  renderExpandedContent = () => null,
   stockItems = [],
   supplierRefs = {},
   standardSpecs = {},
@@ -27,7 +27,7 @@ export default function PurchaseRequestsTable({
   const [addingSupplierRefId, setAddingSupplierRefId] = useState(null);
   const [addingSpecsId, setAddingSpecsId] = useState(null);
   const [refFormData, setRefFormData] = useState({ supplier_id: "", supplier_ref: "", unit_price: "", delivery_time_days: "" });
-  const [specsFormData, setSpecsFormData] = useState({ title: "", spec_text: "", is_default: true });
+  const [specsFormData, setSpecsFormData] = useState({ title: "", spec_text: "", isDefault: true });
 
   const getStockItemDetails = (stockItemId) => {
     if (!stockItemId) return null;
@@ -43,7 +43,7 @@ export default function PurchaseRequestsTable({
   };
   const getPreferredSupplier = useCallback((stockItemId) => {
     const refs = supplierRefs[stockItemId] || [];
-    const pref = refs.find((r) => r.is_preferred);
+    const pref = refs.find((r) => r.isPreferred);
     return pref?.supplier_id?.name || null;
   }, [supplierRefs]);
   const getStockItemRef = useCallback((stockItemId) => {
@@ -66,10 +66,10 @@ export default function PurchaseRequestsTable({
     return "var(--red-2)";
   };
   const getBusinessStatus = (request) => {
-    const hasLink = !!request.stock_item_id;
+    const hasLink = !!request.stockItemId;
     const hasQty = Number(request.quantity) > 0;
-    const hasRef = !!getStockItemRef(request.stock_item_id);
-    const hasPrefSupp = !!getPreferredSupplier(request.stock_item_id);
+    const hasRef = !!getStockItemRef(request.stockItemId);
+    const hasPrefSupp = !!getPreferredSupplier(request.stockItemId);
     const missing = !(hasLink && hasQty && hasRef && hasPrefSupp);
     if (missing) return { key: "to_qualify", icon: FileQuestion, label: "À qualifier" };
     const statusId = typeof request.status === "string" ? request.status : request.status?.id;
@@ -80,17 +80,17 @@ export default function PurchaseRequestsTable({
   };
   const getMissingList = (request) => {
     const items = [];
-    if (!request.stock_item_id) items.push("Lien article manquant");
+    if (!request.stockItemId) items.push("Lien article manquant");
     if (!(Number(request.quantity) > 0)) items.push("Quantité manquante");
-    if (!getStockItemRef(request.stock_item_id)) items.push("Référence article manquante");
-    if (!getPreferredSupplier(request.stock_item_id)) items.push("Fournisseur préféré manquant");
+    if (!getStockItemRef(request.stockItemId)) items.push("Référence article manquante");
+    if (!getPreferredSupplier(request.stockItemId)) items.push("Fournisseur préféré manquant");
     return items;
   };
   const getBlockageCause = (request) => {
     const causes = [];
-    if (!request.stock_item_id) causes.push("article non lié");
-    if (!getStockItemRef(request.stock_item_id)) causes.push("référence manquante");
-    if (!getPreferredSupplier(request.stock_item_id)) causes.push("fournisseur manquant");
+    if (!request.stockItemId) causes.push("article non lié");
+    if (!getStockItemRef(request.stockItemId)) causes.push("référence manquante");
+    if (!getPreferredSupplier(request.stockItemId)) causes.push("fournisseur manquant");
     return causes.join(" + ");
   };
 
@@ -99,9 +99,9 @@ export default function PurchaseRequestsTable({
     // Calcul du score de complétude : moins complet (score bas) = priorité haute
     const getCompletenessScore = (request) => {
       let score = 0;
-      const hasLink = !!request.stock_item_id;
-      const hasRef = !!getStockItemRef(request.stock_item_id);
-      const hasPrefSupp = !!getPreferredSupplier(request.stock_item_id);
+      const hasLink = !!request.stockItemId;
+      const hasRef = !!getStockItemRef(request.stockItemId);
+      const hasPrefSupp = !!getPreferredSupplier(request.stockItemId);
       
       // Chaque critère = +100 points
       if (hasLink) score += 100;
@@ -130,8 +130,8 @@ export default function PurchaseRequestsTable({
       if (scoreA !== scoreB) return scoreA - scoreB;
       
       // Priorité 2 : Âge décroissant (plus vieux en premier)
-      const ageA = getAgeDays(a.created_at);
-      const ageB = getAgeDays(b.created_at);
+      const ageA = getAgeDays(a.createdAt);
+      const ageB = getAgeDays(b.createdAt);
       return ageB - ageA;
     });
   }, [requests, getStockItemRef, getPreferredSupplier]);
@@ -188,15 +188,15 @@ export default function PurchaseRequestsTable({
         {sortedRequests.map((request) => (
           <Fragment key={request.id}>
             {(() => {
-              const age = getAgeDays(request.created_at);
+              const age = getAgeDays(request.createdAt);
               const bg = getRowAgeColor(age);
               const biz = getBusinessStatus(request);
               const MissingIcon = AlertTriangle;
               const missingList = getMissingList(request);
               const hasMissing = missingList.length > 0;
               const BizIcon = biz.icon;
-              const stockItem = getStockItemDetails(request.stock_item_id);
-              const supplierName = getPreferredSupplier(request.stock_item_id);
+              const stockItem = getStockItemDetails(request.stockItemId);
+              const supplierName = getPreferredSupplier(request.stockItemId);
               return (
                 <Table.Row style={{ background: bg }}>
                   <Table.Cell>
@@ -225,11 +225,11 @@ export default function PurchaseRequestsTable({
                     )}
                   </Table.Cell>
                   <Table.Cell>
-                    <Text weight="medium">{request.item_label || stockItem?.name || "-"}</Text>
+                    <Text weight="medium">{request.itemLabel || stockItem?.name || "-"}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    {getStockItemRef(request.stock_item_id) ? (
-                      <Badge color="green" variant="soft">{getStockItemRef(request.stock_item_id)}</Badge>
+                    {getStockItemRef(request.stockItemId) ? (
+                      <Badge color="green" variant="soft">{getStockItemRef(request.stockItemId)}</Badge>
                     ) : (
                       <Text color="gray">-</Text>
                     )}
@@ -320,11 +320,11 @@ export default function PurchaseRequestsTable({
               </ExpandableDetailsRow>
             )}
 
-            {detailsExpandedId === request.id && request.stock_item_id && (
+            {detailsExpandedId === request.id && request.stockItemId && (
               <ExpandableDetailsRow colSpan={8} withCard={false}>
                 <Flex direction="column" gap="3" p="4">
                   {(() => {
-                    const stockItem = getStockItemDetails(request.stock_item_id);
+                    const stockItem = getStockItemDetails(request.stockItemId);
                     return (
                       stockItem && (
                         <Flex align="center" justify="between">
@@ -345,8 +345,8 @@ export default function PurchaseRequestsTable({
                   })()}
 
                   {(() => {
-                    const refs = getSupplierRefsForItem(request.stock_item_id);
-                    const isAddingRefs = addingSupplierRefId === request.stock_item_id;
+                    const refs = getSupplierRefsForItem(request.stockItemId);
+                    const isAddingRefs = addingSupplierRefId === request.stockItemId;
                     return (
                       <Card>
                         <Flex direction="column" gap="2" p="3">
@@ -359,7 +359,7 @@ export default function PurchaseRequestsTable({
                               </Box>
                             </Flex>
                             {onAddSupplierRef && !isAddingRefs && (
-                              <Button size="2" variant="soft" color="blue" onClick={() => setAddingSupplierRefId(request.stock_item_id)}>
+                              <Button size="2" variant="soft" color="blue" onClick={() => setAddingSupplierRefId(request.stockItemId)}>
                                 <Plus size={14} />
                                 Ajouter
                               </Button>
@@ -378,25 +378,25 @@ export default function PurchaseRequestsTable({
                               </Table.Header>
                               <Table.Body>
                                 {refs.map((ref, idx) => (
-                                  <Table.Row key={idx} style={{ background: ref.is_preferred ? "var(--green-2)" : undefined }}>
+                                  <Table.Row key={idx} style={{ background: ref.isPreferred ? "var(--green-2)" : undefined }}>
                                     <Table.Cell>
-                                      <Text size="2" weight={ref.is_preferred ? "bold" : "regular"}>
-                                        {ref.supplier_id?.name || "Fournisseur inconnu"}
+                                      <Text size="2" weight={ref.isPreferred ? "bold" : "regular"}>
+                                        {ref.supplier?.name || "Fournisseur inconnu"}
                                       </Text>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <Text size="2" weight={ref.is_preferred ? "bold" : "regular"}>
-                                        {ref.supplier_ref}
+                                      <Text size="2" weight={ref.isPreferred ? "bold" : "regular"}>
+                                        {ref.supplierRef}
                                       </Text>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <Text size="2">{ref.unit_price ? `${ref.unit_price}€` : "-"}</Text>
+                                      <Text size="2">{ref.unitPrice ? `${ref.unitPrice}€` : "-"}</Text>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <Badge variant="soft" size="1" color="blue">{ref.delivery_time_days ? `${ref.delivery_time_days}j` : "-"}</Badge>
+                                      <Badge variant="soft" size="1" color="blue">{ref.deliveryTimeDays ? `${ref.deliveryTimeDays}j` : "-"}</Badge>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      {ref.is_preferred && <Badge color="green" size="1" variant="solid">Préféré</Badge>}
+                                      {ref.isPreferred && <Badge color="green" size="1" variant="solid">Préféré</Badge>}
                                     </Table.Cell>
                                   </Table.Row>
                                 ))}
@@ -444,7 +444,7 @@ export default function PurchaseRequestsTable({
                                   const trimmedSupplierRef = refFormData.supplier_ref?.trim() || '';
                                   if (onAddSupplierRef && trimmedSupplierId && trimmedSupplierRef) {
                                     try {
-                                      await onAddSupplierRef(request.stock_item_id, {
+                                      await onAddSupplierRef(request.stockItemId, {
                                         supplier_id: trimmedSupplierId,
                                         supplier_ref: trimmedSupplierRef,
                                         unit_price: refFormData.unit_price ? parseFloat(refFormData.unit_price) : null,
@@ -466,8 +466,8 @@ export default function PurchaseRequestsTable({
                   })()}
 
                   {(() => {
-                    const specs = getStandardSpecsForItem(request.stock_item_id);
-                    const isAddingSpecs = addingSpecsId === request.stock_item_id;
+                    const specs = getStandardSpecsForItem(request.stockItemId);
+                    const isAddingSpecs = addingSpecsId === request.stockItemId;
                     return (
                       <Card>
                         <Flex direction="column" gap="2" p="3">
@@ -482,18 +482,18 @@ export default function PurchaseRequestsTable({
                             {onAddStandardSpec && !isAddingSpecs && (
                               <Flex gap="2">
                                 <SearchSpecsDialog
-                                  stockItemId={request.stock_item_id}
-                                  stockItemName={getStockItemDetails(request.stock_item_id)?.name || "Article"}
+                                  stockItemId={request.stockItemId}
+                                  stockItemName={getStockItemDetails(request.stockItemId)?.name || "Article"}
                                   onSpecAdded={async () => {
-                                    const { fetchStockItemStandardSpecs } = await import("../../lib/api");
-                                    await fetchStockItemStandardSpecs(request.stock_item_id);
+                                    const { stock } = await import("@/lib/api/facade");
+                                    await stock.fetchStockItemStandardSpecs(request.stockItemId);
                                     if (setDispatchResult) {
                                       setDispatchResult({ type: "success", message: "Spécification copiée" });
                                       setTimeout(() => setDispatchResult(null), 3000);
                                     }
                                   }}
                                 />
-                                <Button size="2" variant="soft" color="blue" onClick={() => setAddingSpecsId(request.stock_item_id)}>
+                                <Button size="2" variant="soft" color="blue" onClick={() => setAddingSpecsId(request.stockItemId)}>
                                   <Plus size={14} />
                                   Ajouter
                                 </Button>
@@ -511,15 +511,15 @@ export default function PurchaseRequestsTable({
                               </Table.Header>
                               <Table.Body>
                                 {specs.map((spec, idx) => (
-                                  <Table.Row key={idx} style={{ background: spec.is_default ? "var(--blue-2)" : undefined }}>
+                                  <Table.Row key={idx} style={{ background: spec.isDefault ? "var(--blue-2)" : undefined }}>
                                     <Table.Cell>
                                       <Text size="2" weight="bold">{spec.title}</Text>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{spec.spec_text}</Text>
+                                      <Text size="2" color="gray" style={{ whiteSpace: "pre-wrap" }}>{spec.text}</Text>
                                     </Table.Cell>
                                     <Table.Cell>
-                                      {spec.is_default && <Badge color="blue" size="1" variant="solid">Défaut</Badge>}
+                                      {spec.isDefault && <Badge color="blue" size="1" variant="solid">Défaut</Badge>}
                                     </Table.Cell>
                                   </Table.Row>
                                 ))}
@@ -545,7 +545,7 @@ export default function PurchaseRequestsTable({
                               </Box>
                               <Flex asChild gap="2">
                                 <label>
-                                  <Checkbox checked={specsFormData.is_default} onCheckedChange={(checked) => setSpecsFormData({ ...specsFormData, is_default: checked })} />
+                                  <Checkbox checked={specsFormData.isDefault} onCheckedChange={(checked) => setSpecsFormData({ ...specsFormData, isDefault: checked })} />
                                   <Text size="2">Utiliser par défaut dans les demandes</Text>
                                 </label>
                               </Flex>
@@ -554,7 +554,7 @@ export default function PurchaseRequestsTable({
                                 <Button color="blue" disabled={loading} onClick={async () => {
                                   if (onAddStandardSpec && specsFormData.title && specsFormData.spec_text) {
                                     try {
-                                      await onAddStandardSpec(request.stock_item_id, { title: specsFormData.title, spec_text: specsFormData.spec_text, is_default: specsFormData.is_default });
+                                      await onAddStandardSpec(request.stockItemId, { title: specsFormData.title, spec_text: specsFormData.spec_text, is_default: specsFormData.isDefault });
                                       await new Promise((resolve) => setTimeout(resolve, 500));
                                       setSpecsFormData({ title: "", spec_text: "", is_default: true });
                                     } catch (err) {
@@ -582,8 +582,8 @@ export default function PurchaseRequestsTable({
 PurchaseRequestsTable.propTypes = {
   requests: PropTypes.array.isRequired,
   expandedRequestId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onToggleExpand: PropTypes.func.isRequired,
-  renderExpandedContent: PropTypes.func.isRequired,
+  onToggleExpand: PropTypes.func,
+  renderExpandedContent: PropTypes.func,
   stockItems: PropTypes.array,
   supplierRefs: PropTypes.object,
   standardSpecs: PropTypes.object,

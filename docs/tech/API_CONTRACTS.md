@@ -1,3 +1,69 @@
+<!--
+═══════════════════════════════════════════════════════════════════════════════
+📄 API_CONTRACTS.md - Contrats d'interface Frontend ↔ Backend
+═══════════════════════════════════════════════════════════════════════════════
+
+Documentation de référence définissant les contrats stables entre le front-end et le
+backend pour garantir l'interchangeabilité des backends sans impact sur les composants.
+
+Contenu:
+- Contrats DTO (formes des données, validation, enums)
+- Architecture Facade + Adapter Pattern (isolation backend)
+- Stratégie de migration backend (swap sans casser le front)
+- Règles d'implémentation adapter (normalizers, mappers, cache)
+- Patterns anti-dette technique (pureté DTO, centralisation)
+- Checklist validation (tests, grep checks, migration)
+
+Architecture:
+- Facade: src/lib/api/facade.js (API stable pour composants)
+- Provider: src/lib/api/adapters/provider.js (sélection backend via VITE_BACKEND_PROVIDER)
+- Adapters: src/lib/api/adapters/<provider>/*.adapter.js (mapping backend ↔ domain)
+- Client: src/lib/api/client.js (HTTP, cache, interceptors)
+- Errors: src/lib/api/errors.js (types d'erreurs typés et normalisés)
+
+✅ IMPLÉMENTÉ:
+- Contrats domain DTO complets (Auth, Interventions, Machines, Stock, Suppliers)
+- Adapter Directus production avec pattern normalisé (normalizers, mappers, cache)
+- Facade exposant API backend-agnostic pour composants
+- Système d'erreurs typées unifié (AuthenticationError, ValidationError, etc.)
+- Cache avec invalidation par tags logiques (ex: ['interventions', id])
+- Pattern normalizers centralisés (ex: normalizeStatus() unique pour tous mappers)
+- Pattern payload mappers factorisés (ex: mapInterventionDomainToBackend() réutilisé create/update)
+- DTO purs sans fuite backend (pas de _raw, pas de champs backend)
+- Support relations imbriquées (machine.zone.name, intervention.technician.firstName)
+- Validation runtime sur writes critiques (supplier_ref obligatoire, normalisation champs optionnels)
+- Documentation migration strategy complète avec checklist
+- Tests pattern pour adapters (normalizers, mappers, CRUD flows)
+- Grep checks anti-dette technique (pas d'imports backend hors adapters)
+
+📋 TODO:
+- [ ] Implémenter second backend (FastAPI ou mock) pour valider interchangeabilité réelle
+- [ ] Ajouter pagination normalisée pour listes volumétriques (Stock, Interventions)
+- [ ] Documenter contrats filtrage/sorting/search (high-level filters → backend specifics)
+- [ ] Créer adapter mock pour tests unitaires composants (pas de vraie API)
+- [ ] Ajouter validation TypeScript stricte sur DTOs (zod ou joi)
+- [ ] Implémenter versioning DTOs pour évolutions non-breaking (v1, v2)
+- [ ] Créer script validation automatique (check DTOs pureté, normalizers centralisés)
+- [ ] Ajouter métriques adapter (temps réponse, taux erreur par endpoint)
+- [ ] Documenter strategy cache avancée (TTL, invalidation granulaire, background refresh)
+- [ ] Créer tests intégration end-to-end (swap backend, run app, verify no errors)
+- [ ] Ajouter exemples composants utilisant facade (bonnes pratiques import/usage)
+- [ ] Implémenter retry policy pour NetworkError (backoff exponentiel)
+- [ ] Documenter conventions nommage relations imbriquées (machine.zone vs machineZone)
+- [ ] Créer guide migration backend existant → facade (refacto composants legacy)
+- [ ] Ajouter support WebSockets/SSE via facade (événements temps réel backend-agnostic)
+- [ ] Implémenter optimistic updates pattern (UI update avant API success)
+- [ ] Documenter strategy rollback si migration backend échoue (plan B)
+- [ ] Ajouter contrats batch operations (bulk create/update/delete)
+- [ ] Créer dashboard monitoring adapters (santé backend, cache hit rate)
+- [ ] Implémenter rate limiting adapter-side (protection backend overload)
+
+@module docs/tech/API_CONTRACTS
+@see src/lib/api/facade.js - Point d'entrée API pour composants
+@see src/lib/api/adapters/provider.js - Sélection backend
+@see src/lib/api/adapters/directus/ - Implémentation Directus production
+-->
+
 # API Contracts (Frontend ↔ Backend)
 
 This document freezes the front-end contracts so a backend change doesn’t break the UI. It defines DTO shapes, validation rules, and a migration strategy via an adapter layer.
@@ -51,7 +117,7 @@ This section defines backend-agnostic DTOs exposed by the facade. Adapters map b
 
 Domain shapes:
 
-- `Intervention`: `{ id: string, code: string, title: string, status: 'open' | 'in_progress' | 'closed', type: 'CUR' | 'PREV' | 'PROJ', priority?: 'low' | 'normal' | 'high', reportedDate?: string, machine?: { id: string, code: string, name: string } }`
+- `Intervention`: `{ id: string, code: string, title: string, status: 'open' | 'in_progress' | 'closed', type: 'CUR' | 'PRE' | 'PRO', priority?: 'faible' | 'normale' | 'important' | 'urgent', reportedDate?: string, machine?: { id: string, code: string, name: string } }`
 - `InterventionAction`: `{ id: string, description: string, timeSpent?: number, complexityScore?: number, createdAt: string, technician?: { id: string, firstName: string, lastName: string }, subcategory?: { id: string, code?: string, name?: string }, intervention?: { id: string, code?: string, title?: string } }`
 - `InterventionPart`: `{ id: string, quantity: number, note?: string, stockItem?: { id: string, ref?: string, name?: string } }`
 - `InterventionStatusLog`: `{ id: string, date: string, from?: { id: string, value?: string }, to?: { id: string, value?: string }, technician?: { id: string, firstName: string, lastName: string } }`

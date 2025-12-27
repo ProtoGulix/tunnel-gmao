@@ -1,7 +1,43 @@
 import { Box, Flex, Text, Table, Badge } from "@radix-ui/themes";
-import { Zap, TrendingUp } from "lucide-react";
+import PropTypes from "prop-types";
+import { Zap } from "lucide-react";
 import { AnalysisHeader, AdviceCallout } from "@/components/common/AnalysisComponents";
 import EmptyState from "@/components/common/EmptyState";
+
+// ============================================================================
+// DTO ACCESSORS
+// ============================================================================
+
+/**
+ * Safe accessors for category object fields
+ */
+const getCategoryName = (cat) => cat?.category ?? cat?.Category ?? '';
+const getSubcategoryName = (cat) => cat?.subcategory ?? cat?.subcategory_name ?? cat?.Subcategory ?? '';
+const getCode = (cat) => cat?.code ?? cat?.Code ?? '';
+const getCount = (cat) => {
+  const value = cat?.count ?? cat?.Count ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getInterventionCount = (cat) => {
+  const value = cat?.interventionCount ?? cat?.intervention_count ?? cat?.InterventionCount ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getAvgTime = (cat) => {
+  const value = cat?.avgTime ?? cat?.avg_time ?? cat?.AvgTime ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getAvgComplexity = (cat) => {
+  const value = cat?.avgComplexity ?? cat?.avg_complexity ?? cat?.AvgComplexity ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getTotalTime = (cat) => {
+  const value = cat?.totalTime ?? cat?.total_time ?? cat?.TotalTime ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getLoadScore = (cat) => {
+  const value = cat?.loadScore ?? cat?.load_score ?? cat?.LoadScore ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
 
 /**
  * Tableau d'analyse de charge des catégories
@@ -49,57 +85,70 @@ export default function LoadAnalysisTable({
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {categories.map((cat, index) => (
-            <Table.Row 
-              key={index}
-              style={{ 
-                background: index < 3 ? "var(--red-2)" : "transparent",
-              }}
-            >
-              <Table.Cell>
-                <Badge color={getLoadPriorityBadge(index).color} size="1">
-                  #{index + 1}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <Text size="2">{cat.category}</Text>
-              </Table.Cell>
-              <Table.Cell>
-                <Flex align="center" gap="1">
-                  {cat.code && (
-                    <Text weight="bold" size="2">{cat.code}</Text>
-                  )}
-                  <Text size="2">{cat.subcategory}</Text>
-                </Flex>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "center" }}>
-                <Badge color="blue" size="1">{cat.count}×</Badge>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "center" }}>
-                <Text size="2">{cat.interventionCount}</Text>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "right" }}>
-                <Text size="2" style={{ fontFamily: "monospace" }}>
-                  {cat.avgTime}h
-                </Text>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "right" }}>
-                <Badge color={getComplexityBadge(parseFloat(cat.avgComplexity)).color} size="1">
-                  {cat.avgComplexity}/10
-                </Badge>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "right" }}>
-                <Text weight="bold" size="2" style={{ fontFamily: "monospace" }}>
-                  {cat.totalTime.toFixed(2)}h
-                </Text>
-              </Table.Cell>
-              <Table.Cell style={{ textAlign: "right" }}>
-                <Text weight="bold" size="2" color="red" style={{ fontFamily: "monospace" }}>
-                  {cat.loadScore.toFixed(2)}
-                </Text>
-              </Table.Cell>
-            </Table.Row>
-          ))}
+          {categories.map((cat, index) => {
+            // ----- Computed Values -----
+            const categoryName = getCategoryName(cat);
+            const subcategoryName = getSubcategoryName(cat);
+            const code = getCode(cat);
+            const count = getCount(cat);
+            const interventionCount = getInterventionCount(cat);
+            const avgTime = getAvgTime(cat);
+            const avgComplexity = getAvgComplexity(cat);
+            const totalTime = getTotalTime(cat);
+            const loadScore = getLoadScore(cat);
+
+            return (
+              <Table.Row 
+                key={index}
+                style={{ 
+                  background: index < 3 ? "var(--red-2)" : "transparent",
+                }}
+              >
+                <Table.Cell>
+                  <Badge color={getLoadPriorityBadge(index).color} size="1">
+                    #{index + 1}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Text size="2">{categoryName}</Text>
+                </Table.Cell>
+                <Table.Cell>
+                  <Flex align="center" gap="1">
+                    {code && (
+                      <Text weight="bold" size="2">{code}</Text>
+                    )}
+                    <Text size="2">{subcategoryName}</Text>
+                  </Flex>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "center" }}>
+                  <Badge color="blue" size="1">{count}×</Badge>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "center" }}>
+                  <Text size="2">{interventionCount}</Text>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "right" }}>
+                  <Text size="2" style={{ fontFamily: "monospace" }}>
+                    {avgTime}h
+                  </Text>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "right" }}>
+                  <Badge color={getComplexityBadge(avgComplexity).color} size="1">
+                    {avgComplexity.toFixed(2)}/10
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "right" }}>
+                  <Text weight="bold" size="2" style={{ fontFamily: "monospace" }}>
+                    {totalTime.toFixed(2)}h
+                  </Text>
+                </Table.Cell>
+                <Table.Cell style={{ textAlign: "right" }}>
+                  <Text weight="bold" size="2" color="red" style={{ fontFamily: "monospace" }}>
+                    {loadScore.toFixed(2)}
+                  </Text>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
         </Table.Body>
       </Table.Root>
 
@@ -118,3 +167,42 @@ export default function LoadAnalysisTable({
     </Box>
   );
 }
+
+// ============================================================================
+// PROP TYPES
+// ============================================================================
+
+LoadAnalysisTable.propTypes = {
+  categories: PropTypes.arrayOf(
+    PropTypes.shape({
+      category: PropTypes.string,
+      Category: PropTypes.string,
+      subcategory: PropTypes.string,
+      subcategory_name: PropTypes.string,
+      Subcategory: PropTypes.string,
+      code: PropTypes.string,
+      Code: PropTypes.string,
+      count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      Count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      interventionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      intervention_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      InterventionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avg_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      AvgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avgComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avg_complexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      AvgComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      totalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      total_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      TotalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      loadScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      load_score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      LoadScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ),
+  getComplexityBadge: PropTypes.func,
+  getLoadPriorityBadge: PropTypes.func,
+};
+
+LoadAnalysisTable.displayName = 'LoadAnalysisTable';

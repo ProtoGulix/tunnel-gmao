@@ -1,10 +1,31 @@
 import { Grid, Card, Box, Flex, Heading, Text, Badge } from "@radix-ui/themes";
+import PropTypes from "prop-types";
 import { Wrench, Clock, BarChart3, AlertCircle } from "lucide-react";
+
+// ============================================================================
+// DTO ACCESSORS
+// ============================================================================
+
+/**
+ * Safe accessors for stats object fields
+ */
+const getTotalActions = (stats) => stats?.totalActions ?? stats?.total_actions ?? 0;
+const getCategoriesCount = (stats) => stats?.categoriesCount ?? stats?.categories_count ?? 0;
+const getTotalTime = (stats) => stats?.totalTime ?? stats?.total_time ?? 0;
+const getAvgComplexity = (stats) => {
+  const value = stats?.avgComplexity ?? stats?.avg_complexity ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
 
 /**
  * Cartes de statistiques pour les actions
  */
 export default function ActionStatsCards({ stats, totalAnomalies }) {
+  // ----- Computed Values -----
+  const totalActions = getTotalActions(stats);
+  const categoriesCount = getCategoriesCount(stats);
+  const totalTime = getTotalTime(stats);
+  const avgComplexity = getAvgComplexity(stats);
   return (
     <Grid columns={{ initial: "1", sm: "2", md: "4" }} gap="3">
       {/* Total Actions */}
@@ -14,9 +35,9 @@ export default function ActionStatsCards({ stats, totalAnomalies }) {
             <Wrench size={20} />
             <Text size="2" color="gray">Actions totales</Text>
           </Flex>
-          <Heading size="6">{stats.totalActions}</Heading>
+          <Heading size="6">{totalActions}</Heading>
           <Text size="1" color="gray" style={{ marginTop: '4px' }}>
-            {stats.categoriesCount} catégories
+            {categoriesCount} catégories
           </Text>
         </Box>
       </Card>
@@ -28,7 +49,7 @@ export default function ActionStatsCards({ stats, totalAnomalies }) {
             <Clock size={20} />
             <Text size="2" color="gray">Temps total</Text>
           </Flex>
-          <Heading size="6">{stats.totalTime}h</Heading>
+          <Heading size="6">{totalTime}h</Heading>
           <Text size="1" color="gray" style={{ marginTop: '4px' }}>
             Temps cumulé
           </Text>
@@ -43,15 +64,15 @@ export default function ActionStatsCards({ stats, totalAnomalies }) {
             <Text size="2" color="gray">Complexité moy.</Text>
           </Flex>
           <Flex align="baseline" gap="2">
-            <Heading size="6">{stats.avgComplexity}</Heading>
+            <Heading size="6">{avgComplexity}</Heading>
             <Text size="2" color="gray">/10</Text>
           </Flex>
           <Badge 
-            color={stats.avgComplexity >= 7 ? "red" : stats.avgComplexity >= 5 ? "orange" : "green"}
+            color={avgComplexity >= 7 ? "red" : avgComplexity >= 5 ? "orange" : "green"}
             size="1"
             style={{ marginTop: '4px' }}
           >
-            {stats.avgComplexity >= 7 ? "Élevée" : stats.avgComplexity >= 5 ? "Moyenne" : "Faible"}
+            {avgComplexity >= 7 ? "Élevée" : avgComplexity >= 5 ? "Moyenne" : "Faible"}
           </Badge>
         </Box>
       </Card>
@@ -78,3 +99,23 @@ export default function ActionStatsCards({ stats, totalAnomalies }) {
     </Grid>
   );
 }
+
+// ============================================================================
+// PROP TYPES
+// ============================================================================
+
+ActionStatsCards.propTypes = {
+  stats: PropTypes.shape({
+    totalActions: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    total_actions: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    categoriesCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    categories_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    totalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    total_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    avgComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    avg_complexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }),
+  totalAnomalies: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+
+ActionStatsCards.displayName = 'ActionStatsCards';

@@ -15,7 +15,7 @@ import {
 } from "@radix-ui/themes";
 import { CheckCircle, AlertCircle, ChevronDown } from "lucide-react";
 import ManufacturerBadge from "@/components/common/ManufacturerBadge";
-import { fetchManufacturerItems } from "@/lib/api/manufacturer-items";
+import { manufacturerItems } from "@/lib/api/facade";
 
 export default function SupplierRefsInlinePanel({
   stockItem,
@@ -40,11 +40,11 @@ export default function SupplierRefsInlinePanel({
   
   // Charger la liste des fabricants
   useEffect(() => {
-    fetchManufacturerItems().then(items => setManufacturers(items || []));
+    manufacturerItems.fetchManufacturerItems().then(items => setManufacturers(items || []));
   }, []);
   
   const preferredCount = useMemo(
-    () => refs.filter((r) => r.is_preferred).length,
+    () => refs.filter((r) => r.isPreferred).length,
     [refs]
   );
 
@@ -159,9 +159,9 @@ export default function SupplierRefsInlinePanel({
                 <Table.Body>
                   {refs.map((ref) => {
                     // Normalize supplier_id to primitive
-                    const supplierId = typeof ref.supplier_id === 'object' 
-                      ? ref.supplier_id?.id 
-                      : ref.supplier_id;
+                    const supplierId = typeof ref.supplier === 'object' 
+                      ? ref.supplier?.id 
+                      : ref.supplier;
                     
                     const supplierName =
                       ref.supplier?.name ||
@@ -181,7 +181,7 @@ export default function SupplierRefsInlinePanel({
                       <Table.Row
                         key={ref.id}
                         style={{
-                          background: ref.is_preferred ? "var(--green-2)" : undefined,
+                          background: ref.isPreferred ? "var(--green-2)" : undefined,
                         }}
                       >
                         <Table.Cell>
@@ -190,8 +190,8 @@ export default function SupplierRefsInlinePanel({
                           </Text>
                         </Table.Cell>
                         <Table.Cell>
-                          <Text size="2" weight={ref.is_preferred ? "bold" : "regular"}>
-                            {ref.supplier_ref}
+                          <Text size="2" weight={ref.isPreferred ? "bold" : "regular"}>
+                            {ref.supplierRef}
                           </Text>
                           <ManufacturerBadge
                             name={manufacturerName}
@@ -200,12 +200,12 @@ export default function SupplierRefsInlinePanel({
                           />
                         </Table.Cell>
                         <Table.Cell>
-                          <Text size="2">{ref.delivery_time_days ? `${ref.delivery_time_days}j` : "-"}</Text>
+                          <Text size="2">{ref.deliveryTimeDays ? `${ref.deliveryTimeDays}j` : "-"}</Text>
                         </Table.Cell>
                         <Table.Cell>
                           <Flex align="center">
                             <Checkbox
-                              checked={ref.is_preferred}
+                              checked={ref.isPreferred}
                               onCheckedChange={(checked) =>
                                 onUpdatePreferred(ref.id, { is_preferred: checked })
                               }
@@ -220,13 +220,13 @@ export default function SupplierRefsInlinePanel({
                               variant="soft"
                               title="Utiliser cette référence pour les futures demandes d'achat"
                               onClick={() => {
-                                if (!ref.is_preferred) {
+                                if (!ref.isPreferred) {
                                   onUpdatePreferred(ref.id, { is_preferred: true });
                                 }
                               }}
-                              disabled={ref.is_preferred}
+                              disabled={ref.isPreferred}
                             >
-                              {ref.is_preferred ? "✓ Utilisée" : "Utiliser"}
+                              {ref.isPreferred ? "✓ Utilisée" : "Utiliser"}
                             </Button>
                             <Button
                               size="1"

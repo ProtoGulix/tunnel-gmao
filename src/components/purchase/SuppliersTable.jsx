@@ -12,11 +12,7 @@ import {
   Box,
 } from "@radix-ui/themes";
 import { Building2, Pencil, Trash2, Plus, ChevronDown, Mail } from "lucide-react";
-import {
-  createSupplier,
-  updateSupplier,
-  deleteSupplier,
-} from "@/lib/api";
+import { suppliers as suppliersApi } from "@/lib/api/facade";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import SupplierRefsBySupplierPanel from "@/components/stock/SupplierRefsBySupplierPanel";
 import EmptyState from "@/components/common/EmptyState";
@@ -90,6 +86,10 @@ const SuppliersTable = forwardRef(function SuppliersTable(
   });
   const [loading, setLoading] = useState(false);
 
+  // DTO-friendly getters (camelCase with legacy fallback)
+  const getContactName = (s) => s?.contactName ?? s?.contact_name ?? "";
+  const getItemCount = (s) => s?.itemCount ?? s?.item_count ?? 0;
+
   const handleOpenDialog = useCallback((supplier = null) => {
     if (supplier) {
       setEditingSupplier(supplier);
@@ -98,7 +98,7 @@ const SuppliersTable = forwardRef(function SuppliersTable(
         email: supplier.email || "",
         phone: supplier.phone || "",
         address: supplier.address || "",
-        contact_name: supplier.contact_name || "",
+        contact_name: getContactName(supplier) || "",
       });
     } else {
       setEditingSupplier(null);
@@ -123,9 +123,9 @@ const SuppliersTable = forwardRef(function SuppliersTable(
     try {
       setLoading(true);
       if (editingSupplier) {
-        await updateSupplier(editingSupplier.id, formData);
+        await suppliersApi.updateSupplier(editingSupplier.id, formData);
       } else {
-        await createSupplier(formData);
+        await suppliersApi.createSupplier(formData);
       }
       setDialogOpen(false);
       await onRefresh();
@@ -154,7 +154,7 @@ const SuppliersTable = forwardRef(function SuppliersTable(
     if (!confirmed) return;
 
     try {
-      await deleteSupplier(supplierId);
+      await suppliersApi.deleteSupplier(supplierId);
       await onRefresh();
     } catch (error) {
       showError(error instanceof Error ? error : new Error("Erreur lors de la suppression"));
@@ -171,7 +171,7 @@ const SuppliersTable = forwardRef(function SuppliersTable(
     const summary = supplierSummaries[supplier.id];
     const preferredLines = summary?.preferredRefs?.slice(0, 8).map((r) => `- ${r}`) || [];
     const bodyLines = [
-      `Bonjour ${supplier.contact_name || ""},`,
+      `Bonjour ${getContactName(supplier) || ""},`,
       "",
       "Nous souhaitons confirmer les références préférées suivantes :",
       ...(preferredLines.length ? preferredLines : ["- (aucune référence préférée enregistrée)"]),
@@ -324,7 +324,7 @@ const SuppliersTable = forwardRef(function SuppliersTable(
                     </Table.Cell>
                     <Table.Cell>
                       <Text size="2" color="gray">
-                        {supplier.contact_name || "-"}
+                        {getContactName(supplier) || "-"}
                       </Text>
                     </Table.Cell>
                     <Table.Cell>
@@ -351,7 +351,7 @@ const SuppliersTable = forwardRef(function SuppliersTable(
                     </Table.Cell>
                     <Table.Cell>
                       <Badge color="blue" variant="soft">
-                        {supplier.item_count || 0}
+                        {getItemCount(supplier)}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell>
@@ -433,10 +433,12 @@ SuppliersTable.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       name: PropTypes.string.isRequired,
       contact_name: PropTypes.string,
+      contactName: PropTypes.string,
       email: PropTypes.string,
       phone: PropTypes.string,
       address: PropTypes.string,
       item_count: PropTypes.number,
+      itemCount: PropTypes.number,
     })
   ).isRequired,
   onRefresh: PropTypes.func.isRequired,

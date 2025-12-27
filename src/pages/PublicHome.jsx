@@ -1,11 +1,41 @@
 // ===== IMPORTS =====
-import { Box, Flex, Grid, Card, Text, Button, Heading, Container } from '@radix-ui/themes';
-import { ShoppingCartIcon, ClipboardListIcon, LogInIcon, WrenchIcon } from 'lucide-react';
+// 1. React Router
 import { useNavigate } from 'react-router-dom';
 
+// 2. UI Libraries (Radix)
+import { Box, Flex, Grid, Card, Text, Button, Heading, Container } from '@radix-ui/themes';
+
+// 3. Icons
+import { ShoppingCart, ClipboardList, LogIn, Wrench } from 'lucide-react';
+
 // ===== COMPONENT =====
+/**
+ * Public home page with access to public services.
+ * Provides forms for purchase requests and intervention requests without authentication.
+ * Staff members can navigate to the login page from here.
+ *
+ * @component
+ * @returns {JSX.Element} Public landing page with service cards
+ *
+ * @example
+ * <Route path="/" element={<PublicHome />} />
+ */
 export default function PublicHome() {
+  // ----- Router Hooks -----
   const navigate = useNavigate();
+
+  // ----- Handlers -----
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  const handlePurchaseRequest = () => {
+    navigate('/public/purchase-request');
+  };
+
+  const handleInterventionRequest = () => {
+    navigate('/public/intervention-request');
+  };
 
   // ----- Main Render -----
   return (
@@ -22,20 +52,20 @@ export default function PublicHome() {
           <Flex justify="between" align="center">
             <Flex direction="column" gap="2">
               <Heading size="8" style={{ color: 'white' }}>
-                <WrenchIcon size={32} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
+                <Wrench size={32} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '0.5rem' }} />
                 GMAO MVP
               </Heading>
               <Text size="4" style={{ color: 'white', opacity: 0.9 }}>
-                Système de gestion de maintenance
+                Maintenance Management System
               </Text>
             </Flex>
             <Button 
               size="3" 
               variant="surface"
-              onClick={() => navigate('/login')}
+              onClick={handleLogin}
             >
-              <LogInIcon size={18} />
-              Connexion Personnel
+              <LogIn size={18} />
+              Staff Login
             </Button>
           </Flex>
         </Container>
@@ -46,9 +76,9 @@ export default function PublicHome() {
         <Flex direction="column" gap="6">
           {/* Welcome Section */}
           <Box>
-            <Heading size="6" mb="2">Bienvenue</Heading>
+            <Heading size="6" mb="2">Welcome</Heading>
             <Text color="gray" size="3">
-              Vous pouvez soumettre une demande d'achat ou une demande d'intervention en utilisant les formulaires ci-dessous.
+              You can submit a purchase request or an intervention request using the forms below.
             </Text>
           </Box>
 
@@ -57,7 +87,7 @@ export default function PublicHome() {
             {/* Purchase Request Card */}
             <Card 
               style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-              onClick={() => navigate('/public/purchase-request')}
+              onClick={handlePurchaseRequest}
             >
               <Flex direction="column" gap="3" align="center" p="4">
                 <Box 
@@ -70,14 +100,14 @@ export default function PublicHome() {
                     justifyContent: 'center'
                   }}
                 >
-                  <ShoppingCartIcon size={48} color="var(--blue-9)" />
+                  <ShoppingCart size={48} color="var(--blue-9)" />
                 </Box>
-                <Heading size="5" align="center">Demande d'Achat</Heading>
+                <Heading size="5" align="center">Purchase Request</Heading>
                 <Text color="gray" align="center" size="2">
-                  Soumettez une demande d'achat de pièces ou d'équipements
+                  Submit a purchase request for parts or equipment
                 </Text>
                 <Button variant="soft" size="2" style={{ width: '100%' }}>
-                  Accéder au formulaire
+                  Access Form
                 </Button>
               </Flex>
             </Card>
@@ -85,7 +115,7 @@ export default function PublicHome() {
             {/* Intervention Request Card */}
             <Card 
               style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
-              onClick={() => navigate('/public/intervention-request')}
+              onClick={handleInterventionRequest}
             >
               <Flex direction="column" gap="3" align="center" p="4">
                 <Box 
@@ -98,14 +128,14 @@ export default function PublicHome() {
                     justifyContent: 'center'
                   }}
                 >
-                  <ClipboardListIcon size={48} color="var(--amber-9)" />
+                  <ClipboardList size={48} color="var(--amber-9)" />
                 </Box>
-                <Heading size="5" align="center">Demande d'Intervention</Heading>
+                <Heading size="5" align="center">Intervention Request</Heading>
                 <Text color="gray" align="center" size="2">
-                  Signalez un problème ou demandez une intervention de maintenance
+                  Report an issue or request a maintenance intervention
                 </Text>
                 <Button variant="soft" size="2" style={{ width: '100%' }}>
-                  Accéder au formulaire
+                  Access Form
                 </Button>
               </Flex>
             </Card>
@@ -114,10 +144,10 @@ export default function PublicHome() {
           {/* Info Section */}
           <Card mt="4">
             <Flex direction="column" gap="2" p="3">
-              <Heading size="4">Personnel autorisé</Heading>
+              <Heading size="4">Authorized Staff</Heading>
               <Text color="gray" size="2">
-                Si vous faites partie du personnel de maintenance, cliquez sur le bouton "Connexion Personnel" 
-                en haut à droite pour accéder à toutes les fonctionnalités de gestion.
+                If you are part of the maintenance staff, click on the &quot;Staff Login&quot; 
+                button at the top right to access all management features.
               </Text>
             </Flex>
           </Card>

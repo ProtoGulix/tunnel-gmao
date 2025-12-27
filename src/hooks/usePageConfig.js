@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { useLocation } from "react-router-dom";
-import { getPageConfig } from "@/config/menuConfig";
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { getPageConfig } from '@/config/menuConfig';
 
 /**
  * Hook pour récupérer automatiquement la configuration de la page courante
@@ -41,9 +41,9 @@ export function usePageHeaderProps(overrides = {}) {
     const configTimeFilter = pageConfig?.timeFilter
       ? {
           enabled: pageConfig.timeFilter.enabled ?? true,
-          mode: pageConfig.timeFilter.mode || "select",
+          mode: pageConfig.timeFilter.mode || 'select',
           component: pageConfig.timeFilter.component,
-          triggerLabel: pageConfig.timeFilter.triggerLabel || "Période",
+          triggerLabel: pageConfig.timeFilter.triggerLabel || 'Période',
           options: pageConfig.timeFilter.options,
           defaultValue: pageConfig.timeFilter.defaultValue,
           totalActions: pageConfig.timeFilter.totalActions,
@@ -52,7 +52,8 @@ export function usePageHeaderProps(overrides = {}) {
       : null;
 
     const overrideTimeSelection = overrides.timeSelection;
-    const { timeSelection: _ignored, ...restOverrides } = overrides;
+    const restOverrides = { ...overrides };
+    delete restOverrides.timeSelection;
 
     const mergedTimeSelection = overrideTimeSelection
       ? { ...configTimeFilter, ...overrideTimeSelection }
@@ -60,8 +61,8 @@ export function usePageHeaderProps(overrides = {}) {
 
     if (!pageConfig) {
       return {
-        title: "Page",
-        subtitle: "",
+        title: 'Page',
+        subtitle: '',
         icon: null,
         ...restOverrides,
         timeSelection: mergedTimeSelection || overrideTimeSelection || null,
@@ -70,7 +71,7 @@ export function usePageHeaderProps(overrides = {}) {
 
     return {
       title: overrides.title || pageConfig.pageTitle || pageConfig.label,
-      subtitle: overrides.subtitle || pageConfig.pageSubtitle || "",
+      subtitle: overrides.subtitle || pageConfig.pageSubtitle || '',
       icon: overrides.icon || pageConfig.icon,
       ...restOverrides,
       timeSelection: mergedTimeSelection || overrideTimeSelection || null,

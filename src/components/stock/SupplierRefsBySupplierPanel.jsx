@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useError } from '@/contexts/ErrorContext';
 import { Table, Flex, Text, Badge, Button, Box } from "@radix-ui/themes";
 import { Link2, CheckCircle, Star } from "lucide-react";
-import { fetchSupplierRefsBySupplier, setPreferredSupplier, deleteStockItemSupplier } from "@/lib/api/stock-suppliers";
+import { stockSuppliers } from "@/lib/api/facade";
 import ManufacturerBadge from "@/components/common/ManufacturerBadge";
 
 /**
@@ -17,9 +17,6 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
   // Liste des références articles pour ce fournisseur
   const [refs, setRefs] = useState([]);
   
-  // État de chargement des données
-  const [loading, setLoading] = useState(false);
-  
   // Messages d'erreur lors du chargement
   const [error, setError] = useState(null);
 
@@ -27,22 +24,21 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
   const load = async () => {
     if (!supplier?.id) return;
     try {
-      setLoading(true);
       setError(null);
       // Récupère la liste des articles fournis par ce fournisseur
-      const data = await fetchSupplierRefsBySupplier(supplier.id);
+      const data = await stockSuppliers.fetchSupplierRefsBySupplier(supplier.id);
       setRefs(data || []);
       if (data) {
-        const preferredRefs = data.filter((r) => r.is_preferred);
+        const preferredRefs = data.filter((r) => r.isPreferred);
         const leadTimes = data
-          .map((r) => r.delivery_time_days)
+          .map((r) => r.deliveryTimeDays)
           .filter((v) => typeof v === "number");
         const avgLeadTime = leadTimes.length
           ? Math.round(leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length)
           : null;
         const preferredLabels = preferredRefs.map((r) => {
-          const itemRef = r.stock_item_id?.ref || "?";
-          const itemName = r.stock_item_id?.name || "";
+          const itemRef = r.stockItem?.ref || "?";
+          const itemName = r.stockItem?.name || "";
           return `${itemRef} ${itemName}`.trim();
         });
         onSummary?.({
@@ -55,8 +51,6 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
     } catch (e) {
       console.error("Erreur chargement références fournisseur:", e);
       setError(e?.message || "Erreur de chargement");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -70,7 +64,7 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
   const handleSetPreferred = async (link) => {
     try {
       // Met à jour la préférence via API
-      await setPreferredSupplier(link.stock_item_id.id, link.id);
+      await stockSuppliers.setPreferredSupplier(link.stockItem.id, link.id);
       // Recharge la liste pour refléter les changements
       await load();
       // Notifie le composant parent
@@ -88,7 +82,7 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
     if (!confirmed) return;
     try {
       // Supprime la référence via API
-      await deleteStockItemSupplier(link.id);
+      await stockSuppliers.deleteStockItemSupplier(link.id);
       // Recharge la liste
       await load();
       // Notifie le composant parent
@@ -140,34 +134,34 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
               ) : (
                 /* Liste des références : article, réf, prix, délai, fabricant, préférence */
                 refs.map((link) => {
-                  const manu = link.manufacturer_item_id || {};
+                  const manu = link.manufacturerItem || {};
                   return (
                     <Table.Row key={link.id}>
                       {/* Colonne article : référence et nom */}
                       <Table.Cell>
                         <Flex direction="column" gap="1">
-                          <Text size="2" weight="bold">{link.stock_item_id?.ref}</Text>
-                          <Text size="2" color="gray">{link.stock_item_id?.name}</Text>
+                          <Text size="2" weight="bold">{link.stockItem?.ref}</Text>
+                          <Text size="2" color="gray">{link.stockItem?.name}</Text>
                         </Flex>
                       </Table.Cell>
                       {/* Colonne référence fournisseur */}
                       <Table.Cell>
-                        <Text size="2">{link.supplier_ref}</Text>
+                        <Text size="2">{link.supplierRef}</Text>
                       </Table.Cell>
                       {/* Colonne prix unitaire */}
                       <Table.Cell>
-                        <Text size="2">{link.unit_price ?? "-"}</Text>
+                        <Text size="2">{link.unitPrice ?? "-"}</Text>
                       </Table.Cell>
                       {/* Colonne délai livraison */}
                       <Table.Cell>
-                        <Text size="2">{link.delivery_time_days ?? "-"}</Text>
+                        <Text size="2">{link.deliveryTimeDays ?? "-"}</Text>
                       </Table.Cell>
                       {/* Colonne fabricant */}
                       <Table.Cell>
-                        {(manu.manufacturer_name || manu.manufacturer_ref || manu.designation) ? (
+                        {(manu.manufacturerName || manu.manufacturerRef || manu.designation) ? (
                           <ManufacturerBadge
-                            name={manu.manufacturer_name}
-                            refCode={manu.manufacturer_ref}
+                            name={manu.manufacturerName}
+                            refCode={manu.manufacturerRef}
                             designation={manu.designation}
                           />
                         ) : (
@@ -176,7 +170,7 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
                       </Table.Cell>
                       {/* Colonne statut préféré */}
                       <Table.Cell>
-                        {link.is_preferred ? (
+                        {link.isPreferred ? (
                           <Flex align="center" gap="1">
                             <CheckCircle size={16} color="var(--green-9)" />
                             <Text size="2" color="green">Préféré pour cet article</Text>
@@ -188,7 +182,7 @@ export default function SupplierRefsBySupplierPanel({ supplier, onChanged, onSum
                       {/* Colonne actions : marquer préféré ou supprimer */}
                       <Table.Cell>
                         <Flex gap="2">
-                          {!link.is_preferred && (
+                          {!link.isPreferred && (
                             <Button size="1" onClick={() => handleSetPreferred(link)}>
                               <Star size={14} />
                               Préférer

@@ -1,5 +1,11 @@
-import { useState } from "react";
+// ===== IMPORTS =====
+// 1. React Core
+import { useState, useCallback } from "react";
+
+// 2. React Router
 import { useNavigate } from "react-router-dom";
+
+// 3. UI Libraries (Radix)
 import { 
   Box, 
   Container, 
@@ -12,88 +18,106 @@ import {
   Select,
   Spinner
 } from "@radix-ui/themes";
-import { interventions } from "@/lib/api/facade";
-import { useApiMutation } from "@/hooks/useApiCall";
-import { useAuth } from "@/auth/AuthContext";
+
+// 4. Custom Components
 import MachineSearchSelect from "@/components/machine/MachineSearchSelect";
 import ErrorDisplay from "@/components/ErrorDisplay";
 
+// 5. Custom Hooks
+import { useApiMutation } from "@/hooks/useApiCall";
+import { useAuth } from "@/auth/AuthContext";
+
+// 6. API
+import { interventions } from "@/lib/api/facade";
+
+// ===== COMPONENT =====
 /**
- * PAGE : NOUVELLE INTERVENTION
- * Formulaire simple de création
+ * Intervention creation page with form.
+ * Allows users to create a new intervention with title, machine, type, and priority.
+ * Redirects to intervention detail page upon successful creation.
+ *
+ * @component
+ * @returns {JSX.Element} Intervention creation form page
+ *
+ * @example
+ * <Route path="/intervention/create" element={<InterventionCreate />} />
  */
 export default function InterventionCreate() {
+  // ----- Router Hooks -----
   const navigate = useNavigate();
-  const { user } = useAuth();
 
+  // ----- Custom Hooks -----
+  // Note: user authentication handled by ProtectedRoute
+  useAuth();
+
+  // ----- State -----
   const [formData, setFormData] = useState({
     title: "",
     type_inter: "CUR",
-    priority: "normal",
+    priority: "normale",
     machine_id: null,
   });
 
   const [localError, setLocalError] = useState(null);
 
-  // Mutation pour créer l'intervention
+  // ----- API Calls -----
   const { mutate: createNewIntervention, loading } = useApiMutation(
     interventions.createIntervention,
     {
       onSuccess: (newIntervention) => {
-        // Redirection vers le détail
         navigate(`/intervention/${newIntervention.id}`);
       },
       onError: (error) => {
-        setLocalError(error.message || "Erreur lors de la création");
+        setLocalError(error.message || "Error during creation");
       }
     }
   );
 
-  const handleChange = (field, value) => {
+  // ----- Callbacks -----
+  const handleChange = useCallback((field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setLocalError(null);
 
     // Validation
     if (!formData.title.trim()) {
-      setLocalError("Le titre est obligatoire");
+      setLocalError("Title is required");
       return;
     }
 
     if (!formData.machine_id) {
-      setLocalError("Veuillez sélectionner une machine");
+      setLocalError("Please select a machine");
       return;
     }
 
-    // Payload
+    // Payload - using domain DTO structure (API_CONTRACTS.md compliant)
     const payload = {
       title: formData.title,
-      type_inter: formData.type_inter,
+      type: formData.type_inter,
       priority: formData.priority,
-      machine_id: formData.machine_id,
+      machine: { id: formData.machine_id },
       status: "open",
-      assigned_to: user?.id || null,
-      reported_by: user ? `${user.first_name} ${user.last_name}` : null,
-      reported_date: new Date().toISOString(),
+      reportedDate: new Date().toISOString(),
     };
 
     await createNewIntervention(payload);
-  };
+  }, [formData, createNewIntervention]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     navigate("/interventions");
-  };
+  }, [navigate]);
 
+  // ----- Main Render -----
   return (
     <Container size="2" style={{ paddingTop: "2rem", paddingBottom: "2rem" }}>
       <Card>
-        <Heading size="7" mb="4">Nouvelle intervention</Heading>
+        <Heading size="7" mb="4">New Intervention</Heading>
 
         {localError && (
           <Box mb="4">
@@ -103,13 +127,13 @@ export default function InterventionCreate() {
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="4">
-            {/* Titre */}
+            {/* Title */}
             <Box>
               <Text as="label" size="2" weight="bold" mb="2">
-                Titre <Text color="red">*</Text>
+                Title <Text color="red">*</Text>
               </Text>
               <TextField.Root
-                placeholder="Titre de l'intervention"
+                placeholder="Intervention title"
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 required
@@ -138,17 +162,17 @@ export default function InterventionCreate() {
               >
                 <Select.Trigger />
                 <Select.Content>
-                  <Select.Item value="CUR">Curatif</Select.Item>
-                  <Select.Item value="PRE">Préventif</Select.Item>
-                  <Select.Item value="PRO">Projet</Select.Item>
+                  <Select.Item value="CUR">Curative</Select.Item>
+                  <Select.Item value="PRE">Preventive</Select.Item>
+                  <Select.Item value="PRO">Project</Select.Item>
                 </Select.Content>
               </Select.Root>
             </Box>
 
-            {/* Priorité */}
+            {/* Priority */}
             <Box>
               <Text as="label" size="2" weight="bold" mb="2">
-                Priorité
+                Priority
               </Text>
               <Select.Root 
                 value={formData.priority} 
@@ -158,13 +182,13 @@ export default function InterventionCreate() {
                 <Select.Content>
                   <Select.Item value="urgent">Urgent</Select.Item>
                   <Select.Item value="important">Important</Select.Item>
-                  <Select.Item value="normal">Normal</Select.Item>
-                  <Select.Item value="faible">Faible</Select.Item>
+                  <Select.Item value="normale">Normal</Select.Item>
+                  <Select.Item value="faible">Low</Select.Item>
                 </Select.Content>
               </Select.Root>
             </Box>
 
-            {/* Boutons */}
+            {/* Buttons */}
             <Flex gap="3" justify="end" mt="4">
               <Button 
                 type="button" 
@@ -172,13 +196,13 @@ export default function InterventionCreate() {
                 onClick={handleCancel}
                 disabled={loading}
               >
-                Annuler
+                Cancel
               </Button>
               <Button 
                 type="submit"
                 disabled={loading}
               >
-                {loading ? <Spinner size="2" /> : "Créer"}
+                {loading ? <Spinner size="2" /> : "Create"}
               </Button>
             </Flex>
           </Flex>

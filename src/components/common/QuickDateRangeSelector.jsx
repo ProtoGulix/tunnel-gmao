@@ -1,30 +1,10 @@
-import DateRangeFilter from "@/components/common/DateRangeFilter";
-import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
+import { Box, Flex, Text, Button, Badge, Separator, TextField } from "@radix-ui/themes";
 
 /**
  * Wrapper de compatibilité vers DateRangeFilter (mode complet)
  * Conserve l'API existante et délègue au composant unifié
  */
-export default function QuickDateRangeSelector({ onFilterChange, selectedRange = "all", totalItems = 0, filteredItems = 0 }) {
-  return (
-    <DateRangeFilter
-      mode="full"
-      selectedRange={selectedRange}
-      onFilterChange={onFilterChange}
-      totalItems={totalItems}
-      filteredItems={filteredItems}
-    />
-  );
-}
-
-QuickDateRangeSelector.propTypes = {
-  onFilterChange: PropTypes.func,
-  selectedRange: PropTypes.string,
-  totalItems: PropTypes.number,
-  filteredItems: PropTypes.number,
-};
-import { useEffect, useState } from "react";
-import { Box, Flex, Text, Button, Badge, Separator, TextField } from "@radix-ui/themes";
 
 /**
  * Sélecteur rapide de période temporelle

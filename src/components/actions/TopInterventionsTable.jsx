@@ -1,8 +1,44 @@
 import { Link } from "react-router-dom";
 import { Box, Flex, Text, Table, Badge } from "@radix-ui/themes";
+import PropTypes from "prop-types";
 import { Repeat2, TrendingUp } from "lucide-react";
 import { AnalysisHeader, AdviceCallout } from "../common/AnalysisComponents";
 import EmptyState from "../common/EmptyState";
+
+// ============================================================================
+// DTO ACCESSORS
+// ============================================================================
+
+/**
+ * Safe accessors for intervention object fields
+ */
+const getInterventionId = (interv) => interv?.id ?? interv?.Id ?? '';
+const getInterventionCode = (interv) => interv?.code ?? interv?.Code ?? '';
+const getInterventionTitle = (interv) => interv?.title ?? interv?.Title ?? 'Sans titre';
+const getActionCount = (interv) => {
+  const value = interv?.actionCount ?? interv?.action_count ?? interv?.ActionCount ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getCategoryCount = (interv) => {
+  const value = interv?.categoryCount ?? interv?.category_count ?? interv?.CategoryCount ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getTotalTime = (interv) => {
+  const value = interv?.totalTime ?? interv?.total_time ?? interv?.TotalTime ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getAvgTime = (interv) => {
+  const value = interv?.avgTime ?? interv?.avg_time ?? interv?.AvgTime ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getAvgComplexity = (interv) => {
+  const value = interv?.avgComplexity ?? interv?.avg_complexity ?? interv?.AvgComplexity ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
+const getRecurrenceScore = (interv) => {
+  const value = interv?.recurrenceScore ?? interv?.recurrence_score ?? interv?.RecurrenceScore ?? 0;
+  return typeof value === 'number' ? value : Number(value) || 0;
+};
 
 /**
  * Tableau des interventions les plus récurrentes
@@ -51,10 +87,16 @@ export default function TopInterventionsTable({
         </Table.Header>
         <Table.Body>
           {interventions.map((interv, index) => {
-            const recurrenceScore = interv.recurrenceScore ?? 0;
-            const avgComplexity = parseFloat(interv.avgComplexity) || 0;
-            const avgTime = interv.avgTime ?? 0;
-            const totalTime = interv.totalTime ?? 0;
+            // ----- Computed Values -----
+            const id = getInterventionId(interv);
+            const code = getInterventionCode(interv);
+            const title = getInterventionTitle(interv);
+            const actionCount = getActionCount(interv);
+            const categoryCount = getCategoryCount(interv);
+            const totalTime = getTotalTime(interv);
+            const avgTime = getAvgTime(interv);
+            const avgComplexity = getAvgComplexity(interv);
+            const recurrenceScore = getRecurrenceScore(interv);
 
             // Déterminer le statut
             let statusBadge, statusColor;
@@ -71,7 +113,7 @@ export default function TopInterventionsTable({
 
             return (
               <Table.Row 
-                key={interv.id}
+                key={id}
                 style={{ 
                   background: index < 5 ? "var(--orange-2)" : "transparent",
                 }}
@@ -83,9 +125,9 @@ export default function TopInterventionsTable({
                 </Table.Cell>
                 <Table.Cell>
                   <Flex direction="column" gap="1">
-                    <Link to={`/intervention/${interv.id}`} style={{ textDecoration: 'none' }}>
+                    <Link to={`/intervention/${id}`} style={{ textDecoration: 'none' }}>
                       <Text weight="bold" size="2" style={{ color: 'var(--blue-11)' }}>
-                        {interv.code || `INT-${interv.id}`}
+                        {code || `INT-${id}`}
                       </Text>
                     </Link>
                     <Text 
@@ -97,17 +139,17 @@ export default function TopInterventionsTable({
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden'
                       }}
-                      title={interv.title}
+                      title={title}
                     >
-                      {interv.title || "Sans titre"}
+                      {title}
                     </Text>
                   </Flex>
                 </Table.Cell>
                 <Table.Cell style={{ textAlign: "center" }}>
-                  <Badge color="blue" size="1">{interv.actionCount || 0}</Badge>
+                  <Badge color="blue" size="1">{actionCount}</Badge>
                 </Table.Cell>
                 <Table.Cell style={{ textAlign: "center" }}>
-                  <Badge color="purple" size="1">{interv.categoryCount || 0}</Badge>
+                  <Badge color="purple" size="1">{categoryCount}</Badge>
                 </Table.Cell>
                 <Table.Cell style={{ textAlign: "right" }}>
                   <Text weight="bold" size="2" style={{ fontFamily: "monospace" }}>
@@ -163,3 +205,42 @@ export default function TopInterventionsTable({
     </Box>
   );
 }
+
+// ============================================================================
+// PROP TYPES
+// ============================================================================
+
+TopInterventionsTable.propTypes = {
+  interventions: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      Id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      code: PropTypes.string,
+      Code: PropTypes.string,
+      title: PropTypes.string,
+      Title: PropTypes.string,
+      actionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      action_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      ActionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      categoryCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      category_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      CategoryCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      totalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      total_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      TotalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avg_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      AvgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avgComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      avg_complexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      AvgComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      recurrenceScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      recurrence_score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      RecurrenceScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ),
+  getComplexityBadge: PropTypes.func,
+  getRecurrenceBadge: PropTypes.func,
+};
+
+TopInterventionsTable.displayName = 'TopInterventionsTable';

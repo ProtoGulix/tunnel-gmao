@@ -181,7 +181,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
             fontSize: '1.1rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              GMAO
+              TUNNEL GMAO
               <div
                 style={{
                   width: '8px',
@@ -367,7 +367,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
           }}>
             <span>v{APP_VERSION}</span>
             <a
-              href='https://github.com/ProtoGulix/GMAO-MVP'
+              href='https://github.com/ProtoGulix/tunnel-gmao'
               target='_blank'
               rel='noopener noreferrer'
               style={{

@@ -1,10 +1,17 @@
+import PropTypes from "prop-types";
 import { Box, Flex, Text, Card, TextField, Select, Badge, TextArea, Button } from "@radix-ui/themes";
 import { Activity, Clock, Tag, Folder, BarChart3, Plus } from "lucide-react";
 import { ACTION_CATEGORY_COLORS } from "@/config/interventionTypes";
 
+// DTO-friendly accessors with legacy fallback
+const getCategoryId = (subcategory) => subcategory?.id ?? subcategory?.category_id?.id ?? null;
+const getCategoryCode = (subcategory) => subcategory?.category_id?.code ?? subcategory?.categoryCode ?? subcategory?.code ?? "—";
+const getCategoryName = (subcategory) => subcategory?.name ?? subcategory?.category_name ?? "—";
+
 const getCategoryColor = (subcategory) => {
-  if (!subcategory?.category_id?.code) return 'gray';
-  return ACTION_CATEGORY_COLORS[subcategory.category_id.code] || 'gray';
+  const code = getCategoryCode(subcategory);
+  if (!code || code === "—") return 'gray';
+  return ACTION_CATEGORY_COLORS[code] || 'gray';
 };
 
 export default function ActionForm({
@@ -91,12 +98,12 @@ export default function ActionForm({
                   />
                   <Select.Content>
                     {subcategories.map(cat => (
-                      <Select.Item key={`cat-${cat.id}`} value={String(cat.id)}>
+                      <Select.Item key={`cat-${getCategoryId(cat)}`} value={String(getCategoryId(cat))}>
                         <Flex align="center" gap="2">
                           <Badge variant="soft" size="1" color={getCategoryColor(cat)}>
-                            {cat.code}
+                            {getCategoryCode(cat)}
                           </Badge>
-                          <Text size="2">{cat.name}</Text>
+                          <Text size="2">{getCategoryName(cat)}</Text>
                         </Flex>
                       </Select.Item>
                     ))}
@@ -109,7 +116,7 @@ export default function ActionForm({
             <Box>
               <Flex align="center" gap="2" mb="2">
                 <Folder size={16} color="var(--gray-9)" />
-                <Text size="2" weight="bold">Description de l'action</Text>
+                <Text size="2" weight="bold">Description de l&apos;action</Text>
                 <Badge color="red" size="1">Obligatoire</Badge>
               </Flex>
               <TextArea 
@@ -124,7 +131,7 @@ export default function ActionForm({
                 }}
               />
               <Text size="1" color="gray" mt="1">
-                Sois précis : cela aide pour l'analyse et les prochaines interventions
+                Sois précis : cela aide pour l&apos;analyse et les prochaines interventions
               </Text>
             </Box>
 
@@ -197,7 +204,7 @@ export default function ActionForm({
                 </Select.Content>
               </Select.Root>
               <Text size="1" color="gray" mt="1">
-                Évalue la difficulté de l'intervention
+                Évalue la difficulté de l&apos;intervention
               </Text>
             </Box>
 
@@ -212,7 +219,7 @@ export default function ActionForm({
                 style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
               >
                 <Plus size={16} />
-                Ajouter l'action
+                Ajouter l&apos;action
               </Button>
             </Flex>
           </Flex>
@@ -221,3 +228,41 @@ export default function ActionForm({
     </Card>
   );
 }
+
+ActionForm.displayName = "ActionForm";
+
+ActionForm.propTypes = {
+  actionTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  setActionTime: PropTypes.func.isRequired,
+  actionDate: PropTypes.string,
+  setActionDate: PropTypes.func.isRequired,
+  actionCategory: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  setActionCategory: PropTypes.func.isRequired,
+  subcategories: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      code: PropTypes.string,
+      name: PropTypes.string,
+      category_name: PropTypes.string,
+      category_id: PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        code: PropTypes.string
+      })
+    })
+  ),
+  actionDescription: PropTypes.string,
+  setActionDescription: PropTypes.func.isRequired,
+  actionComplexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  setActionComplexity: PropTypes.func.isRequired,
+  complexityFactors: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string
+    })
+  ),
+  actionComplexityFactors: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
+  setActionComplexityFactors: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  style: PropTypes.object
+};

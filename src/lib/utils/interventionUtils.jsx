@@ -398,6 +398,21 @@ export const getTimeDiff = (prevDateStr, currDateStr) => {
 };
 
 /**
+ * Maps domain DTO status to config key for UI display.
+ * @param {string} dtoStatus - Domain status ('open' | 'in_progress' | 'closed' | 'cancelled')
+ * @returns {string} Config key ('ouvert' | 'attente_pieces' | 'ferme' | 'cancelled')
+ */
+const mapDtoStatusToConfigKey = (dtoStatus) => {
+  const mapping = {
+    'open': 'ouvert',
+    'in_progress': 'attente_pieces',
+    'closed': 'ferme',
+    'cancelled': 'cancelled'
+  };
+  return mapping[dtoStatus] || 'ouvert';
+};
+
+/**
  * Obtenir la couleur d'état à une date donnée
  */
 export const getStatusColorAtDate = (date, statusLog, STATE_COLORS) => {
@@ -417,8 +432,10 @@ export const getStatusColorAtDate = (date, statusLog, STATE_COLORS) => {
     }
   }
 
-  if (activeStatus?.to?.id) {
-    const statusConfig = STATE_COLORS[activeStatus.to.id];
+  if (activeStatus?.to?.value) {
+    // to.value is now the normalized DTO status, map it to config key
+    const configKey = mapDtoStatusToConfigKey(activeStatus.to.value);
+    const statusConfig = STATE_COLORS[configKey];
     return statusConfig?.activeBg || "var(--blue-6)";
   }
 

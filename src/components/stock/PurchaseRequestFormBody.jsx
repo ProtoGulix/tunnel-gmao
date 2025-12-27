@@ -17,7 +17,7 @@ import {
 import { CheckCircle, AlertCircle, Search, Package, HelpCircle } from 'lucide-react';
 
 // 4. Utils
-import { fetchStockItems } from '@/lib/api';
+import { stock } from '@/lib/api/facade';
 import { normalizeText } from '@/lib/utils/textUtils';
 
 // 5. Config
@@ -54,8 +54,7 @@ export default function PurchaseRequestFormBody({
 
   // Load stock items once for suggestions
   useEffect(() => {
-    // TODO: Implémenter un système de logging approprié
-    fetchStockItems().then(setAllStockItems).catch(console.error);
+    stock.fetchStockItems().then(setAllStockItems).catch(console.error);
   }, []);
 
   // Filter suggestions locally (name/ref contains search term)

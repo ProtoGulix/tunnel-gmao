@@ -1,35 +1,34 @@
-import { useEffect, useState, useMemo } from "react";
-import { actions } from "@/lib/api/facade";
-import { useApiCall } from "@/hooks/useApiCall";
-import LoadingState from "@/components/common/LoadingState";
-import ErrorDisplay from "@/components/ErrorDisplay";
+// ===== IMPORTS =====
+// 1. React Core
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+
+// 2. UI Libraries (Radix)
 import {
   Container,
   Flex,
   Box,
-  Card,
-  Heading,
-  Text,
-  Button,
   Tabs,
   Badge,
-  IconButton
+  Text
 } from "@radix-ui/themes";
 
-// Composants
+// 3. Custom Components
 import PageHeader from "@/components/layout/PageHeader";
+import PageContainer from "@/components/layout/PageContainer";
+import LoadingState from "@/components/common/LoadingState";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import ActionStatsCards from "@/components/actions/ActionStatsCards";
 import LoadAnalysisTable from "@/components/actions/LoadAnalysisTable";
 import TopInterventionsTable from "@/components/actions/TopInterventionsTable";
 import AnomaliesPanel from "@/components/actions/AnomaliesPanel";
 import ActionsList from "@/components/actions/ActionsList";
 
-// Configuration
+// 4. Custom Hooks
+import { useApiCall } from "@/hooks/useApiCall";
 import { usePageHeaderProps } from "@/hooks/usePageConfig";
-// Layout
-import PageContainer from "@/components/layout/PageContainer";
 
-// Utilitaires
+// 5. API & Utilities
+import { actions } from "@/lib/api/facade";
 import { 
   calculateActionStats,
   filterActionsByDateRange,
@@ -38,26 +37,34 @@ import {
   getRecurrenceBadge
 } from "@/lib/utils/actionUtils";
 
+// ===== COMPONENT =====
 /**
- * Page principale de gestion des actions
- * Affiche la liste des actions avec analyse de charge
+ * Actions management page with workload analysis.
+ * Displays the list of intervention actions with statistics, load analysis,
+ * top interventions ranking, and anomaly detection.
+ *
+ * @component
+ * @returns {JSX.Element} Actions page with tabs (list, load analysis, top interventions, anomalies)
+ *
+ * @example
+ * <Route path="/actions" element={<ActionsPage />} />
  */
 export default function ActionsPage() {
-  // ==================== STATE ====================
+  // ----- State -----
   const [filteredActions, setFilteredActions] = useState([]);
   const [dateRange, setDateRange] = useState(null);
   const [activeTab, setActiveTab] = useState("list");
+  const initialLoadRef = useRef(false);
 
-  // ✅ Utiliser le hook useApiCall
+  // ----- API Calls -----
   const { 
     data: allActions = [], 
     loading, 
     error, 
     execute: refetchActions 
-  } = useApiCall(actions.fetchActions);
+  } = useApiCall(actions.fetchActions, { autoExecute: false });
 
-  // ==================== COMPUTED VALUES ====================
-
+  // ----- Computed Values -----
   const stats = useMemo(() => {
     if (!filteredActions || !Array.isArray(filteredActions)) {
       return { totalActions: 0, totalTime: 0, categoriesCount: 0, categories: [], topInterventions: [], anomalies: null };
@@ -81,19 +88,31 @@ export default function ActionsPage() {
     }, 0);
   }, [stats.anomalies]);
 
-  // ==================== LIFECYCLE & EFFECTS ====================
-
-  useEffect(() => {
-    refetchActions();
+  // ----- Callbacks -----
+  const handleDateRangeChange = useCallback(({ range }) => {
+    setDateRange(range);
   }, []);
 
+  const handleCreateAction = useCallback(() => {
+    // TODO: Implement action creation flow
+  }, []);
+
+  // ----- Effects -----
   useEffect(() => {
+    // Protection against React StrictMode double invocation
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    refetchActions();
+  }, [refetchActions]);
+
+  useEffect(() => {
+    // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
       refetchActions();
-    }, 5 * 60 * 1000); // Refresh toutes les 5 minutes
+    }, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [refetchActions]);
 
   useEffect(() => {
     if (dateRange) {
@@ -104,44 +123,38 @@ export default function ActionsPage() {
     }
   }, [dateRange, allActions]);
 
-  // ==================== HANDLERS ====================
-
-  /**
-   * Gère le changement de période depuis HeaderDateRangeFilter
-   * @param {{ range: {start: Date, end: Date} | null, key: string }} filterData
-   */
-  const handleDateRangeChange = ({ range }) => {
-    setDateRange(range);
-  };
-
-  // ==================== RENDER: LOADING STATE ====================
-
-  // Header props depuis la config centralisée
+  // ----- Header Configuration -----
   const headerProps = usePageHeaderProps({
-    subtitle: loading ? "Chargement en cours..." : error ? "Erreur de chargement" : `${filteredActions?.length || 0} action${(filteredActions?.length || 0) > 1 ? 's' : ''} • ${totalTimeSpent.toFixed(1)}h`,
+    subtitle: loading 
+      ? "Loading..." 
+      : error 
+        ? "Loading error" 
+        : `${filteredActions?.length || 0} action${(filteredActions?.length || 0) > 1 ? 's' : ''} • ${totalTimeSpent.toFixed(1)}h`,
     urgentBadge: totalAnomalies > 0 ? { 
       count: totalAnomalies, 
-      label: `anomalie${totalAnomalies > 1 ? 's' : ''}` 
+      label: `anomal${totalAnomalies > 1 ? 'ies' : 'y'}` 
     } : null,
     stats: !loading && !error ? [
       { label: 'Actions', value: stats.totalActions },
-      { label: 'Temps total', value: `${stats.totalTime}h` },
-      { label: 'Catégories', value: stats.categoriesCount }
+      { label: 'Total Time', value: `${stats.totalTime}h` },
+      { label: 'Categories', value: stats.categoriesCount }
     ] : [],
     onRefresh: refetchActions,
-    onAdd: () => console.log('Créer action'),
-    addLabel: "+ Nouvelle action",
+    onAdd: handleCreateAction,
+    addLabel: "+ New Action",
     timeSelection: {
       onFilterChange: handleDateRangeChange
     }
   });
+
+  // ----- Render States -----
 
   if (loading) {
     return (
       <Box>
         <PageHeader {...headerProps} />
         <PageContainer>
-          <LoadingState message="Chargement des actions..." />
+          <LoadingState message="Loading actions..." />
         </PageContainer>
       </Box>
     );
@@ -155,35 +168,32 @@ export default function ActionsPage() {
           <ErrorDisplay
             error={error}
             onRetry={refetchActions}
-            title="Erreur de chargement des actions"
+            title="Actions Loading Error"
           />
         </PageContainer>
       </Box>
     );
   }
 
-  // ==================== RENDER: MAIN VIEW ====================
-
+  // ----- Main Render -----
   return (
     <Box>
-      {/* PAGE HEADER depuis configuration centralisée */}
       <PageHeader {...headerProps} />
 
       <Container size="4" p="3">
         <Flex direction="column" gap="3">
-          
-          {/* ========== STATISTICS CARDS ========== */}
+          {/* Statistics Cards */}
           <ActionStatsCards 
             stats={stats} 
             totalAnomalies={totalAnomalies} 
           />
 
-          {/* ========== MAIN CONTENT TABS ========== */}
+          {/* Main Content Tabs */}
           <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
             <Tabs.List size="2" mb="3">
               <Tabs.Trigger value="list">
                 <Flex align="center" gap="2">
-                  <Text>📋 Liste</Text>
+                  <Text>📋 List</Text>
                   <Badge color="blue" size="1" variant="soft">
                     {filteredActions?.length || 0}
                   </Badge>
@@ -192,7 +202,7 @@ export default function ActionsPage() {
 
               <Tabs.Trigger value="load">
                 <Flex align="center" gap="2">
-                  <Text>🔥 Analyse charge</Text>
+                  <Text>🔥 Load Analysis</Text>
                   <Badge color="amber" size="1" variant="soft">
                     {stats.categories.length}
                   </Badge>
@@ -201,7 +211,7 @@ export default function ActionsPage() {
 
               <Tabs.Trigger value="interventions">
                 <Flex align="center" gap="2">
-                  <Text>🔁 Top interventions</Text>
+                  <Text>🔁 Top Interventions</Text>
                   <Badge color="blue" size="1" variant="soft">
                     {stats.topInterventions.length}
                   </Badge>
@@ -220,7 +230,7 @@ export default function ActionsPage() {
               )}
             </Tabs.List>
 
-            {/* ========== TAB: LISTE DES ACTIONS ========== */}
+            {/* Tab: Actions List */}
             <Tabs.Content value="list">
               <ActionsList 
                 actions={filteredActions}
@@ -228,7 +238,7 @@ export default function ActionsPage() {
               />
             </Tabs.Content>
 
-            {/* ========== TAB: ANALYSE DE CHARGE ========== */}
+            {/* Tab: Load Analysis */}
             <Tabs.Content value="load">
               <LoadAnalysisTable 
                 categories={stats.categories}
@@ -237,7 +247,7 @@ export default function ActionsPage() {
               />
             </Tabs.Content>
 
-            {/* ========== TAB: TOP INTERVENTIONS ========== */}
+            {/* Tab: Top Interventions */}
             <Tabs.Content value="interventions">
               <TopInterventionsTable 
                 interventions={stats.topInterventions}
@@ -246,7 +256,7 @@ export default function ActionsPage() {
               />
             </Tabs.Content>
 
-            {/* ========== TAB: ANOMALIES ========== */}
+            {/* Tab: Anomalies */}
             {stats.anomalies && (
               <Tabs.Content value="anomalies">
                 <AnomaliesPanel anomalies={stats.anomalies} />

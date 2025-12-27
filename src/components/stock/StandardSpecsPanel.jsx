@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useError } from '@/contexts/ErrorContext';
+import { useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Flex,
@@ -21,19 +21,13 @@ import {
   AlertCircle,
   FileText,
 } from "lucide-react";
-import {
-  fetchStockItemStandardSpecs,
-  createStockItemStandardSpec,
-  updateStockItemStandardSpec,
-  deleteStockItemStandardSpec,
-} from "@/lib/api";
+import { stock } from "@/lib/api/facade";
 import SearchSpecsDialog from "./SearchSpecsDialog";
 
 /**
  * Panneau de gestion des spécifications standard pour un article de stock
  */
 export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
-  const { showError } = useError();
   const [specs, setSpecs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,14 +39,10 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     is_default: false,
   });
 
-  useEffect(() => {
-    loadSpecs();
-  }, [stockItemId]);
-
-  const loadSpecs = async () => {
+  const loadSpecs = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchStockItemStandardSpecs(stockItemId);
+      const data = await stock.fetchStockItemStandardSpecs(stockItemId);
       setSpecs(data);
       setError(null);
     } catch (err) {
@@ -61,7 +51,11 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [stockItemId]);
+
+  useEffect(() => {
+    loadSpecs();
+  }, [loadSpecs]);
 
   const handleAdd = async () => {
     if (!formData.title.trim() || !formData.spec_text.trim()) {
@@ -70,7 +64,7 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     }
 
     try {
-      await createStockItemStandardSpec({
+      await stock.createStockItemStandardSpec({
         stock_item_id: stockItemId,
         ...formData,
       });
@@ -91,7 +85,7 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     }
 
     try {
-      await updateStockItemStandardSpec(id, formData);
+      await stock.updateStockItemStandardSpec(id, formData);
       await loadSpecs();
       setEditingId(null);
       setFormData({ title: "", spec_text: "", is_default: false });
@@ -107,7 +101,7 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     if (!confirmed) return;
 
     try {
-      await deleteStockItemStandardSpec(id);
+      await stock.deleteStockItemStandardSpec(id);
       await loadSpecs();
       setError(null);
     } catch (err) {
@@ -120,8 +114,8 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     setEditingId(spec.id);
     setFormData({
       title: spec.title,
-      spec_text: spec.spec_text,
-      is_default: spec.is_default,
+      spec_text: spec.text,
+      is_default: spec.isDefault,
     });
     setIsAdding(false);
   };
@@ -343,7 +337,7 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
                         <Text weight="bold" size="2">
                           {spec.title}
                         </Text>
-                        {spec.is_default && (
+                        {spec.isDefault && (
                           <Badge color="blue" size="1">
                             Par défaut
                           </Badge>
@@ -373,11 +367,11 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
                       color="gray"
                       style={{ whiteSpace: "pre-wrap" }}
                     >
-                      {spec.spec_text}
+                      {spec.text}
                     </Text>
                     <Text size="1" color="gray">
                       Créé le{" "}
-                      {new Date(spec.created_at).toLocaleDateString("fr-FR")}
+                      {new Date(spec.createdAt).toLocaleDateString("fr-FR")}
                     </Text>
                   </Flex>
                 )}
@@ -389,3 +383,8 @@ export default function StandardSpecsPanel({ stockItemId, stockItemName }) {
     </Box>
   );
 }
+
+StandardSpecsPanel.propTypes = {
+  stockItemId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  stockItemName: PropTypes.string,
+};

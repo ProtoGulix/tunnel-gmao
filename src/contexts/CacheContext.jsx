@@ -6,7 +6,7 @@ const CacheContext = createContext(null);
 export const CacheProvider = ({ children }) => {
   const clearCache = useCallback(() => {
     client.clearAllCache();
-    console.log('🗑️ Cache entièrement vidé');
+    console.warn('🗑️ Cache entièrement vidé');
   }, []);
 
   const value = {

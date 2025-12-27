@@ -1,4 +1,5 @@
-import { Box, Flex, Heading, Text, Badge, Tabs } from "@radix-ui/themes";
+import { Box, Flex, Text, Badge, Tabs } from "@radix-ui/themes";
+import PropTypes from "prop-types";
 import { Repeat2, Clock, Timer, Search, RotateCw, Zap, CircleCheck } from "lucide-react";
 import { AnalysisHeader, AdviceCallout } from "@/components/common/AnalysisComponents";
 import EmptyState from "@/components/common/EmptyState";
@@ -143,29 +144,30 @@ export default function AnomaliesPanel({ anomalies }) {
         {ANOMALY_TABS.map(tab => {
           const tabAnomalies = anomalies[tab.key] || [];
           const anomalyCount = Array.isArray(tabAnomalies) ? tabAnomalies.length : 0;
-          const TabIcon = tab.icon;
+          // eslint-disable-next-line no-unused-vars
+          const TabIcon = tab.icon; // Reserved for potential icon rendering in future versions
 
           return (
-            <Tabs.Content key={tab.value} value={tab.value}>
-              <Box pt="3">
-                <AdviceCallout
-                  type="warnings"
-                  title={`Type ${tab.typeLabel} : ${tab.label}`}
-                  items={[tab.description]}
-                  customConfig={{ color: tab.color, icon: '⚠️' }}
-                />
-                
-                {anomalyCount === 0 ? (
-                  <Text color="gray" size="2">Aucune anomalie de ce type</Text>
-                ) : (
-                  <Flex direction="column" gap="3" mt="3">
-                    {tabAnomalies.map((item, index) => (
-                      <tab.Component key={index} item={item} index={index} />
-                    ))}
-                  </Flex>
-                )}
-              </Box>
-            </Tabs.Content>
+      <Tabs.Content key={tab.value} value={tab.value}>
+        <Box pt="3">
+          <AdviceCallout
+            type="warnings"
+            title={`Type ${tab.typeLabel} : ${tab.label}`}
+            items={[tab.description]}
+            customConfig={{ color: tab.color, icon: '⚠️' }}
+          />
+          
+          {anomalyCount === 0 ? (
+            <Text color="gray" size="2">Aucune anomalie de ce type</Text>
+          ) : (
+            <Flex direction="column" gap="3" mt="3">
+              {tabAnomalies.map((item, index) => (
+                <tab.Component key={index} item={item} index={index} />
+              ))}
+            </Flex>
+          )}
+        </Box>
+      </Tabs.Content>
           );
         })}
       </Tabs.Root>
@@ -184,3 +186,20 @@ export default function AnomaliesPanel({ anomalies }) {
     </Box>
   );
 }
+
+// ============================================================================
+// PROP TYPES
+// ============================================================================
+
+AnomaliesPanel.propTypes = {
+  anomalies: PropTypes.shape({
+    tooRepetitive: PropTypes.arrayOf(PropTypes.object),
+    tooFragmented: PropTypes.arrayOf(PropTypes.object),
+    tooLongForCategory: PropTypes.arrayOf(PropTypes.object),
+    badClassification: PropTypes.arrayOf(PropTypes.object),
+    backToBack: PropTypes.arrayOf(PropTypes.object),
+    lowValueHighLoad: PropTypes.arrayOf(PropTypes.object),
+  }),
+};
+
+AnomaliesPanel.displayName = 'AnomaliesPanel';

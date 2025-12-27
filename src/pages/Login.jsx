@@ -1,7 +1,6 @@
+// ===== IMPORTS =====
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/auth/AuthContext";
-import ServerStatus from "@/components/ServerStatus";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -14,28 +13,50 @@ import {
   Callout,
   Separator
 } from "@radix-ui/themes";
+import ServerStatus from "@/components/ServerStatus";
+import { useAuth } from "@/auth/AuthContext";
 
+// ===== COMPONENT =====
+/**
+ * Login page with authentication and redirect handling.
+ * Manages user authentication and redirects to the intended page after login.
+ * Includes server status monitoring and offline mode information.
+ *
+ * @component
+ * @returns {JSX.Element} Login page with authentication form
+ *
+ * @example
+ * // Routed in App.jsx as public route
+ * <Route path="/login" element={<Login />} />
+ */
 export default function Login() {
+  // ----- State -----
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, user, isAuthenticated } = useAuth();
+
+  // ----- Router Hooks -----
   const navigate = useNavigate();
 
-  // Redirection uniquement si déjà authentifié au chargement initial
+  // ----- Custom Hooks -----
+  const { login, isAuthenticated } = useAuth();
+
+  // ----- Effects -----
   useEffect(() => {
+    // Redirect authenticated users to their intended destination or default page
     if (isAuthenticated) {
       const redirectUrl = localStorage.getItem("redirect_after_login");
       if (redirectUrl) {
         localStorage.removeItem("redirect_after_login");
-        navigate(redirectUrl, { replace: true });
+        navigate(decodeURIComponent(redirectUrl), { replace: true });
       } else {
         navigate("/interventions", { replace: true });
       }
     }
-  }, []);  // Seulement au montage
+  }, [isAuthenticated, navigate]);
 
+  // ----- Handlers -----
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -44,11 +65,11 @@ export default function Login() {
     try {
       await login(email, password);
       
-      // Récupérer l'URL de redirection sauvegardée
+      // Redirect to saved URL or default page after successful login
       const redirectUrl = localStorage.getItem("redirect_after_login");
       if (redirectUrl) {
         localStorage.removeItem("redirect_after_login");
-        navigate(redirectUrl, { replace: true });
+        navigate(decodeURIComponent(redirectUrl), { replace: true });
       } else {
         navigate("/interventions", { replace: true });
       }
@@ -67,6 +88,7 @@ export default function Login() {
     }
   };
 
+  // ----- Main Render -----
   return (
     <Box
       style={{
@@ -98,7 +120,7 @@ export default function Login() {
                   ⚙️
                 </Box>
                 <Heading size="6" align="center">
-                  GMAO MVP
+                  TUNNEL GMAO
                 </Heading>
                 <Text size="2" color="gray" align="center">
                   Gestion de Maintenance Assistée par Ordinateur
@@ -193,13 +215,6 @@ export default function Login() {
               </Callout.Root>
             </Flex>
           </Card>
-
-          {/* Footer */}
-          <Box mt="4">
-            <Text size="1" align="center" color="gray">
-              © 2024 GMAO MVP - Tous droits réservés
-            </Text>
-          </Box>
         </Container>
 
       <style>{`

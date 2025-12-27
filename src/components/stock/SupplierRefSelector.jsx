@@ -35,12 +35,12 @@ export default function SupplierRefSelector({
   const sortedRefs = useMemo(() => {
     return [...refs].sort((a, b) => {
       // Préférée en premier
-      if (a.is_preferred && !b.is_preferred) return -1;
-      if (!a.is_preferred && b.is_preferred) return 1;
+      if (a.isPreferred && !b.isPreferred) return -1;
+      if (!a.isPreferred && b.isPreferred) return 1;
       
       // Puis tri par fournisseur
-      const supplierA = typeof a.supplier_id === 'object' ? a.supplier_id.name : '';
-      const supplierB = typeof b.supplier_id === 'object' ? b.supplier_id.name : '';
+      const supplierA = typeof a.supplier === 'object' ? a.supplier.name : '';
+      const supplierB = typeof b.supplier === 'object' ? b.supplier.name : '';
       return supplierA.localeCompare(supplierB);
     });
   }, [refs]);
@@ -52,9 +52,9 @@ export default function SupplierRefSelector({
 
   // Formater le label du dropdown : "FOURNISSEUR — Réf ⭐"
   const formatItemLabel = (ref) => {
-    const supplierName = typeof ref.supplier_id === 'object' ? ref.supplier_id.name : 'Fournisseur';
-    const supplierRef = ref.supplier_ref || '—';
-    const star = ref.is_preferred ? ' ⭐' : '';
+    const supplierName = typeof ref.supplier === 'object' ? ref.supplier.name : 'Fournisseur';
+    const supplierRef = ref.supplierRef || '—';
+    const star = ref.isPreferred ? ' ⭐' : '';
     return `${supplierName} — ${supplierRef}${star}`;
   };
 

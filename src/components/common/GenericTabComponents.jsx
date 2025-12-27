@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Badge } from "@radix-ui/themes";
+import { Box, Flex, Text } from "@radix-ui/themes";
 import LoadingState from "./LoadingState";
 import EmptyState from "./EmptyState";
 
@@ -163,8 +163,7 @@ export const TimelineSeparator = ({ statusColor, timeDiff }) => (
 export const History = ({ 
   items, 
   renderItem, 
-  loading, 
-  onRefresh 
+  loading
 }) => {
   return (
     <>
@@ -236,7 +235,6 @@ export const StatsGrid = ({ stats }) => {
 export const PdfViewer = ({ 
   url, 
   loading, 
-  onLoad, 
   title = "Document PDF" 
 }) => {
   return (

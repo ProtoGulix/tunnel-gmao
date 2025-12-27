@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 /**
  * Hook pour rafraîchir automatiquement les données toutes les X secondes
@@ -6,11 +6,7 @@ import { useEffect, useRef } from "react";
  * @param {number} intervalSeconds - Intervalle en secondes (défaut: 5)
  * @param {boolean} enabled - Active/désactive le polling (défaut: true)
  */
-export function useAutoRefresh(
-  refreshFunction,
-  intervalSeconds = 5,
-  enabled = true
-) {
+export function useAutoRefresh(refreshFunction, intervalSeconds = 5, enabled = true) {
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -23,7 +19,7 @@ export function useAutoRefresh(
 
     // Créer le nouvel interval
     intervalRef.current = setInterval(() => {
-      console.log(`🔄 Auto-refresh actif (toutes les ${intervalSeconds}s)`);
+      console.warn(`🔄 Auto-refresh actif (toutes les ${intervalSeconds}s)`);
       refreshFunction();
     }, intervalSeconds * 1000);
 

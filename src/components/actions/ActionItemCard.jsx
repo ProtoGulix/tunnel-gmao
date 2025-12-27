@@ -2,6 +2,17 @@ import { Card, Flex, Text, Badge } from "@radix-ui/themes";
 import { Clock, User, Edit2, Copy, Trash2 } from "lucide-react";
 import PropTypes from "prop-types";
 
+// DTO-friendly accessors with legacy fallback
+const getComplexityScore = (action) => Number(action?.complexityScore ?? action?.complexity_score ?? 0);
+const getTimeSpent = (action) => Number(action?.timeSpent ?? action?.time_spent ?? 0);
+const getSubcategory = (action) => action?.subcategory ?? null;
+const getTechnician = (action) => action?.technician ?? null;
+const getCreatedAt = (action) => action?.createdAt ?? action?.created_at ?? null;
+const getDescription = (action) => action?.description ?? "";
+const getTechnicianFirstName = (technician) => technician?.firstName ?? technician?.first_name ?? "—";
+const getTechnicianLastName = (technician) => technician?.lastName ?? technician?.last_name ?? "—";
+const getSubcategoryCode = (subcategory) => subcategory?.code ?? "—";
+
 const getComplexityColor = (score) => {
   const complexityScore = parseInt(score);
   if (complexityScore <= 3) return { color: 'gray', label: 'Banale' };
@@ -10,7 +21,13 @@ const getComplexityColor = (score) => {
 };
 
 export default function ActionItemCard({ action, getCategoryColor, sanitizeDescription }) {
-  const complexityInfo = getComplexityColor(action.complexityScore);
+  const complexityScore = getComplexityScore(action);
+  const complexityInfo = getComplexityColor(complexityScore);
+  const subcategory = getSubcategory(action);
+  const technician = getTechnician(action);
+  const createdAt = getCreatedAt(action);
+  const timeSpent = getTimeSpent(action);
+  const description = getDescription(action);
 
   return (
     <Card 
@@ -45,53 +62,53 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
       >
         <Flex align="center" gap="2" wrap="wrap" style={{ flex: 1, minWidth: 0 }}>
           {/* Catégorie */}
-          {action.subcategory && (
+          {subcategory && (
             <Badge 
               variant="soft" 
               size="2"
-              color={getCategoryColor(action.subcategory)}
+              color={getCategoryColor(subcategory)}
               style={{ flexShrink: 0 }}
             >
-              {action.subcategory.code || '—'}
+              {getSubcategoryCode(subcategory)}
             </Badge>
           )}
 
           {/* Temps */}
-          {action.timeSpent && (
+          {timeSpent > 0 && (
             <Flex align="center" gap="1">
               <Clock size={14} color="var(--gray-9)" />
               <Text size="2" weight="medium">
-                {action.timeSpent}h
+                {timeSpent}h
               </Text>
             </Flex>
           )}
 
           {/* Complexité */}
-          {action.complexityScore && (
+          {complexityScore > 0 && (
             <Badge 
               color={complexityInfo.color} 
               variant="soft" 
               size="1"
-              title={`Complexité: ${action.complexityScore}/10 (${complexityInfo.label})`}
+              title={`Complexité: ${complexityScore}/10 (${complexityInfo.label})`}
             >
-              {action.complexityScore}/10
+              {complexityScore}/10
             </Badge>
           )}
 
           {/* Technicien */}
-          {action.technician && (
+          {technician && (
             <Flex align="center" gap="1">
               <User size={14} color="var(--gray-8)" />
               <Text size="2" color="gray">
-                {action.technician.firstName} {action.technician.lastName}
+                {getTechnicianFirstName(technician)} {getTechnicianLastName(technician)}
               </Text>
             </Flex>
           )}
 
           {/* Horaire */}
-          {action.createdAt && (
+          {createdAt && (
             <Text size="2" color="gray">
-              {new Date(action.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </Text>
           )}
         </Flex>
@@ -127,23 +144,30 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
         size="2"
         style={{ lineHeight: '1.5', wordBreak: 'break-word' }}
       >
-        {sanitizeDescription(action.description)}
+        {sanitizeDescription(description)}
       </Text>
     </Card>
   );
 }
 
+ActionItemCard.displayName = "ActionItemCard";
+
 ActionItemCard.propTypes = {
   action: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    description: PropTypes.string.isRequired,
-    timeSpent: PropTypes.number,
-    complexityScore: PropTypes.number,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    description: PropTypes.string,
+    timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    complexityScore: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    complexity_score: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     createdAt: PropTypes.string,
+    created_at: PropTypes.string,
     technician: PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       firstName: PropTypes.string,
+      first_name: PropTypes.string,
       lastName: PropTypes.string,
+      last_name: PropTypes.string,
     }),
     subcategory: PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -154,7 +178,7 @@ ActionItemCard.propTypes = {
         name: PropTypes.string,
       }),
     }),
-  }).isRequired,
+  }),
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
 };

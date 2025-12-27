@@ -6,7 +6,7 @@
  */
 
 import { formatSpecsForExport, getFullSpecification } from '@/lib/utils/specsFormatter';
-import { fetchStockItemStandardSpecs } from '@/lib/api';
+import { stock } from '@/lib/api/facade';
 
 /**
  * Génère le contenu HTML d'un email de demande de prix
@@ -19,7 +19,7 @@ export const generatePriceRequestEmail = async (order, orderLines, supplier) => 
   // Charger les spécifications pour chaque ligne
   const linesWithSpecs = await Promise.all(
     orderLines.map(async (line) => {
-      const specs = await fetchStockItemStandardSpecs(line.stock_item_id?.id);
+      const specs = await stock.fetchStockItemStandardSpecs(line.stock_item_id?.id);
       return {
         ...line,
         specs,
@@ -250,7 +250,7 @@ export const generatePriceRequestEmail = async (order, orderLines, supplier) => 
 export const generatePriceRequestEmailText = async (order, orderLines, supplier) => {
   const linesWithSpecs = await Promise.all(
     orderLines.map(async (line) => {
-      const specs = await fetchStockItemStandardSpecs(line.stock_item_id?.id);
+      const specs = await stock.fetchStockItemStandardSpecs(line.stock_item_id?.id);
       return {
         ...line,
         specsText: getFullSpecification(specs),

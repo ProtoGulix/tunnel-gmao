@@ -5,6 +5,20 @@ import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
 import SafeHtml from "@/components/common/SafeHtml";
 import { formatActionDate } from "@/lib/utils/actionUtils";
 
+// DTO-friendly accessors with legacy fallback
+const getInterventionId = (item) => item?.interventionId ?? item?.intervention_id;
+const getIntervention = (item) => item?.intervention ?? item?.intervention_code ?? "N/A";
+const getInterventionTitle = (item) => item?.interventionTitle ?? item?.intervention_title ?? "Sans titre";
+const getSeverity = (item) => item?.severity ?? "medium";
+const getDaysDiff = (item) => Number(item?.daysDiff ?? item?.days_diff ?? 0);
+const getTechnicianName = (item) => item?.tech ?? item?.technician ?? item?.technician_name ?? "—";
+const getMachine = (item) => item?.machine ?? item?.machine_name ?? "—";
+const getDate1 = (item) => item?.date1 ?? item?.first_date ?? null;
+const getDate2 = (item) => item?.date2 ?? item?.second_date ?? null;
+const getCategory1 = (item) => item?.category1 ?? item?.first_category ?? "—";
+const getCategory2 = (item) => item?.category2 ?? item?.second_category ?? "—";
+const getActions = (item) => item?.actions ?? [];
+
 /**
  * Type E - Retours back-to-back
  * Affiche les anomalies où le même technicien revient sur la même intervention sous 24h
@@ -50,25 +64,27 @@ import { formatActionDate } from "@/lib/utils/actionUtils";
  * />
  */
 export default function AnomalyTypeE({ item }) {
+  const severity = getSeverity(item);
+  
   return (
-    <AnomalyContainer severity={item.severity}>
+    <AnomalyContainer severity={severity}>
       <AnomalyHeader
-        title={item.intervention || 'N/A'}
-        subtitle={`${item.interventionTitle || 'Sans titre'}`}
-        severity={item.severity}
+        title={getIntervention(item)}
+        subtitle={getInterventionTitle(item)}
+        severity={severity}
         badges={[
-          { color: "blue", label: `${item.daysDiff}j`, size: "2" }
+          { color: "blue", label: `${getDaysDiff(item)}j`, size: "2" }
         ]}
       >
-        {item.interventionId && (
-          <Link to={`/intervention/${item.interventionId}`}>
+        {getInterventionId(item) && (
+          <Link to={`/intervention/${getInterventionId(item)}`}>
             <Text size="2" color="blue" style={{ display: 'block', marginTop: '4px' }}>
               → Voir l&apos;intervention
             </Text>
           </Link>
         )}
         <Text size="1" color="gray" style={{ display: 'block' }}>
-          Technicien: {item.tech} • Machine: {item.machine}
+          Technicien: {getTechnicianName(item)} • Machine: {getMachine(item)}
         </Text>
       </AnomalyHeader>
       
@@ -102,7 +118,7 @@ export default function AnomalyTypeE({ item }) {
                 1ère action
               </Badge>
               <Text size="1" color="gray">
-                {formatActionDate(item.date1)}
+                {formatActionDate(getDate1(item))}
               </Text>
             </Flex>
             
@@ -111,11 +127,11 @@ export default function AnomalyTypeE({ item }) {
                 Catégorie :
               </Text>
               <Badge color="purple" size="1">
-                {item.category1}
+                {getCategory1(item)}
               </Badge>
             </Box>
             
-            {item.actions[0].description && (
+            {getActions(item)[0]?.description && (
               <Box>
                 <Text size="1" color="gray" weight="bold" style={{ display: 'block', marginBottom: '4px' }}>
                   Description :
@@ -129,7 +145,7 @@ export default function AnomalyTypeE({ item }) {
                   }}
                 >
                   <SafeHtml 
-                    html={item.actions[0].description}
+                    html={getActions(item)[0]?.description}
                     maxLength={150}
                     style={{ 
                       fontSize: '11px',
@@ -170,7 +186,7 @@ export default function AnomalyTypeE({ item }) {
                 2ème action
               </Badge>
               <Text size="1" color="gray">
-                {formatActionDate(item.date2)}
+                {formatActionDate(getDate2(item))}
               </Text>
             </Flex>
             
@@ -179,11 +195,11 @@ export default function AnomalyTypeE({ item }) {
                 Catégorie :
               </Text>
               <Badge color="purple" size="1">
-                {item.category2}
+                {getCategory2(item)}
               </Badge>
             </Box>
             
-            {item.actions[1].description && (
+            {getActions(item)[1]?.description && (
               <Box>
                 <Text size="1" color="gray" weight="bold" style={{ display: 'block', marginBottom: '4px' }}>
                   Description :
@@ -197,7 +213,7 @@ export default function AnomalyTypeE({ item }) {
                   }}
                 >
                   <SafeHtml 
-                    html={item.actions[1].description}
+                    html={getActions(item)[1]?.description}
                     maxLength={150}
                     style={{ 
                       fontSize: '11px',
@@ -223,7 +239,7 @@ export default function AnomalyTypeE({ item }) {
           }}
         >
           <Text size="2" weight="bold" color="blue">
-            🔄 Retour après {item.daysDiff} jour{item.daysDiff > 1 ? 's' : ''} - Travail potentiellement mal découpé
+            🔄 Retour après {getDaysDiff(item)} jour{getDaysDiff(item) > 1 ? 's' : ''} - Travail potentiellement mal découpé
           </Text>
         </Box>
       </Box>
@@ -250,23 +266,37 @@ export default function AnomalyTypeE({ item }) {
   );
 }
 
+AnomalyTypeE.displayName = "AnomalyTypeE";
+
 AnomalyTypeE.propTypes = {
   item: PropTypes.shape({
+    // DTO field names (camelCase)
     interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    intervention: PropTypes.string.isRequired,
+    intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    intervention: PropTypes.string,
+    intervention_code: PropTypes.string,
     interventionTitle: PropTypes.string,
-    severity: PropTypes.oneOf(['high', 'medium', 'low']).isRequired,
-    daysDiff: PropTypes.number.isRequired,
-    tech: PropTypes.string.isRequired,
-    machine: PropTypes.string.isRequired,
-    date1: PropTypes.string.isRequired,
-    category1: PropTypes.string.isRequired,
-    date2: PropTypes.string.isRequired,
-    category2: PropTypes.string.isRequired,
+    intervention_title: PropTypes.string,
+    severity: PropTypes.oneOf(['high', 'medium', 'low']),
+    daysDiff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    days_diff: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    tech: PropTypes.string,
+    technician: PropTypes.string,
+    technician_name: PropTypes.string,
+    machine: PropTypes.string,
+    machine_name: PropTypes.string,
+    date1: PropTypes.string,
+    first_date: PropTypes.string,
+    category1: PropTypes.string,
+    first_category: PropTypes.string,
+    date2: PropTypes.string,
+    second_date: PropTypes.string,
+    category2: PropTypes.string,
+    second_category: PropTypes.string,
     actions: PropTypes.arrayOf(
       PropTypes.shape({
         description: PropTypes.string
       })
-    ).isRequired
-  }).isRequired
+    )
+  })
 };

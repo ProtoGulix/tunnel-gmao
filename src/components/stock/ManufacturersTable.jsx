@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useError } from '@/contexts/ErrorContext';
 import { Card, Table, Flex, Text, Box, TextField, Button} from "@radix-ui/themes";
 import { Factory, Plus } from "lucide-react";
-import { fetchManufacturerItems, createManufacturerItem } from "@/lib/api/manufacturer-items";
+import { manufacturerItems } from "@/lib/api/facade";
 import TableHeader from "@/components/common/TableHeader";
 
 export default function ManufacturersTable() {
@@ -12,8 +12,8 @@ export default function ManufacturersTable() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [formData, setFormData] = useState({
-    manufacturer_name: "",
-    manufacturer_ref: "",
+    manufacturerName: "",
+    manufacturerRef: "",
     designation: ""
   });
   const [addLoading, setAddLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function ManufacturersTable() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchManufacturerItems();
+      const data = await manufacturerItems.fetchManufacturerItems();
       setItems(data);
     } catch (e) {
       console.error("Erreur chargement fabricants:", e);
@@ -35,8 +35,8 @@ export default function ManufacturersTable() {
   useEffect(() => { load(); }, []);
 
   const handleAdd = async () => {
-    const name = formData.manufacturer_name?.trim();
-    const ref = formData.manufacturer_ref?.trim();
+    const name = formData.manufacturerName?.trim();
+    const ref = formData.manufacturerRef?.trim();
     const designation = formData.designation?.trim();
 
     if (!name && !ref) {
@@ -47,12 +47,12 @@ export default function ManufacturersTable() {
     try {
       setAddLoading(true);
       setError(null);
-      const newItem = await createManufacturerItem({ name, ref, designation });
+      const newItem = await manufacturerItems.createManufacturerItem({ name, ref, designation });
       if (newItem) {
         setItems([...items, newItem]);
         setFormData({
-          manufacturer_name: "",
-          manufacturer_ref: "",
+          manufacturerName: "",
+          manufacturerRef: "",
           designation: ""
         });
       }
@@ -68,8 +68,8 @@ export default function ManufacturersTable() {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      (m.manufacturer_name || "").toLowerCase().includes(q) ||
-      (m.manufacturer_ref || "").toLowerCase().includes(q) ||
+      (m.manufacturerName || "").toLowerCase().includes(q) ||
+      (m.manufacturerRef || "").toLowerCase().includes(q) ||
       (m.designation || "").toLowerCase().includes(q)
     );
   });
@@ -104,8 +104,8 @@ export default function ManufacturersTable() {
                   Fabricant *
                 </Text>
                 <TextField.Root
-                  value={formData.manufacturer_name}
-                  onChange={(e) => setFormData({ ...formData, manufacturer_name: e.target.value })}
+                  value={formData.manufacturerName}
+                  onChange={(e) => setFormData({ ...formData, manufacturerName: e.target.value })}
                   placeholder="Ex: Schneider Electric"
                 />
               </Box>
@@ -115,8 +115,8 @@ export default function ManufacturersTable() {
                   Référence *
                 </Text>
                 <TextField.Root
-                  value={formData.manufacturer_ref}
-                  onChange={(e) => setFormData({ ...formData, manufacturer_ref: e.target.value })}
+                  value={formData.manufacturerRef}
+                  onChange={(e) => setFormData({ ...formData, manufacturerRef: e.target.value })}
                   placeholder="Ex: RXM2AB2BD"
                 />
               </Box>
@@ -166,10 +166,10 @@ export default function ManufacturersTable() {
               filtered.map((m) => (
                 <Table.Row key={m.id}>
                   <Table.Cell>
-                    <Text weight="bold">{m.manufacturer_name}</Text>
+                    <Text weight="bold">{m.manufacturerName}</Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text size="2">{m.manufacturer_ref}</Text>
+                    <Text size="2">{m.manufacturerRef}</Text>
                   </Table.Cell>
                   <Table.Cell>
                     <Text size="2" color="gray">{m.designation || "-"}</Text>

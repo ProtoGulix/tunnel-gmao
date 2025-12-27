@@ -1,66 +1,107 @@
-import { useEffect, useState } from "react";
-import { Container, Box, Badge } from "@radix-ui/themes";
+// ===== IMPORTS =====
+// 1. React Core
+import { useEffect, useState, useCallback } from "react";
+
+// 2. UI Libraries (Radix)
+import { Container, Box } from "@radix-ui/themes";
+
+// 3. Custom Components
 import PageHeader from "@/components/layout/PageHeader";
+
+// 4. Custom Hooks
 import { usePageHeaderProps } from "@/hooks/usePageConfig";
 
+// ===== COMPONENT =====
 /**
- * Exemple d'utilisation de la configuration centralisée
- * pour les en-têtes de page
+ * Example page demonstrating centralized header configuration.
+ * Shows three methods to use usePageHeaderProps hook:
+ * 1. Auto-generated props from menuConfig
+ * 2. Override dynamic values (subtitle, badges)
+ * 3. Add custom actions (export, refresh, add)
+ *
+ * @component
+ * @returns {JSX.Element} Example page with different header configurations
+ *
+ * @example
+ * <Route path="/example" element={<ExamplePageWithConfig />} />
  */
 export default function ExamplePageWithConfig() {
-  const [data, setData] = useState([]);
+  // ----- State -----
+  const [data, /* setData */] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ----- Callbacks -----
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    // TODO: Implement your data loading logic here
+    // Example: const result = await api.fetchData();
+    // setData(result);
+    setLoading(false);
+  }, []);
+
+  const handleExport = useCallback(() => {
+    // TODO: Implement export logic
+  }, []);
+
+  const handleAdd = useCallback(() => {
+    // TODO: Implement add logic
+  }, []);
+
+  // ----- Effects -----
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // ----- Header Configurations -----
   
-  // Méthode 1 : Utiliser le hook pour auto-générer les props
-  // L'icône, le titre et le sous-titre viennent automatiquement de menuConfig.js
+  // Method 1: Use hook to auto-generate props
+  // Icon, title and subtitle come automatically from menuConfig.js
   const headerProps = usePageHeaderProps();
   
-  // Méthode 2 : Surcharger certaines valeurs dynamiques
+  // Method 2: Override certain dynamic values
+  // eslint-disable-next-line no-unused-vars
   const headerPropsWithOverride = usePageHeaderProps({
-    subtitle: `${data.length} éléments trouvés`,
+    subtitle: `${data.length} elements found`,
     urgentBadge: data.filter(d => d.urgent).length > 0 ? {
       count: data.filter(d => d.urgent).length,
       label: "Urgent"
     } : null,
   });
   
-  // Méthode 3 : Ajouter des actions personnalisées
+  // Method 3: Add custom actions
+  // eslint-disable-next-line no-unused-vars
   const completeHeaderProps = usePageHeaderProps({
     actions: [
       {
-        label: "Exporter",
-        onClick: () => console.log("Export"),
+        label: "Export",
+        onClick: handleExport,
         variant: "soft"
       }
     ],
-    onRefresh: () => loadData(),
-    onAdd: () => console.log("Ajouter"),
-    addLabel: "+ Nouvelle entrée"
+    onRefresh: loadData,
+    onAdd: handleAdd,
+    addLabel: "+ New Entry"
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    // ... votre logique de chargement
-    setLoading(false);
-  };
-
+  // ----- Main Render -----
   return (
     <Container size="4">
-      {/* Simple : toutes les infos viennent de la config */}
+      {/* Simple: all info comes from config */}
       <PageHeader {...headerProps} />
       
-      {/* Avec surcharge pour infos dynamiques */}
+      {/* With override for dynamic info */}
       {/* <PageHeader {...headerPropsWithOverride} /> */}
       
-      {/* Avec actions personnalisées */}
+      {/* With custom actions */}
       {/* <PageHeader {...completeHeaderProps} /> */}
 
       <Box>
-        {/* Contenu de votre page */}
+        {/* Your page content */}
+        {loading ? (
+          <Box>Loading...</Box>
+        ) : (
+          <Box>Content with {data.length} items</Box>
+        )}
       </Box>
     </Container>
   );

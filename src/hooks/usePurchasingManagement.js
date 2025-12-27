@@ -1,9 +1,5 @@
-import { useCallback, useState } from "react";
-import {
-  fetchSupplierOrders,
-  fetchSuppliers,
-  dispatchPurchaseRequests,
-} from "@/lib/api";
+import { useCallback, useState } from 'react';
+import { suppliers as suppliersApi } from '@/lib/api/facade';
 
 /**
  * Hook pour gérer la logique des achats (fournisseurs et paniers)
@@ -20,12 +16,12 @@ export const usePurchasingManagement = (onError) => {
       try {
         if (isInitial) setLoading(true);
 
-        const data = await fetchSuppliers();
+        const data = await suppliersApi.fetchSuppliers();
         setSuppliers(data);
         return data;
       } catch (error) {
-        console.error("Erreur chargement fournisseurs:", error);
-        onError?.("Impossible de charger les fournisseurs");
+        console.error('Erreur chargement fournisseurs:', error);
+        onError?.('Impossible de charger les fournisseurs');
         return [];
       } finally {
         if (isInitial) setLoading(false);
@@ -39,12 +35,12 @@ export const usePurchasingManagement = (onError) => {
       try {
         if (isInitial) setLoading(true);
 
-        const data = await fetchSupplierOrders();
+        const data = await suppliersApi.fetchSupplierOrders();
         setSupplierOrders(data);
         return data;
       } catch (error) {
-        console.error("Erreur chargement paniers:", error);
-        onError?.("Impossible de charger les paniers");
+        console.error('Erreur chargement paniers:', error);
+        onError?.('Impossible de charger les paniers');
         return [];
       } finally {
         if (isInitial) setLoading(false);
@@ -56,14 +52,14 @@ export const usePurchasingManagement = (onError) => {
   const dispatch = useCallback(async () => {
     try {
       setDispatching(true);
-      const results = await dispatchPurchaseRequests();
+      const results = await suppliersApi.dispatchPurchaseRequests();
 
       // Recharger les paniers après dispatch
       await loadSupplierOrders(false);
 
       return results;
     } catch (error) {
-      console.error("Erreur dispatch:", error);
+      console.error('Erreur dispatch:', error);
       throw error;
     } finally {
       setDispatching(false);
@@ -72,10 +68,7 @@ export const usePurchasingManagement = (onError) => {
 
   const loadAll = useCallback(
     async (isInitial = false) => {
-      return Promise.all([
-        loadSuppliers(isInitial),
-        loadSupplierOrders(isInitial),
-      ]);
+      return Promise.all([loadSuppliers(isInitial), loadSupplierOrders(isInitial)]);
     },
     [loadSuppliers, loadSupplierOrders]
   );

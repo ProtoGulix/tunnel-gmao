@@ -1,32 +1,46 @@
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { Box, Flex, Text, Badge, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
 import { formatActionDate } from "@/lib/utils/actionUtils";
 import SafeHtml from "@/components/common/SafeHtml";
 
+// DTO-friendly accessors with legacy fallback
+const getIntervention = (item) => item?.intervention ?? item?.intervention_id ?? "N/A";
+const getInterventionTitle = (item) => item?.interventionTitle ?? item?.intervention_title ?? "Sans titre";
+const getInterventionId = (item) => item?.interventionId ?? item?.intervention_id;
+const getTechnicianName = (item) => item?.tech ?? item?.technician ?? item?.technician_name ?? "—";
+const getFoundKeywords = (item) => item?.foundKeywords ?? item?.found_keywords ?? [];
+const getCategory = (item) => item?.category ?? "—";
+const getMachine = (item) => item?.machine ?? item?.machine_name ?? "—";
+const getDescription = (item) => item?.description ?? "";
+const getSeverity = (item) => item?.severity ?? "medium";
+const getDate = (item) => item?.date ?? item?.created_at ?? null;
+
 /**
  * Type D - Mauvaise classification
+ * Affiche une anomalie d'action mal classée (mauvaise catégorie ou sous-catégorie détectée)
  */
-export default function AnomalyTypeD({ item, index }) {
+function AnomalyTypeD({ item }) {
   return (
-    <AnomalyContainer severity={item.severity}>
+    <AnomalyContainer severity={getSeverity(item)}>
       <AnomalyHeader
-        title={item.intervention || 'N/A'}
-        subtitle={`${item.interventionTitle || 'Sans titre'}`}
-        severity={item.severity}
+        title={getIntervention(item)}
+        subtitle={getInterventionTitle(item)}
+        severity={getSeverity(item)}
         badges={[
-          { color: "purple", label: `${item.foundKeywords.length} indices`, size: "2" }
+          { color: "purple", label: `${getFoundKeywords(item).length} indices`, size: "2" }
         ]}
       >
-        {item.interventionId && (
-          <Link to={`/intervention/${item.interventionId}`}>
+        {getInterventionId(item) && (
+          <Link to={`/intervention/${getInterventionId(item)}`}>
             <Text size="2" color="blue" style={{ display: 'block', marginTop: '4px' }}>
-              → Voir l'intervention
+              → Voir l&apos;intervention
             </Text>
           </Link>
         )}
         <Text size="1" color="gray" style={{ display: 'block' }}>
-          Catégorie: {item.category} • Machine: {item.machine}
+          Catégorie: {getCategory(item)} • Machine: {getMachine(item)}
         </Text>
       </AnomalyHeader>
       
@@ -34,7 +48,7 @@ export default function AnomalyTypeD({ item, index }) {
       
       <Box>
         <Text size="1" weight="bold" color="gray" style={{ display: 'block', marginBottom: '8px' }}>
-          Détails de l'action :
+          Détails de l&apos;action :
         </Text>
         <Box 
           p="2"
@@ -47,10 +61,10 @@ export default function AnomalyTypeD({ item, index }) {
           <Flex direction="column" gap="1">
             <Flex justify="between" align="center">
               <Text size="1" color="gray">
-                <Text weight="bold">Technicien:</Text> {item.tech}
+                <Text weight="bold">Technicien:</Text> {getTechnicianName(item)}
               </Text>
               <Text size="1" color="gray">
-                {formatActionDate(item.date)}
+                {getDate(item) && formatActionDate(getDate(item))}
               </Text>
             </Flex>
 
@@ -66,7 +80,7 @@ export default function AnomalyTypeD({ item, index }) {
                 Mots suspects détectés :
               </Text>
               <Flex gap="1" wrap="wrap">
-                {item.foundKeywords.map((keyword, idx) => (
+                {getFoundKeywords(item).map((keyword, idx) => (
                   <Badge key={idx} color="purple" size="1">
                     {keyword}
                   </Badge>
@@ -74,7 +88,7 @@ export default function AnomalyTypeD({ item, index }) {
               </Flex>
             </Box>
             
-            {item.description && (
+            {getDescription(item) && (
               <Box 
                 p="2" 
                 mt="2"
@@ -87,7 +101,7 @@ export default function AnomalyTypeD({ item, index }) {
                   Description :
                 </Text>
                 <SafeHtml 
-                  html={item.description}
+                  html={getDescription(item)}
                   style={{ 
                     fontSize: '12px',
                     color: 'var(--gray-11)',
@@ -117,3 +131,30 @@ export default function AnomalyTypeD({ item, index }) {
     </AnomalyContainer>
   );
 }
+
+AnomalyTypeD.propTypes = {
+  item: PropTypes.shape({
+    // DTO field names (camelCase)
+    intervention: PropTypes.string,
+    intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    interventionTitle: PropTypes.string,
+    intervention_title: PropTypes.string,
+    interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    severity: PropTypes.oneOf(["low", "medium", "high", "critical"]),
+    foundKeywords: PropTypes.arrayOf(PropTypes.string),
+    found_keywords: PropTypes.arrayOf(PropTypes.string),
+    category: PropTypes.string,
+    machine: PropTypes.string,
+    machine_name: PropTypes.string,
+    tech: PropTypes.string,
+    technician: PropTypes.string,
+    technician_name: PropTypes.string,
+    date: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    created_at: PropTypes.string,
+    description: PropTypes.string,
+  }).isRequired,
+};
+
+AnomalyTypeD.displayName = "AnomalyTypeD";
+
+export default AnomalyTypeD;

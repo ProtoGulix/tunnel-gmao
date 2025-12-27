@@ -7,6 +7,16 @@ import {
   groupActionsByIntervention 
 } from "./AnomalyHelpers";
 
+// DTO-friendly accessors with legacy fallback
+const getCategoryName = (item) => item?.categoryName ?? item?.category_name ?? "—";
+const getCategory = (item) => item?.category ?? "—";
+const getMachine = (item) => item?.machine ?? item?.machine_name ?? "—";
+const getMonth = (item) => item?.month ?? item?.period ?? "—";
+const getSeverity = (item) => item?.severity ?? "medium";
+const getCount = (item) => Number(item?.count ?? 0);
+const getInterventionCount = (item) => Number(item?.interventionCount ?? item?.intervention_count ?? 0);
+const getActions = (item) => item?.actions ?? item?.action_list ?? [];
+
 /**
  * Type A - Actions répétitives
  * Affiche les anomalies où la même catégorie d'action se répète sur la même machine plus de 3 fois par mois
@@ -39,18 +49,19 @@ import {
  * />
  */
 export default function AnomalyTypeA({ item }) {
-  const interventions = groupActionsByIntervention(item.actions);
-  const severityColor = item.severity === 'high' ? 'red' : 'orange';
+  const interventions = groupActionsByIntervention(getActions(item));
+  const severity = getSeverity(item);
+  const severityColor = severity === 'high' ? 'red' : 'orange';
   
   return (
-    <AnomalyContainer severity={item.severity}>
+    <AnomalyContainer severity={severity}>
       <AnomalyHeader
-        title={`${item.categoryName} (${item.category})`}
-        subtitle={`Machine : ${item.machine} • Période : ${item.month}`}
-        severity={item.severity}
+        title={`${getCategoryName(item)} (${getCategory(item)})`}
+        subtitle={`Machine : ${getMachine(item)} • Période : ${getMonth(item)}`}
+        severity={severity}
         badges={[
-          { color: severityColor, label: `${item.count} fois`, size: "2" },
-          { color: "blue", label: `${item.interventionCount} interv.`, size: "1" }
+          { color: severityColor, label: `${getCount(item)} fois`, size: "2" },
+          { color: "blue", label: `${getInterventionCount(item)} interv.`, size: "1" }
         ]}
       />
       
@@ -63,27 +74,44 @@ export default function AnomalyTypeA({ item }) {
 
 AnomalyTypeA.propTypes = {
   item: PropTypes.shape({
-    categoryName: PropTypes.string.isRequired,
-    category: PropTypes.string.isRequired,
-    machine: PropTypes.string.isRequired,
-    month: PropTypes.string.isRequired,
-    severity: PropTypes.oneOf(['high', 'medium', 'low']).isRequired,
-    count: PropTypes.number.isRequired,
-    interventionCount: PropTypes.number.isRequired,
+    // DTO field names (camelCase)
+    categoryName: PropTypes.string,
+    category_name: PropTypes.string,
+    category: PropTypes.string,
+    machine: PropTypes.string,
+    machine_name: PropTypes.string,
+    month: PropTypes.string,
+    period: PropTypes.string,
+    severity: PropTypes.oneOf(['high', 'medium', 'low']),
+    count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    interventionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    intervention_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     actions: PropTypes.arrayOf(
       PropTypes.shape({
         interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         interventionCode: PropTypes.string,
+        intervention_code: PropTypes.string,
         interventionTitle: PropTypes.string,
+        intervention_title: PropTypes.string,
         machine: PropTypes.string,
+        machine_name: PropTypes.string,
         timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         createdAt: PropTypes.string,
+        created_at: PropTypes.string,
         description: PropTypes.string,
         technician: PropTypes.shape({
           firstName: PropTypes.string,
-          lastName: PropTypes.string
-        })
+          first_name: PropTypes.string,
+          lastName: PropTypes.string,
+          last_name: PropTypes.string
+        }),
+        tech: PropTypes.string,
       })
-    ).isRequired
+    ),
+    action_list: PropTypes.arrayOf(PropTypes.object),
   }).isRequired
 };
+
+AnomalyTypeA.displayName = "AnomalyTypeA";

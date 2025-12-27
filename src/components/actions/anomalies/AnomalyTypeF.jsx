@@ -7,6 +7,18 @@ import {
   groupActionsByIntervention 
 } from "./AnomalyHelpers";
 
+// DTO-friendly accessors with legacy fallback
+const getCategoryName = (item) => item?.categoryName ?? item?.category_name ?? "—";
+const getCategory = (item) => item?.category ?? "—";
+const getSeverity = (item) => item?.severity ?? "medium";
+const getTotalTime = (item) => Number(item?.totalTime ?? item?.total_time ?? 0);
+const getInterventionCount = (item) => Number(item?.interventionCount ?? item?.intervention_count ?? 0);
+const getMachineCount = (item) => Number(item?.machineCount ?? item?.machine_count ?? 0);
+const getTechCount = (item) => Number(item?.techCount ?? item?.tech_count ?? 0);
+const getCount = (item) => Number(item?.count ?? 0);
+const getAvgTime = (item) => String(item?.avgTime ?? item?.avg_time ?? "0");
+const getActions = (item) => item?.actions ?? [];
+
 /**
  * Type F - Faible valeur + charge élevée
  * Affiche les catégories à faible valeur ajoutée avec plus de 30h cumulées (problème structurel)
@@ -43,24 +55,25 @@ import {
  * />
  */
 export default function AnomalyTypeF({ item }) {
-  const interventions = groupActionsByIntervention(item.actions);
-  const severityColor = item.severity === 'high' ? 'red' : 'orange';
+  const severity = getSeverity(item);
+  const severityColor = severity === 'high' ? 'red' : 'orange';
+  const interventions = groupActionsByIntervention(getActions(item));
   
   return (
-    <AnomalyContainer severity={item.severity}>
+    <AnomalyContainer severity={severity}>
       <AnomalyHeader
-        title={`${item.categoryName} (${item.category})`}
-        severity={item.severity}
+        title={`${getCategoryName(item)} (${getCategory(item)})`}
+        severity={severity}
         badges={[
-          { color: severityColor, label: `${item.totalTime.toFixed(2)}h`, size: "2" },
-          { color: "blue", label: `${item.interventionCount} interv.`, size: "1" }
+          { color: severityColor, label: `${getTotalTime(item).toFixed(2)}h`, size: "2" },
+          { color: "blue", label: `${getInterventionCount(item)} interv.`, size: "1" }
         ]}
       >
         <Text size="1" color="gray" style={{ display: 'block' }}>
-          {item.machineCount} machine{item.machineCount > 1 ? 's' : ''} • {item.techCount} technicien{item.techCount > 1 ? 's' : ''}
+          {getMachineCount(item)} machine{getMachineCount(item) > 1 ? 's' : ''} • {getTechCount(item)} technicien{getTechCount(item) > 1 ? 's' : ''}
         </Text>
         <Text size="1" color="gray" style={{ display: 'block' }}>
-          {item.count} actions • Temps moyen: {item.avgTime}h/action
+          {getCount(item)} actions • Temps moyen: {getAvgTime(item)}h/action
         </Text>
       </AnomalyHeader>
       
@@ -71,31 +84,48 @@ export default function AnomalyTypeF({ item }) {
   );
 }
 
+AnomalyTypeF.displayName = "AnomalyTypeF";
+
 AnomalyTypeF.propTypes = {
   item: PropTypes.shape({
-    categoryName: PropTypes.string.isRequired,
-    category: PropTypes.string.isRequired,
-    severity: PropTypes.oneOf(['high', 'medium', 'low']).isRequired,
-    totalTime: PropTypes.number.isRequired,
-    interventionCount: PropTypes.number.isRequired,
-    machineCount: PropTypes.number.isRequired,
-    techCount: PropTypes.number.isRequired,
-    count: PropTypes.number.isRequired,
-    avgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    // DTO field names (camelCase)
+    categoryName: PropTypes.string,
+    category_name: PropTypes.string,
+    category: PropTypes.string,
+    severity: PropTypes.oneOf(['high', 'medium', 'low']),
+    totalTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    total_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    interventionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    intervention_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    machineCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    machine_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    techCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    tech_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    avgTime: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    avg_time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     actions: PropTypes.arrayOf(
       PropTypes.shape({
         interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         interventionCode: PropTypes.string,
+        intervention_code: PropTypes.string,
         interventionTitle: PropTypes.string,
+        intervention_title: PropTypes.string,
         machine: PropTypes.string,
+        machine_name: PropTypes.string,
         timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         createdAt: PropTypes.string,
+        created_at: PropTypes.string,
         description: PropTypes.string,
         technician: PropTypes.shape({
           firstName: PropTypes.string,
-          lastName: PropTypes.string
+          first_name: PropTypes.string,
+          lastName: PropTypes.string,
+          last_name: PropTypes.string
         })
       })
-    ).isRequired
-  }).isRequired
+    )
+  })
 };

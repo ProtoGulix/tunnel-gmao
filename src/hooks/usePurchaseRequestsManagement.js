@@ -1,9 +1,5 @@
-import { useCallback, useState } from "react";
-import {
-  fetchPurchaseRequests,
-  updatePurchaseRequest,
-  createStockItem,
-} from "@/lib/api";
+import { useCallback, useState } from 'react';
+import { stock } from '@/lib/api/facade';
 
 /**
  * Hook pour gérer la logique des demandes d'achat
@@ -18,11 +14,11 @@ export const usePurchaseRequestsManagement = (onError) => {
       try {
         if (isInitial) setLoading(true);
 
-        const data = await fetchPurchaseRequests();
+        const data = await stock.fetchPurchaseRequests();
         setRequests(data);
         return data;
       } catch (error) {
-        console.error("Erreur chargement demandes:", error);
+        console.error('Erreur chargement demandes:', error);
         onError?.("Impossible de charger les demandes d'achat");
         return [];
       } finally {
@@ -34,21 +30,19 @@ export const usePurchaseRequestsManagement = (onError) => {
 
   const updateStatus = useCallback(async (requestId, newStatus) => {
     try {
-      await updatePurchaseRequest(requestId, { status: newStatus });
+      await stock.updatePurchaseRequest(requestId, { status: newStatus });
       setRequests((prev) =>
-        prev.map((req) =>
-          req.id === requestId ? { ...req, status: newStatus } : req
-        )
+        prev.map((req) => (req.id === requestId ? { ...req, status: newStatus } : req))
       );
     } catch (error) {
-      console.error("Erreur changement statut:", error);
+      console.error('Erreur changement statut:', error);
       throw error;
     }
   }, []);
 
   const linkExistingItem = useCallback(async (requestId, stockItem) => {
     try {
-      await updatePurchaseRequest(requestId, {
+      await stock.updatePurchaseRequest(requestId, {
         stock_item_id: stockItem.id,
         item_label: stockItem.name,
       });
@@ -64,19 +58,19 @@ export const usePurchaseRequestsManagement = (onError) => {
         )
       );
     } catch (error) {
-      console.error("Erreur liaison article:", error);
+      console.error('Erreur liaison article:', error);
       throw error;
     }
   }, []);
 
   const createAndLink = useCallback(async (requestId, itemData) => {
     try {
-      const newItem = await createStockItem({
+      const newItem = await stock.createStockItem({
         ...itemData,
         quantity: 0,
       });
 
-      await updatePurchaseRequest(requestId, {
+      await stock.updatePurchaseRequest(requestId, {
         stock_item_id: newItem.id,
         item_label: newItem.name,
       });
@@ -95,7 +89,7 @@ export const usePurchaseRequestsManagement = (onError) => {
 
       return newItem;
     } catch (error) {
-      console.error("Erreur création et liaison:", error);
+      console.error('Erreur création et liaison:', error);
       throw error;
     }
   }, []);

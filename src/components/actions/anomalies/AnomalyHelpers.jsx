@@ -57,6 +57,16 @@ import { formatActionDate } from "@/lib/utils/actionUtils";
 import SafeHtml from "@/components/common/SafeHtml";
 import InterventionCard from "@/components/interventions/InterventionCard";
 
+// DTO-friendly accessors with legacy fallback
+const getActionCreatedAt = (action) => action?.createdAt ?? action?.created_at ?? null;
+const getActionTechnicianFirstName = (technician) => technician?.firstName ?? technician?.first_name ?? "—";
+const getActionTechnicianLastName = (technician) => technician?.lastName ?? technician?.last_name ?? "—";
+const getActionTimeSpent = (action) => Number(action?.timeSpent ?? action?.time_spent ?? 0);
+const getActionDescription = (action) => action?.description ?? "";
+const getItemTechnicianName = (item) => item?.tech ?? item?.technician ?? item?.technician_name ?? "—";
+const getItemDate = (item) => item?.date ?? item?.created_at ?? null;
+const getItemDescription = (item) => item?.description ?? "";
+
 /**
  * Regroupe les actions par intervention
  * 
@@ -145,6 +155,8 @@ export function AnomalyHeader({ title, subtitle, badges, children }) {
   );
 }
 
+AnomalyHeader.displayName = "AnomalyHeader";
+
 AnomalyHeader.propTypes = {
   title: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
@@ -196,16 +208,16 @@ export function ActionItem({ action, timeColor = "gray" }) {
     >
       <Flex justify="between" align="center">
         <Text size="1" color="gray">
-          {formatActionDate(action.createdAt)} • {action.technician ? `${action.technician.firstName} ${action.technician.lastName}` : 'N/A'}
+          {formatActionDate(getActionCreatedAt(action))} • {getActionTechnicianFirstName(action.technician)} {getActionTechnicianLastName(action.technician)}
         </Text>
         <Text size="1" weight="bold" color={timeColor}>
-          {parseFloat(action.timeSpent || 0).toFixed(2)}h
+          {getActionTimeSpent(action).toFixed(2)}h
         </Text>
       </Flex>
-      {action.description && (
+      {getActionDescription(action) && (
         <Box mt="1">
           <SafeHtml 
-            html={action.description}
+            html={getActionDescription(action)}
             maxLength={100}
             style={{ 
               fontSize: '11px',
@@ -220,16 +232,22 @@ export function ActionItem({ action, timeColor = "gray" }) {
   );
 }
 
+ActionItem.displayName = "ActionItem";
+
 ActionItem.propTypes = {
   action: PropTypes.shape({
-    createdAt: PropTypes.string.isRequired,
+    createdAt: PropTypes.string,
+    created_at: PropTypes.string,
     technician: PropTypes.shape({
       firstName: PropTypes.string,
-      lastName: PropTypes.string
+      first_name: PropTypes.string,
+      lastName: PropTypes.string,
+      last_name: PropTypes.string
     }),
     timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     description: PropTypes.string
-  }).isRequired,
+  }),
   timeColor: PropTypes.string
 };
 
@@ -282,6 +300,8 @@ export function InterventionsSection({ interventions, actionTimeColor = "gray" }
   );
 }
 
+InterventionsSection.displayName = "InterventionsSection";
+
 InterventionsSection.propTypes = {
   interventions: PropTypes.arrayOf(
     PropTypes.shape({
@@ -326,6 +346,8 @@ export function AnomalyContainer({ severity, children }) {
     </Box>
   );
 }
+
+AnomalyContainer.displayName = "AnomalyContainer";
 
 AnomalyContainer.propTypes = {
   severity: PropTypes.oneOf(['high', 'medium', 'low']),
@@ -385,14 +407,14 @@ export function SingleActionDetail({ item, warningColor, warningMessage }) {
         <Flex direction="column" gap="1">
           <Flex justify="between" align="center">
             <Text size="1" color="gray">
-              <Text weight="bold">Technicien:</Text> {item.tech}
+              <Text weight="bold">Technicien:</Text> {getItemTechnicianName(item)}
             </Text>
             <Text size="1" color="gray">
-              {formatActionDate(item.date)}
+              {formatActionDate(getItemDate(item))}
             </Text>
           </Flex>
           
-          {(item.action?.description || item.description) && (
+          {getItemDescription(item) && (
             <Box 
               p="2" 
               mt="2"
@@ -405,7 +427,7 @@ export function SingleActionDetail({ item, warningColor, warningMessage }) {
                 Description :
               </Text>
               <SafeHtml 
-                html={item.description || item.action.description}
+                html={getItemDescription(item)}
                 style={{ 
                   fontSize: '12px',
                   color: 'var(--gray-11)',
@@ -435,35 +457,25 @@ export function SingleActionDetail({ item, warningColor, warningMessage }) {
   );
 }
 
+SingleActionDetail.displayName = "SingleActionDetail";
+
 SingleActionDetail.propTypes = {
   item: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    created_at: PropTypes.string.isRequired,
-    tech: PropTypes.shape({
-      first_name: PropTypes.string,
-      last_name: PropTypes.string
-    }),
+    created_at: PropTypes.string,
+    date: PropTypes.string,
+    tech: PropTypes.string,
+    technician: PropTypes.string,
+    technician_name: PropTypes.string,
     time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     description: PropTypes.string,
     action: PropTypes.shape({
       description: PropTypes.string
     }),
     intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     intervention_code: PropTypes.string
-  }).isRequired,
+  }),
   warningColor: PropTypes.string,
-  warningMessage: PropTypes.string,
-};
-
-SingleActionDetail.propTypes = {
-  item: PropTypes.shape({
-    tech: PropTypes.string.isRequired,
-    date: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    action: PropTypes.shape({
-      description: PropTypes.string
-    })
-  }).isRequired,
-  warningColor: PropTypes.string.isRequired,
-  warningMessage: PropTypes.string.isRequired
+  warningMessage: PropTypes.string
 };

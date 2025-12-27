@@ -1,14 +1,5 @@
-import { useCallback, useState } from "react";
-import {
-  fetchStockItems,
-  createStockItem,
-  updateStockItem,
-  fetchStockItemSuppliers,
-  createStockItemSupplier,
-  updateStockItemSupplier,
-  deleteStockItemSupplier,
-  fetchStockItemStandardSpecs,
-} from "../lib/api";
+import { useCallback, useState } from 'react';
+import { stock, stockSuppliers, stockSpecs } from '@/lib/api/facade';
 
 /**
  * Hook pour gérer la logique des articles en stock
@@ -29,7 +20,7 @@ export const useStockItemsManagement = (onError) => {
       try {
         if (isInitial) setLoading(true);
 
-        const data = await fetchStockItems();
+        const data = await stock.fetchStockItems();
         setStockItems(data);
 
         // Charger les compteurs (références + specs) pour chaque article
@@ -43,8 +34,8 @@ export const useStockItemsManagement = (onError) => {
           for (const item of data) {
             try {
               const [refs, specs] = await Promise.all([
-                fetchStockItemSuppliers(item.id),
-                fetchStockItemStandardSpecs(item.id),
+                stockSuppliers.fetchStockItemSuppliers(item.id),
+                stockSpecs.fetchStockItemStandardSpecs(item.id),
               ]);
               refsCounts[item.id] = refs.length;
               specCounts[item.id] = (specs || []).length;
@@ -70,8 +61,8 @@ export const useStockItemsManagement = (onError) => {
 
         return data;
       } catch (error) {
-        console.error("Erreur chargement stock:", error);
-        onError?.("Impossible de charger le stock");
+        console.error('Erreur chargement stock:', error);
+        onError?.('Impossible de charger le stock');
         return [];
       } finally {
         if (isInitial) setLoading(false);
@@ -82,31 +73,29 @@ export const useStockItemsManagement = (onError) => {
 
   const addStockItem = useCallback(async (itemData) => {
     try {
-      const newItem = await createStockItem(itemData);
+      const newItem = await stock.createStockItem(itemData);
       setStockItems((prev) => [...prev, newItem]);
       return newItem;
     } catch (error) {
-      console.error("Erreur ajout article:", error);
+      console.error('Erreur ajout article:', error);
       throw error;
     }
   }, []);
 
   const updateItem = useCallback(async (itemId, itemData) => {
     try {
-      const updatedItem = await updateStockItem(itemId, itemData);
-      setStockItems((prev) =>
-        prev.map((item) => (item.id === itemId ? updatedItem : item))
-      );
+      const updatedItem = await stock.updateStockItem(itemId, itemData);
+      setStockItems((prev) => prev.map((item) => (item.id === itemId ? updatedItem : item)));
       return updatedItem;
     } catch (error) {
-      console.error("Erreur mise à jour article:", error);
+      console.error('Erreur mise à jour article:', error);
       throw error;
     }
   }, []);
 
   const loadSupplierRefs = useCallback(async (stockItemId) => {
     try {
-      const data = await fetchStockItemSuppliers(stockItemId);
+      const data = await stockSuppliers.fetchStockItemSuppliers(stockItemId);
       setStockItemSuppliers(data);
       setSupplierRefsByItem((prev) => ({
         ...prev,
@@ -118,7 +107,7 @@ export const useStockItemsManagement = (onError) => {
       }));
       return data;
     } catch (error) {
-      console.error("Erreur chargement références:", error);
+      console.error('Erreur chargement références:', error);
       throw error;
     }
   }, []);
@@ -126,13 +115,13 @@ export const useStockItemsManagement = (onError) => {
   const addSupplierRef = useCallback(
     async (stockItemId, refData) => {
       try {
-        await createStockItemSupplier({
+        await stockSuppliers.createStockItemSupplier({
           stock_item_id: stockItemId,
           ...refData,
         });
         await loadSupplierRefs(stockItemId);
       } catch (error) {
-        console.error("Erreur ajout référence:", error);
+        console.error('Erreur ajout référence:', error);
         throw error;
       }
     },
@@ -142,10 +131,10 @@ export const useStockItemsManagement = (onError) => {
   const updateSupplierRef = useCallback(
     async (refId, updates, stockItemId) => {
       try {
-        await updateStockItemSupplier(refId, updates);
+        await stockSuppliers.updateStockItemSupplier(refId, updates);
         await loadSupplierRefs(stockItemId);
       } catch (error) {
-        console.error("Erreur mise à jour référence:", error);
+        console.error('Erreur mise à jour référence:', error);
         throw error;
       }
     },
@@ -155,10 +144,10 @@ export const useStockItemsManagement = (onError) => {
   const deleteSupplierRef = useCallback(
     async (refId, stockItemId) => {
       try {
-        await deleteStockItemSupplier(refId);
+        await stockSuppliers.deleteStockItemSupplier(refId);
         await loadSupplierRefs(stockItemId);
       } catch (error) {
-        console.error("Erreur suppression référence:", error);
+        console.error('Erreur suppression référence:', error);
         throw error;
       }
     },

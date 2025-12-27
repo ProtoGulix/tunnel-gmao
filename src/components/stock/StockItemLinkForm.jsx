@@ -11,7 +11,7 @@ import {
   Badge,
 } from "@radix-ui/themes";
 import { Search, Plus, CheckCircle, Link as LinkIcon, FileText } from "lucide-react";
-import { fetchStockItemStandardSpecs } from "@/lib/api";
+import { stock } from "@/lib/api/facade";
 import { useStockFamilies, useStockSubFamilies } from "@/hooks/useStockFamilies";
 import StockItemSearchDropdown from "./StockItemSearchDropdown";
 import { generateStockReference } from "@/lib/utils/stockReferenceGenerator";
@@ -44,7 +44,7 @@ export default function StockItemLinkForm({
   // Mémoïser loadSpecs pour éviter re-renders inutiles
   const loadSpecs = useCallback(async (stockItemId) => {
     try {
-      const specs = await fetchStockItemStandardSpecs(stockItemId);
+      const specs = await stock.fetchStockItemStandardSpecs(stockItemId);
       setSelectedItemSpecs(specs);
     } catch (error) {
       console.error("Erreur chargement specs:", error);
@@ -141,7 +141,7 @@ export default function StockItemLinkForm({
                     </Button>
                   </Flex>
                   {selectedItemSpecs.length > 0 && (() => {
-                    const defaultSpec = selectedItemSpecs.find(s => s.is_default) || selectedItemSpecs[0];
+                    const defaultSpec = selectedItemSpecs.find(s => s.isDefault) || selectedItemSpecs[0];
                     return (
                       <Box
                         p="2"
@@ -156,7 +156,7 @@ export default function StockItemLinkForm({
                             <Text size="2" weight="bold">
                               {defaultSpec.title}
                             </Text>
-                            {defaultSpec.is_default && (
+                            {defaultSpec.isDefault && (
                               <Badge color="green" size="1" variant="soft">Par défaut</Badge>
                             )}
                           </Flex>

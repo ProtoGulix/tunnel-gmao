@@ -13,11 +13,7 @@ import {
   DropdownMenu,
 } from "@radix-ui/themes";
 import { Package, Send, Eye, MoreHorizontal, TruckIcon } from "lucide-react";
-import {
-  updateSupplierOrder,
-  fetchSupplierOrderLines,
-  updatePurchaseRequest,
-} from "@/lib/api";
+import { suppliers, stock } from "@/lib/api/facade";
 import { 
   CSV_CONFIG, 
   EMAIL_CONFIG, 
@@ -26,7 +22,6 @@ import {
   generateFullEmailHTML
 } from "@/config/exportConfig";
 import { getSupplierOrderStatus } from "@/config/purchasingConfig";
-import { api } from "@/lib/api/client";
 import TableHeader from "@/components/common/TableHeader";
 import FilterSelect from "@/components/common/FilterSelect";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
@@ -41,8 +36,15 @@ const getAgeInDays = (date) => {
   return Math.max(0, Math.floor(diff / DAY_IN_MS));
 };
 
+// DTO-friendly accessors supporting legacy snake_case
+const getOrderNumber = (order) => order?.orderNumber ?? order?.order_number;
+const getCreatedAt = (order) => order?.createdAt ?? order?.created_at;
+const getSupplierObj = (order) => order?.supplier ?? order?.supplier_id;
+const getTotalAmount = (order) => order?.totalAmount ?? order?.total_amount;
+const getLineCount = (order) => Number(order?.lineCount ?? order?.line_count ?? 0);
+
 const getAgeColor = (order) => {
-  const ageDays = getAgeInDays(order.created_at);
+  const ageDays = getAgeInDays(getCreatedAt(order));
   if (ageDays == null) return "gray";
   
   // Hiérarchie visuelle basée sur statut + âge
@@ -122,8 +124,8 @@ export default function SupplierOrdersTable({
       if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
       
       // Priorité 2 : Âge décroissant (plus vieux en premier)
-      const ageA = getAgeInDays(a.created_at) || 0;
-      const ageB = getAgeInDays(b.created_at) || 0;
+      const ageA = getAgeInDays(getCreatedAt(a)) || 0;
+      const ageB = getAgeInDays(getCreatedAt(b)) || 0;
       return ageB - ageA;
     });
   }, [orders]);
@@ -138,7 +140,7 @@ export default function SupplierOrdersTable({
         return cachedLines.get(orderId);
       }
 
-      const lines = await fetchSupplierOrderLines(orderId);
+      const lines = await suppliers.fetchSupplierOrderLines(orderId);
       setCachedLines((prev) => new Map(prev).set(orderId, lines));
       return lines;
     },
@@ -172,8 +174,8 @@ export default function SupplierOrdersTable({
       const url = URL.createObjectURL(blob);
       link.href = url;
       link.download = CSV_CONFIG.fileNamePattern(
-        order.order_number, 
-        order.supplier_id?.name || "fournisseur"
+        getOrderNumber(order), 
+        getSupplierObj(order)?.name || "fournisseur"
       );
       document.body.appendChild(link);
       link.click();
@@ -187,11 +189,11 @@ export default function SupplierOrdersTable({
   const handleSendEmail = useCallback(async (order) => {
     try {
       const lines = await getOrderLines(order.id, { forceRefresh: true });
-      const subject = EMAIL_CONFIG.subject(order.order_number);
+      const subject = EMAIL_CONFIG.subject(getOrderNumber(order));
       const bodyText = generateEmailBody(order, lines);
       
       // mailto avec texte formaté (pas de HTML)
-      const mailtoLink = `mailto:${order.supplier_id?.email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      const mailtoLink = `mailto:${getSupplierObj(order)?.email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
       
       // Ouvrir dans le client email
       window.location.href = mailtoLink;
@@ -225,14 +227,14 @@ export default function SupplierOrdersTable({
       
       // Validation : Montant obligatoire pour passer en RECEIVED
       const currentOrder = orders.find(o => o.id === orderId);
-      if (newStatus === 'RECEIVED' && (!currentOrder?.total_amount || Number(currentOrder.total_amount) <= 0)) {
+      if (newStatus === 'RECEIVED' && (!getTotalAmount(currentOrder) || Number(getTotalAmount(currentOrder)) <= 0)) {
         showError(new Error('Montant obligatoire pour passer en "Commandé". Veuillez saisir un montant (même estimatif).'));
         setLoading(false);
         return;
       }
       
       // 1. Récupérer toutes les lignes du panier
-      const lines = await fetchSupplierOrderLines(orderId);
+      const lines = await suppliers.fetchSupplierOrderLines(orderId);
       
       // 2. Mapper le statut commande → statut DA
       const statusMapping = {
@@ -252,46 +254,22 @@ export default function SupplierOrdersTable({
       }
       
       // 3. Mettre à jour tous les DAs liés
-      let allRequests = Array.from(new Set(
-        lines.flatMap((line) => {
-          return (line.purchase_requests || []).map((pr) => {
-            const prField = pr.purchase_request_id;
-            if (prField && typeof prField === "object") {
-              return prField.id;
-            }
-            return prField || null;
-          });
-        })
-      )).filter(Boolean);
-
-      // 3.b Fallback: si aucune DA trouvée via les lignes chargées, requête directe sur la table de jonction
-      if (allRequests.length === 0 && lines.length > 0) {
-        const lineIds = lines.map((l) => l.id).filter(Boolean);
-        try {
-          const { data } = await api.get("/items/supplier_order_line_purchase_request", {
-            params: {
-              filter: { supplier_order_line_id: { _in: lineIds } },
-              fields: ["purchase_request_id", "purchase_request_id.id"].join(","),
-              limit: -1,
-              _t: Date.now(),
-            },
-          });
-
-          allRequests = Array.from(new Set(
-            (data?.data || []).map((row) => {
-              const prField = row.purchase_request_id;
-              if (prField && typeof prField === "object") return prField.id;
+      const allRequests = Array.from(
+        new Set(
+          lines.flatMap((line) => {
+            const prs = line.purchaseRequests ?? line.purchase_requests ?? [];
+            return prs.map((pr) => {
+              const prField = pr.purchaseRequest ?? pr.purchase_request_id;
+              if (prField && typeof prField === 'object') return prField.id;
               return prField || null;
-            })
-          )).filter(Boolean);
-        } catch (fallbackError) {
-          console.error("Erreur fallback récupération DAs:", fallbackError);
-        }
-      }
+            });
+          })
+        )
+      ).filter(Boolean);
       
       await Promise.all(
         allRequests.map((prId) =>
-          updatePurchaseRequest(prId, { status: daStatus })
+          stock.updatePurchaseRequest(prId, { status: daStatus })
         )
       );
       
@@ -303,14 +281,14 @@ export default function SupplierOrdersTable({
         updateData.received_at = new Date().toISOString();
       }
       
-      await updateSupplierOrder(orderId, updateData);
+      await suppliers.updateSupplierOrder(orderId, updateData);
       
       // 5. Rafraîchir les données
       await onRefresh();
       
       // 6. Recharger les lignes si expandée
       if (expandedOrderId === orderId) {
-        const updatedLines = await fetchSupplierOrderLines(orderId);
+        const updatedLines = await suppliers.fetchSupplierOrderLines(orderId);
         setOrderLines(updatedLines);
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -377,8 +355,9 @@ export default function SupplierOrdersTable({
     const lines = cachedLines.get(order.id);
     // Ligne urgente = demande avec âge > 5j
     return lines.some(line => 
-      line.purchase_requests?.some(pr => {
-        const reqDate = pr.purchase_request_id?.created_at;
+      (line.purchaseRequests ?? line.purchase_requests)?.some(pr => {
+        const prObj = pr.purchaseRequest ?? pr.purchase_request_id;
+        const reqDate = (typeof prObj === 'object' ? prObj?.createdAt ?? prObj?.created_at : null);
         if (!reqDate) return false;
         const age = getAgeInDays(reqDate);
         return age != null && age > 5;
@@ -449,8 +428,8 @@ export default function SupplierOrdersTable({
 
         <Table.Body>
           {sortedOrders.map((order) => {
-            const lineCount = order.line_count || 0;
-            const ageDays = getAgeInDays(order.created_at);
+            const lineCount = getLineCount(order);
+            const ageDays = getAgeInDays(getCreatedAt(order));
             const isBlocking = (
               (order.status === "OPEN" && ageDays != null && ageDays > STALE_OPEN_DAYS) ||
               (order.status === "SENT" && ageDays != null && ageDays > STALE_SENT_DAYS)
@@ -475,14 +454,14 @@ export default function SupplierOrdersTable({
                         <Text title={blockingReason}>⚠️</Text>
                       )}
                       <Text weight="bold" family="mono">
-                        {order.order_number || "—"}
+                        {getOrderNumber(order) || "—"}
                       </Text>
                     </Flex>
                   </Table.Cell>
 
                   <Table.Cell>
                     <Text weight="medium">
-                      {order.supplier_id?.name || "—"}
+                      {getSupplierObj(order)?.name || "—"}
                     </Text>
                   </Table.Cell>
 
@@ -505,9 +484,9 @@ export default function SupplierOrdersTable({
                   </Table.Cell>
 
                   <Table.Cell>
-                    {canShowAmount(order.status) && Number(order.total_amount) > 0 ? (
+                    {canShowAmount(order.status) && Number(getTotalAmount(order)) > 0 ? (
                       <Text weight="medium">
-                        {Number(order.total_amount).toFixed(2)} {order.currency || "EUR"}
+                        {Number(getTotalAmount(order)).toFixed(2)} {order.currency || "EUR"}
                       </Text>
                     ) : order.status !== "OPEN" ? (
                       <Text color="amber" size="1" style={{ fontStyle: "italic" }}>
@@ -618,19 +597,19 @@ export default function SupplierOrdersTable({
                               <Table.Row key={line.id}>
                                 <Table.Cell>
                                   <Text weight="medium">
-                                    {line.stock_item_id?.name || "—"}
+                                    {(line.stockItem ?? line.stock_item_id)?.name || "—"}
                                   </Text>
                                 </Table.Cell>
 
                                 <Table.Cell>
                                   <Text family="mono" size="1">
-                                    {line.stock_item_id?.ref || "—"}
+                                    {(line.stockItem ?? line.stock_item_id)?.ref || "—"}
                                   </Text>
                                 </Table.Cell>
 
                                 <Table.Cell>
                                   <Badge variant="soft" color="blue">
-                                    {line.supplier_ref_snapshot || "—"}
+                                    {line.supplierRefSnapshot ?? line.supplier_ref_snapshot ?? "—"}
                                   </Badge>
                                 </Table.Cell>
 
@@ -638,20 +617,23 @@ export default function SupplierOrdersTable({
                                   <Flex align="center" gap="1">
                                     <Package size={12} />
                                     <Text weight="medium">{line.quantity}</Text>
-                                    {line.purchase_requests?.length > 1 && (
+                                    {(line.purchaseRequests ?? line.purchase_requests)?.length > 1 && (
                                       <Badge color="gray" size="1">
-                                        {line.purchase_requests.length} DAs
+                                        {(line.purchaseRequests ?? line.purchase_requests).length} DAs
                                       </Badge>
                                     )}
                                   </Flex>
                                 </Table.Cell>
 
                                 <Table.Cell>
-                                  {line.purchase_requests?.length > 0 && line.purchase_requests[0].purchase_request_id?.intervention_id ? (
+                                  {(line.purchaseRequests ?? line.purchase_requests)?.length > 0 && ((line.purchaseRequests ?? line.purchase_requests)[0].purchaseRequest?.intervention?.id || (line.purchaseRequests ?? line.purchase_requests)[0].purchase_request_id?.intervention_id) ? (
                                     <Badge color="blue" variant="soft" size="1">
-                                      {typeof line.purchase_requests[0].purchase_request_id.intervention_id === 'object' 
-                                        ? line.purchase_requests[0].purchase_request_id.intervention_id.code || line.purchase_requests[0].purchase_request_id.intervention_id.id
-                                        : line.purchase_requests[0].purchase_request_id.intervention_id}
+                                      {(() => {
+                                        const first = (line.purchaseRequests ?? line.purchase_requests)[0];
+                                        const interv = first.purchaseRequest?.intervention ?? first.purchase_request_id?.intervention_id;
+                                        if (interv && typeof interv === 'object') return interv.code || interv.id;
+                                        return interv || '—';
+                                      })()}
                                     </Badge>
                                   ) : (
                                     <Text color="gray" size="1">—</Text>
@@ -660,14 +642,14 @@ export default function SupplierOrdersTable({
 
                                 <Table.Cell>
                                   <Flex direction="column" gap="1">
-                                    {line.purchase_requests?.slice(0, 2).map((pr, idx) => (
+                                    {(line.purchaseRequests ?? line.purchase_requests)?.slice(0, 2).map((pr, idx) => (
                                       <Text key={idx} size="1" color="gray">
-                                        {pr.purchase_request_id?.requested_by || "—"}
+                                        {(pr.purchaseRequest ?? pr.purchase_request_id)?.requested_by || (pr.purchaseRequest ?? pr.purchase_request_id)?.requestedBy || "—"}
                                       </Text>
                                     ))}
-                                    {line.purchase_requests?.length > 2 && (
+                                    {(line.purchaseRequests ?? line.purchase_requests)?.length > 2 && (
                                       <Text size="1" color="gray" style={{ fontStyle: "italic" }}>
-                                        +{line.purchase_requests.length - 2} autre{line.purchase_requests.length - 2 > 1 ? "s" : ""}
+                                        +{(line.purchaseRequests ?? line.purchase_requests).length - 2} autre{(line.purchaseRequests ?? line.purchase_requests).length - 2 > 1 ? "s" : ""}
                                       </Text>
                                     )}
                                   </Flex>
@@ -694,14 +676,24 @@ SupplierOrdersTable.propTypes = {
     PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       order_number: PropTypes.string,
+      orderNumber: PropTypes.string,
       status: PropTypes.string.isRequired,
       created_at: PropTypes.string,
+      createdAt: PropTypes.string,
       ordered_at: PropTypes.string,
+      orderedAt: PropTypes.string,
       received_at: PropTypes.string,
+      receivedAt: PropTypes.string,
       total_amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      totalAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       currency: PropTypes.string,
-      line_count: PropTypes.number,
+      line_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      lineCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       supplier_id: PropTypes.shape({
+        name: PropTypes.string,
+        email: PropTypes.string,
+      }),
+      supplier: PropTypes.shape({
         name: PropTypes.string,
         email: PropTypes.string,
       }),

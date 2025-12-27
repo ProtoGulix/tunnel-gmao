@@ -1,4 +1,4 @@
-import { Flex, Text, TextField, Button, Card, Box} from "@radix-ui/themes";
+import { Flex, Text, TextField, Button, Box} from "@radix-ui/themes";
 import { RefreshCw, X } from "lucide-react";
 
 export default function TableHeader({
@@ -66,7 +66,7 @@ export default function TableHeader({
             aria-label="Supprimer le filtre de recherche" 
             onClick={() => onSearchChange("")}
           >
-            Recherche: "{searchValue}" 
+            Recherche: &quot;{searchValue}&quot; 
             <X size={12} style={{ marginLeft: 4 }} />
           </Button>
         </Flex>

@@ -11,8 +11,8 @@ import {
   Badge,
   ScrollArea,
 } from "@radix-ui/themes";
-import { Search, Copy, Plus } from "lucide-react";
-import { searchAllStandardSpecs, copyStandardSpec } from "../../lib/api";
+import { Search, Copy } from "lucide-react";
+import { stockSpecs } from "@/lib/api/facade";
 
 /**
  * Dialogue pour rechercher et copier des spécifications existantes
@@ -44,9 +44,9 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
     const filtered = allSpecs.filter(
       (spec) =>
         spec.title.toLowerCase().includes(term) ||
-        spec.spec_text.toLowerCase().includes(term) ||
-        spec.stock_item_id?.name?.toLowerCase().includes(term) ||
-        spec.stock_item_id?.ref?.toLowerCase().includes(term)
+        spec.text.toLowerCase().includes(term) ||
+        spec.stockItem?.name?.toLowerCase().includes(term) ||
+        spec.stockItem?.ref?.toLowerCase().includes(term)
     );
     setFilteredSpecs(filtered);
   }, [searchTerm, allSpecs]);
@@ -54,11 +54,11 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
   const loadAllSpecs = async () => {
     try {
       setLoading(true);
-      const specs = await searchAllStandardSpecs();
+      const specs = await stockSpecs.searchAllStandardSpecs();
       
       // Exclure les specs du stock item actuel
       const filtered = specs.filter(
-        (spec) => spec.stock_item_id?.id !== stockItemId
+        (spec) => spec.stockItem?.id !== stockItemId
       );
       
       setAllSpecs(filtered);
@@ -73,7 +73,7 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
   const handleCopySpec = async (spec) => {
     try {
       setCopying(spec.id);
-      await copyStandardSpec(spec.id, stockItemId);
+      await stockSpecs.copyStandardSpec(spec.id, stockItemId);
       
       // Callback pour rafraîchir la liste des specs
       if (onSpecAdded) {
@@ -167,13 +167,13 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
                       <Flex align="center" justify="between">
                         <Flex align="center" gap="2">
                           <Badge variant="soft" color="blue" size="1">
-                            {spec.stock_item_id?.ref || "N/A"}
+                            {spec.stockItem?.ref || "N/A"}
                           </Badge>
                           <Text size="1" color="gray">
-                            {spec.stock_item_id?.name || "Article inconnu"}
+                            {spec.stockItem?.name || "Article inconnu"}
                           </Text>
                         </Flex>
-                        {spec.is_default && (
+                        {spec.isDefault && (
                           <Badge color="green" size="1">
                             Par défaut
                           </Badge>
@@ -200,7 +200,7 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
                           color="gray"
                           style={{ whiteSpace: "pre-wrap" }}
                         >
-                          {spec.spec_text}
+                          {spec.text}
                         </Text>
                       </Box>
 
@@ -228,7 +228,7 @@ export default function SearchSpecsDialog({ stockItemId, stockItemName, onSpecAd
             <Flex gap="2" p="2">
               <Text size="1" color="blue">
                 💡 <strong>Astuce :</strong> Les spécifications copiées ne seront pas
-                marquées "par défaut". Vous pouvez les modifier après la copie.
+                marquées &quot;par défaut&quot;. Vous pouvez les modifier après la copie.
               </Text>
             </Flex>
           </Card>

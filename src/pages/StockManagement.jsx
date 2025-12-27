@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, Fragment, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   Box,
   Tabs,
@@ -12,7 +12,6 @@ import {
   Package,
   ShoppingCart,
   TruckIcon,
-  AlertCircle,
   Zap,
   Building2,
   Factory,
@@ -25,10 +24,7 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LoadingState from "@/components/common/LoadingState";
 import { usePurchaseRequestFilters } from "@/hooks/useFilters";
-import {
-  useRequestStats,
-  useAvailableStatuses,
-} from "@/hooks/useStockData";
+import { useRequestStats } from "@/hooks/useStockData";
 import FilterSelect from "@/components/common/FilterSelect";
 import PurchaseRequestsTable from "@/components/stock/PurchaseRequestsTable";
 import StockItemLinkForm from "@/components/stock/StockItemLinkForm";
@@ -47,7 +43,7 @@ import { useStockItemsManagement } from "@/hooks/useStockItemsManagement";
 import { usePurchaseRequestsManagement } from "@/hooks/usePurchaseRequestsManagement";
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { STOCK_MANAGEMENT_TABS, DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
-import { getOrCreateManufacturerItem } from "@/lib/api/manufacturer-items";
+import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 
 export default function StockManagement() {
   // ========== 1. CUSTOM HOOKS (Logique métier) ==========
@@ -85,7 +81,7 @@ export default function StockManagement() {
   const [compactRows, setCompactRows] = useState(false);
 
   // ========== 3. CUSTOM HOOKS VARIABLES ==========
-  const availableStatuses = useAvailableStatuses(purchases.requests);
+  // availableStatuses not used; removed to satisfy ESLint
   const requestStats = useRequestStats(purchases.requests);
   const baseFilteredRequests = usePurchaseRequestFilters(
     purchases.requests,
@@ -94,21 +90,14 @@ export default function StockManagement() {
     statusFilter
   );
 
-  // Tri par priorité de statut
-  const STATUS_PRIORITY = {
-    'open': 1,          // Ouvertes en premier (critiques)
-    'in_progress': 2,   // En cours
-    'ordered': 3,       // Commandées
-    'received': 4,      // Reçues
-    'cancelled': 5,     // Annulées en dernier
-  };
+  // Note: Removed unused STATUS_PRIORITY constant to satisfy ESLint.
 
   const hasMissingInfo = (req) => {
-    const hasLink = !!req.stock_item_id;
+    const hasLink = !!req.stockItemId;
     const hasQty = Number(req.quantity) > 0;
     // Preferred supplier presence requires data from stock; approximate here (refined in table)
     const hasSupplierInfo = !!req.preferred_supplier_id; // may be undefined; treated as missing -> surfaced in table
-    const hasRef = !!req.item_ref || !!req.item_label; // fallback if backend provides ref; refined in table
+    const hasRef = !!req.itemLabel; // check if item has a label
     return !(hasLink && hasQty && hasSupplierInfo && hasRef);
   };
 
@@ -122,8 +111,8 @@ export default function StockManagement() {
         if (aMissing !== bMissing) return bMissing - aMissing; // true first
 
         // 2) Âge décroissant
-        const ageA = new Date().getTime() - new Date(a.created_at).getTime();
-        const ageB = new Date().getTime() - new Date(b.created_at).getTime();
+        const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
+        const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
         return ageB - ageA;
       });
   }, [baseFilteredRequests]);
@@ -132,8 +121,8 @@ export default function StockManagement() {
     return [...baseFilteredRequests]
       .filter(req => req.status === 'received')
       .sort((a, b) => {
-        const ageA = new Date().getTime() - new Date(a.created_at).getTime();
-        const ageB = new Date().getTime() - new Date(b.created_at).getTime();
+        const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
+        const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
         return ageB - ageA;
       });
   }, [baseFilteredRequests]);
@@ -228,12 +217,12 @@ export default function StockManagement() {
     // 3. L'article a un fournisseur préféré défini
     return purchases.requests.filter((r) => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      if (statusId !== "open" || !r.stock_item_id) return false;
+      if (statusId !== "open" || !r.stockItemId) return false;
       
       // Vérifier si l'article lié a un fournisseur préféré
-      const supplierRefs = stock.supplierRefsByItem?.[r.stock_item_id] || [];
-      const hasPreferredSupplier = supplierRefs.some(ref => ref.is_preferred);
-      return hasPreferredSupplier;
+      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
+      
+      return supplierRefs.some(ref => ref.is_preferred);
     }).length;
   }, [purchases.requests, stock.supplierRefsByItem]);
 
@@ -241,10 +230,10 @@ export default function StockManagement() {
     () => purchases.requests.filter((r) => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
       if (statusId !== "open") return false;
-      if (!r.stock_item_id) return false;
+      if (!r.stockItemId) return false;
       
       // Demande a un article mais pas de fournisseur préféré
-      const supplierRefs = stock.supplierRefsByItem?.[r.stock_item_id] || [];
+      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
       const hasPreferredSupplier = supplierRefs.some(ref => ref.is_preferred);
       return !hasPreferredSupplier;
     }).length,
@@ -254,7 +243,7 @@ export default function StockManagement() {
   const unlinkedCount = useMemo(
     () => purchases.requests.filter((r) => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      return statusId === "open" && !r.stock_item_id;
+      return statusId === "open" && !r.stockItemId;
     }).length,
     [purchases.requests]
   );
@@ -291,7 +280,7 @@ export default function StockManagement() {
       const manuName = refData.manufacturer_name?.trim() || '';
       const manuRef = refData.manufacturer_ref?.trim() || '';
       if (manuName || manuRef) {
-        const manu = await getOrCreateManufacturerItem({
+        const manu = await manufacturerItems.getOrCreateManufacturerItem({
           name: manuName,
           ref: manuRef,
           designation: refData.manufacturer_designation?.trim() || '',
@@ -299,15 +288,17 @@ export default function StockManagement() {
         manufacturer_item_id = manu?.id || null;
       }
 
-      await stock.addSupplierRef({
-        stock_item_id: stockItemId,
-        supplier_id: refData.supplier_id,
-        supplier_ref: refData.supplier_ref?.trim() || '',
-        unit_price: refData.unit_price,
-        delivery_time_days: refData.delivery_time_days,
-        is_preferred: false,
-        ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
-      });
+      await stock.addSupplierRef(
+        stockItemId,
+        {
+          supplier_id: refData.supplier_id,
+          supplier_ref: refData.supplier_ref?.trim() || '',
+          unit_price: refData.unit_price,
+          delivery_time_days: refData.delivery_time_days,
+          is_preferred: false,
+          ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
+        }
+      );
       await Promise.all([
         stock.loadSupplierRefs(stockItemId),
         stock.loadStockItems(false),
@@ -331,8 +322,7 @@ export default function StockManagement() {
   const onAddStandardSpecForRequests = useCallback(async (stockItemId, specsData) => {
     try {
       setFormLoading(true);
-      const { createStockItemStandardSpec } = await import("../lib/api");
-      await createStockItemStandardSpec({
+      await stockAPI.createStockItemStandardSpec({
         stock_item_id: stockItemId,
         title: specsData.title,
         spec_text: specsData.spec_text,
@@ -365,7 +355,7 @@ export default function StockManagement() {
     const trimmedSupplierRef = (currentFormData.supplier_ref || '').trim();
     const trimmedSupplierId = (currentFormData.supplier_id || '').trim();
 
-    console.log('[DEBUG] handleAddSupplierRef called with:', {
+    console.warn('[DEBUG] handleAddSupplierRef called with:', {
       stockItemId,
       currentFormData,
       trimmed: { trimmedSupplierId, trimmedSupplierRef }
@@ -390,7 +380,7 @@ export default function StockManagement() {
       const manuName = currentFormData.manufacturer_name?.trim() || '';
       const manuRef = currentFormData.manufacturer_ref?.trim() || '';
       if (manuName || manuRef) {
-        const manu = await getOrCreateManufacturerItem({
+        const manu = await manufacturerItems.getOrCreateManufacturerItem({
           name: manuName,
           ref: manuRef,
           designation: currentFormData.manufacturer_designation?.trim() || '',
@@ -408,7 +398,7 @@ export default function StockManagement() {
         ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
       };
 
-      console.log('[DEBUG] Sending payload to API:', payload);
+      console.warn('[DEBUG] Sending payload to API:', payload);
 
       // Call addSupplierRef with correct signature: (stockItemId, refData)
       // But payload already has stock_item_id, so extract it
@@ -582,7 +572,7 @@ export default function StockManagement() {
       // 1. Gérer le manufacturer_item_id si des champs fabricant sont remplis
       let manufacturer_item_id = null;
       if (itemData.manufacturer_name?.trim() || itemData.manufacturer_ref?.trim()) {
-        const manu = await getOrCreateManufacturerItem({
+        const manu = await manufacturerItems.getOrCreateManufacturerItem({
           name: itemData.manufacturer_name?.trim() || "",
           ref: itemData.manufacturer_ref?.trim() || "",
           designation: itemData.manufacturer_designation?.trim() || ""
@@ -591,7 +581,10 @@ export default function StockManagement() {
       }
 
       // 2. Préparer les données pour l'API (retirer les champs temporaires)
-      const {manufacturer_name, manufacturer_ref, manufacturer_designation, ...apiData} = itemData;
+      const apiData = { ...itemData };
+      delete apiData.manufacturer_name;
+      delete apiData.manufacturer_ref;
+      delete apiData.manufacturer_designation;
       
       // 3. Ajouter manufacturer_item_id si disponible
       const payload = {
@@ -638,8 +631,8 @@ export default function StockManagement() {
     // Compter les demandes vraiment prêtes (open + article + fournisseur préféré)
     const trueReadyCount = filteredRequests.filter(r => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      if (statusId !== "open" || !r.stock_item_id) return false;
-      const supplierRefs = stock.supplierRefsByItem?.[r.stock_item_id] || [];
+      if (statusId !== "open" || !r.stockItemId) return false;
+      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
       return supplierRefs.some(ref => ref.is_preferred);
     }).length;
 
@@ -685,14 +678,20 @@ export default function StockManagement() {
   };
 
   // ========== 5. EFFECTS (useEffect) ==========
+  // Protéger contre React StrictMode et les dépendances instables
+  const initialLoadRef = useRef(false);
+  
   useEffect(() => {
-    // Initial load of all data
+    // Charger les données UNE SEULE FOIS au montage
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+
     Promise.all([
       stock.loadStockItems(true),
       purchases.loadRequests(true),
       purchasing.loadAll(true)
     ]);
-  }, []);
+  }, [purchases, purchasing, stock]); // Pas de dépendances - charge une seule fois
 
   // Auto-refresh silencieux (pas de spinner pour éviter le clignotement)
   useAutoRefresh(async () => {
@@ -808,7 +807,7 @@ export default function StockManagement() {
           <StatusCallout type="info" dialog title="Confirmer le dispatch">
             <Flex direction="column" gap="3">
               <Text size="2" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                {readyCount} demande{readyCount > 1 ? 's' : ''} d'achat {readyCount > 1 ? 'vont être dispatchées' : 'va être dispatchée'} vers les paniers fournisseurs.
+                {readyCount} demande{readyCount > 1 ? 's' : ''} d&#39;achat {readyCount > 1 ? 'vont être dispatchées' : 'va être dispatchée'} vers les paniers fournisseurs.
               </Text>
               <Flex gap="2">
                 <Button 
@@ -886,7 +885,7 @@ export default function StockManagement() {
             <Tabs.Trigger value="requests">
               <Flex align="center" gap="2">
                 <ShoppingCart size={14} />
-                <Text>Demandes d'achat</Text>
+                <Text>Demandes d&#39;achat</Text>
                 {readyCount > 0 && (
                   <Badge color="blue" variant="solid" size="1">
                     {readyCount}
@@ -986,9 +985,10 @@ export default function StockManagement() {
                   <EmptyState
                     icon={<ShoppingCart size={64} />}
                     title="Aucune demande trouvée"
-                    description="Ajustez ou réinitialisez les filtres pour afficher les demandes d'achat"
+                    description="Ajustez ou réinitialisez les filtres pour afficher les demandes d&#39;achat"
                     actions={[
                       <Button
+                        key="reset-filters-requests"
                         size="2"
                         variant="soft"
                         color="gray"
@@ -1000,7 +1000,7 @@ export default function StockManagement() {
                       >
                         Réinitialiser les filtres
                       </Button>,
-                      <Button size="2" onClick={refreshRequests}>
+                      <Button key="refresh-requests" size="2" onClick={refreshRequests}>
                         Rafraîchir
                       </Button>
                     ]}
@@ -1026,7 +1026,7 @@ export default function StockManagement() {
                       renderExpandedContent={(request) => (
                         <StockItemLinkForm
                           requestId={request.id}
-                          initialItemLabel={request.item_label}
+                          initialItemLabel={request.itemLabel}
                           onLinkExisting={handleLinkExisting}
                           onCreateNew={handleCreateNew}
                           loading={formLoading}
@@ -1060,7 +1060,7 @@ export default function StockManagement() {
                             renderExpandedContent={(request) => (
                               <StockItemLinkForm
                                 requestId={request.id}
-                                initialItemLabel={request.item_label}
+                                initialItemLabel={request.itemLabel}
                                 onLinkExisting={handleLinkExisting}
                                 onCreateNew={handleCreateNew}
                                 loading={formLoading}
@@ -1119,10 +1119,11 @@ export default function StockManagement() {
                     title="Aucun panier fournisseur"
                     description="Créez une commande ou modifiez les filtres pour voir les paniers existants"
                     actions={[
-                      <Button size="2" onClick={refreshOrders}>
+                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
                         Rafraîchir
                       </Button>,
                       <Button
+                        key="reset-filter-orders"
                         size="2"
                         variant="soft"
                         color="gray"
@@ -1178,6 +1179,7 @@ export default function StockManagement() {
                     description="Ajoutez un article ou modifiez les filtres pour voir la liste"
                     actions={[
                       <Button
+                        key="reset-filters-stock"
                         size="2"
                         variant="soft"
                         color="gray"
@@ -1188,7 +1190,7 @@ export default function StockManagement() {
                       >
                         Réinitialiser les filtres
                       </Button>,
-                      <Button size="2" onClick={refreshStock}>Rafraîchir</Button>
+                      <Button key="refresh-stock" size="2" onClick={refreshStock}>Rafraîchir</Button>
                     ]}
                   />
                 ) : (

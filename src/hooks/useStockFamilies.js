@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { fetchStockFamilies, fetchStockSubFamilies } from "@/lib/directus";
+import { useState, useEffect } from 'react';
+import { stock } from '@/lib/api/facade';
 
 /**
  * Hook pour récupérer les familles de stock
@@ -13,10 +13,10 @@ export const useStockFamilies = () => {
     const loadFamilies = async () => {
       try {
         setLoading(true);
-        const data = await fetchStockFamilies();
+        const data = await stock.fetchStockFamilies();
         setFamilies(data);
       } catch (err) {
-        console.error("Erreur chargement familles:", err);
+        console.error('Erreur chargement familles:', err);
         setError(err);
       } finally {
         setLoading(false);
@@ -46,10 +46,10 @@ export const useStockSubFamilies = (familyCode) => {
     const loadSubFamilies = async () => {
       try {
         setLoading(true);
-        const data = await fetchStockSubFamilies(familyCode);
+        const data = await stock.fetchStockSubFamilies(familyCode);
         setSubFamilies(data);
       } catch (err) {
-        console.error("Erreur chargement sous-familles:", err);
+        console.error('Erreur chargement sous-familles:', err);
         setError(err);
       } finally {
         setLoading(false);

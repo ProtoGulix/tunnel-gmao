@@ -12,7 +12,7 @@ import {
 } from "@radix-ui/themes";
 import { Edit2, Save } from "lucide-react";
 import { useStockFamilies, useStockSubFamilies } from "@/hooks/useStockFamilies";
-import { fetchManufacturerItems } from "@/lib/api/manufacturer-items";
+import { manufacturerItems } from "@/lib/api/facade";
 
 /**
  * Dialogue pour modifier un article de stock
@@ -44,7 +44,7 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
 
   // Charger les fabricants au montage
   useEffect(() => {
-    fetchManufacturerItems().then(items => setManufacturers(items || []));
+    manufacturerItems.fetchManufacturerItems().then(items => setManufacturers(items || []));
   }, []);
 
   // Filtrer les suggestions par ref
@@ -100,9 +100,9 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
       </Dialog.Trigger>
 
       <Dialog.Content maxWidth="600px">
-        <Dialog.Title>Modifier l'article</Dialog.Title>
+        <Dialog.Title>Modifier l&apos;article</Dialog.Title>
         <Dialog.Description size="2" mb="4">
-          Modifiez les informations de l'article de stock
+          Modifiez les informations de l&apos;article de stock
         </Dialog.Description>
 
         <Flex direction="column" gap="3">

@@ -56,7 +56,7 @@ export default function StockItemsTable({
   const getItemRefs = useCallback((itemId) => {
     if (Array.isArray(refs)) {
       return refs.filter((r) => {
-        const sid = typeof r.stock_item_id === "object" ? r.stock_item_id?.id : r.stock_item_id;
+        const sid = typeof r.stockItemId === "object" ? r.stockItemId?.id : r.stockItemId;
         return String(sid) === String(itemId);
       });
     }
@@ -78,35 +78,33 @@ export default function StockItemsTable({
   const sortedItems = useMemo(() => {
     if (!sortConfig.column) return items;
 
-    const sorted = [...items].sort((a, b) => {
-      let aValue, bValue;
-
-      switch (sortConfig.column) {
-        case 'ref':
-          aValue = a.ref || '';
-          bValue = b.ref || '';
-          break;
-        case 'name':
-          aValue = a.name || '';
-          bValue = b.name || '';
-          break;
-        case 'family':
-          aValue = a.family_code || '';
-          bValue = b.family_code || '';
-          break;
-        case 'stock':
-          aValue = a.quantity || 0;
-          bValue = b.quantity || 0;
-          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-        default:
-          return 0;
-      }
-
-      const comparison = aValue.toString().localeCompare(bValue.toString(), 'fr', { numeric: true });
-      return sortConfig.direction === 'asc' ? comparison : -comparison;
-    });
-
-    return sorted;
+    return [...items].sort((a, b) => {
+          let aValue, bValue;
+    
+          switch (sortConfig.column) {
+            case 'ref':
+              aValue = a.ref || '';
+              bValue = b.ref || '';
+              break;
+            case 'name':
+              aValue = a.name || '';
+              bValue = b.name || '';
+              break;
+            case 'family':
+              aValue = a.family_code || '';
+              bValue = b.family_code || '';
+              break;
+            case 'stock':
+              aValue = a.quantity || 0;
+              bValue = b.quantity || 0;
+              return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+            default:
+              return 0;
+          }
+    
+          const comparison = aValue.toString().localeCompare(bValue.toString(), 'fr', { numeric: true });
+          return sortConfig.direction === 'asc' ? comparison : -comparison;
+        });
   }, [items, sortConfig]);
 
   // TODO: Si items.length > 100, implémenter virtualisation avec react-window
@@ -230,7 +228,7 @@ export default function StockItemsTable({
                       ) : (
                         <Flex align="center" gap="1">
                           {/* Check if item has a preferred ref */}
-                          {getItemRefs(item.id).some((r) => r.is_preferred) && (
+                          {getItemRefs(item.id).some((r) => r.isPreferred) && (
                             <Star size={14} color="var(--amber-9)" fill="var(--amber-9)" title="Référence préférée définie" />
                           )}
                           <Badge color="blue" variant="outline">{supplierRefsCounts[item.id] || 0}</Badge>

@@ -1,5 +1,5 @@
 // ===== IMPORTS =====
-import { useState } from 'react';
+// useState removed - not used in component
 import { Box, Flex, Card, Text } from '@radix-ui/themes';
 import PageHeader from '@/components/layout/PageHeader';
 import { usePageHeaderProps } from '@/hooks/usePageConfig';
@@ -17,7 +17,7 @@ export default function InterventionRequestForm() {
       <Box p="6" maxWidth="800px" mx="auto">
         <Card>
           <Flex direction="column" gap="4">
-            <Text>Formulaire de demande d'intervention - À compléter</Text>
+            <Text>Formulaire de demande d&apos;intervention - À compléter</Text>
           </Flex>
         </Card>
       </Box>

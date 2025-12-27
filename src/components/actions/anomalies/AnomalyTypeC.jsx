@@ -3,6 +3,16 @@ import PropTypes from "prop-types";
 import { Text, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader, SingleActionDetail } from "./AnomalyHelpers";
 
+// DTO-friendly accessors with legacy fallback
+const getInterventionId = (item) => item?.interventionId ?? item?.intervention_id;
+const getIntervention = (item) => item?.intervention ?? item?.intervention_code ?? "N/A";
+const getInterventionTitle = (item) => item?.interventionTitle ?? item?.intervention_title ?? "Sans titre";
+const getSeverity = (item) => item?.severity ?? "medium";
+const getTime = (item) => Number(item?.time ?? item?.timeSpent ?? item?.time_spent ?? 0);
+const getCategoryName = (item) => item?.categoryName ?? item?.category_name ?? "—";
+const getCategory = (item) => item?.category ?? "—";
+const getMachine = (item) => item?.machine ?? item?.machine_name ?? "—";
+
 /**
  * Type C - Actions trop longues
  * Affiche les actions de plus de 4h sur catégories normalement simples
@@ -41,27 +51,28 @@ import { AnomalyContainer, AnomalyHeader, SingleActionDetail } from "./AnomalyHe
  * />
  */
 export default function AnomalyTypeC({ item }) {
-  const severityColor = item.severity === 'high' ? 'red' : 'orange';
+  const severity = getSeverity(item);
+  const severityColor = severity === 'high' ? 'red' : 'orange';
   
   return (
-    <AnomalyContainer severity={item.severity}>
+    <AnomalyContainer severity={severity}>
       <AnomalyHeader
-        title={item.intervention || 'N/A'}
-        subtitle={`${item.interventionTitle || 'Sans titre'}`}
-        severity={item.severity}
+        title={getIntervention(item)}
+        subtitle={getInterventionTitle(item)}
+        severity={severity}
         badges={[
-          { color: severityColor, label: `${item.time}h`, size: "2" }
+          { color: severityColor, label: `${getTime(item)}h`, size: "2" }
         ]}
       >
-        {item.interventionId && (
-          <Link to={`/intervention/${item.interventionId}`}>
+        {getInterventionId(item) && (
+          <Link to={`/intervention/${getInterventionId(item)}`}>
             <Text size="2" color="blue" style={{ display: 'block', marginTop: '4px' }}>
               → Voir l&apos;intervention
             </Text>
           </Link>
         )}
         <Text size="1" color="gray" style={{ display: 'block' }}>
-          {item.categoryName} ({item.category}) • Machine: {item.machine}
+          {getCategoryName(item)} ({getCategory(item)}) • Machine: {getMachine(item)}
         </Text>
       </AnomalyHeader>
       
@@ -76,21 +87,31 @@ export default function AnomalyTypeC({ item }) {
   );
 }
 
+AnomalyTypeC.displayName = "AnomalyTypeC";
+
 AnomalyTypeC.propTypes = {
   item: PropTypes.shape({
+    // DTO field names (camelCase)
     interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    intervention: PropTypes.string.isRequired,
+    intervention_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    intervention: PropTypes.string,
+    intervention_code: PropTypes.string,
     interventionTitle: PropTypes.string,
-    severity: PropTypes.oneOf(['high', 'medium', 'low']).isRequired,
-    time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    categoryName: PropTypes.string.isRequired,
-    category: PropTypes.string.isRequired,
-    machine: PropTypes.string.isRequired,
-    tech: PropTypes.string.isRequired,
-    date: PropTypes.string.isRequired,
-    description: PropTypes.string,
-    action: PropTypes.shape({
-      description: PropTypes.string
-    })
-  }).isRequired
+    intervention_title: PropTypes.string,
+    severity: PropTypes.oneOf(['high', 'medium', 'low']),
+    time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    timeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    time_spent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    categoryName: PropTypes.string,
+    category_name: PropTypes.string,
+    category: PropTypes.string,
+    machine: PropTypes.string,
+    machine_name: PropTypes.string,
+    tech: PropTypes.string,
+    technician: PropTypes.string,
+    technician_name: PropTypes.string,
+    date: PropTypes.string,
+    created_at: PropTypes.string,
+    description: PropTypes.string
+  })
 };

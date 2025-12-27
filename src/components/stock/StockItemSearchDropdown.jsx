@@ -10,7 +10,7 @@ import {
   Theme
 } from '@radix-ui/themes';
 import { Search, Package, AlertCircle } from 'lucide-react';
-import { fetchStockItems } from '@/lib/api';
+import { stock } from '@/lib/api/facade';
 import { normalizeText } from '@/lib/utils/textUtils';
 import { useError } from '@/contexts/ErrorContext';
 
@@ -51,7 +51,7 @@ export default function StockItemSearchDropdown({
     const loadItems = async () => {
       try {
         setLoading(true);
-        const items = await fetchStockItems();
+        const items = await stock.fetchStockItems();
         setAllStockItems(items);
       } catch (error) {
         showError(error);

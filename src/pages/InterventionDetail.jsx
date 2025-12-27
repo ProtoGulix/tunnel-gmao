@@ -12,18 +12,7 @@ import { Button, Tabs, Flex, Text, Badge } from '@radix-ui/themes';
 import { Wrench, Plus } from 'lucide-react';
 
 // 5. API / Lib
-import { interventions, actions, actionSubcategories, interventionStatusLogs } from '@/lib/api/facade';
-import {
-  fetchPurchaseRequestsByIntervention,
-  createPurchaseRequest,
-  updatePurchaseRequest,
-  fetchStockItems,
-  fetchSuppliers,
-  createStockItemSupplier,
-  fetchStockItemSuppliers,
-  fetchStockItemStandardSpecs,
-  createStockItemStandardSpec,
-} from '@/lib/api';
+import { interventions, actions, actionSubcategories, interventionStatusLogs, suppliers, stock, stockSuppliers } from '@/lib/api/facade';
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
@@ -55,6 +44,25 @@ import {
   getLastUpdateDate,
   groupTimelineByDay,
 } from '@/lib/utils/interventionUtils.jsx';
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// STATUS MAPPING (DTO ↔ Backend French)
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Maps domain DTO status to config key for UI display.
+ * @param {string} dtoStatus - Domain status ('open' | 'in_progress' | 'closed' | 'cancelled')
+ * @returns {string} Config key ('ouvert' | 'attente_pieces' | 'ferme' | 'cancelled')
+ */
+const mapDtoStatusToConfigKey = (dtoStatus) => {
+  const mapping = {
+    'open': 'ouvert',
+    'in_progress': 'attente_pieces', // Default display
+    'closed': 'ferme',
+    'cancelled': 'cancelled'
+  };
+  return mapping[dtoStatus] || 'ouvert';
+};
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -132,7 +140,7 @@ export default function InterventionDetail() {
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [stockItems, setStockItems] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
+  const [supplierList, setSupplierList] = useState([]);
   const [supplierRefs, setSupplierRefs] = useState({});
   const [standardSpecs, setStandardSpecs] = useState({});
   const [summaryDataLoaded, setSummaryDataLoaded] = useState(false);
@@ -170,10 +178,10 @@ export default function InterventionDetail() {
     // Charger les purchase requests pour afficher le badge
     const loadBadgesData = async () => {
       try {
-        const requestsData = await fetchPurchaseRequestsByIntervention(id);
+        const requestsData = await stock.fetchPurchaseRequestsByIntervention(id);
         setPurchaseRequests(requestsData || []);
       } catch (error) {
-        console.error('Erreur chargement badges:', error);
+        showError(error);
       }
     };
     loadBadgesData();
@@ -194,12 +202,12 @@ export default function InterventionDetail() {
           setComplexityFactors(factorsData || []);
           setActionDataLoaded(true);
         } catch (error) {
-          console.error('Erreur chargement données action:', error);
+          showError(error);
         }
       };
       loadActionData();
     }
-  }, [showActionForm, actionDataLoaded]);
+  }, [showActionForm, actionDataLoaded, showError]);
 
   // Lazy loading : Charger les données de l'onglet Résumé uniquement lors du premier accès
   useEffect(() => {
@@ -208,12 +216,12 @@ export default function InterventionDetail() {
         try {
           // Charger stocks et fournisseurs en parallèle
           const [itemsData, suppliersData] = await Promise.all([
-            fetchStockItems(),
-            fetchSuppliers()
+            stock.fetchStockItems(),
+            suppliers.fetchSuppliers()
           ]);
 
           setStockItems(itemsData || []);
-          setSuppliers(suppliersData || []);
+          setSupplierList(suppliersData || []);
 
           // Charger les références fournisseurs et spécifications standards pour chaque article
           // Charger supplier refs et standard specs pour chaque stock item
@@ -224,17 +232,17 @@ export default function InterventionDetail() {
             await Promise.all(
               itemsData.map(async (item) => {
                 try {
-                  const refs = await fetchStockItemSuppliers(item.id);
+                  const refs = await stockSuppliers.fetchStockItemSuppliers(item.id);
                   if (refs && refs.length > 0) {
                     refsGrouped[item.id] = refs;
                   }
 
-                  const specs = await fetchStockItemStandardSpecs(item.id);
+                  const specs = await stock.fetchStockItemStandardSpecs(item.id);
                   if (specs && specs.length > 0) {
                     specsGrouped[item.id] = specs;
                   }
-                } catch (err) {
-                  console.warn(`Erreur chargement données pour item ${item.id}:`, err);
+                } catch {
+                  // Silently skip individual item load failures
                 }
               })
             );
@@ -245,12 +253,12 @@ export default function InterventionDetail() {
           
           setSummaryDataLoaded(true);
         } catch (error) {
-          console.error('Erreur chargement données résumé:', error);
+          showError(error);
         }
       };
       loadSummaryData();
     }
-  }, [activeTab, summaryDataLoaded, id]);
+  }, [activeTab, summaryDataLoaded, id, showError]);
 
   // Injection de styles responsive pour timeline et boutons d'action
   useEffect(() => {
@@ -311,8 +319,7 @@ export default function InterventionDetail() {
       }
       pdfUrlRef.current = url;
       setPdfUrl(url);
-    } catch (e) {
-      console.error('Erreur chargement PDF:', e);
+    } catch {
       setOperationError('Impossible de charger la fiche PDF.');
     } finally {
       setPdfLoading(false);
@@ -352,7 +359,7 @@ export default function InterventionDetail() {
       // Priorité : dernière catégorie utilisée > DEP > première catégorie disponible
       let defaultId = lastAction?.subcategory?.id;
       if (!defaultId) {
-        const dep = subcategories.find(c => c.category_id?.code === 'DEP');
+        const dep = subcategories.find(c => c.category?.code === 'DEP');
         defaultId = dep?.id || subcategories[0]?.id;
       }
       if (defaultId) {
@@ -438,19 +445,20 @@ export default function InterventionDetail() {
     if (!actionForm.description.trim()) return;
 
     await mutateAddAction({
-      intervention_id: id,
+      intervention: { id },
       description: actionForm.description,
-      time_spent: parseFloat(actionForm.time) || 0,
-      created_at: actionForm.date || new Date().toISOString().split('T')[0],
-      complexity_score: parseInt(actionForm.complexity) || null,
-      complexity_factors: actionForm.complexityFactors.length > 0 ? actionForm.complexityFactors : null,
-      action_subcategory: actionForm.category || null,
-      tech: null
+      timeSpent: parseFloat(actionForm.time) || 0,
+      createdAt: actionForm.date || new Date().toISOString().split('T')[0],
+      complexityScore: parseInt(actionForm.complexity) || null,
+      complexityFactors: actionForm.complexityFactors.length > 0 ? actionForm.complexityFactors : undefined,
+      subcategory: actionForm.category ? { id: String(actionForm.category) } : undefined,
+      technician: null,
     });
   }, [actionForm, id, mutateAddAction]);
 
-  const handleStatusChange = useCallback((newStatus) => {
-    mutateUpdateStatus({ status_actual: newStatus });
+  const handleStatusChange = useCallback((backendStatus) => {
+    // Backend status is in French (ouvert, attente_pieces, attente_prod, ferme, cancelled)
+    mutateUpdateStatus({ status: backendStatus });
   }, [mutateUpdateStatus]);
 
   const handlePriorityChange = useCallback((newPriority) => {
@@ -459,64 +467,60 @@ export default function InterventionDetail() {
 
   const handleCreatePurchaseRequest = useCallback(async (requestData) => {
     try {
-      await createPurchaseRequest(requestData);
+      await stock.createPurchaseRequest(requestData);
       if (summaryDataLoaded) {
-        const updated = await fetchPurchaseRequestsByIntervention(id);
+        const updated = await stock.fetchPurchaseRequestsByIntervention(id);
         setPurchaseRequests(updated || []);
       }
     } catch (error) {
-      console.error('Erreur création demande d\'achat:', error);
       showError(error);
     }
   }, [id, summaryDataLoaded, showError]);
 
   const handleUpdatePurchaseRequest = useCallback(async (requestId, updates) => {
     try {
-      await updatePurchaseRequest(requestId, updates);
+      await stock.updatePurchaseRequest(requestId, updates);
       if (summaryDataLoaded) {
-        const updated = await fetchPurchaseRequestsByIntervention(id);
+        const updated = await stock.fetchPurchaseRequestsByIntervention(id);
         setPurchaseRequests(updated || []);
       }
     } catch (error) {
-      console.error('Erreur mise à jour demande d\'achat:', error);
       showError(error);
     }
   }, [id, summaryDataLoaded, showError]);
 
   const handleAddSupplierRef = useCallback(async (stockItemId, supplierRefData) => {
     try {
-      await createStockItemSupplier({
-        stock_item_id: stockItemId,
+      await stockSuppliers.createStockItemSupplier({
+        stockItemId: stockItemId,
         ...supplierRefData
       });
       
       // Rafraîchir les supplier refs pour cet item
-      const refs = await fetchStockItemSuppliers(stockItemId);
+      const refs = await stockSuppliers.fetchStockItemSuppliers(stockItemId);
       setSupplierRefs(prev => ({
         ...prev,
         [stockItemId]: refs || []
       }));
     } catch (error) {
-      console.error('Erreur ajout référence fournisseur:', error);
       showError(error);
     }
   }, [showError]);
 
   const handleAddStandardSpec = useCallback(async (stockItemId, specData) => {
     try {
-      await createStockItemStandardSpec({
-        stock_item_id: stockItemId,
+      await stock.createStockItemStandardSpec({
+        stockItemId: stockItemId,
         ...specData
       });
       
       // Rafraîchir les standard specs pour cet item
-      const specs = await fetchStockItemStandardSpecs(stockItemId);
+      const specs = await stock.fetchStockItemStandardSpecs(stockItemId);
       setStandardSpecs(prev => ({
         ...prev,
         [stockItemId]: specs || []
       }));
     } catch (error) {
-      console.error('Erreur ajout spécification:', error);
       showError(error);
     }
   }, [showError]);
@@ -544,13 +548,13 @@ export default function InterventionDetail() {
     <PageContainer style={{ paddingBottom: "4rem" }}>
       <PageHeader
         icon={Wrench}
-        title={`${interv.machine_id?.name || "Machine"} • ${interv.code || `INT-${id}`}`}
+        title={`${interv.machine?.name || "Machine"} • ${interv.code || `INT-${id}`}`}
         subtitle={interv.title || "Intervention"}
         statusDropdown={
           <DropdownButton
-            label={STATE_COLORS[interv.status_actual?.id]?.label || 'En cours'}
-            color={STATE_COLORS[interv.status_actual?.id]?.activeBg || 'var(--blue-6)'}
-            textColor={STATE_COLORS[interv.status_actual?.id]?.textActive || 'white'}
+            label={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.label || 'En cours'}
+            color={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.activeBg || 'var(--blue-6)'}
+            textColor={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.textActive || 'white'}
             items={[
               { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
               { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },
@@ -660,7 +664,7 @@ export default function InterventionDetail() {
             onCreatePurchaseRequest={handleCreatePurchaseRequest}
             onUpdatePurchaseRequest={handleUpdatePurchaseRequest}
             stockItems={stockItems}
-            suppliers={suppliers}
+            suppliers={supplierList}
             supplierRefs={supplierRefs}
             standardSpecs={standardSpecs}
             onAddSupplierRef={handleAddSupplierRef}

@@ -5,7 +5,7 @@ import { useMemo, useCallback, useEffect, useState } from 'react';
 // 2. React Router
 import { useNavigate } from 'react-router-dom';
 
-// 3. UI Libraries
+// 3. UI Libraries (Radix)
 import {
   Container,
   Box,
@@ -31,15 +31,75 @@ import { useApiCall } from '@/hooks/useApiCall';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { usePageHeaderProps } from '@/hooks/usePageConfig';
 
-// 7. Lib
+// 7. API
 import { interventions } from '@/lib/api/facade';
 
 // 8. Config
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// STATUS MAPPING (DTO → Config)
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 /**
- * PAGE : ACCUEIL / À FAIRE
- * Liste simple des interventions ouvertes dans une table unique
+ * Maps domain DTO status to config key for display.
+ * @param {string} dtoStatus - Domain status ('open' | 'in_progress' | 'closed' | 'cancelled')
+ * @returns {string} Config key ('ouvert' | 'attente_pieces' | 'ferme' | 'cancelled')
+ */
+const mapDtoStatusToConfigKey = (dtoStatus) => {
+  const mapping = {
+    'open': 'ouvert',
+    'in_progress': 'attente_pieces', // Default to pieces for display
+    'closed': 'ferme',
+    'cancelled': 'cancelled'
+  };
+  return mapping[dtoStatus] || 'ouvert';
+};
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Interventions list page with priority-based segmentation.
+ * Groups open interventions into 4 blocks: actionable, blocked, projects, archived.
+ * Features full-text search, smart sorting by priority & age, auto-refresh.
+ *
+ * @component
+ * @description
+ * Display all interventions in 4 visual blocks:
+ * - 🔴 Actionable: Open interventions needing immediate action
+ * - 🟠 Blocked: Waiting for parts/supplier (attente_pieces, attente_prod)
+ * - 🔵 Projects: PRO/PIL/MES type with non-urgent priority
+ * - 📦 Archived: Closed or cancelled interventions
+ *
+ * Search filters interventions by machine code, intervention code, or title.
+ * Sorting: by priority (urgent → normal → faible) then by age (newest first).
+ * Age badge shown only if > threshold (urgent & 7+ days OR 30+ days).
+ *
+ * @architecture
+ * - State: useState for search, UI state
+ * - Data fetching: useApiCall with silent background refresh
+ * - Computed: useMemo for segmentation, sorting, calculations
+ * - Side effects: useEffect for initial load, useAutoRefresh for polling
+ *
+ * @performance
+ * - Memoized segmentation/sorting (recalc only on data/search change)
+ * - Lazy priority/status lookups (callbacks with useCallback)
+ * - Background auto-refresh (no loading state)
+ *
+ * @route /interventions
+ * @requires Auth
+ *
+ * @example
+ * // Route in menuConfig.js
+ * { path: "/interventions", component: InterventionsList, requiresAuth: true }
+ *
+ * @see {@link InterventionDetail} - Detail page
+ * @see {@link PRIORITY_CONFIG} - Priority colors and labels
+ * @see {@link STATUS_CONFIG} - Status colors and labels
+ *
+ * @returns {JSX.Element} List page with 4 segmented blocks
  */
 export default function InterventionsList() {
   const navigate = useNavigate();
@@ -91,30 +151,28 @@ export default function InterventionsList() {
     const archivé = [];
 
     filteredInterventions.forEach(i => {
-      const statusId = i.status?.id;
-      const type = i.type?.toUpperCase();
+      const { status, type: rawType, priority } = i; // DTO normalized status: 'open' | 'in_progress' | 'closed' | 'cancelled'
+      const type = rawType?.toUpperCase();
       
-      // BLOC 4 : Archivé
-      if (statusId === 'ferme' || statusId === 'cancelled') {
+      // BLOC 4 : Archivé (closed ou cancelled)
+      if (status === 'closed' || status === 'cancelled') {
         archivé.push(i);
         return;
       }
 
-      // BLOC 3 : Projets / Support
-      if (type === 'PRO' || type === 'PIL' || type === 'MES') {
-        if (i.priority?.toLowerCase() !== 'urgent') {
-          projet.push(i);
-          return;
-        }
+      // BLOC 3 : Projets / Support (PRO/PIL/MES types, not urgent)
+      if ((type === 'PRO' || type === 'PIL' || type === 'MES') && priority?.toLowerCase() !== 'urgent') {
+        projet.push(i);
+        return;
       }
 
-      // BLOC 2 : Bloqué
-      if (statusId === 'attente_pieces' || statusId === 'attente_prod') {
+      // BLOC 2 : Bloqué (in_progress means waiting for parts/supplier)
+      if (status === 'in_progress') {
         bloque.push(i);
         return;
       }
 
-      // BLOC 1 : À faire maintenant
+      // BLOC 1 : À faire maintenant (open interventions)
       actionnable.push(i);
     });
 
@@ -127,8 +185,7 @@ export default function InterventionsList() {
     const now = new Date();
     const reported = new Date(reportedDate);
     const diffTime = Math.abs(now - reported);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, []);
 
   // Tri : priorité puis âge décroissant (pour chaque bloc)
@@ -450,7 +507,7 @@ export default function InterventionsList() {
                   </Table.Header>
                   <Table.Body>
                     {sortedBlocks.projet.map((interv) => {
-                      const statusConfig = STATUS_CONFIG[interv.status?.id] || STATUS_CONFIG.ouvert;
+                      const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ouvert;
                       const age = calculateAge(interv.reportedDate);
                       const machineCode = interv.machine?.code || 'SUPP';
                       const intervCode = interv.code || '';
@@ -521,7 +578,7 @@ export default function InterventionsList() {
                   </Table.Header>
                   <Table.Body>
                     {sortedBlocks.archivé.map((interv) => {
-                      const statusConfig = STATUS_CONFIG[interv.status?.id] || STATUS_CONFIG.ferme;
+                      const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ferme;
                       const age = calculateAge(interv.reportedDate);
                       const machineCode = interv.machine?.code || 'SUPP';
                       const intervCode = interv.code || '';
