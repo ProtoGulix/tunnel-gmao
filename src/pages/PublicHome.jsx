@@ -1,6 +1,5 @@
 // ===== IMPORTS =====
 // 1. React core
-import PropTypes from 'prop-types';
 
 // 2. React Router
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +51,7 @@ export default function PublicHome() {
               Comment pouvons-nous vous aider ?
             </Heading>
             <Text size="3" color="gray">
-              Soumettez une demande d'achat ou d'intervention ci-dessous.
+              Soumettez une demande d&apos;achat ou d&apos;intervention ci-dessous.
             </Text>
           </Box>
 
@@ -88,7 +87,7 @@ export default function PublicHome() {
                 >
                   <ShoppingCart size={48} color="var(--blue-9)" />
                 </Box>
-                <Heading size="5" align="center">Demande d'achat</Heading>
+                <Heading size="5" align="center">Demande d&apos;achat</Heading>
                 <Text color="gray" align="center" size="2">
                   Pièces, équipements ou fournitures
                 </Text>
@@ -133,7 +132,7 @@ export default function PublicHome() {
                 >
                   <ClipboardList size={48} color="var(--amber-9)" />
                 </Box>
-                <Heading size="5" align="center">Demande d'intervention</Heading>
+                <Heading size="5" align="center">Demande d&apos;intervention</Heading>
                 <Text color="gray" align="center" size="2">
                   Signaler une panne ou demander une maintenance
                 </Text>
@@ -153,8 +152,3 @@ export default function PublicHome() {
     </Box>
   );
 }
-
-// ===== PROP TYPES =====
-PublicHome.propTypes = {
-  // PublicHome a aucune props (route publique)
-};

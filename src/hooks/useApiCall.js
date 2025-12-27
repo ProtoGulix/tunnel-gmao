@@ -1,12 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useError } from '@/contexts/ErrorContext';
 
 /**
  * Hook pour gérer les appels API avec gestion d'erreur automatique
- * 
+ *
  * @example
  * const { data, loading, error, execute } = useApiCall(fetchInterventions);
- * 
+ *
  * useEffect(() => {
  *   execute();
  * }, []);
@@ -16,45 +16,74 @@ export const useApiCall = (apiFunction, options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { showError } = useError();
+  const abortControllerRef = useRef(null);
 
   // Extraire les options pour stabiliser les dépendances
-  const disableGlobalError = options.disableGlobalError;
-  const throwError = options.throwError;
+  const {disableGlobalError, throwError} = options;
 
-  const run = useCallback(async (args = [], runOptions = {}) => {
-    const { silent = false } = runOptions;
-
-    if (!silent) {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      // Normaliser args en tableau
-      const argsArray = Array.isArray(args) ? args : [];
-      const result = await apiFunction(...argsArray);
-      setData(result);
-      return result;
-    } catch (err) {
-      setError(err);
-      
-      // Afficher l'erreur globalement sauf si disabled
-      if (!disableGlobalError) {
-        showError(err);
+  // Cleanup: annuler les requêtes en cours lors du démontage
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-      
-      // Re-throw si l'utilisateur veut gérer l'erreur localement
-      if (throwError) {
-        throw err;
-      }
-      
-      return null;
-    } finally {
+    };
+  }, []);
+
+  const run = useCallback(
+    async (args = [], runOptions = {}) => {
+      const { silent = false } = runOptions;
+
+      // Créer un AbortController LOCAL pour CETTE requête uniquement
+      const localController = new AbortController();
+      const currentSignal = localController.signal;
+
       if (!silent) {
-        setLoading(false);
+        setLoading(true);
       }
-    }
-  }, [apiFunction, showError, disableGlobalError, throwError]);
+      setError(null);
+
+      try {
+        // Normaliser args en tableau
+        const argsArray = Array.isArray(args) ? args : [];
+        const result = await apiFunction(...argsArray);
+
+        // Ne pas mettre à jour le state si la requête a été annulée OU si result est null (annulation dans apiCall)
+        if (!currentSignal.aborted && result !== null) {
+          setData(result);
+        }
+
+        return result;
+      } catch (err) {
+        // Ignorer silencieusement les erreurs d'annulation (navigation React Router)
+        if (err?.name === 'NetworkError' && err?.details?.canceled) {
+          return null;
+        }
+
+        // Vérifier si la requête a été annulée avant de mettre à jour le state
+        if (!currentSignal.aborted) {
+          setError(err);
+
+          // Afficher l'erreur globalement sauf si disabled
+          if (!disableGlobalError) {
+            showError(err);
+          }
+        }
+
+        // Re-throw si l'utilisateur veut gérer l'erreur localement
+        if (throwError) {
+          throw err;
+        }
+
+        return null;
+      } finally {
+        if (!silent && !currentSignal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [apiFunction, showError, disableGlobalError, throwError]
+  );
 
   const execute = useCallback((...args) => run(args, { silent: false }), [run]);
   const executeSilent = useCallback((...args) => run(args, { silent: true }), [run]);
@@ -70,7 +99,7 @@ export const useApiCall = (apiFunction, options = {}) => {
 
 /**
  * Hook pour gérer une mutation (create, update, delete)
- * 
+ *
  * @example
  * const { mutate, loading } = useApiMutation(createIntervention, {
  *   onSuccess: () => refetch(),
@@ -88,41 +117,44 @@ export const useApiMutation = (mutationFunction, options = {}) => {
   const disableGlobalError = options.disableGlobalError;
   const throwError = options.throwError;
 
-  const mutate = useCallback(async (...args) => {
-    setLoading(true);
-    setError(null);
+  const mutate = useCallback(
+    async (...args) => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await mutationFunction(...args);
-      
-      // Callback de succès
-      if (onSuccess) {
-        onSuccess(result);
+      try {
+        const result = await mutationFunction(...args);
+
+        // Callback de succès
+        if (onSuccess) {
+          onSuccess(result);
+        }
+
+        return result;
+      } catch (err) {
+        setError(err);
+
+        // Afficher l'erreur globalement
+        if (!disableGlobalError) {
+          showError(err);
+        }
+
+        // Callback d'erreur
+        if (onError) {
+          onError(err);
+        }
+
+        if (throwError) {
+          throw err;
+        }
+
+        return null;
+      } finally {
+        setLoading(false);
       }
-      
-      return result;
-    } catch (err) {
-      setError(err);
-      
-      // Afficher l'erreur globalement
-      if (!disableGlobalError) {
-        showError(err);
-      }
-      
-      // Callback d'erreur
-      if (onError) {
-        onError(err);
-      }
-      
-      if (throwError) {
-        throw err;
-      }
-      
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [mutationFunction, showError, onSuccess, onError, disableGlobalError, throwError]);
+    },
+    [mutationFunction, showError, onSuccess, onError, disableGlobalError, throwError]
+  );
 
   return { mutate, loading, error };
 };

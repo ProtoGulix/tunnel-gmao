@@ -104,6 +104,7 @@ export const machinesAdapter = {
         },
       });
       const items = data.data || [];
+
       return items.map(toDomainMachine);
     }, 'Machines.fetchMachines');
   },
@@ -134,6 +135,11 @@ export const machinesAdapter = {
     return apiCall(async () => {
       // Load machines
       const machines = await this.fetchMachines();
+
+      // Si la requête a été annulée, retourner null immédiatement
+      if (!machines) {
+        return null;
+      }
 
       // Load interventions (minimal fields)
       const { data } = await api.get('/items/intervention', {

@@ -204,7 +204,7 @@ const createTypedError = (status, message, details, context) => {
  * }
  */
 export const handleAPIError = (error, context = '') => {
-  // Request was canceled
+  // Request was canceled - ne pas logger (comportement normal lors de la navigation)
   if (error?.code === 'ERR_CANCELED') {
     return new NetworkError('Request was cancelled', {
       canceled: true,
@@ -313,6 +313,13 @@ export const apiCall = async (fn, context = 'API Call') => {
   try {
     return await fn();
   } catch (error) {
-    throw handleAPIError(error, context);
+    const typedError = handleAPIError(error, context);
+
+    // Ne pas throw les erreurs d'annulation (comportement normal)
+    if (typedError instanceof NetworkError && typedError.details?.canceled) {
+      return null;
+    }
+
+    throw typedError;
   }
 };
