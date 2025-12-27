@@ -54,6 +54,9 @@ package-lock.json
 # Optional eslint cache
 .eslintcache
 
+# ESLint reports
+eslint-report.txt
+
 # Optional stylelint cache
 .stylelintcache
 
