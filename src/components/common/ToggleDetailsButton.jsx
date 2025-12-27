@@ -1,0 +1,42 @@
+import { Button } from "@radix-ui/themes";
+import { ChevronDown } from "lucide-react";
+
+/**
+ * Composant standard pour afficher/masquer des détails dans un tableau
+ * Utilisé pour maintenir une cohérence visuelle à travers l'application
+ * Accessible avec aria-expanded et aria-label
+ * 
+ * @param {boolean} isExpanded - État d'expansion (ouvert/fermé)
+ * @param {function} onToggle - Callback appelé lors du clic
+ * @param {string} size - Taille du bouton (défaut: "1")
+ * @param {boolean} disabled - Désactiver le bouton
+ * @param {string} label - Label pour l'accessibilité (défaut: "Détails")
+ */
+export default function ToggleDetailsButton({ 
+  isExpanded, 
+  onToggle, 
+  size = "1",
+  disabled = false,
+  label = "Détails"
+}) {
+  return (
+    <Button
+      size={size}
+      variant="soft"
+      color={isExpanded ? "blue" : "gray"}
+      onClick={onToggle}
+      disabled={disabled}
+      aria-label={label}
+      aria-expanded={isExpanded}
+      title={label}
+    >
+      <ChevronDown
+        size={14}
+        style={{
+          transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
+          transition: "transform 0.2s",
+        }}
+      />
+    </Button>
+  );
+}

@@ -19,7 +19,7 @@ This document freezes the front-end contracts so a backend change doesn’t brea
 Usage example:
 
 ```js
-import { auth, machines } from "src/lib/api/facade";
+import { auth, machines } from 'src/lib/api/facade';
 const user = await auth.getCurrentUser();
 const list = await machines.fetchMachines();
 ```
@@ -169,14 +169,14 @@ export const adapter = {
   interventions: {
     createIntervention: async (payload) => {
       const backend = mapInterventionDomainToBackend(payload);
-      const response = await api.post("/items/intervention", backend);
-      invalidateCache(["interventions"]); // Logical tag
+      const response = await api.post('/items/intervention', backend);
+      invalidateCache(['interventions']); // Logical tag
       return mapInterventionToDomain(response.data);
     },
     updateIntervention: async (id, updates) => {
       const backend = mapInterventionDomainToBackend(updates); // Reuse
       const response = await api.patch(`/items/intervention/${id}`, backend);
-      invalidateCache(["interventions", id]); // Granular tag
+      invalidateCache(['interventions', id]); // Granular tag
       return mapInterventionToDomain(response.data);
     },
   },
@@ -212,7 +212,7 @@ return {
 return {
   id: item.id,
   code: item.code,
-  status: item.status_actual?.value || "open",
+  status: item.status_actual?.value || 'open',
   // No _raw, no backend identifiers
 };
 ```
@@ -249,17 +249,15 @@ const mapInterventionDomainToBackend = (payload) => {
   if (payload.status !== undefined) backend.status_actual = payload.status;
   if (payload.type !== undefined) backend.type_inter = payload.type;
   if (payload.priority !== undefined) backend.priority = payload.priority;
-  if (payload.reportedDate !== undefined)
-    backend.reported_date = payload.reportedDate;
-  if (payload.machine?.id !== undefined)
-    backend.machine_id = payload.machine.id;
+  if (payload.reportedDate !== undefined) backend.reported_date = payload.reportedDate;
+  if (payload.machine?.id !== undefined) backend.machine_id = payload.machine.id;
   return backend;
 };
 
 // Reuse in both create and update
 createIntervention: async (payload) => {
   const backendPayload = mapInterventionDomainToBackend(payload);
-  const response = await api.post("/items/intervention", backendPayload);
+  const response = await api.post('/items/intervention', backendPayload);
   return mapInterventionToDomain(response.data.data);
 };
 
@@ -278,25 +276,22 @@ Use structured tags instead of generic endpoint paths for cache invalidation.
 
 ```js
 // ❌ WRONG - Generic, not granular
-invalidateCache("/items/intervention");
-invalidateCache("/items/intervention_action");
+invalidateCache('/items/intervention');
+invalidateCache('/items/intervention_action');
 
 // ✅ CORRECT - Logical tags for granular control
-invalidateCache(["interventions"]); // All interventions
-invalidateCache(["interventions", interventionId]); // Specific intervention
-invalidateCache(["actions"]); // All actions
-invalidateCache(["actions", interventionId]); // Actions of one intervention
+invalidateCache(['interventions']); // All interventions
+invalidateCache(['interventions', interventionId]); // Specific intervention
+invalidateCache(['actions']); // All actions
+invalidateCache(['actions', interventionId]); // Actions of one intervention
 ```
 
 **Pattern applied to all write operations:**
 
 ```js
 createIntervention: async (payload) => {
-  const response = await api.post(
-    "/items/intervention",
-    mapInterventionDomainToBackend(payload)
-  );
-  invalidateCache(["interventions"]); // Invalidate the list
+  const response = await api.post('/items/intervention', mapInterventionDomainToBackend(payload));
+  invalidateCache(['interventions']); // Invalidate the list
   return mapInterventionToDomain(response.data.data);
 };
 
@@ -305,17 +300,14 @@ updateIntervention: async (id, updates) => {
     `/items/intervention/${id}`,
     mapInterventionDomainToBackend(updates)
   );
-  invalidateCache(["interventions", id]); // Invalidate specific item + list
+  invalidateCache(['interventions', id]); // Invalidate specific item + list
   return mapInterventionToDomain(response.data.data);
 };
 
 createAction: async (payload) => {
-  const response = await api.post(
-    "/items/intervention_action",
-    mapActionPayloadToBackend(payload)
-  );
-  invalidateCache(["interventions", payload.intervention?.id]); // Invalidate parent
-  invalidateCache(["actions"]); // Invalidate global actions
+  const response = await api.post('/items/intervention_action', mapActionPayloadToBackend(payload));
+  invalidateCache(['interventions', payload.intervention?.id]); // Invalidate parent
+  invalidateCache(['actions']); // Invalidate global actions
   return mapActionToDomain(response.data.data);
 };
 ```
@@ -332,10 +324,10 @@ createAction: async (payload) => {
 // ============================================================================
 
 const normalizeStatus = (raw) => {
-  if (!raw) return "open";
-  if (typeof raw === "string") return raw;
+  if (!raw) return 'open';
+  if (typeof raw === 'string') return raw;
   if (raw.value) return raw.value;
-  return "open";
+  return 'open';
 };
 
 const mapInterventionDomainToBackend = (payload) => {
@@ -345,10 +337,8 @@ const mapInterventionDomainToBackend = (payload) => {
   if (payload.status !== undefined) backend.status_actual = payload.status;
   if (payload.type !== undefined) backend.type_inter = payload.type;
   if (payload.priority !== undefined) backend.priority = payload.priority;
-  if (payload.reportedDate !== undefined)
-    backend.reported_date = payload.reportedDate;
-  if (payload.machine?.id !== undefined)
-    backend.machine_id = payload.machine.id;
+  if (payload.reportedDate !== undefined) backend.reported_date = payload.reportedDate;
+  if (payload.machine?.id !== undefined) backend.machine_id = payload.machine.id;
   return backend;
 };
 
@@ -363,8 +353,8 @@ const mapInterventionToDomain = (item) => {
     code: item.code,
     title: item.title,
     status: normalizeStatus(item.status_actual), // Use centralized normalizer
-    type: item.type_inter || "CUR",
-    priority: item.priority || "normal",
+    type: item.type_inter || 'CUR',
+    priority: item.priority || 'normal',
     reportedDate: item.reported_date,
     machine: item.machine_id
       ? {
@@ -382,7 +372,7 @@ const mapInterventionToDomain = (item) => {
 // ============================================================================
 
 export const adapter = {
-  name: "mybackend",
+  name: 'mybackend',
   client: {
     /* http client, baseURL, etc. */
   },
@@ -398,22 +388,16 @@ export const adapter = {
 
     createIntervention: async (payload) => {
       const backendPayload = mapInterventionDomainToBackend(payload);
-      const response = await api.post(
-        "/endpoint/interventions",
-        backendPayload
-      );
-      invalidateCache(["interventions"]);
+      const response = await api.post('/endpoint/interventions', backendPayload);
+      invalidateCache(['interventions']);
       return mapInterventionToDomain(response.data);
     },
 
     updateIntervention: async (id, updates) => {
       // Reuse same mapper as create
       const backendUpdates = mapInterventionDomainToBackend(updates);
-      const response = await api.patch(
-        `/endpoint/intervention/${id}`,
-        backendUpdates
-      );
-      invalidateCache(["interventions", id]);
+      const response = await api.patch(`/endpoint/intervention/${id}`, backendUpdates);
+      invalidateCache(['interventions', id]);
       return mapInterventionToDomain(response.data);
     },
   },
@@ -424,7 +408,7 @@ export const adapter = {
 
 ## Env Configuration
 
-- `VITE_DIRECTUS_URL` → base URL for Directus.
+- `VITE_DATA_API_URL` → base URL for the data API.
 - `VITE_BACKEND_PROVIDER` → backend provider key (e.g., `directus`).
 
 ## Non-breaking Rules
@@ -473,41 +457,41 @@ This section specifies how the frontend must access data to guarantee backend in
 Read (list):
 
 ```js
-import { machines } from "src/lib/api/facade";
+import { machines } from 'src/lib/api/facade';
 const list = await machines.fetchMachines();
 ```
 
 Read (detail):
 
 ```js
-import { interventions } from "src/lib/api/facade";
+import { interventions } from 'src/lib/api/facade';
 const one = await interventions.fetchIntervention(interventionId);
 ```
 
 Write (create):
 
 ```js
-import { stock } from "src/lib/api/facade";
+import { stock } from 'src/lib/api/facade';
 const created = await stock.createPurchaseRequest({
-  stockItemId: "...",
+  stockItemId: '...',
   quantity: 3,
-  label: "Courroie 12mm",
+  label: 'Courroie 12mm',
 });
 ```
 
 Write (update):
 
 ```js
-import { stock } from "src/lib/api/facade";
+import { stock } from 'src/lib/api/facade';
 const updated = await stock.updateStockItem(stockItemId, {
-  location: "Aisle-3-B",
+  location: 'Aisle-3-B',
 });
 ```
 
 Clear cache:
 
 ```js
-import { client } from "src/lib/api/facade";
+import { client } from 'src/lib/api/facade';
 client.clearAllCache();
 ```
 
@@ -621,78 +605,78 @@ export const interventionsAdapter = {
 ```js
 // test/adapters/interventions.adapter.test.js
 
-describe("normalizeStatus", () => {
+describe('normalizeStatus', () => {
   it('handles Directus format { value: "open" }', () => {
-    expect(normalizeStatus({ value: "open" })).toBe("open");
+    expect(normalizeStatus({ value: 'open' })).toBe('open');
   });
   it('handles FastAPI string "open"', () => {
-    expect(normalizeStatus("open")).toBe("open");
+    expect(normalizeStatus('open')).toBe('open');
   });
-  it("handles null/undefined", () => {
-    expect(normalizeStatus(null)).toBe("open");
-    expect(normalizeStatus(undefined)).toBe("open");
+  it('handles null/undefined', () => {
+    expect(normalizeStatus(null)).toBe('open');
+    expect(normalizeStatus(undefined)).toBe('open');
   });
 });
 
-describe("mapInterventionDomainToBackend", () => {
-  it("maps domain fields to backend fields", () => {
+describe('mapInterventionDomainToBackend', () => {
+  it('maps domain fields to backend fields', () => {
     const result = mapInterventionDomainToBackend({
-      code: "INT-001",
-      status: "open",
-      reportedDate: "2025-12-26",
+      code: 'INT-001',
+      status: 'open',
+      reportedDate: '2025-12-26',
     });
     expect(result).toEqual({
-      code: "INT-001",
-      status_actual: "open",
-      reported_date: "2025-12-26",
+      code: 'INT-001',
+      status_actual: 'open',
+      reported_date: '2025-12-26',
     });
   });
-  it("ignores undefined fields", () => {
-    const result = mapInterventionDomainToBackend({ code: "INT-001" });
-    expect(result).toEqual({ code: "INT-001" });
+  it('ignores undefined fields', () => {
+    const result = mapInterventionDomainToBackend({ code: 'INT-001' });
+    expect(result).toEqual({ code: 'INT-001' });
     expect(result.status_actual).toBeUndefined();
   });
 });
 
-describe("mapInterventionToDomain", () => {
-  it("returns pure domain DTO with no backend fields", () => {
+describe('mapInterventionToDomain', () => {
+  it('returns pure domain DTO with no backend fields', () => {
     const directusResponse = {
-      id: "1",
-      code: "INT-001",
-      status_actual: { value: "open" },
-      type_inter: "CUR",
+      id: '1',
+      code: 'INT-001',
+      status_actual: { value: 'open' },
+      type_inter: 'CUR',
     };
     const result = mapInterventionToDomain(directusResponse);
     expect(result).toEqual({
-      id: "1",
-      code: "INT-001",
-      status: "open", // normalized
-      type: "CUR",
+      id: '1',
+      code: 'INT-001',
+      status: 'open', // normalized
+      type: 'CUR',
       // No _raw, no status_actual
     });
     expect(result._raw).toBeUndefined();
   });
 });
 
-describe("createIntervention", () => {
-  it("maps payload, posts, invalidates cache, returns DTO", async () => {
-    const payload = { code: "INT-001", status: "open" };
+describe('createIntervention', () => {
+  it('maps payload, posts, invalidates cache, returns DTO', async () => {
+    const payload = { code: 'INT-001', status: 'open' };
     // Mock api.post to return Directus response
-    jest.spyOn(api, "post").mockResolvedValue({
-      data: { id: "1", code: "INT-001", status_actual: { value: "open" } },
+    jest.spyOn(api, 'post').mockResolvedValue({
+      data: { id: '1', code: 'INT-001', status_actual: { value: 'open' } },
     });
 
     const result = await interventionsAdapter.createIntervention(payload);
 
     expect(api.post).toHaveBeenCalledWith(
-      "/items/intervention",
-      { code: "INT-001", status_actual: "open" } // Backend format
+      '/items/intervention',
+      { code: 'INT-001', status_actual: 'open' } // Backend format
     );
-    expect(invalidateCache).toHaveBeenCalledWith(["interventions"]);
+    expect(invalidateCache).toHaveBeenCalledWith(['interventions']);
     expect(result).toEqual({
-      id: "1",
-      code: "INT-001",
-      status: "open", // Domain format
+      id: '1',
+      code: 'INT-001',
+      status: 'open', // Domain format
       // No _raw
     });
   });

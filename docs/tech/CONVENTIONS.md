@@ -75,12 +75,12 @@ Utiliser `@/*` partout (défini dans `jsconfig.json`):
 
 ```javascript
 // ✅ BON
-import { Button } from "@/components/ui/Button";
-import { useAuth } from "@/auth/AuthContext";
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/auth/AuthContext';
 
 // ❌ MAUVAIS
-import { Button } from "../../../components/ui/Button";
-import { useAuth } from "../../auth/AuthContext";
+import { Button } from '../../../components/ui/Button';
+import { useAuth } from '../../auth/AuthContext';
 ```
 
 ---
@@ -91,44 +91,44 @@ import { useAuth } from "../../auth/AuthContext";
 
 ```javascript
 // 1. React core
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
 // 2. React Router
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from 'react-router-dom';
 
 // 3. External Libraries
-import axios from "axios";
+import axios from 'axios';
 
 // 4. UI Libraries (Radix)
-import { Box, Flex, Grid, Card, Text, Button, Heading } from "@radix-ui/themes";
+import { Box, Flex, Grid, Card, Text, Button, Heading } from '@radix-ui/themes';
 
 // 5. Icons (toujours importer les composants)
-import { ClipboardList, Plus, AlertTriangle } from "lucide-react";
+import { ClipboardList, Plus, AlertTriangle } from 'lucide-react';
 
 // 6. Custom Components
-import PageHeader from "@/components/layout/PageHeader";
-import ErrorDisplay from "@/components/ErrorDisplay";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import PageHeader from '@/components/layout/PageHeader';
+import ErrorDisplay from '@/components/ErrorDisplay';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // 7. Custom Hooks
-import { useApiCall } from "@/hooks/useApiCall";
-import { useAuth } from "@/auth/AuthContext";
+import { useApiCall } from '@/hooks/useApiCall';
+import { useAuth } from '@/auth/AuthContext';
 
 // 8. Utilities
-import { formatDate, calculateStats } from "@/utils/actionUtils";
+import { formatDate, calculateStats } from '@/lib/utils/actionUtils';
 
 // 9. Config & Constants
-import { INTERVENTION_TYPES, STATUS_CONFIG } from "@/config/interventionTypes";
+import { INTERVENTION_TYPES, STATUS_CONFIG } from '@/config/interventionTypes';
 ```
 
 ### 2.2 Pas d'Imports Relatifs Imbriqués
 
 ```javascript
 // ❌ MAUVAIS
-import Button from "../../../../components/Button";
+import Button from '../../../../components/Button';
 
 // ✅ BON
-import Button from "@/components/ui/Button";
+import Button from '@/components/ui/Button';
 ```
 
 ---
@@ -189,18 +189,18 @@ function InterventionCard({
 
 ```jsx
 // ===== IMPORTS =====
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ClipboardList, Plus } from "lucide-react";
-import { Box } from "@radix-ui/themes";
-import PageHeader from "@/components/layout/PageHeader";
-import { useApiCall } from "@/hooks/useApiCall";
-import { formatDate } from "@/utils/actionUtils";
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ClipboardList, Plus } from 'lucide-react';
+import { Box } from '@radix-ui/themes';
+import PageHeader from '@/components/layout/PageHeader';
+import { useApiCall } from '@/hooks/useApiCall';
+import { formatDate } from '@/lib/utils/actionUtils';
 
 // ===== COMPONENT =====
 export default function InterventionsList() {
   // ----- State -----
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState('all');
   const initialLoadRef = useRef(false);
 
   // ----- Router Hooks -----
@@ -213,14 +213,14 @@ export default function InterventionsList() {
   const stats = useMemo(() => {
     return {
       total: data.length,
-      open: data.filter((i) => i.status === "open").length,
-      inProgress: data.filter((i) => i.status === "in_progress").length,
+      open: data.filter((i) => i.status === 'open').length,
+      inProgress: data.filter((i) => i.status === 'in_progress').length,
     };
   }, [data]);
 
   // ----- Callbacks -----
   const handleCreate = useCallback(() => {
-    navigate("/interventions/create");
+    navigate('/interventions/create');
   }, [navigate]);
 
   // ----- Effects -----
@@ -243,12 +243,12 @@ export default function InterventionsList() {
         subtitle="Gestion des interventions de maintenance"
         icon={ClipboardList}
         stats={[
-          { label: "Total", value: stats.total },
-          { label: "Ouvertes", value: stats.open },
+          { label: 'Total', value: stats.total },
+          { label: 'Ouvertes', value: stats.open },
         ]}
         actions={[
           {
-            label: "Nouvelle Intervention",
+            label: 'Nouvelle Intervention',
             icon: Plus,
             onClick: handleCreate,
           },
@@ -289,9 +289,7 @@ export default function ActionCard({ action, isSelected = false, onClick }) {
     <Card
       onClick={onClick}
       style={{
-        border: isSelected
-          ? "2px solid var(--blue-9)"
-          : "1px solid var(--gray-6)",
+        border: isSelected ? '2px solid var(--blue-9)' : '1px solid var(--gray-6)',
       }}
     >
       {/* Contenu */}
@@ -325,7 +323,7 @@ export default function MyComponent() {
 
   // 5. Computed values (useMemo)
   const filteredData = useMemo(() => {
-    return apiData?.filter((item) => item.status === "active");
+    return apiData?.filter((item) => item.status === 'active');
   }, [apiData]);
 
   // 6. Callbacks (useCallback)
@@ -361,11 +359,7 @@ useEffect(() => {
 
 ```javascript
 // ✅ BON : Parallèle
-const [data1, data2, data3] = await Promise.all([
-  fetchData1(),
-  fetchData2(),
-  fetchData3(),
-]);
+const [data1, data2, data3] = await Promise.all([fetchData1(), fetchData2(), fetchData3()]);
 
 // ❌ MAUVAIS : Séquentiel (3x plus lent)
 const data1 = await fetchData1();
@@ -380,7 +374,7 @@ const data3 = await fetchData3();
 ### 6.1 Hook useApiCall
 
 ```javascript
-import { useApiCall } from "@/hooks/useApiCall";
+import { useApiCall } from '@/hooks/useApiCall';
 
 // Pour GET/Fetch
 const {
@@ -405,7 +399,7 @@ const handleRefresh = () => executeSilent();
 ### 6.2 Hook useApiMutation
 
 ```javascript
-import { useApiMutation } from "@/hooks/useApiCall";
+import { useApiMutation } from '@/hooks/useApiCall';
 
 const { mutate, loading, error } = useApiMutation(updateIntervention, {
   onSuccess: () => {
@@ -422,18 +416,18 @@ const handleSave = async (data) => {
 
 ```javascript
 // src/lib/api/interventions.js
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from '@/lib/api/client';
 
 /**
  * Récupère toutes les interventions
  * @returns {Promise<Array>} Interventions
  */
 export async function fetchInterventions() {
-  const response = await apiClient.get("/interventions", {
+  const response = await apiClient.get('/interventions', {
     params: {
-      fields: ["*", "machine_id.*", "actions.*"],
-      filter: { status: { _neq: "deleted" } },
-      sort: ["-date_creation"],
+      fields: ['*', 'machine_id.*', 'actions.*'],
+      filter: { status: { _neq: 'deleted' } },
+      sort: ['-date_creation'],
     },
   });
   return response.data;
@@ -445,7 +439,7 @@ export async function fetchInterventions() {
  * @returns {Promise<Object>} Intervention créée
  */
 export async function createIntervention(data) {
-  const response = await apiClient.post("/interventions", data);
+  const response = await apiClient.post('/interventions', data);
   return response.data;
 }
 ```
@@ -502,7 +496,7 @@ export default function InterventionForm({ initialData }) {
 
 ```javascript
 export default function DetailPage() {
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState('summary');
   const [tabsLoaded, setTabsLoaded] = useState({});
 
   // Charger données critiques au démarrage
@@ -513,7 +507,7 @@ export default function DetailPage() {
 
   // Lazy loading au changement d'onglet
   useEffect(() => {
-    if (activeTab === "advanced" && !tabsLoaded.advanced) {
+    if (activeTab === 'advanced' && !tabsLoaded.advanced) {
       loadAdvancedData();
       setTabsLoaded((prev) => ({ ...prev, advanced: true }));
     }
@@ -532,9 +526,7 @@ export default function DetailPage() {
         </Tabs.Trigger>
       </Tabs.List>
 
-      <Tabs.Content value="summary">
-        {/* Contenu toujours chargé */}
-      </Tabs.Content>
+      <Tabs.Content value="summary">{/* Contenu toujours chargé */}</Tabs.Content>
 
       <Tabs.Content value="advanced">
         {tabsLoaded.advanced ? <AdvancedContent /> : <LoadingState />}
@@ -551,7 +543,7 @@ export default function DetailPage() {
 ### 9.1 Sanitization HTML
 
 ```javascript
-import { stripHtml, sanitizeHtml } from '@/utils/htmlUtils';
+import { stripHtml, sanitizeHtml } from '@/lib/utils/htmlUtils';
 
 // Pour texte brut (supprimer tout HTML)
 <Text>{stripHtml(description)}</Text>
@@ -573,7 +565,7 @@ export function validateEmail(email) {
 
 const isValid = validateEmail(userInput);
 if (!isValid) {
-  setError("Email invalide");
+  setError('Email invalide');
   return;
 }
 
@@ -633,10 +625,7 @@ const stats = useMemo(() => {
 // Pour > 100 items, implémenter la pagination
 const [page, setPage] = useState(1);
 const itemsPerPage = 20;
-const paginatedData = data.slice(
-  (page - 1) * itemsPerPage,
-  page * itemsPerPage
-);
+const paginatedData = data.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 ```
 
 ### 10.3 Lazy Loading des Données
@@ -644,7 +633,7 @@ const paginatedData = data.slice(
 ```javascript
 // ✅ BON : Charger au besoin
 useEffect(() => {
-  if (activeTab === "summary" && !summaryLoaded) {
+  if (activeTab === 'summary' && !summaryLoaded) {
     loadSummary();
     setSummaryLoaded(true);
   }
@@ -761,7 +750,7 @@ useEffect(() => {
  */
 export function calculateActionStats(actions, complexityFactors) {
   if (!Array.isArray(actions)) {
-    throw new Error("actions doit être un tableau");
+    throw new Error('actions doit être un tableau');
   }
   // ...
 }
@@ -796,11 +785,7 @@ useEffect(() => {
 // ✅ BON : Affiche erreur + possibilité de retry
 if (error) {
   return (
-    <ErrorDisplay
-      error={error}
-      message="Impossible de charger les données"
-      onRetry={execute}
-    />
+    <ErrorDisplay error={error} message="Impossible de charger les données" onRetry={execute} />
   );
 }
 
@@ -814,12 +799,12 @@ if (error) {
 
 ```javascript
 // ✅ BON : Logs utiles en dev
-if (process.env.NODE_ENV === "development") {
-  console.log("Fetching interventions...");
+if (process.env.NODE_ENV === 'development') {
+  console.log('Fetching interventions...');
 }
 
 // ❌ MAUVAIS : Logs partout
-console.log("test"); // Oublié en prod
+console.log('test'); // Oublié en prod
 console.log(userData); // Sécurité !
 ```
 
@@ -840,28 +825,28 @@ Recommandations pratiques:
 Exemple — Remplacer `alert()` par un message d’erreur intégré:
 
 ```jsx
-import React, { useState } from "react";
-import { Box, Text, Button } from "@radix-ui/themes";
+import React, { useState } from 'react';
+import { Box, Text, Button } from '@radix-ui/themes';
 
 function ExampleForm({ onSubmit }) {
-  const [value, setValue] = useState("");
-  const [formError, setFormError] = useState("");
+  const [value, setValue] = useState('');
+  const [formError, setFormError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setFormError("");
+    setFormError('');
 
     if (!value.trim()) {
       // ❌ Ne pas faire: alert('Champ requis')
       // ✅ Faire: message d’erreur dans l’UI
-      setFormError("Le champ est requis.");
+      setFormError('Le champ est requis.');
       return;
     }
 
     try {
       await onSubmit({ value });
     } catch (err) {
-      setFormError("Une erreur est survenue. Veuillez réessayer.");
+      setFormError('Une erreur est survenue. Veuillez réessayer.');
     }
   };
 
@@ -871,8 +856,8 @@ function ExampleForm({ onSubmit }) {
         <Box
           mb="2"
           style={{
-            background: "var(--red-3)",
-            border: "1px solid var(--red-7)",
+            background: 'var(--red-3)',
+            border: '1px solid var(--red-7)',
             borderRadius: 6,
             padding: 12,
           }}
@@ -885,17 +870,12 @@ function ExampleForm({ onSubmit }) {
 
       <input
         aria-invalid={Boolean(formError)}
-        aria-describedby={formError ? "field-error" : undefined}
+        aria-describedby={formError ? 'field-error' : undefined}
         value={value}
         onChange={(e) => setValue(e.target.value)}
       />
       {formError && (
-        <Text
-          id="field-error"
-          size="1"
-          color="red"
-          style={{ display: "block", marginTop: 4 }}
-        >
+        <Text id="field-error" size="1" color="red" style={{ display: 'block', marginTop: 4 }}>
           {formError}
         </Text>
       )}
