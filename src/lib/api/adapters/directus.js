@@ -39,7 +39,7 @@ import { anomalyConfigAdapter as anomalyConfig } from './directus/anomalyConfig/
 import { authAdapter as auth } from './directus/auth.adapter';
 import { interventionStatusLogsAdapter as interventionStatusLogs } from './directus/interventionStatusLogs.adapter';
 import { interventionStatusRefsAdapter as interventionStatusRefs } from './directus/interventionStatusRefs.adapter';
-import { interventionsAdapter as interventions } from './directus/interventions.adapter';
+import { interventionsAdapter as interventions } from './directus/interventions/adapter';
 import { machinesAdapter as machines } from './directus/machines/adapter';
 import { manufacturerItemsAdapter as manufacturerItems } from './directus/manufacturerItems.adapter';
 import { stockAdapter as stock } from './directus/stock.adapter';

@@ -15,8 +15,15 @@ import ErrorNotification from '@/components/ErrorNotification';
 import { AuthProvider } from '@/auth/AuthContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 
-// 5. Global Styles
+// 5. Configuration (async preload)
+import { loadAnomalyConfig } from '@/config/anomalyConfig';
+
+// 6. Global Styles
 // import '@/styles/globals.css';
+
+// ===== PRELOAD CONFIGURATION =====
+// Load anomaly config at startup (non-blocking)
+loadAnomalyConfig().catch(console.error);
 
 // ===== RENDER =====
 ReactDOM.createRoot(document.getElementById('root')).render(

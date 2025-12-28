@@ -18,12 +18,7 @@ import {
   fetchClassificationProbesRaw,
   fetchThresholdsRaw,
 } from './datasource';
-import {
-  buildAnomalyConfig,
-  mapCategoryMeta,
-  mapClassificationProbes,
-  mapThresholdsArray,
-} from './mapper';
+import { buildAnomalyConfig } from './mapper';
 
 // ============================================================================
 // Cache
@@ -67,8 +62,22 @@ export const anomalyConfigAdapter = {
         fetchThresholdsRaw(),
       ]);
 
+      // DEBUG: Tracer ce que le backend retourne
+      console.log('[AnomalyConfigAdapter] Backend data:', {
+        categories: categories.length,
+        probes: probes.length,
+        thresholds: thresholds.length,
+        thresholdsData: thresholds,
+      });
+
       // Construire la configuration (mapper)
       const config = buildAnomalyConfig(categories, probes, thresholds);
+
+      // DEBUG: Tracer le résultat mappé
+      console.log('[AnomalyConfigAdapter] Mapped config:', {
+        thresholdKeys: Object.keys(config.thresholds || {}),
+        config,
+      });
 
       // Mettre en cache
       cachedConfig = config;
@@ -80,35 +89,29 @@ export const anomalyConfigAdapter = {
 
   /**
    * Récupère uniquement les métadonnées des catégories.
+   * Aucune transformation nécessaire pour l'instant (backend = domain).
    * @returns Tableau de catégories avec métadonnées
    */
   fetchCategoryMeta: async () => {
-    return apiCall(async () => {
-      const rawCategories = await fetchCategoryMetaRaw();
-      return mapCategoryMeta(rawCategories);
-    }, 'FetchCategoryMeta');
+    return apiCall(fetchCategoryMetaRaw, 'FetchCategoryMeta');
   },
 
   /**
    * Récupère uniquement les sondes de classification actives.
+   * Aucune transformation nécessaire pour l'instant (backend = domain).
    * @returns Tableau de sondes NLP
    */
   fetchClassificationProbes: async () => {
-    return apiCall(async () => {
-      const rawProbes = await fetchClassificationProbesRaw();
-      return mapClassificationProbes(rawProbes);
-    }, 'FetchClassificationProbes');
+    return apiCall(fetchClassificationProbesRaw, 'FetchClassificationProbes');
   },
 
   /**
    * Récupère uniquement les seuils d'anomalies actifs.
+   * Aucune transformation nécessaire pour l'instant (backend = domain).
    * @returns Tableau de seuils
    */
   fetchThresholds: async () => {
-    return apiCall(async () => {
-      const rawThresholds = await fetchThresholdsRaw();
-      return mapThresholdsArray(rawThresholds);
-    }, 'FetchThresholds');
+    return apiCall(fetchThresholdsRaw, 'FetchThresholds');
   },
 
   /**

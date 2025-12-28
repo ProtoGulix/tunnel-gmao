@@ -171,6 +171,27 @@ export const { actions } = API;
 export const { actionSubcategories } = API;
 
 /**
+ * **Anomaly Configuration**
+ *
+ * Dynamic configuration for anomaly detection in actions.
+ * Loaded from backend, cached for performance.
+ *
+ * Functions:
+ * - `fetchAnomalyConfiguration()` → `AnomalyConfig`
+ * - `fetchCategoryMeta()` → `CategoryMeta[]`
+ * - `fetchClassificationProbes()` → `ClassificationProbe[]`
+ * - `fetchThresholds()` → `Threshold[]`
+ * - `invalidateCache()` → `void`
+ *
+ * @type {Object}
+ *
+ * @example
+ * import { anomalyConfig } from 'src/lib/api/facade';
+ * const config = await anomalyConfig.fetchAnomalyConfiguration();
+ */
+export const { anomalyConfig } = API;
+
+/**
  * **Machines (Equipment)**
  *
  * Functions:

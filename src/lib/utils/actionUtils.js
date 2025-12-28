@@ -112,7 +112,14 @@ export function filterActionsByDateRange(actions, dateRange) {
  * Détecte les actions répétitives (Type A)
  */
 function detectRepetitiveActions(actionsData) {
-  const { repetitive } = ANOMALY_CONFIG.thresholds;
+  const { repetitive } = ANOMALY_CONFIG.thresholds || {};
+
+  // Protection: si pas de config repetitive, retourner tableau vide
+  if (!repetitive || typeof repetitive.monthlyCount === 'undefined') {
+    console.warn('[detectRepetitiveActions] Configuration repetitive manquante ou invalide');
+    return [];
+  }
+
   const monthlyActions = new Map();
 
   actionsData.forEach((action) => {
@@ -163,7 +170,14 @@ function detectRepetitiveActions(actionsData) {
  * Détecte les actions fragmentées (Type B)
  */
 function detectFragmentedActions(actionsData) {
-  const { fragmented } = ANOMALY_CONFIG.thresholds;
+  const { fragmented } = ANOMALY_CONFIG.thresholds || {};
+
+  // Protection: si pas de config fragmented, retourner tableau vide
+  if (!fragmented || typeof fragmented.maxDuration === 'undefined') {
+    console.warn('[detectFragmentedActions] Configuration fragmented manquante ou invalide');
+    return [];
+  }
+
   const fragmentedMap = new Map();
 
   actionsData.forEach((action) => {
@@ -211,8 +225,14 @@ function detectFragmentedActions(actionsData) {
  * Détecte les actions trop longues (Type C)
  */
 function detectTooLongActions(actionsData) {
-  const { tooLong } = ANOMALY_CONFIG.thresholds;
+  const { tooLong } = ANOMALY_CONFIG.thresholds || {};
   const { simpleCategories } = ANOMALY_CONFIG;
+
+  // Protection: si pas de config tooLong, retourner tableau vide
+  if (!tooLong || !tooLong.maxDuration) {
+    console.warn('[detectTooLongActions] Configuration tooLong manquante ou invalide');
+    return [];
+  }
 
   return actionsData
     .filter((action) => {
@@ -246,7 +266,13 @@ function detectTooLongActions(actionsData) {
  */
 function detectBadClassification(actionsData) {
   const { suspiciousKeywords } = ANOMALY_CONFIG;
-  const { badClassification } = ANOMALY_CONFIG.thresholds;
+  const { badClassification } = ANOMALY_CONFIG.thresholds || {};
+
+  // Protection: si pas de config badClassification, retourner tableau vide
+  if (!badClassification || typeof badClassification.highSeverityKeywords === 'undefined') {
+    console.warn('[detectBadClassification] Configuration badClassification manquante ou invalide');
+    return [];
+  }
 
   return actionsData
     .filter((action) => action.subcategory?.code === 'BAT_NET')
@@ -283,7 +309,14 @@ function detectBadClassification(actionsData) {
  * Détecte les retours back-to-back (Type E)
  */
 function detectBackToBackActions(actionsData) {
-  const { backToBack } = ANOMALY_CONFIG.thresholds;
+  const { backToBack } = ANOMALY_CONFIG.thresholds || {};
+
+  // Protection: si pas de config backToBack, retourner tableau vide
+  if (!backToBack || typeof backToBack.maxDaysDiff === 'undefined') {
+    console.warn('[detectBackToBackActions] Configuration backToBack manquante ou invalide');
+    return [];
+  }
+
   const sortedActions = [...actionsData].sort(
     (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
   );
@@ -348,7 +381,14 @@ function detectBackToBackActions(actionsData) {
  */
 function detectLowValueHighLoad(actionsData) {
   const { lowValueCategories } = ANOMALY_CONFIG;
-  const { lowValueHighLoad } = ANOMALY_CONFIG.thresholds;
+  const { lowValueHighLoad } = ANOMALY_CONFIG.thresholds || {};
+
+  // Protection: si pas de config lowValueHighLoad, retourner tableau vide
+  if (!lowValueHighLoad || typeof lowValueHighLoad.minTotalHours === 'undefined') {
+    console.warn('[detectLowValueHighLoad] Configuration lowValueHighLoad manquante ou invalide');
+    return [];
+  }
+
   const loadMap = new Map();
 
   actionsData.forEach((action) => {

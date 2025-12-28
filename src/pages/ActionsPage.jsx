@@ -26,6 +26,7 @@ import ActionsList from "@/components/actions/ActionsList";
 // 4. Custom Hooks
 import { useApiCall } from "@/hooks/useApiCall";
 import { usePageHeaderProps } from "@/hooks/usePageConfig";
+import { useAnomalyConfig } from "@/hooks/useAnomalyConfig";
 
 // 5. API & Utilities
 import { actions } from "@/lib/api/facade";
@@ -56,6 +57,9 @@ export default function ActionsPage() {
   const [activeTab, setActiveTab] = useState("list");
   const initialLoadRef = useRef(false);
 
+  // ----- Anomaly Config -----
+  const { config: anomalyConfig, loading: configLoading } = useAnomalyConfig();
+
   // ----- API Calls -----
   const { 
     data: allActions = [], 
@@ -69,8 +73,10 @@ export default function ActionsPage() {
     if (!filteredActions || !Array.isArray(filteredActions)) {
       return { totalActions: 0, totalTime: 0, categoriesCount: 0, categories: [], topInterventions: [], anomalies: null };
     }
+    // Les fonctions detect* dans actionUtils sont protégées contre les configs manquantes
+    // Elles retournent [] si la config n'est pas disponible
     return calculateActionStats(filteredActions);
-  }, [filteredActions]);
+  }, [filteredActions, anomalyConfig]);
 
   const totalTimeSpent = useMemo(() => {
     if (!filteredActions || !Array.isArray(filteredActions)) {
@@ -125,7 +131,7 @@ export default function ActionsPage() {
 
   // ----- Header Configuration -----
   const headerProps = usePageHeaderProps({
-    subtitle: loading 
+    subtitle: (loading || configLoading)
       ? "Loading..." 
       : error 
         ? "Loading error" 
@@ -134,7 +140,7 @@ export default function ActionsPage() {
       count: totalAnomalies, 
       label: `anomal${totalAnomalies > 1 ? 'ies' : 'y'}` 
     } : null,
-    stats: !loading && !error ? [
+    stats: (!loading && !error && !configLoading) ? [
       { label: 'Actions', value: stats.totalActions },
       { label: 'Total Time', value: `${stats.totalTime}h` },
       { label: 'Categories', value: stats.categoriesCount }
@@ -149,12 +155,12 @@ export default function ActionsPage() {
 
   // ----- Render States -----
 
-  if (loading) {
+  if (loading || configLoading) {
     return (
       <Box>
         <PageHeader {...headerProps} />
         <PageContainer>
-          <LoadingState message="Loading actions..." />
+          <LoadingState message={configLoading ? "Loading configuration..." : "Loading actions..."} />
         </PageContainer>
       </Box>
     );

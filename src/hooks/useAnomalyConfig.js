@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { API } from '@/lib/api/facade';
+import { anomalyConfig } from '@/lib/api/facade';
 
 /**
  * Hook pour récupérer la configuration des anomalies.
@@ -50,7 +50,7 @@ export function useAnomalyConfig() {
         setLoading(true);
         setError(null);
 
-        const data = await API.anomalyConfig.fetchAnomalyConfiguration();
+        const data = await anomalyConfig.fetchAnomalyConfiguration();
 
         if (!cancelled) {
           setConfig(data);
@@ -76,7 +76,7 @@ export function useAnomalyConfig() {
    * Force un rechargement de la configuration (vide le cache).
    */
   const invalidate = () => {
-    API.anomalyConfig.invalidateCache();
+    anomalyConfig.invalidateCache();
     setRefreshKey((prev) => prev + 1);
   };
 

@@ -53,14 +53,32 @@ function mapProbes(probes: Record<string, unknown>[]) {
 }
 
 /**
- * Transforme les seuils en objet indexé par type d'anomalie.
+ * Normalise le type d'anomalie du backend (snake_case) vers domain (camelCase).
+ * Centralise la conversion pour tous mappers utilisant anomaly_type.
+ * 
+ * @param raw - Type d'anomalie backend (ex: "too_long", "back_to_back")
+ * @returns Type normalisé domain (ex: "tooLong", "backToBack")
+ * 
+ * @example
+ * normalizeAnomalyType("too_long") // → "tooLong"
+ * normalizeAnomalyType("back_to_back") // → "backToBack"
+ */
+const normalizeAnomalyType = (raw: string): string => {
+  if (!raw) return '';
+  return raw.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+};
+
+/**
+ * Transforme les seuils en objet indexé par type d'anomalie (clés en camelCase).
  */
 function mapThresholds(thresholds: Record<string, unknown>[]) {
   const thresholdsMap: Record<string, unknown> = {};
 
   thresholds.forEach((threshold) => {
     const config = (threshold.config_json as Record<string, unknown>) || {};
-    thresholdsMap[threshold.anomaly_type as string] = {
+    // Normaliser la clé via normalizer centralisé
+    const camelKey = normalizeAnomalyType(threshold.anomaly_type as string);
+    thresholdsMap[camelKey] = {
       ...config,
       threshold_value: threshold.threshold_value,
       high_severity_value: threshold.high_severity_value,
@@ -94,31 +112,4 @@ export function buildAnomalyConfig(
     thresholds: thresholdsMap,
     ...STATIC_BADGES,
   };
-}
-
-/**
- * Mappe les métadonnées catégories au format domain.
- */
-export function mapCategoryMeta(rawCategories: Record<string, unknown>[]) {
-  // Pour l'instant, on retourne tel quel (pas de transformation nécessaire)
-  // Si changement de backend, adapter ici
-  return rawCategories;
-}
-
-/**
- * Mappe les sondes de classification au format domain.
- */
-export function mapClassificationProbes(rawProbes: Record<string, unknown>[]) {
-  // Pour l'instant, on retourne tel quel
-  // Si changement de backend, adapter ici
-  return rawProbes;
-}
-
-/**
- * Mappe les seuils d'anomalies au format domain.
- */
-export function mapThresholdsArray(rawThresholds: Record<string, unknown>[]) {
-  // Pour l'instant, on retourne tel quel
-  // Si changement de backend, adapter ici
-  return rawThresholds;
 }

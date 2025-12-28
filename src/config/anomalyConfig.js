@@ -1,115 +1,116 @@
 /**
- * Configuration pour la détection d'anomalies dans les actions
+ * Anomaly Configuration Loader
  *
- * ⚠️ DEPRECATED - Ce fichier est obsolète !
+ * Provides synchronous access to anomaly configuration for utility functions.
+ * Configuration is loaded at app startup via main.jsx.
  *
- * La configuration est maintenant chargée dynamiquement depuis PostgreSQL
- * via l'adapter anomalyConfig et le hook useAnomalyConfig.
+ * Architecture:
+ * - React components: use useAnomalyConfig hook
+ * - Pure utility functions: use ANOMALY_CONFIG from this module
+ * - Config loaded from adapter (backend-agnostic)
  *
- * Migration :
- * - Ancien : import { ANOMALY_CONFIG } from '@/config/anomalyConfig';
- * - Nouveau : import { useAnomalyConfig } from '@/hooks/useAnomalyConfig';
- *
- * Avantages :
- * - Configuration modifiable à chaud via Directus admin
- * - Pas de redéploiement nécessaire pour ajuster les seuils
- * - Une seule source de vérité (PostgreSQL)
- *
- * @deprecated Utiliser useAnomalyConfig() à la place
- * @see src/hooks/useAnomalyConfig.js
- * @see src/lib/api/adapters/directus/anomalyConfig/adapter.ts
- * @see docs/REGLES_METIER.md - Configuration métier centralisée
+ * @module config/anomalyConfig
  */
 
-export const ANOMALY_CONFIG = {
-  // Catégories considérées comme "simples" (temps d'exécution normalement court)
-  simpleCategories: ['BAT_NET', 'SUP_INV', 'SUP_ACH', 'SUP_GES'],
+import { anomalyConfig } from '@/lib/api/facade';
 
-  // Catégories à faible valeur ajoutée
-  lowValueCategories: ['SUP_ACH', 'SUP_INV', 'BAT_NET'],
+// ============================================================================
+// State Management
+// ============================================================================
 
-  // Mots-clés suspects pour mauvaise classification
-  suspiciousKeywords: [
-    'identif',
-    'tableur',
-    'référence',
-    'pneuma',
-    'vis',
-    'rangement',
-    'tri',
-    'classement',
-    'inventaire',
-    'commande',
-  ],
-
-  // Seuils de détection
-  thresholds: {
-    // A - Actions répétitives
-    repetitive: {
-      monthlyCount: 3, // Nombre maximal d'actions par mois sur même machine
-      highSeverityCount: 6, // Seuil pour sévérité élevée
-    },
-
-    // B - Actions fragmentées
-    fragmented: {
-      maxDuration: 1, // Durée maximale en heures
-      minOccurrences: 5, // Nombre minimal d'occurrences
-      highSeverityCount: 10, // Seuil pour sévérité élevée
-    },
-
-    // C - Actions trop longues
-    tooLong: {
-      maxDuration: 4, // Durée maximale en heures pour catégorie simple
-      highSeverityDuration: 8, // Seuil pour sévérité élevée
-    },
-
-    // D - Mauvaise classification
-    badClassification: {
-      minKeywords: 1, // Nombre minimal de mots-clés suspects
-      highSeverityKeywords: 2, // Seuil pour sévérité élevée
-    },
-
-    // E - Retours back-to-back
-    backToBack: {
-      maxDaysDiff: 1, // Différence maximale en jours
-      highSeverityDays: 0.5, // Seuil pour sévérité élevée
-    },
-
-    // F - Faible valeur + charge élevée
-    lowValueHighLoad: {
-      minTotalHours: 30, // Nombre minimal d'heures cumulées
-      highSeverityHours: 60, // Seuil pour sévérité élevée
-    },
-  },
-
-  // Configuration des badges de complexité
-  complexityBadges: [
-    { max: 3, color: 'green', label: 'Faible' },
-    { max: 6, color: 'orange', label: 'Moyenne' },
-    { max: 10, color: 'red', label: 'Élevée' },
-  ],
-
-  // Configuration des badges de priorité
-  priorityBadges: [
-    { max: 2, color: 'red', label: 'Urgent' },
-    { max: 6, color: 'orange', label: 'Important' },
-    { max: Infinity, color: 'blue', label: 'Normal' },
-  ],
-
-  // Configuration des badges de récurrence
-  recurrenceBadges: [
-    { max: 4, color: 'red', label: 'Très récurrent' },
-    { max: 9, color: 'orange', label: 'Récurrent' },
-    { max: Infinity, color: 'blue', label: 'Modéré' },
-  ],
-};
+let cachedConfig = null;
+let loadPromise = null;
 
 /**
- * Retourne la configuration d'un badge selon un score
- * @param {number} value - Valeur à évaluer
- * @param {Array} badgeConfig - Configuration des badges
- * @returns {Object} Configuration du badge
+ * Loads anomaly configuration from backend adapter.
+ * Called automatically at app startup (main.jsx).
+ *
+ * @returns {Promise<Object>} Anomaly configuration
  */
-export function getBadgeConfig(value, badgeConfig) {
-  return badgeConfig.find((badge) => value <= badge.max) || badgeConfig[badgeConfig.length - 1];
+export async function loadAnomalyConfig() {
+  // Return existing load promise if already loading
+  if (loadPromise) {
+    return loadPromise;
+  }
+
+  // Return cached config if available
+  if (cachedConfig) {
+    return cachedConfig;
+  }
+
+  // Start loading
+  loadPromise = anomalyConfig
+    .fetchAnomalyConfiguration()
+    .then((config) => {
+      console.log('[loadAnomalyConfig] Config chargée avec succès:', config);
+      console.log('[loadAnomalyConfig] thresholds keys:', Object.keys(config?.thresholds || {}));
+      cachedConfig = config;
+      loadPromise = null;
+      return config;
+    })
+    .catch((error) => {
+      console.error('Failed to load anomaly configuration:', error);
+      loadPromise = null;
+      // Return fallback empty config
+      const fallback = {
+        thresholds: {},
+        simpleCategories: [],
+        suspiciousKeywords: [],
+        lowValueCategories: [],
+      };
+      cachedConfig = fallback;
+      return fallback;
+    });
+
+  return loadPromise;
 }
+
+/**
+ * Gets cached anomaly configuration synchronously.
+ * Used by utility functions (actionUtils.js).
+ *
+ * ⚠️ IMPORTANT: Must call loadAnomalyConfig() first at app startup.
+ *
+ * @returns {Object} Cached anomaly configuration
+ */
+export function getAnomalyConfig() {
+  if (!cachedConfig) {
+    console.warn('Anomaly configuration not loaded yet. Using fallback empty config.');
+    return {
+      thresholds: {},
+      simpleCategories: [],
+      suspiciousKeywords: [],
+      lowValueCategories: [],
+    };
+  }
+  return cachedConfig;
+}
+
+/**
+ * Invalidates cached configuration.
+ * Forces reload on next access.
+ */
+export function invalidateAnomalyConfig() {
+  cachedConfig = null;
+  loadPromise = null;
+  // Also invalidate adapter cache
+  if (anomalyConfig.invalidateCache) {
+    anomalyConfig.invalidateCache();
+  }
+}
+
+/**
+ * Legacy export for backward compatibility with actionUtils.js.
+ * Provides synchronous Proxy access to configuration.
+ *
+ * ⚠️ React components should use useAnomalyConfig hook instead.
+ */
+export const ANOMALY_CONFIG = new Proxy(
+  {},
+  {
+    get(target, prop) {
+      const config = getAnomalyConfig();
+      return config[prop];
+    },
+  }
+);
