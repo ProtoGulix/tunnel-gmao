@@ -1,56 +1,10 @@
 /**
  * Configuration des badges pour les actions
  * Contient les mappings de codes, priorités, statuts vers des représentations visuelles
+ *
+ * Note: Les couleurs des catégories d'actions proviennent maintenant du backend
+ * via le champ category.color dans les données de subcategory.
  */
-
-/**
- * Mapping des catégories d'actions vers leurs badges
- */
-export const CATEGORY_BADGES = {
-  // Électrique
-  DEP_ELEC: { color: 'blue', icon: '🔍', label: 'Diagnostic élec.' },
-  ELEC_REP: { color: 'amber', icon: '⚡', label: 'Réparation élec.' },
-  ELEC_INSTALL: { color: 'green', icon: '🔌', label: 'Installation élec.' },
-
-  // Mécanique
-  DEP_MEC: { color: 'blue', icon: '🔧', label: 'Diagnostic méca.' },
-  MEC_REP: { color: 'amber', icon: '⚙️', label: 'Réparation méca.' },
-  MEC_INSTALL: { color: 'green', icon: '🔩', label: 'Installation méca.' },
-
-  // Pneumatique
-  PNEU_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic pneu.' },
-  PNEU_REP: { color: 'amber', icon: '💨', label: 'Réparation pneu.' },
-
-  // Hydraulique
-  HYD_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic hydr.' },
-  HYD_REP: { color: 'amber', icon: '💧', label: 'Réparation hydr.' },
-
-  // Bâtiment
-  BAT_NET: { color: 'gray', icon: '🧹', label: 'Nettoyage' },
-  BAT_REP: { color: 'amber', icon: '🔨', label: 'Réparation bât.' },
-
-  // Informatique
-  INFO_DIAG: { color: 'blue', icon: '💻', label: 'Diagnostic info.' },
-  INFO_REP: { color: 'amber', icon: '🖥️', label: 'Réparation info.' },
-  INFO_INSTALL: { color: 'green', icon: '📡', label: 'Installation info.' },
-
-  // Maintenance préventive
-  PREV_INSP: { color: 'blue', icon: '👁️', label: 'Inspection' },
-  PREV_LUB: { color: 'blue', icon: '🛢️', label: 'Lubrification' },
-  PREV_TEST: { color: 'blue', icon: '✅', label: 'Test' },
-
-  // Autre
-  OTHER: { color: 'gray', icon: '•', label: 'Autre' },
-};
-
-/**
- * Badge par défaut pour catégories inconnues
- */
-export const DEFAULT_CATEGORY_BADGE = {
-  color: 'gray',
-  icon: '?',
-  label: 'N/A',
-};
 
 /**
  * Mapping des niveaux de priorité vers leurs badges

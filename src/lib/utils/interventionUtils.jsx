@@ -206,11 +206,12 @@ export const getSelectionButtonStyle = (config, isActive, isHovered) => {
 };
 
 /**
- * Obtenir la couleur de la catégorie d'action
+ * Obtenir la couleur de la catégorie d'action depuis les données backend
+ * @param {object} subcategory - Subcategory object avec category.color ou category_id.color
+ * @returns {string} - Couleur Radix UI (ex: 'blue', 'red', 'gray')
  */
-export const getCategoryColor = (subcategory, ACTION_CATEGORY_COLORS) => {
-  if (!subcategory?.category_id?.code) return "gray";
-  return ACTION_CATEGORY_COLORS[subcategory.category_id.code] || "gray";
+export const getCategoryColor = (subcategory) => {
+  return subcategory?.category?.color || subcategory?.category_id?.color || 'gray';
 };
 
 /**

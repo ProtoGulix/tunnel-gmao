@@ -1,17 +1,15 @@
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Card, TextField, Select, Badge, TextArea, Button } from "@radix-ui/themes";
 import { Activity, Clock, Tag, Folder, BarChart3, Plus } from "lucide-react";
-import { ACTION_CATEGORY_COLORS } from "@/config/interventionTypes";
 
 // DTO-friendly accessors with legacy fallback
 const getCategoryId = (subcategory) => subcategory?.id ?? subcategory?.category_id?.id ?? null;
 const getCategoryCode = (subcategory) => subcategory?.category_id?.code ?? subcategory?.categoryCode ?? subcategory?.code ?? "—";
 const getCategoryName = (subcategory) => subcategory?.name ?? subcategory?.category_name ?? "—";
 
+// Utilise la couleur provenant du backend (category.color)
 const getCategoryColor = (subcategory) => {
-  const code = getCategoryCode(subcategory);
-  if (!code || code === "—") return 'gray';
-  return ACTION_CATEGORY_COLORS[code] || 'gray';
+  return subcategory?.category?.color ?? subcategory?.category_id?.color ?? 'gray';
 };
 
 export default function ActionForm({
@@ -100,7 +98,14 @@ export default function ActionForm({
                     {subcategories.map(cat => (
                       <Select.Item key={`cat-${getCategoryId(cat)}`} value={String(getCategoryId(cat))}>
                         <Flex align="center" gap="2">
-                          <Badge variant="soft" size="1" color={getCategoryColor(cat)}>
+                          <Badge 
+                            variant="soft" 
+                            size="1" 
+                            style={{ 
+                              backgroundColor: getCategoryColor(cat) || '#6b7280',
+                              color: 'white'
+                            }}
+                          >
                             {getCategoryCode(cat)}
                           </Badge>
                           <Text size="2">{getCategoryName(cat)}</Text>

@@ -1,7 +1,5 @@
 import { ANOMALY_CONFIG } from '@/config/anomalyConfig';
 import {
-  CATEGORY_BADGES,
-  DEFAULT_CATEGORY_BADGE,
   PRIORITY_BADGES,
   DEFAULT_PRIORITY_BADGE,
   STATUS_BADGES,
@@ -757,17 +755,12 @@ export function getRecurrenceBadge(rank) {
 }
 
 /**
- * Retourne le badge de catégorie d'action
- * @param {string} categoryCode - Code de la catégorie
- * @returns {object} - { color, icon, label }
+ * Retourne la couleur de catégorie d'action depuis les données backend
+ * @param {object} subcategory - Subcategory object avec category.color
+ * @returns {string} - Couleur Radix UI (ex: 'blue', 'red', 'gray')
  */
-export function getCategoryBadge(categoryCode) {
-  return (
-    CATEGORY_BADGES[categoryCode] || {
-      ...DEFAULT_CATEGORY_BADGE,
-      label: categoryCode || 'N/A',
-    }
-  );
+export function getCategoryColor(subcategory) {
+  return subcategory?.category?.color || 'gray';
 }
 
 /**

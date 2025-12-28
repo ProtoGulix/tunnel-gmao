@@ -33,7 +33,7 @@
 // ==============================
 // DOMAIN ADAPTERS (sorted alphabetically for readability)
 // ==============================
-import { actionSubcategoriesAdapter as actionSubcategories } from './directus/actionSubcategories.adapter';
+import { actionSubcategoriesAdapter as actionSubcategories } from './directus/actionSubcategories/adapter.ts';
 import { actionsAdapter as actions } from './directus/actions/adapter';
 import { authAdapter as auth } from './directus/auth.adapter';
 import { interventionStatusLogsAdapter as interventionStatusLogs } from './directus/interventionStatusLogs.adapter';

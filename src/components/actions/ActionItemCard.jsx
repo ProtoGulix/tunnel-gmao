@@ -66,8 +66,11 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
             <Badge 
               variant="soft" 
               size="2"
-              color={getCategoryColor(subcategory)}
-              style={{ flexShrink: 0 }}
+              style={{ 
+                flexShrink: 0,
+                backgroundColor: getCategoryColor(subcategory) || '#6b7280',
+                color: 'white'
+              }}
             >
               {getSubcategoryCode(subcategory)}
             </Badge>

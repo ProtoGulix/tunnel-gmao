@@ -235,7 +235,12 @@ const mapActionPayloadToBackend = (payload) => {
   if (payload.complexityScore !== undefined) backend.complexity_score = payload.complexityScore;
   if (payload.subcategory?.id !== undefined) backend.action_subcategory = payload.subcategory.id;
   if (payload.technician?.id !== undefined) backend.tech = payload.technician.id;
-  if (payload.intervention?.id !== undefined) backend.intervention_id = payload.intervention.id;
+  // Ensure intervention_id is a string UUID, not an object
+  if (payload.intervention?.id !== undefined) {
+    backend.intervention_id = String(payload.intervention.id);
+  } else if (payload.interventionId !== undefined) {
+    backend.intervention_id = String(payload.interventionId);
+  }
   return backend;
 };
 
@@ -249,7 +254,12 @@ const mapPartPayloadToBackend = (payload) => {
   if (payload.quantity !== undefined) backend.quantity = payload.quantity;
   if (payload.note !== undefined) backend.note = payload.note;
   if (payload.stockItem?.id !== undefined) backend.stock_item_id = payload.stockItem.id;
-  if (payload.intervention?.id !== undefined) backend.intervention_id = payload.intervention.id;
+  // Ensure intervention_id is a string UUID, not an object
+  if (payload.intervention?.id !== undefined) {
+    backend.intervention_id = String(payload.intervention.id);
+  } else if (payload.interventionId !== undefined) {
+    backend.intervention_id = String(payload.interventionId);
+  }
   return backend;
 };
 

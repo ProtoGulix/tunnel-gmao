@@ -9,7 +9,7 @@ import {
   formatActionDate, 
   formatTime, 
   getComplexityBadge,
-  getCategoryBadge 
+  getCategoryColor
 } from "@/lib/utils/actionUtils";
 
 // DTO-friendly accessors with legacy fallback
@@ -136,12 +136,12 @@ export default function ActionsList({ actions, onDateRangeChange }) {
             {filteredActions.map((action) => {
               const complexity = getActionComplexityScore(action);
               const complexityBadge = getComplexityBadge(complexity);
-              const categoryBadge = getCategoryBadge(getSubcategoryCode(action.action_subcategory ?? action.subcategory));
+              const subcategory = action.action_subcategory ?? action.subcategory;
+              const categoryColor = getCategoryColor(subcategory);
               const timeSpent = getActionTimeSpent(action);
               const createdAt = getActionCreatedAt(action);
               const description = getActionDescription(action);
               const intervention = action.intervention_id ?? action.intervention;
-              const subcategory = action.action_subcategory ?? action.subcategory;
               const technician = action.tech ?? action.technician;
 
               return (
@@ -186,8 +186,14 @@ export default function ActionsList({ actions, onDateRangeChange }) {
                   {/* Catégorie */}
                   <Table.Cell>
                     <Flex direction="column" gap="1">
-                      <Badge color={categoryBadge.color} size="1">
-                        {categoryBadge.icon} {getSubcategoryCode(subcategory)}
+                      <Badge 
+                        size="1" 
+                        style={{ 
+                          backgroundColor: categoryColor || '#6b7280',
+                          color: 'white'
+                        }}
+                      >
+                        {getSubcategoryCode(subcategory)}
                       </Badge>
                       <Text size="1" color="gray">
                         {getSubcategoryName(subcategory)}

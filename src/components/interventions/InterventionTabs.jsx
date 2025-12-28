@@ -68,7 +68,7 @@ import {
 import { getCategoryColor, sanitizeDescription, getTimeDiff, getStatusColorAtDate } from "@/lib/utils/interventionUtils.jsx";
 
 // 6. Config & Constants
-import { STATE_COLORS, STATUS_CONFIG, ACTION_CATEGORY_COLORS } from "@/config/interventionTypes";
+import { STATE_COLORS, STATUS_CONFIG } from "@/config/interventionTypes";
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // ACTIONS TAB
@@ -235,7 +235,7 @@ const TimelineItemRenderer = ({ item }) => {
   return (
     <ActionItemCard 
       action={item.data}
-      getCategoryColor={(sub) => getCategoryColor(sub, ACTION_CATEGORY_COLORS)}
+      getCategoryColor={getCategoryColor}
       sanitizeDescription={sanitizeDescription}
     />
   );
@@ -737,7 +737,10 @@ const HistoryItem = ({ item }) => (
               <Badge 
                 variant="soft" 
                 size="1" 
-                color={getCategoryColor(item.data.subcategory, ACTION_CATEGORY_COLORS)}
+                style={{
+                  backgroundColor: getCategoryColor(item.data.subcategory) || '#6b7280',
+                  color: 'white'
+                }}
               >
                 {item.data.subcategory.code || '—'}
               </Badge>
