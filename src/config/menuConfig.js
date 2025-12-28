@@ -10,27 +10,13 @@ import {
   LayoutList,
 } from 'lucide-react';
 
-// Imports des composants pages
-import PublicHome from '../pages/PublicHome';
-import PurchaseRequestForm from '../pages/public/PurchaseRequestForm';
-import InterventionRequestForm from '../pages/public/InterventionRequestForm';
-import Login from '../pages/Login';
-import InterventionsList from '../pages/InterventionsList';
-import InterventionDetail from '../pages/InterventionDetail';
-import InterventionCreate from '../pages/InterventionCreate';
-import MachineList from '../pages/MachineList';
-import MachineDetail from '../pages/MachineDetail';
-import ActionsPage from '../pages/ActionsPage';
-import StockManagement from '../pages/StockManagement';
-
 /**
- * Configuration complète des pages de l'application
- * Définit la navigation, les en-têtes, les icônes, labels, autorisations ET composants
+ * Configuration des pages de l'application
+ * Configuration pure sans imports de composants React
  *
  * Structure de chaque item :
  * - id: Identifiant unique
  * - path: Chemin de la route
- * - component: Composant React à rendre
  * - label: Label affiché dans le menu
  * - icon: Icône Lucide React
  * - pageTitle: Titre de la page (peut être différent du label menu)
@@ -39,6 +25,7 @@ import StockManagement from '../pages/StockManagement';
  * - publicOnly: Visible uniquement en mode public
  * - requiresAuth: Nécessite une authentification (défaut: true)
  * - showInMenu: Afficher dans le menu latéral (défaut: true)
+ * - timeFilter: Configuration du filtre temporel (optionnel)
  */
 
 export const PAGES_CONFIG = [
@@ -46,7 +33,6 @@ export const PAGES_CONFIG = [
   {
     id: 'home',
     path: '/',
-    component: PublicHome,
     label: 'Accueil',
     icon: Home,
     pageTitle: 'Accueil',
@@ -57,7 +43,6 @@ export const PAGES_CONFIG = [
   {
     id: 'login',
     path: '/login',
-    component: Login,
     label: 'Connexion',
     icon: Home,
     pageTitle: 'Connexion',
@@ -69,7 +54,6 @@ export const PAGES_CONFIG = [
   {
     id: 'intervention-request',
     path: '/public/intervention-request',
-    component: InterventionRequestForm,
     label: "Demande d'intervention",
     icon: Wrench,
     pageTitle: "Demande d'intervention",
@@ -80,7 +64,6 @@ export const PAGES_CONFIG = [
   {
     id: 'purchase-request',
     path: '/public/purchase-request',
-    component: PurchaseRequestForm,
     label: "Demande d'achat",
     icon: ShoppingCart,
     pageTitle: "Demande d'achat",
@@ -93,7 +76,6 @@ export const PAGES_CONFIG = [
   {
     id: 'interventions',
     path: '/interventions',
-    component: InterventionsList,
     label: 'Interventions',
     icon: ClipboardList,
     pageTitle: 'Gestion des interventions',
@@ -103,7 +85,6 @@ export const PAGES_CONFIG = [
   {
     id: 'interventions-new',
     path: '/intervention/new',
-    component: InterventionCreate,
     label: 'Nouvelle intervention',
     icon: Plus,
     pageTitle: 'Créer une intervention',
@@ -114,7 +95,6 @@ export const PAGES_CONFIG = [
   {
     id: 'intervention-detail',
     path: '/intervention/:id',
-    component: InterventionDetail,
     label: 'Détail intervention',
     icon: FileText,
     pageTitle: "Détail de l'intervention",
@@ -125,7 +105,6 @@ export const PAGES_CONFIG = [
   {
     id: 'actions',
     path: '/actions',
-    component: ActionsPage,
     label: 'Actions techniques',
     icon: LayoutList,
     pageTitle: 'Actions techniques',
@@ -141,7 +120,6 @@ export const PAGES_CONFIG = [
   {
     id: 'machines',
     path: '/machines',
-    component: MachineList,
     label: 'Machines',
     icon: Settings,
     pageTitle: 'Parc machines',
@@ -151,7 +129,6 @@ export const PAGES_CONFIG = [
   {
     id: 'machine-detail',
     path: '/machines/:id',
-    component: MachineDetail,
     label: 'Détail machine',
     icon: Settings,
     pageTitle: 'Détail de la machine',
@@ -162,7 +139,6 @@ export const PAGES_CONFIG = [
   {
     id: 'stock',
     path: '/stock',
-    component: StockManagement,
     label: 'Stock',
     icon: Package,
     pageTitle: 'Gestion du stock',

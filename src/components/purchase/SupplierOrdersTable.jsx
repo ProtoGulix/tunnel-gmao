@@ -14,13 +14,12 @@ import {
 } from "@radix-ui/themes";
 import { Package, Send, Eye, MoreHorizontal, TruckIcon } from "lucide-react";
 import { suppliers, stock } from "@/lib/api/facade";
-import { 
-  CSV_CONFIG, 
-  EMAIL_CONFIG, 
-  generateCSVContent, 
+import { CSV_CONFIG, EMAIL_CONFIG } from "@/config/exportConfig";
+import {
+  generateCSVContent,
   generateEmailBody,
-  generateFullEmailHTML
-} from "@/config/exportConfig";
+  generateFullEmailHTML,
+} from "@/lib/utils/exportGenerator";
 import { getSupplierOrderStatus } from "@/config/purchasingConfig";
 import TableHeader from "@/components/common/TableHeader";
 import FilterSelect from "@/components/common/FilterSelect";

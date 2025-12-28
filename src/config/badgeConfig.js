@@ -8,12 +8,12 @@
  */
 export const CATEGORY_BADGES = {
   // Électrique
-  ELEC_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic élec.' },
+  DEP_ELEC: { color: 'blue', icon: '🔍', label: 'Diagnostic élec.' },
   ELEC_REP: { color: 'amber', icon: '⚡', label: 'Réparation élec.' },
   ELEC_INSTALL: { color: 'green', icon: '🔌', label: 'Installation élec.' },
 
   // Mécanique
-  MEC_DIAG: { color: 'blue', icon: '🔧', label: 'Diagnostic méca.' },
+  DEP_MEC: { color: 'blue', icon: '🔧', label: 'Diagnostic méca.' },
   MEC_REP: { color: 'amber', icon: '⚙️', label: 'Réparation méca.' },
   MEC_INSTALL: { color: 'green', icon: '🔩', label: 'Installation méca.' },
 

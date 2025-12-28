@@ -7,8 +7,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import NotFound from '@/pages/NotFound';
 
-// 3. Config
+// 3. Config & Routes
 import { PAGES_CONFIG } from '@/config/menuConfig';
+import { getRouteComponent } from '@/pages/routes';
 
 // ===== MAIN COMPONENT =====
 /**
@@ -27,7 +28,7 @@ function App() {
     <Router>
       <Routes>
         {PAGES_CONFIG.map((page) => {
-          const Component = page.component;
+          const Component = getRouteComponent(page.id);
           
           // Skip pages with missing components (log only in development)
           if (!Component) {
