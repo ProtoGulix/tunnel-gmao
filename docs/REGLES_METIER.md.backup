@@ -1,8 +1,40 @@
-## Gestion des interventions, actions et sous-tâches
+## Gestion des demandes d'intervention et des sous-tâches
 
-> **Note importante** : Ce document définit le **modèle métier actuel** de Tunnel GMAO
-> basé sur le schéma PostgreSQL implémenté. Les règles décrites correspondent
-> à l'architecture technique en place.
+> **Note importante** : Ce document définit le **modèle métier cible** de Tunnel GMAO.  
+> Certaines règles décrites ici **ne sont pas encore implémentées techniquement**, mais elles
+> font partie intégrante des règles métier et doivent guider toute évolution
+> du modèle de données et du code.
+
+---
+
+### Demande d’intervention (Request)
+
+#### Rôle métier
+
+La demande d’intervention est le **point d’entrée unique** d’un besoin de maintenance.
+Elle sert à :
+
+- signaler un problème ou un besoin
+- qualifier la demande
+- décider de sa prise en charge
+
+#### Règles métier
+
+- Une demande peut exister **sans intervention**
+- Une demande **ne contient jamais** :
+  - de temps passé
+  - d’actions
+  - de pièces
+- Une demande peut être :
+  - acceptée
+  - rejetée
+  - clôturée sans intervention
+- Une demande acceptée peut générer **une seule et unique intervention**
+
+#### Statuts cibles (MVP)
+
+> **À définir selon la mise en œuvre concrète**  
+> Exemples possibles : `nouvelle`, `en_qualification`, `acceptée`, `rejetée`, `clôturée`
 
 ---
 
@@ -38,23 +70,24 @@ Elle représente **l'exécution réelle du travail de maintenance** sur un équi
 
 Les sous-tâches servent **exclusivement à organiser le travail** lors :
 
-- d'interventions longues
+- d’interventions longues
 - de projets
 - de mises en service
 
 #### Règles métier
 
 - Une sous-tâche est toujours rattachée à une intervention
-- Une sous-tâche n'a **aucune valeur de traçabilité terrain**
+- Une sous-tâche n’a **aucune valeur de traçabilité terrain**
 - Une sous-tâche ne contient :
   - ni temps passé
   - ni pièces
   - ni complexité
 - Les statistiques et indicateurs **ne tiennent jamais compte des sous-tâches**
 
-#### Statuts
+#### Statuts cibles
 
-Les sous-tâches peuvent avoir des statuts pour suivre l'avancement organisationnel (exemples : `todo`, `in_progress`, `done`, `blocked`).
+> **À définir selon la mise en œuvre concrète**  
+> Exemples possibles : `en_cours`, `attente_pieces`, `attente_prod`, `terminée`, `annulée`
 
 ---
 
@@ -71,14 +104,13 @@ L'action (`intervention_action`) est la **seule unité de travail réel** et de 
 - Une action possède :
   - Une **description** libre du travail effectué
   - Un **temps passé** (`time_spent` en heures) - **seule source de vérité**
-  - Un **score de complexité** (`complexity_score`) - valeur arbitraire donnée par le technicien pour identifier les points de blocage
-  - Des **annotations de complexité** (`complexity_anotation` JSON) - détail optionnel des facteurs contributifs (ex: facteurs de `complexity_factor`)
+  - Une **complexité** (`complexity` : simple, moyen, élevé, critique)
+  - Une **priorité** (`priority` : basse, normale, haute, critique)
   - Un **technicien** ayant réalisé l'action (`tech`)
 
 #### Règles fortes
 
-- Le temps passé et le score de complexité sont portés **uniquement par les actions**
-- Le score de complexité est **subjectif** : évaluation terrain du technicien pour signaler les difficultés rencontrées
+- Le temps et la complexité sont portés **uniquement par les actions**
 - Toutes les statistiques et KPI sont calculés **à partir des actions**
 - Les actions sont horodatées (`created_at`, `updated_at`)
 - Une action ne peut pas exister sans intervention parente
@@ -110,19 +142,17 @@ Les pièces consommées durant interventions sont tracées via `intervention_par
 
 ### Règle métier synthèse (non négociable)
 
-| Règle                           | Description                                                      | Implémentation |
-| ------------------------------- | ---------------------------------------------------------------- | -------------- |
+| Règle                         | Description                                                      | Implémentation |
+| ----------------------------- | ---------------------------------------------------------------- | -------------- |
 | **Intervention = point entrée** | L'intervention est le point d'entrée principal de la maintenance | ✅ Implémenté  |
-| **Machine obligatoire**         | Toute intervention doit être rattachée à une machine             | ✅ Implémenté  |
-| **Sous-tâche = organisation**   | Une sous-tâche est un outil d'organisation, pas de traçabilité   | ✅ Implémenté  |
-| **Action = preuve**             | Une action est la seule preuve de travail réel                   | ✅ Implémenté  |
-| **Temps dans l'action**         | Le temps et la complexité vivent uniquement dans les actions     | ✅ Implémenté  |
-| **Code auto-généré**            | Les codes intervention, stock, commandes sont auto-générés       | ✅ Triggers    |
-| **Historisation statuts**       | Tout changement de statut est automatiquement historisé          | ✅ Triggers    |
+| **Machine obligatoire**       | Toute intervention doit être rattachée à une machine             | ✅ Implémenté  |
+| **Sous-tâche = organisation** | Une sous-tâche est un outil d'organisation, pas de traçabilité   | ✅ Implémenté  |
+| **Action = preuve**           | Une action est la seule preuve de travail réel                   | ✅ Implémenté  |
+| **Temps dans l'action**       | Le temps et la complexité vivent uniquement dans les actions     | ✅ Implémenté  |
+| **Code auto-généré**          | Les codes intervention, stock, commandes sont auto-générés       | ✅ Triggers    |
+| **Historisation statuts**     | Tout changement de statut est automatiquement historisé          | ✅ Triggers    |
 
-### Impact sur l'architecture technique
-
-Ces règles métier se traduisent dans le schéma PostgreSQL par :
+### Impact sur l'architecture techniqueschéma PostgreSQL par :
 
 1. **Modèle de données** (voir [db/schema/](../db/schema/))
 
@@ -134,9 +164,9 @@ Ces règles métier se traduisent dans le schéma PostgreSQL par :
    - Table `intervention_action` : unité de travail réel
      - `intervention_id` (UUID, FK vers `intervention`) - obligatoire
      - `action_subcategory` (INTEGER, FK vers `action_subcategory`)
-     - `time_spent` (NUMERIC(6,2)) - temps en heures
-     - `complexity_score` (INTEGER) - score arbitraire donné par le technicien (identification des blocages)
-     - `complexity_anotation` (JSON) - annotations optionnelles sur les facteurs de difficulté
+     - `time_spent` (NUMERIC) - temps en heures
+     - `complexity` (VARCHAR) - niveau complexité
+     - `priority` (VARCHAR) - priorité
      - `tech` (UUID) - technicien
    - Table `subtask` : organisation interne
      - `intervention_id` (UUID, FK vers `intervention`)
@@ -152,7 +182,7 @@ Ces règles métier se traduisent dans le schéma PostgreSQL par :
      - `trg_generate_stock_item_ref` : Référence stock `FAM-SFAM-SPEC-DIM`
      - `trg_generate_supplier_order_number` : Numéro commande `CMD-YYYYMMDD-NNNN`
    - **Historisation statuts** :
-     - `trg_init_status_log` : Log initial à la création (statut ouvert)
+     - `trg_init_status_log` : Log initial à la création (statut "ouvert")
      - `trg_log_status_change` : Log automatique à chaque changement statut
      - `trg_sync_status_from_log` : Synchronisation `status_actual` depuis log
    - **Calculs automatiques** :
@@ -175,105 +205,11 @@ Ces règles métier se traduisent dans le schéma PostgreSQL par :
 
 5. **API contracts (DTOs)**
    - `Intervention` : inclure `machine: { id, code, nom }`, `status_actual`, `code`
-   - `InterventionAction` : inclure `timeSpent`, `complexityScore`, `complexityAnotation`, `subcategory.category.color`
+   - `InterventionAction` : inclure `timeSpent`, `complexity`, `priority`, `subcategory.category.color`
    - `Subtask` : DTO simple sans champs analytiques (organisation uniquement)
+   - Pas de DTO `InterventionRequest` (non implémenté dans schéma actuel)
 
 > 📖 Voir [tech/API_CONTRACTS.md](tech/API_CONTRACTS.md) pour les contrats DTOs détaillés  
 > 📖 Voir [db/schema/README.md](../db/schema/README.md) pour la documentation du schéma SQL
 
----
-
-## Gestion du stock et des achats
-
-### Articles stock
-
-#### Structure
-
-Les articles sont organisés en hiérarchie :
-
-- **Familles** (`stock_family`) : niveau 1 (ex: VIS, ROUL, COURR)
-- **Sous-familles** (`stock_sub_family`) : niveau 2 (ex: VIS-CHC, VIS-TH)
-- **Articles** (`stock_item`) : niveau 3 avec référence auto-générée
-
-#### Règles métier
-
-- Référence auto-générée : `FAMILLE-SOUSFAMILLE-SPEC-DIMENSION`
-  - Exemple : `VIS-CHC-M8-20`
-- Stock suivi en quantité (`stock_quantity`)
-- Seuil minimum (`stock_min`) pour alertes
-- Contrainte : stock >= 0
-
-#### Fournisseurs
-
-- Articles liés aux fournisseurs via `stock_item_supplier`
-- Prix, délais, quantités minimum par fournisseur
-- Fournisseur préféré marquable (`is_preferred`)
-
-### Demandes d'achat
-
-#### Rôle métier
-
-Les demandes d'achat (`purchase_request`) permettent de demander l'approvisionnement d'articles.
-
-#### Règles métier
-
-- Rattachée à un article stock (`stock_item_id`)
-- Peut être liée à une intervention (`intervention_id`, optionnel)
-- Quantités : demandée (`quantity_requested`) et approuvée (`quantity_approved`)
-- Statut : `en_attente`, `approuve`, `commande`, `recu`, `refuse`
-- Marquage urgence possible (`urgent`)
-
-### Commandes fournisseurs
-
-#### Structure
-
-- **Commande** (`supplier_order`) : entête avec numéro auto-généré `CMD-YYYYMMDD-NNNN`
-- **Lignes** (`supplier_order_line`) : détail articles commandés
-- **Lien demandes** (`supplier_order_line_purchase_request`) : traçabilité demande → commande
-
-#### Règles métier
-
-- Numéro commande auto-généré et unique
-- Total ligne calculé automatiquement (prix × quantité)
-- Dates : commande, livraison prévue, livraison réelle
-- Statut : `brouillon`, `envoye`, `recu`, `annule`
-
----
-
-## Machines et équipements
-
-### Structure hiérarchique
-
-- Une machine peut avoir un **équipement parent** (`equipement_mere`)
-- Permet modélisation équipements composés (ex: ligne production avec plusieurs machines)
-
-### Règles métier
-
-- Code unique obligatoire (`code`) - utilisé dans code intervention
-- Informations : type, fabricant, numéro série, date mise en service
-- Localisation géographique (`localisation` → `location`)
-- Hiérarchie auto-référencée pour sous-équipements
-
----
-
-## Principes architecturaux
-
-### Backend-agnostic
-
-L'architecture suit le pattern **datasource/mapper/adapter** :
-
-- **Datasource** : Requêtes HTTP backend-spécifiques
-- **Mapper** : Transformations pures backend → domain
-- **Adapter** : Interface domaine pour composants
-
-### Séparation des préoccupations
-
-- **Métier** : Tables core (intervention, action, stock)
-- **Référentiels** : Tables ref (catégories, statuts)
-- **Automatisations** : Triggers (codes, logs, calculs)
-
-### Traçabilité
-
-- Tous les changements de statut historisés
-- Timestamps automatiques (`created_at`, `updated_at`)
-- Actions = preuve du travail réel avec temps passé
+> 📖 Voir [tech/API_CONTRACTS.md](tech/API_CONTRACTS.md) pour les contrats détaillés
