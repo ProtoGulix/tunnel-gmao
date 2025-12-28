@@ -1,4 +1,22 @@
 import { ANOMALY_CONFIG } from '@/config/anomalyConfig';
+import {
+  CATEGORY_BADGES,
+  DEFAULT_CATEGORY_BADGE,
+  PRIORITY_BADGES,
+  DEFAULT_PRIORITY_BADGE,
+  STATUS_BADGES,
+  DEFAULT_STATUS_BADGE,
+  SEVERITY_BADGES,
+  DEFAULT_SEVERITY_BADGE,
+  COMPLEXITY_THRESHOLDS,
+  MAX_COMPLEXITY_BADGE,
+  LOAD_PRIORITY_BADGES,
+  LOW_LOAD_BADGE,
+  RECURRENCE_BADGES,
+  RARE_RECURRENCE_BADGE,
+  PRODUCTIVITY_THRESHOLDS,
+  LOW_PRODUCTIVITY_BADGE,
+} from '@/config/badgeConfig';
 
 /**
  * Utilitaires pour le traitement des actions
@@ -439,11 +457,11 @@ function aggregateByCategory(actionsData) {
     const subcat = action.subcategory;
     if (!subcat) return;
 
-    const key = `${subcat.category_id || 'Autre'}|${subcat.id}`;
+    const key = `${subcat.code || 'Autre'}|${subcat.id}`;
 
     if (!categoryMap.has(key)) {
       categoryMap.set(key, {
-        category: subcat.category_id || 'Autre',
+        category: 'Action',
         subcategory: subcat.name,
         code: subcat.code,
         count: 0,
@@ -549,7 +567,7 @@ export function calculateActionStats(actions) {
     if (!categories[catKey]) {
       categories[catKey] = {
         code: action.subcategory?.code,
-        category: action.subcategory?.category_id?.name || 'Autre',
+        category: 'Action',
         subcategory: action.subcategory?.name,
         count: 0,
         totalTime: 0,
@@ -665,50 +683,13 @@ export function calculateActionStats(actions) {
 export function getComplexityBadge(complexity) {
   const score = parseInt(complexity) || 0;
 
-  if (score <= 2) {
-    return {
-      color: 'green',
-      icon: '✓',
-      label: 'Simple',
-      value: score,
-      description: 'Tâche facile et rapide',
-    };
-  }
-  if (score <= 4) {
-    return {
-      color: 'blue',
-      icon: '◆',
-      label: 'Facile',
-      value: score,
-      description: 'Tâche standard',
-    };
-  }
-  if (score <= 6) {
-    return {
-      color: 'amber',
-      icon: '◆◆',
-      label: 'Moyen',
-      value: score,
-      description: "Requiert de l'expérience",
-    };
-  }
-  if (score <= 8) {
-    return {
-      color: 'red',
-      icon: '◆◆◆',
-      label: 'Difficile',
-      value: score,
-      description: 'Tâche complexe',
-    };
+  for (const threshold of COMPLEXITY_THRESHOLDS) {
+    if (score <= threshold.max) {
+      return { ...threshold.badge, value: score };
+    }
   }
 
-  return {
-    color: 'crimson',
-    icon: '⚡',
-    label: 'Très difficile',
-    value: score,
-    description: 'Tâche très complexe ou dangereuse',
-  };
+  return { ...MAX_COMPLEXITY_BADGE, value: score };
 }
 
 /**
@@ -718,15 +699,7 @@ export function getComplexityBadge(complexity) {
  */
 export function getPriorityBadge(priority) {
   const p = (priority || '').toLowerCase();
-
-  const priorityMap = {
-    urgent: { color: 'red', icon: '🚨', label: 'Urgent' },
-    haute: { color: 'amber', icon: '⚠️', label: 'Haute' },
-    normal: { color: 'blue', icon: '→', label: 'Normal' },
-    basse: { color: 'gray', icon: '↓', label: 'Basse' },
-  };
-
-  return priorityMap[p] || { color: 'gray', icon: '?', label: 'N/A' };
+  return PRIORITY_BADGES[p] || DEFAULT_PRIORITY_BADGE;
 }
 
 /**
@@ -736,16 +709,7 @@ export function getPriorityBadge(priority) {
  */
 export function getStatusBadge(status) {
   const s = (status || '').toLowerCase();
-
-  const statusMap = {
-    'en attente': { color: 'gray', icon: '⏳', label: 'En attente' },
-    'en cours': { color: 'blue', icon: '⏱️', label: 'En cours' },
-    completée: { color: 'green', icon: '✓', label: 'Complétée' },
-    annulée: { color: 'red', icon: '✗', label: 'Annulée' },
-    suspendue: { color: 'orange', icon: '⏸', label: 'Suspendue' },
-  };
-
-  return statusMap[s] || { color: 'gray', icon: '?', label: 'N/A' };
+  return STATUS_BADGES[s] || DEFAULT_STATUS_BADGE;
 }
 
 /**
@@ -755,26 +719,7 @@ export function getStatusBadge(status) {
  */
 export function getSeverityBadge(severity) {
   const sev = (severity || '').toLowerCase();
-
-  const severityMap = {
-    high: { color: 'red', icon: '🔴', label: 'Haute', textColor: 'tomato' },
-    medium: {
-      color: 'amber',
-      icon: '🟠',
-      label: 'Moyenne',
-      textColor: 'amber',
-    },
-    low: { color: 'amber', icon: '🟡', label: 'Basse', textColor: 'amber' },
-  };
-
-  return (
-    severityMap[sev] || {
-      color: 'gray',
-      icon: '⚪',
-      label: 'N/A',
-      textColor: 'gray',
-    }
-  );
+  return SEVERITY_BADGES[sev] || DEFAULT_SEVERITY_BADGE;
 }
 
 /**
@@ -783,45 +728,15 @@ export function getSeverityBadge(severity) {
  * @returns {object} - { color, icon, label }
  */
 export function getLoadPriorityBadge(rank) {
-  if (rank === 0) {
-    return {
-      color: 'red',
-      icon: '🔥',
-      label: 'Critique',
-      description: 'Charge de travail très élevée',
-    };
+  for (const config of LOAD_PRIORITY_BADGES) {
+    if (config.rank !== undefined && rank === config.rank) {
+      return config.badge;
+    }
+    if (config.maxRank !== undefined && rank <= config.maxRank) {
+      return config.badge;
+    }
   }
-  if (rank === 1) {
-    return {
-      color: 'amber',
-      icon: '⚠️',
-      label: 'Élevée',
-      description: 'Charge importante à surveiller',
-    };
-  }
-  if (rank === 2) {
-    return {
-      color: 'amber',
-      icon: '⚡',
-      label: 'Haute',
-      description: 'Charge significative',
-    };
-  }
-  if (rank <= 4) {
-    return {
-      color: 'blue',
-      icon: '→',
-      label: 'Moyenne',
-      description: 'Charge modérée',
-    };
-  }
-
-  return {
-    color: 'gray',
-    icon: '·',
-    label: 'Faible',
-    description: 'Charge réduite',
-  };
+  return LOW_LOAD_BADGE;
 }
 
 /**
@@ -830,45 +745,15 @@ export function getLoadPriorityBadge(rank) {
  * @returns {object} - { color, icon, label }
  */
 export function getRecurrenceBadge(rank) {
-  if (rank === 0) {
-    return {
-      color: 'red',
-      icon: '🔁',
-      label: 'Très récurrent',
-      description: 'Intervention la plus fréquente',
-    };
+  for (const config of RECURRENCE_BADGES) {
+    if (config.rank !== undefined && rank === config.rank) {
+      return config.badge;
+    }
+    if (config.maxRank !== undefined && rank <= config.maxRank) {
+      return config.badge;
+    }
   }
-  if (rank === 1) {
-    return {
-      color: 'amber',
-      icon: '🔄',
-      label: 'Récurrent',
-      description: 'Intervention fréquente',
-    };
-  }
-  if (rank === 2) {
-    return {
-      color: 'amber',
-      icon: '↻',
-      label: 'Régulier',
-      description: 'Intervention régulière',
-    };
-  }
-  if (rank <= 4) {
-    return {
-      color: 'blue',
-      icon: '→',
-      label: 'Occasionnel',
-      description: 'Intervention occasionnelle',
-    };
-  }
-
-  return {
-    color: 'gray',
-    icon: '·',
-    label: 'Rare',
-    description: 'Intervention rare',
-  };
+  return RARE_RECURRENCE_BADGE;
 }
 
 /**
@@ -877,47 +762,9 @@ export function getRecurrenceBadge(rank) {
  * @returns {object} - { color, icon, label }
  */
 export function getCategoryBadge(categoryCode) {
-  const categoryMap = {
-    // Électrique
-    ELEC_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic élec.' },
-    ELEC_REP: { color: 'amber', icon: '⚡', label: 'Réparation élec.' },
-    ELEC_INST: { color: 'green', icon: '🔌', label: 'Installation élec.' },
-
-    // Mécanique
-    MEC_DIAG: { color: 'blue', icon: '🔧', label: 'Diagnostic méca.' },
-    MEC_REP: { color: 'amber', icon: '⚙️', label: 'Réparation méca.' },
-    MEC_INST: { color: 'green', icon: '🔩', label: 'Installation méca.' },
-
-    // Pneumatique
-    PNEU_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic pneu.' },
-    PNEU_REP: { color: 'amber', icon: '💨', label: 'Réparation pneu.' },
-
-    // Hydraulique
-    HYD_DIAG: { color: 'blue', icon: '🔍', label: 'Diagnostic hydr.' },
-    HYD_REP: { color: 'amber', icon: '💧', label: 'Réparation hydr.' },
-
-    // Bâtiment
-    BAT_NET: { color: 'gray', icon: '🧹', label: 'Nettoyage' },
-    BAT_REP: { color: 'amber', icon: '🔨', label: 'Réparation bât.' },
-
-    // Informatique
-    INFO_DIAG: { color: 'blue', icon: '💻', label: 'Diagnostic info.' },
-    INFO_REP: { color: 'amber', icon: '🖥️', label: 'Réparation info.' },
-    INFO_INST: { color: 'green', icon: '📡', label: 'Installation info.' },
-
-    // Maintenance préventive
-    PREV_INSP: { color: 'blue', icon: '👁️', label: 'Inspection' },
-    PREV_LUB: { color: 'blue', icon: '🛢️', label: 'Lubrification' },
-    PREV_TEST: { color: 'blue', icon: '✅', label: 'Test' },
-
-    // Autre
-    OTHER: { color: 'gray', icon: '•', label: 'Autre' },
-  };
-
   return (
-    categoryMap[categoryCode] || {
-      color: 'gray',
-      icon: '?',
+    CATEGORY_BADGES[categoryCode] || {
+      ...DEFAULT_CATEGORY_BADGE,
       label: categoryCode || 'N/A',
     }
   );
@@ -940,27 +787,13 @@ export function getProductivityRate(actions) {
   // Formule simple : (actions / temps) * complexité moyenne
   const rate = totalTime > 0 ? (actions.length / totalTime) * (avgComplexity / 5) : 0;
 
-  if (rate >= 1.5) {
-    return {
-      rate: rate.toFixed(2),
-      color: 'green',
-      label: 'Excellent',
-      icon: '⭐',
-    };
-  }
-  if (rate >= 1) {
-    return { rate: rate.toFixed(2), color: 'blue', label: 'Bon', icon: '✓' };
-  }
-  if (rate >= 0.5) {
-    return {
-      rate: rate.toFixed(2),
-      color: 'orange',
-      label: 'Moyen',
-      icon: '→',
-    };
+  for (const threshold of PRODUCTIVITY_THRESHOLDS) {
+    if (rate >= threshold.min) {
+      return { rate: rate.toFixed(2), ...threshold.badge };
+    }
   }
 
-  return { rate: rate.toFixed(2), color: 'red', label: 'Faible', icon: '⚠️' };
+  return { rate: rate.toFixed(2), ...LOW_PRODUCTIVITY_BADGE };
 }
 
 /**

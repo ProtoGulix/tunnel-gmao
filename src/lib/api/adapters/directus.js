@@ -34,7 +34,7 @@
 // DOMAIN ADAPTERS (sorted alphabetically for readability)
 // ==============================
 import { actionSubcategoriesAdapter as actionSubcategories } from './directus/actionSubcategories.adapter';
-import { actionsAdapter as actions } from './directus/actions.adapter';
+import { actionsAdapter as actions } from './directus/actions/adapter';
 import { authAdapter as auth } from './directus/auth.adapter';
 import { interventionStatusLogsAdapter as interventionStatusLogs } from './directus/interventionStatusLogs.adapter';
 import { interventionStatusRefsAdapter as interventionStatusRefs } from './directus/interventionStatusRefs.adapter';
@@ -49,8 +49,8 @@ import { suppliersAdapter as suppliers } from './directus/suppliers.adapter';
 // ==============================
 // INFRASTRUCTURE
 // ==============================
-import { api, BASE_URL, clearAllCache } from '../client';
-import * as errors from '../errors';
+import { api, BASE_URL, clearAllCache } from '@/lib/api/client';
+import * as errors from '@/lib/api/errors';
 
 // ==============================
 // ADAPTER EXPORT

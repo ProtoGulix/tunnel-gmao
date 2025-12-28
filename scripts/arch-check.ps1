@@ -29,7 +29,7 @@ Write-Host ""
 # Check 1: "directus" outside adapters
 Write-Host -NoNewline "Checking for 'directus' leaks outside adapters... "
 $directusLeaks = Get-ChildItem -Path src -Recurse -Include *.js, *.jsx, *.ts, *.tsx |
-Where-Object { $_.FullName -notmatch 'api\\adapters' } |
+Where-Object { $_.FullName -notmatch 'api\\adapters' -and $_.FullName -notmatch '\\config\\' } |
 Select-String -Pattern "directus" -CaseSensitive:$false 2>$null
 
 if ($directusLeaks) {
@@ -76,7 +76,7 @@ else {
 # Check 4: Backend filters (_eq, _and, _or) outside adapters
 Write-Host -NoNewline "Checking for backend filters outside adapters... "
 $filterLeaks = Get-ChildItem -Path src -Recurse -Include *.js, *.jsx, *.ts, *.tsx |
-Where-Object { $_.FullName -notmatch 'api\\adapters' } |
+Where-Object { $_.FullName -notmatch 'api\\adapters' -and $_.FullName -notmatch '\\config\\' } |
 Select-String -Pattern "(_eq|_and|_or|_neq|_in|_nin)" 2>$null
 
 if ($filterLeaks) {

@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const BASE_URL = import.meta.env.VITE_DATA_API_URL || 'http://localhost:8055';
+import { api, BASE_URL } from '@/lib/api/client';
 
 export async function checkServerStatus() {
   try {
@@ -8,7 +6,7 @@ export async function checkServerStatus() {
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
     const startedAt = performance.now();
 
-    const response = await axios.get(`${BASE_URL}/server/ping`, {
+    const response = await api.get('/server/ping', {
       signal: controller.signal,
       timeout: 5000,
     });

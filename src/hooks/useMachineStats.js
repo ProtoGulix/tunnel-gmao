@@ -64,7 +64,7 @@ export const useMachineStats = (interventions, actions, subcategories) => {
 
     // Répartitions
     const byType = interventions.reduce((acc, i) => {
-      const type = i.type_inter?.toUpperCase() || 'UNKNOWN';
+      const type = i.type?.toUpperCase() || 'UNKNOWN';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
@@ -76,7 +76,7 @@ export const useMachineStats = (interventions, actions, subcategories) => {
     }, {});
 
     const byStatus = interventions.reduce((acc, i) => {
-      const status = i.status_actual?.id || 'unknown';
+      const status = i.status || 'unknown';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
@@ -153,7 +153,7 @@ export const useMachineStats = (interventions, actions, subcategories) => {
 
     // État global
     const hasUrgent = openInterventions.some(i => i.priority === 'urgent');
-    const hasCurative = openInterventions.some(i => i.type_inter === 'CUR');
+    const hasCurative = openInterventions.some(i => i.type === 'CUR');
     
     let globalStatus = 'ok';
     if (hasUrgent) {
