@@ -6,6 +6,16 @@
 Documentation de référence définissant les contrats stables entre le front-end et le
 backend pour garantir l'interchangeabilité des backends sans impact sur les composants.
 
+⚠️ PRÉREQUIS LECTURE :
+Avant de lire ce document, lire impérativement :
+📖 ../REGLES_METIER.md - Concepts métier fondamentaux (5 min)
+
+Les DTOs définis ici reflètent directement les règles métier :
+- InterventionRequest : peut exister seul (demande autonome)
+- Intervention : toujours lié à request.id (dépendance demande)
+- Action : porte timeSpent, complexityScore (seule unité de travail)
+- Subtask : sans champs analytiques (organisation uniquement)
+
 Contenu:
 - Contrats DTO (formes des données, validation, enums)
 - Architecture Facade + Adapter Pattern (isolation backend)

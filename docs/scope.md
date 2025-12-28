@@ -1,5 +1,9 @@
 # Périmètre fonctionnel de Tunnel GMAO
 
+> **Note** : Ce document détaille les fonctionnalités. Pour comprendre les concepts métier (demandes, interventions, actions), lire d'abord [REGLES_METIER.md](REGLES_METIER.md).
+
+---
+
 ## Fonctionnalités incluses
 
 ### 1. Gestion des machines (Équipements)
@@ -21,11 +25,14 @@
 
 ### 3. Interventions et actions
 
-- Enregistrer les actions menées sur une machine (rattachées à une demande)
-- Suivre le temps passé par type d'action (diagnostic, réglage, dépannage, préventif, nettoyage)
-- Associer des pièces utilisées lors de l'intervention
+> **Important** : Lire [REGLES_METIER.md](REGLES_METIER.md) pour comprendre la distinction fondamentale entre demandes, interventions, actions et sous-tâches.
+
+- Enregistrer les **actions** menées sur une machine (rattachées à une intervention)
+- Suivre le **temps passé** par type d'action (diagnostic, réglage, dépannage, préventif, nettoyage)
+- Associer des **pièces utilisées** lors de l'intervention
 - Ajouter des observations techniques (texte libre)
 - Indiquer si l'intervention est clôturée ou nécessite un suivi
+- **Sous-tâches** (optionnel) : organiser les projets longs sans valeur de traçabilité (temps/complexité uniquement dans les actions)
 
 ### 4. Demandes d'achat et stock
 

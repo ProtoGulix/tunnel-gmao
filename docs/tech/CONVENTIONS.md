@@ -1,9 +1,26 @@
-# 📚 Conventions - GMAO MVP Frontend
+# 📚 Conventions - Tunnel GMAO
 
 > **Document Maître** : Toutes les conventions de développement du projet
 >
-> **Dernière mise à jour**: 26 décembre 2025  
-> **Version**: 2.0.0
+> **Dernière mise à jour**: 28 décembre 2025  
+> **Version**: 2.1.0
+
+---
+
+## ⚠️ Lecture Obligatoire Avant Contribution
+
+### Prérequis : Comprendre le métier
+
+**Avant de lire ce document, lire impérativement :**  
+📖 [../REGLES_METIER.md](../REGLES_METIER.md) - Concepts métier fondamentaux (5 min)
+
+Les conventions de code découlent directement des règles métier. Par exemple :
+
+- DTOs `Intervention` incluent toujours `request: { id, title }` (règle : intervention dépend de demande)
+- DTOs `Action` portent `timeSpent`, `complexityScore` (règle : seule unité de travail tracée)
+- `Subtask` n'a pas de champs analytiques (règle : organisation, pas traçabilité)
+
+**Sans comprendre les règles métier, vous écrirez du code qui viole les concepts fondamentaux.**
 
 ---
 

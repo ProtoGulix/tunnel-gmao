@@ -2,12 +2,31 @@
 
 > Conventions de développement, contrats d'API et standards
 >
-> **Version**: 2.0.0  
-> **Dernière mise à jour**: 26 décembre 2025
+> **Version**: 2.1.0  
+> **Dernière mise à jour**: 28 décembre 2025
 
 ---
 
-## 📑 Documents Essentiels
+## 📖 Lecture Recommandée (Ordre)
+
+### Avant de coder : Comprendre le métier
+
+**⭐ 0. [../REGLES_METIER.md](../REGLES_METIER.md)** - **À LIRE EN PREMIER**
+
+Concepts métier fondamentaux qui structurent tout le code :
+
+- Demandes d'intervention (point d'entrée)
+- Interventions (exécution terrain)
+- Actions (unité de travail réel)
+- Sous-tâches (organisation, pas traçabilité)
+
+**Public** : TOUS les développeurs  
+**Durée** : 5 minutes  
+**Impact** : Architecture de données, DTOs, validations
+
+---
+
+### Documents Techniques Essentiels
 
 ### 1. [CONVENTIONS.md](./CONVENTIONS.md)
 

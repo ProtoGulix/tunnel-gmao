@@ -1,5 +1,10 @@
 # Philosophie de Tunnel GMAO
 
+> **Vision** : Un outil qui enregistre la réalité terrain sans imposer de méthode.  
+> Pour comprendre les concepts métier structurants, voir [REGLES_METIER.md](REGLES_METIER.md).
+
+---
+
 ## Terrain first
 
 Tunnel GMAO est conçu pour les personnes qui maintiennent les machines au quotidien, pas pour les tableaux de bord de direction.
