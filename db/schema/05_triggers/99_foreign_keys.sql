@@ -170,3 +170,19 @@ ALTER TABLE public.supplier_order_line_purchase_request
 ALTER TABLE public.supplier_order_line_purchase_request
     ADD CONSTRAINT supplier_order_line_purchase_request_purchase_request_id_fkey 
     FOREIGN KEY (purchase_request_id) REFERENCES public.purchase_request(id);
+
+-- ============================================================================
+-- action_category_meta
+-- ============================================================================
+
+ALTER TABLE public.action_category_meta
+    ADD CONSTRAINT action_category_meta_category_code_foreign
+    FOREIGN KEY (category_code) REFERENCES public.action_category(code) ON DELETE CASCADE;
+
+-- ============================================================================
+-- action_classification_probe
+-- ============================================================================
+
+ALTER TABLE public.action_classification_probe
+    ADD CONSTRAINT action_classification_probe_suggested_category_foreign
+    FOREIGN KEY (suggested_category) REFERENCES public.action_category(code) ON DELETE SET NULL;

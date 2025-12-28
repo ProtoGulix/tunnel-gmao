@@ -1,26 +1,45 @@
 /**
  * Configuration pour la détection d'anomalies dans les actions
+ *
+ * ⚠️ DEPRECATED - Ce fichier est obsolète !
+ *
+ * La configuration est maintenant chargée dynamiquement depuis PostgreSQL
+ * via l'adapter anomalyConfig et le hook useAnomalyConfig.
+ *
+ * Migration :
+ * - Ancien : import { ANOMALY_CONFIG } from '@/config/anomalyConfig';
+ * - Nouveau : import { useAnomalyConfig } from '@/hooks/useAnomalyConfig';
+ *
+ * Avantages :
+ * - Configuration modifiable à chaud via Directus admin
+ * - Pas de redéploiement nécessaire pour ajuster les seuils
+ * - Une seule source de vérité (PostgreSQL)
+ *
+ * @deprecated Utiliser useAnomalyConfig() à la place
+ * @see src/hooks/useAnomalyConfig.js
+ * @see src/lib/api/adapters/directus/anomalyConfig.adapter.js
+ * @see docs/REGLES_METIER.md - Configuration métier centralisée
  */
 
 export const ANOMALY_CONFIG = {
   // Catégories considérées comme "simples" (temps d'exécution normalement court)
-  simpleCategories: ["BAT_NET", "SUP_INV", "SUP_ACH", "SUP_GES"],
+  simpleCategories: ['BAT_NET', 'SUP_INV', 'SUP_ACH', 'SUP_GES'],
 
   // Catégories à faible valeur ajoutée
-  lowValueCategories: ["SUP_ACH", "SUP_INV", "BAT_NET"],
+  lowValueCategories: ['SUP_ACH', 'SUP_INV', 'BAT_NET'],
 
   // Mots-clés suspects pour mauvaise classification
   suspiciousKeywords: [
-    "identif",
-    "tableur",
-    "référence",
-    "pneuma",
-    "vis",
-    "rangement",
-    "tri",
-    "classement",
-    "inventaire",
-    "commande",
+    'identif',
+    'tableur',
+    'référence',
+    'pneuma',
+    'vis',
+    'rangement',
+    'tri',
+    'classement',
+    'inventaire',
+    'commande',
   ],
 
   // Seuils de détection
@@ -65,23 +84,23 @@ export const ANOMALY_CONFIG = {
 
   // Configuration des badges de complexité
   complexityBadges: [
-    { max: 3, color: "green", label: "Faible" },
-    { max: 6, color: "orange", label: "Moyenne" },
-    { max: 10, color: "red", label: "Élevée" },
+    { max: 3, color: 'green', label: 'Faible' },
+    { max: 6, color: 'orange', label: 'Moyenne' },
+    { max: 10, color: 'red', label: 'Élevée' },
   ],
 
   // Configuration des badges de priorité
   priorityBadges: [
-    { max: 2, color: "red", label: "Urgent" },
-    { max: 6, color: "orange", label: "Important" },
-    { max: Infinity, color: "blue", label: "Normal" },
+    { max: 2, color: 'red', label: 'Urgent' },
+    { max: 6, color: 'orange', label: 'Important' },
+    { max: Infinity, color: 'blue', label: 'Normal' },
   ],
 
   // Configuration des badges de récurrence
   recurrenceBadges: [
-    { max: 4, color: "red", label: "Très récurrent" },
-    { max: 9, color: "orange", label: "Récurrent" },
-    { max: Infinity, color: "blue", label: "Modéré" },
+    { max: 4, color: 'red', label: 'Très récurrent' },
+    { max: 9, color: 'orange', label: 'Récurrent' },
+    { max: Infinity, color: 'blue', label: 'Modéré' },
   ],
 };
 
@@ -92,8 +111,5 @@ export const ANOMALY_CONFIG = {
  * @returns {Object} Configuration du badge
  */
 export function getBadgeConfig(value, badgeConfig) {
-  return (
-    badgeConfig.find((badge) => value <= badge.max) ||
-    badgeConfig[badgeConfig.length - 1]
-  );
+  return badgeConfig.find((badge) => value <= badge.max) || badgeConfig[badgeConfig.length - 1];
 }

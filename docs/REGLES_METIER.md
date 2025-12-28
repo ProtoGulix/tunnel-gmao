@@ -145,7 +145,21 @@ Ces règles métier se traduisent dans le schéma PostgreSQL par :
    - Table `intervention_status_log` : historique automatique
      - Alimentée par triggers `trg_init_status_log` et `trg_log_status_change`
 
-2. **Automatisations PostgreSQL** (triggers)
+2. **Configuration métier centralisée** (voir [db/schema/03_meta/](../db/schema/03_meta/))
+
+   - Table `action_category_meta` : Métadonnées des catégories
+     - `is_simple` (BOOLEAN) - Catégorie "simple" (temps court)
+     - `is_low_value` (BOOLEAN) - Faible valeur ajoutée
+     - `typical_duration_min/max` (NUMERIC) - Durées typiques
+   - Table `action_classification_probe` : Sondes NLP
+     - `keyword` (VARCHAR) - Mot-clé de détection
+     - `suggested_category` (VARCHAR) - Catégorie suggérée
+     - `severity` (VARCHAR) - Niveau sévérité (info, warning, error)
+   - Table `anomaly_threshold` : Seuils de détection
+     - 6 types : repetitive, fragmented, too_long, bad_classification, back_to_back, low_value_high_load
+     - Valeurs ajustables sans redéploiement
+
+3. **Automatisations PostgreSQL** (triggers)
 
    - **Génération codes** :
      - `trg_interv_code` : Code intervention `MACHINE-TYPE-YYYYMMDD-INITIALES`
@@ -159,26 +173,30 @@ Ces règles métier se traduisent dans le schéma PostgreSQL par :
      - `trg_calculate_line_total` : Total ligne commande (prix × quantité)
      - `update_updated_at_column` : Timestamps `updated_at`
 
-3. **Validation backend**
+4. **Validation backend**
 
    - Création intervention : `machine_id` obligatoire
    - Création action : `intervention_id` obligatoire
    - Temps/complexité : uniquement dans `intervention_action`
    - Codes auto-générés : interdiction modification manuelle
+   - Configuration anomalies : chargée depuis `03_meta/` (pas de hardcoding)
 
-4. **Interface utilisateur**
+5. **Interface utilisateur**
 
    - Workflow : Machine → Intervention → Actions
    - Statistiques calculées **uniquement sur actions** (ignorer sous-tâches)
    - Sous-tâches affichées comme checklist organisationnelle
-   - Badges colorés catégories (couleurs hex depuis `action_category.color`)
+   - Configuration anomalies chargée dynamiquement via API
 
-5. **API contracts (DTOs)**
-   - `Intervention` : inclure `machine: { id, code, nom }`, `status_actual`, `code`
-   - `InterventionAction` : inclure `timeSpent`, `complexityScore`, `complexityAnotation`, `subcategory.category.color`
-   - `Subtask` : DTO simple sans champs analytiques (organisation uniquement)
+6 5. **API contracts (DTOs)**
+
+- `Intervention` : inclure `machine: { id, code, nom }`, `status_actual`, `code`
+- `InterventionAction` : inclure `timeSpent`, `complexityScore`, `complexityAnotation`, `subcategory.category.color`
+- `AnomalyConfiguration` : Agrégat de `action_category_meta`, `action_classification_probe`, `anomaly_threshold`
 
 > 📖 Voir [tech/API_CONTRACTS.md](tech/API_CONTRACTS.md) pour les contrats DTOs détaillés  
+> 📖 Voir [db/schema/README.md](../db/schema/README.md) pour la documentation du schéma SQL  
+> 📖 Voir [db/schema/03_meta/](../db/schema/03_meta/) pour la configuration centralisée
 > 📖 Voir [db/schema/README.md](../db/schema/README.md) pour la documentation du schéma SQL
 
 ---

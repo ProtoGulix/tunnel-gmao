@@ -32,6 +32,10 @@ db/schema/
 │  ├─ purchase_status.sql
 │  ├─ stock_family.sql
 │  └─ stock_sub_family.sql
+├─ 03_meta/                   # Métadonnées et configuration
+│  ├─ action_category_meta.sql
+│  ├─ action_classification_probe.sql
+│  └─ anomaly_threshold.sql
 └─ 05_triggers/               # Triggers & contraintes
    ├─ trg_interv_code.sql
    ├─ trg_log_status.sql
@@ -48,6 +52,7 @@ db/schema/
 
 - ✅ Gestion interventions avec génération codes automatique
 - ✅ Classification actions (catégories/sous-catégories avec couleurs)
+- ✅ Configuration métier centralisée (durées typiques, seuils anomalies, sondes NLP)
 - ✅ Historisation statuts (audit trail complet)
 - ✅ Gestion stock (familles, références auto-générées)
 - ✅ Achats (demandes, commandes, fournisseurs)
@@ -96,7 +101,12 @@ psql -d gmao -f 02_ref/purchase_status.sql
 psql -d gmao -f 02_ref/stock_family.sql
 psql -d gmao -f 02_ref/stock_sub_family.sql
 
-# 4. Triggers
+# 4. Métadonnées et configuration
+psql -d gmao -f 03_meta/action_category_meta.sql
+psql -d gmao -f 03_meta/action_classification_probe.sql
+psql -d gmao -f 03_meta/anomaly_threshold.sql
+
+# 5. Triggers
 psql -d gmao -f 05_triggers/trg_interv_code.sql
 psql -d gmao -f 05_triggers/trg_log_status.sql
 psql -d gmao -f 05_triggers/trg_sync_status.sql
@@ -104,7 +114,7 @@ psql -d gmao -f 05_triggers/trg_stock_ref.sql
 psql -d gmao -f 05_triggers/trg_supplier_order.sql
 psql -d gmao -f 05_triggers/trg_calculate_totals.sql
 
-# 5. Foreign keys (en dernier)
+# 6. Foreign keys (en dernier)
 psql -d gmao -f 05_triggers/99_foreign_keys.sql
 ```
 
@@ -118,6 +128,9 @@ for file in 01_core/*.sql; do
   psql -d gmao -f "$file"
 done
 for file in 02_ref/*.sql; do
+  psql -d gmao -f "$file"
+done
+for file in 03_meta/*.sql; do
   psql -d gmao -f "$file"
 done
 for file in 05_triggers/*.sql; do
@@ -243,14 +256,3 @@ ORDER BY conrelid::regclass::text;
 - PostgreSQL >= 12
 - Extension `uuid-ossp` (génération UUID)
 - Droits création tables, fonctions, triggers
-
-## 🎯 Différences avec schéma Directus
-
-Ce schéma est **nettoyé** :
-
-- ❌ Supprimé : Toutes tables Directus (directus\_\*)
-- ❌ Supprimé : Métadonnées Directus (user_created, user_updated)
-- ✅ Conservé : Logique métier pure GMAO
-- ✅ Conservé : Automatisations triggers
-- ✅ Ajouté : Contraintes intégrité référentielle (99_foreign_keys.sql)
-- [ ] Créer dashboard Grafana sur v_kpi_basic
