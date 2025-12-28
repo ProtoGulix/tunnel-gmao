@@ -35,7 +35,7 @@
 // ==============================
 import { actionSubcategoriesAdapter as actionSubcategories } from './directus/actionSubcategories/adapter.ts';
 import { actionsAdapter as actions } from './directus/actions/adapter';
-import { anomalyConfigAdapter as anomalyConfig } from './directus/anomalyConfig.adapter';
+import { anomalyConfigAdapter as anomalyConfig } from './directus/anomalyConfig/adapter';
 import { authAdapter as auth } from './directus/auth.adapter';
 import { interventionStatusLogsAdapter as interventionStatusLogs } from './directus/interventionStatusLogs.adapter';
 import { interventionStatusRefsAdapter as interventionStatusRefs } from './directus/interventionStatusRefs.adapter';
@@ -92,15 +92,4 @@ export const adapter = {
   // Suppliers & Purchasing
   suppliers,
   stockSuppliers,
-};
-  actions,
-  actionSubcategories,
-  // Equipment
-  machines,
-  // Stock Management
-  stock,
-  stockSpecs,
-  suppliers,
-  stockSuppliers,
-  manufacturerItems,
 };

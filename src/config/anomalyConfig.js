@@ -17,7 +17,7 @@
  *
  * @deprecated Utiliser useAnomalyConfig() à la place
  * @see src/hooks/useAnomalyConfig.js
- * @see src/lib/api/adapters/directus/anomalyConfig.adapter.js
+ * @see src/lib/api/adapters/directus/anomalyConfig/adapter.ts
  * @see docs/REGLES_METIER.md - Configuration métier centralisée
  */
 

@@ -1,7 +1,7 @@
 /**
  * Anomaly Configuration Hook
  *
- * Charge la configuration dynamique des anomalies depuis PostgreSQL via Directus.
+ * Charge la configuration dynamique des anomalies depuis le backend.
  * Remplace l'ancien fichier statique anomalyConfig.js.
  *
  * Usage:
@@ -19,7 +19,7 @@
  * }
  * ```
  *
- * @see src/lib/api/adapters/directus/anomalyConfig.adapter.js
+ * @see src/lib/api/facade - API backend-agnostic
  * @see docs/REGLES_METIER.md - Configuration métier centralisée
  */
 

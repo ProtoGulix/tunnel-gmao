@@ -5,7 +5,7 @@
  * This is the SINGLE SOURCE OF TRUTH for status normalization across ALL adapters.
  * 
  * Rules:
- * - NO backend-specific logic (no "directus", no "_actual", etc.)
+ * - NO backend-specific logic
  * - Handles: string, { value: string }, null, undefined
  * - Returns domain-level status types only
  * - Reusable by ANY adapter implementation
