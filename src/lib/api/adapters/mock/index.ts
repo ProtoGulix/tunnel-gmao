@@ -331,8 +331,8 @@ const stockSuppliers = {
     };
   },
   
-  async deleteStockItemSupplier(id: string) {
-    return true;
+  async deleteStockItemSupplier(id: string): Promise<void> {
+    // No-op
   },
 };
 
@@ -366,8 +366,8 @@ const stockSpecs = {
     };
   },
   
-  async deleteStockSpec(id: string) {
-    return true;
+  async deleteStockSpec(id: string): Promise<void> {
+    // Mock: ne fait rien 
   },
 };
 
