@@ -13,7 +13,7 @@ import { exportAdapter } from './adapters/export.adapter';
  * Architecture:
  * - Facade (this module): Stable public API
  * - Provider: Selects implementation based on env var
- * - Adapters: Backend-specific implementations (e.g., Directus adapter)
+ * - Adapters: Backend-specific implementations (under src/lib/api/adapters/<provider>/)
  * - DTOs: Domain models defined in docs/tech/API_CONTRACTS.md
  *
  * Usage:
@@ -37,7 +37,7 @@ import { exportAdapter } from './adapters/export.adapter';
  *
  * @see docs/tech/API_CONTRACTS.md - Complete DTO definitions and contracts
  * @see src/lib/api/adapters/provider.js - Provider implementation
- * @see src/lib/api/adapters/directus.js - Directus adapter reference
+ * @see src/lib/api/adapters/provider.js - Provider implementation
  */
 
 // ==============================
@@ -46,7 +46,7 @@ import { exportAdapter } from './adapters/export.adapter';
 
 /**
  * Provider: Selects backend implementation based on environment variable.
- * Returns an adapter implementing the stable contract (DirectusAdapter or equivalent).
+ * Returns an adapter implementing the stable contract (backend adapter or equivalent).
  *
  * Export service: Independent adapter for file/data export operations.
  * Not affected by backend provider changes.

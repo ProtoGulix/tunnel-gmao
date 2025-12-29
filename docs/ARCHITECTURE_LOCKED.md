@@ -92,6 +92,96 @@ Règles ESLint qui **interdisent** automatiquement les fuites backend.
 
 ---
 
+### 🔐 Authentification Backend-Agnostic (Pattern Clé)
+
+#### Le Problème
+
+Les clés de stockage ne doivent **jamais** faire référence au backend utilisé. Exemple:
+
+```typescript
+// ❌ MAUVAIS (tight coupling à Directus)
+localStorage.setItem('directus_token', token);
+localStorage.setItem('directus_refresh_token', refreshToken);
+
+// Plus tard, si tu changes vers Supabase:
+// localStorage.getItem('directus_token') // ❌ Introuvable!
+// Résultat: les utilisateurs sont déconnectés après la migration
+```
+
+#### Pourquoi C'est Un Problème
+
+1. **Couplage fort**: Les noms de stockage codent dur le backend
+2. **Migration impossible**: Changer de backend = tous les users doivent se reconnecter
+3. **Ambiguïté**: Quel backend a écrit ce token?
+4. **Contamination**: L'adapter (code métier) connaît Directus (détail technique)
+
+#### La Solution: Noms Génériques
+
+Les clés de stockage doivent être **agnostiques au backend**:
+
+```typescript
+// ✅ BON (aucune référence au backend)
+localStorage.setItem('auth_access_token', token); // Générique
+localStorage.setItem('auth_refresh_token', refreshToken); // Générique
+localStorage.setItem('login_timestamp', Date.now()); // Générique
+
+// Plus tard, si tu changes vers Supabase:
+// localStorage.getItem('auth_access_token') // ✅ Trouvé!
+// Les utilisateurs restent connectés. Migration réussie.
+```
+
+#### Comment L'Implémenter
+
+**Dans l'adapter** (ici `auth/adapter.ts`):
+
+```typescript
+export const login = async (email: string, password: string) => {
+  // 1. Appeler le datasource (qui know Directus)
+  const backendData = await datasource.loginRequest(email, password);
+
+  // 2. Mapper vers le domaine (backend-agnostic)
+  const tokens = mapper.mapAuthTokensToDomain(backendData);
+
+  // 3. Stocker avec des clés GÉNÉRIQUES
+  localStorage.setItem('auth_access_token', tokens.accessToken);
+  localStorage.setItem('auth_refresh_token', tokens.refreshToken);
+
+  // ❌ NE JAMAIS faire ceci:
+  // localStorage.setItem('directus_token', tokens.accessToken);
+
+  return tokens;
+};
+```
+
+**Dans le client HTTP** (ici `client.js`):
+
+```typescript
+// ✅ Le client cherche les clés génériques
+const token =
+  localStorage.getItem('auth_access_token') || // Standard
+  localStorage.getItem('legacy_api_token'); // Fallback pour anciennes versions
+
+if (token) {
+  config.headers.Authorization = `Bearer ${token}`;
+}
+
+// ❌ NE JAMAIS chercher des clés backend-spécifiques:
+// localStorage.getItem('directus_token')  // ❌ Tight coupling!
+```
+
+#### Résultat
+
+Grâce à cette approche:
+
+| Scenario                    | Avant (Mauvais)      | Après (Bon)                |
+| --------------------------- | -------------------- | -------------------------- |
+| **Migration vers Supabase** | Users déconnectés ❌ | Users restent connectés ✅ |
+| **Clés localStorage**       | 10 variantes (chaos) | 3 clés génériques          |
+| **Lisibilité du code**      | Couplage visible ❌  | Séparation claire ✅       |
+| **Test avec mock adapter**  | Impossible           | Fonctionne ✅              |
+
+---
+
 ### ÉTAPE 5: Adapter Mock (Preuve Ultime) ✓
 
 **Fichier**: [src/lib/api/adapters/mock/index.ts](src/lib/api/adapters/mock/index.ts)

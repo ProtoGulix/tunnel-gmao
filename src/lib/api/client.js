@@ -161,7 +161,7 @@ export const clearAllCache = () => {
  *
  * Token sources (in order of preference):
  * 1. auth_access_token (current standard)
- * 2. directus_token (legacy, for backwards compatibility)
+ * 2. legacy_api_token (legacy, for backwards compatibility)
  */
 api.interceptors.request.use(
   (config) => {
@@ -173,9 +173,9 @@ api.interceptors.request.use(
       }
     }
 
-    // Prefer generic token; fallback to legacy directus token
+    // Prefer current standard token; fallback to legacy generic token
     const token =
-      localStorage.getItem('auth_access_token') || localStorage.getItem('directus_token');
+      localStorage.getItem('auth_access_token') || localStorage.getItem('legacy_api_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -189,9 +189,9 @@ api.interceptors.request.use(
 // ==============================
 // RESPONSE INTERCEPTOR
 // ==============================
-
+// Prefer generic token; fallback to legacy token name
 /**
- * Handles API errors globally:
+      localStorage.getItem('auth_access_token') || localStorage.getItem('legacy_api_token');
  * - 401 (Unauthorized): clears tokens and redirects to /login
  * - 403 (Forbidden): logs the incident for debugging
  * - Others: passes error to caller for handling
@@ -212,8 +212,9 @@ api.interceptors.response.use(
       // Clear all token variants (current + legacy)
       localStorage.removeItem('auth_access_token');
       localStorage.removeItem('auth_refresh_token');
-      localStorage.removeItem('directus_token');
-      localStorage.removeItem('directus_refresh_token');
+      localStorage.removeItem('legacy_api_token');
+      localStorage.removeItem('legacy_api_refresh_token');
+      localStorage.removeItem('login_timestamp');
 
       // Redirect to login
       window.location.href = '/login';

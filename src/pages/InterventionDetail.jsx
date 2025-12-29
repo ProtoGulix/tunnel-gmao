@@ -288,7 +288,7 @@ export default function InterventionDetail() {
     try {
       setPdfLoading(true);
       const EXPORT_API_URL = import.meta.env.VITE_EXPORT_API_URL || "http://localhost:8001";
-      const token = localStorage.getItem("auth_access_token") || localStorage.getItem("directus_token");
+      const token = localStorage.getItem("auth_access_token") || localStorage.getItem("legacy_api_token");
       
       if (!token) {
         setOperationError('Session expirée. Veuillez vous reconnecter.');

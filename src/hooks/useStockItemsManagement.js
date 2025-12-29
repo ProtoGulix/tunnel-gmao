@@ -23,8 +23,9 @@ export const useStockItemsManagement = (onError) => {
         const data = await stock.fetchStockItems();
         setStockItems(data);
 
-        // Charger les compteurs (références + specs) pour chaque article
-        if (isInitial && data.length > 0) {
+        // TOUJOURS charger les compteurs (références + specs) pour chaque article
+        // (pas seulement au démarrage initial)
+        if (data.length > 0) {
           const refsCounts = {};
           const specCounts = {};
           const specDefaults = {};
@@ -35,7 +36,7 @@ export const useStockItemsManagement = (onError) => {
             try {
               const [refs, specs] = await Promise.all([
                 stockSuppliers.fetchStockItemSuppliers(item.id),
-                stockSpecs.fetchStockItemStandardSpecs(item.id),
+                stockSpecs.fetchStockSpecsForItem(item.id),
               ]);
               refsCounts[item.id] = refs.length;
               specCounts[item.id] = (specs || []).length;
@@ -43,7 +44,7 @@ export const useStockItemsManagement = (onError) => {
               refsByItem[item.id] = refs || [];
               specsByItem[item.id] = specs || [];
             } catch (err) {
-              console.warn(`Erreur chargement compteurs pour ${item.id}:`, err);
+              console.error(`[useStockItemsManagement] Error loading for item ${item.id}:`, err);
               refsCounts[item.id] = refsCounts[item.id] ?? 0;
               specCounts[item.id] = specCounts[item.id] ?? 0;
               specDefaults[item.id] = specDefaults[item.id] ?? false;

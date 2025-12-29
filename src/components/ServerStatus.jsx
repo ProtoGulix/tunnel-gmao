@@ -2,7 +2,7 @@
 // ServerStatus.jsx
 // ═══════════════════════════════════════════════════════════════════════════════
 /**
- * Composant de monitoring de l'état du serveur Directus.
+ * Composant de monitoring de l'état du serveur backend.
  * 
  * @description
  * Affiche un badge indiquant si le serveur backend est accessible (online/offline).

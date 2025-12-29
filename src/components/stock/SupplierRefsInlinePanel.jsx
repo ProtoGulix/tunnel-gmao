@@ -170,7 +170,7 @@ export default function SupplierRefsInlinePanel({
                       "N/A";
 
                     // Optional manufacturer info (progressive enhancement):
-                    // Prefer structured manufacturer_item_id.* (Directus relation), fallback to manufacturer_item.* then flat fields
+                    // Prefer structured manufacturer_item_id.* (relation), fallback to manufacturer_item.* then flat fields
                     const mObj =
                       ref.manufacturer_item_id || ref.manufacturer_item || null;
                     const manufacturerName = mObj?.manufacturer_name || ref.manufacturer_name || null;
