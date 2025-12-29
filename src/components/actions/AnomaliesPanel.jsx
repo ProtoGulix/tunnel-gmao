@@ -1,6 +1,14 @@
-import { Box, Flex, Text, Badge, Tabs } from "@radix-ui/themes";
+// ===== IMPORTS =====
+// 1. React Core
 import PropTypes from "prop-types";
-import { Repeat2, Clock, Timer, Search, RotateCw, Zap, CircleCheck } from "lucide-react";
+
+// 2. UI Libraries (Radix)
+import { Box, Flex, Text, Badge, Tabs } from "@radix-ui/themes";
+
+// 3. Icons
+import { Zap, CircleCheck } from "lucide-react";
+
+// 4. Custom Components
 import { AnalysisHeader, AdviceCallout } from "@/components/common/AnalysisComponents";
 import EmptyState from "@/components/common/EmptyState";
 import AnomalyTypeA from "./anomalies/AnomalyTypeA";
@@ -10,77 +18,54 @@ import AnomalyTypeD from "./anomalies/AnomalyTypeD";
 import AnomalyTypeE from "./anomalies/AnomalyTypeE";
 import AnomalyTypeF from "./anomalies/AnomalyTypeF";
 
-/**
- * Configuration des onglets d'anomalies
- */
-const ANOMALY_TABS = [
-  { 
-    value: "repetitive", 
-    label: "Répétitives", 
-    key: "tooRepetitive", 
-    color: "red",
-    icon: Repeat2,
-    typeLabel: "A",
-    description: "Même catégorie sur même machine plus de 3 fois par mois. Envisager une maintenance préventive.",
-    Component: AnomalyTypeA
-  },
-  { 
-    value: "fragmented", 
-    label: "Fragmentées", 
-    key: "tooFragmented", 
-    color: "orange",
-    icon: Clock,
-    typeLabel: "B",
-    description: "Actions de moins d'1h répétées plus de 5 fois. Travail mal organisé ou tâches à regrouper.",
-    Component: AnomalyTypeB
-  },
-  { 
-    value: "long", 
-    label: "Trop longues", 
-    key: "tooLongForCategory", 
-    color: "orange",
-    icon: Timer,
-    typeLabel: "C",
-    description: "Actions de plus de 4h sur catégories normalement simples. Vérifier la classification ou le découpage.",
-    Component: AnomalyTypeC
-  },
-  { 
-    value: "classification", 
-    label: "Classification", 
-    key: "badClassification", 
-    color: "purple",
-    icon: Search,
-    typeLabel: "D",
-    description: "Description contient des mots-clés suspects pour la catégorie. Revoir la classification.",
-    Component: AnomalyTypeD
-  },
-  { 
-    value: "backtoback", 
-    label: "Back-to-Back", 
-    key: "backToBack", 
-    color: "blue",
-    icon: RotateCw,
-    typeLabel: "E",
-    description: "Même technicien revient sur même intervention sous 24h. Travail mal découpé ou problème non résolu.",
-    Component: AnomalyTypeE
-  },
-  { 
-    value: "lowvalue", 
-    label: "Faible valeur", 
-    key: "lowValueHighLoad", 
-    color: "red",
-    icon: Zap,
-    typeLabel: "F",
-    description: "Catégories à faible valeur ajoutée avec plus de 30h cumulées. Problème structurel à adresser.",
-    Component: AnomalyTypeF
-  }
-];
+// 5. Config
+import { ANOMALY_TABS } from "@/config/actionPageConfig";
 
+// ===== COMPONENT =====
 /**
- * Panneau de détection d'anomalies
- * Affiche les 6 types d'anomalies détectées
+ * Panneau de détection et affichage des anomalies
+ * 
+ * Affiche les 6 types d'anomalies détectées dans les actions d'interventions.
+ * Chaque type est présenté dans un onglet dédié avec sa description et ses occurrences.
+ * 
+ * Types d'anomalies:
+ * - Type A (Répétitives): Même catégorie répétée sur même machine
+ * - Type B (Fragmentées): Actions courtes répétées trop souvent
+ * - Type C (Trop longues): Actions simples qui prennent trop de temps
+ * - Type D (Classification): Mots-clés suspects dans la description
+ * - Type E (Back-to-Back): Technicien revient rapidement sur même intervention
+ * - Type F (Faible valeur): Catégories à faible valeur avec charge élevée
+ * 
+ * @component
+ * @param {Object} props
+ * @param {Object} props.anomalies - Objet contenant les anomalies par type (camelCase keys)
+ * @param {Array} props.anomalies.tooRepetitive - Anomalies répétitives
+ * @param {Array} props.anomalies.tooFragmented - Anomalies fragmentées
+ * @param {Array} props.anomalies.tooLongForCategory - Anomalies trop longues
+ * @param {Array} props.anomalies.badClassification - Anomalies de classification
+ * @param {Array} props.anomalies.backToBack - Anomalies back-to-back
+ * @param {Array} props.anomalies.lowValueHighLoad - Anomalies faible valeur/charge élevée
+ * 
+ * @returns {JSX.Element} Panneau d'anomalies avec onglets
+ * 
+ * @example
+ * <AnomaliesPanel anomalies={detectedAnomalies} />
  */
 export default function AnomaliesPanel({ anomalies }) {
+  // ----- Render Helpers -----
+  /**
+   * Composants d'anomalies par type
+   * Mapping explicite pour éviter d'inclure Component dans ANOMALY_TABS (config pur)
+   */
+  const ANOMALY_COMPONENTS = {
+    tooRepetitive: AnomalyTypeA,
+    tooFragmented: AnomalyTypeB,
+    tooLongForCategory: AnomalyTypeC,
+    badClassification: AnomalyTypeD,
+    backToBack: AnomalyTypeE,
+    lowValueHighLoad: AnomalyTypeF,
+  };
+  
   // ==================== RENDER: EMPTY STATE ====================
   if (!anomalies) {
     return (
@@ -92,7 +77,7 @@ export default function AnomaliesPanel({ anomalies }) {
     );
   }
 
-  // ==================== COMPUTED VALUES ====================
+  // ----- Computed Values -----
   const totalAnomalies = Object.values(anomalies).reduce((sum, arr) => {
     return sum + (Array.isArray(arr) ? arr.length : 0);
   }, 0);
@@ -144,30 +129,29 @@ export default function AnomaliesPanel({ anomalies }) {
         {ANOMALY_TABS.map(tab => {
           const tabAnomalies = anomalies[tab.key] || [];
           const anomalyCount = Array.isArray(tabAnomalies) ? tabAnomalies.length : 0;
-          // eslint-disable-next-line no-unused-vars
-          const TabIcon = tab.icon; // Reserved for potential icon rendering in future versions
+          const TabComponent = ANOMALY_COMPONENTS[tab.key];
 
           return (
-      <Tabs.Content key={tab.value} value={tab.value}>
-        <Box pt="3">
-          <AdviceCallout
-            type="warnings"
-            title={`Type ${tab.typeLabel} : ${tab.label}`}
-            items={[tab.description]}
-            customConfig={{ color: tab.color, icon: '⚠️' }}
-          />
-          
-          {anomalyCount === 0 ? (
-            <Text color="gray" size="2">Aucune anomalie de ce type</Text>
-          ) : (
-            <Flex direction="column" gap="3" mt="3">
-              {tabAnomalies.map((item, index) => (
-                <tab.Component key={index} item={item} index={index} />
-              ))}
-            </Flex>
-          )}
-        </Box>
-      </Tabs.Content>
+            <Tabs.Content key={tab.value} value={tab.value}>
+              <Box pt="3">
+                <AdviceCallout
+                  type="warnings"
+                  title={`Type ${tab.typeLabel} : ${tab.label}`}
+                  items={[tab.description]}
+                  customConfig={{ color: tab.color, icon: '⚠️' }}
+                />
+                
+                {anomalyCount === 0 ? (
+                  <Text color="gray" size="2">Aucune anomalie de ce type</Text>
+                ) : (
+                  <Flex direction="column" gap="3" mt="3">
+                    {tabAnomalies.map((item, index) => (
+                      <TabComponent key={index} item={item} index={index} />
+                    ))}
+                  </Flex>
+                )}
+              </Box>
+            </Tabs.Content>
           );
         })}
       </Tabs.Root>

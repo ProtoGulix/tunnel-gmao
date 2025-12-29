@@ -42,8 +42,6 @@ export async function loadAnomalyConfig() {
   loadPromise = anomalyConfig
     .fetchAnomalyConfiguration()
     .then((config) => {
-      console.log('[loadAnomalyConfig] Config chargée avec succès:', config);
-      console.log('[loadAnomalyConfig] thresholds keys:', Object.keys(config?.thresholds || {}));
       cachedConfig = config;
       loadPromise = null;
       return config;

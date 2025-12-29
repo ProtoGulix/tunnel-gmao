@@ -23,12 +23,12 @@ import TopInterventionsTable from "@/components/actions/TopInterventionsTable";
 import AnomaliesPanel from "@/components/actions/AnomaliesPanel";
 import ActionsList from "@/components/actions/ActionsList";
 
-// 4. Custom Hooks
+// 5. Custom Hooks
 import { useApiCall } from "@/hooks/useApiCall";
 import { usePageHeaderProps } from "@/hooks/usePageConfig";
 import { useAnomalyConfig } from "@/hooks/useAnomalyConfig";
 
-// 5. API & Utilities
+// 6. API & Utilities
 import { actions } from "@/lib/api/facade";
 import { 
   calculateActionStats,
@@ -38,15 +38,27 @@ import {
   getRecurrenceBadge
 } from "@/lib/utils/actionUtils";
 
+// 7. Config
+import { ACTION_TABS } from "@/config/actionPageConfig";
+
 // ===== COMPONENT =====
 /**
  * Actions management page with workload analysis.
- * Displays the list of intervention actions with statistics, load analysis,
- * top interventions ranking, and anomaly detection.
- *
+ * 
+ * Displays the list of intervention actions with comprehensive statistics,
+ * load analysis, top interventions ranking, and anomaly detection.
+ * 
+ * Features:
+ * - List view with filtering and date range selection
+ * - Load analysis by category with complexity and priority badges
+ * - Top interventions ranking by recurrence and complexity
+ * - Anomaly detection (6 types: repetitive, fragmented, too long, classification, back-to-back, low value)
+ * - Auto-refresh every 5 minutes
+ * - Backend-agnostic via facade pattern
+ * 
  * @component
  * @returns {JSX.Element} Actions page with tabs (list, load analysis, top interventions, anomalies)
- *
+ * 
  * @example
  * <Route path="/actions" element={<ActionsPage />} />
  */
@@ -58,7 +70,7 @@ export default function ActionsPage() {
   const initialLoadRef = useRef(false);
 
   // ----- Anomaly Config -----
-  const { config: anomalyConfig, loading: configLoading } = useAnomalyConfig();
+  const { loading: configLoading } = useAnomalyConfig();
 
   // ----- API Calls -----
   const { 
@@ -73,10 +85,8 @@ export default function ActionsPage() {
     if (!filteredActions || !Array.isArray(filteredActions)) {
       return { totalActions: 0, totalTime: 0, categoriesCount: 0, categories: [], topInterventions: [], anomalies: null };
     }
-    // Les fonctions detect* dans actionUtils sont protégées contre les configs manquantes
-    // Elles retournent [] si la config n'est pas disponible
     return calculateActionStats(filteredActions);
-  }, [filteredActions, anomalyConfig]);
+  }, [filteredActions]);
 
   const totalTimeSpent = useMemo(() => {
     if (!filteredActions || !Array.isArray(filteredActions)) {
@@ -197,43 +207,37 @@ export default function ActionsPage() {
           {/* Main Content Tabs */}
           <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
             <Tabs.List size="2" mb="3">
-              <Tabs.Trigger value="list">
-                <Flex align="center" gap="2">
-                  <Text>📋 List</Text>
-                  <Badge color="blue" size="1" variant="soft">
-                    {filteredActions?.length || 0}
-                  </Badge>
-                </Flex>
-              </Tabs.Trigger>
+              {ACTION_TABS.map((tab) => {
+                // Skip anomalies tab if no anomalies
+                if (tab.conditional && (!stats.anomalies || Object.keys(stats.anomalies).length === 0)) {
+                  return null;
+                }
 
-              <Tabs.Trigger value="load">
-                <Flex align="center" gap="2">
-                  <Text>🔥 Load Analysis</Text>
-                  <Badge color="amber" size="1" variant="soft">
-                    {stats.categories.length}
-                  </Badge>
-                </Flex>
-              </Tabs.Trigger>
+                const Icon = tab.icon;
+                let badgeCount = 0;
 
-              <Tabs.Trigger value="interventions">
-                <Flex align="center" gap="2">
-                  <Text>🔁 Top Interventions</Text>
-                  <Badge color="blue" size="1" variant="soft">
-                    {stats.topInterventions.length}
-                  </Badge>
-                </Flex>
-              </Tabs.Trigger>
+                // Calculate badge count based on tab
+                if (tab.value === "list") badgeCount = filteredActions?.length || 0;
+                else if (tab.value === "load") badgeCount = stats.categories.length;
+                else if (tab.value === "interventions") badgeCount = stats.topInterventions.length;
+                else if (tab.value === "anomalies") badgeCount = totalAnomalies;
 
-              {stats.anomalies && (
-                <Tabs.Trigger value="anomalies">
-                  <Flex align="center" gap="2">
-                    <Text>⚠️ Anomalies</Text>
-                    <Badge color="red" size="1" variant="solid">
-                      {totalAnomalies}
-                    </Badge>
-                  </Flex>
-                </Tabs.Trigger>
-              )}
+                return (
+                  <Tabs.Trigger key={tab.value} value={tab.value}>
+                    <Flex align="center" gap="2">
+                      <Icon size={16} />
+                      <Text>{tab.label}</Text>
+                      <Badge 
+                        color={tab.color} 
+                        size="1" 
+                        variant={tab.value === "anomalies" ? "solid" : "soft"}
+                      >
+                        {badgeCount}
+                      </Badge>
+                    </Flex>
+                  </Tabs.Trigger>
+                );
+              })}
             </Tabs.List>
 
             {/* Tab: Actions List */}

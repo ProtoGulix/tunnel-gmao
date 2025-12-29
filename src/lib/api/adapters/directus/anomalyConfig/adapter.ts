@@ -62,22 +62,8 @@ export const anomalyConfigAdapter = {
         fetchThresholdsRaw(),
       ]);
 
-      // DEBUG: Tracer ce que le backend retourne
-      console.log('[AnomalyConfigAdapter] Backend data:', {
-        categories: categories.length,
-        probes: probes.length,
-        thresholds: thresholds.length,
-        thresholdsData: thresholds,
-      });
-
       // Construire la configuration (mapper)
       const config = buildAnomalyConfig(categories, probes, thresholds);
-
-      // DEBUG: Tracer le résultat mappé
-      console.log('[AnomalyConfigAdapter] Mapped config:', {
-        thresholdKeys: Object.keys(config.thresholds || {}),
-        config,
-      });
 
       // Mettre en cache
       cachedConfig = config;
