@@ -197,10 +197,25 @@ export const mapInterventionDomainToBackend = (payload: any) => {
   const backend: any = {};
   if (payload.code !== undefined) backend.code = payload.code;
   if (payload.title !== undefined) backend.title = payload.title;
-  if (payload.status !== undefined) backend.status_actual = payload.status;
+
+  // Map domain status (open|in_progress|closed|cancelled) to backend FK value
+  if (payload.status !== undefined) {
+    const mapStatusToBackend = (status: string) => {
+      const normalized = (status || '').toLowerCase().trim();
+      if (normalized === 'open') return 'ouvert';
+      if (normalized === 'in_progress') return 'attente_pieces';
+      if (normalized === 'closed') return 'ferme';
+      if (normalized === 'cancelled') return 'cancelled';
+      return status; // fallback: pass-through
+    };
+    backend.status_actual = mapStatusToBackend(payload.status);
+  }
+
   if (payload.type !== undefined) backend.type_inter = payload.type;
   if (payload.priority !== undefined) backend.priority = payload.priority;
   if (payload.reportedDate !== undefined) backend.reported_date = payload.reportedDate;
+  if (payload.reportedBy?.id !== undefined) backend.reported_by = payload.reportedBy.id;
+  if (payload.techInitials !== undefined) backend.tech_initials = payload.techInitials;
   if (payload.machine?.id !== undefined) backend.machine_id = payload.machine.id;
   return backend;
 };
