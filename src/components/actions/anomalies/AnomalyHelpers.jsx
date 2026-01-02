@@ -54,7 +54,7 @@
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 import { formatActionDate } from "@/lib/utils/actionUtils";
-import { truncateHtml, sanitizeHtml, parseHtmlSafe } from "@/lib/utils/htmlUtils";
+import { parseHtmlSafe } from "@/lib/utils/htmlUtils";
 import InterventionCard from "@/components/interventions/InterventionCard";
 
 // DTO-friendly accessors with legacy fallback
