@@ -124,13 +124,17 @@ This section defines backend-agnostic DTOs exposed by the facade. Adapters map b
 - `addAction(action)` / `createAction(action)` → `InterventionAction`
 - `addPart(part)` → `InterventionPart`
 - `fetchInterventionStatusLog(id)` → `InterventionStatusLog[]`
+- `fetchComplexityFactors()` → `ComplexityFactor[]`
+- `fetchActionSubcategories()` → `ActionSubcategory[]`
 
 Domain shapes:
 
 - `Intervention`: `{ id: string, code: string, title: string, status: 'open' | 'in_progress' | 'closed', type: 'CUR' | 'PRE' | 'PRO', priority?: 'faible' | 'normale' | 'important' | 'urgent', reportedDate?: string, machine?: { id: string, code: string, name: string } }`
-- `InterventionAction`: `{ id: string, description: string, timeSpent?: number, complexityScore?: number, createdAt: string, technician?: { id: string, firstName: string, lastName: string }, subcategory?: { id: string, code?: string, name?: string }, intervention?: { id: string, code?: string, title?: string } }`
+- `InterventionAction`: `{ id: string, description: string, timeSpent?: number, complexityScore?: number, complexityFactors?: ComplexityFactor[], createdAt: string, technician?: { id: string, firstName: string, lastName: string }, subcategory?: { id: string, code?: string, name?: string }, intervention?: { id: string, code?: string, title?: string } }`
 - `InterventionPart`: `{ id: string, quantity: number, note?: string, stockItem?: { id: string, ref?: string, name?: string } }`
 - `InterventionStatusLog`: `{ id: string, date: string, from?: { id: string, value?: string }, to?: { id: string, value?: string }, technician?: { id: string, firstName: string, lastName: string } }`
+- `ComplexityFactor`: `{ id: string, label: string, category?: string }` — Reference table for complexity annotation. `id` is the factor code (e.g., 'simple', 'moyen', 'élevé', 'critique'). Used to annotate which factors made an action complex.
+- `ActionSubcategory`: `{ id: string, code?: string, name: string, category?: { id: string, code?: string, name?: string } }` — Categorization for action types within interventions.
 
 ### Machines
 
