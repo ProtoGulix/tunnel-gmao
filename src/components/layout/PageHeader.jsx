@@ -60,21 +60,23 @@ const DEFAULT_TIME_SELECTION_OPTIONS = [
  *   stats={[{ label: 'Actions', value: 5 }]}
  * />
  */
-export default function PageHeader({
-  title,
-  subtitle,
-  icon: Icon = ClipboardList,
-  stats = null,
-  urgentBadge = null,
-  actions = [],
-  onRefresh = null,
-  onAdd = null,
-  addLabel = "+ Ajouter",
-  timeSelection = null,
-  // Mode hiérarchisé (interventions)
-  statusDropdown = null,
-  priorityDropdown = null
-}) {
+export default function PageHeader(props) {
+  const {
+    title,
+    subtitle,
+    icon: Icon = ClipboardList,
+    stats = null,
+    urgentBadge = null,
+    actions = [],
+    onRefresh = null,
+    onAdd = null,
+    addLabel = "+ Ajouter",
+    timeSelection = null,
+    // Mode hiérarchisé (interventions)
+    statusDropdown = null,
+    priorityDropdown = null
+  } = props;
+
   const isHierarchicalMode = !!(statusDropdown || priorityDropdown);
   const hasTimeSelection = !!timeSelection?.enabled;
   const selectionOptions = useMemo(() => {

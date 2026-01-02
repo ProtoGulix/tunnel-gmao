@@ -23,19 +23,21 @@ import { useSearchableSelect } from './useSearchableSelect';
  * @param {number} [props.maxSuggestions=8] - Nombre max de suggestions
  * @param {string} [props.placeholder='Tapez pour rechercher...'] - Texte du placeholder
  */
-export default function SearchableSelect({
-  items = [],
-  label,
-  onChange,
-  value,
-  getDisplayText,
-  getSearchableFields,
-  renderItem,
-  renderSelected,
-  required = false,
-  maxSuggestions = 8,
-  placeholder = 'Tapez pour rechercher...'
-}) {
+export default function SearchableSelect(props) {
+  const {
+    items = [],
+    label,
+    onChange,
+    value,
+    getDisplayText,
+    getSearchableFields,
+    renderItem,
+    renderSelected,
+    required = false,
+    maxSuggestions = 8,
+    placeholder = 'Tapez pour rechercher...'
+  } = props;
+
   const {
     search,
     selectedItem,

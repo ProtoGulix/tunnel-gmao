@@ -61,17 +61,19 @@ SearchInput.propTypes = {
   placeholder: PropTypes.string.isRequired,
 };
 
-function ControlBar({
-  actions,
-  searchValue,
-  onSearchChange,
-  searchLabel,
-  searchPlaceholder,
-  showResetButton,
-  showRefreshButton,
-  onRefresh,
-  loading,
-}) {
+function ControlBar(props) {
+  const {
+    actions,
+    searchValue,
+    onSearchChange,
+    searchLabel,
+    searchPlaceholder,
+    showResetButton,
+    showRefreshButton,
+    onRefresh,
+    loading,
+  } = props;
+
   const hasFilters = hasActiveFilters(searchValue);
   return (
     <Flex align="end" gap="2">

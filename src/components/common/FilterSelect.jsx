@@ -251,15 +251,17 @@ VerticalLayout.propTypes = {
  *   minWidth="250px"
  * />
  */
-export default function FilterSelect({
-  label,
-  value,
-  onValueChange,
-  options = [],
-  size = DEFAULT_SIZE,
-  minWidth = DEFAULT_MIN_WIDTH,
-  inline = false,
-}) {
+export default function FilterSelect(props) {
+  const {
+    label,
+    value,
+    onValueChange,
+    options = [],
+    size = DEFAULT_SIZE,
+    minWidth = DEFAULT_MIN_WIDTH,
+    inline = false,
+  } = props;
+
   const longestLabel = useMemo(() => getLongestLabel(options), [options]);
   const minWidthPx = useMemo(() => parseMinWidth(minWidth), [minWidth]);
 

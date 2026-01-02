@@ -204,7 +204,8 @@ DistributionHeader.propTypes = { title: PropTypes.string.isRequired, total: Prop
  * @param {Object.<string, number>} [props.previousData] - Données période précédente
  * @returns {JSX.Element} Card avec tooltip, badges, trend indicator et count
  */
-function DistributionCard({ itemKey, count, total, config, onItemClick, renderFooter, layout, previousData }) {
+function DistributionCard(props) {
+  const { itemKey, count, total, config, onItemClick, renderFooter, layout, previousData } = props;
   const meta = getCardMeta(config, itemKey);
   const percentageNum = total > 0 ? (count / total) * 100 : 0;
   const percentage = percentageNum.toFixed(1);
@@ -256,7 +257,8 @@ DistributionCard.propTypes = { itemKey: PropTypes.string.isRequired, count: Prop
  * @param {Object.<string, number>} [props.previousData] - Données période précédente
  * @returns {JSX.Element} Grid ou Flex contenant les DistributionCard
  */
-function CardsLayout({ entries, total, config, layout, columns, onItemClick, renderFooter, previousData }) {
+function CardsLayout(props) {
+  const { entries, total, config, layout, columns, onItemClick, renderFooter, previousData } = props;
   const isGrid = layout === "grid";
   const cards = entries.map(([itemKey, count]) => (
     <DistributionCard
@@ -319,7 +321,20 @@ CardsLayout.propTypes = { entries: PropTypes.arrayOf(PropTypes.array).isRequired
  *   layout="grid"
  * />
  */
-export default function DistributionCards({ title, data, config = {}, previousData = null, onItemClick = null, emptyMessage = "Aucune donnée disponible", headerExtras = null, renderFooter = null, layout = "flex", columns = DEFAULT_COLUMNS }) {
+export default function DistributionCards(props) {
+  const {
+    title,
+    data,
+    config = {},
+    previousData = null,
+    onItemClick = null,
+    emptyMessage = "Aucune donnée disponible",
+    headerExtras = null,
+    renderFooter = null,
+    layout = "flex",
+    columns = DEFAULT_COLUMNS
+  } = props;
+
   const total = useMemo(() => computeTotal(data), [data]);
   const sortedEntries = useMemo(() => sortEntries(data), [data]);
 

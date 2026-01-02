@@ -140,16 +140,18 @@ ContentWrapper.propTypes = {
  *   <ActionsList actions={actions} />
  * </ExpandableDetailsRow>
  */
-export default function ExpandableDetailsRow({ 
-  children, 
-  colSpan, 
-  bgColor = DEFAULT_BG_COLOR,
-  padding = DEFAULT_PADDING,
-  withCard = true,
-  cardMargin = DEFAULT_CARD_MARGIN,
-  cardBgColor,
-  cardStyle = {}
-}) {
+export default function ExpandableDetailsRow(props) {
+  const {
+    children,
+    colSpan,
+    bgColor = DEFAULT_BG_COLOR,
+    padding = DEFAULT_PADDING,
+    withCard = true,
+    cardMargin = DEFAULT_CARD_MARGIN,
+    cardBgColor,
+    cardStyle = {}
+  } = props;
+
   return (
     <Table.Row>
       <Table.Cell colSpan={colSpan} style={buildCellStyle(bgColor, padding)}>

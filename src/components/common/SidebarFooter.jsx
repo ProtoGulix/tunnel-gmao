@@ -28,17 +28,19 @@ import SidebarActionButton from '@/components/common/SidebarActionButton';
  * @param {Object} props.statusColorMap - Map des couleurs de statut
  * @returns {JSX.Element}
  */
-export default function SidebarFooter({
-  isAuthenticated,
-  user,
-  logoutConfirm,
-  onLogout,
-  onLogin,
-  serverStatus,
-  appVersion,
-  colors,
-  statusColorMap,
-}) {
+export default function SidebarFooter(props) {
+  const {
+    isAuthenticated,
+    user,
+    logoutConfirm,
+    onLogout,
+    onLogin,
+    serverStatus,
+    appVersion,
+    colors,
+    statusColorMap,
+  } = props;
+
   const latencyLabel = serverStatus.latencyMs !== null 
     ? `${Math.round(serverStatus.latencyMs)} ms` 
     : 'N/A';
