@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
-import { Box, Flex, TextField } from "@radix-ui/themes";
-import { Activity, Search } from "lucide-react";
+import { Box, Flex, TextField, Button } from "@radix-ui/themes";
+import { Activity, Search, Plus } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState";
 import TableHeader from "@/components/common/TableHeader";
 import { Timeline } from "@/components/common/GenericTabComponents";
@@ -48,6 +48,18 @@ export default function ActionsTab({ model, handlers, metadata }) {
             loading={model.loading}
             showRefreshButton={true}
             onRefresh={handleRefresh}
+            actions={
+              handlers.onAddAction && (
+                <Button
+                  size="2"
+                  onClick={handlers.onAddAction}
+                  style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
+                >
+                  <Plus size={16} />
+                  Action
+                </Button>
+              )
+            }
           />
           
           <TextField.Root
@@ -98,7 +110,8 @@ ActionsTab.propTypes = {
   }).isRequired,
   handlers: PropTypes.shape({
     onSearchChange: PropTypes.func.isRequired,
-    onRefresh: PropTypes.func.isRequired
+    onRefresh: PropTypes.func.isRequired,
+    onAddAction: PropTypes.func
   }).isRequired,
   metadata: PropTypes.shape({
     statusLog: PropTypes.array

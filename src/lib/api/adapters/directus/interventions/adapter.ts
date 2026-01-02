@@ -135,13 +135,21 @@ export const interventionsAdapter = {
 
   /**
    * Fetch complexity factors.
-   * ⚠️ TODO: Define ComplexityFactor DTO in API_CONTRACTS.md or move out of domain.
-   * Currently returns backend raw data (temporary).
-   * @returns {Promise<Array>}
+   * 
+   * DTO: ComplexityFactor { id: string, label: string, category?: string }
+   * Reference table for action complexity annotation. ID is the factor code (e.g., 'simple', 'moyen', 'élevé', 'critique').
+   * 
+   * @returns {Promise<ComplexityFactor[]>}
    */
   fetchComplexityFactors: async () => {
     return apiCall(async () => {
-      return await datasource.fetchComplexityFactorsRaw();
+      const raw = await datasource.fetchComplexityFactorsRaw();
+      // Map code to id since complexity_factor uses code as PK
+      return raw.map(factor => ({
+        id: factor.code,
+        label: factor.label,
+        category: factor.category
+      }));
     }, 'FetchComplexityFactors');
   },
 

@@ -18,6 +18,7 @@ import { interventions, actions, actionSubcategories, interventionStatusLogs, su
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useError } from '@/contexts/ErrorContext';
+import { useAuth } from '@/auth/useAuth';
 
 // 7. Components
 import PageContainer from '@/components/layout/PageContainer';
@@ -26,6 +27,7 @@ import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import DropdownButton from '@/components/common/DropdownButton';
+import ActionForm from '@/components/actions/ActionForm';
 import {
   ActionsTab,
   SummaryTab,
@@ -114,6 +116,7 @@ export default function InterventionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showError } = useError();
+  const { user } = useAuth();
   const [operationError, setOperationError] = useState('');
   const pdfUrlRef = useRef(null);
   const initialLoadRef = useRef(false);
@@ -126,15 +129,6 @@ export default function InterventionDetail() {
   const [searchActions, setSearchActions] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
-
-  const [actionForm, setActionForm] = useState({
-    description: "",
-    time: "",
-    date: "",
-    complexity: "",
-    category: "",
-    complexityFactors: []
-  });
 
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
@@ -346,42 +340,12 @@ export default function InterventionDetail() {
     }
   }, [activeTab, loadPdf]);
 
-  // Auto-sélection intelligente de la catégorie d'action : dernière utilisée ou DEP par défaut
-  useEffect(() => {
-    if (!actionForm.category && subcategories.length > 0 && showActionForm) {
-      // Trouver la dernière action pour pré-remplir la catégorie
-      const lastAction = interv?.action?.length > 0 
-        ? interv.action.reduce((latest, a) => 
-            new Date(a.createdAt) > new Date(latest.createdAt) ? a : latest
-          )
-        : null;
-
-      // Priorité : dernière catégorie utilisée > DEP > première catégorie disponible
-      let defaultId = lastAction?.subcategory?.id;
-      if (!defaultId) {
-        const dep = subcategories.find(c => c.category?.code === 'DEP');
-        defaultId = dep?.id || subcategories[0]?.id;
-      }
-      if (defaultId) {
-        setActionForm(prev => ({ ...prev, category: String(defaultId) }));
-      }
-    }
-  }, [subcategories, interv?.action, showActionForm, actionForm.category]);
-
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // MUTATIONS
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const { mutate: mutateAddAction } = useApiMutation(actions.addAction, {
+  const { mutate: mutateAddAction } = useApiMutation(actions.createAction, {
     onSuccess: () => {
       refetchIntervention();
-      setActionForm({
-        description: "",
-        time: "",
-        date: "",
-        complexity: "",
-        category: "",
-        complexityFactors: []
-      });
     }
   });
 
@@ -437,24 +401,50 @@ export default function InterventionDetail() {
     return purchaseRequests.length;
   }, [purchaseRequests]);
 
+  // État initial du formulaire d'action avec catégorie par défaut
+  const actionFormInitialState = useMemo(() => {
+    if (!subcategories.length) return {};
+
+    // Trouver la dernière action pour pré-remplir la catégorie
+    const lastAction = interv?.action?.length > 0 
+      ? interv.action.reduce((latest, a) => 
+          new Date(a.createdAt) > new Date(latest.createdAt) ? a : latest
+        )
+      : null;
+
+    // Priorité : dernière catégorie utilisée > DEP > première catégorie disponible
+    let defaultId = lastAction?.subcategory?.id;
+    if (!defaultId) {
+      const dep = subcategories.find(c => c.category?.code === 'DEP');
+      defaultId = dep?.id || subcategories[0]?.id;
+    }
+
+    return {
+      category: defaultId ? String(defaultId) : '',
+      date: new Date().toISOString().split('T')[0]
+    };
+  }, [subcategories, interv?.action]);
+
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // HANDLERS
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const handleAddAction = useCallback(async (e) => {
-    e.preventDefault();
-    if (!actionForm.description.trim()) return;
+  const handleAddAction = useCallback(async (formData) => {
+    if (!formData.description?.trim()) return;
 
     await mutateAddAction({
       intervention: { id },
-      description: actionForm.description,
-      timeSpent: parseFloat(actionForm.time) || 0,
-      createdAt: actionForm.date || new Date().toISOString().split('T')[0],
-      complexityScore: parseInt(actionForm.complexity) || null,
-      complexityFactors: actionForm.complexityFactors.length > 0 ? actionForm.complexityFactors : undefined,
-      subcategory: actionForm.category ? { id: String(actionForm.category) } : undefined,
-      technician: null,
+      description: formData.description,
+      timeSpent: parseFloat(formData.time) || 0,
+      date: formData.date || new Date().toISOString().split('T')[0],
+      complexityScore: parseInt(formData.complexity) || null,
+      complexityFactors: formData.complexityFactors?.length > 0 ? formData.complexityFactors : [],
+      subcategory: formData.category ? { id: String(formData.category) } : undefined,
+      technician: user?.id ? { id: user.id } : undefined,
     });
-  }, [actionForm, id, mutateAddAction]);
+
+    // Fermer le formulaire après succès
+    setShowActionForm(false);
+  }, [id, mutateAddAction, user?.id]);
 
   const handleStatusChange = useCallback((backendStatus) => {
     // Backend status is in French (ouvert, attente_pieces, attente_prod, ferme, cancelled)
@@ -636,6 +626,18 @@ export default function InterventionDetail() {
         
         {/* TAB: Actions */}
         <Tabs.Content value="actions">
+          {showActionForm && (
+            <ActionForm
+              initialState={actionFormInitialState}
+              metadata={{
+                subcategories: subcategories,
+                complexityFactors: complexityFactors
+              }}
+              onCancel={() => setShowActionForm(false)}
+              onSubmit={handleAddAction}
+              style={{ marginTop: '1rem', marginBottom: '1rem' }}
+            />
+          )}
           <ActionsTab
             model={{
               interv,
@@ -645,7 +647,8 @@ export default function InterventionDetail() {
             }}
             handlers={{
               onSearchChange: setSearchActions,
-              onRefresh: refetchIntervention
+              onRefresh: refetchIntervention,
+              onAddAction: () => setShowActionForm(!showActionForm)
             }}
             metadata={{
               statusLog

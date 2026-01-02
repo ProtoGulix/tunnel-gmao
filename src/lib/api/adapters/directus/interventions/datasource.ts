@@ -147,10 +147,11 @@ export const fetchInterventionStatusLogRaw = async (interventionId: string) => {
  * Fetch complexity factors (raw Directus response).
  */
 export const fetchComplexityFactorsRaw = async () => {
-  const { data } = await api.get('/items/meta_complexity_factor', {
+  const { data } = await api.get('/items/complexity_factor', {
     params: {
       limit: -1,
       sort: 'label',
+      fields: ['code', 'label', 'category'].join(','),
       _t: Date.now(),
     },
   });

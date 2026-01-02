@@ -77,6 +77,10 @@ export const mapActionPayloadToBackend = (payload: any): Record<string, unknown>
   if (payload.description !== undefined) backend.description = payload.description;
   if (payload.timeSpent !== undefined) backend.time_spent = payload.timeSpent;
   if (payload.complexityScore !== undefined) backend.complexity_score = payload.complexityScore;
+  if (payload.complexityFactors !== undefined && payload.complexityFactors.length > 0) {
+    backend.complexity_anotation = payload.complexityFactors.map(factorId => ({ id: factorId }));
+  }
+  if (payload.date !== undefined) backend.created_at = payload.date;
   if (payload.subcategory?.id !== undefined) backend.action_subcategory = payload.subcategory.id;
   if (payload.technician?.id !== undefined) backend.tech = payload.technician.id;
   // Ensure intervention_id is a string UUID, not an object
