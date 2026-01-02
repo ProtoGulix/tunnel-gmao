@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Box, Heading, Card, Text, Button, Badge, Flex } from "@radix-ui/themes";
 import { History, ExternalLink } from "lucide-react";
-import ActivitySparkline from "../common/ActivitySparkline";
 
 /**
  * Résumé de l'historique des interventions d'une machine avec lien vers page complète
@@ -18,7 +17,6 @@ import ActivitySparkline from "../common/ActivitySparkline";
  * - PropTypes complets avec oneOfType pour ID flexible
  * 
  * TODO: Améliorations futures :
- * - ✅ Graphique sparkline d'évolution des interventions sur 90j
  * - Ventilation par type : X préventives, Y curatives, Z urgentes
  * - Top 3 problèmes récurrents avec badges
  * - Temps total passé sur 90j avec comparaison période précédente
@@ -29,7 +27,7 @@ import ActivitySparkline from "../common/ActivitySparkline";
  * - Export PDF historique avec graphiques
  * - Filtres rapides : 7j/30j/90j/1an avec boutons toggle
  */
-export default function HistoricalSummary({ count, machineId, interventionTimestamps = [] }) {
+export default function HistoricalSummary({ count, machineId }) {
   return (
     <Box>
       <Flex align="center" gap="2" mb="2">
@@ -40,22 +38,13 @@ export default function HistoricalSummary({ count, machineId, interventionTimest
       </Flex>
       <Card>
         <Box p="3">
-          <Flex align="center" gap="2" justify="between" mb="3">
-            <Flex align="center" gap="2">
-              <Badge color={count > 0 ? "blue" : "gray"} variant="soft" size="2">
-                {count || 0}
-              </Badge>
-              <Text size="2" color="gray">
-                {count === 1 ? "intervention enregistrée" : "interventions enregistrées"}
-              </Text>
-            </Flex>
-            {interventionTimestamps.length > 0 && (
-              <ActivitySparkline 
-                timestamps={interventionTimestamps} 
-                width={60}
-                height={24}
-              />
-            )}
+          <Flex align="center" gap="2" mb="3">
+            <Badge color={count > 0 ? "blue" : "gray"} variant="soft" size="2">
+              {count || 0}
+            </Badge>
+            <Text size="2" color="gray">
+              {count === 1 ? "intervention enregistrée" : "interventions enregistrées"}
+            </Text>
           </Flex>
 
           {count === 0 && (
@@ -81,6 +70,5 @@ export default function HistoricalSummary({ count, machineId, interventionTimest
 
 HistoricalSummary.propTypes = {
   count: PropTypes.number.isRequired,
-  machineId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  interventionTimestamps: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
+  machineId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
 };

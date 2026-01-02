@@ -53,7 +53,7 @@ import { useAuth } from "@/auth/AuthContext";
 import Sidebar from "./Sidebar";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { MOBILE_QUERY } from "@/config/layoutConfig";
-import styles from './Layout.module.css';
+import styles from '@/styles/modules/Layout.module.css';
 
 /**
  * Layout principal avec Sidebar + contenu responsive

@@ -234,7 +234,6 @@ export default function MachineDetail() {
         <HistoricalSummary 
           count={stats.last90Days}
           machineId={id}
-          interventionTimestamps={interventions.map(i => new Date(i.reported_date))}
         />
       </Flex>
     </PageContainer>

@@ -35,6 +35,10 @@ export default defineConfig([
     files: ['**/*.{js,jsx,ts,tsx}'],
     ignores: ['src/lib/api/client.js', 'src/lib/api/adapters/**'],
     rules: {
+      'max-params': ['error', 5],
+      'max-depth': ['error', 3],
+      'max-lines': ['error', 200],
+      'complexity': ['error', 10],
       'no-restricted-imports': [
         'error',
         {

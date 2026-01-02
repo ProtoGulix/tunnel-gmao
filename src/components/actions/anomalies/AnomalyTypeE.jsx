@@ -4,6 +4,7 @@ import { Box, Flex, Text, Badge, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
 import SafeHtml from "@/components/common/SafeHtml";
 import { formatActionDate } from "@/lib/utils/actionUtils";
+import styles from "@/styles/modules/AnomalyTypeE.module.css";
 
 // DTO-friendly accessors with legacy fallback
 const getInterventionId = (item) => item?.interventionId ?? item?.intervention_id;
@@ -101,7 +102,7 @@ export default function AnomalyTypeE({ item }) {
           style={{
             flexDirection: 'column'
           }}
-          className="actions-container"
+          className={styles.actionsContainer}
         >
           {/* Première action */}
           <Box 
@@ -162,13 +163,13 @@ export default function AnomalyTypeE({ item }) {
           <Flex 
             align="center" 
             justify="center"
-            className="arrow-separator"
+            className={styles.arrowSeparator}
             style={{
               minHeight: '30px'
             }}
           >
-            <Text className="arrow-desktop" style={{ fontSize: '24px', display: 'none' }} color="blue" weight="bold">→</Text>
-            <Text className="arrow-mobile" style={{ fontSize: '20px' }} color="blue" weight="bold">⬇️</Text>
+            <Text className={styles.arrowDesktop} style={{ fontSize: '24px', display: 'none' }} color="blue" weight="bold">→</Text>
+            <Text className={styles.arrowMobile} style={{ fontSize: '20px' }} color="blue" weight="bold">⬇️</Text>
           </Flex>
 
           {/* Deuxième action */}
@@ -243,25 +244,6 @@ export default function AnomalyTypeE({ item }) {
           </Text>
         </Box>
       </Box>
-
-      {/* CSS inline avec style tag classique */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media (min-width: 640px) {
-          .actions-container {
-            flex-direction: row !important;
-          }
-          .arrow-desktop {
-            display: inline !important;
-          }
-          .arrow-mobile {
-            display: none !important;
-          }
-          .arrow-separator {
-            min-width: 40px;
-            min-height: auto;
-          }
-        }
-      `}} />
     </AnomalyContainer>
   );
 }

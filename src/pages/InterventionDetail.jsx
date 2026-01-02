@@ -637,58 +637,71 @@ export default function InterventionDetail() {
         {/* TAB: Actions */}
         <Tabs.Content value="actions">
           <ActionsTab
-            interv={interv}
-            loading={loading}
-            actionForm={actionForm}
-            setActionForm={setActionForm}
-            subcategories={subcategories}
-            complexityFactors={complexityFactors}
-            showActionForm={showActionForm}
-            setShowActionForm={setShowActionForm}
-            searchActions={searchActions}
-            setSearchActions={setSearchActions}
-            timelineByDay={timelineByDay}
-            statusLog={statusLog}
-            handleAddAction={handleAddAction}
-            refetchIntervention={refetchIntervention}
+            model={{
+              interv,
+              searchActions,
+              timelineByDay,
+              loading
+            }}
+            handlers={{
+              onSearchChange: setSearchActions,
+              onRefresh: refetchIntervention
+            }}
+            metadata={{
+              statusLog
+            }}
           />
         </Tabs.Content>
 
         {/* TAB: Résumé */}
         <Tabs.Content value="summary">
           <SummaryTab
-            interv={interv}
-            loading={loading}
-            refetchIntervention={refetchIntervention}
-            purchaseRequests={purchaseRequests}
-            onCreatePurchaseRequest={handleCreatePurchaseRequest}
-            onUpdatePurchaseRequest={handleUpdatePurchaseRequest}
-            stockItems={stockItems}
-            suppliers={supplierList}
-            supplierRefs={supplierRefs}
-            standardSpecs={standardSpecs}
-            onAddSupplierRef={handleAddSupplierRef}
-            onAddStandardSpec={handleAddStandardSpec}
+            model={{
+              interv,
+              loading,
+              purchaseRequests
+            }}
+            handlers={{
+              onCreatePurchaseRequest: handleCreatePurchaseRequest,
+              onRefresh: refetchIntervention,
+              onAddSupplierRef: handleAddSupplierRef,
+              onAddStandardSpec: handleAddStandardSpec
+            }}
+            metadata={{
+              stockItems,
+              supplierRefs,
+              standardSpecs,
+              suppliers: supplierList
+            }}
           />
         </Tabs.Content>
 
         {/* TAB: Fiche */}
         <Tabs.Content value="fiche">
           <SheetTab
-            pdfUrl={pdfUrl}
-            pdfLoading={pdfLoading}
-            loadPdf={loadPdf}
+            model={{
+              pdfUrl,
+              pdfLoading
+            }}
+            handlers={{
+              onLoadPdf: loadPdf
+            }}
           />
         </Tabs.Content>
 
         {/* TAB: Historique */}
         <Tabs.Content value="details">
           <HistoryTab
-            timeline={timeline}
-            loading={loading}
-            statusLogLoading={statusLogLoading}
-            refetchIntervention={refetchIntervention}
-            refetchStatusLog={refetchStatusLog}
+            model={{
+              timeline,
+              loading: statusLogLoading
+            }}
+            handlers={{
+              onRefresh: () => {
+                refetchIntervention();
+                refetchStatusLog();
+              }
+            }}
           />
         </Tabs.Content>
       </Tabs.Root>

@@ -21,7 +21,7 @@ import ActionStatsCards from "@/components/actions/ActionStatsCards";
 import LoadAnalysisTable from "@/components/actions/LoadAnalysisTable";
 import TopInterventionsTable from "@/components/actions/TopInterventionsTable";
 import AnomaliesPanel from "@/components/actions/AnomaliesPanel";
-import ActionsList from "@/components/actions/ActionsList";
+import ActionsList from "@/components/actions/ActionsList/";
 
 // 5. Custom Hooks
 import { useApiCall } from "@/hooks/useApiCall";

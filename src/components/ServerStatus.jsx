@@ -48,7 +48,7 @@ import { RefreshCw, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { checkServerStatus } from '@/lib/serverStatus';
 import { client } from '@/lib/api/facade';
 import { useError } from '@/contexts/ErrorContext';
-import styles from './ServerStatus.module.css';
+import styles from '@/styles/modules/ServerStatus.module.css';
 
 /**
  * Composant de monitoring de l'état du serveur.

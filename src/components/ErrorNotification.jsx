@@ -45,7 +45,7 @@
 
 import { AlertCircle, X } from 'lucide-react';
 import { useError } from "@/contexts/ErrorContext";
-import './ErrorNotification.css';
+import styles from '@/styles/modules/ErrorNotification.module.css';
 
 /**
  * Toast notification d'erreur global avec auto-hide 5s
@@ -76,17 +76,17 @@ const ErrorNotification = () => {
   if (!error || !isVisible) return null;
 
   return (
-    <div className={`error-notification ${isVisible ? 'visible' : ''}`} role="alert" aria-live="assertive">
-      <div className="error-content">
-        <div className="error-icon">
+    <div className={`${styles.errorNotification} ${isVisible ? styles.visible : ''}`} role="alert" aria-live="assertive">
+      <div className={styles.errorContent}>
+        <div className={styles.errorIcon}>
           <AlertCircle color="var(--red-9)" size={24} />
         </div>
-        <div className="error-message">
+        <div className={styles.errorMessage}>
           <strong>Erreur</strong>
           <p>{error.message}</p>
         </div>
         <button 
-          className="error-close" 
+          className={styles.errorClose}
           onClick={hideError}
           aria-label="Fermer la notification"
         >

@@ -289,7 +289,7 @@ export default function PageHeader({
                 {onRefresh && (
                   <IconButton
                     variant="soft"
-                    onClick={onRefresh}
+                    onClick={() => onRefresh()}
                     size="2"
                     title="Actualiser"
                     aria-label="Actualiser les données"
