@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Flex, Text, Table, Badge } from "@radix-ui/themes";
 import EmptyState from "@/components/common/EmptyState";
+import { stripHtml } from "@/lib/utils/htmlUtils";
 import { 
   formatActionDate, 
   formatTime, 
@@ -153,9 +154,9 @@ function ActionTableRow({ action }) {
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden'
           }}
-          title={description}
+          title={stripHtml(description)}
         >
-          {description || '—'}
+          {stripHtml(description) || '—'}
         </Text>
       </Table.Cell>
 

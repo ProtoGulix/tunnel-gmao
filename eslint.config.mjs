@@ -37,8 +37,8 @@ export default defineConfig([
     rules: {
       'max-params': ['error', 5],
       'max-depth': ['error', 3],
-      'max-lines': ['error', 200],
-      'complexity': ['error', 10],
+      'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+      complexity: ['error', 10],
       'no-restricted-imports': [
         'error',
         {

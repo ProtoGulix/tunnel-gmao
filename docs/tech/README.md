@@ -3,7 +3,7 @@
 > Conventions de développement, contrats d'API et standards
 >
 > **Version**: 2.1.0  
-> **Dernière mise à jour**: 28 décembre 2025
+> **Dernière mise à jour**: 2 janvier 2026
 
 ---
 
@@ -34,6 +34,7 @@ Concepts métier fondamentaux qui structurent tout le code :
 
 - Architecture et structure du projet
 - Naming conventions
+- **Standards des composants common (PropTypes, JSDoc, helpers)**
 - Patterns React (composants, hooks, state)
 - Gestion des API et formulaires
 - Sécurité, performance, accessibilité
@@ -255,6 +256,13 @@ src/config/menuConfig.js
 ---
 
 ## 📝 Changelog
+
+### v2.1.0 (2 Janvier 2026)
+
+- ✅ Ajout standards composants common (PropTypes, JSDoc, helpers)
+- ✅ Documentation extraction sous-composants et constantes
+- ✅ Checklist validation composants réutilisables
+- ✅ Référence à GenericTabComponents comme exemple
 
 ### v2.0.0 (26 Décembre 2025)
 

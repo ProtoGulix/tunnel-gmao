@@ -21,5 +21,4 @@ export { default as SummaryTab } from './SummaryTab';
 export { default as StatsTab } from './StatsTab';
 export { default as SheetTab } from './SheetTab';
 export { default as HistoryTab } from './HistoryTab';
-
-export { TimelineItemRenderer as default } from './TimelineItemRenderer';
+export { default as TimelineItemRenderer } from './TimelineItemRenderer';

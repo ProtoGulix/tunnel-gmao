@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
-import SafeHtml from "@/components/common/SafeHtml";
+import { truncateHtml } from "@/lib/utils/htmlUtils";
 import { formatActionDate } from "@/lib/utils/actionUtils";
 import styles from "@/styles/modules/AnomalyTypeE.module.css";
 
@@ -145,13 +145,16 @@ export default function AnomalyTypeE({ item }) {
                     border: '1px solid var(--gray-4)'
                   }}
                 >
-                  <SafeHtml 
-                    html={getActions(item)[0]?.description}
-                    maxLength={150}
-                    style={{ 
+                  <div
+                    style={{
                       fontSize: '11px',
                       color: 'var(--gray-12)',
-                      lineHeight: '1.4'
+                      lineHeight: '1.4',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: truncateHtml(getActions(item)[0]?.description, 150),
                     }}
                   />
                 </Box>
@@ -213,13 +216,16 @@ export default function AnomalyTypeE({ item }) {
                     border: '1px solid var(--gray-4)'
                   }}
                 >
-                  <SafeHtml 
-                    html={getActions(item)[1]?.description}
-                    maxLength={150}
-                    style={{ 
+                  <div
+                    style={{
                       fontSize: '11px',
                       color: 'var(--gray-12)',
-                      lineHeight: '1.4'
+                      lineHeight: '1.4',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: truncateHtml(getActions(item)[1]?.description, 150),
                     }}
                   />
                 </Box>

@@ -2,6 +2,39 @@ import PropTypes from "prop-types";
 import { Callout, Text, Flex, Button } from "@radix-ui/themes";
 import { AlertCircle } from "lucide-react";
 
+const SEVERITY_COLORS = {
+  warning: "orange",
+  error: "red",
+  critical: "red"
+};
+
+function getSeverityColor(severity) {
+  return SEVERITY_COLORS[severity] || "red";
+}
+
+function UrgencyCount({ urgencyCount }) {
+  if (!urgencyCount) return null;
+  return (
+    <Text as="span" weight="bold" style={{ marginLeft: "4px" }}>
+      ({urgencyCount} {urgencyCount === 1 ? "élément" : "éléments"})
+    </Text>
+  );
+}
+
+function ActionButton({ action, onActionClick }) {
+  if (!action || !onActionClick) return null;
+  return (
+    <Button
+      size="2"
+      variant="soft"
+      onClick={onActionClick}
+      style={{ marginTop: "4px", alignSelf: "flex-start" }}
+    >
+      {action}
+    </Button>
+  );
+}
+
 /**
  * Alerte critique réutilisable pour contextes nécessitant attention immédiate
  * Affiche un callout coloré avec message d'avertissement personnalisable
@@ -36,15 +69,7 @@ export default function CriticalAlert({
   onActionClick
 }) {
   if (!show) return null;
-  
-  // Mapping sévérité → couleur Radix
-  const severityColors = {
-    warning: "orange",
-    error: "red",
-    critical: "red"
-  };
-
-  const color = severityColors[severity] || "red";
+  const color = getSeverityColor(severity);
   
   return (
     <Callout.Root color={color} role="alert" aria-live="assertive">
@@ -57,11 +82,7 @@ export default function CriticalAlert({
             <Text weight="bold" size="3">
               {title}
             </Text>
-            {urgencyCount > 0 && (
-              <Text as="span" weight="bold" style={{ marginLeft: '4px' }}>
-                ({urgencyCount} {urgencyCount === 1 ? 'élément' : 'éléments'})
-              </Text>
-            )}
+            <UrgencyCount urgencyCount={urgencyCount} />
           </Flex>
           
           {message && (
@@ -70,16 +91,7 @@ export default function CriticalAlert({
             </Text>
           )}
 
-          {action && onActionClick && (
-            <Button 
-              size="2" 
-              variant="soft" 
-              onClick={onActionClick}
-              style={{ marginTop: '4px', alignSelf: 'flex-start' }}
-            >
-              {action}
-            </Button>
-          )}
+          <ActionButton action={action} onActionClick={onActionClick} />
         </Flex>
       </Callout.Text>
     </Callout.Root>
@@ -95,4 +107,13 @@ CriticalAlert.propTypes = {
   icon: PropTypes.node,
   action: PropTypes.string,
   onActionClick: PropTypes.func,
+};
+
+UrgencyCount.propTypes = {
+  urgencyCount: PropTypes.number
+};
+
+ActionButton.propTypes = {
+  action: PropTypes.string,
+  onActionClick: PropTypes.func
 };

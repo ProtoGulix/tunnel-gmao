@@ -2,7 +2,7 @@
 
 > **Document Maître** : Toutes les conventions de développement du projet
 >
-> **Dernière mise à jour**: 28 décembre 2025  
+> **Dernière mise à jour**: 2 janvier 2026  
 > **Version**: 2.1.0
 
 ---
@@ -201,6 +201,246 @@ function InterventionCard({
 ---
 
 ## 4. Composants React
+
+### 4.0 Standards des Composants Common (MANDATORY)
+
+Tous les composants dans `src/components/common/` doivent respecter ces règles:
+
+#### 4.0.1 PropTypes Obligatoires
+
+```jsx
+import PropTypes from 'prop-types';
+
+export default function MyComponent({ label, value, onClick }) {
+  // Implementation...
+}
+
+MyComponent.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onClick: PropTypes.func,
+};
+```
+
+**Règles:**
+
+- ✅ Toujours importer `PropTypes` depuis `"prop-types"`
+- ✅ Définir `ComponentName.propTypes` après la définition du composant
+- ✅ Marquer les props obligatoires avec `.isRequired`
+- ✅ Utiliser les types précis (`string`, `number`, `func`, `bool`, `array`, `object`)
+- ✅ `oneOfType([...])` pour accepter plusieurs types
+- ✅ `arrayOf(...)`, `shape({...})` pour structures complexes
+
+#### 4.0.2 JSDoc Complet
+
+```jsx
+/**
+ * @fileoverview Description du module en une ligne
+ *
+ * @module components/common/ComponentName
+ * @requires react
+ * @requires prop-types
+ * @requires @radix-ui/themes
+ */
+
+/**
+ * Description du composant en une phrase
+ * @component
+ * @param {Object} props
+ * @param {string} props.label - Description de la prop
+ * @param {string|number} props.value - Valeur principale
+ * @param {Function} [props.onClick] - Callback optionnel
+ * @returns {JSX.Element} Description du rendu
+ * @example
+ * <MyComponent label="Total" value={42} onClick={handleClick} />
+ */
+export default function MyComponent({ label, value, onClick }) {
+  // ...
+}
+```
+
+**Règles:**
+
+- ✅ `@fileoverview` en haut du fichier
+- ✅ `@module` pour identifier le module
+- ✅ `@requires` pour lister les dépendances principales
+- ✅ `@component` pour marquer les composants React
+- ✅ `@param` pour chaque prop avec description
+- ✅ `[props.name]` pour props optionnelles
+- ✅ `@returns` pour décrire le rendu
+- ✅ `@example` avec code réaliste
+
+#### 4.0.3 Extraction de Helpers et Constantes
+
+**Extraire la logique complexe dans des helpers:**
+
+```jsx
+// ❌ MAUVAIS: Logique inline
+export default function Component({ color, progress }) {
+  const displayColor = color
+    ? color
+    : progress !== undefined && typeof progress === "number"
+      ? progress >= 95 ? "green" : progress >= 85 ? "orange" : "red"
+      : "blue";
+
+  return <Box style={{ color: displayColor }} />;
+}
+
+// ✅ BON: Helper extrait
+/** Couleur par défaut */
+const DEFAULT_COLOR = "blue";
+
+/** Seuils de coloration */
+const THRESHOLDS = { EXCELLENT: 95, GOOD: 85 };
+
+/**
+ * Détermine la couleur selon le contexte
+ * @param {string|undefined} color - Couleur explicite
+ * @param {number|undefined} progress - Valeur 0-100
+ * @returns {string} Nom de couleur Radix UI
+ */
+const determineColor = (color, progress) => {
+  if (color) return color;
+  if (progress !== undefined && typeof progress === "number") {
+    if (progress >= THRESHOLDS.EXCELLENT) return "green";
+    if (progress >= THRESHOLDS.GOOD) return "orange";
+    return "red";
+  }
+  return DEFAULT_COLOR;
+};
+
+export default function Component({ color, progress }) {
+  const displayColor = determineColor(color, progress);
+  return <Box style={{ color: displayColor }} />;
+}
+```
+
+**Règles:**
+
+- ✅ Extraire constantes en SCREAMING_SNAKE_CASE
+- ✅ Helpers nommés avec verbes (`determine*`, `build*`, `calculate*`, `format*`)
+- ✅ Documenter helpers avec JSDoc
+- ✅ Garder composants < 200 lignes (config ESLint)
+- ✅ Complexité cyclomatique ≤ 10 par fonction
+
+#### 4.0.4 Extraction de Sous-composants
+
+```jsx
+// ❌ MAUVAIS: Tout dans un composant
+export default function Card({ title, icon, items }) {
+  return (
+    <Box>
+      <Flex>
+        {icon && <Box>{icon}</Box>}
+        <Heading>{title}</Heading>
+      </Flex>
+      <Box>
+        {items.map((item, idx) => (
+          <Box key={idx}>
+            <Text>{item.label}</Text>
+            <Text>{item.value}</Text>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+// ✅ BON: Sous-composants extraits
+/**
+ * En-tête de la carte
+ * @param {Object} props
+ * @param {string} props.title
+ * @param {JSX.Element} [props.icon]
+ */
+function CardHeader({ title, icon }) {
+  return (
+    <Flex>
+      {icon && <Box>{icon}</Box>}
+      <Heading>{title}</Heading>
+    </Flex>
+  );
+}
+
+CardHeader.propTypes = {
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.element,
+};
+
+/**
+ * Item individuel
+ * @param {Object} props
+ * @param {string} props.label
+ * @param {string} props.value
+ */
+function CardItem({ label, value }) {
+  return (
+    <Box>
+      <Text>{label}</Text>
+      <Text>{value}</Text>
+    </Box>
+  );
+}
+
+CardItem.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+};
+
+/**
+ * Carte complète
+ * @component
+ */
+export default function Card({ title, icon, items }) {
+  return (
+    <Box>
+      <CardHeader title={title} icon={icon} />
+      <Box>
+        {items.map((item, idx) => (
+          <CardItem key={idx} label={item.label} value={item.value} />
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
+Card.propTypes = {
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.element,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
+```
+
+**Règles:**
+
+- ✅ Créer sous-composants pour blocs réutilisables
+- ✅ Nommer avec préfixe du parent (`Card` → `CardHeader`, `CardItem`)
+- ✅ Sous-composants non exportés sauf réutilisation externe
+- ✅ PropTypes pour tous, même internes
+- ✅ Documentation JSDoc minimale
+
+#### 4.0.5 Checklist Composant Common
+
+Avant de commit un composant dans `src/components/common/`:
+
+- [ ] ✅ PropTypes complets avec `.isRequired` appropriés
+- [ ] ✅ JSDoc avec `@fileoverview`, `@module`, `@component`, `@example`
+- [ ] ✅ Constantes extraites (seuils, valeurs par défaut, styles)
+- [ ] ✅ Helpers extraits si logique > 3 lignes ou réutilisée
+- [ ] ✅ Sous-composants si rendu > 20 lignes ou répété
+- [ ] ✅ Fichier < 200 lignes (ESLint: `max-lines`)
+- [ ] ✅ Complexité ≤ 10 par fonction (ESLint: `complexity`)
+- [ ] ✅ Aucun warning ESLint (`npm run lint`)
+- [ ] ✅ Build réussi (`npm run build`)
+
+**Exemple de référence:** `src/components/common/GenericTabComponents.jsx`
+
+---
 
 ### 4.1 Structure Standard de Page
 
@@ -748,6 +988,10 @@ useEffect(() => {
 ## 13. Documentation du Code
 
 ### 13.1 JSDoc Standard
+
+**Pour les composants React, voir [§4.0.2 Standards des Composants Common](#402-jsdoc-complet)**
+
+Pour les fonctions utilitaires et helpers:
 
 ```javascript
 /**

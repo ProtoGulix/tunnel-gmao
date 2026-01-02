@@ -45,17 +45,9 @@
  * - [ ] Badge count actions (ex: "5 actions")
  * - [ ] Tooltip détails sur hover (description complète)
  * - [ ] Animation fade-in au mount (framer-motion)
- * - [ ] Skeleton loading state
- * - [ ] Action rapide menu (3 dots) avec Edit/Delete
- * - [ ] Tests unitaires (Jest + RTL: render, navigation, hover)
- * - [ ] Storybook stories (variants: priorités, avec/sans machine)
- * - [ ] Drag & drop pour réorganisation (react-beautiful-dnd)
- * 
- * @module components/interventions/InterventionCard
- * @requires react-router-dom - Link navigation
- * @requires @radix-ui/themes - Card, Box, Flex, Text, Badge, Separator
- * @requires config/interventionTypes - PRIORITY_CONFIG
  */
+
+import { stripHtml } from "@/lib/utils/htmlUtils";
 
 import { useMemo, useState } from "react";
 import PropTypes from "prop-types";
@@ -243,7 +235,7 @@ export default function InterventionCard({ intervention, showActions = false, sh
                     >
                       <Flex justify="between" align="center">
                         <Text size="1" style={{ flex: 1 }}>
-                          {action.description || 'Action'}
+                          {stripHtml(action.description) || 'Action'}
                         </Text>
                         <Badge color={actionTimeColor} size="1">
                           {parseFloat(action.timeSpent || 0).toFixed(2)}h

@@ -54,7 +54,7 @@
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 import { formatActionDate } from "@/lib/utils/actionUtils";
-import SafeHtml from "@/components/common/SafeHtml";
+import { truncateHtml } from "@/lib/utils/htmlUtils";
 import InterventionCard from "@/components/interventions/InterventionCard";
 
 // DTO-friendly accessors with legacy fallback
@@ -216,14 +216,17 @@ export function ActionItem({ action, timeColor = "gray" }) {
       </Flex>
       {getActionDescription(action) && (
         <Box mt="1">
-          <SafeHtml 
-            html={getActionDescription(action)}
-            maxLength={100}
-            style={{ 
+          <div
+            style={{
               fontSize: '11px',
               color: 'var(--gray-11)',
               fontStyle: 'italic',
-              lineHeight: '1.3'
+              lineHeight: '1.3',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+            }}
+            dangerouslySetInnerHTML={{
+              __html: truncateHtml(getActionDescription(action), 100),
             }}
           />
         </Box>

@@ -1,86 +1,83 @@
 /**
- * ═══════════════════════════════════════════════════════════════════════════════
- * ⏳ LoadingState.jsx - Composant loading state réutilisable
- * ═══════════════════════════════════════════════════════════════════════════════
+ * @fileoverview État de chargement réutilisable avec spinner Radix UI
  * 
- * Composant centralisé pour afficher état chargement avec spinner Radix UI
- * - Mode fullscreen : 100vh pour pages complètes
- * - Mode inline : 8rem pour sections/tabs
- * - Container wrapper pour padding correct
- * - Spinner Radix UI tailles configurables (1, 2, 3)
- * - Message customisable
- * 
- * Utilisé dans :
- * - InterventionTabs (ActionsTab, PurchasesTab, StatsTab)
- * - Futures pages migrées depuis LoadingSpinner
- * 
- * ✅ Implémenté :
- * - Prop fullscreen boolean (100vh vs 8rem)
- * - Container Radix UI pour layout
- * - Flex centered vertical + horizontal
- * - Spinner avec size configurable
- * - Message gray optionnel
- * - Defaults sensibles (message "Chargement...", fullscreen true, size "3")
- * 
- * 📋 TODO : Améliorations futures
- * - [ ] Variants visuels : default, inline, overlay, modal
- * - [ ] Animation custom : rotation speed, pulse effect
- * - [ ] Skeleton loading : alternative au spinner pour meilleure UX
- * - [ ] Progress bar : afficher progression % si disponible
- * - [ ] Cancel button : annuler opération longue
- * - [ ] Timeout warning : message si >5s de chargement
- * - [ ] Accessibilité : role="status", aria-live="polite"
- * - [ ] Dark mode : adapter couleurs spinner/texte
- * - [ ] Multiple spinners : stack plusieurs loaders
- * - [ ] Icon custom : remplacer spinner par icon perso
+ * Composant centralisé pour afficher un état de chargement avec spinner.
+ * Supporte mode fullscreen (pages complètes) et inline (sections/tabs).
  * 
  * @module components/common/LoadingState
  * @requires react
+ * @requires prop-types
  * @requires @radix-ui/themes
  */
 
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 import { Container, Flex, Text, Spinner } from "@radix-ui/themes";
 
+/** Message par défaut du loader */
+const DEFAULT_MESSAGE = "Chargement...";
+
+/** Taille par défaut du spinner */
+const DEFAULT_SIZE = "3";
+
+/** Hauteur minimale en mode fullscreen */
+const FULLSCREEN_HEIGHT = "100vh";
+
+/** Hauteur minimale en mode inline */
+const INLINE_HEIGHT = "8rem";
+
 /**
- * État de chargement avec spinner centré
+ * Détermine la hauteur minimale selon le mode
+ * @param {boolean} fullscreen - Mode fullscreen ou inline
+ * @returns {string} Valeur CSS de hauteur
+ */
+const getMinHeight = (fullscreen) => (fullscreen ? FULLSCREEN_HEIGHT : INLINE_HEIGHT);
+
+/**
+ * État de chargement avec spinner centré et message
+ * 
+ * Affiche un spinner Radix UI avec message optionnel.
+ * Mode fullscreen pour pages complètes, inline pour sections/tabs.
  * 
  * @component
- * @param {Object} props - Props du composant
+ * @param {Object} props
  * @param {string} [props.message="Chargement..."] - Message à afficher sous spinner
  * @param {boolean} [props.fullscreen=true] - Mode plein écran (100vh) ou inline (8rem)
  * @param {string} [props.size="3"] - Taille spinner Radix ('1', '2', '3')
- * @returns {JSX.Element} Container avec spinner et message
+ * @returns {JSX.Element} Container avec spinner centré et message
  * 
  * @example
- * // Loading fullscreen (page entière)
+ * // Mode fullscreen (page entière)
  * if (loading) return <LoadingState message="Chargement des données..." />;
  * 
  * @example
- * // Loading inline (section)
+ * // Mode inline (section/tab)
  * <LoadingState 
  *   message="Chargement des actions..." 
  *   fullscreen={false}
  *   size="2"
  * />
  */
-export default function LoadingState({ message = "Chargement...", fullscreen = true, size = "3" }) {
+export default function LoadingState({ 
+  message = DEFAULT_MESSAGE, 
+  fullscreen = true, 
+  size = DEFAULT_SIZE 
+}) {
   return (
     <Container size="4">
       <Flex 
         direction="column" 
         align="center" 
         justify="center" 
-        style={{ minHeight: fullscreen ? '100vh' : '8rem' }} 
+        style={{ minHeight: getMinHeight(fullscreen) }} 
         gap="3"
         role="status"
         aria-live="polite"
         aria-label={message}
       >
         <Spinner size={size} />
-        
-        {/* Message */}
-        <Text color="gray" size="2">{message}</Text>
+        <Text color="gray" size="2">
+          {message}
+        </Text>
       </Flex>
     </Container>
   );
@@ -89,5 +86,5 @@ export default function LoadingState({ message = "Chargement...", fullscreen = t
 LoadingState.propTypes = {
   message: PropTypes.string,
   fullscreen: PropTypes.bool,
-  size: PropTypes.oneOf(['1', '2', '3'])
+  size: PropTypes.oneOf(["1", "2", "3"]),
 };
