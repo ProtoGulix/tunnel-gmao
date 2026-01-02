@@ -1,4 +1,5 @@
-import DOMPurify from "dompurify";
+import DOMPurify from 'dompurify';
+import parse from 'html-react-parser';
 
 /**
  * Nettoie et sécurise le HTML
@@ -6,41 +7,41 @@ import DOMPurify from "dompurify";
  * @returns {string} HTML sécurisé
  */
 export function sanitizeHtml(html) {
-  if (!html) return "";
+  if (!html) return '';
 
   // Configuration de DOMPurify
   const config = {
     ALLOWED_TAGS: [
-      "p",
-      "br",
-      "strong",
-      "em",
-      "u",
-      "b",
-      "i",
-      "ul",
-      "ol",
-      "li",
-      "span",
-      "div",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "blockquote",
-      "code",
-      "pre",
+      'p',
+      'br',
+      'strong',
+      'em',
+      'u',
+      'b',
+      'i',
+      'ul',
+      'ol',
+      'li',
+      'span',
+      'div',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'blockquote',
+      'code',
+      'pre',
     ],
-    ALLOWED_ATTR: ["class", "style"],
+    ALLOWED_ATTR: ['class', 'style'],
     ALLOWED_STYLES: {
-      "*": {
+      '*': {
         color: [/^#[0-9a-fA-F]{3,6}$/],
-        "background-color": [/^#[0-9a-fA-F]{3,6}$/],
-        "font-weight": [/^(normal|bold|[1-9]00)$/],
-        "font-style": [/^(normal|italic|oblique)$/],
-        "text-decoration": [/^(none|underline|line-through)$/],
+        'background-color': [/^#[0-9a-fA-F]{3,6}$/],
+        'font-weight': [/^(normal|bold|[1-9]00)$/],
+        'font-style': [/^(normal|italic|oblique)$/],
+        'text-decoration': [/^(none|underline|line-through)$/],
       },
     },
     KEEP_CONTENT: true,
@@ -58,14 +59,14 @@ export function sanitizeHtml(html) {
  * @returns {string} Texte sans balises HTML
  */
 export function stripHtml(html) {
-  if (!html) return "";
+  if (!html) return '';
 
   // Crée un élément temporaire pour extraire le texte
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.innerHTML = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
 
   // Retourne le texte brut en nettoyant les espaces multiples
-  return div.textContent || div.innerText || "".replace(/\s+/g, " ").trim();
+  return div.textContent || div.innerText || ''.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -75,20 +76,20 @@ export function stripHtml(html) {
  * @returns {string} HTML tronqué et sécurisé
  */
 export function truncateHtml(html, maxLength = 100) {
-  if (!html) return "";
+  if (!html) return '';
 
   // Nettoie d'abord le HTML
   const cleanHtml = sanitizeHtml(html);
 
   // Extrait le texte brut pour vérifier la longueur
-  const textContent = cleanHtml.replace(/<[^>]*>/g, "");
+  const textContent = cleanHtml.replace(/<[^>]*>/g, '');
 
   if (textContent.length <= maxLength) {
     return cleanHtml;
   }
 
   // Si trop long, tronque le texte et ajoute ...
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.innerHTML = cleanHtml;
 
   let currentLength = 0;
@@ -96,12 +97,12 @@ export function truncateHtml(html, maxLength = 100) {
     if (node.nodeType === Node.TEXT_NODE) {
       const remaining = maxLength - currentLength;
       if (remaining <= 0) {
-        node.textContent = "";
+        node.textContent = '';
         return;
       }
 
       if (node.textContent.length > remaining) {
-        node.textContent = node.textContent.substring(0, remaining) + "...";
+        node.textContent = node.textContent.substring(0, remaining) + '...';
         currentLength = maxLength;
       } else {
         currentLength += node.textContent.length;
@@ -113,4 +114,31 @@ export function truncateHtml(html, maxLength = 100) {
 
   truncateNode(div);
   return div.innerHTML;
+}
+
+/**
+ * Parse le HTML en composants React de manière sécurisée
+ * Combine DOMPurify pour la sanitization et html-react-parser pour éviter dangerouslySetInnerHTML
+ *
+ * @param {string} html - HTML brut à parser
+ * @param {number} [maxLength] - Longueur max optionnelle (tronque avant de parser)
+ * @returns {React.ReactElement|React.ReactElement[]|string} Composants React ou texte
+ *
+ * @example
+ * // Simple
+ * const content = parseHtmlSafe('<p><strong>Important</strong> message</p>');
+ * return <div>{content}</div>;
+ *
+ * @example
+ * // Avec troncature
+ * const content = parseHtmlSafe(longHtml, 100);
+ */
+export function parseHtmlSafe(html, maxLength) {
+  if (!html) return '';
+
+  // Nettoie et tronque si nécessaire
+  const cleanHtml = maxLength ? truncateHtml(html, maxLength) : sanitizeHtml(html);
+
+  // Parse en composants React (évite dangerouslySetInnerHTML)
+  return parse(cleanHtml);
 }

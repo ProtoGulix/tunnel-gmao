@@ -54,7 +54,7 @@
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 import { formatActionDate } from "@/lib/utils/actionUtils";
-import { truncateHtml } from "@/lib/utils/htmlUtils";
+import { truncateHtml, sanitizeHtml, parseHtmlSafe } from "@/lib/utils/htmlUtils";
 import InterventionCard from "@/components/interventions/InterventionCard";
 
 // DTO-friendly accessors with legacy fallback
@@ -215,20 +215,18 @@ export function ActionItem({ action, timeColor = "gray" }) {
         </Text>
       </Flex>
       {getActionDescription(action) && (
-        <Box mt="1">
-          <div
-            style={{
-              fontSize: '11px',
-              color: 'var(--gray-11)',
-              fontStyle: 'italic',
-              lineHeight: '1.3',
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
-            }}
-            dangerouslySetInnerHTML={{
-              __html: truncateHtml(getActionDescription(action), 100),
-            }}
-          />
+        <Box 
+          mt="1"
+          style={{
+            fontSize: '11px',
+            color: 'var(--gray-11)',
+            fontStyle: 'italic',
+            lineHeight: '1.3',
+            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
+          }}
+        >
+          {parseHtmlSafe(getActionDescription(action), 100)}
         </Box>
       )}
     </Box>
@@ -429,15 +427,18 @@ export function SingleActionDetail({ item, warningColor, warningMessage }) {
               <Text size="1" weight="bold" color="gray" style={{ display: 'block', marginBottom: '4px' }}>
                 Description :
               </Text>
-              <SafeHtml 
-                html={getItemDescription(item)}
+              <Box
                 style={{ 
                   fontSize: '12px',
                   color: 'var(--gray-11)',
                   fontStyle: 'italic',
-                  lineHeight: '1.4'
+                  lineHeight: '1.4',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
                 }}
-              />
+              >
+                {parseHtmlSafe(getItemDescription(item))}
+              </Box>
             </Box>
           )}
 

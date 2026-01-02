@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Box, Flex, Text, Badge, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
 import { formatActionDate } from "@/lib/utils/actionUtils";
-import { sanitizeHtml } from "@/lib/utils/htmlUtils";
+import { parseHtmlSafe } from "@/lib/utils/htmlUtils";
 
 // DTO-friendly accessors with legacy fallback
 const getIntervention = (item) => item?.intervention ?? item?.intervention_id ?? "N/A";
@@ -100,7 +100,7 @@ function AnomalyTypeD({ item }) {
                 <Text size="1" weight="bold" color="gray" style={{ display: 'block', marginBottom: '4px' }}>
                   Description :
                 </Text>
-                <div
+                <Box
                   style={{
                     fontSize: '12px',
                     color: 'var(--gray-11)',
@@ -109,10 +109,9 @@ function AnomalyTypeD({ item }) {
                     wordWrap: 'break-word',
                     overflowWrap: 'break-word',
                   }}
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(getDescription(item)),
-                  }}
-                />
+                >
+                  {parseHtmlSafe(getDescription(item))}
+                </Box>
               </Box>
             )}
 

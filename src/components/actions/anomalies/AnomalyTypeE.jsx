@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge, Separator } from "@radix-ui/themes";
 import { AnomalyContainer, AnomalyHeader } from "./AnomalyHelpers";
-import { truncateHtml } from "@/lib/utils/htmlUtils";
+import { parseHtmlSafe } from "@/lib/utils/htmlUtils";
 import { formatActionDate } from "@/lib/utils/actionUtils";
 import styles from "@/styles/modules/AnomalyTypeE.module.css";
 
@@ -145,7 +145,7 @@ export default function AnomalyTypeE({ item }) {
                     border: '1px solid var(--gray-4)'
                   }}
                 >
-                  <div
+                  <Box
                     style={{
                       fontSize: '11px',
                       color: 'var(--gray-12)',
@@ -153,10 +153,9 @@ export default function AnomalyTypeE({ item }) {
                       wordWrap: 'break-word',
                       overflowWrap: 'break-word',
                     }}
-                    dangerouslySetInnerHTML={{
-                      __html: truncateHtml(getActions(item)[0]?.description, 150),
-                    }}
-                  />
+                  >
+                    {parseHtmlSafe(getActions(item)[0]?.description, 150)}
+                  </Box>
                 </Box>
               </Box>
             )}
@@ -216,7 +215,7 @@ export default function AnomalyTypeE({ item }) {
                     border: '1px solid var(--gray-4)'
                   }}
                 >
-                  <div
+                  <Box
                     style={{
                       fontSize: '11px',
                       color: 'var(--gray-12)',
@@ -224,10 +223,9 @@ export default function AnomalyTypeE({ item }) {
                       wordWrap: 'break-word',
                       overflowWrap: 'break-word',
                     }}
-                    dangerouslySetInnerHTML={{
-                      __html: truncateHtml(getActions(item)[1]?.description, 150),
-                    }}
-                  />
+                  >
+                    {parseHtmlSafe(getActions(item)[1]?.description, 150)}
+                  </Box>
                 </Box>
               </Box>
             )}
