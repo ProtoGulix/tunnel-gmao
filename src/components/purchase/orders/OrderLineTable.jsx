@@ -17,8 +17,12 @@ import { Package } from "lucide-react";
 
 // ===== DTO ACCESSORS =====
 const getStock = (line) => line.stockItem ?? line.stock_item_id;
-const getPurchaseRequests = (line) => line.purchaseRequests ?? line.purchase_requests ?? [];
-const getPurchaseRequest = (pr) => pr.purchaseRequest ?? pr.purchase_request_id;
+const getPurchaseRequests = (line) => line?.purchaseRequests ?? line?.purchase_requests ?? [];
+const getPurchaseRequest = (pr) => {
+  if (!pr) return null;
+  if (pr.purchaseRequest || pr.purchase_request_id) return pr.purchaseRequest ?? pr.purchase_request_id;
+  return pr; // already normalized object
+};
 
 /**
  * Extrait le code intervention d'un objet intervention
@@ -50,7 +54,25 @@ const getInterventionCode = (line) => {
  */
 const getRequesterName = (pr) => {
   const prObj = getPurchaseRequest(pr);
-  return (prObj?.requested_by || prObj?.requestedBy || "—");
+  return prObj?.requested_by || prObj?.requestedBy || "—";
+};
+
+const renderRequesters = (prs) => {
+  const visible = prs.slice(0, 2);
+  const extra = prs.length - visible.length;
+
+  return (
+    <Flex direction="column" gap="1">
+      {visible.map((pr, idx) => (
+        <Text key={idx} size="1" color="gray">{getRequesterName(pr)}</Text>
+      ))}
+      {extra > 0 && (
+        <Text size="1" color="gray" style={{ fontStyle: "italic" }}>
+          +{extra} autre{extra > 1 ? "s" : ""}
+        </Text>
+      )}
+    </Flex>
+  );
 };
 
 /**
@@ -99,18 +121,7 @@ function OrderLineRow({ line }) {
         )}
       </Table.Cell>
 
-      <Table.Cell>
-        <Flex direction="column" gap="1">
-          {prs.slice(0, 2).map((pr, idx) => (
-            <Text key={idx} size="1" color="gray">{getRequesterName(pr)}</Text>
-          ))}
-          {prs.length > 2 && (
-            <Text size="1" color="gray" style={{ fontStyle: "italic" }}>
-              +{prs.length - 2} autre{prs.length > 3 ? "s" : ""}
-            </Text>
-          )}
-        </Flex>
-      </Table.Cell>
+      <Table.Cell>{renderRequesters(prs)}</Table.Cell>
     </Table.Row>
   );
 }
@@ -138,6 +149,8 @@ OrderLineRow.propTypes = {
  * @returns {JSX.Element}
  */
 export default function OrderLineTable({ order, orderLines = [] }) {
+  // Dedup lines by id to avoid double display when backend returns duplicates
+  const uniqueLines = Array.from(new Map(orderLines.map((l) => [l.id, l])).values());
   const isLocked = ['RECEIVED', 'CLOSED'].includes(order.status);
 
   return (
@@ -166,7 +179,7 @@ export default function OrderLineTable({ order, orderLines = [] }) {
         </Table.Header>
 
         <Table.Body>
-          {orderLines.map((line) => (
+          {uniqueLines.map((line) => (
             <OrderLineRow key={line.id} line={line} />
           ))}
         </Table.Body>

@@ -1,4 +1,4 @@
-import { useState, useCallback, Fragment, useMemo } from "react";
+import { useState, useCallback, Fragment, useMemo, useEffect } from "react";
 import { useError } from '@/contexts/ErrorContext';
 import { Flex, Card, Table, Text } from "@radix-ui/themes";
 import { Package, TruckIcon } from "lucide-react";
@@ -17,14 +17,6 @@ import {
 } from "./supplierOrdersHandlers";
 import { supplierOrdersTablePropTypes } from "./supplierOrdersTablePropTypes";
 
-/**
- * @fileoverview Table complète de gestion des paniers fournisseurs
- *
- * Affiche, trie, filtre les commandes fournisseurs avec actions complètes
- * (export CSV/email, changement de statut, expansion pour voir détails).
- *
- * Table de gestion des paniers fournisseurs (tri, filtres, exports, emails, mise à jour statut).
- */
 export default function SupplierOrdersTable({
   orders,
   onRefresh,
@@ -39,12 +31,17 @@ export default function SupplierOrdersTable({
   supplierOptions = [],
 }) {
   const { showError } = useError();
+  const [localOrders, setLocalOrders] = useState(orders);
   const [orderLines, setOrderLines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  useEffect(() => {
+    setLocalOrders(orders);
+  }, [orders]);
+
   // Tri par défaut : paniers non commandés d'abord, puis âge décroissant
-  const sortedOrders = useMemo(() => sortOrdersByStatusAndAge(orders), [orders]);
+  const sortedOrders = useMemo(() => sortOrdersByStatusAndAge(localOrders), [localOrders]);
 
   // Fonction utilitaire pour récupérer les lignes (mise en cache)
   const [cachedLines, setCachedLines] = useState(new Map());
@@ -79,9 +76,12 @@ export default function SupplierOrdersTable({
   const handleExportCSV = useCallback((order) => createHandleExportCSV(getOrderLines, showError)(order), [getOrderLines, showError]);
   const handleSendEmail = useCallback((order) => createHandleSendEmail(getOrderLines, showError)(order), [getOrderLines, showError]);
   const handleCopyHTMLEmail = useCallback((order) => createHandleCopyHTMLEmail(getOrderLines, showError)(order), [getOrderLines, showError]);
-  const wrappedHandleStatusChange = useCallback((orderId, newStatus) => 
-    handleStatusChange(orderId, newStatus, orders, onRefresh, expandedOrderId, setLoading, setOrderLines, showError),
-    [orders, onRefresh, expandedOrderId, showError]
+  const wrappedHandleStatusChange = useCallback(
+    async (orderId, newStatus) => {
+      await handleStatusChange(orderId, newStatus, localOrders, onRefresh, expandedOrderId, setLoading, setOrderLines, showError);
+      setLocalOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)));
+    },
+    [localOrders, onRefresh, expandedOrderId, showError]
   );
 
   const renderHeader = () =>
@@ -138,8 +138,6 @@ export default function SupplierOrdersTable({
                 <Fragment key={order.id}>
                   <OrderRow
                     order={order}
-                    isExpanded={expandedOrderId === order.id}
-                    orderLines={orderLines}
                     loading={loading}
                     cachedLines={cachedLines}
                     onViewDetails={() => handleViewDetails(order)}

@@ -32,6 +32,7 @@ export default function SupplierRefsInlinePanel({
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const refFieldRef = useRef(null); // Ref directe au champ supplier_ref pour éviter les race conditions
   const [manufacturers, setManufacturers] = useState([]);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   // Nouveau flux: recherche d'abord par référence constructeur, puis nom si nécessaire
   const [manuRefInput, setManuRefInput] = useState("");
   const [manuNameInput, setManuNameInput] = useState("");
@@ -42,6 +43,21 @@ export default function SupplierRefsInlinePanel({
   useEffect(() => {
     manufacturerItems.fetchManufacturerItems().then(items => setManufacturers(items || []));
   }, []);
+
+  // Reload refs if empty on mount (prevent showing stale cache)
+  useEffect(() => {
+    if (refs.length === 0 && stockItem?.id) {
+      setIsLoadingInitial(true);
+      onAdd?.(stockItem.id);
+    }
+  }, [stockItem?.id, onAdd, refs.length]);
+
+  // Stop loading indicator when refs arrive
+  useEffect(() => {
+    if (refs.length > 0) {
+      setIsLoadingInitial(false);
+    }
+  }, [refs.length]);
   
   const preferredCount = useMemo(
     () => refs.filter((r) => r.isPreferred).length,
@@ -137,13 +153,17 @@ export default function SupplierRefsInlinePanel({
             <Text weight="bold" size="2">
               Références existantes
             </Text>
-            {refs.length === 0 ? (
+            {isLoadingInitial ? (
+              <Flex align="center" gap="2" direction="column" style={{ padding: '12px' }}>
+                <Text size="2" color="gray">Chargement des références...</Text>
+              </Flex>
+            ) : refs.length === 0 ? (
               <Flex align="center" gap="2" color="gray" direction="column" style={{ padding: '12px' }}>
                 <Flex align="center" gap="2">
                   <AlertCircle size={16} color="var(--amber-9)" />
                   <Text size="2" weight="bold" color="gray">Aucune référence fournisseur définie</Text>
                 </Flex>
-                <Text size="1" color="gray">Vous devez ajouter au moins une r&eacute;f&eacute;rence pour pouvoir utiliser cet article dans les demandes d&apos;achat.</Text>
+                <Text size="1" color="gray">Vous devez ajouter au moins une référence pour pouvoir utiliser cet article dans les demandes d'achat.</Text>
               </Flex>
             ) : (
               <Table.Root>

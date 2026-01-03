@@ -13,7 +13,7 @@
 import { Fragment } from "react";
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Button, Badge, Select, DropdownMenu } from "@radix-ui/themes";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, FolderOpen, Send, Mail, PackageCheck, Archive, XCircle } from "lucide-react";
 import {
   getOrderNumber,
   getCreatedAt,
@@ -25,8 +25,6 @@ import {
   isBlockingOrder,
 } from "./supplierOrdersConfig";
 import { getSupplierOrderStatus } from "@/config/purchasingConfig";
-import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
-import OrderLineTable from "./OrderLineTable";
 import { isUrgentOrder, getPrimaryActionConfig, shouldShowAmount } from "./orderRowHelpers";
 
 /**
@@ -51,12 +49,24 @@ const renderOrderNumber = (order, isBlocking, isUrgent) => (
   </Flex>
 );
 
-const renderStatusBadge = (statusConfig) => (
-  <Badge color={statusConfig.color} variant="solid" size="2">
-    {statusConfig.icon && <span style={{ marginRight: '4px' }}>{statusConfig.icon}</span>}
-    {statusConfig.label}
-  </Badge>
-);
+const STATUS_ICONS = {
+  FolderOpen,
+  Send,
+  Mail,
+  PackageCheck,
+  Archive,
+  XCircle,
+};
+
+const renderStatusBadge = (statusConfig) => {
+  const Icon = statusConfig.icon ? STATUS_ICONS[statusConfig.icon] : null;
+  return (
+    <Badge color={statusConfig.color} variant="solid" size="2">
+      {Icon ? <Icon size={16} style={{ marginRight: 4 }} /> : null}
+      {statusConfig.label}
+    </Badge>
+  );
+};
 
 const renderLineCountBadge = (lineCount) => (
   <Badge color="gray" variant="soft">
@@ -86,8 +96,6 @@ const renderAgeBadge = (ageDays, ageColor) => (
  */
 export default function OrderRow({
   order,
-  isExpanded = false,
-  orderLines = [],
   loading = false,
   cachedLines = new Map(),
   onViewDetails,
@@ -177,11 +185,6 @@ export default function OrderRow({
         </Table.Cell>
       </Table.Row>
 
-      {isExpanded && (
-        <ExpandableDetailsRow colSpan={7} withCard={true}>
-          <OrderLineTable order={order} orderLines={orderLines} />
-        </ExpandableDetailsRow>
-      )}
     </Fragment>
   );
 }
@@ -203,8 +206,6 @@ OrderRow.propTypes = {
     supplier: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
     supplier_id: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
   }).isRequired,
-  isExpanded: PropTypes.bool,
-  orderLines: PropTypes.array,
   loading: PropTypes.bool,
   cachedLines: PropTypes.instanceOf(Map),
   onViewDetails: PropTypes.func.isRequired,

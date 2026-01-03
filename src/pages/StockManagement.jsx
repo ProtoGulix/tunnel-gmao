@@ -92,31 +92,28 @@ export default function StockManagement() {
 
   // Note: Removed unused STATUS_PRIORITY constant to satisfy ESLint.
 
-  const hasMissingInfo = (req) => {
-    const hasLink = !!req.stockItemId;
-    const hasQty = Number(req.quantity) > 0;
-    // Vérifier si l'article lié a un fournisseur préféré défini
-    const supplierRefs = stock.supplierRefsByItem?.[req.stockItemId] || [];
-    const hasSupplierInfo = supplierRefs.some(ref => ref.isPreferred);
-    const hasRef = !!req.itemLabel; // check if item has a label
-    return !(hasLink && hasQty && hasSupplierInfo && hasRef);
-  };
-
   const filteredRequests = useMemo(() => {
+    const hasMissingInfo = (req) => {
+      const hasLink = !!req.stockItemId;
+      const hasQty = Number(req.quantity) > 0;
+      const supplierRefs = stock.supplierRefsByItem?.[req.stockItemId] || [];
+      const hasSupplierInfo = supplierRefs.some(ref => ref.isPreferred);
+      const hasRef = !!req.itemLabel;
+      return !(hasLink && hasQty && hasSupplierInfo && hasRef);
+    };
+
     return [...baseFilteredRequests]
-      .filter(req => req.status !== 'received') // Exclure les reçues du tableau principal
+      .filter(req => req.status !== 'received')
       .sort((a, b) => {
-        // 1) Blocage en premier
         const aMissing = hasMissingInfo(a) ? 1 : 0;
         const bMissing = hasMissingInfo(b) ? 1 : 0;
-        if (aMissing !== bMissing) return bMissing - aMissing; // true first
+        if (aMissing !== bMissing) return bMissing - aMissing;
 
-        // 2) Âge décroissant
         const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
         const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
         return ageB - ageA;
       });
-  }, [baseFilteredRequests]);
+  }, [baseFilteredRequests, stock.supplierRefsByItem]);
 
   // Précharger les refs fournisseurs uniquement pour les demandes visibles
   useEffect(() => {
@@ -151,6 +148,15 @@ export default function StockManagement() {
     () => ["all", ...new Set(stock.stockItems.map(item => item.family_code).filter(Boolean))],
     [stock.stockItems]
   );
+
+  // Pre-calculate supplier ref counts from supplierRefsByItem to avoid dynamic counting
+  const supplierRefsCounts = useMemo(() => {
+    const counts = {};
+    Object.entries(stock.supplierRefsByItem || {}).forEach(([itemId, refs]) => {
+      counts[itemId] = (refs || []).length;
+    });
+    return counts;
+  }, [stock.supplierRefsByItem]);
   
   const filteredStockItems = useMemo(() => {
     return stock.stockItems.filter(item => {
@@ -374,6 +380,16 @@ export default function StockManagement() {
     const trimmedSupplierRef = (currentFormData.supplier_ref || '').trim();
     const trimmedSupplierId = (currentFormData.supplier_id || '').trim();
 
+    // If called without form data, just reload the refs (refresh call from useEffect)
+    if (!trimmedSupplierId && !trimmedSupplierRef) {
+      try {
+        await stock.loadSupplierRefs(stockItemId);
+      } catch (error) {
+        console.error('Erreur rechargement références:', error);
+      }
+      return;
+    }
+
     console.warn('[DEBUG] handleAddSupplierRef called with:', {
       stockItemId,
       currentFormData,
@@ -445,9 +461,12 @@ export default function StockManagement() {
       setTimeout(() => setDispatchResult(null), 3000);
     } catch (error) {
       console.error("Erreur ajout référence:", error);
+      const isDuplicate = error?.code === 'DUPLICATE_SUPPLIER_REF' || /unique/i.test(error?.message || '');
       setDispatchResult({
         type: 'error',
-        message: 'Erreur lors de l\'ajout de la référence',
+        message: isDuplicate
+          ? 'Ce fournisseur est déjà associé à cet article (référence existante).'
+          : 'Erreur lors de l\'ajout de la référence',
         details: error.message,
       });
     } finally {
@@ -1233,7 +1252,7 @@ export default function StockManagement() {
                     compactRows={compactRows}
                     specsCounts={stock.specsCounts}
                     specsHasDefault={stock.specsHasDefault}
-                    supplierRefsCounts={stock.supplierRefsCounts}
+                    supplierRefsCounts={supplierRefsCounts}
                     onEditStockItem={handleUpdateStockItem}
                     suppliers={purchasing.suppliers}
                     refs={stock.supplierRefsByItem}

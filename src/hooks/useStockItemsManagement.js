@@ -1,6 +1,12 @@
 import { useCallback, useState } from 'react';
 import { stock, stockSuppliers, stockSpecs } from '@/lib/api/facade';
 
+const normalizeId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'object') return value.id ?? null;
+  return value;
+};
+
 /**
  * Hook pour gérer la logique des articles en stock
  * Centralise: fetch, create, update, supplier refs
@@ -123,6 +129,23 @@ export const useStockItemsManagement = (onError) => {
   const addSupplierRef = useCallback(
     async (stockItemId, refData) => {
       try {
+        const supplierId = normalizeId(refData.supplier_id);
+        let existing = supplierRefsByItem[stockItemId];
+        if (!existing) {
+          existing = await loadSupplierRefs(stockItemId);
+        }
+
+        const isDuplicate = (existing || []).some((ref) => {
+          const refSupplierId = normalizeId(ref.supplier_id ?? ref.supplier);
+          return String(refSupplierId) === String(supplierId);
+        });
+
+        if (isDuplicate) {
+          const err = new Error('Ce fournisseur est déjà associé à cet article.');
+          err.code = 'DUPLICATE_SUPPLIER_REF';
+          throw err;
+        }
+
         await stockSuppliers.createStockItemSupplier({
           stock_item_id: stockItemId,
           ...refData,
@@ -133,7 +156,7 @@ export const useStockItemsManagement = (onError) => {
         throw error;
       }
     },
-    [loadSupplierRefs]
+    [loadSupplierRefs, supplierRefsByItem]
   );
 
   const updateSupplierRef = useCallback(
