@@ -23,41 +23,16 @@ export const useStockItemsManagement = (onError) => {
         const data = await stock.fetchStockItems();
         setStockItems(data);
 
-        // TOUJOURS charger les compteurs (références + specs) pour chaque article
-        // (pas seulement au démarrage initial)
         if (data.length > 0) {
-          const refsCounts = {};
-          const specCounts = {};
-          const specDefaults = {};
-          const refsByItem = {};
-          const specsByItem = {};
-
-          for (const item of data) {
-            try {
-              const [refs, specs] = await Promise.all([
-                stockSuppliers.fetchStockItemSuppliers(item.id),
-                stockSpecs.fetchStockSpecsForItem(item.id),
-              ]);
-              refsCounts[item.id] = refs.length;
-              specCounts[item.id] = (specs || []).length;
-              specDefaults[item.id] = (specs || []).some((s) => s.is_default);
-              refsByItem[item.id] = refs || [];
-              specsByItem[item.id] = specs || [];
-            } catch (err) {
-              console.error(`[useStockItemsManagement] Error loading for item ${item.id}:`, err);
-              refsCounts[item.id] = refsCounts[item.id] ?? 0;
-              specCounts[item.id] = specCounts[item.id] ?? 0;
-              specDefaults[item.id] = specDefaults[item.id] ?? false;
-              refsByItem[item.id] = [];
-              specsByItem[item.id] = [];
-            }
-          }
-
-          setSupplierRefsCounts(refsCounts);
-          setSpecsCounts(specCounts);
-          setSpecsHasDefault(specDefaults);
-          setSupplierRefsByItem(refsByItem);
-          setStandardSpecsByItem(specsByItem);
+          const zeroCounts = {};
+          const zeroDefaults = {};
+          data.forEach((item) => {
+            zeroCounts[item.id] = 0;
+            zeroDefaults[item.id] = false;
+          });
+          setSupplierRefsCounts(zeroCounts);
+          setSpecsCounts(zeroCounts);
+          setSpecsHasDefault(zeroDefaults);
         }
 
         return data;
@@ -112,6 +87,38 @@ export const useStockItemsManagement = (onError) => {
       throw error;
     }
   }, []);
+
+  const loadStandardSpecs = useCallback(async (stockItemId) => {
+    try {
+      const specs = await stockSpecs.fetchStockSpecsForItem(stockItemId);
+      setStandardSpecsByItem((prev) => ({
+        ...prev,
+        [stockItemId]: specs || [],
+      }));
+      setSpecsCounts((prev) => ({
+        ...prev,
+        [stockItemId]: (specs || []).length,
+      }));
+      setSpecsHasDefault((prev) => ({
+        ...prev,
+        [stockItemId]: (specs || []).some((s) => s.is_default),
+      }));
+      return specs;
+    } catch (error) {
+      console.error('Erreur chargement spécifications:', error);
+      throw error;
+    }
+  }, []);
+
+  const prefetchSupplierRefsForItems = useCallback(
+    async (stockItemIds = []) => {
+      const uniqueIds = Array.from(new Set(stockItemIds.filter(Boolean)));
+      const missingIds = uniqueIds.filter((id) => !supplierRefsByItem[id]);
+      if (missingIds.length === 0) return [];
+      return Promise.all(missingIds.map((id) => loadSupplierRefs(id)));
+    },
+    [loadSupplierRefs, supplierRefsByItem]
+  );
 
   const addSupplierRef = useCallback(
     async (stockItemId, refData) => {
@@ -171,6 +178,8 @@ export const useStockItemsManagement = (onError) => {
     addStockItem,
     updateItem,
     loadSupplierRefs,
+    loadStandardSpecs,
+    prefetchSupplierRefsForItems,
     addSupplierRef,
     updateSupplierRef,
     deleteSupplierRef,

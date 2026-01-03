@@ -303,6 +303,14 @@ const suppliers = {
   async deleteSupplier(id: string) {
     // No-op
   },
+
+  async dispatchPurchaseRequests() {
+    return {
+      dispatched: [],
+      toQualify: [],
+      errors: [],
+    };
+  },
 };
 
 /**

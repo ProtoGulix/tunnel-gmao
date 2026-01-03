@@ -427,6 +427,11 @@ export interface SuppliersNamespace {
   createSupplier(supplier: Partial<Supplier>): Promise<Supplier>;
   updateSupplier(id: string, updates: Partial<Supplier>): Promise<Supplier>;
   deleteSupplier(id: string): Promise<void | true>;
+  dispatchPurchaseRequests(): Promise<{
+    dispatched: string[];
+    toQualify: string[];
+    errors: Array<{ id: string; error: string }>;
+  }>;
 }
 
 /**

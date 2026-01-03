@@ -3,8 +3,8 @@ import { Box, Flex, Button, Card } from "@radix-ui/themes";
 import { Plus, Package } from "lucide-react";
 import LoadingState from "@/components/common/LoadingState";
 import TableHeader from "@/components/common/TableHeader";
-import PurchaseRequestsTable from "@/components/stock/PurchaseRequestsTable";
-import PurchaseRequestFormBody from "@/components/stock/PurchaseRequestFormBody";
+import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
+import PurchaseRequestFormBody from "@/components/purchase/requests/PurchaseRequestFormBody";
 import { useSummaryTab } from "./useSummaryTab";
 
 /**

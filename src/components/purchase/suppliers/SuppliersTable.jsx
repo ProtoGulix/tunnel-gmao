@@ -14,7 +14,7 @@ import {
 import { Building2, Pencil, Trash2, Plus, ChevronDown, Mail } from "lucide-react";
 import { suppliers as suppliersApi } from "@/lib/api/facade";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
-import SupplierRefsBySupplierPanel from "@/components/stock/SupplierRefsBySupplierPanel";
+import SupplierRefsBySupplierPanel from "@/components/purchase/suppliers/SupplierRefsBySupplierPanel";
 import EmptyState from "@/components/common/EmptyState";
 
 /**

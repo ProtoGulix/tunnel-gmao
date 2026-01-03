@@ -105,12 +105,13 @@ export const mapPurchaseRequestDomainToBackend = (payload: Record<string, unknow
   if (payload.reason !== undefined) backend.reason = payload.reason;
   if (payload.notes !== undefined) backend.notes = payload.notes;
   if (payload.status !== undefined) backend.status = payload.status;
-  if (payload.interventionId !== undefined) backend.intervention_id = payload.interventionId;
+  // Only include intervention_id if explicitly provided (not undefined/null)
+  if (payload.interventionId !== undefined && payload.interventionId !== null) backend.intervention_id = payload.interventionId;
   // Legacy snake_case support
   if (payload.stock_item_id !== undefined) backend.stock_item_id = payload.stock_item_id;
   if (payload.item_label !== undefined) backend.item_label = payload.item_label;
   if (payload.requested_by !== undefined) backend.requested_by = payload.requested_by;
-  if (payload.intervention_id !== undefined) backend.intervention_id = payload.intervention_id;
+  if (payload.intervention_id !== undefined && payload.intervention_id !== null) backend.intervention_id = payload.intervention_id;
   return backend;
 };
 

@@ -26,16 +26,16 @@ import LoadingState from "@/components/common/LoadingState";
 import { usePurchaseRequestFilters } from "@/hooks/useFilters";
 import { useRequestStats } from "@/hooks/useStockData";
 import FilterSelect from "@/components/common/FilterSelect";
-import PurchaseRequestsTable from "@/components/stock/PurchaseRequestsTable";
+import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
 import StockItemLinkForm from "@/components/stock/StockItemLinkForm";
 import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
-import SupplierOrdersTable from "@/components/purchase/SupplierOrdersTable";
-import SuppliersTable from "@/components/purchase/SuppliersTable";
+import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
+import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
 import TableHeader from "@/components/common/TableHeader";
 import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
 import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
-import ManufacturersTable from "@/components/stock/ManufacturersTable";
+import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks pour la logique métier
@@ -95,8 +95,9 @@ export default function StockManagement() {
   const hasMissingInfo = (req) => {
     const hasLink = !!req.stockItemId;
     const hasQty = Number(req.quantity) > 0;
-    // Preferred supplier presence requires data from stock; approximate here (refined in table)
-    const hasSupplierInfo = !!req.preferred_supplier_id; // may be undefined; treated as missing -> surfaced in table
+    // Vérifier si l'article lié a un fournisseur préféré défini
+    const supplierRefs = stock.supplierRefsByItem?.[req.stockItemId] || [];
+    const hasSupplierInfo = supplierRefs.some(ref => ref.isPreferred);
     const hasRef = !!req.itemLabel; // check if item has a label
     return !(hasLink && hasQty && hasSupplierInfo && hasRef);
   };
@@ -116,6 +117,24 @@ export default function StockManagement() {
         return ageB - ageA;
       });
   }, [baseFilteredRequests]);
+
+  // Précharger les refs fournisseurs uniquement pour les demandes visibles
+  useEffect(() => {
+    const itemIds = filteredRequests.map((req) => req.stockItemId).filter(Boolean);
+    stock.prefetchSupplierRefsForItems?.(itemIds);
+  }, [filteredRequests, stock]);
+
+  // Précharger les refs pour toutes les demandes non archivées (open/in_progress/ordered)
+  useEffect(() => {
+    const activeItemIds = purchases.requests
+      .filter((req) => {
+        const statusId = typeof req.status === 'string' ? req.status : req.status?.id;
+        return statusId !== 'received' && statusId !== 'closed' && statusId !== 'cancelled';
+      })
+      .map((req) => req.stockItemId)
+      .filter(Boolean);
+    stock.prefetchSupplierRefsForItems?.(activeItemIds);
+  }, [purchases.requests, stock]);
 
   const receivedRequests = useMemo(() => {
     return [...baseFilteredRequests]
@@ -222,7 +241,7 @@ export default function StockManagement() {
       // Vérifier si l'article lié a un fournisseur préféré
       const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
       
-      return supplierRefs.some(ref => ref.is_preferred);
+      return supplierRefs.some(ref => ref.isPreferred);
     }).length;
   }, [purchases.requests, stock.supplierRefsByItem]);
 
@@ -234,7 +253,7 @@ export default function StockManagement() {
       
       // Demande a un article mais pas de fournisseur préféré
       const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
-      const hasPreferredSupplier = supplierRefs.some(ref => ref.is_preferred);
+      const hasPreferredSupplier = supplierRefs.some(ref => ref.isPreferred);
       return !hasPreferredSupplier;
     }).length,
     [purchases.requests, stock.supplierRefsByItem]
@@ -487,6 +506,21 @@ export default function StockManagement() {
     setExpandedRequestId(prev => prev === requestId ? null : requestId);
   };
 
+  // Quand on ouvre une demande, charger au besoin les refs/specifics liées à l'article
+  useEffect(() => {
+    if (!expandedRequestId) return;
+    const req = purchases.requests.find((r) => r.id === expandedRequestId);
+    const stockItemId = req?.stockItemId;
+    if (!stockItemId) return;
+
+    if (!stock.supplierRefsByItem?.[stockItemId]) {
+      stock.loadSupplierRefs?.(stockItemId);
+    }
+    if (!stock.standardSpecsByItem?.[stockItemId]) {
+      stock.loadStandardSpecs?.(stockItemId);
+    }
+  }, [expandedRequestId, purchases.requests, stock]);
+
   const handleLinkExisting = async (requestId, stockItem) => {
     try {
       setFormLoading(true);
@@ -633,7 +667,7 @@ export default function StockManagement() {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
       if (statusId !== "open" || !r.stockItemId) return false;
       const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
-      return supplierRefs.some(ref => ref.is_preferred);
+      return supplierRefs.some(ref => ref.isPreferred);
     }).length;
 
     if (trueReadyCount === 0) {

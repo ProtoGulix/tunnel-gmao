@@ -11,7 +11,7 @@ import { CheckCircle } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { usePageHeaderProps } from '@/hooks/usePageConfig';
 import { stock } from '@/lib/api/facade';
-import PurchaseRequestFormBody from '@/components/stock/PurchaseRequestFormBody';
+import PurchaseRequestFormBody from '@/components/purchase/requests/PurchaseRequestFormBody';
 
 // ===== COMPONENT =====
 export default function PurchaseRequestForm() {

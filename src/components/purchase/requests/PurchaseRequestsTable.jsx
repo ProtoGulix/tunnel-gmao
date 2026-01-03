@@ -4,7 +4,7 @@ import { Table, Text, Badge, Flex, Button, Card, Box, TextField, TextArea, Selec
 import { Package, AlertTriangle, AlertCircle, Building2, FileText, Plus, Send, Hourglass, FileQuestion } from "lucide-react";
 
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
-import SearchSpecsDialog from "./SearchSpecsDialog";
+import SearchSpecsDialog from "@/components/stock/SearchSpecsDialog";
 
 export default function PurchaseRequestsTable({
   requests,
@@ -44,7 +44,7 @@ export default function PurchaseRequestsTable({
   const getPreferredSupplier = useCallback((stockItemId) => {
     const refs = supplierRefs[stockItemId] || [];
     const pref = refs.find((r) => r.isPreferred);
-    return pref?.supplier_id?.name || null;
+    return pref?.supplier?.name || pref?.supplier?.id || null;
   }, [supplierRefs]);
   const getStockItemRef = useCallback((stockItemId) => {
     if (!stockItemId) return null;
@@ -73,6 +73,7 @@ export default function PurchaseRequestsTable({
     const missing = !(hasLink && hasQty && hasRef && hasPrefSupp);
     if (missing) return { key: "to_qualify", icon: FileQuestion, label: "À qualifier" };
     const statusId = typeof request.status === "string" ? request.status : request.status?.id;
+    if (statusId === "open") return { key: "to_dispatch", icon: Send, label: "À dispatcher" };
     if (statusId === "received") return { key: "received", icon: Package, label: "Reçue" };
     if (statusId === "ordered") return { key: "ordered", icon: Package, label: "Commandée" };
     if (statusId === "in_progress") return { key: "waiting", icon: Hourglass, label: "Attente fournisseur" };
@@ -305,7 +306,13 @@ export default function PurchaseRequestsTable({
               );
             })()}
 
-            {expandedRequestId === request.id && renderExpandedContent(request)}
+            {expandedRequestId === request.id && (
+              <Table.Row>
+                <Table.Cell colSpan={8}>
+                  {renderExpandedContent(request)}
+                </Table.Cell>
+              </Table.Row>
+            )}
 
             {missingExpandedId === request.id && (
               <ExpandableDetailsRow colSpan={8} withCard={false}>

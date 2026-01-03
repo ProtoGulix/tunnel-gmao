@@ -66,7 +66,14 @@ export const updateSupplierOrder = async (id: string, updates: Record<string, un
   return mapper.mapSupplierOrderToDomain(raw);
 };
 
-// TODO: Implement dispatchPurchaseRequests if needed, using datasource + mappers
+export const dispatchPurchaseRequests = async () => {
+  const result = await datasource.dispatchPurchaseRequests();
+  return {
+    dispatched: result.dispatched || [],
+    toQualify: result.toQualify || [],
+    errors: result.errors || [],
+  };
+};
 
 export const suppliersAdapter = {
   fetchSuppliers,
@@ -77,4 +84,5 @@ export const suppliersAdapter = {
   fetchSupplierOrder,
   fetchSupplierOrderLines,
   updateSupplierOrder,
+  dispatchPurchaseRequests,
 };
