@@ -37,8 +37,7 @@ export default function StockItemsTable({
   setFormData,
   onAdd,
   onUpdatePreferred,
-  onDelete,
-  loading,
+  onDelete,  onLoadSupplierRefs,  loading,
   showStockCol = true,
   allManufacturers = [],
   stockFamilies = [],
@@ -89,6 +88,7 @@ export default function StockItemsTable({
           onAdd,
           onUpdatePreferred,
           onDelete,
+          onLoadSupplierRefs,
           compactRows,
           allManufacturers,
           stockFamilies,
@@ -149,6 +149,7 @@ function renderStockTable({
   onAdd,
   onUpdatePreferred,
   onDelete,
+  onLoadSupplierRefs,
   compactRows,
   allManufacturers,
   stockFamilies,
@@ -188,6 +189,7 @@ function renderStockTable({
             onAdd={onAdd}
             onUpdatePreferred={(refId, updates) => onUpdatePreferred(refId, updates, item.id)}
             onDelete={(refId) => onDelete(refId, item.id)}
+            onLoadSupplierRefs={onLoadSupplierRefs}
             allManufacturers={allManufacturers}
             stockFamilies={stockFamilies}
           />
@@ -211,6 +213,7 @@ StockItemsTable.propTypes = {
   onAdd: PropTypes.func,
   onUpdatePreferred: PropTypes.func,
   onDelete: PropTypes.func,
+  onLoadSupplierRefs: PropTypes.func,
   loading: PropTypes.bool,
   showStockCol: PropTypes.bool,
   allManufacturers: PropTypes.array,

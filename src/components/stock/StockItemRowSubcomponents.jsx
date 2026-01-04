@@ -1,6 +1,9 @@
 import PropTypes from "prop-types";
 import { Flex, Text, Badge, Button } from "@radix-ui/themes";
 import { Package, CheckCircle, FileText, AlertCircle, Star } from "lucide-react";
+import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
+import StandardSpecsPanel from "@/components/stock/StandardSpecsPanel";
+import SupplierRefsInlinePanel from "@/components/stock/SupplierRefsInlinePanel";
 import {
   getRefCountBadgeColor,
   getRefCountBadgeVariant,
@@ -90,4 +93,102 @@ export function StockQuantitySection({ quantity, unit }) {
 StockQuantitySection.propTypes = {
   quantity: PropTypes.number,
   unit: PropTypes.string,
+};
+
+/**
+ * Sections développables pour specs et références fournisseurs
+ * Affiche les panneaux détaillés d'un article quand ils sont ouverts.
+ *
+ * @component
+ * @param {Object} props
+ * @param {Object} props.item - Article de stock
+ * @param {string} props.item.id - ID article
+ * @param {string} props.item.name - Nom article
+ * @param {number} props.colSpan - Nombre de colonnes
+ * @param {boolean} props.specsExpanded - Specs panel open
+ * @param {boolean} props.refsExpanded - Refs panel open
+ * @param {Array} props.suppliers - Liste des fournisseurs
+ * @param {Array} props.refs - Références fournisseurs
+ * @param {Object} props.formData - Données formulaire
+ * @param {Function} props.setFormData - Setter formulaire
+ * @param {Function} props.onAdd - Callback ajout ref
+ * @param {Function} props.onUpdatePreferred - Callback update préféré
+ * @param {Function} props.onDelete - Callback suppression ref
+ * @param {Array} [props.allManufacturers=[]] - Fabricants disponibles
+ * @returns {JSX.Element} Sections développables
+ *
+ * @example
+ * <StockItemRowExpandedSections
+ *   item={stockItem}
+ *   colSpan={7}
+ *   specsExpanded={true}
+ *   refsExpanded={false}
+ *   suppliers={suppliersList}
+ *   refs={itemRefs}
+ *   formData={formData}
+ *   setFormData={setFormData}
+ *   onAdd={handleAdd}
+ * />
+ */
+export function StockItemRowExpandedSections({
+  item,
+  colSpan,
+  specsExpanded,
+  refsExpanded,
+  suppliers,
+  refs,
+  formData,
+  setFormData,
+  onAdd,
+  onUpdatePreferred,
+  onDelete,
+  allManufacturers = [],
+}) {
+  return (
+    <>
+      {specsExpanded && (
+        <ExpandableDetailsRow colSpan={colSpan} withCard={false}>
+          <StandardSpecsPanel stockItemId={item.id} stockItemName={item.name} />
+        </ExpandableDetailsRow>
+      )}
+      {refsExpanded && (
+        <ExpandableDetailsRow colSpan={colSpan} withCard={false}>
+          <SupplierRefsInlinePanel
+            stockItem={item}
+            suppliers={suppliers}
+            refs={refs}
+            formData={formData}
+            setFormData={setFormData}
+            onAdd={onAdd}
+            onUpdatePreferred={onUpdatePreferred}
+            onDelete={onDelete}
+            allManufacturers={allManufacturers}
+          />
+        </ExpandableDetailsRow>
+      )}
+    </>
+  );
+}
+
+StockItemRowExpandedSections.propTypes = {
+  item: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+  }).isRequired,
+  colSpan: PropTypes.number.isRequired,
+  specsExpanded: PropTypes.bool.isRequired,
+  refsExpanded: PropTypes.bool.isRequired,
+  suppliers: PropTypes.array,
+  refs: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  formData: PropTypes.object,
+  setFormData: PropTypes.func,
+  onAdd: PropTypes.func,
+  onUpdatePreferred: PropTypes.func,
+  onDelete: PropTypes.func,
+  allManufacturers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    })
+  ),
 };

@@ -27,7 +27,7 @@ import { usePurchaseRequestFilters } from "@/hooks/useFilters";
 import { useRequestStats } from "@/hooks/useStockData";
 import FilterSelect from "@/components/common/FilterSelect";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
-import StockItemLinkForm from "@/components/stock/StockItemLinkForm";
+import StockItemSearch from "@/components/stock/StockItemSearch";
 import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
 import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
 import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
@@ -1074,7 +1074,7 @@ export default function StockManagement() {
                       onAddSupplierRef={onAddSupplierRefForRequests}
                       onAddStandardSpec={onAddStandardSpecForRequests}
                       renderExpandedContent={(request) => (
-                        <StockItemLinkForm
+                        <StockItemSearch
                           requestId={request.id}
                           initialItemLabel={request.itemLabel}
                           onLinkExisting={handleLinkExisting}
@@ -1109,7 +1109,7 @@ export default function StockManagement() {
                             onAddSupplierRef={onAddSupplierRefForRequests}
                             onAddStandardSpec={onAddStandardSpecForRequests}
                             renderExpandedContent={(request) => (
-                              <StockItemLinkForm
+                              <StockItemSearch
                                 requestId={request.id}
                                 initialItemLabel={request.itemLabel}
                                 onLinkExisting={handleLinkExisting}
@@ -1260,6 +1260,7 @@ export default function StockManagement() {
                     onAdd={handleAddSupplierRef}
                     onUpdatePreferred={handleUpdateSupplierRef}
                     onDelete={handleDeleteSupplierRef}
+                    onLoadSupplierRefs={stock.loadSupplierRefs}
                     loading={isLoading}
                     showStockCol={true}
                     allManufacturers={allManufacturers}

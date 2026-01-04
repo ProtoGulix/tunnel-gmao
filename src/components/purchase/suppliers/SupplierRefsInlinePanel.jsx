@@ -1,4 +1,20 @@
-import { useMemo, useState, useRef, useEffect } from "react";
+/**
+ * @fileoverview Panneau inline de gestion des références fournisseur
+ * Permet d'ajouter, modifier et supprimer des références fournisseur pour un article de stock.
+ * Gère également les informations fabricant associées à chaque référence.
+ *
+ * @module components/purchase/suppliers/SupplierRefsInlinePanel
+ * @requires react
+ * @requires prop-types
+ * @requires @radix-ui/themes
+ * @requires @/contexts/ErrorContext
+ * @requires @/components/common/ManufacturerBadge
+ * @requires @/components/purchase/manufacturers/ManufacturerFormFields
+ * @requires @/components/purchase/suppliers/SupplierReferenceForm
+ * @requires @/lib/api/facade
+ */
+
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from 'prop-types';
 import { useError } from '@/contexts/ErrorContext';
 import {
@@ -6,17 +22,50 @@ import {
   Flex,
   Text,
   Table,
-  Select,
-  TextField,
-  Button,
   Badge,
   Checkbox,
   Card,
+  Button,
 } from "@radix-ui/themes";
-import { CheckCircle, AlertCircle, ChevronDown } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import ManufacturerBadge from "@/components/common/ManufacturerBadge";
+import ManufacturerFormFields from "@/components/purchase/manufacturers/ManufacturerFormFields";
+import SupplierReferenceForm from "@/components/purchase/suppliers/SupplierReferenceForm";
 import { manufacturerItems } from "@/lib/api/facade";
 
+/**
+ * Panneau de gestion des références fournisseur pour un article
+ * @component
+ * 
+ * @param {Object} props
+ * @param {Object} props.stockItem - Article de stock
+ * @param {string|number} props.stockItem.id - ID de l'article
+ * @param {string} [props.stockItem.name] - Nom de l'article
+ * @param {Array<Object>} props.suppliers - Liste des fournisseurs disponibles
+ * @param {Array<Object>} props.refs - Liste des références fournisseur existantes
+ * @param {Object} props.formData - Données du formulaire d'ajout
+ * @param {Function} props.setFormData - Callback pour mettre à jour le formulaire
+ * @param {Function} props.onAdd - Callback pour ajouter une référence
+ * @param {Function} props.onUpdatePreferred - Callback pour mettre à jour une référence
+ * @param {Function} props.onDelete - Callback pour supprimer une référence
+ * @param {boolean} [props.loading=false] - État de chargement
+ * @param {Array<Object>} [props.allManufacturers=[]] - Liste des fabricants disponibles
+ * @returns {JSX.Element} Panneau de gestion des références
+ * 
+ * @example
+ * <SupplierRefsInlinePanel
+ *   stockItem={{ id: 123, name: "Vis M8" }}
+ *   suppliers={suppliersList}
+ *   refs={referencesList}
+ *   formData={formData}
+ *   setFormData={setFormData}
+ *   onAdd={handleAdd}
+ *   onUpdatePreferred={handleUpdate}
+ *   onDelete={handleDelete}
+ *   loading={isLoading}
+ *   allManufacturers={manufacturersList}
+ * />
+ */
 export default function SupplierRefsInlinePanel({
   stockItem,
   suppliers,
@@ -27,94 +76,96 @@ export default function SupplierRefsInlinePanel({
   onUpdatePreferred,
   onDelete,
   loading,
+  allManufacturers = [],
 }) {
   const { showError } = useError();
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
-  const refFieldRef = useRef(null); // Ref directe au champ supplier_ref pour éviter les race conditions
-  const [manufacturers, setManufacturers] = useState([]);
-  // Nouveau flux: recherche d'abord par référence constructeur, puis nom si nécessaire
-  const [manuRefInput, setManuRefInput] = useState("");
-  const [manuNameInput, setManuNameInput] = useState("");
-  const [showManuRefSuggestions, setShowManuRefSuggestions] = useState(false);
-  const [showManuNameSuggestions, setShowManuNameSuggestions] = useState(false);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
   
-  // Charger la liste des fabricants
+  // État pour éditer le fabricant d'une référence existante
+  const [editingRefId, setEditingRefId] = useState(null);
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState(null);
+  const [isSavingManufacturer, setIsSavingManufacturer] = useState(false);
+
+  // Ne plus relancer d'appel si aucune ref : afficher l'empty state directement
   useEffect(() => {
-    manufacturerItems.fetchManufacturerItems().then(items => setManufacturers(items || []));
-  }, []);
+    setIsLoadingInitial(false);
+  }, [refs.length]);
+  
+  // Reset form when refs are added successfully
+  useEffect(() => {
+    if (formData.supplier_ref && refs.length > 0) {
+      const lastRef = refs[refs.length - 1];
+      if (lastRef?.supplierRef === (formData.supplier_ref || '').trim()) {
+        setFormData({
+          supplier_id: '',
+          supplier_ref: '',
+          unit_price: '',
+          delivery_time_days: '',
+          is_preferred: false,
+        });
+      }
+    }
+  }, [refs, formData, setFormData]);
   
   const preferredCount = useMemo(
     () => refs.filter((r) => r.isPreferred).length,
     [refs]
   );
 
-  // Filtrer les suggestions de fabricants
-  // Suggestions: priorité aux correspondances par référence, puis par nom
-  const manuRefSuggestions = useMemo(() => {
-    const q = manuRefInput.trim().toLowerCase();
-    if (!q) return [];
-    const byRef = manufacturers.filter(m => (m.manufacturer_ref || "").toLowerCase().includes(q));
-    const byName = manufacturers.filter(
-      m => (m.manufacturer_name || "").toLowerCase().includes(q) && !byRef.some(x => x.id === m.id)
-    );
-    return [...byRef, ...byName].slice(0, 8);
-  }, [manufacturers, manuRefInput]);
-
-  const manuNameSuggestions = useMemo(() => {
-    const q = manuNameInput.trim().toLowerCase();
-    if (!q) return [];
-    // dédupliquer par nom
-    const names = Array.from(
-      new Set(manufacturers.map(m => m.manufacturer_name).filter(Boolean))
-    );
-    return names.filter(n => n.toLowerCase().includes(q)).slice(0, 6);
-  }, [manufacturers, manuNameInput]);
-
   const handleAdd = () => {
-    // Prevent double-clicks by disabling if loading
-    if (loading) {
-      return;
-    }
-
-    // Validation stricte CLIENT avant submission
-    // Utilise à la fois l'état ET la ref du DOM pour éviter les race conditions
-    const stateSupplierRef = (formData.supplier_ref || '').trim();
-    const domSupplierRef = (refFieldRef.current?.value || '').trim();
-    const finalSupplierRef = domSupplierRef || stateSupplierRef;
-    const trimmedSupplierId = (formData.supplier_id || '').trim();
-
-    // Validation
-    if (!trimmedSupplierId) {
-      showError(new Error('Veuillez sélectionner un fournisseur'));
-      return;
-    }
-    if (!finalSupplierRef) {
-      showError(new Error('Veuillez entrer la référence fournisseur'));
-      return;
-    }
-
-    // Synchroniser les champs fabricant basés sur les nouvelles entrées
-    const nextManuName = (manuNameInput || formData.manufacturer_name || "").trim();
-    const nextManuRef = (manuRefInput || formData.manufacturer_ref || "").trim();
-
-    // Mettre à jour formData avec les valeurs du fabricant AVANT d'appeler onAdd
-    const updatedFormData = {
-      ...formData,
-      supplier_ref: finalSupplierRef,
-      supplier_id: trimmedSupplierId,
-      manufacturer_name: nextManuName,
-      manufacturer_ref: nextManuRef,
-    };
-    
-    setFormData(updatedFormData);
-    
-    // Appeler onAdd immédiatement avec les données à jour
     onAdd(stockItem.id);
+  };
+
+  // Fonctions pour éditer le fabricant d'une référence existante
+  const startEditingManufacturer = (ref) => {
+    setEditingRefId(ref.id);
+    const mObj = ref.manufacturer_item_id || ref.manufacturer_item || null;
+    setSelectedManufacturerId(mObj?.id || null);
+  };
+
+  const cancelEditingManufacturer = () => {
+    setEditingRefId(null);
+    setSelectedManufacturerId(null);
+  };
+
+  const handleSelectManufacturer = (ref) => {
+    setSelectedManufacturerId(ref.id);
+  };
+
+  const handleCreateManufacturer = async (manufacturerData) => {
+    if (!editingRefId) return;
+    setIsSavingManufacturer(true);
+    try {
+      let manu_id = null;
+      
+      if (manufacturerData.id) {
+        manu_id = manufacturerData.id;
+      } else if (manufacturerData.manufacturer_name || manufacturerData.manufacturer_ref) {
+        const manu = await manufacturerItems.getOrCreateManufacturerItem({
+          name: manufacturerData.manufacturer_name.trim(),
+          ref: manufacturerData.manufacturer_ref.trim(),
+          designation: manufacturerData.designation?.trim() || "",
+        });
+        manu_id = manu?.id || null;
+      }
+      
+      await onUpdatePreferred(editingRefId, {
+        manufacturer_item_id: manu_id,
+      });
+      
+      cancelEditingManufacturer();
+    } catch (err) {
+      console.error('Erreur mise à jour fabricant:', err);
+      showError(err instanceof Error ? err : new Error('Erreur lors de la mise à jour'));
+    } finally {
+      setIsSavingManufacturer(false);
+    }
   };
 
   return (
     <Box p="4">
       <Flex direction="column" gap="4">
+        {/* En-tête avec compteurs */}
         <Flex align="center" justify="between" wrap="wrap" gap="3">
           <Flex align="center" gap="2">
             <CheckCircle size={16} color="var(--blue-9)" />
@@ -132,18 +183,25 @@ export default function SupplierRefsInlinePanel({
           </Flex>
         </Flex>
 
+        {/* Liste des références existantes */}
         <Card>
           <Flex direction="column" gap="3">
             <Text weight="bold" size="2">
               Références existantes
             </Text>
-            {refs.length === 0 ? (
+            {isLoadingInitial ? (
+              <Flex align="center" gap="2" direction="column" style={{ padding: '12px' }}>
+                <Text size="2" color="gray">Chargement des références...</Text>
+              </Flex>
+            ) : refs.length === 0 ? (
               <Flex align="center" gap="2" color="gray" direction="column" style={{ padding: '12px' }}>
                 <Flex align="center" gap="2">
                   <AlertCircle size={16} color="var(--amber-9)" />
                   <Text size="2" weight="bold" color="gray">Aucune référence fournisseur définie</Text>
                 </Flex>
-                <Text size="1" color="gray">Vous devez ajouter au moins une r&eacute;f&eacute;rence pour pouvoir utiliser cet article dans les demandes d&apos;achat.</Text>
+                <Text size="1" color="gray">
+                  Vous devez ajouter au moins une référence pour pouvoir utiliser cet article dans les demandes d&apos;achat.
+                </Text>
               </Flex>
             ) : (
               <Table.Root>
@@ -158,7 +216,6 @@ export default function SupplierRefsInlinePanel({
                 </Table.Header>
                 <Table.Body>
                   {refs.map((ref) => {
-                    // Normalize supplier_id to primitive
                     const supplierId = typeof ref.supplier === 'object' 
                       ? ref.supplier?.id 
                       : ref.supplier;
@@ -169,13 +226,10 @@ export default function SupplierRefsInlinePanel({
                       (typeof supplierId === 'string' || typeof supplierId === 'number' ? String(supplierId) : null) ||
                       "N/A";
 
-                    // Optional manufacturer info (progressive enhancement):
-                    // Prefer structured manufacturer_item_id.* (relation), fallback to manufacturer_item.* then flat fields
-                    const mObj =
-                      ref.manufacturer_item_id || ref.manufacturer_item || null;
-                    const manufacturerName = mObj?.manufacturer_name || ref.manufacturer_name || null;
-                    const manufacturerRef = mObj?.manufacturer_ref || ref.manufacturer_ref || null;
-                    const manufacturerDesignation = mObj?.designation || ref.manufacturer_designation || null;
+                    const mObj = ref.manufacturer_item_id || ref.manufacturer_item || ref.manufacturerItem || null;
+                    const manufacturerName = mObj?.manufacturer_name || mObj?.manufacturerName || null;
+                    const manufacturerRef = mObj?.manufacturer_ref || mObj?.manufacturerRef || null;
+                    const manufacturerDesignation = mObj?.designation || null;
 
                     return (
                       <Table.Row
@@ -190,14 +244,22 @@ export default function SupplierRefsInlinePanel({
                           </Text>
                         </Table.Cell>
                         <Table.Cell>
-                          <Text size="2" weight={ref.isPreferred ? "bold" : "regular"}>
-                            {ref.supplierRef}
-                          </Text>
-                          <ManufacturerBadge
-                            name={manufacturerName}
-                            reference={manufacturerRef}
-                            designation={manufacturerDesignation}
-                          />
+                          <Flex direction="column" gap="1">
+                            <Text size="2" weight={ref.isPreferred ? "bold" : "regular"}>
+                              {ref.supplierRef}
+                            </Text>
+                            {manufacturerName || manufacturerRef ? (
+                              <ManufacturerBadge
+                                name={manufacturerName}
+                                reference={manufacturerRef}
+                                designation={manufacturerDesignation}
+                              />
+                            ) : (
+                              <Text size="1" color="gray">
+                                Pas de fabricant
+                              </Text>
+                            )}
+                          </Flex>
                         </Table.Cell>
                         <Table.Cell>
                           <Text size="2">{ref.deliveryTimeDays ? `${ref.deliveryTimeDays}j` : "-"}</Text>
@@ -230,6 +292,15 @@ export default function SupplierRefsInlinePanel({
                             </Button>
                             <Button
                               size="1"
+                              color="blue"
+                              variant="soft"
+                              title="Ajouter/modifier les informations fabricant"
+                              onClick={() => startEditingManufacturer(ref)}
+                            >
+                              Fabricant
+                            </Button>
+                            <Button
+                              size="1"
                               color="red"
                               variant="soft"
                               onClick={() => onDelete(ref.id)}
@@ -247,268 +318,45 @@ export default function SupplierRefsInlinePanel({
           </Flex>
         </Card>
 
-        <Card style={{ background: "white", position: "relative", overflow: "visible" }}>
-          <Flex direction="column" gap="3">
-            <Text weight="bold" size="2">
-              Ajouter une référence
-            </Text>
-            <Flex gap="2" wrap="wrap" align="end">
-              <Box style={{ flex: "1", minWidth: "200px" }}>
-                <Text size="2" as="label" weight="bold">
-                  Fournisseur *
+        {/* Formulaire d'édition du fabricant pour une référence existante */}
+        {editingRefId && (
+          <Card style={{ background: "var(--blue-1)", borderLeft: "4px solid var(--blue-9)" }}>
+            <Flex direction="column" gap="3">
+              <Flex align="center" justify="between">
+                <Text weight="bold" size="2">
+                  Ajouter/Modifier les informations fabricant
                 </Text>
-                <Select.Root
-                  value={String(formData.supplier_id || '')}
-                  onValueChange={(value) => {
-                    setFormData({
-                      ...formData,
-                      supplier_id: value,
-                    });
-                  }}
-                >
-                  <Select.Trigger placeholder="Choisir..." />
-                  <Select.Content>
-                    {suppliers.map((supplier) => (
-                      <Select.Item key={supplier.id} value={String(supplier.id)}>
-                        {supplier.name}
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Root>
-              </Box>
-
-              <Box style={{ flex: "1", minWidth: "150px" }}>
-                <Text size="2" as="label" weight="bold">
-                  Référence fournisseur *
-                </Text>
-                <TextField.Root
-                  ref={refFieldRef}
-                  value={formData.supplier_ref || ''}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      supplier_ref: e.target.value,
-                    });
-                  }}
-                  placeholder="Ex: 51775.040.020"
-                  required
-                />
-              </Box>
-
-              <Box style={{ flex: "0.7", minWidth: "100px" }}>
-                <Text size="2" as="label" weight="bold">
-                  Prix unitaire
-                </Text>
-                <TextField.Root
-                  type="number"
-                  step="0.01"
-                  value={formData.unit_price || ''}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      unit_price: e.target.value,
-                    });
-                  }}
-                  placeholder="0.00"
-                />
-              </Box>
-
-              <Box style={{ flex: "0.6", minWidth: "80px" }}>
-                <Text size="2" as="label" weight="bold">
-                  Délai (j)
-                </Text>
-                <TextField.Root
-                  type="number"
-                  value={formData.delivery_time_days || ''}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      delivery_time_days: e.target.value,
-                    });
-                  }}
-                />
-              </Box>
-
-              <Flex align="center" gap="2">
-                <Checkbox
-                  checked={formData.is_preferred}
-                  onCheckedChange={(checked) => {
-                    setFormData({
-                      ...formData,
-                      is_preferred: checked,
-                    });
-                  }}
-                />
-                <Text size="2">Préféré</Text>
               </Flex>
-
-              {/* Collapsible Optional Fields */}
-              <Box style={{ flexBasis: "100%" }}>
+              <ManufacturerFormFields
+                selectedRefId={selectedManufacturerId}
+                onSelectRef={handleSelectManufacturer}
+                onCreateRef={handleCreateManufacturer}
+                availableRefs={allManufacturers}
+                loading={isSavingManufacturer}
+              />
+              <Flex gap="1" mt="3">
                 <Button
-                  size="1"
-                  variant="ghost"
+                  size="2"
+                  variant="soft"
                   color="gray"
-                  onClick={() => setShowOptionalFields(!showOptionalFields)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: 0 }}
+                  onClick={cancelEditingManufacturer}
                 >
-                  <ChevronDown size={14} style={{ transform: showOptionalFields ? 'rotate(180deg)' : 'rotate(0)' }} />
-                  <Text size="1">Champs optionnels (Fabricant)</Text>
+                  Annuler
                 </Button>
-              </Box>
-
-              {showOptionalFields && (
-                <>
-                  <Box style={{
-                    flex: "1",
-                    minWidth: "220px",
-                    position: "relative",
-                    paddingBottom: (manuNameInput && showManuNameSuggestions && manuNameSuggestions.length === 0) ? "24px" : undefined
-                  }}>
-                    <Text size="2" as="label" weight="bold">
-                      Fabricant (optionnel)
-                    </Text>
-                    <TextField.Root
-                      value={manuNameInput}
-                      onChange={(e) => {
-                        setManuNameInput(e.target.value);
-                        setShowManuNameSuggestions(true);
-                      }}
-                      onFocus={() => setShowManuNameSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowManuNameSuggestions(false), 200)}
-                      placeholder="Ex: Schneider Electric"
-                    />
-                    {showManuNameSuggestions && manuNameSuggestions.length > 0 && (
-                      <Card style={{
-                        position: "absolute",
-                        bottom: "100%",
-                        left: 0,
-                        right: 0,
-                        zIndex: 10000,
-                        maxHeight: "200px",
-                        overflowY: "auto",
-                        marginBottom: "4px",
-                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-                      }}>
-                        {manuNameSuggestions.map((name, idx) => (
-                          <Box
-                            key={`${name}-${idx}`}
-                            p="2"
-                            style={{ cursor: "pointer", borderBottom: idx < manuNameSuggestions.length - 1 ? "1px solid var(--gray-4)" : "none" }}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setManuNameInput(name);
-                              setFormData({ ...formData, manufacturer_name: name });
-                              setShowManuNameSuggestions(false);
-                            }}
-                          >
-                            <Text size="2">{name}</Text>
-                          </Box>
-                        ))}
-                      </Card>
-                    )}
-                    {manuNameInput && manuNameSuggestions.length === 0 && showManuNameSuggestions && (
-                      <Text size="1" color="green" style={{ display: "block", marginTop: "4px" }}>
-                        ✓ Nouveau fabricant &quot;{manuNameInput}&quot; sera créé
-                      </Text>
-                    )}
-                  </Box>
-
-                  <Box style={{
-                    flex: "1",
-                    minWidth: "220px",
-                    position: "relative",
-                    paddingBottom: (manuRefInput && showManuRefSuggestions && manuRefSuggestions.length === 0) ? "28px" : undefined
-                  }}>
-                    <Text size="2" as="label" weight="bold">
-                      Réf constructeur (optionnel)
-                    </Text>
-                    <TextField.Root
-                      value={manuRefInput}
-                      onChange={(e) => {
-                        setManuRefInput(e.target.value);
-                        setShowManuRefSuggestions(true);
-                      }}
-                      onFocus={() => setShowManuRefSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowManuRefSuggestions(false), 200)}
-                      placeholder="Ex: RXM2AB2BD"
-                    />
-                    {showManuRefSuggestions && manuRefSuggestions.length > 0 && (
-                      <Card style={{
-                        position: "absolute",
-                        bottom: "100%",
-                        left: 0,
-                        right: 0,
-                        zIndex: 10000,
-                        maxHeight: "220px",
-                        overflowY: "auto",
-                        marginBottom: "4px",
-                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-                      }}>
-                        {manuRefSuggestions.map((mfr, idx) => (
-                          <Box
-                            key={mfr.id || idx}
-                            p="2"
-                            style={{ cursor: "pointer", borderBottom: idx < manuRefSuggestions.length - 1 ? "1px solid var(--gray-4)" : "none" }}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setManuRefInput(mfr.manufacturer_ref || "");
-                              setManuNameInput(mfr.manufacturer_name || "");
-                              setFormData({
-                                ...formData,
-                                manufacturer_ref: mfr.manufacturer_ref || "",
-                                manufacturer_name: mfr.manufacturer_name || "",
-                                manufacturer_designation: mfr.designation || formData.manufacturer_designation || "",
-                              });
-                              setShowManuRefSuggestions(false);
-                            }}
-                          >
-                            <Text size="2" weight="bold">{mfr.manufacturer_ref || "(sans réf)"}</Text>
-                            {mfr.manufacturer_name && (
-                              <Text size="1" color="gray"> — {mfr.manufacturer_name}</Text>
-                            )}
-                            {mfr.designation && (
-                              <Text size="1" color="gray"> • {mfr.designation}</Text>
-                            )}
-                          </Box>
-                        ))}
-                      </Card>
-                    )}
-                    {manuRefInput && manuRefSuggestions.length === 0 && showManuRefSuggestions && (
-                      <Text size="1" color="green" style={{ display: "block", marginTop: "4px" }}>
-                        ✓ Nouveau mod&egrave;le constructeur &quot;{manuRefInput}&quot; &mdash; pr&eacute;cisez le fabricant ci-dessus
-                      </Text>
-                    )}
-                  </Box>
-
-                  <Box style={{ flex: "1", minWidth: "240px" }}>
-                    <Text size="2" as="label" weight="bold">
-                      Désignation (optionnel)
-                    </Text>
-                    <TextField.Root
-                      value={formData.manufacturer_designation || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          manufacturer_designation: e.target.value,
-                        })
-                      }
-                      placeholder="Désignation constructeur (si utile)"
-                    />
-                  </Box>
-                </>
-              )}
-
-              <Button
-                size="2"
-                color="blue"
-                onClick={handleAdd}
-                disabled={loading}
-              >
-                Ajouter
-              </Button>
+              </Flex>
             </Flex>
-          </Flex>
-        </Card>
+          </Card>
+        )}
+
+        {/* Formulaire d'ajout de référence */}
+        <SupplierReferenceForm
+          suppliers={suppliers}
+          formData={formData}
+          setFormData={setFormData}
+          onAdd={handleAdd}
+          stockItemId={stockItem.id}
+          loading={loading}
+        />
       </Flex>
     </Box>
   );
@@ -529,12 +377,24 @@ SupplierRefsInlinePanel.propTypes = {
   refs: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      supplier_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.object]),
+      supplier: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          name: PropTypes.string,
+        }),
+      ]),
+      supplierRef: PropTypes.string,
       supplier_ref: PropTypes.string,
       unit_price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       delivery_time_days: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      deliveryTimeDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       is_preferred: PropTypes.bool,
+      isPreferred: PropTypes.bool,
       manufacturer_item_id: PropTypes.object,
+      manufacturer_item: PropTypes.object,
+      manufacturerItem: PropTypes.object,
       manufacturer_name: PropTypes.string,
       manufacturer_ref: PropTypes.string,
       manufacturer_designation: PropTypes.string,
@@ -546,13 +406,18 @@ SupplierRefsInlinePanel.propTypes = {
     unit_price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     delivery_time_days: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     is_preferred: PropTypes.bool,
-    manufacturer_name: PropTypes.string,
-    manufacturer_ref: PropTypes.string,
-    manufacturer_designation: PropTypes.string,
   }),
   setFormData: PropTypes.func.isRequired,
   onAdd: PropTypes.func.isRequired,
   onUpdatePreferred: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  allManufacturers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      manufacturer_name: PropTypes.string,
+      manufacturer_ref: PropTypes.string,
+      designation: PropTypes.string,
+    })
+  ),
 };
