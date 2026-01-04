@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { auth } from "@/lib/api/facade";
+import { loadAnomalyConfig } from "@/config/anomalyConfig";
 
 export const AuthContext = createContext(null);
 
@@ -13,6 +14,8 @@ export function AuthProvider({ children }) {
         try {
           const userData = await auth.getCurrentUser();
           setUser(userData);
+          // Load anomaly config after successful authentication
+          loadAnomalyConfig().catch(console.error);
         } catch (error) {
           console.error("Erreur lors du chargement de l'utilisateur:", error);
           // Clear generic tokens; client will handle redirects on 401
@@ -31,6 +34,8 @@ export function AuthProvider({ children }) {
       await auth.login(email, password);
       const userData = await auth.getCurrentUser();
       setUser(userData);
+      // Load anomaly config after successful login
+      loadAnomalyConfig().catch(console.error);
       return userData;
     } catch (error) {
       console.error("Erreur de connexion:", error);
