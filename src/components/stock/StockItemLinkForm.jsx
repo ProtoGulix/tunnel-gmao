@@ -12,7 +12,7 @@ import {
 } from "@radix-ui/themes";
 import { Search, Plus, CheckCircle, Link as LinkIcon, FileText } from "lucide-react";
 import { stock } from "@/lib/api/facade";
-import { useStockFamilies, useStockSubFamilies } from "@/hooks/useStockFamilies";
+import { useStockSubFamilies } from "@/hooks/useStockFamilies";
 import StockItemSearchDropdown from "./StockItemSearchDropdown";
 import { generateStockReference } from "@/lib/utils/stockReferenceGenerator";
 
@@ -22,6 +22,7 @@ export default function StockItemLinkForm({
   onLinkExisting,
   onCreateNew,
   loading,
+  stockFamilies = [],
 }) {
   const [formTab, setFormTab] = useState("search");
   const [formSearchTerm, setFormSearchTerm] = useState(initialItemLabel || "");
@@ -37,8 +38,7 @@ export default function StockItemLinkForm({
   const [newItemUnit, setNewItemUnit] = useState("pcs");
   const [newItemLocation, setNewItemLocation] = useState("");
 
-  // Load families and sub-families
-  const { families } = useStockFamilies();
+  // Load sub-families
   const { subFamilies } = useStockSubFamilies(newItemFamilyCode);
 
   // Mémoïser loadSpecs pour éviter re-renders inutiles
@@ -209,7 +209,7 @@ export default function StockItemLinkForm({
                 >
                   <Select.Trigger placeholder="Sélectionner..." />
                   <Select.Content>
-                    {families.map((family) => (
+                    {stockFamilies.map((family) => (
                       <Select.Item key={family.code} value={family.code}>
                         {family.label}
                       </Select.Item>
@@ -316,4 +316,5 @@ StockItemLinkForm.propTypes = {
   onLinkExisting: PropTypes.func.isRequired,
   onCreateNew: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  stockFamilies: PropTypes.array,
 };

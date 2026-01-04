@@ -65,7 +65,7 @@ export const fetchStockItemsFromBackend = async () => {
       limit: -1,
       fields: [
         'id','name','family_code','sub_family_code','spec','dimension','ref','quantity','unit','location',
-        'manufacturer_item_id.id','manufacturer_item_id.manufacturer_name','manufacturer_item_id.manufacturer_ref','manufacturer_item_id.designation',
+        'supplier_refs_count',
       ].join(','),
       sort: '-ref',
       _t: Date.now(),

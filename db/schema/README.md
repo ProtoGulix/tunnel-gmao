@@ -65,6 +65,7 @@ db/schema/
 - ✅ Historisation changements statut automatique
 - ✅ Calculs totaux lignes commandes
 - ✅ Timestamps updated_at automatiques
+- ✅ Compte de références fournisseurs par article (optimisé)
 
 ## 🚀 Déploiement
 
@@ -113,6 +114,7 @@ psql -d gmao -f 05_triggers/trg_sync_status.sql
 psql -d gmao -f 05_triggers/trg_stock_ref.sql
 psql -d gmao -f 05_triggers/trg_supplier_order.sql
 psql -d gmao -f 05_triggers/trg_calculate_totals.sql
+psql -d gmao -f 05_triggers/trg_update_supplier_refs_count.sql
 
 # 6. Foreign keys (en dernier)
 psql -d gmao -f 05_triggers/99_foreign_keys.sql

@@ -37,6 +37,7 @@ export const mapStockItemToDomain = (item: Record<string, unknown>) => {
     quantity: item.quantity ?? undefined,
     unit: item.unit ?? undefined,
     location: item.location ?? undefined,
+    supplierRefsCount: item.supplier_refs_count ?? 0,
     manufacturerItem:
       typeof item.manufacturer_item_id === 'object' && item.manufacturer_item_id !== null
         ? (() => {

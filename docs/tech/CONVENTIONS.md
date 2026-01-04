@@ -745,6 +745,261 @@ export default function InterventionForm({ initialData }) {
 }
 ```
 
+### 7.2 Pattern: Formulaires dans Panneaux Dropdowns/Expandables
+
+Pour les formulaires au sein de panneaux expandables (édition, ajout dans listes, etc.), utiliser ce pattern standardisé:
+
+#### 7.2.1 Structure & Composants
+
+```jsx
+{
+  /* Condition d'affichage du panel */
+}
+{
+  isEditingMode && (
+    <Card
+      style={{
+        background: 'var(--[color]-1)',
+        borderLeft: '4px solid var(--[color]-9)',
+      }}
+    >
+      <Flex direction="column" gap="3">
+        {/* 1. En-tête avec contexte */}
+        <Flex align="center" justify="between">
+          <Text weight="bold" size="2">
+            Action / Titre du formulaire
+          </Text>
+        </Flex>
+
+        {/* 2. Champs du formulaire avec suggestions */}
+        <Flex gap="2" wrap="wrap" align="end">
+          {/* Champ simple */}
+          <Box style={{ flex: '1', minWidth: '200px' }}>
+            <Text size="2" as="label" weight="bold">
+              Label (optionnel)
+            </Text>
+            <TextField.Root
+              value={fieldValue}
+              onChange={(e) => setFieldValue(e.target.value)}
+              placeholder="Placeholder..."
+            />
+          </Box>
+
+          {/* Champ avec suggestions dropdown */}
+          <Box
+            style={{
+              flex: '1',
+              minWidth: '220px',
+              position: 'relative',
+            }}
+          >
+            <Text size="2" as="label" weight="bold">
+              Label
+            </Text>
+            <TextField.Root
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Tapez pour rechercher..."
+            />
+
+            {/* Suggestions - positionnées en absolu */}
+            {showSuggestions && suggestions.length > 0 && (
+              <Card
+                style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 10000,
+                  maxHeight: '220px',
+                  overflowY: 'auto',
+                  marginBottom: '4px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                }}
+              >
+                {suggestions.map((item, idx) => (
+                  <Box
+                    key={item.id || idx}
+                    p="2"
+                    style={{
+                      cursor: 'pointer',
+                      borderBottom:
+                        idx < suggestions.length - 1 ? '1px solid var(--gray-4)' : 'none',
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Empêche le blur
+                      handleSelectSuggestion(item);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    <Text size="2" weight="bold">
+                      {item.primaryField}
+                    </Text>
+                    {item.secondaryField && (
+                      <Text size="1" color="gray">
+                        {' '}
+                        — {item.secondaryField}
+                      </Text>
+                    )}
+                    {item.tertiaryField && (
+                      <Text size="1" color="gray">
+                        {' '}
+                        • {item.tertiaryField}
+                      </Text>
+                    )}
+                  </Box>
+                ))}
+              </Card>
+            )}
+
+            {/* Message feedback pour nouvelle valeur */}
+            {inputValue && suggestions.length === 0 && showSuggestions && (
+              <Text size="1" color="green" style={{ display: 'block', marginTop: '4px' }}>
+                ✓ Nouvelle entrée « {inputValue} » sera créée
+              </Text>
+            )}
+          </Box>
+        </Flex>
+
+        {/* 3. Boutons d'action */}
+        <Flex gap="1">
+          <Button size="2" color="green" onClick={handleSave} disabled={loading}>
+            Enregistrer
+          </Button>
+          <Button size="2" variant="soft" color="gray" onClick={handleCancel}>
+            Annuler
+          </Button>
+        </Flex>
+      </Flex>
+    </Card>
+  );
+}
+```
+
+#### 7.2.2 État Management
+
+```javascript
+export default function MyPanel() {
+  // ----- Edit Mode -----
+  const [isEditingMode, setIsEditingMode] = useState(false);
+
+  // ----- Form Fields -----
+  const [editField1, setEditField1] = useState('');
+  const [editField2, setEditField2] = useState('');
+
+  // ----- Suggestions State -----
+  const [showSuggestions1, setShowSuggestions1] = useState(false);
+  const [showSuggestions2, setShowSuggestions2] = useState(false);
+
+  // ----- Computed -----
+  const suggestions1 = useMemo(() => {
+    const q = editField1.trim().toLowerCase();
+    if (!q) return [];
+    return data
+      .filter(item => item.field1.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [editField1, data]);
+
+  const suggestions2 = useMemo(() => {
+    const q = editField2.trim().toLowerCase();
+    if (!q) return [];
+    return data
+      .filter(item => item.field2.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [editField2, data]);
+
+  // ----- Handlers -----
+  const startEditing = (existingData) => {
+    setEditField1(existingData.field1 || '');
+    setEditField2(existingData.field2 || '');
+    setIsEditingMode(true);
+  };
+
+  const cancelEditing = () => {
+    setEditField1('');
+    setEditField2('');
+    setShowSuggestions1(false);
+    setShowSuggestions2(false);
+    setIsEditingMode(false);
+  };
+
+  const saveEditing = async () => {
+    await onUpdate({
+      field1: editField1,
+      field2: editField2,
+    });
+    cancelEditing();
+  };
+
+  return (
+    {/* Bouton pour ouvrir le panel */}
+    <Button onClick={() => startEditing(currentData)}>Éditer</Button>
+
+    {/* Panel */}
+    {/* ... code du panel ... */}
+  );
+}
+```
+
+#### 7.2.3 Règles d'UX/UI
+
+1. **Couleur du Panel:**
+
+   - Utiliser `background: "var(--[color]-1)"` pour fond léger
+   - Utiliser `borderLeft: "4px solid var(--color]-9)"` pour accent
+   - Couleurs: `blue` (défaut), `green` (succès), `amber` (warning), `red` (erreur)
+
+2. **Positionnement des Suggestions:**
+
+   - `position: "absolute"` + `bottom: "100%"` pour suggestions au-dessus du champ
+   - `zIndex: 10000` pour surpasser autres éléments
+   - `maxHeight: "220px"` + `overflowY: "auto"` pour listes longues
+   - `boxShadow: "0 4px 6px rgba(0,0,0,0.1)"` pour profondeur
+
+3. **Interaction Suggestions:**
+
+   - `onMouseDown` au lieu de `onClick` (empêche le blur de TextField)
+   - `e.preventDefault()` pour garder le focus dans le champ
+   - `setTimeout(..., 200)` au `onBlur` pour délai de fermeture
+
+4. **Feedback Utilisateur:**
+
+   - Message ✓ vert si nouvelle valeur (n'existe pas en suggestions)
+   - Message gris si suggestions vides mais champ non vide (ambiguïté)
+   - Désactiver Enregistrer si données invalides
+
+5. **Responsive:**
+   - `flex: "1"` + `minWidth: "200px"` pour champs flexibles
+   - `gap="2" wrap="wrap"` pour reflow mobile
+   - `align="end"` pour aligner boutons sur ligne des champs
+
+#### 7.2.4 Checklist Implémentation
+
+- [ ] Couleur de Card cohérente avec action (blue = edit, green = success)
+- [ ] En-tête descriptif (`Ajouter/Modifier...`)
+- [ ] Tous les champs ont labels explicites
+- [ ] Au moins 1 champ a suggestions autocomplete
+- [ ] `onMouseDown` sur suggestions (pas `onClick`)
+- [ ] `e.preventDefault()` dans `onMouseDown`
+- [ ] Délai `setTimeout` sur `onBlur` pour suggestions
+- [ ] Message ✓ vert pour nouvelles valeurs
+- [ ] Boutons Enregistrer (vert) et Annuler (gris)
+- [ ] Logs de débogage supprimés
+- [ ] Aucun warning dans console
+
+#### 7.2.5 Exemple Réel
+
+Voir implémentation: [src/components/stock/SupplierRefsInlinePanel.jsx](../../src/components/stock/SupplierRefsInlinePanel.jsx)
+
+- Formulaire édition fabricant (lignes ~370-510)
+- Formulaire création référence fournisseur (lignes ~515-775)
+- Patterns appliqués: suggestions, feedback, responsive, colors
+
 ---
 
 ## 8. Gestion des Onglets

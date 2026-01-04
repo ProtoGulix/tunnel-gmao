@@ -40,6 +40,8 @@ export default function StockItemsTable({
   onDelete,
   loading,
   showStockCol = true,
+  allManufacturers = [],
+  stockFamilies = [],
 }) {
   // État pour le tri des colonnes
   const [sortConfig, setSortConfig] = useState({ column: null, direction: 'asc' });
@@ -88,6 +90,8 @@ export default function StockItemsTable({
           onUpdatePreferred,
           onDelete,
           compactRows,
+          allManufacturers,
+          stockFamilies,
         })}
       </Flex>
     </Card>
@@ -146,6 +150,8 @@ function renderStockTable({
   onUpdatePreferred,
   onDelete,
   compactRows,
+  allManufacturers,
+  stockFamilies,
 }) {
   return (
     <Table.Root size={compactRows ? "1" : "2"}>
@@ -182,6 +188,8 @@ function renderStockTable({
             onAdd={onAdd}
             onUpdatePreferred={(refId, updates) => onUpdatePreferred(refId, updates, item.id)}
             onDelete={(refId) => onDelete(refId, item.id)}
+            allManufacturers={allManufacturers}
+            stockFamilies={stockFamilies}
           />
         ))}
       </Table.Body>
@@ -205,4 +213,6 @@ StockItemsTable.propTypes = {
   onDelete: PropTypes.func,
   loading: PropTypes.bool,
   showStockCol: PropTypes.bool,
+  allManufacturers: PropTypes.array,
+  stockFamilies: PropTypes.array,
 };

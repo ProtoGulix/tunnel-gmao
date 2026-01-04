@@ -24,7 +24,8 @@ export const fetchStockItemSuppliers = async (stockItemId: string) => {
         _t: Date.now(),
       },
     });
-    return data?.data || [];
+    const result = data?.data || [];
+    return result;
   }, 'FetchStockItemSuppliers');
 };
 

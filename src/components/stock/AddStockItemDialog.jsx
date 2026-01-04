@@ -10,10 +10,10 @@ import {
   Select,
 } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
-import { useStockFamilies, useStockSubFamilies } from "@/hooks/useStockFamilies";
+import { useStockSubFamilies } from "@/hooks/useStockFamilies";
 import { generateStockReference } from "@/lib/utils/stockReferenceGenerator";
 
-export default function AddStockItemDialog({ onAdd, loading }) {
+export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] }) {
   const [open, setOpen] = useState(false);
   
   const [name, setName] = useState("");
@@ -25,7 +25,6 @@ export default function AddStockItemDialog({ onAdd, loading }) {
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("0");
 
-  const { families } = useStockFamilies();
   const { subFamilies } = useStockSubFamilies(familyCode);
 
   const resetForm = () => {
@@ -110,7 +109,7 @@ export default function AddStockItemDialog({ onAdd, loading }) {
               >
                 <Select.Trigger placeholder="Sélectionner..." />
                 <Select.Content>
-                  {families.map((family) => (
+                  {stockFamilies.map((family) => (
                     <Select.Item key={family.code} value={family.code}>
                       {family.label}
                     </Select.Item>
@@ -242,4 +241,5 @@ export default function AddStockItemDialog({ onAdd, loading }) {
 AddStockItemDialog.propTypes = {
   onAdd: PropTypes.func.isRequired,
   loading: PropTypes.bool,
+  stockFamilies: PropTypes.array,
 };

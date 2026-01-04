@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.stock_item_supplier (
     -- Relations
     stock_item_id UUID, -- FK vers stock_item
     supplier_id UUID, -- FK vers supplier
+    manufacturer_item_id UUID, -- FK vers manufacturer_item (référence fabricant)
     
     -- Référence fournisseur
     supplier_ref VARCHAR(255), -- Référence catalogue fournisseur

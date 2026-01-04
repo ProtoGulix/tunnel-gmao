@@ -27,9 +27,12 @@ export function mapManufacturerItemToDomain(item: any): any {
 
   return {
     id: item.id,
+    manufacturer_name: item.manufacturer_name || undefined,
+    manufacturer_ref: item.manufacturer_ref || undefined,
+    designation: item.designation || undefined,
+    // Backward compat
     manufacturerName: item.manufacturer_name || undefined,
     manufacturerRef: item.manufacturer_ref || undefined,
-    designation: item.designation || undefined,
   };
 }
 

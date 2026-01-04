@@ -6,7 +6,6 @@ import EditStockItemDialog from "./EditStockItemDialog";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import StandardSpecsPanel from "./StandardSpecsPanel";
 import SupplierRefsInlinePanel from "./SupplierRefsInlinePanel";
-import ManufacturerBadge from "@/components/common/ManufacturerBadge";
 import { hasPreferredRef } from "./stockItemsTableHelpers";
 import { SupplierRefsBadge, SpecsBadgeSection, StockQuantitySection } from "./StockItemRowSubcomponents";
 
@@ -20,7 +19,7 @@ import { SupplierRefsBadge, SpecsBadgeSection, StockQuantitySection } from "./St
  * @param {boolean} showStockCol - Whether to show stock quantity column
  * @param {Object} specsCounts - Pre-calculated specs count per item
  * @param {Object} specsHasDefault - Pre-calculated default specs flag per item
- * @param {Object} supplierRefsCounts - Pre-calculated supplier refs count per item
+ * @param {Object} supplierRefsCounts - Pre-calculated supplier refs count per item (legacy fallback)
  * @param {Array} itemRefs - Supplier references for this item
  * @param {Function} onEditStockItem - Callback when item is edited
  * @param {boolean} loading - Loading state
@@ -49,11 +48,15 @@ function StockItemRow({
   onAdd,
   onUpdatePreferred,
   onDelete,
+  allManufacturers = [],
+  stockFamilies = [],
 }) {
   const [expandedSpecsItemId, setExpandedSpecsItemId] = useState(null);
   const [expandedStockItemId, setExpandedStockItemId] = useState(null);
 
-  const refCount = supplierRefsCounts[item.id] || 0;
+  // Préférence au champ denormalisé en base, fallback sur l'ancien calcul si présent
+  const refCount = item.supplierRefsCount ?? supplierRefsCounts[item.id] ?? 0;
+  
   const specsCount = specsCounts[item.id] || 0;
   const hasDefault = specsHasDefault[item.id] || false;
 
@@ -85,6 +88,8 @@ function StockItemRow({
         loading,
         toggleSpecs,
         toggleRefs,
+        stockFamilies,
+        allManufacturers,
       })}
       
       {renderExpandedSections({
@@ -99,6 +104,7 @@ function StockItemRow({
         onAdd,
         onUpdatePreferred,
         onDelete,
+        allManufacturers,
       })}
     </Fragment>
   );
@@ -120,6 +126,8 @@ function renderItemRowCells({
   loading,
   toggleSpecs,
   toggleRefs,
+  stockFamilies,
+  allManufacturers,
 }) {
   return (
     <Table.Row>
@@ -128,11 +136,6 @@ function renderItemRowCells({
       </Table.Cell>
       <Table.Cell>
         <Text size="2">{item.name}</Text>
-        <ManufacturerBadge
-          name={item?.manufacturer_item_id?.manufacturer_name}
-          reference={item?.manufacturer_item_id?.manufacturer_ref}
-          designation={item?.manufacturer_item_id?.designation}
-        />
       </Table.Cell>
       <Table.Cell>
         <Badge variant="soft">{item.family_code}</Badge>
@@ -161,7 +164,7 @@ function renderItemRowCells({
       </Table.Cell>
       <Table.Cell>
         <Flex gap="1">
-          <EditStockItemDialog item={item} onSave={onEditStockItem} loading={loading} />
+          <EditStockItemDialog item={item} onSave={onEditStockItem} loading={loading} stockFamilies={stockFamilies} allManufacturers={allManufacturers} />
           <ToggleDetailsButton
             isExpanded={refsExpanded}
             onToggle={toggleRefs}
@@ -188,6 +191,7 @@ function renderExpandedSections({
   onAdd,
   onUpdatePreferred,
   onDelete,
+  allManufacturers,
 }) {
   return (
     <>
@@ -207,6 +211,7 @@ function renderExpandedSections({
             onAdd={onAdd}
             onUpdatePreferred={onUpdatePreferred}
             onDelete={onDelete}
+            allManufacturers={allManufacturers}
           />
         </ExpandableDetailsRow>
       )}
@@ -231,6 +236,8 @@ StockItemRow.propTypes = {
   onAdd: PropTypes.func,
   onUpdatePreferred: PropTypes.func,
   onDelete: PropTypes.func,
+  allManufacturers: PropTypes.array,
+  stockFamilies: PropTypes.array,
 };
 
 export default StockItemRow;

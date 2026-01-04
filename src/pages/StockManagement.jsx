@@ -80,6 +80,18 @@ export default function StockManagement() {
   
   const [compactRows, setCompactRows] = useState(false);
 
+  // Load manufacturers once at parent level
+  const [allManufacturers, setAllManufacturers] = useState([]);
+  useEffect(() => {
+    manufacturerItems.fetchManufacturerItems().then(items => setAllManufacturers(items || []));
+  }, []);
+
+  // Load stock families once at parent level
+  const [stockFamilies, setStockFamilies] = useState([]);
+  useEffect(() => {
+    stockAPI.fetchStockFamilies().then(families => setStockFamilies(families || []));
+  }, []);
+
   // ========== 3. CUSTOM HOOKS VARIABLES ==========
   // availableStatuses not used; removed to satisfy ESLint
   const requestStats = useRequestStats(purchases.requests);
@@ -149,14 +161,16 @@ export default function StockManagement() {
     [stock.stockItems]
   );
 
-  // Pre-calculate supplier ref counts from supplierRefsByItem to avoid dynamic counting
+  // Supplier ref counts are now provided by the database (supplier_refs_count field)
+  // No need to calculate them in the frontend anymore
   const supplierRefsCounts = useMemo(() => {
     const counts = {};
-    Object.entries(stock.supplierRefsByItem || {}).forEach(([itemId, refs]) => {
-      counts[itemId] = (refs || []).length;
+    stock.stockItems.forEach(item => {
+      // Use the database-calculated count if available, otherwise fallback to 0
+      counts[item.id] = item.supplierRefsCount ?? 0;
     });
     return counts;
-  }, [stock.supplierRefsByItem]);
+  }, [stock.stockItems]);
   
   const filteredStockItems = useMemo(() => {
     return stock.stockItems.filter(item => {
@@ -622,30 +636,13 @@ export default function StockManagement() {
 
   const handleUpdateStockItem = async (itemId, itemData) => {
     try {
-      // 1. Gérer le manufacturer_item_id si des champs fabricant sont remplis
-      let manufacturer_item_id = null;
-      if (itemData.manufacturer_name?.trim() || itemData.manufacturer_ref?.trim()) {
-        const manu = await manufacturerItems.getOrCreateManufacturerItem({
-          name: itemData.manufacturer_name?.trim() || "",
-          ref: itemData.manufacturer_ref?.trim() || "",
-          designation: itemData.manufacturer_designation?.trim() || ""
-        });
-        manufacturer_item_id = manu?.id || null;
-      }
-
-      // 2. Préparer les données pour l'API (retirer les champs temporaires)
+      // Préparer les données pour l'API (retirer les champs temporaires fabricant)
       const apiData = { ...itemData };
       delete apiData.manufacturer_name;
       delete apiData.manufacturer_ref;
       delete apiData.manufacturer_designation;
-      
-      // 3. Ajouter manufacturer_item_id si disponible
-      const payload = {
-        ...apiData,
-        ...(manufacturer_item_id ? { manufacturer_item_id } : {})
-      };
 
-      const updatedItem = await stock.updateItem(itemId, payload);
+      const updatedItem = await stock.updateItem(itemId, apiData);
       await refreshStock();
       
       setDispatchResult({
@@ -1083,6 +1080,7 @@ export default function StockManagement() {
                           onLinkExisting={handleLinkExisting}
                           onCreateNew={handleCreateNew}
                           loading={formLoading}
+                          stockFamilies={stockFamilies}
                         />
                       )}
                     />
@@ -1117,6 +1115,7 @@ export default function StockManagement() {
                                 onLinkExisting={handleLinkExisting}
                                 onCreateNew={handleCreateNew}
                                 loading={formLoading}
+                                stockFamilies={stockFamilies}
                               />
                             )}
                           />
@@ -1223,7 +1222,7 @@ export default function StockManagement() {
                   onSearchChange={setStockSearchTerm}
                   searchPlaceholder="Recherche (nom, ref, famille...)"
                   showRefreshButton={false}
-                  actions={<AddStockItemDialog onAdd={handleAddStockItem} loading={isLoading} />}
+                  actions={<AddStockItemDialog onAdd={handleAddStockItem} loading={isLoading} stockFamilies={stockFamilies} />}
                 />
                 {filteredStockItems.length === 0 ? (
                   <EmptyState
@@ -1263,6 +1262,8 @@ export default function StockManagement() {
                     onDelete={handleDeleteSupplierRef}
                     loading={isLoading}
                     showStockCol={true}
+                    allManufacturers={allManufacturers}
+                    stockFamilies={stockFamilies}
                   />
                 )}
               </Flex>

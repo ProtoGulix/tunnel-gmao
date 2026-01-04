@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useError } from '@/contexts/ErrorContext';
 import {
   Dialog,
@@ -11,13 +12,12 @@ import {
   Card,
 } from "@radix-ui/themes";
 import { Edit2, Save } from "lucide-react";
-import { useStockFamilies, useStockSubFamilies } from "@/hooks/useStockFamilies";
-import { manufacturerItems } from "@/lib/api/facade";
+import { useStockSubFamilies } from "@/hooks/useStockFamilies";
 
 /**
  * Dialogue pour modifier un article de stock
  */
-export default function EditStockItemDialog({ item, onSave, loading }) {
+export default function EditStockItemDialog({ item, onSave, loading, stockFamilies = [], allManufacturers = [] }) {
   const { showError } = useError();
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,17 +35,10 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
     manufacturer_designation: "",
   });
 
-  const [manufacturers, setManufacturers] = useState([]);
   const [manuRefSuggestions, setManuRefSuggestions] = useState([]);
   const [showManuRefSuggestions, setShowManuRefSuggestions] = useState(false);
 
-  const { families } = useStockFamilies();
   const { subFamilies } = useStockSubFamilies(formData.family_code);
-
-  // Charger les fabricants au montage
-  useEffect(() => {
-    manufacturerItems.fetchManufacturerItems().then(items => setManufacturers(items || []));
-  }, []);
 
   // Filtrer les suggestions par ref
   useEffect(() => {
@@ -54,12 +47,12 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
       setManuRefSuggestions([]);
       return;
     }
-    const byRef = manufacturers.filter(m => (m.manufacturer_ref || "").toLowerCase().includes(q));
-    const byName = manufacturers.filter(
+    const byRef = allManufacturers.filter(m => (m.manufacturer_ref || "").toLowerCase().includes(q));
+    const byName = allManufacturers.filter(
       m => (m.manufacturer_name || "").toLowerCase().includes(q) && !byRef.some(x => x.id === m.id)
     );
     setManuRefSuggestions([...byRef, ...byName].slice(0, 8));
-  }, [formData.manufacturer_ref, manufacturers]);
+  }, [formData.manufacturer_ref, allManufacturers]);
 
   useEffect(() => {
     if (item && open) {
@@ -150,7 +143,7 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
             >
               <Select.Trigger placeholder="Sélectionner une famille" />
               <Select.Content>
-                {families.map((fam) => (
+                {stockFamilies.map((fam) => (
                   <Select.Item key={fam.code} value={fam.code}>
                     {fam.label}
                   </Select.Item>
@@ -380,3 +373,11 @@ export default function EditStockItemDialog({ item, onSave, loading }) {
     </Dialog.Root>
   );
 }
+
+EditStockItemDialog.propTypes = {
+  item: PropTypes.object.isRequired,
+  onSave: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+  stockFamilies: PropTypes.array,
+  allManufacturers: PropTypes.array,
+};

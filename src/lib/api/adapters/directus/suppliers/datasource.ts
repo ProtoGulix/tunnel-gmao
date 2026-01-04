@@ -196,13 +196,25 @@ export const dispatchPurchaseRequests = async () => {
         );
 
         if (!supplierOrder) {
+          // Generate order number: CMD-YYYYMMDD-NNNN
+          const today = new Date();
+          const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+          const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+          const orderNumber = `CMD-${dateStr}-${randomNum}`;
+          
           // Create new supplier order for this supplier
           const { data: newOrder } = await api.post('/items/supplier_order', {
+            order_number: orderNumber,
             supplier_id: prefRef.supplier_id,
             status: 'OPEN',
             total_amount: 0,
           });
           supplierOrder = newOrder?.data;
+          
+          // Add to local array so next items use the same basket
+          if (supplierOrder) {
+            supplierOrders.push(supplierOrder);
+          }
         }
 
         // Create supplier_order_line or update quantity if it already exists
