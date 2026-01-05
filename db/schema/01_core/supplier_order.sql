@@ -13,18 +13,22 @@ CREATE TABLE IF NOT EXISTS public.supplier_order (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
     -- Numéro commande auto-généré
-    order_number VARCHAR(255) UNIQUE,
+    order_number TEXT UNIQUE,
     
     -- Relations
     supplier_id UUID, -- FK vers supplier
     
     -- Dates
-    order_date DATE DEFAULT CURRENT_DATE,
-    expected_delivery_date DATE,
-    actual_delivery_date DATE,
+    ordered_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, -- Date de commande
+    expected_delivery_date DATE, -- Date livraison prévue
+    received_at TIMESTAMPTZ, -- Date réception réelle
     
     -- Statut
     status VARCHAR(255) DEFAULT 'brouillon', -- brouillon, envoyé, reçu, annulé
+    
+    -- Montants
+    total_amount NUMERIC(10,2), -- Montant total calculé
+    currency REAL, -- Devise (ex: EUR, USD)
     
     -- Notes
     notes TEXT,

@@ -25,7 +25,7 @@ ALTER TABLE public.intervention
 
 ALTER TABLE public.intervention
     ADD CONSTRAINT intervention_status_actual_foreign 
-    FOREIGN KEY (status_actual) REFERENCES public.intervention_status_ref(code);
+    FOREIGN KEY (status_actual) REFERENCES public.intervention_status_ref(id);
 
 -- ============================================================================
 -- intervention_action
@@ -57,11 +57,11 @@ ALTER TABLE public.intervention_status_log
 
 ALTER TABLE public.intervention_status_log
     ADD CONSTRAINT intervention_status_log_status_from_foreign 
-    FOREIGN KEY (status_from) REFERENCES public.intervention_status_ref(code);
+    FOREIGN KEY (status_from) REFERENCES public.intervention_status_ref(id);
 
 ALTER TABLE public.intervention_status_log
     ADD CONSTRAINT intervention_status_log_status_to_foreign 
-    FOREIGN KEY (status_to) REFERENCES public.intervention_status_ref(code);
+    FOREIGN KEY (status_to) REFERENCES public.intervention_status_ref(id);
 
 -- ============================================================================
 -- machine
@@ -93,7 +93,7 @@ ALTER TABLE public.stock_item
 
 ALTER TABLE public.stock_item
     ADD CONSTRAINT fk_item_sub_family 
-    FOREIGN KEY (sub_family_code, family_code) REFERENCES public.stock_sub_family(code, family_code);
+    FOREIGN KEY (family_code, sub_family_code) REFERENCES public.stock_sub_family(family_code, code);
 
 ALTER TABLE public.stock_item
     ADD CONSTRAINT stock_item_manufacturer_item_id_foreign 
@@ -101,7 +101,7 @@ ALTER TABLE public.stock_item
 
 ALTER TABLE public.stock_item
     ADD CONSTRAINT stock_item_standars_spec_foreign 
-    FOREIGN KEY (standards_spec) REFERENCES public.stock_item_standard_spec(id);
+    FOREIGN KEY (standars_spec) REFERENCES public.stock_item_standard_spec(id);
 
 -- ============================================================================
 -- stock_item_standard_spec
@@ -174,15 +174,8 @@ ALTER TABLE public.supplier_order_line_purchase_request
 -- ============================================================================
 -- action_category_meta
 -- ============================================================================
-
-ALTER TABLE public.action_category_meta
-    ADD CONSTRAINT action_category_meta_category_code_foreign
-    FOREIGN KEY (category_code) REFERENCES public.action_category(code) ON DELETE CASCADE;
-
+-- Notes:
+-- - action_category_meta.category_code et action_classification_probe.suggested_category
+--   ne référencent pas action_category car la structure utilise des codes VARCHAR
+--   au lieu d'une FK sur l'ID. Ces contraintes n'existent pas en base.
 -- ============================================================================
--- action_classification_probe
--- ============================================================================
-
-ALTER TABLE public.action_classification_probe
-    ADD CONSTRAINT action_classification_probe_suggested_category_foreign
-    FOREIGN KEY (suggested_category) REFERENCES public.action_category(code) ON DELETE SET NULL;

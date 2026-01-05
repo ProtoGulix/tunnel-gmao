@@ -2,6 +2,50 @@
 
 Architecture SQL complète pour gestion maintenance industrielle (nettoyée sans Directus).
 
+## ⚠️ Corrections récentes (Janvier 2026)
+
+### Problèmes identifiés et corrigés
+
+#### 1. **stock_item.sql**
+
+- ✅ Colonne `designation` → `name` (alignement avec la DB)
+- ✅ Colonne `stock_quantity` → `quantity` (alignement avec la DB)
+- ✅ Colonne `standards_spec` → `standars_spec` (typo historique maintenue pour compatibilité)
+- ✅ Ajout colonne `location` (manquante dans le schéma)
+- ✅ Ajout colonne `supplier_refs_count` (géré par trigger)
+- ✅ Types de colonnes corrigés : `family_code` VARCHAR(20), `sub_family_code` VARCHAR(20), `spec` VARCHAR(50)
+- ✅ Contrainte `NOT NULL` ajoutée sur `family_code`, `sub_family_code`, `dimension`
+- ❌ Supprimée colonne `stock_min` (n'existe pas en base)
+
+#### 2. **supplier_order.sql**
+
+- ✅ Colonne `order_number` VARCHAR(255) → TEXT
+- ✅ Colonne `order_date` → `ordered_at` TIMESTAMPTZ
+- ✅ Colonne `actual_delivery_date` → `received_at` TIMESTAMPTZ
+- ✅ Ajout colonne `total_amount` NUMERIC(10,2)
+- ✅ Ajout colonne `currency` REAL
+
+#### 3. **supplier_order_line.sql**
+
+- ✅ Ajout colonne `supplier_ref_snapshot` TEXT (snapshot référence fournisseur)
+- ✅ Ajout colonne `quantity_received` INTEGER (quantité reçue)
+
+#### 4. **99_foreign_keys.sql**
+
+- ✅ Correction FK `stock_item.standars_spec` (standards → standars)
+- ✅ Correction FK composite `fk_item_sub_family` (ordre des colonnes)
+- ✅ Correction FK `intervention_status_ref` (code → id)
+- ✅ Suppression FK inexistantes en base :
+  - `action_category_meta.category_code` → `action_category.code`
+  - `action_classification_probe.suggested_category` → `action_category.code`
+
+### État de synchronisation
+
+- ✅ Schémas SQL synchronisés avec la base de données `gmaomvp-db-1`
+- ✅ Types de données alignés
+- ✅ Contraintes d'intégrité vérifiées
+- ✅ Clés étrangères corrigées
+
 ## 📁 Structure
 
 ```
