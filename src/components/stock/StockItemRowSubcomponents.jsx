@@ -3,7 +3,7 @@ import { Flex, Text, Badge, Button } from "@radix-ui/themes";
 import { Package, CheckCircle, FileText, AlertCircle, Star } from "lucide-react";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import StandardSpecsPanel from "@/components/stock/StandardSpecsPanel";
-import SupplierRefsInlinePanel from "@/components/stock/SupplierRefsInlinePanel";
+import SupplierRefsInlinePanel from "@/components/purchase/suppliers/SupplierRefsInlinePanel";
 import {
   getRefCountBadgeColor,
   getRefCountBadgeVariant,

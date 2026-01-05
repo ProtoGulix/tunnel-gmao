@@ -11,7 +11,6 @@
  * @requires @/components/stock/EditStockItemDialog
  * @requires @/components/common/ExpandableDetailsRow
  * @requires @/components/stock/StandardSpecsPanel
- * @requires @/components/stock/SupplierRefsInlinePanel
  * @requires @/components/stock/stockItemsTableHelpers
  * @requires @/components/stock/StockItemRowSubcomponents
  */
@@ -23,7 +22,6 @@ import ToggleDetailsButton from "@/components/common/ToggleDetailsButton";
 import EditStockItemDialog from "./EditStockItemDialog";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import StandardSpecsPanel from "./StandardSpecsPanel";
-import SupplierRefsInlinePanel from "./SupplierRefsInlinePanel";
 import { hasPreferredRef } from "./stockItemsTableHelpers";
 import { SupplierRefsBadge, SpecsBadgeSection, StockQuantitySection, StockItemRowExpandedSections } from "./StockItemRowSubcomponents";
 
