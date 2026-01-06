@@ -137,6 +137,15 @@ export const PAGES_CONFIG = [
     showInMenu: false,
   },
   {
+    id: 'preventive-management',
+    path: '/preventive-management',
+    label: 'Préventif',
+    icon: ClipboardList,
+    pageTitle: 'Gestion du Préventif',
+    pageSubtitle: 'Maintenance préventive : préconisations, règles et configuration',
+    requiresAuth: true,
+  },
+  {
     id: 'stock',
     path: '/stock',
     label: 'Stock',

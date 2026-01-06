@@ -14,6 +14,7 @@ import MachineList from './MachineList';
 import MachineDetail from './MachineDetail';
 import ActionsPage from './ActionsPage';
 import StockManagement from './StockManagement';
+import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
 
 /**
  * Map des composants par ID de page
@@ -30,6 +31,7 @@ export const ROUTE_COMPONENTS = {
   actions: ActionsPage,
   machines: MachineList,
   'machine-detail': MachineDetail,
+  'preventive-management': PreventiveSuggestionsPage,
   stock: StockManagement,
 };
 

@@ -42,6 +42,7 @@ import { interventionStatusRefsAdapter as interventionStatusRefs } from './direc
 import { interventionsAdapter as interventions } from './directus/interventions/adapter';
 import { machinesAdapter as machines } from './directus/machines/adapter';
 import { manufacturerItemsAdapter as manufacturerItems } from './directus/manufacturerItems/adapter';
+import { preventiveAdapter as preventive } from './directus/preventive/adapter';
 import { stockAdapter as stock } from './directus/stock/adapter';
 import { stockSpecsAdapter as stockSpecs } from './directus/stockSpecs/adapter';
 import { stockSuppliersAdapter as stockSuppliers } from './directus/stockSuppliers/adapter';
@@ -85,6 +86,8 @@ export const adapter = {
   anomalyConfig,
   // Machines
   machines,
+  // Preventive Maintenance
+  preventive,
   // Stock Management
   stock,
   stockSpecs,

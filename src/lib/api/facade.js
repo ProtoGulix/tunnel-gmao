@@ -210,6 +210,26 @@ export const { anomalyConfig } = API;
 export const { machines } = API;
 
 /**
+ * **Preventive Maintenance Suggestions**
+ *
+ * Functions:
+ * - `fetchAllPreventiveSuggestions(status)` → `PreventiveSuggestion[]`
+ * - `fetchPreventiveSuggestions(machineId, status)` → `PreventiveSuggestion[]`
+ * - `acceptPreventiveSuggestion(suggestionId, userId)` → `PreventiveSuggestion`
+ * - `rejectPreventiveSuggestion(suggestionId, userId)` → `PreventiveSuggestion`
+ * - `reviewPreventiveSuggestion(suggestionId)` → `PreventiveSuggestion`
+ *
+ * @type {Object}
+ *
+ * @example
+ * import { preventive } from 'src/lib/api/facade';
+ * const allSuggestions = await preventive.fetchAllPreventiveSuggestions();
+ * const machineSuggestions = await preventive.fetchPreventiveSuggestions('machine-123');
+ * await preventive.acceptPreventiveSuggestion('suggestion-id', userId);
+ */
+export const { preventive } = API;
+
+/**
  * **Stock Management**
  *
  * Core stock operations: items, specs, purchasing.
