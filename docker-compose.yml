@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tunnel-gmao-frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      # Variables d'environnement si nécessaire (ex: API_URL via injection au runtime)
+      - NODE_ENV=production
