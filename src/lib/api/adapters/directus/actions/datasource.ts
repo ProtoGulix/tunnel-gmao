@@ -24,6 +24,8 @@ const ACTION_FIELDS = [
   'time_spent',
   'complexity_score',
   'created_at',
+  // complexity factors (M2M)
+  'complexity_anotation.id',
   'tech.id',
   'tech.first_name',
   'tech.last_name',
@@ -96,7 +98,16 @@ export const createActionRaw = async (payload: Record<string, unknown>) => {
  * @returns Raw backend response
  */
 export const updateActionRaw = async (actionId: string, updates: Record<string, unknown>) => {
-  const response = await api.patch(`/items/intervention_action/${actionId}`, updates);
+  const response = await api.patch(
+    `/items/intervention_action/${actionId}`,
+    updates,
+    {
+      params: {
+        fields: ACTION_FIELDS,
+        _t: Date.now(),
+      },
+    }
+  );
   return response.data.data;
 };
 

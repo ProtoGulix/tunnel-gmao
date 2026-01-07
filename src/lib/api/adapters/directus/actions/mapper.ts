@@ -28,6 +28,11 @@ export const mapActionToDomain = (raw: any): any => {
     description: raw.description,
     timeSpent: raw.time_spent,
     complexityScore: raw.complexity_score,
+    complexityFactors: Array.isArray(raw.complexity_anotation)
+      ? raw.complexity_anotation
+          .map((f: any) => (f?.id ?? f?.code))
+          .filter((v: any) => v != null)
+      : [],
     createdAt: raw.created_at,
     technician: raw.tech
       ? {
@@ -77,8 +82,8 @@ export const mapActionPayloadToBackend = (payload: any): Record<string, unknown>
   if (payload.description !== undefined) backend.description = payload.description;
   if (payload.timeSpent !== undefined) backend.time_spent = payload.timeSpent;
   if (payload.complexityScore !== undefined) backend.complexity_score = payload.complexityScore;
-  if (payload.complexityFactors !== undefined && payload.complexityFactors.length > 0) {
-    backend.complexity_anotation = payload.complexityFactors.map(factorId => ({ id: factorId }));
+  if (payload.complexityFactors !== undefined) {
+    backend.complexity_anotation = (payload.complexityFactors || []).map((factorId: any) => ({ id: factorId }));
   }
   if (payload.date !== undefined) backend.created_at = payload.date;
   if (payload.subcategory?.id !== undefined) backend.action_subcategory = payload.subcategory.id;

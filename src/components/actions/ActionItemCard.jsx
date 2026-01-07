@@ -1,6 +1,10 @@
 import { Card, Flex, Text, Badge } from "@radix-ui/themes";
 import { Clock, User, Edit2, Copy, Trash2 } from "lucide-react";
 import PropTypes from "prop-types";
+import { useCallback, useMemo, useState } from "react";
+import ActionForm from "@/components/actions/ActionForm";
+import { actions, actionSubcategories, interventions } from "@/lib/api/facade";
+import { useAuth } from "@/auth/useAuth";
 
 // DTO-friendly accessors with legacy fallback
 const getComplexityScore = (action) => Number(action?.complexityScore ?? action?.complexity_score ?? 0);
@@ -21,13 +25,71 @@ const getComplexityColor = (score) => {
 };
 
 export default function ActionItemCard({ action, getCategoryColor, sanitizeDescription }) {
-  const complexityScore = getComplexityScore(action);
+  const { user } = useAuth();
+  const [localAction, setLocalAction] = useState(action);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editDataLoaded, setEditDataLoaded] = useState(false);
+  const [subcategories, setSubcategories] = useState([]);
+  const [complexityFactors, setComplexityFactors] = useState([]);
+
+  const complexityScore = getComplexityScore(localAction);
   const complexityInfo = getComplexityColor(complexityScore);
-  const subcategory = getSubcategory(action);
-  const technician = getTechnician(action);
-  const createdAt = getCreatedAt(action);
-  const timeSpent = getTimeSpent(action);
-  const description = getDescription(action);
+  const subcategory = getSubcategory(localAction);
+  const technician = getTechnician(localAction);
+  const createdAt = getCreatedAt(localAction);
+  const timeSpent = getTimeSpent(localAction);
+  const description = getDescription(localAction);
+
+  const initialEditState = useMemo(() => {
+    const dateIso = createdAt ? new Date(createdAt).toISOString().split('T')[0] : '';
+    return {
+      time: timeSpent || '',
+      date: dateIso,
+      category: subcategory?.id ? String(subcategory.id) : '',
+      description: description || '',
+      complexity: String(complexityScore || '5'),
+      complexityFactors: Array.isArray(localAction?.complexityFactors) ? [...localAction.complexityFactors] : [],
+    };
+  }, [createdAt, timeSpent, subcategory?.id, description, complexityScore, localAction?.complexityFactors]);
+
+  const handleOpenEdit = useCallback(async () => {
+    setShowEditForm((prev) => !prev);
+    if (!editDataLoaded) {
+      try {
+        const [subcatsData, factorsData] = await Promise.all([
+          actionSubcategories.fetchActionSubcategories(),
+          interventions.fetchComplexityFactors(),
+        ]);
+        setSubcategories(subcatsData || []);
+        setComplexityFactors(factorsData || []);
+        setEditDataLoaded(true);
+      } catch (e) {
+        // Silent fail: ActionForm will show metadata error card if needed
+        setEditDataLoaded(true);
+      }
+    }
+  }, [editDataLoaded]);
+
+  const handleSubmitEdit = useCallback(async (formData) => {
+    const updates = {
+      description: formData.description,
+      timeSpent: parseFloat(formData.time) || 0,
+      date: formData.date || undefined,
+      complexityScore: parseInt(formData.complexity) || undefined,
+      subcategory: formData.category ? { id: String(formData.category) } : undefined,
+      // Preserve or set technician
+      technician: (localAction.technician?.id
+        ? { id: localAction.technician.id }
+        : (user?.id ? { id: user.id } : undefined)),
+      // Ensure intervention context stays attached
+      intervention: localAction.intervention?.id ? { id: String(localAction.intervention.id) } : undefined,
+      // Always include complexityFactors to allow updates/clearing
+      complexityFactors: Array.isArray(formData.complexityFactors) ? formData.complexityFactors : [],
+    };
+    const updated = await actions.updateAction(String(localAction.id), updates);
+    setLocalAction(updated || localAction);
+    setShowEditForm(false);
+  }, [localAction, user?.id]);
 
   return (
     <Card 
@@ -121,6 +183,7 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
           <button 
             title="Éditer cette action"
             style={{ background: 'none', border: 'none', color: 'var(--gray-9)', padding: '4px 6px', cursor: 'pointer' }}
+            onClick={handleOpenEdit}
           >
             <Edit2 size={14} />
             <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Éditer</span>
@@ -149,6 +212,17 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
       >
         {sanitizeDescription(description)}
       </Text>
+
+      {/* EDIT FORM */}
+      {showEditForm && (
+        <ActionForm
+          initialState={initialEditState}
+          metadata={{ subcategories, complexityFactors }}
+          onCancel={() => setShowEditForm(false)}
+          onSubmit={handleSubmitEdit}
+          style={{ marginTop: '0.75rem' }}
+        />
+      )}
     </Card>
   );
 }
