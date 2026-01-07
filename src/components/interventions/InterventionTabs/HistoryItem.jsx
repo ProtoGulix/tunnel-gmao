@@ -1,116 +1,224 @@
-import { Box, Flex, Text, Badge } from "@radix-ui/themes";
-import PropTypes from "prop-types";
-import { CheckCircle, Clock, User } from "lucide-react";
-import StatusBadgeRenderer from "@/components/common/StatusBadgeRenderer";
-import { getCategoryColor } from "@/lib/utils/interventionUtils";
-
 /**
- * Renderer pour action dans historique
- * Composant séparé pour réduire complexité
+ * @fileoverview Item d'historique simplifié sur une seule ligne.
+ * Affiche: date · type (Action | Changement statut) · type d'action (si action) · utilisateur
+ *
+ * @module components/interventions/InterventionTabs/HistoryItem
+ * @requires @radix-ui/themes
+ * @requires prop-types
  */
-function ActionHistoryItem({ item }) {
-  return (
-    <Box 
-      mb="3"
-      p="3"
-      style={{
-        backgroundColor: 'var(--gray-2)',
-        borderRadius: '6px',
-        borderLeft: '4px solid var(--blue-6)',
-        position: 'relative'
-      }}
-    >
-      <Flex direction="column" gap="2">
-        <Flex justify="between" align="center">
-          <Flex align="center" gap="2">
-            <CheckCircle size={14} color="white" />
-            <Badge 
-              color="blue" 
-              variant="solid" 
-              size="1"
-            >
-              Action
-            </Badge>
-          </Flex>
-          <Text size="1" color="gray">
-            {new Date(item.date).toLocaleString('fr-FR')}
-          </Text>
-        </Flex>
 
-        <Flex direction="column" gap="2">
-          <Text size="2" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            {item.data.subcategory && (
-              <Badge 
-                variant="soft" 
-                size="1" 
-                style={{
-                  backgroundColor: getCategoryColor(item.data.subcategory) || '#6b7280',
-                  color: 'white'
-                }}
-              >
-                {item.data.subcategory.code || '—'}
-              </Badge>
-            )}
-            {item.data.description}
-          </Text>
-          <Flex gap="3" align="center" wrap="wrap">
-            {item.data.timeSpent && (
-              <Flex align="center" gap="1">
-                <Clock size={12} color="var(--blue-9)" />
-                <Badge color="blue" variant="soft" size="1">
-                  {item.data.timeSpent}h
-                </Badge>
-              </Flex>
-            )}
-            {item.data.technician && (
-              <Flex align="center" gap="1">
-                <User size={12} color="var(--gray-9)" />
-                <Text size="1" color="gray">
-                  {item.data.technician.firstName} {item.data.technician.lastName}
-                </Text>
-              </Flex>
-            )}
-          </Flex>
-        </Flex>
-      </Flex>
-    </Box>
-  );
-}
+import { Flex, Text, Badge } from "@radix-ui/themes";
+import PropTypes from "prop-types";
+import { getCategoryColor } from "@/lib/utils/interventionUtils";
+import { STATE_COLORS } from "@/config/interventionTypes";
 
-ActionHistoryItem.propTypes = {
-  item: PropTypes.shape({
-    date: PropTypes.string.isRequired,
-    data: PropTypes.object.isRequired
-  }).isRequired
+/** Map domain status (open|in_progress|closed|cancelled) to config key */
+const mapDtoStatusToConfigKey = (dtoStatus) => {
+  const mapping = {
+    open: "ouvert",
+    in_progress: "attente_pieces",
+    closed: "ferme",
+    cancelled: "cancelled",
+  };
+  return mapping[dtoStatus] || "ouvert";
 };
 
 /**
- * Item d'historique : affiche action ou changement statut
- * 
- * Contrainte : 1 prop (item), complexité réduite par extraction
+ * Item d'historique (ligne compacte)
+ *
+ * @component
+ * @param {Object} props
+ * @param {Object} props.item - Élément à afficher
+ * @param {('action'|'status')} props.item.type - Type d'item
+ * @param {string} props.item.date - Date ISO (horodatage)
+ * @param {Object} props.item.data - Données associées
+ * @param {Object} [props.item.data.subcategory] - Sous-catégorie d'action
+ * @param {string} [props.item.data.subcategory.code] - Code sous-catégorie (ex: DEP)
+ * @param {string} [props.item.data.subcategory.name] - Libellé sous-catégorie
+ * @param {Object} [props.item.data.technician] - Technicien
+ * @param {string} [props.item.data.technician.firstName] - Prénom
+ * @param {string} [props.item.data.technician.lastName] - Nom
+ * @returns {JSX.Element} Ligne formatée
+ *
+ * @example
+ * <HistoryItem
+ *   item={{
+ *     type: 'action',
+ *     date: new Date().toISOString(),
+ *     data: { subcategory: { code: 'DEP' }, technician: { firstName: 'Jean', lastName: 'Dupont' } }
+ *   }}
+ * />
  */
-function HistoryItem({ item }) {
-  // Early return pour changement de statut
-  if (item.type === "status") {
-    return (
-      <StatusBadgeRenderer
-        item={item}
-        statusConfig={null}
-        variant="history"
-        showTechnician={true}
-      />
+const formatDateFR = (iso) => new Date(iso).toLocaleString('fr-FR');
+const buildUserLabel = (tech) => {
+  if (!tech) return '';
+  return `${(tech.firstName || '').trim()} ${(tech.lastName || '').trim()}`.trim();
+};
+
+function renderActionBadge(subcategory) {
+  const label = subcategory?.code || subcategory?.name;
+  if (!label) return null;
+  return (
+    <Badge
+      size="1"
+      variant="soft"
+      style={{
+        backgroundColor: getCategoryColor(subcategory) || 'var(--gray-7)',
+        color: 'white',
+      }}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+function renderStatusBadge(statusInput) {
+  if (!statusInput) return null;
+  const deriveKey = (input) => {
+    if (typeof input === 'object') {
+      if (input.id && STATE_COLORS[input.id]) return input.id;
+      if (input.value) return mapDtoStatusToConfigKey(input.value);
+      return undefined;
+    }
+    // string: try direct key first, else map from domain value
+    const direct = STATE_COLORS[input];
+    if (direct) return input;
+    return mapDtoStatusToConfigKey(input);
+  };
+  const key = deriveKey(statusInput);
+  const cfg = key ? STATE_COLORS[key] : undefined;
+  if (!cfg) return null;
+  return (
+    <Badge
+      size="1"
+      variant="solid"
+      style={{ backgroundColor: cfg.activeBg || 'var(--blue-6)', color: cfg.textActive || 'white' }}
+    >
+      {cfg.label}
+    </Badge>
+  );
+}
+
+function renderStatusTransition(fromInput, toInput) {
+  const getCfg = (input) => {
+    if (!input) return undefined;
+    if (typeof input === 'object') {
+      if (input.id && STATE_COLORS[input.id]) return STATE_COLORS[input.id];
+      if (input.value) {
+        const key = mapDtoStatusToConfigKey(input.value);
+        return STATE_COLORS[key];
+      }
+      return undefined;
+    }
+    // string
+    if (STATE_COLORS[input]) return STATE_COLORS[input];
+    const key = mapDtoStatusToConfigKey(input);
+    return STATE_COLORS[key];
+  };
+  const fromCfg = getCfg(fromInput);
+  const toCfg = getCfg(toInput);
+
+  const parts = [];
+  if (fromCfg) {
+    parts.push(
+      <Badge
+        key="from"
+        size="1"
+        variant="soft"
+        style={{ backgroundColor: fromCfg.activeBg || 'var(--gray-6)', color: fromCfg.textActive || 'white' }}
+      >
+        {fromCfg.label}
+      </Badge>
+    );
+  }
+  if (fromCfg && toCfg) {
+    parts.push(
+      <Text key="arrow" size="2" style={{ margin: '0 4px' }}>→</Text>
+    );
+  }
+  if (toCfg) {
+    parts.push(
+      <Badge
+        key="to"
+        size="1"
+        variant="solid"
+        style={{ backgroundColor: toCfg.activeBg || 'var(--blue-6)', color: toCfg.textActive || 'white' }}
+      >
+        {toCfg.label}
+      </Badge>
     );
   }
 
-  // Rendu action
-  return <ActionHistoryItem item={item} />;
+  return parts.length ? <span>{parts}</span> : null;
+}
+
+function getActionSegment(item) {
+  return renderActionBadge(item.data?.subcategory) || null;
+}
+
+function getStatusSegment(item) {
+  const trans = renderStatusTransition(item.data?.from, item.data?.to);
+  if (trans) return trans;
+  const toBadge = renderStatusBadge(item.data?.to);
+  if (toBadge) return toBadge;
+  return null;
+}
+
+function getSegment(item, isAction) {
+  if (isAction) return getActionSegment(item);
+  return getStatusSegment(item);
+}
+
+function buildLineParts(item) {
+  const isAction = item.type === 'action';
+  const parts = [];
+  parts.push(<Text key="date" size="2" color="gray">{formatDateFR(item.date)}</Text>);
+  parts.push(<Text key="sep1" size="2">·</Text>);
+  parts.push(<Text key="type" size="2">{isAction ? 'Action' : 'Changement statut'}</Text>);
+
+  const segment = getSegment(item, isAction);
+  if (segment) {
+    parts.push(<Text key="sep2" size="2">·</Text>);
+    parts.push(<span key="segment">{segment}</span>);
+  }
+
+  const user = buildUserLabel(item.data?.technician);
+  if (user) {
+    parts.push(<Text key="sep3" size="2">·</Text>);
+    parts.push(<Text key="user" size="2" color="gray">{user}</Text>);
+  }
+  return parts;
+}
+
+function HistoryItem({ item }) {
+  const parts = buildLineParts(item);
+  return (
+    <Flex align="center" gap="2" mb="2">{parts}</Flex>
+  );
 }
 
 HistoryItem.propTypes = {
   item: PropTypes.shape({
-    type: PropTypes.string.isRequired,
+    type: PropTypes.oneOf(['action', 'status']).isRequired,
     date: PropTypes.string.isRequired,
-    data: PropTypes.object.isRequired
+    data: PropTypes.shape({
+      subcategory: PropTypes.shape({
+        code: PropTypes.string,
+        name: PropTypes.string,
+      }),
+      from: PropTypes.shape({
+        id: PropTypes.string,
+        value: PropTypes.string,
+      }),
+      to: PropTypes.shape({
+        id: PropTypes.string,
+        value: PropTypes.string,
+      }),
+      technician: PropTypes.shape({
+        firstName: PropTypes.string,
+        lastName: PropTypes.string,
+      }),
+    }).isRequired,
   }).isRequired
 };
 

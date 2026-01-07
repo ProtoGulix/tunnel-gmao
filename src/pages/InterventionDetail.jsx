@@ -448,7 +448,8 @@ export default function InterventionDetail() {
 
   const handleStatusChange = useCallback((backendStatus) => {
     // Backend status is in French (ouvert, attente_pieces, attente_prod, ferme, cancelled)
-    mutateUpdateStatus({ status: backendStatus });
+    // Adapter expects a raw status code string and will build { status_actual: { id: <code> } }
+    mutateUpdateStatus(backendStatus);
   }, [mutateUpdateStatus]);
 
   const handlePriorityChange = useCallback((newPriority) => {

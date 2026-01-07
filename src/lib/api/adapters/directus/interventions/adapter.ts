@@ -99,7 +99,10 @@ export const interventionsAdapter = {
    */
   updateStatus: async (interventionId: string, status: string) => {
     return apiCall(async () => {
-      const backendPayload = { status_actual: status };
+      // Directus M2O: allow passing relation as object with id
+      // Our status codes are French (ouvert, attente_pieces, attente_prod, ferme)
+      // The intervention_status table uses code as primary key (id)
+      const backendPayload = { status_actual: { id: status } };
       const raw = await datasource.updateInterventionRaw(interventionId, backendPayload);
       invalidateCache(`interventions:${interventionId}`);
       return mapper.mapInterventionToDomain(raw);
@@ -115,6 +118,10 @@ export const interventionsAdapter = {
   updateIntervention: async (interventionId: string, updates: any) => {
     return apiCall(async () => {
       const backendPayload = mapper.mapInterventionDomainToBackend(updates);
+      // If status is present, wrap as relation object
+      if (backendPayload.status_actual) {
+        backendPayload.status_actual = { id: backendPayload.status_actual };
+      }
       const raw = await datasource.updateInterventionRaw(interventionId, backendPayload);
       invalidateCache(`interventions:${interventionId}`);
       return mapper.mapInterventionToDomain(raw);
