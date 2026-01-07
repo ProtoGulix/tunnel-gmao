@@ -36,6 +36,47 @@ StatusIcon.propTypes = {
   status: PropTypes.string.isRequired,
 };
 
+function DecisionCell({ suggestion, processing, onAccept, onReject }) {
+  if (suggestion.status === 'NEW') {
+    return (
+      <Flex gap="2">
+        <Button
+          onClick={() => onReject(suggestion.id)}
+          disabled={processing}
+          color="gray"
+          variant="soft"
+          size="sm"
+        >
+          {processing ? '...' : 'Rejeter'}
+        </Button>
+        <Button
+          onClick={() => onAccept(suggestion.id)}
+          disabled={processing}
+          color="green"
+          size="sm"
+        >
+          {processing ? '...' : 'Accepter'}
+        </Button>
+      </Flex>
+    );
+  }
+  return (
+    <Text size="xs" color="gray">
+      Traité
+    </Text>
+  );
+}
+
+DecisionCell.propTypes = {
+  suggestion: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
+  }).isRequired,
+  processing: PropTypes.bool.isRequired,
+  onAccept: PropTypes.func.isRequired,
+  onReject: PropTypes.func.isRequired,
+};
+
 /**
  * Ligne de tableau pour une préconisation
  */
@@ -87,32 +128,12 @@ export default function PreventiveSuggestionRow({
         <Text size="sm">{formatDateFR(suggestion.detectedAt)}</Text>
       </Table.Cell>
       <Table.Cell>
-        {suggestion.status === 'NEW' && (
-          <Flex gap="2">
-            <Button
-              onClick={() => onReject(suggestion.id)}
-              disabled={processing}
-              color="gray"
-              variant="soft"
-              size="sm"
-            >
-              {processing ? '...' : 'Rejeter'}
-            </Button>
-            <Button
-              onClick={() => onAccept(suggestion.id)}
-              disabled={processing}
-              color="green"
-              size="sm"
-            >
-              {processing ? '...' : 'Accepter'}
-            </Button>
-          </Flex>
-        )}
-        {suggestion.status !== 'NEW' && (
-          <Text size="xs" color="gray">
-            Traité
-          </Text>
-        )}
+        <DecisionCell
+          suggestion={suggestion}
+          processing={processing}
+          onAccept={onAccept}
+          onReject={onReject}
+        />
       </Table.Cell>
     </Table.Row>
   );
@@ -122,17 +143,15 @@ PreventiveSuggestionRow.propTypes = {
   suggestion: PropTypes.shape({
     id: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
-    machine_id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({
-        id: PropTypes.string,
-        name: PropTypes.string,
-      }),
-    ]).isRequired,
-    preventive_label: PropTypes.string.isRequired,
-    preventive_code: PropTypes.string.isRequired,
+    machine: PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    }),
+    machineId: PropTypes.string,
+    preventiveLabel: PropTypes.string.isRequired,
+    preventiveCode: PropTypes.string.isRequired,
     score: PropTypes.number.isRequired,
-    detected_at: PropTypes.string.isRequired,
+    detectedAt: PropTypes.string.isRequired,
   }).isRequired,
   onAccept: PropTypes.func.isRequired,
   onReject: PropTypes.func.isRequired,
