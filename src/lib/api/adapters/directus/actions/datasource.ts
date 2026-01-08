@@ -24,8 +24,8 @@ const ACTION_FIELDS = [
   'time_spent',
   'complexity_score',
   'created_at',
-  // complexity factors (M2M)
-  'complexity_anotation.id',
+  // complexity factor (O2M relation)
+  'complexity_anotation',
   'tech.id',
   'tech.first_name',
   'tech.last_name',

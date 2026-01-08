@@ -28,10 +28,8 @@ export const mapActionToDomain = (raw: any): any => {
     description: raw.description,
     timeSpent: raw.time_spent,
     complexityScore: raw.complexity_score,
-    complexityFactors: Array.isArray(raw.complexity_anotation)
-      ? raw.complexity_anotation
-          .map((f: any) => (f?.id ?? f?.code))
-          .filter((v: any) => v != null)
+    complexityFactors: raw.complexity_anotation
+      ? [raw.complexity_anotation.key || raw.complexity_anotation]
       : [],
     createdAt: raw.created_at,
     technician: raw.tech
@@ -83,7 +81,12 @@ export const mapActionPayloadToBackend = (payload: any): Record<string, unknown>
   if (payload.timeSpent !== undefined) backend.time_spent = payload.timeSpent;
   if (payload.complexityScore !== undefined) backend.complexity_score = payload.complexityScore;
   if (payload.complexityFactors !== undefined) {
-    backend.complexity_anotation = (payload.complexityFactors || []).map((factorId: any) => ({ id: factorId }));
+    // O2M relation format: single object { key: 'code', collection: 'complexity_factor' }
+    // Store first selected factor only (O2M allows only one)
+    const firstFactor = (payload.complexityFactors || [])[0];
+    backend.complexity_anotation = firstFactor
+      ? { key: firstFactor, collection: 'complexity_factor' }
+      : null;
   }
   if (payload.date !== undefined) backend.created_at = payload.date;
   if (payload.subcategory?.id !== undefined) backend.action_subcategory = payload.subcategory.id;

@@ -1,7 +1,7 @@
 import { Card, Flex, Text, Badge } from "@radix-ui/themes";
 import { Clock, User, Edit2, Copy, Trash2 } from "lucide-react";
 import PropTypes from "prop-types";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import ActionForm from "@/components/actions/ActionForm";
 import { actions, actionSubcategories, interventions } from "@/lib/api/facade";
 import { useAuth } from "@/auth/useAuth";
@@ -13,6 +13,7 @@ const getSubcategory = (action) => action?.subcategory ?? null;
 const getTechnician = (action) => action?.technician ?? null;
 const getCreatedAt = (action) => action?.createdAt ?? action?.created_at ?? null;
 const getDescription = (action) => action?.description ?? "";
+const getComplexityFactors = (action) => action?.complexityFactors ?? [];
 const getTechnicianFirstName = (technician) => technician?.firstName ?? technician?.first_name ?? "—";
 const getTechnicianLastName = (technician) => technician?.lastName ?? technician?.last_name ?? "—";
 const getSubcategoryCode = (subcategory) => subcategory?.code ?? "—";
@@ -39,8 +40,15 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
   const createdAt = getCreatedAt(localAction);
   const timeSpent = getTimeSpent(localAction);
   const description = getDescription(localAction);
+  const actionComplexityFactors = getComplexityFactors(localAction);
 
-  const initialEditState = useMemo(() => {
+  // Sync localAction when action prop changes (e.g., parent refetch)
+  useEffect(() => {
+    setLocalAction(action);
+  }, [action]);
+
+  // Compute initial state fresh from current localAction
+  const buildInitialEditState = () => {
     const dateIso = createdAt ? new Date(createdAt).toISOString().split('T')[0] : '';
     return {
       time: timeSpent || '',
@@ -50,7 +58,7 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
       complexity: String(complexityScore || '5'),
       complexityFactors: Array.isArray(localAction?.complexityFactors) ? [...localAction.complexityFactors] : [],
     };
-  }, [createdAt, timeSpent, subcategory?.id, description, complexityScore, localAction?.complexityFactors]);
+  };
 
   const handleOpenEdit = useCallback(async () => {
     setShowEditForm((prev) => !prev);
@@ -160,6 +168,16 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
             </Badge>
           )}
 
+          {/* Facteur de complexité */}
+          {actionComplexityFactors.length > 0 && (
+            <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>
+              ({actionComplexityFactors.map((code) => {
+                const factor = complexityFactors.find(f => f.id === code);
+                return factor?.label || code;
+              }).join(', ')})
+            </Text>
+          )}
+
           {/* Technicien */}
           {technician && (
             <Flex align="center" gap="1">
@@ -216,7 +234,7 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
       {/* EDIT FORM */}
       {showEditForm && (
         <ActionForm
-          initialState={initialEditState}
+          initialState={buildInitialEditState()}
           metadata={{ subcategories, complexityFactors }}
           onCancel={() => setShowEditForm(false)}
           onSubmit={handleSubmitEdit}
