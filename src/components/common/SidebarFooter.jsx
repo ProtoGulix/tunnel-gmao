@@ -8,8 +8,10 @@
  */
 
 import PropTypes from 'prop-types';
-import { LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn } from '@/lib/icons';
 import SidebarActionButton from '@/components/common/SidebarActionButton';
+
+const CHANGELOG_URL = 'https://github.com/ProtoGulix/tunnel-gmao/blob/main/docs/CHANGELOG.md';
 
 /**
  * Footer de la sidebar avec connexion/déconnexion et infos
@@ -53,6 +55,10 @@ export default function SidebarFooter(props) {
     : statusColor;
   const statusTooltip = `Latence: ${latencyLabel} | API: ${serverStatus.online ? 'OK' : 'KO'} | Dernier check: ${lastCheckedLabel}`;
 
+  const openChangelog = () => {
+    window.open(CHANGELOG_URL, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div style={{ 
       padding: '1rem', 
@@ -93,7 +99,31 @@ export default function SidebarFooter(props) {
         fontSize: '0.85rem',
         marginBottom: '0.5rem'
       }}>
-        <span>v{appVersion}</span>
+        <button
+          type='button'
+          onClick={openChangelog}
+          title='Voir le changelog'
+          aria-label='Voir le changelog'
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            color: colors.textMuted,
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            letterSpacing: '0.2px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.15rem',
+            opacity: 0.8
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = colors.accentSoft}
+          onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
+        >
+          <span style={{ textDecoration: 'none' }}>v{appVersion}</span>
+        </button>
         <span
           title={statusTooltip}
           aria-label={statusTooltip}

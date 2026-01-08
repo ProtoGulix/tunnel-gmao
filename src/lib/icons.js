@@ -21,7 +21,7 @@ export {
 } from "lucide-react";
 
 // Actions & Maintenance
-export { Wrench, Settings, Tool, Hammer, Cog } from "lucide-react";
+export { Wrench, Settings, Hammer, Cog } from "lucide-react";
 
 // Business & Operations
 export {

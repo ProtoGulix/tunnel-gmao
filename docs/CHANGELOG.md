@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.5 - 2026-01-08
+
+### UX / Sidebar
+
+- Clic sur la version dans la sidebar : ouvre le changelog dans un nouvel onglet.
+- Lien de version plus discret (typographie allégée, hover doux) pour limiter le bruit visuel.
+
 ## 1.2.4 - 2026-01-08
 
 ### UX / Front
