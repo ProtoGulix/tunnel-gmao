@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2 - 2026-01-08
+
+### Improvements
+
+- Stabilité générale et corrections mineures
+- Optimisations des performances
+
 ## 1.2.1 - 2026-01-05
 
 ### Database Schema Synchronization
