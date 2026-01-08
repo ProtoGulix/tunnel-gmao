@@ -74,6 +74,8 @@ export const fetchInterventionsRaw = async () => {
         'priority',
         'type_inter',
         'reported_date',
+        'tech_initials',
+        'printed_fiche',
         'machine_id.id',
         'machine_id.code',
         'machine_id.name',

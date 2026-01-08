@@ -396,6 +396,11 @@ export default function InterventionDetail() {
     return items.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [interv?.action, statusLog]);
 
+  const ficheFileName = useMemo(() => {
+    const base = interv?.code || id || 'intervention';
+    return `${base}.pdf`;
+  }, [interv?.code, id]);
+
   const purchaseRequestsCount = useMemo(() => {
     // Plus besoin de filtrer, les demandes sont déjà filtrées
     return purchaseRequests.length;
@@ -454,6 +459,10 @@ export default function InterventionDetail() {
 
   const handlePriorityChange = useCallback((newPriority) => {
     mutateUpdateIntervention({ priority: newPriority });
+  }, [mutateUpdateIntervention]);
+
+  const handleMarkPrintedFiche = useCallback(async () => {
+    await mutateUpdateIntervention({ printedFiche: true });
   }, [mutateUpdateIntervention]);
 
   const handleCreatePurchaseRequest = useCallback(async (requestData) => {
@@ -685,10 +694,13 @@ export default function InterventionDetail() {
           <SheetTab
             model={{
               pdfUrl,
-              pdfLoading
+              pdfLoading,
+              printedFiche: interv.printedFiche,
+              fileName: ficheFileName
             }}
             handlers={{
-              onLoadPdf: loadPdf
+              onLoadPdf: loadPdf,
+              onMarkPrinted: handleMarkPrintedFiche
             }}
           />
         </Tabs.Content>

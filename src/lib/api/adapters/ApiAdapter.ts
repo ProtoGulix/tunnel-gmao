@@ -90,6 +90,8 @@ export interface Intervention {
   priority?: InterventionPriority;
   createdAt?: string;
   reportedDate?: string;
+  printedFiche?: boolean;
+  techInitials?: string;
   machine?: {
     id: string;
     code: string;

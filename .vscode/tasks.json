@@ -5,6 +5,21 @@
 			"label": "npm run build",
 			"type": "shell",
 			"command": "npm run build"
+		},
+		{
+			"label": "npm run build",
+			"type": "shell",
+			"command": "npm run build"
+		},
+		{
+			"label": "npm run build",
+			"type": "shell",
+			"command": "npm run build"
+		},
+		{
+			"label": "npm run build",
+			"type": "shell",
+			"command": "npm run build"
 		}
 	]
 }

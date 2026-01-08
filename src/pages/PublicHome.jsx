@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 // 3. UI Libraries (Radix)
 import { Box, Flex, Grid, Card, Text, Button, Heading, Container } from '@radix-ui/themes';
 
-// 4. Icons
-import { ShoppingCart, ClipboardList } from 'lucide-react';
+// 4. Icons (conformément aux conventions, via '@/lib/icons')
+import { ShoppingCart, ClipboardList } from '@/lib/icons';
 
 // ===== MAIN COMPONENT =====
 /**

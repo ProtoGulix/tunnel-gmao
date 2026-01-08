@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.4 - 2026-01-08
+
+### UX / Front
+
+- Liste des interventions: toute la ligne est désormais cliquable et ouvre le détail.
+- Effet de survol subtil sur les lignes (ombre + légère élévation), cohérent avec les cartes de la page publique.
+- Conventions: imports d’icônes uniformisés via le module centralisé `@/lib/icons`.
+
+### Divers
+
+- Petits ajustements visuels et cohérence des badges/sections.
+
 ## 1.2.3 - 2026-01-08
 
 ### Front

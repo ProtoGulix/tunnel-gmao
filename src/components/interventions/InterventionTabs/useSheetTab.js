@@ -9,9 +9,19 @@ export function useSheetTab() {
     loadPdf();
   }, []);
 
+  const handleMarkPrinted = useCallback(async (isAlreadyPrinted, markPrintedCb) => {
+    if (isAlreadyPrinted) return;
+    const first = window.confirm("Marquer la fiche comme imprimée ?");
+    if (!first) return;
+    const second = window.confirm("Confirmer l'impression de la fiche ?");
+    if (!second) return;
+    await markPrintedCb();
+  }, []);
+
   return {
     handlers: {
       generatePdf: handleGeneratePdf,
+      markPrinted: handleMarkPrinted,
     },
   };
 }

@@ -73,6 +73,8 @@ export const mapInterventionToDomain = (item: any) => {
     priority: item.priority || 'normal',
     createdAt: item.created_at,
     reportedDate: item.reported_date,
+    printedFiche: item.printed_fiche ?? false,
+    techInitials: item.tech_initials ?? undefined,
     machine: item.machine_id
       ? {
           id: item.machine_id.id,
@@ -216,6 +218,8 @@ export const mapInterventionDomainToBackend = (payload: any) => {
   if (payload.priority !== undefined) backend.priority = payload.priority;
   if (payload.createdAt !== undefined) backend.created_at = payload.createdAt;
   if (payload.reportedDate !== undefined) backend.reported_date = payload.reportedDate;
+  if (payload.printedFiche !== undefined) backend.printed_fiche = payload.printedFiche;
+  if (payload.techInitials !== undefined) backend.tech_initials = payload.techInitials;
   if (payload.reportedBy?.id !== undefined) backend.reported_by = payload.reportedBy.id;
   if (payload.techInitials !== undefined) backend.tech_initials = payload.techInitials;
   if (payload.machine?.id !== undefined) backend.machine_id = payload.machine.id;

@@ -18,8 +18,8 @@ import {
   Tooltip,
 } from '@radix-ui/themes';
 
-// 4. Icons
-import { Search, ArrowRight } from 'lucide-react';
+// 4. Icons (conformément aux conventions, via '@/lib/icons')
+import { Search, ArrowRight, FileText } from '@/lib/icons';
 
 // 5. Components
 import PageHeader from '@/components/layout/PageHeader';
@@ -151,12 +151,15 @@ export default function InterventionsList() {
     const archivé = [];
 
     filteredInterventions.forEach(i => {
-      const { status, type: rawType, priority } = i; // DTO normalized status: 'open' | 'in_progress' | 'closed' | 'cancelled'
+      const { status, type: rawType, priority, printedFiche } = i; // DTO normalized status: 'open' | 'in_progress' | 'closed' | 'cancelled'
       const type = rawType?.toUpperCase();
       
-      // BLOC 4 : Archivé (closed ou cancelled)
+      // BLOC 4 : Archivé (closed ou cancelled) - Masquer les fiches imprimées (déjà traitées)
       if (status === 'closed' || status === 'cancelled') {
-        archivé.push(i);
+        // Ne charger que les fiches non imprimées pour éviter le bruit
+        if (!printedFiche) {
+          archivé.push(i);
+        }
         return;
       }
 
@@ -188,7 +191,7 @@ export default function InterventionsList() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, []);
 
-  // Tri : priorité puis âge décroissant (pour chaque bloc)
+  // Tri : priorité, fiches non imprimées en haut (pour clôture), puis âge décroissant
   const sortInterventions = useCallback((interventions) => {
     const priorityOrder = { urgent: 0, important: 1, normal: 2, faible: 3 };
     
@@ -198,6 +201,13 @@ export default function InterventionsList() {
       
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
+      }
+      
+      // Tri secondaire : fiches non imprimées en haut (pour clôture)
+      const printedA = a.printedFiche ? 1 : 0;
+      const printedB = b.printedFiche ? 1 : 0;
+      if (printedA !== printedB) {
+        return printedA - printedB;
       }
       
       return calculateAge(b.reportedDate) - calculateAge(a.reportedDate);
@@ -345,43 +355,56 @@ export default function InterventionsList() {
                       // Infos secondaires : CODE_MACHINE · CODE_INTERVENTION
                       const machineCode = interv.machine?.code || 'SUPP';
                       const intervCode = interv.code || '';
-                      const responsableInitiales = interv.assigned_to?.first_name?.substring(0, 2).toUpperCase() || '—';
-                      const responsableComplet = interv.assigned_to 
-                        ? `${interv.assigned_to.first_name || ''} ${interv.assigned_to.last_name || ''}`.trim() 
-                        : 'Non assigné';
+                      const responsableInitiales = (interv.techInitials || '—').toUpperCase();
 
                       return (
                         <Table.Row 
                           key={interv.id}
+                          onClick={() => handleOpenIntervention(interv.id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                           style={{ 
-                            opacity: isNormalPriority ? 0.75 : 1,
-                            borderLeft: `4px solid var(--${priorityConfig.color}-9)`
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: interv.printedFiche ? 0.5 : 1,
+                            backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
+                            borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : `var(--${priorityConfig.color}-9)`}`
                           }}
                         >
                           <Table.Cell style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-                            <Flex direction="column" gap="0">
-                              <Flex align="center" gap="2" style={{ marginBottom: '2px' }}>
+                            <Flex direction="column" gap="2">
+                              <Flex align="center" gap="2" wrap="wrap">
                                 <Badge color={priorityConfig.color} size="1" variant="solid">
                                   {interv.priority || 'Normal'}
                                 </Badge>
-                                <Text weight="bold" size="3">
-                                  {interv.title || 'Sans titre'}
-                                </Text>
-                              </Flex>
-                              <Flex align="center" gap="2" style={{ marginLeft: '2px' }}>
                                 <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                                   {machineCode}
                                 </Badge>
                                 <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                                   {intervCode}
                                 </Badge>
+                                {interv.printedFiche && (
+                                  <Tooltip content="Fiche imprimée et classée">
+                                    <Badge color="green" variant="soft" size="1">
+                                      <FileText size={12} style={{ marginRight: '2px' }} />
+                                      ✓ Imprimée
+                                    </Badge>
+                                  </Tooltip>
+                                )}
                                 <Text size="2" style={{ color: 'var(--gray-10)' }}>·</Text>
-                                <Tooltip content={`${responsableInitiales} – ${responsableComplet}`}>
-                                  <Text size="2" style={{ color: 'var(--gray-11)', cursor: 'help' }}>
-                                    {responsableInitiales}
-                                  </Text>
-                                </Tooltip>
+                                <Text size="2" style={{ color: 'var(--gray-11)' }}>
+                                  {responsableInitiales}
+                                </Text>
                               </Flex>
+                              <Text size="3">
+                                {interv.title || 'Sans titre'}
+                              </Text>
                             </Flex>
                           </Table.Cell>
                           <Table.Cell style={{ textAlign: "right", verticalAlign: "middle", paddingTop: '8px', paddingBottom: '8px' }}>
@@ -431,20 +454,29 @@ export default function InterventionsList() {
                       // Message clair : "Bloqué – attente achat depuis Xj"
                       const machineCode = interv.machine?.code || 'SUPP';
                       const intervCode = interv.code || '';
-                      const responsableInitiales = interv.assigned_to?.first_name?.substring(0, 2).toUpperCase() || '—';
-                      const responsableComplet = interv.assigned_to 
-                        ? `${interv.assigned_to.first_name || ''} ${interv.assigned_to.last_name || ''}`.trim() 
-                        : 'Non assigné';
+                      const responsableInitiales = (interv.techInitials || '—').toUpperCase();
                       const cause = badgeCause?.label === 'Achat' ? 'attente achat' : 'attente fournisseur';
                       const messageBloque = `En ${cause} depuis ${age}j`;
 
                       return (
                         <Table.Row 
                           key={interv.id}
+                          onClick={() => handleOpenIntervention(interv.id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                           style={{ 
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
                             opacity: 0.7,
                             backgroundColor: "var(--gray-2)",
-                            borderLeft: "4px solid var(--amber-9)"
+                            borderLeft: "4px solid var(--amber-9)",
+                            fontWeight: interv.printedFiche ? 'normal' : '600'
                           }}
                         >
                           <Table.Cell style={{ paddingTop: '8px', paddingBottom: '8px' }}>
@@ -462,12 +494,18 @@ export default function InterventionsList() {
                                 <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                                   {intervCode}
                                 </Badge>
+                                {interv.printedFiche && (
+                                  <Tooltip content="Fiche imprimée et classée">
+                                    <Badge color="green" variant="soft" size="1">
+                                      <FileText size={12} style={{ marginRight: '2px' }} />
+                                      ✓ Imprimée
+                                    </Badge>
+                                  </Tooltip>
+                                )}
                                 <Text size="1" style={{ color: 'var(--gray-10)' }}>·</Text>
-                                <Tooltip content={`${responsableInitiales} – ${responsableComplet}`}>
-                                  <Text size="1" style={{ color: 'var(--gray-10)', cursor: 'help' }}>
-                                    {responsableInitiales}
-                                  </Text>
-                                </Tooltip>
+                                <Text size="1" style={{ color: 'var(--gray-10)' }}>
+                                  {responsableInitiales}
+                                </Text>
                               </Flex>
                             </Flex>
                           </Table.Cell>
@@ -515,8 +553,21 @@ export default function InterventionsList() {
                       return (
                         <Table.Row 
                           key={interv.id}
+                          onClick={() => handleOpenIntervention(interv.id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                           style={{ 
-                            opacity: 0.85
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: interv.printedFiche ? 0.5 : 1,
+                            backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
+                            borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : 'var(--blue-9)'}`
                           }}
                         >
                           <Table.Cell>
@@ -531,6 +582,14 @@ export default function InterventionsList() {
                                 <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                                   {intervCode}
                                 </Badge>
+                                {interv.printedFiche && (
+                                  <Tooltip content="Fiche imprimée et classée">
+                                    <Badge color="green" variant="soft" size="1">
+                                      <FileText size={12} style={{ marginRight: '2px' }} />
+                                      ✓ Imprimée
+                                    </Badge>
+                                  </Tooltip>
+                                )}
                               </Flex>
                             </Flex>
                           </Table.Cell>
@@ -560,12 +619,12 @@ export default function InterventionsList() {
               </Box>
             )}
 
-            {/* BLOC 4 : ARCHIVÉ */}
+            {/* BLOC 4 : À ARCHIVER (closed/cancelled non imprimées) */}
             {sortedBlocks.archivé.length > 0 && (
               <Box>
                 <Flex align="center" gap="2" mb="3">
-                  <Text size="5" weight="bold">📦 Archivé</Text>
-                  <Badge color="gray" variant="soft">{sortedBlocks.archivé.length}</Badge>
+                  <Text size="5" weight="bold">📂 À archiver</Text>
+                  <Badge color="blue" variant="soft">{sortedBlocks.archivé.length}</Badge>
                 </Flex>
                 <Table.Root variant="surface">
                   <Table.Header>
@@ -586,9 +645,20 @@ export default function InterventionsList() {
                       return (
                         <Table.Row 
                           key={interv.id}
+                          onClick={() => handleOpenIntervention(interv.id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
                           style={{ 
-                            opacity: 0.6,
-                            backgroundColor: "var(--gray-2)"
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: 1,
+                            borderLeft: '4px solid var(--blue-9)'
                           }}
                         >
                           <Table.Cell>
@@ -603,6 +673,14 @@ export default function InterventionsList() {
                                 <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                                   {intervCode}
                                 </Badge>
+                                {interv.printedFiche && (
+                                  <Tooltip content="Fiche imprimée et classée">
+                                    <Badge color="green" variant="soft" size="1">
+                                      <FileText size={12} style={{ marginRight: '2px' }} />
+                                      ✓ Imprimée
+                                    </Badge>
+                                  </Tooltip>
+                                )}
                               </Flex>
                             </Flex>
                           </Table.Cell>
