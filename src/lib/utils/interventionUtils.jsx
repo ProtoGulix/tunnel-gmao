@@ -290,9 +290,24 @@ export const getUniqueTechs = (actions) => {
   if (!actions) return [];
   const techMap = new Map();
   actions.forEach((action) => {
-    if (action.technician) {
-      const initials = `${action.technician.firstName[0]}${action.technician.lastName[0]}`;
-      techMap.set(action.technician.id, initials);
+    const tech = action?.technician;
+    if (!tech) return;
+
+    const first = typeof tech.firstName === "string" ? tech.firstName.trim() : "";
+    const last = typeof tech.lastName === "string" ? tech.lastName.trim() : "";
+
+    const firstInitial = first ? first[0].toUpperCase() : "";
+    const lastInitial = last ? last[0].toUpperCase() : "";
+
+    // Prefer two-letter initials; otherwise fall back to available letters or a dash
+    const initials = (firstInitial + lastInitial)
+      || (first.slice(0, 2).toUpperCase())
+      || (last.slice(0, 2).toUpperCase())
+      || "—";
+
+    const key = tech.id ?? `${first}|${last}`;
+    if (!techMap.has(key)) {
+      techMap.set(key, initials);
     }
   });
   return Array.from(techMap.values());

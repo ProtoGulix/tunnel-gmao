@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tunnel-gmao-frontend
+    ports:
+      - "127.0.0.1:8082:80"  # Expose uniquement en local pour reverse proxy
+    restart: unless-stopped
+    environment:
+      # Variables d'environnement si nécessaire (ex: API_URL via injection au runtime)
+      - NODE_ENV=production

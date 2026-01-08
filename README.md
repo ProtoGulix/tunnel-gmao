@@ -75,6 +75,13 @@ Tunnel GMAO convient aussi aux prestataires et consultants en maintenance qui so
 
 ---
 
+## 🚀 Dernières évolutions (v1.1.3)
+
+- Sélecteur machine enrichi dans la création d'intervention avec `SearchableSelect` (recherche + navigation clavier) : [src/components/common/SearchableSelect.jsx](src/components/common/SearchableSelect.jsx) et [src/pages/InterventionCreate.jsx](src/pages/InterventionCreate.jsx).
+- Adapters refactorés en trio adapter/datasource/mapper avec clés d'auth génériques et fallback legacy documenté : [docs/ARCHITECTURE_LOCKED.md](docs/ARCHITECTURE_LOCKED.md) et [src/lib/api/adapters/directus/auth/adapter.ts](src/lib/api/adapters/directus/auth/adapter.ts).
+- Stock : lecture des specs article unifiée et affichage corrigé des références fournisseurs dans la liste stock : [src/lib/api/adapters/directus/stockSpecs/adapter.ts](src/lib/api/adapters/directus/stockSpecs/adapter.ts) et [src/components/stock/SupplierRefsInlinePanel.jsx](src/components/stock/SupplierRefsInlinePanel.jsx).
+- Métadonnées projet enrichies (description, mots-clés) dans [package.json](package.json) pour faciliter la diffusion du projet.
+
 ## 📚 Documentation
 
 ### 🗂️ Navigation complète : [docs/INDEX.md](docs/INDEX.md)
