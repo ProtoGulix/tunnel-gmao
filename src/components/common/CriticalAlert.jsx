@@ -129,29 +129,36 @@ export default function CriticalAlert(props) {
   const color = getSeverityColor(severity);
   
   return (
-    <Callout.Root color={color} role="alert" aria-live="assertive">
-      <Callout.Icon>
-        {icon || <AlertCircle size={20} />}
-      </Callout.Icon>
-      <Callout.Text>
-        <Flex direction="column" gap="2">
-          <Flex align="center" gap="2" wrap="wrap">
-            <Text weight="bold" size="3">
-              {title}
-            </Text>
-            <UrgencyCount urgencyCount={urgencyCount} />
-          </Flex>
-          
-          {message && (
-            <Text size="2">
-              {message}
-            </Text>
-          )}
-
-          <ActionButton action={action} onActionClick={onActionClick} />
+    <div role="alert" aria-live="assertive" style={{
+      padding: '12px',
+      paddingLeft: '16px',
+      borderRadius: '6px',
+      border: `1px solid var(--${color}-6)`,
+      backgroundColor: `var(--${color}-2)`,
+      display: 'flex',
+      gap: '12px'
+    }}>
+      <div style={{ flexShrink: 0, marginTop: '2px' }}>
+        {icon || <AlertCircle size={20} color={`var(--${color}-9)`} />}
+      </div>
+      
+      <Flex direction="column" gap="2" style={{ flex: 1 }}>
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text as="span" weight="bold" size="3" color={color}>
+            {title}
+          </Text>
+          <UrgencyCount urgencyCount={urgencyCount} />
         </Flex>
-      </Callout.Text>
-    </Callout.Root>
+        
+        {message && (
+          <Text as="span" size="2" color={color}>
+            {message}
+          </Text>
+        )}
+
+        <ActionButton action={action} onActionClick={onActionClick} />
+      </Flex>
+    </div>
   );
 }
 

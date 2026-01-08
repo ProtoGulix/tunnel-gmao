@@ -81,12 +81,26 @@ const getDaysSince = (dateString) => {
 /**
  * Détermine la couleur du badge retard selon la durée
  * @param {number} days - Nombre de jours écoulés
- * @returns {string} Couleur badge ('red'|'orange'|null)
+ * @returns {string} Couleur badge ('red'|'amber'|null)
  */
 const getDelayColor = (days) => {
   if (days > 14) return 'red';
-  if (days > 7) return 'orange';
+  if (days > 7) return 'amber';
   return null;
+};
+
+/**
+ * Calcule le temps total consommé sur une intervention
+ * @param {Object} intervention - Objet intervention
+ * @returns {number} Temps total en heures
+ */
+const calculateTotalTime = (intervention) => {
+  if (!intervention || !intervention.action || intervention.action.length === 0) {
+    return 0;
+  }
+  return intervention.action.reduce((total, action) => {
+    return total + (parseFloat(action.time_spent) || 0);
+  }, 0);
 };
 
 /**
@@ -265,7 +279,8 @@ export default function OpenInterventionsTable({ interventions, machineId }) {
                   <SortIcon column="date" />
                 </Flex>
               </Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Durée</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Ouverture</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Consommé</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
@@ -279,6 +294,7 @@ export default function OpenInterventionsTable({ interventions, machineId }) {
               const delayColor = getDelayColor(daysSince);
               const isUrgent = intervention.priority?.toLowerCase() === 'urgent';
               const rowBackground = isUrgent ? 'var(--red-2)' : undefined;
+              const totalTime = calculateTotalTime(intervention);
 
               return (
                 <Table.Row key={intervention.id} style={{ background: rowBackground }}>
@@ -305,7 +321,7 @@ export default function OpenInterventionsTable({ interventions, machineId }) {
                       color={interventionType?.color || 'gray'} 
                       size="1"
                     >
-                      {intervention.type_inter || "N/A"}
+                      {interventionType?.title || intervention.type || "N/A"}
                     </Badge>
                   </Table.Cell>
 
@@ -322,10 +338,10 @@ export default function OpenInterventionsTable({ interventions, machineId }) {
                   {/* Statut */}
                   <Table.Cell>
                     <Badge 
-                      color={STATUS_CONFIG[intervention.status_actual?.id]?.color || 'gray'} 
+                      color={STATUS_CONFIG[intervention.status?.value?.toLowerCase()]?.color || 'gray'} 
                       size="1"
                     >
-                      {intervention.status_actual?.value || "N/A"}
+                      {STATUS_CONFIG[intervention.status?.value?.toLowerCase()]?.label || intervention.status_actual?.value || "N/A"}
                     </Badge>
                   </Table.Cell>
 
@@ -351,6 +367,13 @@ export default function OpenInterventionsTable({ interventions, machineId }) {
                         </Badge>
                       )}
                     </Flex>
+                  </Table.Cell>
+
+                  {/* Temps consommé */}
+                  <Table.Cell>
+                    <Text size="1" weight="bold" color="blue">
+                      {totalTime > 0 ? `${totalTime.toFixed(1)}h` : '0h'}
+                    </Text>
                   </Table.Cell>
 
                   {/* Actions */}

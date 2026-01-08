@@ -1,128 +1,145 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * 📄 MachineDetail.jsx - Page de détail complète d'une machine
+ * 📄 MachineDetail.jsx - Page de pilotage opérationnel d'une machine
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * Page orchestratrice affichant toutes les informations et statistiques d'une machine:
- * - Informations générales (zone, atelier, hiérarchie)
- * - KPIs de disponibilité et performance
- * - Analyses des temps passés (top activités, techniciens, types)
- * - Interventions ouvertes avec actions en cours
- * - Historique 30/90 jours avec navigation vers liste complète
+ * Page de pilotage orientée décision : "Quelles actions dois-je prendre?"
+ * Affiche UNIQUEMENT les informations impactant les décisions opérationnelles.
+ * 
+ * Hiérarchie stricte (du plus urgent au plus stratégique) :
+ * 1. INTERVENTIONS : Liste ouvertes + clôturées < 30 jours → prioriser / clôturer / transformer
+ * 2. TEMPS PASSÉ : Bilan période courante vs référence → détecter dérive charge
+ * 3. DEMANDES D'ACHAT : Liées à la machine → standardiser / stocker / remettre en cause
+ * 4. SUGGESTIONS PRÉVENTIF : Top 5 → empêcher récurrence
  * 
  * Architecture:
- * - Hooks customs: useMachineData (chargement), useMachineStats (calculs)
- * - Composants spécialisés: Header, KPIs, distributions, tables
- * - États: Loading/Error avec retry, CriticalAlert si machine critique
- * - Performance: useMemo pour filtrage interventions, stats calculées dans hook
+ * - Hooks: useMachineData (chargement), useMachineStats (calculs statiques)
+ * - Composants existants réutilisés (OpenInterventionsTable, PreventiveSuggestionsPanel)
+ * - Pas de nouveaux composants, uniquement organisation / filtrage / masquage
+ * - États: Loading/Error avec retry, CriticalAlert si urgent
  * 
  * ✅ IMPLÉMENTÉ:
- * - Chargement données machine + interventions + actions + subcategories
- * - Calcul automatique KPIs (disponibilité, temps passés, complexité moyenne)
- * - Grille responsive KPIs (2 cols mobile, 4 cols desktop)
- * - CriticalAlert avec severity error si globalStatus === 'critical'
- * - Filtrage mémoïsé interventions ouvertes (isInterventionOpen)
- * - Navigation vers historique complet avec filtres pré-remplis
- * - Reload capability avec callback onRetry sur ErrorState
- * 
- * 📋 TODO:
- * - [ ] Export PDF rapport complet machine (KPIs + interventions + historique)
- * - [ ] Mode comparaison (sélectionner 2+ machines, overlay KPIs)
- * - [ ] Timeline visuelle interventions (Gantt chart avec période zoom)
- * - [ ] Prédiction maintenance préventive (ML sur historique pannes)
- * - [ ] Graphique évolution disponibilité dans le temps (30/90/365j)
- * - [ ] Alertes configurables (seuils disponibilité, nb interventions, temps passé)
- * - [ ] Indicateur coût total maintenance (pièces + main d'oeuvre)
- * - [ ] Badge "Machine sous garantie" avec date expiration
- * - [ ] Section fichiers attachés (manuels, photos, schémas techniques)
- * - [ ] QR code pour accès mobile rapide depuis étiquette machine
- * - [ ] Mode impression optimisé (CSS @media print, masquer actions)
- * - [ ] Favoris/bookmarks machines (localStorage, icône étoile header)
- * - [ ] Notifications push si nouvelle intervention ajoutée
- * - [ ] Skeleton loading granulaire (KPIs apparaissent progressivement)
+ * - Chargement données machine + interventions + actions
+ * - Filtrage interventions: ouvertes OU clôturées < 30 jours
+ * - Affichage anomalies: durée d'ouverture, temps passé élevé
+ * - Temps passé période: total + delta vs référence (simple comparaison)
+ * - Demandes d'achat liées aux interventions
+ * - Suggestions préventif limitées à top 5 avec règles explicites
+ * - CriticalAlert si intervention urgente
+ * - Suppression KPIs sans décision, graphiques non-décisionnels
  * 
  * @module pages/MachineDetail
- * @requires hooks/useMachineData - Chargement données machine
+ * @requires hooks/useMachineData - Chargement données
  * @requires hooks/useMachineStats - Calculs statistiques
- * @requires utils/interventionHelpers - isInterventionOpen, statuts
- * @requires utils/timeFormatter - formatTime pour affichage durées
+ * @requires utils/interventionHelpers - Filtres interventions
+ * @requires components/machine/OpenInterventionsTable - Table interventions
+ * @requires components/preventive/PreventiveSuggestionsPanel - Suggestions
  */
 
 import { useParams } from "react-router-dom";
 import { useMemo, useCallback } from "react";
-import { Flex, Grid, Separator } from "@radix-ui/themes";
+import { Flex, Separator } from "@radix-ui/themes";
+import { AlertTriangle } from "lucide-react";
 
 // Hooks
 import { useMachineData } from "@/hooks/useMachineData";
-import { useMachineStats } from "@/hooks/useMachineStats";
+import { useApiCall } from "@/hooks/useApiCall";
 
 import PageContainer from "@/components/layout/PageContainer";
 
 // Composants communs
 import LoadingState from "@/components/common/LoadingState";
 import ErrorState from "@/components/common/ErrorState";
-import KPICard from "@/components/common/KPICard";
 import CriticalAlert from "@/components/common/CriticalAlert";
 
 // Composants spécifiques machine
 import MachineHeader from "@/components/machine/MachineHeader";
 import GeneralInfo from "@/components/machine/GeneralInfo";
-import TopActivities from "@/components/machine/TopActivities";
-import TechnicianDistribution from "@/components/machine/TechnicianDistribution";
-import ActivityPeriod from "@/components/machine/ActivityPeriod";
-import InterventionTypeDistribution from "@/components/machine/InterventionTypeDistribution";
-import PriorityDistribution from "@/components/machine/PriorityDistribution";
-import OpenInterventionsTable from "@/components/machine/OpenInterventionsTable";
-import HistoricalSummary from "@/components/machine/HistoricalSummary";
+import {
+  InterventionsBlock,
+  TimeSpentBlock,
+  PurchaseRequestsBlock,
+  PreventiveSuggestionsBlock,
+  filterDecisionalInterventions,
+  getTimeSpentInPeriod,
+  getMachineRequests,
+  hasUrgentAlert
+} from './MachineDetail/MachineDetailBlocks';
 
 // Utilitaires
-import { formatTime } from "@/lib/utils/timeFormatter";
-import { isInterventionOpen } from "@/lib/utils/interventionHelpers";
+import { stock } from "@/lib/api/facade";
 
 /**
- * Filtre les interventions ouvertes d'une liste
- * Exporté pour réutilisation dans d'autres pages/tests
+ * Page de détail d'une machine - Orientation décisionnelle
  * 
- * @param {Array} interventions - Liste des interventions à filtrer
- * @returns {Array} Interventions avec statut ouvert uniquement
- * @example
- * const openOnly = filterOpenInterventions(allInterventions); // => [{status: 'open', ...}]
- */
-export const filterOpenInterventions = (interventions) => 
-  interventions.filter(isInterventionOpen);
-
-/**
- * Page de détail d'une machine avec toutes ses statistiques et interventions
+ * Affiche les éléments impactant les décisions opérationnelles:
+ * 1. Interventions (ouvertes + clôturées < 30j)
+ * 2. Temps passé (bilan période)
+ * 3. Demandes d'achat (récurrence)
+ * 4. Suggestions préventif (top 5)
  * 
- * Affiche les KPIs de performance, analyses des temps passés par activité/technicien,
- * répartitions par type/priorité, interventions ouvertes, et historique 30/90 jours.
- * 
- * @returns {JSX.Element} Page complète avec orchestration des composants machine
+ * @returns {JSX.Element} Page complète
  */
 export default function MachineDetail() {
   const { id } = useParams();
   
-  // Chargement des données
+  // Chargement des données machine
   const { 
     machine, 
     interventions, 
     actions, 
-    subcategories, 
     loading, 
     error, 
     reload 
   } = useMachineData(id);
 
-  // Calcul des statistiques
-  const stats = useMachineStats(interventions, actions, subcategories);
+  // Chargement des demandes d'achat
+  const { 
+    data: purchaseRequests = [], 
+    loading: requestsLoading 
+  } = useApiCall(
+    () => stock.fetchPurchaseRequests(),
+    { autoExecute: true }
+  );
 
-  // Filtrage des interventions ouvertes (mémoïsé pour optimisation)
-  const openInterventions = useMemo(
-    () => filterOpenInterventions(interventions),
+  // Chargement des articles de stock
+  const { 
+    data: stockItems = [] 
+  } = useApiCall(
+    () => stock.fetchStockItems(),
+    { autoExecute: true }
+  );
+
+  // Filtrage des interventions décisionnelles (ouvertes + clôturées < 30j)
+  const decisionalInterventions = useMemo(
+    () => filterDecisionalInterventions(interventions),
     [interventions]
   );
 
-  // Stabilisation référence reload pour éviter re-renders enfants
+  // Filtrage des demandes d'achat liées à cette machine
+  const machineRequests = useMemo(
+    () => getMachineRequests(purchaseRequests, interventions),
+    [purchaseRequests, interventions]
+  );
+
+  // Calcul des temps passés
+  const timeSpentLast30Days = useMemo(
+    () => getTimeSpentInPeriod(actions, 30 * 24 * 60 * 60 * 1000),
+    [actions]
+  );
+
+  const timeSpentLast90Days = useMemo(
+    () => getTimeSpentInPeriod(actions, 90 * 24 * 60 * 60 * 1000),
+    [actions]
+  );
+
+  // Déterminer s'il y a une alerte urgente
+  const urgentAlert = useMemo(
+    () => hasUrgentAlert(decisionalInterventions),
+    [decisionalInterventions]
+  );
+
+  // Stabilisation référence reload
   const handleReload = useCallback(() => {
     reload();
   }, [reload]);
@@ -145,95 +162,51 @@ export default function MachineDetail() {
   
   return (
     <PageContainer>
-      <Flex direction="column" gap="3">
-        {/* En-tête avec état de la machine */}
+      <Flex direction="column" gap="5">
         <MachineHeader 
           machine={machine} 
-          globalStatus={stats.globalStatus} 
+          globalStatus={urgentAlert ? 'critical' : 'ok'} 
           onReload={handleReload} 
         />
 
-        {/* Alerte si la machine est en état critique */}
         <CriticalAlert 
-          show={stats.globalStatus === 'critical'}
-          title="⚠️ Machine critique"
-          message="Cette machine nécessite une attention immédiate."
+          show={urgentAlert}
+          title="Intervention urgente"
+          message="Une intervention marquée comme urgente requiert une action immédiate."
           severity="error"
+          icon={<AlertTriangle size={20} color="var(--red-9)" />}
         />
 
-        {/* Informations générales de la machine */}
         <GeneralInfo machine={machine} />
+        <Separator size="3" />
 
-        {/* KPIs principaux */}
-        <Grid columns={{ initial: '2', md: '4' }} gap="3">
-          <KPICard 
-            label="Disponibilité"
-            value={`${stats.availabilityRate.toFixed(1)}%`}
-            progress={stats.availabilityRate}
-          />
-          
-          <KPICard 
-            label="Interventions ouvertes"
-            value={stats.open}
-            subtitle={`sur ${stats.total} total`}
-            color={stats.open > 0 ? 'orange' : 'green'}
-          />
+        {/* BLOC 1: INTERVENTIONS */}
+        <InterventionsBlock interventions={decisionalInterventions} machineId={id} />
+        <Separator size="3" />
 
-          <KPICard 
-            label="Temps total passé"
-            value={formatTime(stats.totalTimeSpent)}
-            subtitle={`${stats.totalActions} actions`}
-            color="blue"
-          />
-
-          <KPICard 
-            label="Temps moyen / intervention"
-            value={formatTime(stats.avgTimePerIntervention)}
-            subtitle={`Complexité moy: ${stats.avgComplexity.toFixed(1)}`}
-          />
-        </Grid>
-
-        {/* Analyse des temps passés */}
-        <TopActivities 
-          topSubcategories={stats.topSubcategories} 
-          totalTime={stats.totalTimeSpent} 
+        {/* BLOC 2: TEMPS PASSÉ */}
+        <TimeSpentBlock 
+          timeSpent30d={timeSpentLast30Days}
+          timeSpent90d={timeSpentLast90Days}
         />
+        <Separator size="3" />
 
-        {/* Répartition par technicien */}
-        <TechnicianDistribution 
-          timeByTech={stats.timeByTech} 
-          totalTime={stats.totalTimeSpent} 
-        />
+        {/* BLOC 3: DEMANDES D&apos;ACHAT */}
+        {machineRequests.length > 0 && (
+          <>
+            <PurchaseRequestsBlock 
+              requests={machineRequests}
+              stockItems={stockItems}
+              loading={requestsLoading}
+            />
+            <Separator size="3" />
+          </>
+        )}
 
-        {/* Activité récente */}
-        <ActivityPeriod 
-          interventionCount={stats.last30Days}
-          timeSpent={stats.last30DaysTime}
-          periodDays={30}
-          historicalCount={stats.last90Days}
-        />
-
-        {/* Répartition par type d'intervention */}
-        <InterventionTypeDistribution 
-          byType={stats.byType} 
-          total={stats.total} 
-        />
-
-        {/* Répartition par priorité */}
-        <PriorityDistribution byPriority={stats.byPriority} />
-
-        <Separator size="4" />
-
-        {/* Liste des interventions ouvertes */}
-        <OpenInterventionsTable 
-          interventions={openInterventions} 
-          machineId={id} 
-        />
-
-        {/* Résumé historique */}
-        <HistoricalSummary 
-          count={stats.last90Days}
+        {/* BLOC 4: PRÉVENTIF */}
+        <PreventiveSuggestionsBlock 
           machineId={id}
+          hasRequests={machineRequests.length > 0}
         />
       </Flex>
     </PageContainer>

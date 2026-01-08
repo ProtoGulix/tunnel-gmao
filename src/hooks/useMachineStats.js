@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import { isInterventionOpen, filterByDateRange } from "@/lib/utils/interventionHelpers";
+import { useMemo } from 'react';
+import { isInterventionOpen, filterByDateRange } from '@/lib/utils/interventionHelpers';
 
 const TIME_RANGES = {
   LAST_30_DAYS: 30 * 24 * 60 * 60 * 1000,
-  LAST_90_DAYS: 90 * 24 * 60 * 60 * 1000
+  LAST_90_DAYS: 90 * 24 * 60 * 60 * 1000,
 };
 
 /**
@@ -35,32 +35,28 @@ export const useMachineStats = (interventions, actions, subcategories) => {
         avgComplexity: 0,
         last30DaysTime: 0,
         avgTimePerIntervention: 0,
-        totalActions: 0
+        totalActions: 0,
       };
     }
 
     // Séparation des interventions
     const openInterventions = interventions.filter(isInterventionOpen);
-    const closedInterventions = interventions.filter(i => !isInterventionOpen(i));
+    const closedInterventions = interventions.filter((i) => !isInterventionOpen(i));
 
     // Statistiques par période
     const last30DaysInterventions = filterByDateRange(
-      interventions, 
-      'reported_date', 
+      interventions,
+      'reported_date',
       TIME_RANGES.LAST_30_DAYS
     );
-    
+
     const last90DaysInterventions = filterByDateRange(
-      interventions, 
-      'reported_date', 
+      interventions,
+      'reported_date',
       TIME_RANGES.LAST_90_DAYS
     );
 
-    const last30DaysActions = filterByDateRange(
-      actions, 
-      'created_at', 
-      TIME_RANGES.LAST_30_DAYS
-    );
+    const last30DaysActions = filterByDateRange(actions, 'created_at', TIME_RANGES.LAST_30_DAYS);
 
     // Répartitions
     const byType = interventions.reduce((acc, i) => {
@@ -82,22 +78,19 @@ export const useMachineStats = (interventions, actions, subcategories) => {
     }, {});
 
     // Statistiques des actions
-    const subcatMap = new Map(subcategories.map(s => [s.id, s]));
+    const subcatMap = new Map(subcategories.map((s) => [s.id, s]));
 
-    const totalTimeSpent = actions.reduce(
-      (sum, a) => sum + parseFloat(a.time_spent || 0), 
-      0
-    );
+    const totalTimeSpent = actions.reduce((sum, a) => sum + parseFloat(a.time_spent || 0), 0);
 
     const last30DaysTime = last30DaysActions.reduce(
-      (sum, a) => sum + parseFloat(a.time_spent || 0), 
+      (sum, a) => sum + parseFloat(a.time_spent || a.timeSpent || 0),
       0
     );
 
     const timeBySubcategory = actions.reduce((acc, action) => {
-      const subcatId = action.action_subcategory;
+      const subcatId = action.action_subcategory || action.subcategory?.id;
       if (!subcatId) return acc;
-      
+
       if (!acc[subcatId]) {
         const subcat = subcatMap.get(subcatId);
         acc[subcatId] = {
@@ -106,13 +99,13 @@ export const useMachineStats = (interventions, actions, subcategories) => {
           name: subcat?.name || 'Inconnu',
           categoryId: subcat?.category_id,
           time: 0,
-          count: 0
+          count: 0,
         };
       }
-      
-      acc[subcatId].time += parseFloat(action.time_spent || 0);
+
+      acc[subcatId].time += parseFloat(action.time_spent || action.timeSpent || 0);
       acc[subcatId].count += 1;
-      
+
       return acc;
     }, {});
 
@@ -121,40 +114,47 @@ export const useMachineStats = (interventions, actions, subcategories) => {
       .slice(0, 5);
 
     const timeByTech = actions.reduce((acc, action) => {
-      const techId = action.tech?.id || 'unknown';
-      const techName = action.tech 
-        ? `${action.tech.first_name} ${action.tech.last_name}` 
+      // Chercher tech dans action.tech, action.technician, ou action.tech (d'intervention imbriquée)
+      const tech = action.tech || action.technician;
+
+      const techId = tech?.id || 'unknown';
+      const techName = tech
+        ? `${tech.firstName || tech.first_name || ''} ${
+            tech.lastName || tech.last_name || ''
+          }`.trim()
         : 'Non assigné';
-      
+
       if (!acc[techId]) {
         acc[techId] = { name: techName, time: 0, actions: 0 };
       }
-      
-      acc[techId].time += parseFloat(action.time_spent || 0);
+
+      acc[techId].time += parseFloat(action.time_spent || action.timeSpent || 0);
       acc[techId].actions += 1;
-      
+
       return acc;
     }, {});
 
     // Indicateurs clés
-    const actionsWithComplexity = actions.filter(a => a.complexity_score !== null);
-    const avgComplexity = actionsWithComplexity.length > 0
-      ? actionsWithComplexity.reduce((sum, a) => sum + a.complexity_score, 0) / actionsWithComplexity.length
-      : 0;
+    const actionsWithComplexity = actions.filter((a) => a.complexity_score !== null);
+    const avgComplexity =
+      actionsWithComplexity.length > 0
+        ? actionsWithComplexity.reduce((sum, a) => sum + a.complexity_score, 0) /
+          actionsWithComplexity.length
+        : 0;
 
-    const avgTimePerIntervention = interventions.length > 0
-      ? totalTimeSpent / interventions.length
-      : 0;
+    const avgTimePerIntervention =
+      interventions.length > 0 ? totalTimeSpent / interventions.length : 0;
 
     const curativeCount = byType['CUR'] || 0;
-    const availabilityRate = interventions.length > 0 
-      ? ((interventions.length - curativeCount) / interventions.length) * 100 
-      : 100;
+    const availabilityRate =
+      interventions.length > 0
+        ? ((interventions.length - curativeCount) / interventions.length) * 100
+        : 100;
 
     // État global
-    const hasUrgent = openInterventions.some(i => i.priority === 'urgent');
-    const hasCurative = openInterventions.some(i => i.type === 'CUR');
-    
+    const hasUrgent = openInterventions.some((i) => i.priority === 'urgent');
+    const hasCurative = openInterventions.some((i) => i.type === 'CUR');
+
     let globalStatus = 'ok';
     if (hasUrgent) {
       globalStatus = 'critical';
@@ -182,7 +182,7 @@ export const useMachineStats = (interventions, actions, subcategories) => {
       avgComplexity,
       last30DaysTime,
       avgTimePerIntervention,
-      totalActions: actions.length
+      totalActions: actions.length,
     };
   }, [interventions, actions, subcategories]);
 };

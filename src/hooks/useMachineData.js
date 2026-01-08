@@ -35,9 +35,13 @@ export const useMachineData = (machineId) => {
       // Filtrer les interventions de cette machine
       const machineInterventions = allInterventions.filter((i) => i.machine?.id === machineId);
 
-      // Filtrer les actions liées aux interventions de cette machine
-      const interventionIds = new Set(machineInterventions.map((i) => i.id));
-      const machineActions = allActions.filter((a) => interventionIds.has(a.intervention?.id));
+      // Extraire les actions directement depuis les interventions (elles contiennent les données expandues)
+      const machineActions = machineInterventions.flatMap((intervention) =>
+        (intervention.action || []).map((action) => ({
+          ...action,
+          intervention: { id: intervention.id, code: intervention.code, title: intervention.title },
+        }))
+      );
 
       setMachine(machineData);
       setInterventions(machineInterventions);
