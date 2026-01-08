@@ -71,6 +71,7 @@ export const mapInterventionToDomain = (item: any) => {
     status: normalizeStatus(item.status_actual),
     type: item.type_inter || 'CUR',
     priority: item.priority || 'normal',
+    createdAt: item.created_at,
     reportedDate: item.reported_date,
     machine: item.machine_id
       ? {
@@ -213,6 +214,7 @@ export const mapInterventionDomainToBackend = (payload: any) => {
 
   if (payload.type !== undefined) backend.type_inter = payload.type;
   if (payload.priority !== undefined) backend.priority = payload.priority;
+  if (payload.createdAt !== undefined) backend.created_at = payload.createdAt;
   if (payload.reportedDate !== undefined) backend.reported_date = payload.reportedDate;
   if (payload.reportedBy?.id !== undefined) backend.reported_by = payload.reportedBy.id;
   if (payload.techInitials !== undefined) backend.tech_initials = payload.techInitials;

@@ -29,6 +29,14 @@ import { useAuth } from "@/auth/AuthContext";
 
 // 6. API
 import { interventions, machines } from "@/lib/api/facade";
+import { INTERVENTION_TYPES } from "@/config/interventionTypes";
+
+// Normalize default datetime-local value (local time, no timezone drift)
+const getDefaultDateTimeLocal = () => {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
+};
 
 // ===== COMPONENT =====
 /**
@@ -58,6 +66,7 @@ export default function InterventionCreate() {
     priority: "normale",
     machine_id: null,
     reportedBy_id: null,
+    createdAt: getDefaultDateTimeLocal(),
   });
 
   const [localError, setLocalError] = useState(null);
@@ -108,6 +117,11 @@ export default function InterventionCreate() {
       return;
     }
 
+    if (!formData.createdAt || Number.isNaN(Date.parse(formData.createdAt))) {
+      setLocalError("Please provide a valid creation date");
+      return;
+    }
+
     // Payload - using domain DTO structure (API_CONTRACTS.md compliant)
     const initials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
     const payload = {
@@ -116,6 +130,7 @@ export default function InterventionCreate() {
       priority: formData.priority,
       machine: { id: formData.machine_id },
       status: "open",
+      createdAt: new Date(formData.createdAt).toISOString(),
       reportedDate: new Date().toISOString(),
       reportedBy: formData.reportedBy_id ? { id: formData.reportedBy_id } : undefined,
       techInitials: initials ? initials.toUpperCase() : undefined,
@@ -151,6 +166,19 @@ export default function InterventionCreate() {
                 placeholder="Intervention title"
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
+                required
+              />
+            </Box>
+
+            {/* Creation Date */}
+            <Box>
+              <Text as="label" size="2" weight="bold" mb="2">
+                Creation Date <Text color="red">*</Text>
+              </Text>
+              <TextField.Root
+                type="datetime-local"
+                value={formData.createdAt}
+                onChange={(e) => handleChange("createdAt", e.target.value)}
                 required
               />
             </Box>
@@ -211,9 +239,11 @@ export default function InterventionCreate() {
               >
                 <Select.Trigger />
                 <Select.Content>
-                  <Select.Item value="CUR">Curative</Select.Item>
-                  <Select.Item value="PRE">Preventive</Select.Item>
-                  <Select.Item value="PRO">Project</Select.Item>
+                  {INTERVENTION_TYPES.map((type) => (
+                    <Select.Item key={type.id} value={type.id}>
+                      {type.title}
+                    </Select.Item>
+                  ))}
                 </Select.Content>
               </Select.Root>
             </Box>

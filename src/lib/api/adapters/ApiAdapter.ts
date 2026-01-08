@@ -88,6 +88,7 @@ export interface Intervention {
   status: InterventionStatus;
   type: InterventionType;
   priority?: InterventionPriority;
+  createdAt?: string;
   reportedDate?: string;
   machine?: {
     id: string;
