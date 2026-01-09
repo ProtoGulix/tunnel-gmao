@@ -1,5 +1,12 @@
 # Changelog
+## 1.2.6 - 2026-01-09
 
+### Export / Paniers fournisseurs
+
+- **Affichage du fabricant** : Les informations du fabricant (nom + référence) s'affichent correctement dans les exports CSV et emails en chargeant les données depuis la référence fournisseur
+- **Format d'export simplifié** : Une ligne par article avec les champs essentiels (nom, fabricant, réf fab, specs, quantité)
+- **Format cohérent** : Le mail texte (mailto) et le mail HTML affichent maintenant exactement le même format (délimiteurs "-", "N/A" pour les valeurs manquantes)
+- **Référence commande** : Le numéro de commande s'affiche correctement dans le mail
 ## 1.2.5 - 2026-01-08
 
 ### UX / Sidebar

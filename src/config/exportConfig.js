@@ -51,22 +51,22 @@ export const EMAIL_CONFIG = {
       table {
         border-collapse: collapse;
         width: 100%;
-        margin: 20px 0;
+        margin: 5px 0;
         font-family: Arial, sans-serif;
       }
       th {
         background-color: #1f3a5f;
         color: white;
-        padding: 10px;
+        padding: 5px;
         text-align: left;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
       }
       td {
-        padding: 10px;
+        padding: 5px;
         border-bottom: 1px solid #e5e7eb;
         vertical-align: top;
-        font-size: 13px;
+        font-size: 12px;
       }
       tr:nth-child(even) { background-color: #f9fafb; }
       tr:hover { background-color: #f3f4f6; }
@@ -86,52 +86,16 @@ export const EMAIL_CONFIG = {
   generateTableHTML: (normalizedLines) => {
     const rows = normalizedLines
       .map((line) => {
-        const metaParts = [
-          line.dimension && `📐 ${line.dimension}`,
-          line.family && `🏷️ ${line.family}`,
-          line.subFamily && line.subFamily !== line.family ? line.subFamily : '',
-          line.location && `📍 ${line.location}`,
-        ]
-          .filter(Boolean)
-          .join(' • ');
-
-        const requesters = line.requesters.length ? line.requesters.join(', ') : '—';
-        const interventions = line.interventions.length ? line.interventions.join(', ') : '—';
-
         return `
       <tr>
         <td class="mono">${line.index}</td>
-        <td>
-          <div class="item-name">${line.name}</div>
-          ${metaParts ? `<div class="item-meta">${metaParts}</div>` : ''}
-        </td>
-        <td>
-          <div><strong>Interne:</strong> ${line.internalRef || '—'}</div>
-          <div><strong>Fournisseur:</strong> ${line.supplierRef || '—'}</div>
-          <div><strong>Fabricant:</strong> ${line.manufacturerName || '—'}${
-          line.manufacturerRef ? ` (${line.manufacturerRef})` : ''
-        }</div>
-          ${
-            line.manufacturerDesignation
-              ? `<div class="muted">${line.manufacturerDesignation}</div>`
-              : ''
-          }
-        </td>
-        <td>
-          <div class="spec-title">${line.defaultSpecText || '—'}</div>
-          ${
-            line.fullSpecs && line.fullSpecs !== line.defaultSpecText
-              ? `<div class="spec-muted">${line.fullSpecs}</div>`
-              : ''
-          }
-        </td>
+        <td class="item-name">${line.name}</td>
+        <td>${line.manufacturerName || '—'}</td>
+        <td>${line.manufacturerRef || '—'}</td>
+        <td>${line.defaultSpecText || '—'}</td>
         <td class="quantity">
           <div class="qty">${line.quantity}</div>
           <div class="unit">${line.unit}</div>
-        </td>
-        <td>
-          <div><strong>Demandeur(s):</strong> ${requesters}</div>
-          <div><strong>Intervention(s):</strong> ${interventions}</div>
         </td>
       </tr>
       `;
@@ -143,11 +107,11 @@ export const EMAIL_CONFIG = {
         <thead>
           <tr>
             <th>#</th>
-            <th>Article / Famille</th>
-            <th>Références</th>
-            <th>Spécifications</th>
+            <th>Référence stock</th>
+            <th>Fabricant</th>
+            <th>Ref fabricant</th>
+            <th>Specs</th>
             <th>Qté</th>
-            <th>Demandes</th>
           </tr>
         </thead>
         <tbody>

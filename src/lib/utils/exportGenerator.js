@@ -31,7 +31,7 @@ const formatSpecs = (specs = []) => {
 export const normalizeLinesForExport = (lines = []) =>
   lines.map((line, index) => {
     const item = line?.stock_item_id || {};
-    const manufacturer = item.manufacturer_item_id || {};
+    const manufacturer = line?.manufacturer_item_id || {};
     const purchaseRequests = line?.purchase_requests || [];
 
     const requesters = uniqueValues(
@@ -112,44 +112,14 @@ export function generateEmailBody(order, lines) {
   const totalQty = normalized.reduce((sum, line) => sum + line.quantity, 0);
   const supplierName = order.supplier_id?.name || '';
   const contactName = order.supplier_id?.contact_name || '';
+  const orderNumber = order.order_number || order.orderNumber || '—';
 
   let body = `${EMAIL_CONFIG.body.greeting(supplierName, contactName)}\r\n\r\n`;
-  body += `${EMAIL_CONFIG.body.intro(order.order_number)}\r\n\r\n`;
+  body += `${EMAIL_CONFIG.body.intro(orderNumber)}\r\n\r\n`;
 
   normalized.forEach((line) => {
-    const details = [
-      line.dimension && `Dim: ${line.dimension}`,
-      line.family && `Fam: ${line.family}`,
-      line.subFamily && `Sous-fam: ${line.subFamily}`,
-      line.location && `Loc: ${line.location}`,
-    ]
-      .filter(Boolean)
-      .join(' | ');
-
-    body += `${line.index}. ${line.name}\r\n`;
-    body += `   Ref interne: ${line.internalRef || '—'} | Ref fournisseur: ${
-      line.supplierRef || '—'
-    }\r\n`;
-    body += `   Fabricant: ${line.manufacturerName || '—'}${
-      line.manufacturerRef ? ` (réf: ${line.manufacturerRef})` : ''
-    }${line.manufacturerDesignation ? ` - ${line.manufacturerDesignation}` : ''}\r\n`;
-    if (details) {
-      body += `   Détails: ${details}\r\n`;
-    }
-    if (line.defaultSpecText && line.defaultSpecText !== '—') {
-      body += `   Spéc: ${line.defaultSpecText}\r\n`;
-    }
-    if (line.fullSpecs && line.fullSpecs !== '—' && line.fullSpecs !== line.defaultSpecText) {
-      body += `   Spéc (complètes): ${line.fullSpecs}\r\n`;
-    }
-    body += `   Qté: ${line.quantity} ${line.unit}\r\n`;
-    if (line.requesters.length) {
-      body += `   Demandeur(s): ${line.requesters.join(', ')}\r\n`;
-    }
-    if (line.interventions.length) {
-      body += `   Intervention(s): ${line.interventions.join(', ')}\r\n`;
-    }
-    body += `\r\n`;
+    const specs = line.defaultSpecText && line.defaultSpecText !== '—' ? line.defaultSpecText : 'N/A';
+    body += `${line.index}. ${line.name} - ${line.manufacturerName || 'N/A'} - ${line.manufacturerRef || 'N/A'} - ${specs} - ${line.quantity} ${line.unit}\r\n`;
   });
 
   body += `\r\n------------------\r\n`;

@@ -91,7 +91,8 @@ export const fetchSupplierOrder = async (id: string) => {
 
 export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
   return apiCall(async () => {
-    const { data } = await api.get('/items/supplier_order_line', {
+    // 1. Fetch supplier order lines
+    const { data: linesData } = await api.get('/items/supplier_order_line', {
       params: {
         filter: { supplier_order_id: { _eq: supplierOrderId } },
         fields: [
@@ -105,10 +106,6 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
           'stock_item_id.dimension',
           'stock_item_id.location',
           'stock_item_id.unit',
-          'stock_item_id.manufacturer_item_id.id',
-          'stock_item_id.manufacturer_item_id.manufacturer_ref',
-          'stock_item_id.manufacturer_item_id.manufacturer_name',
-          'stock_item_id.manufacturer_item_id.designation',
           'supplier_ref_snapshot',
           'quantity',
           'unit_price',
@@ -119,7 +116,47 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
         _t: Date.now(),
       },
     });
-    return data?.data || [];
+    
+    const lines = linesData?.data || [];
+    
+    // 2. Fetch all stock_item_supplier links with manufacturer data
+    const { data: suppliersData } = await api.get('/items/stock_item_supplier', {
+      params: {
+        fields: [
+          'id',
+          'stock_item_id',
+          'supplier_ref',
+          'manufacturer_item_id.id',
+          'manufacturer_item_id.manufacturer_ref',
+          'manufacturer_item_id.manufacturer_name',
+          'manufacturer_item_id.designation',
+        ].join(','),
+        limit: -1,
+        _t: Date.now(),
+      },
+    });
+    
+    const supplierLinks = suppliersData?.data || [];
+    
+    // 3. Enrich lines with manufacturer data from supplier links
+    const enrichedLines = lines.map((line: Record<string, unknown>) => {
+      const stockItem = line.stock_item_id as Record<string, unknown> | undefined;
+      const stockItemId = stockItem?.id || line.stock_item_id;
+      const supplierRef = line.supplier_ref_snapshot;
+      
+      // Find matching supplier link
+      const matchingLink = supplierLinks.find(
+        (link: Record<string, unknown>) =>
+          link.stock_item_id === stockItemId && link.supplier_ref === supplierRef
+      );
+      
+      return {
+        ...line,
+        manufacturer_item_id: matchingLink?.manufacturer_item_id || null,
+      };
+    });
+    
+    return enrichedLines;
   }, 'FetchSupplierOrderLines');
 };
 
