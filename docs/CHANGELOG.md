@@ -1,4 +1,11 @@
 # Changelog
+
+## 1.2.9 - 2026-01-09
+
+### En développement
+
+- ...
+
 ## 1.2.8 - 2026-01-09
 
 ### UX / Composants réutilisables
@@ -32,6 +39,7 @@
 - **Format d'export simplifié** : Une ligne par article avec les champs essentiels (nom, fabricant, réf fab, specs, quantité)
 - **Format cohérent** : Le mail texte (mailto) et le mail HTML affichent maintenant exactement le même format (délimiteurs "-", "N/A" pour les valeurs manquantes)
 - **Référence commande** : Le numéro de commande s'affiche correctement dans le mail
+
 ## 1.2.5 - 2026-01-08
 
 ### UX / Sidebar
