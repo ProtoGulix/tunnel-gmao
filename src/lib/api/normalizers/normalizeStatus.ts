@@ -58,14 +58,22 @@ export const normalizeInterventionStatus = (
   
   if (typeof input === 'string') {
     statusValue = input;
-  } else if (input && typeof input === 'object' && 'value' in input) {
-    statusValue = (input as StatusObject).value;
+  } else if (input && typeof input === 'object') {
+    // Directus sometimes provides { id: 'ferme', value?: 'Ferme' }
+    // Must extract id (the status code), not value (the display label)
+    const obj = input as StatusObject;
+    statusValue = obj.id || obj.value;
   }
   
   // Normalize to lowercase
   if (statusValue) {
     const normalized = statusValue.toLowerCase();
-    
+
+    // Map common backend values to domain enum
+    if (normalized === 'ouvert') return 'open';
+    if (normalized === 'attente_pieces' || normalized === 'attente_prod') return 'in_progress';
+    if (normalized === 'ferme') return 'closed';
+
     // Validate against domain types
     if (normalized === 'open' || normalized === 'in_progress' || normalized === 'closed') {
       return normalized as InterventionStatus;

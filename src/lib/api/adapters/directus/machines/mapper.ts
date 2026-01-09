@@ -107,10 +107,9 @@ export const enrichMachinesWithStats = (
   machines: Machine[], 
   interventions: Intervention[]
 ): MachineWithStats[] => {
-  // Filter open interventions only
-  const openInterventions = interventions.filter(
-    (i) => i.status !== 'closed'
-  );
+  // Filter open interventions only - status is already normalized by mapInterventionToDomain
+  // Exclude 'closed' status (mapped from backend 'ferme')
+  const openInterventions = interventions.filter((i) => i.status !== 'closed');
 
   return machines.map((machine) => {
     // Get interventions for this machine

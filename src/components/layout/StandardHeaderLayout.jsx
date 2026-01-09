@@ -93,22 +93,29 @@ export default function StandardHeaderLayout(props) {
 
       {/* Stats */}
       {stats && stats.length > 0 && (
-        <Flex gap="4" align="center">
+        <Flex gap="4" align="center" wrap="wrap">
           {stats.map((stat, idx) => (
             <Flex
               key={idx}
               direction="column"
               gap="1"
+              align={stat.color ? "start" : "end"}
               style={{
-                textAlign: "right",
+                textAlign: stat.color ? "left" : "right",
               }}
             >
               <Text size="1" color="gray" weight="medium">
                 {stat.label}
               </Text>
-              <Text size="5" weight="bold">
-                {stat.value}
-              </Text>
+              {stat.color ? (
+                <Badge color={stat.color} size="2">
+                  {stat.value}
+                </Badge>
+              ) : (
+                <Text size="5" weight="bold">
+                  {stat.value}
+                </Text>
+              )}
               {stat.info && (
                 <Text size="1" color="gray">
                   {stat.info}
@@ -184,6 +191,7 @@ StandardHeaderLayout.propTypes = {
       label: PropTypes.string.isRequired,
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       info: PropTypes.string,
+      color: PropTypes.string,
     })
   ),
   urgentBadge: PropTypes.shape({

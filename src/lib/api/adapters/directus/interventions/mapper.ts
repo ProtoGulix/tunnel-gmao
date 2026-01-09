@@ -4,55 +4,15 @@
  * Pure mapping functions. No backend calls. No HTTP. No apiCall wrapper.
  * Maps Directus responses to domain DTOs defined in API_CONTRACTS.md.
  * 
+ * Uses centralized normalizers from @/lib/api/normalizers
+ * 
  * @module lib/api/adapters/directus/interventions/mapper
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Mapper functions handle untyped backend data - type safety enforced at adapter boundary
 
-// ============================================================================
-// Utility Functions (Normalizers)
-// ============================================================================
-
-/**
- * Normalizes raw status value to domain status enum string.
- * Maps Directus French values → domain enum.
- *
- * Handles both string and object formats:
- * - string: 'ouvert' | 'attente_pieces' | 'attente_prod' | 'ferme' | 'cancelled'
- * - object: { id: 'ouvert', value: 'ouvert' } or similar
- *
- * Mapping:
- * - 'ouvert' → 'open'
- * - 'attente_pieces' / 'attente_prod' → 'in_progress'
- * - 'ferme' → 'closed'
- * - 'cancelled' → 'cancelled'
- *
- * @param raw - Raw status value from backend
- * @returns Normalized status ('open' | 'in_progress' | 'closed' | 'cancelled')
- */
-const normalizeStatus = (raw: any): string => {
-  if (!raw) return 'open';
-
-  // Extract value: try id field first, then value field, then toString
-  let status = '';
-  if (typeof raw === 'string') {
-    status = raw;
-  } else if (typeof raw === 'object') {
-    status = raw.id || raw.value || String(raw);
-  }
-
-  status = (status || '').toLowerCase().trim();
-
-  // Map Directus backend values to domain DTO enum
-  if (status === 'ouvert') return 'open';
-  if (status === 'attente_pieces' || status === 'attente_prod') return 'in_progress';
-  if (status === 'ferme') return 'closed';
-  if (status === 'cancelled') return 'cancelled';
-
-  // Default fallback
-  return 'open';
-};
+import { normalizeInterventionStatus } from '@/lib/api/normalizers';
 
 // ============================================================================
 // Response Mappers (Backend → Domain)
@@ -68,7 +28,7 @@ export const mapInterventionToDomain = (item: any) => {
     id: item.id,
     code: item.code,
     title: item.title,
-    status: normalizeStatus(item.status_actual),
+    status: normalizeInterventionStatus(item.status_actual),
     type: item.type_inter || 'CUR',
     priority: item.priority || 'normal',
     createdAt: item.created_at,
@@ -169,13 +129,13 @@ export const mapStatusLogToDomain = (item: any) => {
     from: item.status_from
       ? {
           id: item.status_from.id,
-          value: normalizeStatus(item.status_from),
+          value: normalizeInterventionStatus(item.status_from),
         }
       : undefined,
     to: item.status_to
       ? {
           id: item.status_to.id,
-          value: normalizeStatus(item.status_to),
+          value: normalizeInterventionStatus(item.status_to),
         }
       : undefined,
     technician: item.technician_id
