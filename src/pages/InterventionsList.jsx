@@ -10,21 +10,20 @@ import {
   Container,
   Box,
   Text,
-  Button,
   Badge,
-  Table,
   Flex,
-  TextField,
   Tooltip,
 } from '@radix-ui/themes';
 
 // 4. Icons (conformément aux conventions, via '@/lib/icons')
-import { Search, ArrowRight, FileText } from '@/lib/icons';
+import { FileText } from '@/lib/icons';
 
 // 5. Components
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import SearchField from '@/components/common/SearchField';
+import InteractiveTable from '@/components/common/InteractiveTable';
 
 // 6. Hooks
 import { useApiCall } from '@/hooks/useApiCall';
@@ -191,6 +190,19 @@ export default function InterventionsList() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, []);
 
+  // Code couleur âge (visible seulement si > seuil)
+  const getAgeColor = useCallback((days) => {
+    if (days < 7) return 'gray';
+    if (days < 30) return 'orange';
+    return 'red';
+  }, []);
+
+  const shouldShowAge = useCallback((days, priority) => {
+    if (priority?.toLowerCase() === 'urgent' && days > 7) return true;
+    if (days > 30) return true;
+    return false;
+  }, []);
+
   // Tri : priorité, fiches non imprimées en haut (pour clôture), puis âge décroissant
   const sortInterventions = useCallback((interventions) => {
     const priorityOrder = { urgent: 0, important: 1, normal: 2, faible: 3 };
@@ -230,9 +242,206 @@ export default function InterventionsList() {
     navigate("/intervention/new");
   }, [navigate]);
 
-  const handleOpenIntervention = useCallback((id) => {
-    navigate(`/intervention/${id}`);
+  const handleOpenIntervention = useCallback((interv) => {
+    navigate(`/intervention/${interv.id}`);
   }, [navigate]);
+
+  // Configuration des colonnes pour BLOC 1 : À faire maintenant
+  const actionnableColumns = [
+    { key: 'intervention', header: 'Intervention', width: undefined, align: 'left' },
+    { key: 'age', header: 'Âge', width: '80px', align: 'right' },
+    { key: '_action', header: '', width: '100px', align: 'center' }
+  ];
+
+  // Configuration des colonnes pour BLOC 2 : Bloqué
+  const bloqueColumns = [
+    { key: 'intervention', header: 'Intervention bloquée', width: undefined, align: 'left' },
+    { key: '_action', header: '', width: '100px', align: 'center' }
+  ];
+
+  // Configuration des colonnes pour BLOC 3 & 4 : Projets et Archivé
+  const standardColumns = [
+    { key: 'title', header: 'Titre', width: undefined, align: 'left' },
+    { key: 'status', header: 'Statut', width: undefined, align: 'left' },
+    { key: 'age', header: 'Âge', width: undefined, align: 'left' },
+    { key: '_action', header: '', width: '100px', align: 'center' }
+  ];
+
+  // Fonction de rendu des cellules pour BLOC 1 : À faire maintenant
+  const renderActionnableCell = useCallback((interv, column) => {
+    const priorityConfig = PRIORITY_CONFIG[interv.priority?.toLowerCase()] || PRIORITY_CONFIG.normal;
+    const age = calculateAge(interv.reportedDate);
+    const ageColor = getAgeColor(age);
+    const showAge = shouldShowAge(age, interv.priority);
+    const machineCode = interv.machine?.code || 'SUPP';
+    const intervCode = interv.code || '';
+    const responsableInitiales = (interv.techInitials || '—').toUpperCase();
+
+    switch (column.key) {
+      case 'intervention':
+        return (
+          <Flex direction="column" gap="2">
+            <Flex align="center" gap="2" wrap="wrap">
+              <Badge color={priorityConfig.color} size="1" variant="solid">
+                {interv.priority || 'Normal'}
+              </Badge>
+              <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {machineCode}
+              </Badge>
+              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {intervCode}
+              </Badge>
+              {interv.printedFiche && (
+                <Tooltip content="Fiche imprimée et classée">
+                  <Badge color="green" variant="soft" size="1">
+                    <FileText size={12} style={{ marginRight: '2px' }} />
+                    ✓ Imprimée
+                  </Badge>
+                </Tooltip>
+              )}
+              <Text size="2" style={{ color: 'var(--gray-10)' }}>·</Text>
+              <Text size="2" style={{ color: 'var(--gray-11)' }}>
+                {responsableInitiales}
+              </Text>
+            </Flex>
+            <Text size="3">
+              {interv.title || 'Sans titre'}
+            </Text>
+          </Flex>
+        );
+      
+      case 'age':
+        if (!showAge) return null;
+        return (
+          <Badge color={ageColor} variant="soft" size="1">
+            {age}j
+          </Badge>
+        );
+      
+      default:
+        return null;
+    }
+  }, [calculateAge, getAgeColor, shouldShowAge]);
+
+  // Fonction de rendu des cellules pour BLOC 2 : Bloqué
+  const renderBloqueCell = useCallback((interv, column) => {
+    const age = calculateAge(interv.reportedDate);
+    const machineCode = interv.machine?.code || 'SUPP';
+    const intervCode = interv.code || '';
+    const responsableInitiales = (interv.techInitials || '—').toUpperCase();
+    const cause = interv.status?.id === 'attente_pieces' ? 'attente achat' : 'attente fournisseur';
+    const messageBloque = `En ${cause} depuis ${age}j`;
+
+    switch (column.key) {
+      case 'intervention':
+        return (
+          <Flex direction="column" gap="0">
+            <Text size="2" weight="medium" style={{ marginBottom: '2px' }}>
+              {interv.title || 'Sans titre'}
+            </Text>
+            <Text size="2" style={{ color: 'var(--amber-10)', fontWeight: '500', marginBottom: '4px' }}>
+              {messageBloque}
+            </Text>
+            <Flex align="center" gap="2" style={{ opacity: 0.75 }}>
+              <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {machineCode}
+              </Badge>
+              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {intervCode}
+              </Badge>
+              {interv.printedFiche && (
+                <Tooltip content="Fiche imprimée et classée">
+                  <Badge color="green" variant="soft" size="1">
+                    <FileText size={12} style={{ marginRight: '2px' }} />
+                    ✓ Imprimée
+                  </Badge>
+                </Tooltip>
+              )}
+              <Text size="1" style={{ color: 'var(--gray-10)' }}>·</Text>
+              <Text size="1" style={{ color: 'var(--gray-10)' }}>
+                {responsableInitiales}
+              </Text>
+            </Flex>
+          </Flex>
+        );
+      
+      default:
+        return null;
+    }
+  }, [calculateAge]);
+
+  // Fonction de rendu des cellules pour BLOC 3 & 4 : Projets et Archivé
+  const renderStandardCell = useCallback((interv, column) => {
+    const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ouvert;
+    const age = calculateAge(interv.reportedDate);
+    const machineCode = interv.machine?.code || 'SUPP';
+    const intervCode = interv.code || '';
+
+    switch (column.key) {
+      case 'title':
+        return (
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium">
+              {interv.title || 'Sans titre'}
+            </Text>
+            <Flex align="center" gap="2" style={{ opacity: 0.65 }}>
+              <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {machineCode}
+              </Badge>
+              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                {intervCode}
+              </Badge>
+              {interv.printedFiche && (
+                <Tooltip content="Fiche imprimée et classée">
+                  <Badge color="green" variant="soft" size="1">
+                    <FileText size={12} style={{ marginRight: '2px' }} />
+                    ✓ Imprimée
+                  </Badge>
+                </Tooltip>
+              )}
+            </Flex>
+          </Flex>
+        );
+      
+      case 'status':
+        return (
+          <Badge color={statusConfig.color} size="1" variant="soft">
+            {statusConfig.label}
+          </Badge>
+        );
+      
+      case 'age':
+        return <Text size="2" color="gray">{age}j</Text>;
+      
+      default:
+        return null;
+    }
+  }, [calculateAge]);
+
+  // Fonction de style des lignes pour BLOC 1 : À faire maintenant
+  const getActionnableRowStyle = useCallback((interv) => {
+    const priorityConfig = PRIORITY_CONFIG[interv.priority?.toLowerCase()] || PRIORITY_CONFIG.normal;
+    
+    return {
+      opacity: interv.printedFiche ? 0.5 : 1,
+      backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
+      borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : `var(--${priorityConfig.color}-9)`}`
+    };
+  }, []);
+
+  // Fonction de style des lignes pour BLOC 2 : Bloqué
+  const getBloqueRowStyle = useCallback(() => ({
+    opacity: 0.7,
+    backgroundColor: "var(--gray-2)",
+    borderLeft: "4px solid var(--amber-9)"
+  }), []);
+
+  // Fonction de style des lignes pour BLOC 3 & 4 : Projets et Archivé
+  const getStandardRowStyle = useCallback((interv) => ({
+    opacity: interv.printedFiche ? 0.5 : 1,
+    backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
+    borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : 'var(--blue-9)'}`
+  }), []);
 
   // Badge cause bloquante (jamais redondant avec statut)
   const getBadgeCause = useCallback((intervention) => {
@@ -240,19 +449,6 @@ export default function InterventionsList() {
     if (statusId === 'attente_pieces') return { label: 'Achat', color: 'orange' };
     if (statusId === 'attente_prod') return { label: 'Externe', color: 'amber' };
     return null;
-  }, []);
-
-  // Code couleur âge (visible seulement si > seuil)
-  const getAgeColor = useCallback((days) => {
-    if (days < 7) return 'gray';
-    if (days < 30) return 'orange';
-    return 'red';
-  }, []);
-
-  const shouldShowAge = useCallback((days, priority) => {
-    if (priority?.toLowerCase() === 'urgent' && days > 7) return true;
-    if (days > 30) return true;
-    return false;
   }, []);
 
   // Configuration du header
@@ -298,29 +494,12 @@ export default function InterventionsList() {
       <Container size="4" p="3">
         {/* Champ de recherche global */}
         <Box mb="4">
-          <TextField.Root
-            size="3"
-            placeholder="Rechercher par code machine, code intervention ou mot-clé"
+          <SearchField
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-          >
-            <TextField.Slot>
-              <Search size={18} />
-            </TextField.Slot>
-            {searchTerm && (
-              <TextField.Slot>
-                <Button
-                  size="1"
-                  variant="ghost"
-                  color="gray"
-                  onClick={() => setSearchTerm("")}
-                  style={{ cursor: "pointer" }}
-                >
-                  ✕
-                </Button>
-              </TextField.Slot>
-            )}
-          </TextField.Root>
+            placeholder="Rechercher par code machine, code intervention ou mot-clé"
+            size="3"
+          />
         </Box>
 
         {totalOpen === 0 ? (
@@ -330,385 +509,52 @@ export default function InterventionsList() {
         ) : (
           <Flex direction="column" gap="5">
             {/* BLOC 1 : À FAIRE MAINTENANT */}
-            {sortedBlocks.actionnable.length > 0 && (
-              <Box>
-                <Flex align="center" gap="2" mb="3">
-                  <Text size="5" weight="bold">🔴 À faire maintenant</Text>
-                  <Badge color="red" variant="solid">{sortedBlocks.actionnable.length}</Badge>
-                </Flex>
-                <Table.Root variant="surface">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeaderCell>Intervention</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell width="80px" style={{ textAlign: "right" }}>Âge</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell width="100px"></Table.ColumnHeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {sortedBlocks.actionnable.map((interv) => {
-                      const priorityConfig = PRIORITY_CONFIG[interv.priority?.toLowerCase()] || PRIORITY_CONFIG.normal;
-                      const age = calculateAge(interv.reportedDate);
-                      const ageColor = getAgeColor(age);
-                      const showAge = shouldShowAge(age, interv.priority);
-                      const isNormalPriority = interv.priority?.toLowerCase() === 'normal' || !interv.priority;
-                      
-                      // Infos secondaires : CODE_MACHINE · CODE_INTERVENTION
-                      const machineCode = interv.machine?.code || 'SUPP';
-                      const intervCode = interv.code || '';
-                      const responsableInitiales = (interv.techInitials || '—').toUpperCase();
-
-                      return (
-                        <Table.Row 
-                          key={interv.id}
-                          onClick={() => handleOpenIntervention(interv.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          style={{ 
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            opacity: interv.printedFiche ? 0.5 : 1,
-                            backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
-                            borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : `var(--${priorityConfig.color}-9)`}`
-                          }}
-                        >
-                          <Table.Cell style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-                            <Flex direction="column" gap="2">
-                              <Flex align="center" gap="2" wrap="wrap">
-                                <Badge color={priorityConfig.color} size="1" variant="solid">
-                                  {interv.priority || 'Normal'}
-                                </Badge>
-                                <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {machineCode}
-                                </Badge>
-                                <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {intervCode}
-                                </Badge>
-                                {interv.printedFiche && (
-                                  <Tooltip content="Fiche imprimée et classée">
-                                    <Badge color="green" variant="soft" size="1">
-                                      <FileText size={12} style={{ marginRight: '2px' }} />
-                                      ✓ Imprimée
-                                    </Badge>
-                                  </Tooltip>
-                                )}
-                                <Text size="2" style={{ color: 'var(--gray-10)' }}>·</Text>
-                                <Text size="2" style={{ color: 'var(--gray-11)' }}>
-                                  {responsableInitiales}
-                                </Text>
-                              </Flex>
-                              <Text size="3">
-                                {interv.title || 'Sans titre'}
-                              </Text>
-                            </Flex>
-                          </Table.Cell>
-                          <Table.Cell style={{ textAlign: "right", verticalAlign: "middle", paddingTop: '8px', paddingBottom: '8px' }}>
-                            {showAge && (
-                              <Badge color={ageColor} variant="soft" size="1">
-                                {age}j
-                              </Badge>
-                            )}
-                          </Table.Cell>
-                          <Table.Cell style={{ textAlign: "center", verticalAlign: "middle", paddingTop: '8px', paddingBottom: '8px' }}>
-                            <Button
-                              size="2"
-                              variant="soft"
-                              onClick={() => handleOpenIntervention(interv.id)}
-                            >
-                              <ArrowRight size={14} />
-                              Ouvrir
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            )}
+            <InteractiveTable
+              title="🔴 À faire maintenant"
+              badge={<Badge color="red" variant="solid">{sortedBlocks.actionnable.length}</Badge>}
+              columns={actionnableColumns}
+              data={sortedBlocks.actionnable}
+              onRowClick={handleOpenIntervention}
+              renderCell={renderActionnableCell}
+              getRowStyle={getActionnableRowStyle}
+              actionLabel="Ouvrir"
+            />
 
             {/* BLOC 2 : BLOQUÉ */}
-            {sortedBlocks.bloque.length > 0 && (
-              <Box>
-                <Flex align="center" gap="2" mb="3">
-                  <Text size="5" weight="bold">🟠 Bloqué</Text>
-                  <Badge color="amber" variant="soft">{sortedBlocks.bloque.length}</Badge>
-                </Flex>
-                <Table.Root variant="surface">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeaderCell>Intervention bloquée</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell width="100px"></Table.ColumnHeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {sortedBlocks.bloque.map((interv) => {
-                      const age = calculateAge(interv.reportedDate);
-                      const badgeCause = getBadgeCause(interv);
-                      
-                      // Message clair : "Bloqué – attente achat depuis Xj"
-                      const machineCode = interv.machine?.code || 'SUPP';
-                      const intervCode = interv.code || '';
-                      const responsableInitiales = (interv.techInitials || '—').toUpperCase();
-                      const cause = badgeCause?.label === 'Achat' ? 'attente achat' : 'attente fournisseur';
-                      const messageBloque = `En ${cause} depuis ${age}j`;
-
-                      return (
-                        <Table.Row 
-                          key={interv.id}
-                          onClick={() => handleOpenIntervention(interv.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          style={{ 
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            opacity: 0.7,
-                            backgroundColor: "var(--gray-2)",
-                            borderLeft: "4px solid var(--amber-9)",
-                            fontWeight: interv.printedFiche ? 'normal' : '600'
-                          }}
-                        >
-                          <Table.Cell style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-                            <Flex direction="column" gap="0">
-                              <Text size="2" weight="medium" style={{ marginBottom: '2px' }}>
-                                {interv.title || 'Sans titre'}
-                              </Text>
-                              <Text size="2" style={{ color: 'var(--amber-10)', fontWeight: '500', marginBottom: '4px' }}>
-                                {messageBloque}
-                              </Text>
-                              <Flex align="center" gap="2" style={{ opacity: 0.75 }}>
-                                <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {machineCode}
-                                </Badge>
-                                <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {intervCode}
-                                </Badge>
-                                {interv.printedFiche && (
-                                  <Tooltip content="Fiche imprimée et classée">
-                                    <Badge color="green" variant="soft" size="1">
-                                      <FileText size={12} style={{ marginRight: '2px' }} />
-                                      ✓ Imprimée
-                                    </Badge>
-                                  </Tooltip>
-                                )}
-                                <Text size="1" style={{ color: 'var(--gray-10)' }}>·</Text>
-                                <Text size="1" style={{ color: 'var(--gray-10)' }}>
-                                  {responsableInitiales}
-                                </Text>
-                              </Flex>
-                            </Flex>
-                          </Table.Cell>
-                          <Table.Cell style={{ textAlign: "center", verticalAlign: "middle", paddingTop: '8px', paddingBottom: '8px' }}>
-                            <Button
-                              size="2"
-                              variant="soft"
-                              onClick={() => handleOpenIntervention(interv.id)}
-                            >
-                              <ArrowRight size={14} />
-                              Ouvrir
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            )}
+            <InteractiveTable
+              title="🟠 Bloqué"
+              badge={<Badge color="amber" variant="soft">{sortedBlocks.bloque.length}</Badge>}
+              columns={bloqueColumns}
+              data={sortedBlocks.bloque}
+              onRowClick={handleOpenIntervention}
+              renderCell={renderBloqueCell}
+              getRowStyle={getBloqueRowStyle}
+              actionLabel="Ouvrir"
+            />
 
             {/* BLOC 3 : PROJETS / SUPPORT */}
-            {sortedBlocks.projet.length > 0 && (
-              <Box>
-                <Flex align="center" gap="2" mb="3">
-                  <Text size="5" weight="bold">🔵 Projets / Support</Text>
-                  <Badge color="blue" variant="soft">{sortedBlocks.projet.length}</Badge>
-                </Flex>
-                <Table.Root variant="surface">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeaderCell>Titre</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Âge</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell width="100px"></Table.ColumnHeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {sortedBlocks.projet.map((interv) => {
-                      const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ouvert;
-                      const age = calculateAge(interv.reportedDate);
-                      const machineCode = interv.machine?.code || 'SUPP';
-                      const intervCode = interv.code || '';
+            <InteractiveTable
+              title="🔵 Projets / Support"
+              badge={<Badge color="blue" variant="soft">{sortedBlocks.projet.length}</Badge>}
+              columns={standardColumns}
+              data={sortedBlocks.projet}
+              onRowClick={handleOpenIntervention}
+              renderCell={renderStandardCell}
+              getRowStyle={getStandardRowStyle}
+              actionLabel="Ouvrir"
+            />
 
-                      return (
-                        <Table.Row 
-                          key={interv.id}
-                          onClick={() => handleOpenIntervention(interv.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          style={{ 
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            opacity: interv.printedFiche ? 0.5 : 1,
-                            backgroundColor: interv.printedFiche ? 'var(--gray-2)' : 'transparent',
-                            borderLeft: `4px solid ${interv.printedFiche ? 'var(--gray-6)' : 'var(--blue-9)'}`
-                          }}
-                        >
-                          <Table.Cell>
-                            <Flex direction="column" gap="1">
-                              <Text size="2" weight="medium">
-                                {interv.title || 'Sans titre'}
-                              </Text>
-                              <Flex align="center" gap="2" style={{ opacity: 0.65 }}>
-                                <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {machineCode}
-                                </Badge>
-                                <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {intervCode}
-                                </Badge>
-                                {interv.printedFiche && (
-                                  <Tooltip content="Fiche imprimée et classée">
-                                    <Badge color="green" variant="soft" size="1">
-                                      <FileText size={12} style={{ marginRight: '2px' }} />
-                                      ✓ Imprimée
-                                    </Badge>
-                                  </Tooltip>
-                                )}
-                              </Flex>
-                            </Flex>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Badge color={statusConfig.color} size="1" variant="soft">
-                              {statusConfig.label}
-                            </Badge>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="2" color="gray">{age}j</Text>
-                          </Table.Cell>
-                          <Table.Cell style={{ textAlign: "center" }}>
-                            <Button
-                              size="2"
-                              variant="soft"
-                              onClick={() => handleOpenIntervention(interv.id)}
-                            >
-                              <ArrowRight size={14} />
-                              Ouvrir
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            )}
-
-            {/* BLOC 4 : À ARCHIVER (closed/cancelled non imprimées) */}
-            {sortedBlocks.archivé.length > 0 && (
-              <Box>
-                <Flex align="center" gap="2" mb="3">
-                  <Text size="5" weight="bold">📂 À archiver</Text>
-                  <Badge color="blue" variant="soft">{sortedBlocks.archivé.length}</Badge>
-                </Flex>
-                <Table.Root variant="surface">
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeaderCell>Titre</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Âge</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell width="100px"></Table.ColumnHeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {sortedBlocks.archivé.map((interv) => {
-                      const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ferme;
-                      const age = calculateAge(interv.reportedDate);
-                      const machineCode = interv.machine?.code || 'SUPP';
-                      const intervCode = interv.code || '';
-
-                      return (
-                        <Table.Row 
-                          key={interv.id}
-                          onClick={() => handleOpenIntervention(interv.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(31, 58, 95, 0.12)';
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.boxShadow = 'none';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                          }}
-                          style={{ 
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            opacity: 1,
-                            borderLeft: '4px solid var(--blue-9)'
-                          }}
-                        >
-                          <Table.Cell>
-                            <Flex direction="column" gap="1">
-                              <Text size="2" weight="medium">
-                                {interv.title || 'Sans titre'}
-                              </Text>
-                              <Flex align="center" gap="2" style={{ opacity: 0.65 }}>
-                                <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {machineCode}
-                                </Badge>
-                                <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                                  {intervCode}
-                                </Badge>
-                                {interv.printedFiche && (
-                                  <Tooltip content="Fiche imprimée et classée">
-                                    <Badge color="green" variant="soft" size="1">
-                                      <FileText size={12} style={{ marginRight: '2px' }} />
-                                      ✓ Imprimée
-                                    </Badge>
-                                  </Tooltip>
-                                )}
-                              </Flex>
-                            </Flex>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Badge color={statusConfig.color} size="1" variant="soft">
-                              {statusConfig.label}
-                            </Badge>
-                          </Table.Cell>
-                          <Table.Cell>
-                            <Text size="2" color="gray">{age}j</Text>
-                          </Table.Cell>
-                          <Table.Cell style={{ textAlign: "center" }}>
-                            <Button
-                              size="2"
-                              variant="soft"
-                              onClick={() => handleOpenIntervention(interv.id)}
-                            >
-                              <ArrowRight size={14} />
-                              Ouvrir
-                            </Button>
-                          </Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            )}
+            {/* BLOC 4 : À ARCHIVER */}
+            <InteractiveTable
+              title="📂 À archiver"
+              badge={<Badge color="blue" variant="soft">{sortedBlocks.archivé.length}</Badge>}
+              columns={standardColumns}
+              data={sortedBlocks.archivé}
+              onRowClick={handleOpenIntervention}
+              renderCell={renderStandardCell}
+              getRowStyle={getStandardRowStyle}
+              actionLabel="Ouvrir"
+            />
           </Flex>
         )}
       </Container>

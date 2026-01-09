@@ -1,4 +1,17 @@
 # Changelog
+## 1.2.8 - 2026-01-09
+
+### UX / Composants réutilisables
+
+- **Composant InteractiveTable** : Création d'un composant de tableau interactif réutilisable avec lignes cliquables, effets de survol et boutons d'action configurables
+- **MachineList refactorisé** : Utilisation d'InteractiveTable avec configuration personnalisée (colonnes, rendu des cellules, styles de lignes)
+- **InterventionsList refactorisé** : Remplacement de ~400 lignes de JSX répétitif par 4 instances d'InteractiveTable avec configurations dédiées pour chaque bloc (actionnable, bloqué, projet, archivé)
+- **Architecture DRY** : Réduction significative de la duplication de code, maintenance facilitée, UX cohérente entre les pages de liste
+
+### Composants
+
+- **SearchField** : Composant de recherche avec icône et bouton de nettoyage, déployé sur MachineList et InterventionsList
+
 ## 1.2.7 - 2026-01-09
 
 ### Corrections / Validation backend
