@@ -1,4 +1,16 @@
 # Changelog
+## 1.2.7 - 2026-01-09
+
+### Corrections / Validation backend
+
+- **Demandes d'achat publiques** : Les demandes d'achat créées depuis la page publique (sans intervention associée) fonctionnent maintenant correctement. Le mapper n'envoie plus `intervention_id: null` qui causait une erreur de validation de clé étrangère.
+- **Qualification de demandes d'achat spéciales** : La création de nouvelles références de stock sans fabricant associé fonctionne maintenant correctement. Le mapper n'envoie plus `manufacturer_item_id: null` qui causait une erreur de validation de clé étrangère.
+- **Support des deux formats de nommage** : Le mapper supporte maintenant à la fois `camelCase` et `snake_case` avec priorité au `snake_case` pour les champs `item_label` et `requested_by`.
+
+### Architecture
+
+- **Gestion des clés étrangères optionnelles** : Standardisation du pattern d'exclusion des clés étrangères nulles dans les mappers (ne pas envoyer le champ plutôt que d'envoyer `null`), conformément aux exigences de validation Directus.
+
 ## 1.2.6 - 2026-01-09
 
 ### Export / Paniers fournisseurs

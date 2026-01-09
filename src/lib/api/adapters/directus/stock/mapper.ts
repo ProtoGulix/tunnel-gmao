@@ -97,22 +97,32 @@ export const mapStockSubFamilyToDomain = (item: Record<string, unknown>) => {
 // Domain → Backend mappers
 export const mapPurchaseRequestDomainToBackend = (payload: Record<string, unknown>) => {
   const backend: Record<string, unknown> = {};
-  if (payload.stockItemId !== undefined) backend.stock_item_id = payload.stockItemId;
-  if (payload.itemLabel !== undefined) backend.item_label = payload.itemLabel;
+  
+  // Only include stock_item_id if it has a value
+  if (payload.stockItemId) backend.stock_item_id = payload.stockItemId;
+  if (payload.stock_item_id) backend.stock_item_id = payload.stock_item_id;
+  
+  // item_label: support both camelCase and snake_case, with item_label taking precedence
+  if (payload.item_label !== undefined) backend.item_label = payload.item_label;
+  else if (payload.itemLabel !== undefined) backend.item_label = payload.itemLabel;
+  
   if (payload.quantity !== undefined) backend.quantity = payload.quantity;
   if (payload.unit !== undefined) backend.unit = payload.unit;
   if (payload.urgency !== undefined) backend.urgency = payload.urgency;
   if (payload.requestedBy !== undefined) backend.requested_by = payload.requestedBy;
+  if (payload.requested_by !== undefined) backend.requested_by = payload.requested_by;
+  
   if (payload.reason !== undefined) backend.reason = payload.reason;
   if (payload.notes !== undefined) backend.notes = payload.notes;
   if (payload.status !== undefined) backend.status = payload.status;
-  // Only include intervention_id if explicitly provided (not undefined/null)
-  if (payload.interventionId !== undefined && payload.interventionId !== null) backend.intervention_id = payload.interventionId;
-  // Legacy snake_case support
-  if (payload.stock_item_id !== undefined) backend.stock_item_id = payload.stock_item_id;
-  if (payload.item_label !== undefined) backend.item_label = payload.item_label;
-  if (payload.requested_by !== undefined) backend.requested_by = payload.requested_by;
-  if (payload.intervention_id !== undefined && payload.intervention_id !== null) backend.intervention_id = payload.intervention_id;
+  
+  // Only include intervention_id if it has a truthy value
+  // Don't send the field at all if no intervention (null, undefined, etc)
+  const interventionId = payload.interventionId ?? payload.intervention_id;
+  if (interventionId) {
+    backend.intervention_id = interventionId;
+  }
+  
   return backend;
 };
 
@@ -120,20 +130,18 @@ export const mapStockItemDomainToBackend = (payload: Record<string, unknown>) =>
   const backend: Record<string, unknown> = {};
   if (payload.name !== undefined) backend.name = payload.name;
   if (payload.familyCode !== undefined) backend.family_code = payload.familyCode;
+  if (payload.family_code !== undefined) backend.family_code = payload.family_code;
   if (payload.subFamilyCode !== undefined) backend.sub_family_code = payload.subFamilyCode;
+  if (payload.sub_family_code !== undefined) backend.sub_family_code = payload.sub_family_code;
   if (payload.spec !== undefined) backend.spec = payload.spec;
   if (payload.dimension !== undefined) backend.dimension = payload.dimension;
   if (payload.ref !== undefined) backend.ref = payload.ref;
   if (payload.quantity !== undefined) backend.quantity = payload.quantity;
   if (payload.unit !== undefined) backend.unit = payload.unit;
   if (payload.location !== undefined) backend.location = payload.location;
-  if (payload.manufacturerItemId !== undefined)
-    backend.manufacturer_item_id = payload.manufacturerItemId;
-  // Legacy snake_case support
-  if (payload.family_code !== undefined) backend.family_code = payload.family_code;
-  if (payload.sub_family_code !== undefined) backend.sub_family_code = payload.sub_family_code;
-  if (payload.manufacturer_item_id !== undefined)
-    backend.manufacturer_item_id = payload.manufacturer_item_id;
+  // Only include manufacturer_item_id if it has a value
+  if (payload.manufacturerItemId) backend.manufacturer_item_id = payload.manufacturerItemId;
+  if (payload.manufacturer_item_id) backend.manufacturer_item_id = payload.manufacturer_item_id;
   return backend;
 };
 

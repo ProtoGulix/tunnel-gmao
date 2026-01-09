@@ -467,7 +467,10 @@ export default function InterventionDetail() {
 
   const handleCreatePurchaseRequest = useCallback(async (requestData) => {
     try {
-      await stock.createPurchaseRequest(requestData);
+      await stock.createPurchaseRequest({
+        ...requestData,
+        intervention_id: id
+      });
       if (summaryDataLoaded) {
         const updated = await stock.fetchPurchaseRequestsByIntervention(id);
         setPurchaseRequests(updated || []);
