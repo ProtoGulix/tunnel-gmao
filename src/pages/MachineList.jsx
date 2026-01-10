@@ -306,7 +306,7 @@ export default function MachineList() {
 
           <Flex direction="column" gap="5">
             <InteractiveTable
-              title="⚠️ Machines avec interventions ouvertes"
+              title="Machines avec interventions ouvertes"
               badge={<Badge color="red" variant="solid">{filteredData.filter(m => m.openInterventionsCount > 0).length}</Badge>}
               columns={machineColumns}
               data={filteredData.filter(m => m.openInterventionsCount > 0)}
@@ -317,7 +317,7 @@ export default function MachineList() {
             />
 
             <InteractiveTable
-              title="✓ Reste du parc"
+              title="Reste du parc"
               badge={<Badge color="gray" variant="soft">{filteredData.filter(m => m.openInterventionsCount === 0).length}</Badge>}
               columns={machineColumns}
               data={filteredData.filter(m => m.openInterventionsCount === 0)}

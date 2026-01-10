@@ -510,7 +510,7 @@ export default function InterventionsList() {
           <Flex direction="column" gap="5">
             {/* BLOC 1 : À FAIRE MAINTENANT */}
             <InteractiveTable
-              title="🔴 À faire maintenant"
+              title="À faire maintenant"
               badge={<Badge color="red" variant="solid">{sortedBlocks.actionnable.length}</Badge>}
               columns={actionnableColumns}
               data={sortedBlocks.actionnable}
@@ -522,7 +522,7 @@ export default function InterventionsList() {
 
             {/* BLOC 2 : BLOQUÉ */}
             <InteractiveTable
-              title="🟠 Bloqué"
+              title="Bloqué"
               badge={<Badge color="amber" variant="soft">{sortedBlocks.bloque.length}</Badge>}
               columns={bloqueColumns}
               data={sortedBlocks.bloque}
@@ -534,7 +534,7 @@ export default function InterventionsList() {
 
             {/* BLOC 3 : PROJETS / SUPPORT */}
             <InteractiveTable
-              title="🔵 Projets / Support"
+              title="Projets / Support"
               badge={<Badge color="blue" variant="soft">{sortedBlocks.projet.length}</Badge>}
               columns={standardColumns}
               data={sortedBlocks.projet}
@@ -546,7 +546,7 @@ export default function InterventionsList() {
 
             {/* BLOC 4 : À ARCHIVER */}
             <InteractiveTable
-              title="📂 À archiver"
+              title="À archiver"
               badge={<Badge color="blue" variant="soft">{sortedBlocks.archivé.length}</Badge>}
               columns={standardColumns}
               data={sortedBlocks.archivé}
