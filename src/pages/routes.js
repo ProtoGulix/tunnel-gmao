@@ -15,6 +15,7 @@ import MachineDetail from './MachineDetail';
 import ActionsPage from './ActionsPage';
 import StockManagement from './StockManagement';
 import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
+import ServiceStatus from './ServiceStatus';
 
 /**
  * Map des composants par ID de page
@@ -33,6 +34,7 @@ export const ROUTE_COMPONENTS = {
   'machine-detail': MachineDetail,
   'preventive-management': PreventiveSuggestionsPage,
   stock: StockManagement,
+  'service-status': ServiceStatus,
 };
 
 /**

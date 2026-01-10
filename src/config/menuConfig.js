@@ -8,6 +8,7 @@ import {
   Package,
   FileText,
   LayoutList,
+  Activity,
 } from 'lucide-react';
 
 /**
@@ -152,6 +153,15 @@ export const PAGES_CONFIG = [
     icon: Package,
     pageTitle: 'Gestion du stock',
     pageSubtitle: "Articles en stock et demandes d'achat",
+    requiresAuth: true,
+  },
+  {
+    id: 'service-status',
+    path: '/service-status',
+    label: 'État du service',
+    icon: Activity,
+    pageTitle: 'État du service',
+    pageSubtitle: 'Charge, fragmentation, capacité réelle',
     requiresAuth: true,
   },
 ];

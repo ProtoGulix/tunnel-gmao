@@ -18,6 +18,22 @@
 
 ## 🆕 En cours - 2026-01-10
 
+## 1.3.1 - 2026-01-10
+
+### Finalisation et corrections mineures
+
+- Commit des fichiers restants liés à la page État du service et à la nouvelle section de consommation par site:
+  - Adapters Directus: ajout des champs `intervention_id.machine_id` + hiérarchie (`is_mere`, `equipement_mere`).
+  - Mapper actions: mapping complet de la machine et de l'équipement mère.
+  - Hook `useServiceData`: extraction `getParentEquipment()`, réduction de complexité, calcul `calculateSiteConsumption()`.
+  - Composant `SiteConsumptionTable`: affichage du code + nom d'équipement.
+  - Composants de présentation et configuration (ServiceStatusComponents, ServiceStatusDetails, serviceTimeClassification, serviceTimeTypeCategories).
+  - Normalizer: nettoyage des mentions backend dans commentaires pour passer `arch-check`.
+
+### Notes
+
+- `arch-check`: les fuites de backend dans les commentaires sont résolues; des filtres backend existent encore dans quelques composants (suivi séparé).
+
 ### Nouvelles fonctionnalités
 
 #### Page État du Service

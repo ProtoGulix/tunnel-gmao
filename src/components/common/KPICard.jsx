@@ -50,23 +50,32 @@ const determineColor = (color, progress) => {
  * <KPICard label="Disponibilité" value="92.5%" progress={92.5} />
  * <KPICard label="Interventions" value={8} subtitle="sur 15 total" color="orange" />
  */
-export default function KPICard({ label, value, subtitle, color, progress }) {
+export default function KPICard({ label, value, subtitle, color, progress, notice }) {
   const displayColor = determineColor(color, progress);
 
   return (
     <Card>
-      <Box p="3">
-        <Text size="1" color="gray">{label}</Text>
-        <Heading size="5" color={displayColor}>
-          {value}
+      <Box p="3" display="flex" flexDirection="column" height="100%">
+        <Heading size="3" color={displayColor} mb="2">
+          {label}
         </Heading>
         
-        {subtitle && (
-          <Text size="1" color="gray" mt="1">{subtitle}</Text>
-        )}
+        <Box flex="1">
+          <Heading size="6" color={displayColor} mb="1">
+            {value}
+          </Heading>
+          {subtitle && (
+            <Text size="2" color="gray" mb="2">{subtitle}</Text>
+          )}
+          {progress !== undefined && (
+            <Progress value={progress || 0} color={displayColor} mb="3" />
+          )}
+        </Box>
         
-        {progress !== undefined && (
-          <Progress value={progress || 0} color={displayColor} mt="2" />
+        {notice && (
+          <Text size="1" color="gray" style={{ marginTop: 'auto', borderTop: '1px solid var(--gray-5)', paddingTop: '0.75rem' }}>
+            {notice}
+          </Text>
         )}
       </Box>
     </Card>
@@ -79,4 +88,5 @@ KPICard.propTypes = {
   subtitle: PropTypes.string,
   color: PropTypes.string,
   progress: PropTypes.number,
+  notice: PropTypes.string,
 };

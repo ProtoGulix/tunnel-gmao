@@ -26,7 +26,7 @@ export const mapActionToDomain = (raw: any): any => {
   return {
     id: raw.id,
     description: raw.description,
-    timeSpent: raw.time_spent,
+    timeSpent: raw.time_spent ? Number(raw.time_spent) : 0,
     complexityScore: raw.complexity_score,
     complexityFactors: raw.complexity_anotation
       ? [raw.complexity_anotation.key || raw.complexity_anotation]
@@ -59,6 +59,21 @@ export const mapActionToDomain = (raw: any): any => {
           id: raw.intervention_id.id,
           code: raw.intervention_id.code,
           title: raw.intervention_id.title,
+          machine: raw.intervention_id.machine_id
+            ? {
+                id: raw.intervention_id.machine_id.id,
+                name: raw.intervention_id.machine_id.name,
+                code: raw.intervention_id.machine_id.code,
+                is_mere: raw.intervention_id.machine_id.is_mere,
+                equipement_mere: raw.intervention_id.machine_id.equipement_mere
+                  ? {
+                      id: raw.intervention_id.machine_id.equipement_mere.id,
+                      name: raw.intervention_id.machine_id.equipement_mere.name,
+                      code: raw.intervention_id.machine_id.equipement_mere.code,
+                    }
+                  : undefined,
+              }
+            : undefined,
         }
       : undefined,
   };

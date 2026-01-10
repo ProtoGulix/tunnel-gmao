@@ -59,8 +59,8 @@ export const normalizeInterventionStatus = (
   if (typeof input === 'string') {
     statusValue = input;
   } else if (input && typeof input === 'object') {
-    // Directus sometimes provides { id: 'ferme', value?: 'Ferme' }
-    // Must extract id (the status code), not value (the display label)
+    // Some backends provide { id: 'ferme', value?: 'Ferme' }
+    // Extract id (status code) rather than value (display label)
     const obj = input as StatusObject;
     statusValue = obj.id || obj.value;
   }

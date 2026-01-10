@@ -39,6 +39,13 @@ const ACTION_FIELDS = [
   'intervention_id.id',
   'intervention_id.code',
   'intervention_id.title',
+  'intervention_id.machine_id.id',
+  'intervention_id.machine_id.name',
+  'intervention_id.machine_id.code',
+  'intervention_id.machine_id.is_mere',
+  'intervention_id.machine_id.equipement_mere.id',
+  'intervention_id.machine_id.equipement_mere.name',
+  'intervention_id.machine_id.equipement_mere.code',
 ].join(',');
 
 /**
