@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.3.0 - 2026-01-10
+
+### Nouvelle fonctionnalité
+
+- **Consommation de capacité par site (équipement mère de premier niveau)**
+  - Calcul côté frontend uniquement à partir des actions: groupement par `intervention_id.machine_id` et remontée vers l'équipement mère selon la hiérarchie (`is_mere`, `equipement_mere`)
+  - Métriques par site: heures totales, heures FRAG, % du temps service, % du FRAG service
+  - Tri par heures FRAG décroissantes pour rendre visibles les contraintes organisationnelles
+  - Composant: `src/components/service/SiteConsumptionTable.jsx`
+  - Hook: `src/hooks/useServiceData.js` (`calculateSiteConsumption`, `getParentEquipment`)
+
+### Architecture
+
+- Nettoyage des fuites de mention backend dans des couches non-adapter (suppression de références explicites au backend dans les commentaires hors `src/lib/api/adapters`) via `arch-check`.
+- Restent à traiter (suivi séparé): filtres backend présents dans quelques composants; inchangés dans cette version.
+
+## 🆕 En cours - 2026-01-10
+
+### Nouvelles fonctionnalités
+
+#### Page État du Service
+
+Nouvelle page d'aide à la décision au niveau service (`/service-status`).
+
+**Objectif** : Évaluer en < 30s si le service est en capacité de tenir et progresser.
+
+**Composants** :
+
+- 3 KPICards synthétiques (Charge, Fragmentation, Pilotage)
+- Répartition du temps (PROD, DEP, PILOT, FRAG)
+- Analyse fragmentation (% actions courtes)
+- Règles de lecture décisionnelles factuelles
+- Alertes automatiques si seuils critiques
+
+**Fichiers créés** :
+
+- `src/pages/ServiceStatus.jsx` - Page principale
+- `src/hooks/useServiceData.js` - Hook API
+- `src/components/service/ServiceStatusComponents.jsx` - Composants présentation
+
+**TODO Backend** : Créer vue SQL `service_time_breakdown` et route API
+
+**Documentation** : [docs/features/SERVICE_STATUS_PAGE.md](features/SERVICE_STATUS_PAGE.md)
+
+---
+
 ## 1.2.10 - 2026-01-10
 
 ### Front / Tables réutilisables
