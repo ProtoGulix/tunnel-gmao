@@ -37,14 +37,15 @@ export const interventionsAdapter = {
   },
 
   /**
-   * Fetch all interventions.
+   * Fetch interventions.
+   * @param {string} [machineId] - Optional machine ID to filter. If not provided, returns all interventions.
    * @returns {Promise<Intervention[]>}
    */
-  fetchInterventions: async () => {
+  fetchInterventions: async (machineId?: string) => {
     return apiCall(async () => {
-      const raw = await datasource.fetchInterventionsRaw();
+      const raw = await datasource.fetchInterventionsRaw(machineId);
       return raw.map(mapper.mapInterventionToDomain);
-    }, 'FetchInterventions');
+    }, machineId ? `FetchInterventions:${machineId}` : 'FetchInterventions');
   },
 
   /**

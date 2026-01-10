@@ -24,6 +24,19 @@ import { normalizeInterventionStatus } from '@/lib/api/normalizers';
 export const mapInterventionToDomain = (item: any) => {
   if (!item) return null;
 
+  // Calculer la date d'ouverture réelle depuis status_log
+  let openingDate = item.reported_date; // fallback
+  if (item.status_log && Array.isArray(item.status_log) && item.status_log.length > 0) {
+    // Chercher le premier log où le statut est devenu "ouvert" ou équivalent
+    const openLog = item.status_log.find((log: any) => {
+      const toValue = log.status_to?.value || log.status_to?.id;
+      return toValue === 'ouvert' || toValue?.toLowerCase() === 'open';
+    });
+    if (openLog?.date) {
+      openingDate = openLog.date;
+    }
+  }
+
   return {
     id: item.id,
     code: item.code,
@@ -31,7 +44,7 @@ export const mapInterventionToDomain = (item: any) => {
     status: normalizeInterventionStatus(item.status_actual),
     type: item.type_inter || 'CUR',
     priority: item.priority || 'normal',
-    createdAt: item.created_at,
+    createdAt: openingDate, // Date d'ouverture réelle calculée depuis status_log
     reportedDate: item.reported_date,
     printedFiche: item.printed_fiche ?? false,
     techInitials: item.tech_initials ?? undefined,
@@ -42,6 +55,8 @@ export const mapInterventionToDomain = (item: any) => {
           name: item.machine_id.name,
         }
       : undefined,
+    // Status log pour calculs de durée
+    statusLog: item.status_log ? item.status_log.map(mapStatusLogToDomain) : undefined,
     // Optional nested data (present in fetchIntervention, absent in list)
     action: item.action ? item.action.map(mapActionToDomain) : undefined,
     parts: item.parts ? item.parts.map(mapPartToDomain) : undefined,

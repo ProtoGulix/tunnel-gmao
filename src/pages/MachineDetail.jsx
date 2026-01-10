@@ -36,16 +36,17 @@
  * @requires components/preventive/PreventiveSuggestionsPanel - Suggestions
  */
 
-import { useParams } from "react-router-dom";
 import { useMemo, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Flex, Separator } from "@radix-ui/themes";
-import { AlertTriangle } from "lucide-react";
+import { AlertOctagon, AlertTriangle, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 // Hooks
 import { useMachineData } from "@/hooks/useMachineData";
 import { useApiCall } from "@/hooks/useApiCall";
 
 import PageContainer from "@/components/layout/PageContainer";
+import PageHeader from "@/components/layout/PageHeader";
 
 // Composants communs
 import LoadingState from "@/components/common/LoadingState";
@@ -53,21 +54,83 @@ import ErrorState from "@/components/common/ErrorState";
 import CriticalAlert from "@/components/common/CriticalAlert";
 
 // Composants spécifiques machine
-import MachineHeader from "@/components/machine/MachineHeader";
 import GeneralInfo from "@/components/machine/GeneralInfo";
-import {
-  InterventionsBlock,
-  TimeSpentBlock,
-  PurchaseRequestsBlock,
-  PreventiveSuggestionsBlock,
-  filterDecisionalInterventions,
-  getTimeSpentInPeriod,
-  getMachineRequests,
-  hasUrgentAlert
-} from './MachineDetail/MachineDetailBlocks';
+import OpenInterventionsTable from "@/components/machine/OpenInterventionsTable";
+import ActivityPeriod from "@/components/machine/ActivityPeriod";
+import PreventiveSuggestionsPanel from "@/components/preventive/PreventiveSuggestionsPanel";
+import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
 
 // Utilitaires
 import { stock } from "@/lib/api/facade";
+import { isInterventionOpen } from "@/lib/utils/interventionHelpers";
+
+const STATUS_LABELS = {
+  ok: { label: "Opérationnelle", color: "green", Icon: CheckCircle2 },
+  critical: { label: "Critique", color: "red", Icon: AlertOctagon }
+};
+
+/**
+ * Filtre les interventions pour la page de pilotage
+ * Inclut: ouvertes ET clôturées < 30 jours
+ */
+const filterDecisionalInterventions = (interventions) => {
+  if (!interventions || interventions.length === 0) return [];
+  
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+  const thirtyDaysAgo = new Date(Date.now() - thirtyDaysMs);
+  
+  return interventions.filter(intervention => {
+    if (isInterventionOpen(intervention)) return true;
+    
+    if (intervention.closed_date) {
+      const closedDate = new Date(intervention.closed_date);
+      return closedDate >= thirtyDaysAgo;
+    }
+    
+    if (intervention.reported_date) {
+      const reportedDate = new Date(intervention.reported_date);
+      return reportedDate >= thirtyDaysAgo;
+    }
+    
+    return false;
+  });
+};
+
+/**
+ * Calcule le temps passé sur une période donnée
+ */
+const getTimeSpentInPeriod = (actions, periodMs) => {
+  const periodStart = new Date(Date.now() - periodMs);
+  
+  return (actions || []).reduce((total, action) => {
+    const createdAt = action.createdAt || action.created_at;
+    const timeSpent = action.timeSpent ?? action.time_spent;
+    if (!createdAt) return total;
+    const actionDate = new Date(createdAt);
+    if (actionDate >= periodStart) {
+      return total + parseFloat(timeSpent || 0);
+    }
+    return total;
+  }, 0);
+};
+
+/**
+ * Filtre les demandes d'achat liées aux interventions de la machine
+ */
+const getMachineRequests = (requests, interventions) => {
+  if (!requests || !Array.isArray(requests) || !interventions || !Array.isArray(interventions)) {
+    return [];
+  }
+  const interventionIds = new Set(interventions.map(i => i.id));
+  return requests.filter(req => interventionIds.has(req.intervention_id));
+};
+
+/**
+ * Détermine si une alerte urgente doit être affichée
+ */
+const hasUrgentAlert = (interventions) => {
+  return interventions.some(i => i.priority?.toLowerCase() === 'urgent');
+};
 
 /**
  * Page de détail d'une machine - Orientation décisionnelle
@@ -82,6 +145,7 @@ import { stock } from "@/lib/api/facade";
  */
 export default function MachineDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   
   // Chargement des données machine
   const { 
@@ -128,21 +192,54 @@ export default function MachineDetail() {
     [actions]
   );
 
-  const timeSpentLast90Days = useMemo(
-    () => getTimeSpentInPeriod(actions, 90 * 24 * 60 * 60 * 1000),
-    [actions]
-  );
-
   // Déterminer s'il y a une alerte urgente
   const urgentAlert = useMemo(
     () => hasUrgentAlert(decisionalInterventions),
     [decisionalInterventions]
   );
 
+  const globalStatus = urgentAlert ? "critical" : "ok";
+  const statusConfig = useMemo(
+    () => STATUS_LABELS[globalStatus] || STATUS_LABELS.ok,
+    [globalStatus]
+  );
+
+  const decisionalInterventionCount = decisionalInterventions?.length || 0;
+
   // Stabilisation référence reload
   const handleReload = useCallback(() => {
     reload();
   }, [reload]);
+
+  const headerProps = useMemo(
+    () => ({
+      title: machine?.code || "Machine",
+      subtitle: machine?.name || "Détails opérationnels",
+      icon: statusConfig.Icon,
+      stats: [
+        { label: "État", value: statusConfig.label, color: statusConfig.color },
+        { label: "Interventions décisionnelles", value: decisionalInterventionCount }
+      ],
+      actions: [
+        {
+          label: "Retour aux machines",
+          onClick: () => navigate("/machines"),
+          icon: ArrowLeft,
+          variant: "soft",
+          color: "gray"
+        }
+      ],
+      onRefresh: handleReload
+    }),
+    [
+      machine?.code,
+      machine?.name,
+      statusConfig,
+      decisionalInterventionCount,
+      navigate,
+      handleReload
+    ]
+  );
 
   // ==========================================
   // GESTION DES ÉTATS
@@ -162,13 +259,8 @@ export default function MachineDetail() {
   
   return (
     <PageContainer>
+      <PageHeader {...headerProps} />
       <Flex direction="column" gap="5">
-        <MachineHeader 
-          machine={machine} 
-          globalStatus={urgentAlert ? 'critical' : 'ok'} 
-          onReload={handleReload} 
-        />
-
         <CriticalAlert 
           show={urgentAlert}
           title="Intervention urgente"
@@ -181,33 +273,36 @@ export default function MachineDetail() {
         <Separator size="3" />
 
         {/* BLOC 1: INTERVENTIONS */}
-        <InterventionsBlock interventions={decisionalInterventions} machineId={id} />
+        <OpenInterventionsTable interventions={decisionalInterventions} machineId={id} />
         <Separator size="3" />
 
         {/* BLOC 2: TEMPS PASSÉ */}
-        <TimeSpentBlock 
-          timeSpent30d={timeSpentLast30Days}
-          timeSpent90d={timeSpentLast90Days}
+        <ActivityPeriod
+          interventionCount={decisionalInterventions.length}
+          timeSpent={timeSpentLast30Days / 60}
+          periodDays={30}
+          historicalCount={interventions.length}
         />
         <Separator size="3" />
 
         {/* BLOC 3: DEMANDES D&apos;ACHAT */}
         {machineRequests.length > 0 && (
           <>
-            <PurchaseRequestsBlock 
+            <PurchaseRequestsTable
               requests={machineRequests}
               stockItems={stockItems}
+              supplierRefs={{}}
+              standardSpecs={{}}
+              suppliers={[]}
               loading={requestsLoading}
+              compact={true}
             />
             <Separator size="3" />
           </>
         )}
 
         {/* BLOC 4: PRÉVENTIF */}
-        <PreventiveSuggestionsBlock 
-          machineId={id}
-          hasRequests={machineRequests.length > 0}
-        />
+        <PreventiveSuggestionsPanel machineId={id} status="NEW" />
       </Flex>
     </PageContainer>
   );

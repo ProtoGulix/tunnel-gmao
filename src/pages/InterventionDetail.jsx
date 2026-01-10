@@ -12,7 +12,7 @@ import { Button, Tabs, Flex, Text, Badge } from '@radix-ui/themes';
 import { Wrench, Plus } from 'lucide-react';
 
 // 5. API / Lib
-import { interventions, actions, actionSubcategories, interventionStatusLogs, suppliers, stock, stockSuppliers } from '@/lib/api/facade';
+import { interventions, actions, interventionStatusLogs, suppliers, stock, stockSuppliers } from '@/lib/api/facade';
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';

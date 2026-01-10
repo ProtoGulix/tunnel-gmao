@@ -1,29 +1,47 @@
-import { useState, useCallback, useMemo } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { Table, Flex, Card } from "@radix-ui/themes";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import StockItemRow from "./StockItemRow";
-import { getColSpan, getItemRefsFromData, sortItemsByColumn } from "./stockItemsTableHelpers";
+import { Table, Flex, Card, Badge } from "@radix-ui/themes";
+import { ChevronUp, ChevronDown, Package } from "lucide-react";
+import DataTable from "@/components/common/DataTable";
+import ToggleDetailsButton from "@/components/common/ToggleDetailsButton";
+import EditStockItemDialog from "./EditStockItemDialog";
+import {
+  StockItemRowExpandedSections,
+  SupplierRefsBadge,
+  SpecsBadgeSection,
+  StockQuantitySection,
+} from "./StockItemRowSubcomponents";
+import { getColSpan, getItemRefsFromData, sortItemsByColumn, hasPreferredRef } from "./stockItemsTableHelpers";
 
-/**
- * Table d'affichage des articles du stock avec expansion inline
- * Affiche référence, nom, famille, stock, spécifications et références fournisseurs
- * 
- * ✅ Implémenté :
- * - Tri cliquable sur 4 colonnes (référence, nom, famille, stock) avec chevrons
- * - Expansion inline exclusive (specs OU refs)
- * - Mode compact optionnel
- * - Sticky header pour navigation fluide
- * 
- * TODO: Améliorations futures possibles :
- * - Virtualisation (react-window/react-virtual) si >100 items pour performances
- * - Filtres inline par famille/stock/spécs avec chips
- * - Pagination si dataset très large (>500 items)
- * - Sélection multiple avec checkboxes pour actions en batch
- * - Export CSV/Excel des données affichées
- * - Recherche globale dans la table
- * - Mémorisation du tri dans localStorage
- */
+function SortableHeader({ column, label, sortConfig, onSort }) {
+  const isActive = sortConfig.column === column;
+  const direction = isActive ? sortConfig.direction : null;
+
+  return (
+    <Flex
+      align="center"
+      gap="1"
+      onClick={() => onSort(column)}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      role="button"
+      aria-pressed={isActive}
+    >
+      {label}
+      {isActive && (direction === "asc" ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+    </Flex>
+  );
+}
+
+SortableHeader.propTypes = {
+  column: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  sortConfig: PropTypes.shape({
+    column: PropTypes.string,
+    direction: PropTypes.string,
+  }).isRequired,
+  onSort: PropTypes.func.isRequired,
+};
+
 export default function StockItemsTable({
   items,
   compactRows,
@@ -37,165 +55,156 @@ export default function StockItemsTable({
   setFormData,
   onAdd,
   onUpdatePreferred,
-  onDelete,  onLoadSupplierRefs,  loading,
+  onDelete,
+  onLoadSupplierRefs,
+  loading,
   showStockCol = true,
   allManufacturers = [],
   stockFamilies = [],
 }) {
-  // État pour le tri des colonnes
-  const [sortConfig, setSortConfig] = useState({ column: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ column: null, direction: "asc" });
+  const [expandedSpecsId, setExpandedSpecsId] = useState(null);
+  const [expandedRefsId, setExpandedRefsId] = useState(null);
 
-  // Mémoïser le calcul du colspan pour éviter recalculs inutiles
-  const colSpan = useMemo(() => getColSpan(showStockCol), [showStockCol]);
-
-  // Mémoïser les références des items pour éviter recalculs inutiles
-  const getItemRefs = useCallback((itemId) => {
-    return getItemRefsFromData(itemId, refs);
-  }, [refs]);
-
-  // Fonction de tri des colonnes
   const handleSort = useCallback((column) => {
     setSortConfig((prev) => ({
       column,
-      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc',
+      direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
     }));
   }, []);
 
-  // Trier les items selon la configuration de tri
-  const sortedItems = useMemo(() => {
-    return sortItemsByColumn(items, sortConfig.column, sortConfig.direction);
-  }, [items, sortConfig]);
+  const getItemRefs = useCallback((itemId) => getItemRefsFromData(itemId, refs), [refs]);
 
-  return (
-    <Card>
-      <Flex direction="column" gap="3">
-        {renderStockTable({
-          sortConfig,
-          handleSort,
-          showStockCol,
-          sortedItems,
-          colSpan,
-          specsCounts,
-          specsHasDefault,
-          supplierRefsCounts,
-          getItemRefs,
-          onEditStockItem,
-          loading,
-          suppliers,
-          refs,
-          formData,
-          setFormData,
-          onAdd,
-          onUpdatePreferred,
-          onDelete,
-          onLoadSupplierRefs,
-          compactRows,
-          allManufacturers,
-          stockFamilies,
-        })}
-      </Flex>
-    </Card>
+  const sortedItems = useMemo(
+    () => sortItemsByColumn(items, sortConfig.column, sortConfig.direction),
+    [items, sortConfig]
   );
-}
 
-/**
- * Render a sortable table header cell
- */
-function SortableHeaderCell({ column, label, sortConfig, handleSort }) {
-  return (
-    <Table.ColumnHeaderCell
-      style={{ cursor: 'pointer', userSelect: 'none' }}
-      onClick={() => handleSort(column)}
-    >
-      <Flex align="center" gap="1">
-        {label}
-        {sortConfig.column === column && (
-          sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-        )}
-      </Flex>
-    </Table.ColumnHeaderCell>
-  );
-}
+  const columns = useMemo(() => {
+    const headers = [
+      { key: "ref", header: <SortableHeader column="ref" label="Référence" sortConfig={sortConfig} onSort={handleSort} /> },
+      { key: "name", header: <SortableHeader column="name" label="Nom" sortConfig={sortConfig} onSort={handleSort} /> },
+      { key: "family", header: <SortableHeader column="family" label="Famille" sortConfig={sortConfig} onSort={handleSort} /> },
+    ];
 
-SortableHeaderCell.propTypes = {
-  column: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-  sortConfig: PropTypes.shape({
-    column: PropTypes.string,
-    direction: PropTypes.string,
-  }).isRequired,
-  handleSort: PropTypes.func.isRequired,
-};
+    if (showStockCol) {
+      headers.push({ key: "stock", header: <SortableHeader column="stock" label="Stock" sortConfig={sortConfig} onSort={handleSort} /> });
+    }
 
-/**
- * Render the stock items table with headers and body
- */
-function renderStockTable({
-  sortConfig,
-  handleSort,
-  showStockCol,
-  sortedItems,
-  colSpan,
-  specsCounts,
-  specsHasDefault,
-  supplierRefsCounts,
-  getItemRefs,
-  onEditStockItem,
-  loading,
-  suppliers,
-  refs,
-  formData,
-  setFormData,
-  onAdd,
-  onUpdatePreferred,
-  onDelete,
-  onLoadSupplierRefs,
-  compactRows,
-  allManufacturers,
-  stockFamilies,
-}) {
-  return (
-    <Table.Root size={compactRows ? "1" : "2"}>
-      <Table.Header style={{ position: 'sticky', top: 0, background: 'var(--gray-1)', zIndex: 1 }}>
-        <Table.Row>
-          <SortableHeaderCell column="ref" label="Référence" sortConfig={sortConfig} handleSort={handleSort} />
-          <SortableHeaderCell column="name" label="Nom" sortConfig={sortConfig} handleSort={handleSort} />
-          <SortableHeaderCell column="family" label="Famille" sortConfig={sortConfig} handleSort={handleSort} />
-          {showStockCol && (
-            <SortableHeaderCell column="stock" label="Stock" sortConfig={sortConfig} handleSort={handleSort} />
+    headers.push(
+      { key: "specs", header: "Spécs" },
+      { key: "refs", header: "Références" },
+      { key: "actions", header: "" }
+    );
+
+    return headers;
+  }, [handleSort, showStockCol, sortConfig]);
+
+  const colSpan = useMemo(() => getColSpan(showStockCol), [showStockCol]);
+
+  const rowRenderer = useCallback(
+    (item) => {
+      const specsCount = specsCounts[item.id] || 0;
+      const hasDefault = specsHasDefault[item.id] || false;
+      const refCount = item.supplierRefsCount ?? supplierRefsCounts[item.id] ?? 0;
+      const itemRefs = getItemRefs(item.id);
+      const specsExpanded = expandedSpecsId === item.id;
+      const refsExpanded = expandedRefsId === item.id;
+
+      return (
+        <Fragment key={item.id}>
+          <Table.Row>
+            <Table.Cell>
+              <Badge size="2" color="gray" variant="soft">{item.ref}</Badge>
+            </Table.Cell>
+            <Table.Cell>
+              <span>{item.name}</span>
+            </Table.Cell>
+            <Table.Cell>
+              <Badge variant="soft" size="1">{item.family_code}</Badge>
+            </Table.Cell>
+            {showStockCol && (
+              <Table.Cell>
+                <StockQuantitySection quantity={item.quantity} unit={item.unit} />
+              </Table.Cell>
+            )}
+            <Table.Cell>
+              <SpecsBadgeSection
+                specsCount={specsCount}
+                hasDefault={hasDefault}
+                isExpanded={specsExpanded}
+                onToggle={() => {
+                  setExpandedSpecsId(specsExpanded ? null : item.id);
+                  setExpandedRefsId(null);
+                }}
+                itemName={item.name}
+              />
+            </Table.Cell>
+            <Table.Cell>
+              <SupplierRefsBadge refCount={refCount} hasPreferred={hasPreferredRef(itemRefs)} />
+            </Table.Cell>
+            <Table.Cell>
+              <Flex gap="1">
+                <EditStockItemDialog
+                  item={item}
+                  onSave={onEditStockItem}
+                  loading={loading}
+                  stockFamilies={stockFamilies}
+                  allManufacturers={allManufacturers}
+                />
+                <ToggleDetailsButton
+                  isExpanded={refsExpanded}
+                  onToggle={() => {
+                    const next = refsExpanded ? null : item.id;
+                    setExpandedRefsId(next);
+                    setExpandedSpecsId(null);
+                    if (next && onLoadSupplierRefs) {
+                      onLoadSupplierRefs(item.id);
+                    }
+                  }}
+                  label={refsExpanded ? `Masquer les références fournisseurs de ${item.name}` : `Afficher les références fournisseurs de ${item.name}`}
+                />
+              </Flex>
+            </Table.Cell>
+          </Table.Row>
+
+          {(specsExpanded || refsExpanded) && (
+            <StockItemRowExpandedSections
+              item={item}
+              colSpan={colSpan}
+              specsExpanded={specsExpanded}
+              refsExpanded={refsExpanded}
+              suppliers={suppliers}
+              refs={itemRefs}
+              formData={formData}
+              setFormData={setFormData}
+              onAdd={onAdd}
+              onUpdatePreferred={(refId, updates) => onUpdatePreferred?.(refId, updates, item.id)}
+              onDelete={(refId) => onDelete?.(refId, item.id)}
+              allManufacturers={allManufacturers}
+            />
           )}
-          <Table.ColumnHeaderCell>Spécs</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell>Références</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {sortedItems.map((item) => (
-          <StockItemRow
-            key={item.id}
-            item={item}
-            colSpan={colSpan}
-            showStockCol={showStockCol}
-            specsCounts={specsCounts}
-            specsHasDefault={specsHasDefault}
-            supplierRefsCounts={supplierRefsCounts}
-            itemRefs={getItemRefs(item.id)}
-            onEditStockItem={onEditStockItem}
-            loading={loading}
-            suppliers={suppliers}
-            refs={refs}
-            formData={formData}
-            setFormData={setFormData}
-            onAdd={onAdd}
-            onUpdatePreferred={(refId, updates) => onUpdatePreferred(refId, updates, item.id)}
-            onDelete={(refId) => onDelete(refId, item.id)}
-            onLoadSupplierRefs={onLoadSupplierRefs}
-            allManufacturers={allManufacturers}
-            stockFamilies={stockFamilies}
-          />
-        ))}
-      </Table.Body>
-    </Table.Root>
+        </Fragment>
+      );
+    },
+    [allManufacturers, colSpan, expandedRefsId, expandedSpecsId, formData, getItemRefs, loading, onAdd, onDelete, onEditStockItem, onLoadSupplierRefs, onUpdatePreferred, setFormData, showStockCol, specsCounts, specsHasDefault, supplierRefsCounts, suppliers]
+  );
+
+  return (
+      <Flex direction="column" gap="3">
+        <DataTable
+          columns={columns}
+          data={sortedItems}
+          rowRenderer={rowRenderer}
+          size={compactRows ? "1" : "2"}
+          loading={loading}
+          emptyState={{
+            icon: Package,
+            title: "Aucun article de stock",
+            description: "Ajoutez un article ou ajustez vos filtres pour afficher des résultats.",
+          }}
+        />
+      </Flex>
   );
 }
 

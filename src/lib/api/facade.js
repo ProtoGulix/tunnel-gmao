@@ -103,7 +103,7 @@ export const { auth } = API;
  * **Interventions (Maintenance Orders)**
  *
  * Functions:
- * - `fetchInterventions()` → `Intervention[]`
+ * - `fetchInterventions(machineId?)` → `Intervention[]` (optional machine filter)
  * - `fetchIntervention(id)` → `Intervention`
  * - `createIntervention(payload)` → `Intervention`
  * - `updateIntervention(id, updates)` → `Intervention`
@@ -114,7 +114,11 @@ export const { auth } = API;
  *
  * @example
  * import { interventions } from 'src/lib/api/facade';
+ * // Toutes les interventions
  * const list = await interventions.fetchInterventions();
+ * // Interventions d'une machine spécifique
+ * const machineInterventions = await interventions.fetchInterventions('machine-123');
+ * // Détail d'une intervention
  * const detail = await interventions.fetchIntervention('int-123');
  */
 export const { interventions } = API;

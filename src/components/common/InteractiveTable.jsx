@@ -14,7 +14,9 @@
  */
 
 import { Table, Button, Flex, Text, Box } from "@radix-ui/themes";
+import PropTypes from "prop-types";
 import { ArrowRight } from "@/lib/icons";
+import LoadingState from "@/components/common/LoadingState";
 
 /**
  * Composant de table interactive avec lignes cliquables
@@ -41,8 +43,29 @@ export default function InteractiveTable({
   renderCell,
   getRowStyle,
   actionLabel = "Voir",
-  emptyMessage = "Aucune donnée"
+  emptyMessage = "Aucune donnée",
+  loading = false,
+  loadingMessage = "Chargement...",
 }) {
+  if (loading) {
+    return (
+      <Box>
+        {/* Titre avec badge */}
+        {title && (
+          <Flex align="center" gap="2" mb="3">
+            <Text size="5" weight="bold">{title}</Text>
+            {badge && (
+              <Box as="span" style={{ fontSize: '0.875rem' }}>
+                {badge}
+              </Box>
+            )}
+          </Flex>
+        )}
+        <LoadingState message={loadingMessage} fullscreen={false} size="2" />
+      </Box>
+    );
+  }
+
   if (!data || data.length === 0) {
     return null;
   }
@@ -147,3 +170,17 @@ export default function InteractiveTable({
     </Box>
   );
 }
+
+InteractiveTable.propTypes = {
+  title: PropTypes.string,
+  badge: PropTypes.node,
+  columns: PropTypes.array,
+  data: PropTypes.array,
+  onRowClick: PropTypes.func,
+  renderCell: PropTypes.func,
+  getRowStyle: PropTypes.func,
+  actionLabel: PropTypes.string,
+  emptyMessage: PropTypes.string,
+  loading: PropTypes.bool,
+  loadingMessage: PropTypes.string,
+};

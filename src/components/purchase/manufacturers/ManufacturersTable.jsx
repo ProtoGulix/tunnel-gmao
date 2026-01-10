@@ -17,9 +17,8 @@ import { useError } from '@/contexts/ErrorContext';
 import { Box, Flex, Text } from "@radix-ui/themes";
 import { Factory } from "lucide-react";
 import { manufacturerItems } from "@/lib/api/facade";
-import TableHeader from "@/components/common/TableHeader";
+import DataTable from "@/components/common/DataTable";
 import ManufacturerForm, { FORM_DATA_KEYS, INITIAL_FORM_STATE } from "./ManufacturerForm";
-import ManufacturerTableContent from "./ManufacturerTableContent";
 
 // ===== CONSTANTES =====
 /** Nombre minimum de caractères pour la recherche */
@@ -147,22 +146,28 @@ export default function ManufacturersTable() {
   // ----- Computed Values -----
   const filtered = filterManufacturers(items, search);
 
+  const columns = [
+    { key: "manufacturer", header: "Fabricant", render: (row) => <Text weight="bold">{row.manufacturerName}</Text> },
+    { key: "ref", header: "Référence", render: (row) => <Text size="2">{row.manufacturerRef}</Text> },
+    { key: "designation", header: "Désignation", render: (row) => <Text size="2" color="gray">{row.designation || "-"}</Text> },
+  ];
+
+  const headerProps = {
+    icon: Factory,
+    title: "Références fabricant",
+    count: filtered.length,
+    searchValue: search,
+    onSearchChange: setSearch,
+    onRefresh: load,
+    loading,
+    searchPlaceholder: "Recherche (nom, ref, désignation)",
+    showRefreshButton: false,
+  };
+
   // ----- Render -----
   return (
     <Box>
       <Flex direction="column" gap="3">
-        <TableHeader
-          icon={Factory}
-          title="Références fabricant"
-          count={filtered.length}
-          searchValue={search}
-          onSearchChange={setSearch}
-          onRefresh={load}
-          loading={loading}
-          searchPlaceholder="Recherche (nom, ref, désignation)"
-          showRefreshButton={false}
-        />
-
         {error && (
           <Text color="red" size="2">{error}</Text>
         )}
@@ -174,7 +179,17 @@ export default function ManufacturersTable() {
           loading={addLoading}
         />
 
-        <ManufacturerTableContent items={filtered} />
+        <DataTable
+          headerProps={headerProps}
+          columns={columns}
+          data={filtered}
+          loading={loading}
+          emptyState={{
+            icon: Factory,
+            title: "Aucune référence fabricant",
+            description: search ? "Aucun résultat pour cette recherche" : "Ajoutez une première référence pour commencer",
+          }}
+        />
       </Flex>
     </Box>
   );

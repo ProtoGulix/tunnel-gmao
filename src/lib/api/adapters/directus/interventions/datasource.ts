@@ -58,46 +58,64 @@ export const fetchInterventionRaw = async (id: string) => {
 };
 
 /**
- * Fetch all interventions (raw Directus response).
+ * Fetch interventions (raw Directus response).
+ * @param {string} [machineId] - Optional machine ID to filter interventions. If not provided, returns all.
  */
-export const fetchInterventionsRaw = async () => {
-  const { data } = await api.get('/items/intervention', {
-    params: {
-      limit: -1,
-      sort: '-reported_date',
-      fields: [
-        'id',
-        'code',
-        'title',
-        'status_actual.id',
-        'status_actual.value',
-        'priority',
-        'type_inter',
-        'reported_date',
-        'tech_initials',
-        'printed_fiche',
-        'machine_id.id',
-        'machine_id.code',
-        'machine_id.name',
-        'action.id',
-        'action.action_subcategory.id',
-        'action.action_subcategory.code',
-        'action.action_subcategory.name',
-        'action.action_subcategory.category_id.code',
-        'action.action_subcategory.category_id.name',
-        'action.description',
-        'action.time_spent',
-        'action.complexity_score',
-        'action.complexity_anotation',
-        'action.created_at',
-        'action.updated_at',
-        'action.tech.id',
-        'action.tech.first_name',
-        'action.tech.last_name',
-      ].join(','),
-      _t: Date.now(),
-    },
-  });
+export const fetchInterventionsRaw = async (machineId?: string) => {
+  const params: any = {
+    limit: -1,
+    sort: '-reported_date',
+    fields: [
+      'id',
+      'code',
+      'title',
+      'status_actual.id',
+      'status_actual.value',
+      'priority',
+      'type_inter',
+      'reported_date',
+      'tech_initials',
+      'printed_fiche',
+      'machine_id.id',
+      'machine_id.code',
+      'machine_id.name',
+      'status_log.id',
+      'status_log.date',
+      'status_log.status_from.id',
+      'status_log.status_from.value',
+      'status_log.status_to.id',
+      'status_log.status_to.value',
+      'action.id',
+      'action.action_subcategory.id',
+      'action.action_subcategory.code',
+      'action.action_subcategory.name',
+      'action.action_subcategory.category_id.code',
+      'action.action_subcategory.category_id.name',
+      'action.description',
+      'action.time_spent',
+      'action.complexity_score',
+      'action.complexity_anotation',
+      'action.created_at',
+      'action.updated_at',
+      'action.tech.id',
+      'action.tech.first_name',
+      'action.tech.last_name',
+    ].join(','),
+    _t: Date.now(),
+  };
+
+  // Ajouter un filtre par machine_id si fourni
+  if (machineId) {
+    params.filter = JSON.stringify({
+      machine_id: {
+        id: {
+          _eq: machineId
+        }
+      }
+    });
+  }
+
+  const { data } = await api.get('/items/intervention', { params });
   return data.data;
 };
 

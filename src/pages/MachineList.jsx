@@ -313,6 +313,8 @@ export default function MachineList() {
               onRowClick={handleOpenMachine}
               renderCell={renderMachineCell}
               getRowStyle={getMachineRowStyle}
+              loading={loading}
+              loadingMessage="Chargement des machines..."
               actionLabel="Voir"
             />
 
@@ -324,6 +326,8 @@ export default function MachineList() {
               onRowClick={handleOpenMachine}
               renderCell={renderMachineCell}
               getRowStyle={getMachineRowStyle}
+              loading={loading}
+              loadingMessage="Chargement des machines..."
               actionLabel="Voir"
             />
 

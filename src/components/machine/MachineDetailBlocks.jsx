@@ -6,7 +6,7 @@
  * Blocs d'affichage pour réduire la complexité et la taille de MachineDetail
  * Chaque bloc <200 lignes par ESLint
  * 
- * @module pages/MachineDetail/MachineDetailBlocks
+ * @module components/machine/MachineDetailBlocks
  */
 
 import { useMemo } from 'react';

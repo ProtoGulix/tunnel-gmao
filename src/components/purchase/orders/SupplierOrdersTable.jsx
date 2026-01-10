@@ -1,9 +1,9 @@
 import { useState, useCallback, Fragment, useMemo, useEffect } from "react";
 import { useError } from '@/contexts/ErrorContext';
-import { Flex, Card, Table, Text } from "@radix-ui/themes";
+import { Flex, Button } from "@radix-ui/themes";
 import { Package, TruckIcon } from "lucide-react";
 import { suppliers } from "@/lib/api/facade";
-import TableHeader from "@/components/common/TableHeader";
+import DataTable from "@/components/common/DataTable";
 import FilterSelect from "@/components/common/FilterSelect";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import OrderRow from "./OrderRow";
@@ -84,81 +84,78 @@ export default function SupplierOrdersTable({
     [localOrders, onRefresh, expandedOrderId, showError]
   );
 
-  const renderHeader = () =>
-    showHeader ? (
-      <TableHeader
-        icon={TruckIcon}
-        title="Paniers fournisseurs"
-        count={orders.length}
-        searchValue={searchTerm}
-        onSearchChange={onSearchChange}
-        onRefresh={onRefresh}
-        showRefreshButton
-        searchPlaceholder="Recherche (n°, fournisseur...)"
-        actions={
-          <Flex align="center" gap="2">
-            {typeof statusFilter !== "undefined" && (
-              <FilterSelect label="Statut" value={statusFilter} onValueChange={onStatusFilterChange} minWidth="200px" inline options={STATUS_FILTER_OPTIONS} />
-            )}
-            {typeof supplierFilter !== "undefined" && (
-              <FilterSelect label="Fournisseur" value={supplierFilter} onValueChange={onSupplierFilterChange} minWidth="220px" inline options={supplierOptions} />
-            )}
-          </Flex>
-        }
-      />
-    ) : null;
+  const headerProps = useMemo(() => {
+    if (!showHeader) return null;
+    return {
+      icon: TruckIcon,
+      title: "Paniers fournisseurs",
+      count: orders.length,
+      searchValue: searchTerm,
+      onSearchChange,
+      onRefresh,
+      showRefreshButton: true,
+      searchPlaceholder: "Recherche (n°, fournisseur...)",
+      actions: (
+        <Flex align="center" gap="2">
+          {typeof statusFilter !== "undefined" && (
+            <FilterSelect label="Statut" value={statusFilter} onValueChange={onStatusFilterChange} minWidth="200px" inline options={STATUS_FILTER_OPTIONS} />
+          )}
+          {typeof supplierFilter !== "undefined" && (
+            <FilterSelect label="Fournisseur" value={supplierFilter} onValueChange={onSupplierFilterChange} minWidth="220px" inline options={supplierOptions} />
+          )}
+        </Flex>
+      )
+    };
+  }, [showHeader, orders.length, searchTerm, onSearchChange, onRefresh, statusFilter, onStatusFilterChange, supplierFilter, onSupplierFilterChange, supplierOptions]);
+
+  const columns = useMemo(() => ([
+    { key: "orderNumber", header: "N° Commande" },
+    { key: "supplier", header: "Fournisseur" },
+    { key: "status", header: "Statut" },
+    { key: "lineCount", header: "Nb lignes" },
+    { key: "amount", header: "Montant" },
+    { key: "age", header: "Âge (j)" },
+    { key: "actions", header: "Actions" },
+  ]), []);
+
+  const rowRenderer = useCallback((order) => {
+    const isExpanded = expandedOrderId === order.id;
+    return (
+      <Fragment key={order.id}>
+        <OrderRow
+          order={order}
+          loading={loading}
+          cachedLines={cachedLines}
+          onViewDetails={() => handleViewDetails(order)}
+          onStatusChange={wrappedHandleStatusChange}
+          onExportCSV={() => handleExportCSV(order)}
+          onSendEmail={() => handleSendEmail(order)}
+          onCopyHTMLEmail={() => handleCopyHTMLEmail(order)}
+        />
+
+        {isExpanded && (
+          <ExpandableDetailsRow colSpan={columns.length} withCard={true}>
+            <OrderLineTable order={order} orderLines={orderLines} />
+          </ExpandableDetailsRow>
+        )}
+      </Fragment>
+    );
+  }, [expandedOrderId, cachedLines, handleViewDetails, wrappedHandleStatusChange, handleExportCSV, handleSendEmail, handleCopyHTMLEmail, columns.length, orderLines, loading]);
 
   return (
-    <>
-      {renderHeader()}
-      {orders.length === 0 ? (
-        <Card>
-          <Flex align="center" justify="center" p="6" direction="column" gap="3">
-            <Package size={48} color="var(--gray-9)" />
-            <Text color="gray" size="4">Aucun panier fournisseur</Text>
-          </Flex>
-        </Card>
-      ) : (
-        <Flex direction="column" gap="3">
-          <Table.Root variant="surface">
-            <Table.Header style={{ position: 'sticky', top: 0, background: 'var(--gray-1)', zIndex: 1 }}>
-              <Table.Row>
-                <Table.ColumnHeaderCell>N° Commande</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Fournisseur</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Nb lignes</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Montant</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Âge (j)</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
-              </Table.Row>
-            </Table.Header>
-
-            <Table.Body>
-              {sortedOrders.map((order) => (
-                <Fragment key={order.id}>
-                  <OrderRow
-                    order={order}
-                    loading={loading}
-                    cachedLines={cachedLines}
-                    onViewDetails={() => handleViewDetails(order)}
-                    onStatusChange={wrappedHandleStatusChange}
-                    onExportCSV={() => handleExportCSV(order)}
-                    onSendEmail={() => handleSendEmail(order)}
-                    onCopyHTMLEmail={() => handleCopyHTMLEmail(order)}
-                  />
-
-                  {expandedOrderId === order.id && (
-                    <ExpandableDetailsRow colSpan={7} withCard={true}>
-                      <OrderLineTable order={order} orderLines={orderLines} />
-                    </ExpandableDetailsRow>
-                  )}
-                </Fragment>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Flex>
-      )}
-    </>
+    <DataTable
+      headerProps={headerProps}
+      columns={columns}
+      data={sortedOrders}
+      rowRenderer={rowRenderer}
+      loading={loading}
+      emptyState={{
+        icon: Package,
+        title: "Aucun panier fournisseur",
+        description: "Créez un panier pour commencer.",
+        action: onRefresh ? <Button onClick={onRefresh} size="2" variant="soft" color="blue">Rafraîchir</Button> : null,
+      }}
+    />
   );
 }
 SupplierOrdersTable.propTypes = supplierOrdersTablePropTypes;

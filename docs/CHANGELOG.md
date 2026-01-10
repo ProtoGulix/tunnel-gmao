@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.2.10 - 2026-01-10
+
+### Front / Tables réutilisables
+
+- Nouveau composant `DataTable` (header sticky, état vide, skeletons) utilisé comme base commune pour les listes (paniers fournisseurs, demandes d'achat, fabricants, items de stock).
+- Migration des tableaux existants vers `DataTable` avec `rowRenderer` pour les lignes expandables (paniers fournisseurs, demandes d'achat) et harmonisation des états vides/chargement.
+- Refactor des listes fournisseurs/fabricants/stock : suppression des composants redondants (`ManufacturerTableContent`, `StockItemRow`) au profit du rendu unifié.
+
+### Pilotage machine
+
+- Refonte de la page MachineDetail : en-tête opérationnelle (statut, navigation retour, refresh), alerte critique, tableau des interventions avec pagination/recherche, bloc activité (temps passé) et suggestions préventif.
+- Chargement machine optimisé : `useMachineData` ne récupère plus les interventions globales, agrège les actions depuis les interventions expand et rend le chargement des sous-catégories optionnel.
+- Ouverture/fermeture d'intervention calculée depuis `status_log` via `useInterventionDuration` pour afficher des durées précises.
+
+### API / Backend
+
+- `interventions.fetchInterventions` accepte un filtre `machineId` et rapatrie les `status_log` pour les calculs de durée.
+- Mapper interventions : date d'ouverture dérivée du `status_log` et normalisation des statuts inchangée.
+
 ## 1.2.9 - 2026-01-09
 
 ### En développement

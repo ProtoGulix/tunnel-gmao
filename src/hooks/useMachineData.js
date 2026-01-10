@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { machines, interventions, actions, actionSubcategories } from '@/lib/api/facade';
+import { machines, interventions, actionSubcategories } from '@/lib/api/facade';
 
 const fetchMachine = (id) => machines.fetchMachine(id);
-const fetchInterventions = () => interventions.fetchInterventions();
 
 /**
  * Hook personnalisé pour charger les données d'une machine
  * @param {string} machineId - ID de la machine
+ * @param {Object} options - Options de chargement
+ * @param {boolean} options.includeSubcategories - Charger les sous-catégories d'actions (défaut: false)
  * @returns {object} Données de la machine et états de chargement
  */
-export const useMachineData = (machineId) => {
+export const useMachineData = (machineId, options = {}) => {
+  const { includeSubcategories = false } = options;
   const [machine, setMachine] = useState(null);
-  const [interventions, setInterventions] = useState([]);
+  const [interventionsList, setInterventionsList] = useState([]);
   const [machineActions, setMachineActions] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,18 +27,17 @@ export const useMachineData = (machineId) => {
       setError(null);
 
       // Chargement parallèle de toutes les données
-      const [machineData, allInterventions, allActions, allSubcategories] = await Promise.all([
-        fetchMachine(machineId),
-        fetchInterventions(),
-        actions.fetchActions(),
-        actionSubcategories.fetchActionSubcategories(),
-      ]);
+      const fetchPromises = [fetchMachine(machineId), interventions.fetchInterventions(machineId)];
 
-      // Filtrer les interventions de cette machine
-      const machineInterventions = allInterventions.filter((i) => i.machine?.id === machineId);
+      if (includeSubcategories) {
+        fetchPromises.push(actionSubcategories.fetchActionSubcategories());
+      }
 
-      // Extraire les actions directement depuis les interventions (elles contiennent les données expandues)
-      const machineActions = machineInterventions.flatMap((intervention) =>
+      const results = await Promise.all(fetchPromises);
+      const [machineData, machineInterventions, allSubcategories = []] = results;
+
+      // Extraire les actions directement depuis les interventions (expand)
+      const aggregatedActions = machineInterventions.flatMap((intervention) =>
         (intervention.action || []).map((action) => ({
           ...action,
           intervention: { id: intervention.id, code: intervention.code, title: intervention.title },
@@ -44,9 +45,11 @@ export const useMachineData = (machineId) => {
       );
 
       setMachine(machineData);
-      setInterventions(machineInterventions);
-      setMachineActions(machineActions);
-      setSubcategories(allSubcategories);
+      setInterventionsList(machineInterventions);
+      setMachineActions(aggregatedActions);
+      if (includeSubcategories) {
+        setSubcategories(allSubcategories);
+      }
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err);
 
@@ -59,7 +62,7 @@ export const useMachineData = (machineId) => {
     } finally {
       setLoading(false);
     }
-  }, [machineId, navigate]);
+  }, [machineId, navigate, includeSubcategories]);
 
   useEffect(() => {
     loadData();
@@ -67,9 +70,9 @@ export const useMachineData = (machineId) => {
 
   return {
     machine,
-    interventions,
+    interventions: interventionsList,
     actions: machineActions,
-    subcategories,
+    subcategories: includeSubcategories ? subcategories : undefined,
     loading,
     error,
     reload: loadData,
