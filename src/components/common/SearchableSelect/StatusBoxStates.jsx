@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Box, Flex, Text, Badge } from '@radix-ui/themes';
 import { HelpCircle, AlertCircle, CheckCircle } from 'lucide-react';
 
 /**
@@ -57,9 +57,43 @@ NoResultsState.propTypes = {
 };
 
 /**
+ * Option de demande spéciale
+ */
+export function SpecialRequestOption({ search, onSelect }) {
+  return (
+    <Box
+      p="2"
+      style={{
+        cursor: 'pointer',
+        background: 'var(--orange-2)',
+        borderTop: '1px solid var(--orange-7)',
+        transition: 'background-color 0.15s ease'
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--orange-3)'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--orange-2)'}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onSelect({ id: 'special-request', name: search, isSpecialRequest: true });
+      }}
+    >
+      <Flex align='center' gap='2'>
+        <AlertCircle size={16} color='var(--orange-9)' />
+        <Text size='2' weight='medium' color='orange'>Demande spéciale :</Text>
+        <Text size='2' weight='bold'>{search}</Text>
+      </Flex>
+    </Box>
+  );
+}
+
+SpecialRequestOption.propTypes = {
+  search: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired
+};
+
+/**
  * Liste de suggestions
  */
-export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect }) {
+export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect, search, showSpecialRequest }) {
   const defaultRender = (item) => (
     <Box>
       <Text size="2" weight="bold">{getDisplayText(item)}</Text>
@@ -74,7 +108,7 @@ export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSel
           p="2"
           style={{
             cursor: 'pointer',
-            borderBottom: idx < suggestions.length - 1 ? '1px solid var(--gray-3)' : 'none',
+            borderBottom: '1px solid var(--gray-3)',
             transition: 'background-color 0.15s ease'
           }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-3)'}
@@ -87,6 +121,9 @@ export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSel
           {renderItem ? renderItem(item) : defaultRender(item)}
         </Box>
       ))}
+      {showSpecialRequest && search.trim() && (
+        <SpecialRequestOption search={search} onSelect={onSelect} />
+      )}
     </>
   );
 }
@@ -95,5 +132,7 @@ SuggestionsList.propTypes = {
   suggestions: PropTypes.array.isRequired,
   renderItem: PropTypes.func,
   getDisplayText: PropTypes.func.isRequired,
-  onSelect: PropTypes.func.isRequired
+  onSelect: PropTypes.func.isRequired,
+  search: PropTypes.string,
+  showSpecialRequest: PropTypes.bool
 };

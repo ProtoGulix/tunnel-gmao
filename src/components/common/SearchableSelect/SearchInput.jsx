@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
  */
 export default function SearchInput({ value, onChange, placeholder, required, label }) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', zIndex: 2, pointerEvents: 'auto' }}>
       <input
         type="text"
         placeholder={placeholder}
@@ -20,10 +20,14 @@ export default function SearchInput({ value, onChange, placeholder, required, la
           fontSize: '14px',
           fontFamily: 'inherit',
           boxSizing: 'border-box',
-          height: '44px'
+          height: '44px',
+          background: 'var(--color-background, white)',
+          pointerEvents: 'auto'
         }}
         required={required}
         aria-label={label}
+        autoComplete="off"
+        inputMode="text"
       />
       <Search size={16} style={{
         position: 'absolute',

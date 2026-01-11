@@ -11,37 +11,50 @@
 -- @see trigger trg_log_status_change
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS public.intervention (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    
-    -- Code unique auto-généré (trigger)
-    code VARCHAR(255) UNIQUE,
-    
-    -- Relations
-    machine_id UUID,
-    updated_by UUID, -- Référence utilisateur (gestion externe)
-    
-    -- Informations intervention
-    type_inter VARCHAR(255), -- Type: 'PREV', 'COR', 'INST', etc.
-    tech_initials VARCHAR(255), -- Initiales technicien (pour code)
-    description TEXT,
-    
-    -- Dates
-    date_debut TIMESTAMPTZ,
-    date_fin TIMESTAMPTZ,
-    
-    -- Statut actuel (synchronisé avec intervention_status_log)
-    status_actual VARCHAR(255),
-    
-    -- Métadonnées
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+-- Table: public.intervention
 
--- Index
-CREATE INDEX IF NOT EXISTS intervention_machine_id_index ON public.intervention(machine_id);
+-- DROP TABLE IF EXISTS public.intervention;
 
--- Commentaires
-COMMENT ON TABLE public.intervention IS 'Interventions maintenance sur équipements';
-COMMENT ON COLUMN public.intervention.code IS 'Code unique auto-généré (MACHINE-TYPE-DATE-INITIALES)';
-COMMENT ON COLUMN public.intervention.status_actual IS 'Statut actuel synchronisé depuis intervention_status_log';
+CREATE TABLE IF NOT EXISTS public.intervention
+(
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    code character varying(64) COLLATE pg_catalog."default",
+    title character varying(200) COLLATE pg_catalog."default" NOT NULL,
+    machine_id uuid,
+    type_inter character varying(10) COLLATE pg_catalog."default" NOT NULL,
+    priority character varying(20) COLLATE pg_catalog."default" DEFAULT 'normal'::character varying,
+    reported_by character varying(200) COLLATE pg_catalog."default",
+    tech_initials character varying(255) COLLATE pg_catalog."default",
+    status_actual character varying(255) COLLATE pg_catalog."default",
+    updated_by uuid,
+    printed_fiche boolean DEFAULT false,
+    reported_date date,
+    CONSTRAINT intervention_pkey PRIMARY KEY (id),
+    CONSTRAINT intervention_code_key UNIQUE (code),
+    CONSTRAINT intervention_machine_id_fkey FOREIGN KEY (machine_id)
+        REFERENCES public.machine (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT intervention_status_actual_foreign FOREIGN KEY (status_actual)
+        REFERENCES public.intervention_status_ref (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL,
+    CONSTRAINT intervention_updated_by_foreign FOREIGN KEY (updated_by)
+        REFERENCES public.directus_users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE SET NULL
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.intervention
+    OWNER to directus;
+-- Index: intervention_machine_id_index
+
+-- DROP INDEX IF EXISTS public.intervention_machine_id_index;
+
+CREATE INDEX IF NOT EXISTS intervention_machine_id_index
+    ON public.intervention USING btree
+    (machine_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;

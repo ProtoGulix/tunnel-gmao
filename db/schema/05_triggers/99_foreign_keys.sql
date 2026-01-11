@@ -21,11 +21,15 @@ ALTER TABLE public.action_subcategory
 
 ALTER TABLE public.intervention
     ADD CONSTRAINT intervention_machine_id_fkey 
-    FOREIGN KEY (machine_id) REFERENCES public.machine(id);
+    FOREIGN KEY (machine_id) REFERENCES public.machine(id) ON DELETE SET NULL;
 
 ALTER TABLE public.intervention
     ADD CONSTRAINT intervention_status_actual_foreign 
-    FOREIGN KEY (status_actual) REFERENCES public.intervention_status_ref(id);
+    FOREIGN KEY (status_actual) REFERENCES public.intervention_status_ref(id) ON DELETE SET NULL;
+
+ALTER TABLE public.intervention
+    ADD CONSTRAINT intervention_updated_by_foreign 
+    FOREIGN KEY (updated_by) REFERENCES public.directus_users(id) ON DELETE SET NULL;
 
 -- ============================================================================
 -- intervention_action
@@ -33,11 +37,15 @@ ALTER TABLE public.intervention
 
 ALTER TABLE public.intervention_action
     ADD CONSTRAINT intervention_action_intervention_id_fkey 
-    FOREIGN KEY (intervention_id) REFERENCES public.intervention(id);
+    FOREIGN KEY (intervention_id) REFERENCES public.intervention(id) ON DELETE CASCADE;
 
 ALTER TABLE public.intervention_action
     ADD CONSTRAINT intervention_action_action_subcategory_foreign 
-    FOREIGN KEY (action_subcategory) REFERENCES public.action_subcategory(id);
+    FOREIGN KEY (action_subcategory) REFERENCES public.action_subcategory(id) ON DELETE SET NULL;
+
+ALTER TABLE public.intervention_action
+    ADD CONSTRAINT intervention_action_tech_foreign 
+    FOREIGN KEY (tech) REFERENCES public.directus_users(id) ON DELETE SET NULL;
 
 -- ============================================================================
 -- intervention_part
@@ -77,11 +85,23 @@ ALTER TABLE public.machine
 
 ALTER TABLE public.purchase_request
     ADD CONSTRAINT purchase_request_stock_item_id_fkey 
-    FOREIGN KEY (stock_item_id) REFERENCES public.stock_item(id);
+    FOREIGN KEY (stock_item_id) REFERENCES public.stock_item(id) ON DELETE SET NULL;
 
 ALTER TABLE public.purchase_request
     ADD CONSTRAINT purchase_request_intervention_id_foreign 
-    FOREIGN KEY (intervention_id) REFERENCES public.intervention(id);
+    FOREIGN KEY (intervention_id) REFERENCES public.intervention(id) ON DELETE SET NULL;
+
+-- ============================================================================
+-- intervention_action_purchase_request
+-- ============================================================================
+
+ALTER TABLE public.intervention_action_purchase_request
+    ADD CONSTRAINT intervention_action_purchase_request_intervention_action_id_fkey 
+    FOREIGN KEY (intervention_action_id) REFERENCES public.intervention_action(id) ON DELETE SET NULL;
+
+ALTER TABLE public.intervention_action_purchase_request
+    ADD CONSTRAINT intervention_action_purchase_request_purchase_request_id_fkey 
+    FOREIGN KEY (purchase_request_id) REFERENCES public.purchase_request(id) ON DELETE SET NULL;
 
 -- ============================================================================
 -- stock_item

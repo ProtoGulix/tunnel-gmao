@@ -4,7 +4,7 @@
  */
 
 import PublicHome from './PublicHome';
-import PurchaseRequestForm from './public/PurchaseRequestForm';
+import PurchaseRequestPage from './public/PurchaseRequestPage';
 import InterventionRequestForm from './public/InterventionRequestForm';
 import Login from './Login';
 import InterventionsList from './InterventionsList';
@@ -25,7 +25,7 @@ export const ROUTE_COMPONENTS = {
   home: PublicHome,
   login: Login,
   'intervention-request': InterventionRequestForm,
-  'purchase-request': PurchaseRequestForm,
+  'purchase-request': PurchaseRequestPage,
   interventions: InterventionsList,
   'interventions-new': InterventionCreate,
   'intervention-detail': InterventionDetail,

@@ -35,7 +35,8 @@ export default function SearchableSelect(props) {
     renderSelected,
     required = false,
     maxSuggestions = 8,
-    placeholder = 'Tapez pour rechercher...'
+    placeholder = 'Tapez pour rechercher...',
+    onSearchChange
   } = props;
 
   const {
@@ -50,7 +51,8 @@ export default function SearchableSelect(props) {
     getDisplayText,
     getSearchableFields,
     maxSuggestions,
-    onChange
+    onChange,
+    onSearchChange
   });
 
   return (
@@ -81,10 +83,12 @@ export default function SearchableSelect(props) {
 }
 
 SearchableSelect.propTypes = {
-  items: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.string.isRequired })).isRequired,
+  items: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  })).isRequired,
   label: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   getDisplayText: PropTypes.func.isRequired,
   getSearchableFields: PropTypes.func.isRequired,
   renderItem: PropTypes.func,
@@ -92,4 +96,5 @@ SearchableSelect.propTypes = {
   required: PropTypes.bool,
   maxSuggestions: PropTypes.number,
   placeholder: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };

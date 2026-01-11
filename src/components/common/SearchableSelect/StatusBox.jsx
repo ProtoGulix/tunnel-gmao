@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Box } from '@radix-ui/themes';
-import { EmptyState, SelectedState, NoResultsState, SuggestionsList } from './StatusBoxStates';
+import { EmptyState, SuggestionsList, SpecialRequestOption } from './StatusBoxStates';
 
 /**
  * Boîte de statut qui affiche l'état actuel de la sélection
@@ -14,16 +14,24 @@ export default function StatusBox({
   getDisplayText,
   onSelectItem
 }) {
+  // Ne rien afficher si un item est sélectionné
+  if (selectedItem) {
+    return null;
+  }
+
+  const hasResults = suggestions.length > 0;
+  const hasSearch = search.trim().length > 0;
+
   // Détermine le style de la bordure selon l'état
   const getBorderStyle = () => {
-    if (selectedItem) return '2px solid var(--green-7)';
-    if (search.trim()) return '2px solid var(--orange-7)';
+    if (hasSearch && !hasResults) return '2px solid var(--orange-7)';
+    if (hasSearch) return '2px solid var(--blue-7)';
     return '1px dashed var(--gray-6)';
   };
 
   const getBackgroundStyle = () => {
-    if (selectedItem) return 'var(--green-2)';
-    if (search.trim()) return 'var(--orange-2)';
+    if (hasSearch && !hasResults) return 'var(--orange-2)';
+    if (hasSearch) return 'var(--blue-2)';
     return 'var(--gray-2)';
   };
 
@@ -32,22 +40,23 @@ export default function StatusBox({
       border: getBorderStyle(),
       background: getBackgroundStyle(),
       borderRadius: '8px',
-      minHeight: '140px',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      position: 'relative',
+      zIndex: 1
     }}>
-      {!search.trim() ? (
+      {!hasSearch ? (
         <EmptyState />
-      ) : selectedItem ? (
-        renderSelected ? renderSelected(selectedItem) : <SelectedState item={selectedItem} getDisplayText={getDisplayText} />
-      ) : suggestions.length > 0 ? (
+      ) : hasResults ? (
         <SuggestionsList
           suggestions={suggestions}
           renderItem={renderItem}
           getDisplayText={getDisplayText}
           onSelect={onSelectItem}
+          search={search}
+          showSpecialRequest={true}
         />
       ) : (
-        <NoResultsState search={search} />
+        <SpecialRequestOption search={search} onSelect={onSelectItem} />
       )}
     </Box>
   );

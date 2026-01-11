@@ -16,7 +16,7 @@ import { AuthProvider } from '@/auth/AuthContext';
 import { ErrorProvider } from '@/contexts/ErrorContext';
 
 // 5. Global Styles
-// import '@/styles/globals.css';
+import '@/styles/globals.css';
 
 // ===== RENDER =====
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -11,6 +11,7 @@ export function useSearchableSelect({
   getSearchableFields,
   maxSuggestions,
   onChange,
+  onSearchChange,
 }) {
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -21,13 +22,16 @@ export function useSearchableSelect({
     if (value && items.length > 0) {
       const found = items.find((item) => item.id === value);
       if (found) {
+        const display = getDisplayText(found);
         setSelectedItem(found);
-        setSearch(getDisplayText(found));
+        setSearch(display);
+        if (onSearchChange) onSearchChange(display);
       }
-    } else {
+    } else if (value === null && selectedItem) {
+      // Only clear selectedItem, but keep search term for user convenience
       setSelectedItem(null);
     }
-  }, [value, items, getDisplayText]);
+  }, [value, items, getDisplayText, selectedItem]);
 
   // Calculer les suggestions
   useEffect(() => {
@@ -50,6 +54,7 @@ export function useSearchableSelect({
   const handleSearchChange = (e) => {
     const newSearch = e.target.value;
     setSearch(newSearch);
+    if (onSearchChange) onSearchChange(newSearch);
     if (!newSearch.trim()) {
       setSelectedItem(null);
       onChange(null);
@@ -58,8 +63,10 @@ export function useSearchableSelect({
 
   const handleSelectItem = (item) => {
     setSelectedItem(item);
-    setSearch(getDisplayText(item));
+    const display = getDisplayText(item);
+    setSearch(display);
     setSuggestions([]);
+    if (onSearchChange) onSearchChange(display);
     onChange(item);
   };
 
@@ -67,6 +74,7 @@ export function useSearchableSelect({
     setSearch('');
     setSelectedItem(null);
     setSuggestions([]);
+    if (onSearchChange) onSearchChange('');
     onChange(null);
   };
 

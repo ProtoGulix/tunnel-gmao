@@ -4,7 +4,7 @@ import { Plus, Package } from "lucide-react";
 import LoadingState from "@/components/common/LoadingState";
 import TableHeader from "@/components/common/TableHeader";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
-import PurchaseRequestFormBody from "@/components/purchase/requests/PurchaseRequestFormBody";
+import PurchaseRequestForm from "@/components/purchase/requests/PurchaseRequestForm";
 import { useSummaryTab } from "./useSummaryTab";
 
 /**
@@ -69,7 +69,7 @@ export default function SummaryTab({ model, handlers, metadata }) {
         {/* Formulaire création */}
         {showForm && (
           <Card style={{ backgroundColor: 'var(--gray-2)' }}>
-            <PurchaseRequestFormBody
+            <PurchaseRequestForm
               onSubmit={handleFormSubmit}
               loading={submitting}
               onCancel={handleCancel}

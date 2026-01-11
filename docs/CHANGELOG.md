@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.2 - 2026-01-11
+
+### Demande d'achat - Interface de sélection améliorée
+
+- **Composant SearchableSelect réutilisable** : Recherche d'articles avec suggestions, gestion des demandes spéciales (articles non répertoriés), intégration dans le formulaire de demande d'achat.
+- **Formulaire PurchaseRequestForm refactorisé** : Respect des règles ESLint (complexité < 10, lignes < 200), séparation en sous-composants (DetailsRow, FormActions).
+- **Demande spéciale intégrée** : Option cliquable pour valider un article saisi manuellement si aucun résultat n'est trouvé; distinction visuelle (badge orange vs vert pour stock).
+- **Champ demandeur obligatoire** : Bloque l'envoi tant que le demandeur n'est pas renseigné.
+- **UX conservation de recherche** : Annuler une sélection (`X`) conserve le texte saisi pour modification rapide.
+- **Page PurchaseRequestPage** : Affichage minimaliste du formulaire avec possibilité d'annuler la sélection et de chercher un autre article.
+
 ## 1.3.0 - 2026-01-10
 
 ### Nouvelle fonctionnalité
