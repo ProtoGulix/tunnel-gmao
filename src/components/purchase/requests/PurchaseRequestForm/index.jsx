@@ -5,6 +5,7 @@ import { ShoppingCart, Package, CheckCircle, AlertCircle, X } from 'lucide-react
 import { stock } from '@/lib/api/facade';
 import { DEFAULT_UNIT, resolveUnitForItem } from '@/config/units';
 import SearchableSelect from '@/components/common/SearchableSelect';
+import SelectionSummary from '@/components/common/SelectionSummary';
 import DetailsRow from './DetailsRow';
 import FormActions from './FormActions';
 
@@ -113,54 +114,16 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
               />
               
               {selectedItem && (
-                <Flex 
-                  mt='2'
-                  align='center' 
-                  justify='between' 
-                  gap='2' 
-                  style={{ 
-                    background: selectedItem.isSpecialRequest ? 'var(--orange-3)' : 'var(--green-3)', 
-                    border: selectedItem.isSpecialRequest ? '1px solid var(--orange-7)' : '1px solid var(--green-7)', 
-                    borderRadius: 6, 
-                    padding: '8px 12px' 
+                <SelectionSummary
+                  variant={selectedItem.isSpecialRequest ? 'special' : 'stock'}
+                  badgeText={selectedItem.isSpecialRequest ? 'Demande spéciale' : (selectedItem.ref || '')}
+                  mainText={selectedItem.name}
+                  rightText={selectedItem.isSpecialRequest ? undefined : `${selectedItem.quantity || 0} ${selectedItem.unit || 'pcs'}`}
+                  onClear={() => {
+                    setSearchTerm(selectedItem.name);
+                    setSelectedItem(null);
                   }}
-                >
-                  <Flex align='center' gap='2' style={{ flex: 1, minWidth: 0 }}>
-                    {selectedItem.isSpecialRequest ? (
-                      <>
-                        <AlertCircle size={16} color='var(--orange-9)' />
-                        <Badge color='orange' variant='soft' size='1'>Demande spéciale</Badge>
-                        <Text size='2' weight='bold' style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedItem.name}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={16} color='var(--green-9)' />
-                        <Badge color='blue' variant='soft' size='1'>{selectedItem.ref}</Badge>
-                        <Text size='2' weight='bold' style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedItem.name}
-                        </Text>
-                        <Flex align='center' gap='1' style={{ marginLeft: 'auto' }}>
-                          <Package size={12} color='var(--gray-11)' />
-                          <Text size='1' color='gray'>{selectedItem.quantity || 0} {selectedItem.unit || 'pcs'}</Text>
-                        </Flex>
-                      </>
-                    )}
-                  </Flex>
-                  <IconButton 
-                    size='1' 
-                    variant='ghost' 
-                    color='gray'
-                    type='button'
-                    onClick={() => {
-                      setSearchTerm(selectedItem.name);
-                      setSelectedItem(null);
-                    }}
-                  >
-                    <X size={14} />
-                  </IconButton>
-                </Flex>
+                />
               )}
             </Box>
 

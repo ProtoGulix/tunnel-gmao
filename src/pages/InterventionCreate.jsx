@@ -16,12 +16,18 @@ import {
   Button, 
   Card, 
   Select,
-  Spinner
+  Spinner,
+  Badge,
+  IconButton
 } from "@radix-ui/themes";
 
 // 4. Custom Components
 import SearchableSelect from "@/components/common/SearchableSelect";
+import SelectionSummary from "@/components/common/SelectionSummary";
 import ErrorDisplay from "@/components/ErrorDisplay";
+
+// 5. Icons
+import { CheckCircle, X } from 'lucide-react';
 
 // 5. Custom Hooks
 import { useApiMutation } from "@/hooks/useApiCall";
@@ -70,6 +76,7 @@ export default function InterventionCreate() {
   });
 
   const [localError, setLocalError] = useState(null);
+  const [searchTermMachine, setSearchTermMachine] = useState('');
 
   // ----- Load machines -----
   useEffect(() => {
@@ -188,32 +195,45 @@ export default function InterventionCreate() {
               <Text as="label" size="2" weight="bold" mb="2">
                 Machine <Text color="red">*</Text>
               </Text>
-              <SearchableSelect
-                items={machinesList}
-                label=""
-                value={formData.machine_id}
-                onChange={(machine) => handleChange("machine_id", machine ? machine.id : null)}
-                getDisplayText={(m) => `${m.code || ""} - ${m.name || ""}`}
-                getSearchableFields={(m) => [m.code, m.name, m.location]}
-                renderItem={(m) => (
-                  <Box>
-                    <Text size="2" weight="bold">{m.name}</Text>
-                    {m.code && <Text size="1" color="gray">{m.code}</Text>}
-                    {m.location && <Text size="1" color="gray">📍 {m.location}</Text>}
-                  </Box>
-                )}
-                renderSelected={(m) => (
-                  <Flex direction="column" align="center" justify="center" gap="2" style={{ minHeight: '140px' }}>
-                    <Box style={{ fontSize: '24px' }}>✓</Box>
-                    <Text size="2" weight="bold" color="green" style={{ textAlign: 'center', wordBreak: 'break-word' }}>
-                      {m.name}
-                    </Text>
-                    {m.code && <Text size="1" color="gray">{m.code}</Text>}
-                  </Flex>
-                )}
-                required
-                placeholder="Rechercher par code, nom ou emplacement..."
-              />
+              <Box style={{ position: 'relative', zIndex: 5 }}>
+                <SearchableSelect
+                  items={machinesList}
+                  label=""
+                  value={formData.machine_id}
+                  onChange={(machine) => handleChange("machine_id", machine ? machine.id : null)}
+                  getDisplayText={(m) => `${m.code || ""} - ${m.name || ""}`}
+                  getSearchableFields={(m) => [m.code, m.name, m.location]}
+                  allowSpecialRequest={false}
+                  onSearchChange={(value) => setSearchTermMachine(value)}
+                  renderItem={(m) => (
+                    <Flex align='center' justify='between' gap='2'>
+                      <Flex align='center' gap='2'>
+                        <Badge color='blue' variant='soft' size='1'>{m.code}</Badge>
+                        <Text size='2' weight='bold'>{m.name}</Text>
+                      </Flex>
+                      {m.equipement_mere && (
+                        <Text size='1' color='gray'>{m.equipement_mere}</Text>
+                      )}
+                    </Flex>
+                  )}
+                  required
+                  placeholder="Rechercher par code, nom ou emplacement..."
+                />
+              </Box>
+
+              {formData.machine_id && (
+                <SelectionSummary
+                  variant="stock"
+                  badgeText={machinesList.find(m => m.id === formData.machine_id)?.code || ''}
+                  mainText={machinesList.find(m => m.id === formData.machine_id)?.name || ''}
+                  rightText={machinesList.find(m => m.id === formData.machine_id)?.equipement_mere || ''}
+                  onClear={() => {
+                    const selectedMachine = machinesList.find(m => m.id === formData.machine_id);
+                    setSearchTermMachine(`${selectedMachine?.code || ''} - ${selectedMachine?.name || ''}`);
+                    handleChange('machine_id', null);
+                  }}
+                />
+              )}
             </Box>
 
             {/* Reporter (Optional) */}

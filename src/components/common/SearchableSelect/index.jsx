@@ -22,6 +22,7 @@ import { useSearchableSelect } from './useSearchableSelect';
  * @param {boolean} [props.required=false] - Si le champ est requis
  * @param {number} [props.maxSuggestions=8] - Nombre max de suggestions
  * @param {string} [props.placeholder='Tapez pour rechercher...'] - Texte du placeholder
+ * @param {boolean} [props.allowSpecialRequest=true] - Autoriser la création de demande spéciale (non-sélectionné)
  */
 export default function SearchableSelect(props) {
   const {
@@ -36,7 +37,8 @@ export default function SearchableSelect(props) {
     required = false,
     maxSuggestions = 8,
     placeholder = 'Tapez pour rechercher...',
-    onSearchChange
+    onSearchChange,
+    allowSpecialRequest = true
   } = props;
 
   const {
@@ -77,6 +79,7 @@ export default function SearchableSelect(props) {
         renderSelected={renderSelected}
         getDisplayText={getDisplayText}
         onSelectItem={handleSelectItem}
+        allowSpecialRequest={allowSpecialRequest}
       />
     </Box>
   );

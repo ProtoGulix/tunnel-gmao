@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.3 - 2026-01-11
+
+### Système de sélection unifié
+
+- **Composant partagé `SelectionSummary`** : carte de résumé homogène (stock vs demande spéciale) avec badge, titre, méta à droite et bouton d'annulation.
+- **Refactor `PurchaseRequestForm`** : utilise `SelectionSummary` pour l'article sélectionné; distinction visuelle entre article stocké (vert) et demande spéciale (orange).
+- **Refactor `InterventionCreate`** : utilise `SelectionSummary` pour la machine sélectionnée; badge code, nom à côté et équipement mère à droite; pas de demande spéciale pour ce champ.
+- **`SearchableSelect`** : option `allowSpecialRequest` ajoutée pour contrôler la création de demandes spéciales (désactivée pour machines, activée pour achats).
+- **`PurchaseRequestPage`** : affiche un `SelectionSummary` du dernier envoi (item_label, quantité, unité) lors du succès.
+
 ## 1.3.2 - 2026-01-11
 
 ### Demande d'achat - Interface de sélection améliorée

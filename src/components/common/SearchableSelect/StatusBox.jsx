@@ -12,7 +12,8 @@ export default function StatusBox({
   renderItem,
   renderSelected,
   getDisplayText,
-  onSelectItem
+  onSelectItem,
+  allowSpecialRequest = true
 }) {
   // Ne rien afficher si un item est sélectionné
   if (selectedItem) {
@@ -53,10 +54,12 @@ export default function StatusBox({
           getDisplayText={getDisplayText}
           onSelect={onSelectItem}
           search={search}
-          showSpecialRequest={true}
+          showSpecialRequest={allowSpecialRequest}
         />
-      ) : (
+      ) : allowSpecialRequest ? (
         <SpecialRequestOption search={search} onSelect={onSelectItem} />
+      ) : (
+        <EmptyState />
       )}
     </Box>
   );
@@ -69,5 +72,6 @@ StatusBox.propTypes = {
   renderItem: PropTypes.func,
   renderSelected: PropTypes.func,
   getDisplayText: PropTypes.func.isRequired,
-  onSelectItem: PropTypes.func.isRequired
+  onSelectItem: PropTypes.func.isRequired,
+  allowSpecialRequest: PropTypes.bool
 };
