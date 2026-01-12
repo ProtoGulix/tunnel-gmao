@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
+import PropTypes from 'prop-types';
 import { useError } from '@/contexts/ErrorContext';
 import { Box, Flex, Text } from "@radix-ui/themes";
 import { Factory } from "lucide-react";
@@ -83,12 +84,14 @@ const buildSubmitData = (formData) => ({
  * Permet d'ajouter de nouveaux fabricants via un formulaire inline.
  *
  * @component
+ * @param {Object} props - Props du composant
+ * @param {Function} [props.onManufacturerAdded] - Callback appelé après l'ajout d'un fabricant
  * @returns {JSX.Element} Tableau des fabricants
  *
  * @example
- * <ManufacturersTable />
+ * <ManufacturersTable onManufacturerAdded={refreshManufacturers} />
  */
-export default function ManufacturersTable() {
+export default function ManufacturersTable({ onManufacturerAdded }) {
   // ----- State -----
   const { showError } = useError();
   const [items, setItems] = useState([]);
@@ -133,6 +136,11 @@ export default function ManufacturersTable() {
       if (newItem) {
         setItems([...items, newItem]);
         setFormData(INITIAL_FORM_STATE);
+        
+        // Notifier le parent pour rafraîchir sa liste
+        if (onManufacturerAdded) {
+          onManufacturerAdded();
+        }
       }
     } catch (e) {
       console.error("Erreur création fabricant:", e);
@@ -195,8 +203,6 @@ export default function ManufacturersTable() {
   );
 }
 
-// ===== PROP TYPES =====
 ManufacturersTable.propTypes = {
-  // Ce composant n'accepte actuellement pas de props
-  // Les données sont chargées directement depuis l'API
+  onManufacturerAdded: PropTypes.func,
 };

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2 - 2026-01-12
+
+### Corrections
+
+- **Fix rafraîchissement fabricants** : Ajout d'un système de versioning pour forcer le re-render des tables d'articles en stock quand la liste des fabricants est mise à jour.
+- **Fix copie HTML email** : Ajout de fallbacks pour `navigator.clipboard` afin de supporter HTTP, localhost et les anciens navigateurs.
+
 ## 1.4.1 - 2026-01-12
 
 ### Corrections

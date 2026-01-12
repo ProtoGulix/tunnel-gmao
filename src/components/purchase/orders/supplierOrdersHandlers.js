@@ -74,12 +74,26 @@ export const createHandleCopyHTMLEmail = (getOrderLines, showError) => async (or
     const htmlContent = generateFullEmailHTML(order, lines);
     const textContent = generateEmailBody(order, lines);
 
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': new Blob([htmlContent], { type: 'text/html' }),
-        'text/plain': new Blob([textContent], { type: 'text/plain' }),
-      }),
-    ]);
+    // Check if Clipboard API is available (requires HTTPS or localhost)
+    if (navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([htmlContent], { type: 'text/html' }),
+          'text/plain': new Blob([textContent], { type: 'text/plain' }),
+        }),
+      ]);
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Fallback: copy as plain text
+      await navigator.clipboard.writeText(htmlContent);
+    } else {
+      // Fallback: use deprecated execCommand (for older browsers or HTTP)
+      const textArea = document.createElement('textarea');
+      textArea.value = htmlContent;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
 
     showError(new Error('Email HTML copié ! Collez-le (Ctrl+V) dans votre client email.'));
   } catch (error) {

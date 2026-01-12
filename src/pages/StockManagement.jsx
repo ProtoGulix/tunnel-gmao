@@ -82,9 +82,21 @@ export default function StockManagement() {
 
   // Load manufacturers once at parent level
   const [allManufacturers, setAllManufacturers] = useState([]);
-  useEffect(() => {
-    manufacturerItems.fetchManufacturerItems().then(items => setAllManufacturers(items || []));
+  const [manufacturersVersion, setManufacturersVersion] = useState(0);
+  
+  const refreshManufacturers = useCallback(async () => {
+    try {
+      const items = await manufacturerItems.fetchManufacturerItems();
+      setAllManufacturers(items || []);
+      setManufacturersVersion(v => v + 1); // Force re-render
+    } catch (error) {
+      console.error('Erreur rechargement fabricants:', error);
+    }
   }, []);
+  
+  useEffect(() => {
+    refreshManufacturers();
+  }, [refreshManufacturers]);
 
   // Load stock families once at parent level
   const [stockFamilies, setStockFamilies] = useState([]);
@@ -1247,6 +1259,7 @@ export default function StockManagement() {
                   />
                 ) : (
                   <StockItemsTable
+                    key={`stock-items-${manufacturersVersion}`}
                     items={filteredStockItems}
                     compactRows={compactRows}
                     specsCounts={stock.specsCounts}
@@ -1300,7 +1313,7 @@ export default function StockManagement() {
 
             {/* ===== TAB: MANUFACTURERS ===== */}
             <Tabs.Content value="manufacturers">
-              <ManufacturersTable />
+              <ManufacturersTable onManufacturerAdded={refreshManufacturers} />
             </Tabs.Content>
           </Box>
         </Tabs.Root>
