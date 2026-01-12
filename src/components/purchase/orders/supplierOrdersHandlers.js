@@ -3,7 +3,7 @@
  * Contient la logique d'export (CSV, email) et les changements de statut
  */
 
-import { getOrderNumber, getSupplierObj, getTotalAmount } from './supplierOrdersConfig';
+import { getOrderNumber, getSupplierObj } from './supplierOrdersConfig';
 import { CSV_CONFIG, EMAIL_CONFIG } from '@/config/exportConfig';
 import {
   generateCSVContent,
@@ -122,16 +122,6 @@ export const handleStatusChange = async (
 ) => {
   try {
     setLoading(true);
-
-    const currentOrder = orders.find((o) => o.id === orderId);
-    if (
-      newStatus === 'RECEIVED' &&
-      (!getTotalAmount(currentOrder) || Number(getTotalAmount(currentOrder)) <= 0)
-    ) {
-      showError(new Error('Montant obligatoire pour passer en "Commandé".'));
-      setLoading(false);
-      return;
-    }
 
     const lines = await suppliers.fetchSupplierOrderLines(orderId);
     const daStatus = STATUS_MAPPING[newStatus];

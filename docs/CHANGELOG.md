@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.1 - 2026-01-12
+
+### Corrections
+
+- **Fix import manquant** : Ajout de l'import `actionSubcategories` dans InterventionDetail.jsx pour corriger l'erreur lors de la création d'actions.
+- **Suppression validation prix** : Retrait de l'obligation de renseigner le montant total pour passer un panier fournisseur au statut "Commandé".
+
 ## 1.4.0 - 2026-01-12
 
 ### Gestion des demandes d'achat depuis les fiches action

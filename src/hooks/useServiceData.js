@@ -26,7 +26,7 @@ import {
  * Capacité théorique ETP du service (à configurer)
  * TODO: Externaliser dans une configuration ou table meta
  */
-const SERVICE_ETP_CAPACITY = 160; // heures par mois (1 ETP = 160h/mois)
+const SERVICE_ETP_CAPACITY = 320; // heures par mois (1 ETP = 160h/mois)
 
 /**
  * Calcule les causes de fragmentation par sous-catégorie
