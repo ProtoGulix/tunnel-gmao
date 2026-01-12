@@ -47,9 +47,7 @@ export const fetchInterventionRaw = async (id: string) => {
         'action.tech.id',
         'action.tech.first_name',
         'action.tech.last_name',
-        'parts.id',
-        'parts.quantity',
-        'parts.note',
+        'action.purchase_request_ids.purchase_request_id'
       ].join(','),
       _t: Date.now(),
     },
@@ -100,6 +98,7 @@ export const fetchInterventionsRaw = async (machineId?: string) => {
       'action.tech.id',
       'action.tech.first_name',
       'action.tech.last_name',
+      'action.purchase_request_ids.purchase_request_id',
     ].join(','),
     _t: Date.now(),
   };

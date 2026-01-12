@@ -76,6 +76,16 @@ export const mapActionToDomain = (raw: any): any => {
             : undefined,
         }
       : undefined,
+    // Linked purchase requests (junction table)
+    purchaseRequestIds: Array.isArray(raw.intervention_action_purchase_request)
+      ? raw.intervention_action_purchase_request
+          .map((link: any) => {
+            const pr = link?.purchase_request_id;
+            // Directus can return raw id or nested object
+            return typeof pr === 'object' ? pr?.id : pr;
+          })
+          .filter(Boolean)
+      : [],
   };
 };
 
