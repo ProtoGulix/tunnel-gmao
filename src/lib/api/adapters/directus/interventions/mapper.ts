@@ -82,6 +82,14 @@ export const mapActionToDomain = (item: any) => {
     timeSpent: item.time_spent,
     complexityScore: item.complexity_score,
     createdAt: item.created_at,
+    purchaseRequestIds: Array.isArray(item.purchase_request_ids)
+      ? item.purchase_request_ids
+          .map((link: any) => {
+            const pr = link?.purchase_request_id;
+            return typeof pr === 'object' ? pr?.id : pr;
+          })
+          .filter(Boolean)
+      : [],
     technician: item.tech
       ? {
           id: item.tech.id,

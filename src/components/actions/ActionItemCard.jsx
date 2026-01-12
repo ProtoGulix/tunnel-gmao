@@ -1,9 +1,14 @@
-import { Card, Flex, Text, Badge } from "@radix-ui/themes";
-import { Clock, User, Edit2, Copy, Trash2 } from "lucide-react";
+import { Card, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
+import { Flex } from "@radix-ui/themes";
 import ActionForm from "@/components/actions/ActionForm";
-import { actions, actionSubcategories, interventions } from "@/lib/api/facade";
+import PurchaseRequestForm from "@/components/purchase/requests/PurchaseRequestForm";
+import ActionMetadataHeader from "@/components/common/ActionMetadataHeader";
+import ActionButtons from "@/components/common/ActionButtons";
+import PurchaseRequestList from "@/components/common/PurchaseRequestList";
+import { actions, actionSubcategories, interventions, stock } from "@/lib/api/facade";
+import { api } from "@/lib/api/client";
 import { useAuth } from "@/auth/useAuth";
 
 // DTO-friendly accessors with legacy fallback
@@ -25,13 +30,15 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, getCategoryColor, sanitizeDescription }) {
+export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
+  const [purchaseRequests, setPurchaseRequests] = useState([]);
 
   const complexityScore = getComplexityScore(localAction);
   const complexityInfo = getComplexityColor(complexityScore);
@@ -46,6 +53,42 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
   useEffect(() => {
     setLocalAction(action);
   }, [action]);
+
+  // Load purchase requests when action has linked requests
+  useEffect(() => {
+    const loadPurchaseRequests = async () => {
+      if (localAction?.purchaseRequestIds && localAction.purchaseRequestIds.length > 0) {
+        try {
+          const [allRequests, allStockItems] = await Promise.all([
+            stock.fetchPurchaseRequests(),
+            stock.fetchStockItems()
+          ]);
+          
+          const requests = localAction.purchaseRequestIds
+            .map(id => allRequests.find(pr => pr.id === id))
+            .filter(Boolean)
+            .map(pr => {
+              // Add stockItemCode if stockItemId exists
+              if (pr.stockItemId) {
+                const stockItem = allStockItems.find(item => item.id === pr.stockItemId);
+                return {
+                  ...pr,
+                  stockItemCode: stockItem?.ref || null
+                };
+              }
+              return pr;
+            });
+          
+          setPurchaseRequests(requests);
+        } catch (error) {
+          console.error('Error loading purchase requests:', error);
+        }
+      } else {
+        setPurchaseRequests([]);
+      }
+    };
+    loadPurchaseRequests();
+  }, [localAction?.purchaseRequestIds]);
 
   // Compute initial state fresh from current localAction
   const buildInitialEditState = () => {
@@ -99,6 +142,95 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
     setShowEditForm(false);
   }, [localAction, user?.id]);
 
+  const handleSubmitPurchaseRequest = useCallback(async (requestData) => {
+    try {
+      // Get action ID (always present)
+      const actionId = localAction?.id || action?.id;
+
+      if (!interventionId || !actionId) {
+        throw new Error(`Impossible de créer la demande: ${!actionId ? 'action' : 'intervention'} absente`);
+      }
+
+      // Create purchase request with intervention context
+      const purchaseRequest = {
+        item_label: requestData.item_label,
+        quantity: requestData.quantity,
+        unit: requestData.unit,
+        urgency: requestData.urgency,
+        requested_by: requestData.requested_by,
+        stock_item_id: requestData.stock_item_id || null,
+        intervention_id: interventionId,
+      };
+
+      // Call API to create purchase request
+      const created = await stock.createPurchaseRequest(purchaseRequest);
+
+      // Link purchase request to action via nested PATCH on intervention
+      if (created?.id) {
+        await api.patch(`/items/intervention/${interventionId}`, {
+          action: {
+            create: [],
+            update: [{
+              purchase_request_ids: {
+                create: [{
+                  intervention_action_id: actionId,
+                  purchase_request_id: { id: created.id }
+                }],
+                update: [],
+                delete: []
+              },
+              id: actionId
+            }],
+            delete: []
+          }
+        });
+      }
+
+      // Close the form on success
+      setShowPurchaseForm(false);
+    } catch (error) {
+      console.error('Error creating purchase request:', error);
+    }
+  }, [localAction, action, interventionId]);
+
+  const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
+    try {
+      const actionId = localAction?.id || action?.id;
+
+      if (!interventionId || !actionId) {
+        throw new Error('Impossible de supprimer la demande: intervention ou action absente');
+      }
+
+      // Find and delete the M2M junction record directly
+      // First, fetch the junction record to get its ID
+      const junctionResponse = await api.get('/items/intervention_action_purchase_request', {
+        params: {
+          filter: {
+            intervention_action_id: { _eq: actionId },
+            purchase_request_id: { _eq: purchaseRequestId }
+          },
+          fields: 'id'
+        }
+      });
+
+      const junctionRecords = junctionResponse.data?.data || [];
+      
+      // Delete each junction record found
+      for (const record of junctionRecords) {
+        await api.delete(`/items/intervention_action_purchase_request/${record.id}`);
+      }
+
+      // Delete the purchase request itself
+      await stock.deletePurchaseRequest(purchaseRequestId);
+
+      // Update local state to remove the deleted request
+      setPurchaseRequests(prev => prev.filter(pr => pr.id !== purchaseRequestId));
+    } catch (error) {
+      console.error('Error deleting purchase request:', error);
+      throw error; // Re-throw to let the dialog handle the error state
+    }
+  }, [localAction, action, interventionId]);
+
   return (
     <Card 
       key={action.id}
@@ -130,97 +262,25 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
           marginBottom: '0.75rem'
         }}
       >
-        <Flex align="center" gap="2" wrap="wrap" style={{ flex: 1, minWidth: 0 }}>
-          {/* Catégorie */}
-          {subcategory && (
-            <Badge 
-              variant="soft" 
-              size="2"
-              style={{ 
-                flexShrink: 0,
-                backgroundColor: getCategoryColor(subcategory) || '#6b7280',
-                color: 'white'
-              }}
-            >
-              {getSubcategoryCode(subcategory)}
-            </Badge>
-          )}
+        <ActionMetadataHeader
+          subcategory={subcategory}
+          timeSpent={timeSpent}
+          complexityScore={complexityScore}
+          complexityInfo={complexityInfo}
+          complexityFactors={actionComplexityFactors}
+          complexityFactorsList={complexityFactors}
+          technician={technician}
+          createdAt={createdAt}
+          getCategoryColor={getCategoryColor}
+        />
 
-          {/* Temps */}
-          {timeSpent > 0 && (
-            <Flex align="center" gap="1">
-              <Clock size={14} color="var(--gray-9)" />
-              <Text size="2" weight="medium">
-                {timeSpent}h
-              </Text>
-            </Flex>
-          )}
-
-          {/* Complexité */}
-          {complexityScore > 0 && (
-            <Badge 
-              color={complexityInfo.color} 
-              variant="soft" 
-              size="1"
-              title={`Complexité: ${complexityScore}/10 (${complexityInfo.label})`}
-            >
-              {complexityScore}/10
-            </Badge>
-          )}
-
-          {/* Facteur de complexité */}
-          {actionComplexityFactors.length > 0 && (
-            <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>
-              ({actionComplexityFactors.map((code) => {
-                const factor = complexityFactors.find(f => f.id === code);
-                return factor?.label || code;
-              }).join(', ')})
-            </Text>
-          )}
-
-          {/* Technicien */}
-          {technician && (
-            <Flex align="center" gap="1">
-              <User size={14} color="var(--gray-8)" />
-              <Text size="2" color="gray">
-                {getTechnicianFirstName(technician)} {getTechnicianLastName(technician)}
-              </Text>
-            </Flex>
-          )}
-
-          {/* Horaire */}
-          {createdAt && (
-            <Text size="2" color="gray">
-              {new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            </Text>
-          )}
-        </Flex>
-
-        {/* Actions rapides */}
-        <Flex gap="1" style={{ flexShrink: 0 }}>
-          <button 
-            title="Éditer cette action"
-            style={{ background: 'none', border: 'none', color: 'var(--gray-9)', padding: '4px 6px', cursor: 'pointer' }}
-            onClick={handleOpenEdit}
-          >
-            <Edit2 size={14} />
-            <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Éditer</span>
-          </button>
-          <button 
-            title="Dupliquer cette action"
-            style={{ background: 'none', border: 'none', color: 'var(--gray-9)', padding: '4px 6px', cursor: 'pointer' }}
-          >
-            <Copy size={14} />
-            <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Dupliquer</span>
-          </button>
-          <button 
-            title="Supprimer cette action"
-            style={{ background: 'none', border: 'none', color: 'var(--red-9)', padding: '4px 6px', cursor: 'pointer' }}
-          >
-            <Trash2 size={14} />
-            <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Supprimer</span>
-          </button>
-        </Flex>
+        <ActionButtons
+          onEdit={handleOpenEdit}
+          onDuplicate={undefined}
+          onPurchase={() => setShowPurchaseForm(!showPurchaseForm)}
+          onDelete={undefined}
+          purchaseRequestCount={purchaseRequests.length}
+        />
       </Flex>
 
       {/* CONTENT : Description */}
@@ -241,6 +301,24 @@ export default function ActionItemCard({ action, getCategoryColor, sanitizeDescr
           style={{ marginTop: '0.75rem' }}
         />
       )}
+
+      {/* PURCHASE REQUEST FORM DROPDOWN */}
+      {showPurchaseForm && (
+        <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
+          <PurchaseRequestForm
+            interventionId={localAction.intervention?.id || action.intervention?.id}
+            actionId={localAction.id || action.id}
+            onSubmit={handleSubmitPurchaseRequest}
+            onCancel={() => setShowPurchaseForm(false)}
+          />
+        </div>
+      )}
+
+      {/* PURCHASE REQUESTS LIST */}
+      <PurchaseRequestList 
+        purchaseRequests={purchaseRequests} 
+        onDelete={handleDeletePurchaseRequest}
+      />
     </Card>
   );
 }
@@ -274,6 +352,7 @@ ActionItemCard.propTypes = {
       }),
     }),
   }),
+  interventionId: PropTypes.string,
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
 };

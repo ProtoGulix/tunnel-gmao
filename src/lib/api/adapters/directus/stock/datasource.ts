@@ -58,6 +58,14 @@ export const updatePurchaseRequestInBackend = async (id: string, backendUpdates:
   }, 'UpdatePurchaseRequest');
 };
 
+// Delete purchase request (raw backend)
+export const deletePurchaseRequestInBackend = async (id: string) => {
+  return apiCall(async () => {
+    await api.delete(`/items/purchase_request/${id}`);
+    return true;
+  }, 'DeletePurchaseRequest');
+};
+
 // Fetch all stock items (raw backend)
 export const fetchStockItemsFromBackend = async () => {
   return apiCall(async () => {

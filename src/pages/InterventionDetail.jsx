@@ -208,32 +208,40 @@ export default function InterventionDetail() {
     if (activeTab === 'summary' && !summaryDataLoaded) {
       const loadSummaryData = async () => {
         try {
-          // Charger stocks et fournisseurs en parallèle
-          const [itemsData, suppliersData] = await Promise.all([
+          // Charger stocks, fournisseurs et purchase requests en parallèle
+          const [itemsData, suppliersData, requestsData] = await Promise.all([
             stock.fetchStockItems(),
-            suppliers.fetchSuppliers()
+            suppliers.fetchSuppliers(),
+            stock.fetchPurchaseRequestsByIntervention(id)
           ]);
 
           setStockItems(itemsData || []);
           setSupplierList(suppliersData || []);
+          setPurchaseRequests(requestsData || []);
 
-          // Charger les références fournisseurs et spécifications standards pour chaque article
-          // Charger supplier refs et standard specs pour chaque stock item
-          if (itemsData && itemsData.length > 0) {
+          // Charger supplier refs et standard specs uniquement pour les articles des purchase requests
+          if (requestsData && requestsData.length > 0) {
             const refsGrouped = {};
             const specsGrouped = {};
 
+            // Extraire les stock_item_id uniques des purchase requests
+            const uniqueStockItemIds = [...new Set(
+              requestsData
+                .map(pr => pr.stockItemId)
+                .filter(Boolean)
+            )];
+
             await Promise.all(
-              itemsData.map(async (item) => {
+              uniqueStockItemIds.map(async (stockItemId) => {
                 try {
-                  const refs = await stockSuppliers.fetchStockItemSuppliers(item.id);
+                  const refs = await stockSuppliers.fetchStockItemSuppliers(stockItemId);
                   if (refs && refs.length > 0) {
-                    refsGrouped[item.id] = refs;
+                    refsGrouped[stockItemId] = refs;
                   }
 
-                  const specs = await stock.fetchStockItemStandardSpecs(item.id);
+                  const specs = await stock.fetchStockItemStandardSpecs(stockItemId);
                   if (specs && specs.length > 0) {
-                    specsGrouped[item.id] = specs;
+                    specsGrouped[stockItemId] = specs;
                   }
                 } catch {
                   // Silently skip individual item load failures
@@ -251,6 +259,17 @@ export default function InterventionDetail() {
         }
       };
       loadSummaryData();
+    } else if (activeTab === 'summary' && summaryDataLoaded) {
+      // Recharger uniquement les purchase requests lors des accès suivants
+      const refreshPurchaseRequests = async () => {
+        try {
+          const requestsData = await stock.fetchPurchaseRequestsByIntervention(id);
+          setPurchaseRequests(requestsData || []);
+        } catch (error) {
+          showError(error);
+        }
+      };
+      refreshPurchaseRequests();
     }
   }, [activeTab, summaryDataLoaded, id, showError]);
 
@@ -471,26 +490,24 @@ export default function InterventionDetail() {
         ...requestData,
         intervention_id: id
       });
-      if (summaryDataLoaded) {
-        const updated = await stock.fetchPurchaseRequestsByIntervention(id);
-        setPurchaseRequests(updated || []);
-      }
+      // Recharger les purchase requests après création
+      const updated = await stock.fetchPurchaseRequestsByIntervention(id);
+      setPurchaseRequests(updated || []);
     } catch (error) {
       showError(error);
     }
-  }, [id, summaryDataLoaded, showError]);
+  }, [id, showError]);
 
   const handleUpdatePurchaseRequest = useCallback(async (requestId, updates) => {
     try {
       await stock.updatePurchaseRequest(requestId, updates);
-      if (summaryDataLoaded) {
-        const updated = await stock.fetchPurchaseRequestsByIntervention(id);
-        setPurchaseRequests(updated || []);
-      }
+      // Recharger les purchase requests après mise à jour
+      const updated = await stock.fetchPurchaseRequestsByIntervention(id);
+      setPurchaseRequests(updated || []);
     } catch (error) {
       showError(error);
     }
-  }, [id, summaryDataLoaded, showError]);
+  }, [id, showError]);
 
   const handleAddSupplierRef = useCallback(async (stockItemId, supplierRefData) => {
     try {

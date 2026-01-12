@@ -8,11 +8,11 @@ import { STATE_COLORS } from "@/config/interventionTypes";
  * Renderer pour item timeline : affiche action ou changement statut
  * 
  * Contraintes respectées :
- * - 1 prop (item)
+ * - 2 props (item, interventionId)
  * - Pas de callbacks inline
  * - Complexité réduite par extraction
  */
-export default function TimelineItemRenderer({ item }) {
+export default function TimelineItemRenderer({ item, interventionId }) {
   const statusConfig = STATE_COLORS[item.data.to?.id];
 
   // Early return pour changement de statut
@@ -31,6 +31,7 @@ export default function TimelineItemRenderer({ item }) {
   return (
     <ActionItemCard 
       action={item.data}
+      interventionId={interventionId}
       getCategoryColor={getCategoryColor}
       sanitizeDescription={sanitizeDescription}
     />
@@ -44,5 +45,6 @@ TimelineItemRenderer.propTypes = {
     type: PropTypes.string.isRequired,
     date: PropTypes.string.isRequired,
     data: PropTypes.object.isRequired
-  }).isRequired
+  }).isRequired,
+  interventionId: PropTypes.string
 };

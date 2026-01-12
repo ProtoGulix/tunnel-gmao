@@ -9,6 +9,7 @@ import {
   fetchPurchaseRequestsByInterventionFromBackend,
   createPurchaseRequestInBackend,
   updatePurchaseRequestInBackend,
+  deletePurchaseRequestInBackend,
   fetchStockItemsFromBackend,
   createStockItemInBackend,
   updateStockItemInBackend,
@@ -57,6 +58,12 @@ export const updatePurchaseRequest = async (id: string, updates: Record<string, 
   invalidateCache('purchaseRequests');
   invalidateCache('stockItems');
   return mapPurchaseRequestToDomain(updated);
+};
+
+export const deletePurchaseRequest = async (id: string) => {
+  await deletePurchaseRequestInBackend(id);
+  invalidateCache('purchaseRequests');
+  return true;
 };
 
 // Stock Items
@@ -128,6 +135,7 @@ export const stockAdapter = {
   fetchPurchaseRequestsByIntervention,
   createPurchaseRequest,
   updatePurchaseRequest,
+  deletePurchaseRequest,
   fetchStockItems,
   createStockItem,
   updateStockItem,

@@ -46,6 +46,10 @@ const ACTION_FIELDS = [
   'intervention_id.machine_id.equipement_mere.id',
   'intervention_id.machine_id.equipement_mere.name',
   'intervention_id.machine_id.equipement_mere.code',
+  // Purchase requests (M2M)
+  'intervention_action_purchase_request.id',
+  'intervention_action_purchase_request.purchase_request_id',
+  'intervention_action_purchase_request.purchase_request_id.id',
 ].join(',');
 
 /**

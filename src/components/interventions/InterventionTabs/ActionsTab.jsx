@@ -78,7 +78,7 @@ export default function ActionsTab({ model, handlers, metadata }) {
         {filteredTimeline.length > 0 ? (
           <Timeline
             items={filteredTimeline}
-            renderItem={(item) => <TimelineItemRenderer item={item} />}
+            renderItem={(item) => <TimelineItemRenderer item={item} interventionId={model.interv?.id} />}
             getStatusColor={(dayGroup) => {
               const dayEnd = new Date(dayGroup.date.split('/').reverse().join('-'));
               dayEnd.setHours(23, 59, 59, 999);

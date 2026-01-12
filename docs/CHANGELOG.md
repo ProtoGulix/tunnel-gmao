@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.4.0 - 2026-01-12
+
+### Gestion des demandes d'achat depuis les fiches action
+
+**BREAKING**: Changement du schéma base de données - nouvelles requêtes sur la table M2M `intervention_action_purchase_request`.
+
+#### Composants créés
+
+- **ActionMetadataHeader** : Affichage des métadonnées d'action (catégorie, temps passé, complexité, technicien, timestamp).
+- **ActionButtons** : Boutons d'action réutilisables (Editer, Dupliquer, Créer DA, Supprimer) avec badge de compte DA.
+- **PurchaseRequestList** : Liste des demandes d'achat liées avec confirmation suppression inline (non-modale).
+
+#### Fonctionnalités
+
+- **Liste DA liée à chaque action** avec code article en badge gris au début de ligne.
+- **Indicateur "À qualifier"** : icône alerte + fond amber pour DA sans article stocké associé.
+- **Badges** : quantité, urgence et statut de chaque DA.
+- **Suppression DA avec confirmation inline** (pattern non-modal) : icône poubelle → boutons [Confirmer]/[Annuler].
+- **Création DA depuis ActionItemCard** avec liaison M2M automatique via nested PATCH.
+- **Suppression DA** avec suppression automatique du lien M2M et de la DA elle-même.
+
+#### Refactorisation
+
+- **ActionItemCard** : Extraction métadonnées/boutons → utilisation des nouveaux composants communs; réduction complexité.
+- **Optimisation chargement** : Spécifications stock chargées uniquement pour items avec DA (au lieu de tous les items).
+- **Chargement parallèle** : Stocks + fournisseurs + demandes d'achat en parallèle dans InterventionDetail.
+
+#### API Adapter
+
+- **stock.deletePurchaseRequest()** : Nouvelle fonction pour supprimer une DA et son lien M2M.
+- **Exposition purchaseRequestIds** dans mappers actions et interventions.
+- **M2M creation** : Nested PATCH `intervention.action.update[].purchase_request_ids.create[]`.
+
+#### Database
+
+- **M2M junction table** `intervention_action_purchase_request` : nouvelles requêtes pour creation/deletion.
+- **Champs M2M exposés** dans datasources actions et interventions.
+
 ## 1.3.3 - 2026-01-11
 
 ### Système de sélection unifié
