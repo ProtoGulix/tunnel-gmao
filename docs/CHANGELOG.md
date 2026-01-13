@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.3 - 2026-01-13
+
+### Améliorations
+
+- **Affichage du profil utilisateur** : Nom, prénom et rôle de l'utilisateur connecté s'affichent maintenant dans le footer de la sidebar, centré avec un meilleur style.
+- **Support flexible des formats** : Les champs utilisateur supportent à la fois `first_name`/`last_name` (snake_case) et `firstName`/`lastName` (camelCase).
+
 ## 1.4.2 - 2026-01-12
 
 ### Corrections

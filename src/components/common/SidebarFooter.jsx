@@ -54,6 +54,9 @@ export default function SidebarFooter(props) {
     ? statusColor.replace(/0\.\d+\)$/, '0.08)')
     : statusColor;
   const statusTooltip = `Latence: ${latencyLabel} | API: ${serverStatus.online ? 'OK' : 'KO'} | Dernier check: ${lastCheckedLabel}`;
+  const firstName = user?.first_name ?? user?.firstName ?? '';
+  const lastName = user?.last_name ?? user?.lastName ?? '';
+  const roleLabel = user?.role?.name || user?.role?.label || user?.role || '';
 
   const openChangelog = () => {
     window.open(CHANGELOG_URL, '_blank', 'noopener,noreferrer');
@@ -67,9 +70,27 @@ export default function SidebarFooter(props) {
     }}>
       {isAuthenticated ? (
         <>
-          <div style={{ marginBottom: '0.5rem', color: colors.textMuted }}>
-            {user?.first_name} {user?.last_name}
+          <div style={{
+            marginBottom: '0.5rem',
+            color: colors.text,
+            textAlign: 'center',
+            fontWeight: 600,
+            letterSpacing: '0.2px'
+          }}>
+            {firstName} {lastName}
           </div>
+          {roleLabel && (
+            <div style={{
+              marginTop: '-0.35rem',
+              marginBottom: '0.75rem',
+              color: colors.textMuted,
+              fontSize: '0.8rem',
+              textAlign: 'center',
+              letterSpacing: '0.1px'
+            }}>
+              {roleLabel}
+            </div>
+          )}
           <SidebarActionButton
             label={logoutConfirm ? 'Confirmer' : 'Déconnexion'}
             icon={LogOut}
@@ -177,6 +198,15 @@ SidebarFooter.propTypes = {
   user: PropTypes.shape({
     first_name: PropTypes.string,
     last_name: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
+    role: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        name: PropTypes.string,
+        label: PropTypes.string,
+      })
+    ]),
   }),
   logoutConfirm: PropTypes.bool.isRequired,
   onLogout: PropTypes.func.isRequired,
