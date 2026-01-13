@@ -42,6 +42,8 @@ import StatusCallout from "@/components/common/StatusCallout";
 import { useStockItemsManagement } from "@/hooks/useStockItemsManagement";
 import { usePurchaseRequestsManagement } from "@/hooks/usePurchaseRequestsManagement";
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
+import { useSearchParam } from "@/hooks/useSearchParam";
 import { STOCK_MANAGEMENT_TABS, DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
 import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 
@@ -53,20 +55,20 @@ export default function StockManagement() {
   const purchasing = usePurchasingManagement(setError);
 
   // ========== 2. UI STATE ==========
-  const [activeTab, setActiveTab] = useState(STOCK_MANAGEMENT_TABS.REQUESTS);
+  const [activeTab, setActiveTab] = useTabNavigation(STOCK_MANAGEMENT_TABS.REQUESTS, 'tab');
   const [dispatchResult, setDispatchResult] = useState(null);
   const [showDispatchConfirm, setShowDispatchConfirm] = useState(false);
 
-  // Search & filter state
-  const [stockSearchTerm, setStockSearchTerm] = useState("");
+  // Search & filter state - Synchronized with URL
+  const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
   const [stockFamilyFilter, setStockFamilyFilter] = useState("all");
-  const [requestSearchTerm, setRequestSearchTerm] = useState("");
+  const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('search', '');
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [supplierOrderStatusFilter, setSupplierOrderStatusFilter] = useState("all");
-  const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useState("");
+  const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', '');
   const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
-  const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+  const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
 
   // Ref to SuppliersTable for triggering add dialog from TableHeader
   const suppliersTableRef = useRef(null);

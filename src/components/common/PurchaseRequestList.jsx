@@ -2,6 +2,7 @@ import { Flex, Text, Badge, Button } from "@radix-ui/themes";
 import { ShoppingCart, Trash2, AlertTriangle, X, Check } from "lucide-react";
 import PropTypes from "prop-types";
 import { useState } from "react";
+import StockRefLink from "@/components/common/StockRefLink";
 
 /**
  * PurchaseRequestItem - Individual purchase request item with inline delete confirmation
@@ -45,9 +46,13 @@ function PurchaseRequestItem({ pr, onDelete }) {
       <ShoppingCart size={14} color={isToQualify ? "var(--amber-9)" : "var(--orange-9)"} style={{ flexShrink: 0 }} />
       
       {pr.stockItemCode && (
-        <Badge color="gray" variant="outline" size="1" style={{ flexShrink: 0 }}>
-          {pr.stockItemCode}
-        </Badge>
+        <StockRefLink 
+          reference={pr.stockItemCode}
+          tab="stock"
+          color="gray"
+          variant="outline"
+          size="1"
+        />
       )}
 
       <Text size="2" weight="medium" style={{ flex: 1, minWidth: 0 }}>

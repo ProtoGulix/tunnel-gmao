@@ -17,6 +17,7 @@ import { interventions, actions, interventionStatusLogs, suppliers, stock, stock
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
+import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { useError } from '@/contexts/ErrorContext';
 import { useAuth } from '@/auth/useAuth';
 
@@ -125,7 +126,7 @@ export default function InterventionDetail() {
   // STATE MANAGEMENT
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const [showActionForm, setShowActionForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("actions");
+  const [activeTab, setActiveTab] = useTabNavigation("actions", 'tab');
   const [searchActions, setSearchActions] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);

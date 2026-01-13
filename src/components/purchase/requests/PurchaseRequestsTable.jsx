@@ -11,6 +11,7 @@ import { Package, AlertTriangle, AlertCircle, Building2, FileText, Plus, Send, H
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import SearchSpecsDialog from "@/components/stock/SearchSpecsDialog";
 import DataTable from "@/components/common/DataTable";
+import StockRefLink from "@/components/common/StockRefLink";
 
 export default function PurchaseRequestsTable({
   requests,
@@ -192,7 +193,12 @@ export default function PurchaseRequestsTable({
           </Table.Cell>
           <Table.Cell>
             {getStockItemRef(request.stockItemId) ? (
-              <Badge color="green" variant="soft">{getStockItemRef(request.stockItemId)}</Badge>
+              <StockRefLink 
+                reference={getStockItemRef(request.stockItemId)}
+                tab="stock"
+                color="green"
+                variant="soft"
+              />
             ) : (
               <Text color="gray">-</Text>
             )}
@@ -299,7 +305,12 @@ export default function PurchaseRequestsTable({
                         <Package size={16} color="var(--gray-9)" />
                         <Box>
                           <Text weight="bold" size="3" pl="3">Article en stock</Text>
-                          <Badge variant="outline" size="3">{stockItem.ref}</Badge>
+                          <StockRefLink 
+                            reference={stockItem.ref}
+                            tab="stock"
+                            variant="outline"
+                            size="3"
+                          />
                         </Box>
                       </Flex>
                       <Flex gap="2">
