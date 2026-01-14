@@ -12,6 +12,10 @@ import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import SearchSpecsDialog from "@/components/stock/SearchSpecsDialog";
 import DataTable from "@/components/common/DataTable";
 import StockRefLink from "@/components/common/StockRefLink";
+import DeletePurchaseRequestButton from "@/components/purchase/requests/DeletePurchaseRequestButton";
+import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
+import { stock } from "@/lib/api/facade";
+import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
 
 export default function PurchaseRequestsTable({
   requests,
@@ -35,6 +39,20 @@ export default function PurchaseRequestsTable({
   const [addingSpecsId, setAddingSpecsId] = useState(null);
   const [refFormData, setRefFormData] = useState({ supplier_id: "", supplier_ref: "", unit_price: "", delivery_time_days: "" });
   const [specsFormData, setSpecsFormData] = useState({ title: "", spec_text: "", isDefault: true });
+
+  // Hook pour gérer la suppression avec double-clic
+  const { 
+    deleteConfirmId, 
+    deleteLoading, 
+    handleDeleteButtonClick 
+  } = useDeletePurchaseRequest(async () => {
+    await onRefresh?.();
+    setDispatchResult?.({
+      type: 'success',
+      message: 'Demande d\'achat supprimée'
+    });
+    setTimeout(() => setDispatchResult?.(null), 3000);
+  });
 
   const getStockItemDetails = (stockItemId) => {
     if (!stockItemId) return null;
@@ -81,9 +99,9 @@ export default function PurchaseRequestsTable({
     if (missing) return { key: "to_qualify", icon: FileQuestion, label: "À qualifier" };
     const statusId = typeof request.status === "string" ? request.status : request.status?.id;
     if (statusId === "open") return { key: "to_dispatch", icon: Send, label: "À dispatcher" };
-    if (statusId === "received") return { key: "received", icon: Package, label: "Reçue" };
-    if (statusId === "ordered") return { key: "ordered", icon: Package, label: "Commandée" };
-    if (statusId === "in_progress") return { key: "waiting", icon: Hourglass, label: "Attente fournisseur" };
+    if (statusId === "received") return { key: "received", icon: Package, label: PURCHASE_REQUEST_STATUS.RECEIVED.label };
+    if (statusId === "ordered") return { key: "ordered", icon: Package, label: PURCHASE_REQUEST_STATUS.ORDERED.label };
+    if (statusId === "in_progress") return { key: "waiting", icon: Hourglass, label: PURCHASE_REQUEST_STATUS.IN_PROGRESS.label };
     return { key: "sent", icon: Send, label: "Envoyée" };
   };
   const getMissingList = (request) => {
@@ -223,32 +241,68 @@ export default function PurchaseRequestsTable({
             {(() => {
               if (hasMissing) {
                 return (
-                  <Button
-                    size="1"
-                    color={expandedRequestId === request.id ? "gray" : "blue"}
-                    variant="soft"
-                    onClick={() => onToggleExpand(request.id)}
-                    aria-expanded={expandedRequestId === request.id}
-                  >
-                    Qualifier
-                  </Button>
+                  <Flex gap="2">
+                    <Button
+                      size="1"
+                      color={expandedRequestId === request.id ? "gray" : "blue"}
+                      variant="soft"
+                      onClick={() => onToggleExpand(request.id)}
+                      aria-expanded={expandedRequestId === request.id}
+                    >
+                      Qualifier
+                    </Button>
+                    <DeletePurchaseRequestButton
+                      requestId={request.id}
+                      isConfirming={deleteConfirmId === request.id}
+                      onClick={handleDeleteButtonClick}
+                      disabled={deleteLoading}
+                      size="1"
+                    />
+                  </Flex>
                 );
               }
               if (biz.key === "waiting") {
                 const canRelance = age > 2;
                 return canRelance ? (
-                  <Button size="1" color="amber" variant="soft" aria-label="Relancer le fournisseur">
-                    Relancer
-                  </Button>
+                  <Flex gap="2">
+                    <Button size="1" color="amber" variant="soft" aria-label="Relancer le fournisseur">
+                      Relancer
+                    </Button>
+                    <DeletePurchaseRequestButton
+                      requestId={request.id}
+                      isConfirming={deleteConfirmId === request.id}
+                      onClick={handleDeleteButtonClick}
+                      disabled={deleteLoading}
+                      size="1"
+                    />
+                  </Flex>
                 ) : (
-                  <Text size="2" color="gray">En attente</Text>
+                  <Flex gap="2">
+                    <Text size="2" color="gray">En attente</Text>
+                    <DeletePurchaseRequestButton
+                      requestId={request.id}
+                      isConfirming={deleteConfirmId === request.id}
+                      onClick={handleDeleteButtonClick}
+                      disabled={deleteLoading}
+                      size="1"
+                    />
+                  </Flex>
                 );
               }
               if (biz.key === "sent") {
                 return (
-                  <Button size="1" color="blue" variant="soft" onClick={() => setDetailsExpandedId(detailsExpandedId === request.id ? null : request.id)}>
-                    Voir devis
-                  </Button>
+                  <Flex gap="2">
+                    <Button size="1" color="blue" variant="soft" onClick={() => setDetailsExpandedId(detailsExpandedId === request.id ? null : request.id)}>
+                      Voir devis
+                    </Button>
+                    <DeletePurchaseRequestButton
+                      requestId={request.id}
+                      isConfirming={deleteConfirmId === request.id}
+                      onClick={handleDeleteButtonClick}
+                      disabled={deleteLoading}
+                      size="1"
+                    />
+                  </Flex>
                 );
               }
               if (biz.key === "ordered") {
@@ -259,14 +313,23 @@ export default function PurchaseRequestsTable({
                 );
               }
               return (
-                <Button
-                  size="1"
-                  variant="soft"
-                  color={detailsExpandedId === request.id ? "gray" : "blue"}
-                  onClick={() => setDetailsExpandedId(detailsExpandedId === request.id ? null : request.id)}
-                >
-                  Détails
-                </Button>
+                <Flex gap="2">
+                  <Button
+                    size="1"
+                    variant="soft"
+                    color={detailsExpandedId === request.id ? "gray" : "blue"}
+                    onClick={() => setDetailsExpandedId(detailsExpandedId === request.id ? null : request.id)}
+                  >
+                    Détails
+                  </Button>
+                  <DeletePurchaseRequestButton
+                    requestId={request.id}
+                    isConfirming={deleteConfirmId === request.id}
+                    onClick={handleDeleteButtonClick}
+                    disabled={deleteLoading}
+                    size="1"
+                  />
+                </Flex>
               );
             })()}
           </Table.Cell>
@@ -555,19 +618,21 @@ export default function PurchaseRequestsTable({
   }, [colSpan, detailsExpandedId, expandedRequestId, getAgeColor, getAgeDays, getBusinessStatus, getMissingList, getPreferredSupplier, getRowAgeColor, getStockItemDetails, getStockItemRef, onAddStandardSpec, onAddSupplierRef, onToggleExpand, refFormData, renderExpandedContent, setDispatchResult, suppliers, specsFormData, addingSupplierRefId, addingSpecsId, loading, getStandardSpecsForItem]);
 
   return (
-    <DataTable
-      columns={columns}
-      data={sortedRequests}
-      rowRenderer={rowRenderer}
-      size={compact ? "1" : "2"}
-      loading={loading}
-      emptyState={{
-        icon: Package,
-        title: "Aucune demande trouvée",
-        description: "Aucune demande de matériel n'est disponible.",
-        action: onRefresh ? <Button size="2" variant="soft" color="blue" onClick={onRefresh}>Rafraîchir</Button> : null,
-      }}
-    />
+    <Fragment>
+      <DataTable
+        columns={columns}
+        data={sortedRequests}
+        rowRenderer={rowRenderer}
+        size={compact ? "1" : "2"}
+        loading={loading}
+        emptyState={{
+          icon: Package,
+          title: "Aucune demande trouvée",
+          description: "Aucune demande de matériel n'est disponible.",
+          action: onRefresh ? <Button size="2" variant="soft" color="blue" onClick={onRefresh}>Rafraîchir</Button> : null,
+        }}
+      />
+    </Fragment>
   );
 }
 

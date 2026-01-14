@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.5.2 - 2026-01-14
+
+### Améliorations
+
+- **Refactorisation: Suppression des demandes d'achat** : Création d'une architecture réutilisable pour la suppression des DA avec pattern de sécurité double-clic
+  - **`useDeletePurchaseRequest`** : Hook personnalisé centralisant la logique de suppression
+  - **`DeletePurchaseRequestButton`** : Composant réutilisable avec états visuels (icône trash → "Confirmer ?")
+  - **PurchaseRequestsTable** : Utilisation du hook et du composant pour éliminer le code dupliqué
+  - **Pattern double-clic** : Premier clic = confirmation visuelle (3s timeout), deuxième clic = exécution
+  - Cohérence UX améliorée sur toute l'application
+
+### Corrections
+
+- **Fix: Synchronisation du statut des DA lors du changement de statut panier** : Le statut des demandes d'achat est maintenant correctement mis à jour lorsqu'un panier fournisseur change de statut
+  - **datasource.ts** : Ajout du chargement manuel des relations M2M `supplier_order_line_purchase_request`
+  - **supplierOrdersHandlers.js** : Restructuration de `handleStatusChange` pour garantir la mise à jour des DA pour TOUS les changements de statut
+  - **STATUS_MAPPING** : Correction du mapping OPEN → `in_progress` (au lieu de `open`)
+
+- **Fix: Labels de statut DA plus clairs** : Changement du label "Attente fournisseur" en "En attente de consultation" pour mieux refléter l'état réel du panier OPEN
+  - **purchasingConfig.js** : Mise à jour du label et de la description du statut `IN_PROGRESS`
+  - **PurchaseRequestsTable.jsx** : Utilisation cohérente du label centralisé
+
+## 1.4.4 - 2026-01-14
+
+### Corrections
+
+- **Fix: Bouton de réévaluation des statuts DA** : Ajout d'un bouton de réévaluation provisoire (🔄 Réévaluer statuts DA) dans le menu dropdown des paniers pour permettre une synchronisation manuelle des statuts des demandes d'achat en cas d'erreur.
+  - `handleReEvaluateDA()` : Nouvelle fonction de réévaluation dans supplierOrdersHandlers.js
+  - `OrderRow.jsx` : Ajout du bouton dans le dropdown menu avec gestion des erreurs
+  - `SupplierOrdersTable.jsx` : Intégration du handler avec les callbacks existants
+  - **TODO (v1.5)**: À supprimer après correction complète du bug de synchronisation des DA
+
 ## 1.5.1 - 2026-01-14
 
 ### Corrections

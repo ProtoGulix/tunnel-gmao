@@ -1,6 +1,6 @@
 {
     "name": "tunnel-gmao",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
     "author": "ProtoGulix",
     "license": "AGPL-3.0-or-later",

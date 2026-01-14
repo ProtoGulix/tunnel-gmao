@@ -134,7 +134,34 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
     const lines = linesData?.data || [];
     console.log(`[fetchSupplierOrderLines] Loaded ${lines.length} lines:`, lines);
     
-    // 2. Fetch all stock_item_supplier links with manufacturer data
+    // 2. Fetch purchase_requests via M2M table
+    const lineIds = lines.map((l: any) => l.id).filter(Boolean);
+    let purchaseRequestsByLine: Record<string, any[]> = {};
+    
+    if (lineIds.length > 0) {
+      const { data: m2mData } = await api.get('/items/supplier_order_line_purchase_request', {
+        params: {
+          filter: { supplier_order_line_id: { _in: lineIds } },
+          fields: ['id', 'supplier_order_line_id', 'purchase_request_id.id', 'purchase_request_id.status'].join(','),
+          limit: -1,
+          _t: Date.now(),
+        },
+      });
+      
+      const m2mLinks = m2mData?.data || [];
+      console.log(`[fetchSupplierOrderLines] Loaded ${m2mLinks.length} M2M links:`, m2mLinks);
+      
+      // Group by line
+      m2mLinks.forEach((link: any) => {
+        const lineId = link.supplier_order_line_id;
+        if (!purchaseRequestsByLine[lineId]) {
+          purchaseRequestsByLine[lineId] = [];
+        }
+        purchaseRequestsByLine[lineId].push(link);
+      });
+    }
+    
+    // 3. Fetch all stock_item_supplier links with manufacturer data
     const { data: suppliersData } = await api.get('/items/stock_item_supplier', {
       params: {
         fields: [
@@ -153,7 +180,7 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
     
     const supplierLinks = suppliersData?.data || [];
     
-    // 3. Enrich lines with manufacturer data from supplier links
+    // 4. Enrich lines with manufacturer data and purchase_requests
     const enrichedLines = lines.map((line: Record<string, unknown>) => {
       const stockItem = line.stock_item_id as Record<string, unknown> | undefined;
       const stockItemId = stockItem?.id || line.stock_item_id;
@@ -165,9 +192,13 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
           link.stock_item_id === stockItemId && link.supplier_ref === supplierRef
       );
       
+      // Add purchase_requests from M2M table
+      const purchaseRequests = purchaseRequestsByLine[line.id as string] || [];
+      
       return {
         ...line,
         manufacturer_item_id: matchingLink?.manufacturer_item_id || null,
+        purchase_requests: purchaseRequests,
       };
     });
     

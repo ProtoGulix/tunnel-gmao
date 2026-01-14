@@ -13,7 +13,7 @@
 import { Fragment } from "react";
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Button, Badge, Select, DropdownMenu } from "@radix-ui/themes";
-import { MoreHorizontal, FolderOpen, Send, Mail, PackageCheck, Archive, XCircle } from "lucide-react";
+import { MoreHorizontal, FolderOpen, Send, Mail, PackageCheck, Archive, XCircle, RotateCcw } from "lucide-react";
 import {
   getOrderNumber,
   getCreatedAt,
@@ -104,6 +104,7 @@ export default function OrderRow({
   onSendEmail,
   onCopyHTMLEmail,
   onPurge,
+  onReEvaluateDA,
 }) {
   const lineCount = getLineCount(order);
   const ageDays = getAgeInDays(getCreatedAt(order));
@@ -165,6 +166,14 @@ export default function OrderRow({
                 <DropdownMenu.Item onSelect={onExportCSV}>Export CSV</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={onSendEmail}>📧 Email texte (mailto)</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={onCopyHTMLEmail}>📋 Copier email HTML</DropdownMenu.Item>
+                {onReEvaluateDA && (
+                  <>
+                    <DropdownMenu.Separator />
+                    <DropdownMenu.Item onSelect={onReEvaluateDA} color="orange">
+                      🔄 Réévaluer statuts DA
+                    </DropdownMenu.Item>
+                  </>
+                )}
                 <DropdownMenu.Separator />
                 <DropdownMenu.Item color="red" onSelect={onPurge}>
                   🗑️ Purger le panier
@@ -219,4 +228,5 @@ OrderRow.propTypes = {
   onSendEmail: PropTypes.func.isRequired,
   onCopyHTMLEmail: PropTypes.func.isRequired,
   onPurge: PropTypes.func.isRequired,
+  onReEvaluateDA: PropTypes.func,
 };

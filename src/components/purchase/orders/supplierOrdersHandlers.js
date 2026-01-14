@@ -103,6 +103,14 @@ export const createHandleCopyHTMLEmail = (getOrderLines, showError) => async (or
 
 /**
  * Status mapping for order lifecycle
+ * Mappe le statut du panier fournisseur au statut de la demande d'achat (DA)
+ * 
+ * OPEN → in_progress : Panier ouvert, en attente de consultation (pas de consultation lancée)
+ * SENT → ordered : Consultation lancée, réponses fournisseurs en attente
+ * ACK → ordered : Réponse reçue d'au moins un fournisseur, consultation toujours active
+ * RECEIVED → ordered : Phase de réception du panier, consultation toujours en cours
+ * CLOSED → received : Panier clôturé, commande reçue, consultation terminée
+ * CANCELLED → cancelled : Panier annulé
  */
 const STATUS_MAPPING = {
   OPEN: 'in_progress',
@@ -222,12 +230,16 @@ export const handleStatusChange = async (
       }
     }
 
+    // Mettre à jour le statut des DA (demandes d'achat) liées à ce panier
+    // Cette opération se fait pour TOUS les changements de statut, pas seulement SENT/RECEIVED
     const allRequests = Array.from(
       new Set(
         lines.flatMap((line) => {
           const prs = line.purchaseRequests ?? line.purchase_requests ?? [];
+          console.log('[handleStatusChange] Line:', line.id, 'Purchase requests:', prs);
           return prs.map((pr) => {
             const prField = pr.purchaseRequest ?? pr.purchase_request_id;
+            console.log('[handleStatusChange] PR:', pr, 'prField:', prField);
             if (prField && typeof prField === 'object') return prField.id;
             return prField || null;
           });
@@ -235,9 +247,13 @@ export const handleStatusChange = async (
       )
     ).filter(Boolean);
 
-    await Promise.all(
-      allRequests.map((prId) => stock.updatePurchaseRequest(prId, { status: daStatus }))
-    );
+    console.log('[handleStatusChange] All PR IDs to update:', allRequests, 'with status:', daStatus);
+
+    if (allRequests.length > 0) {
+      await Promise.all(
+        allRequests.map((prId) => stock.updatePurchaseRequest(prId, { status: daStatus }))
+      );
+    }
 
     const updateData = { status: newStatus };
     if (newStatus === 'SENT') updateData.ordered_at = new Date().toISOString();
@@ -253,6 +269,84 @@ export const handleStatusChange = async (
   } catch (error) {
     console.error('Erreur changement statut:', error);
     showError(error instanceof Error ? error : new Error('Erreur lors du changement de statut'));
+  } finally {
+    setLoading(false);
+  }
+};
+
+/**
+ * Re-evaluate DA statuses for a supplier order
+ * TEMPORARY FIX: Allows manual synchronization of DA statuses with supplier order status
+ * TODO: Remove after v1.5 when DA sync is fixed in core handler
+ *
+ * @param {Object} order - Order object with id and status
+ * @param {Function} onRefresh - Refresh callback
+ * @param {Function} setLoading - Set loading state
+ * @param {Function} showError - Error notification
+ */
+export const handleReEvaluateDA = async (order, onRefresh, setLoading, showError) => {
+  try {
+    setLoading(true);
+
+    const lines = await suppliers.fetchSupplierOrderLines(order.id);
+    const daStatus = STATUS_MAPPING[order.status.toUpperCase()];
+
+    if (!daStatus) {
+      console.error('STATUS_MAPPING ne couvre pas le statut:', order.status);
+      console.error('Statuts disponibles:', Object.keys(STATUS_MAPPING));
+      showError(new Error(`Impossible de déterminer le statut des DA pour le statut "${order.status}"`));
+      return;
+    }
+
+    // Debug: afficher la structure des lignes
+    console.log('[ReEvaluateDA] Nombre de lignes:', lines.length);
+    console.log('[ReEvaluateDA] Structure première ligne:', lines[0]);
+
+    // Mettre à jour le statut des DA (demandes d'achat) liées à ce panier
+    const allRequests = Array.from(
+      new Set(
+        lines.flatMap((line) => {
+          // Dans v1.5.x, les DA sont dans purchase_requests (table M2M supplier_order_line_purchase_request)
+          const prs = line.purchase_requests ?? [];
+          console.log('[ReEvaluateDA] Line ID:', line.id, 'Purchase requests:', prs);
+          return prs.map((pr) => {
+            // La structure M2M contient purchase_request_id qui pointe vers la DA
+            const prField = pr.purchase_request_id;
+            console.log('[ReEvaluateDA] PR:', pr, 'prField:', prField);
+            if (prField && typeof prField === 'object') return prField.id;
+            return prField || null;
+          });
+        })
+      )
+    ).filter(Boolean);
+
+    console.log('[ReEvaluateDA] DA trouvées:', allRequests);
+
+    if (allRequests.length === 0) {
+      showError(
+        new Error(
+          `Aucune DA trouvée pour ce panier (${lines.length} ligne(s)). ` +
+          `Vérifiez que la table supplier_order_line_purchase_request contient des entrées ` +
+          `pour ces lignes, ou que l'API Directus charge bien la relation M2M "purchase_requests".`
+        )
+      );
+      setLoading(false);
+      return;
+    }
+
+    await Promise.all(
+      allRequests.map((prId) => stock.updatePurchaseRequest(prId, { status: daStatus }))
+    );
+
+    await onRefresh();
+    showError(new Error(`✅ ${allRequests.length} DA(s) réévaluée(s) avec succès`));
+  } catch (error) {
+    console.error('Erreur réévaluation DA:', error);
+    showError(
+      error instanceof Error
+        ? error
+        : new Error('Erreur lors de la réévaluation des DA')
+    );
   } finally {
     setLoading(false);
   }

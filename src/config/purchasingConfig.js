@@ -10,9 +10,9 @@ export const PURCHASE_REQUEST_STATUS = {
   },
   IN_PROGRESS: {
     id: 'in_progress',
-    label: 'En cours',
+    label: 'En attente de consultation',
     color: 'blue',
-    description: 'En cours de traitement',
+    description: 'Panier ouvert, en attente de consultation fournisseur',
     icon: 'Clock',
   },
   ORDERED: {

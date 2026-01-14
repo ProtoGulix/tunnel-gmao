@@ -13,7 +13,8 @@ import {
   createHandleExportCSV, 
   createHandleSendEmail, 
   createHandleCopyHTMLEmail, 
-  handleStatusChange 
+  handleStatusChange,
+  handleReEvaluateDA,
 } from "./supplierOrdersHandlers";
 import { supplierOrdersTablePropTypes } from "./supplierOrdersTablePropTypes";
 
@@ -115,6 +116,13 @@ export default function SupplierOrdersTable({
     [expandedOrderId, onRefresh, showError]
   );
 
+  const handleReEvaluate = useCallback(
+    async (order) => {
+      await handleReEvaluateDA(order, onRefresh, setLoading, showError);
+    },
+    [onRefresh, showError]
+  );
+
   const headerProps = useMemo(() => {
     if (!showHeader) return null;
     return {
@@ -163,6 +171,7 @@ export default function SupplierOrdersTable({
           onSendEmail={() => handleSendEmail(order)}
           onCopyHTMLEmail={() => handleCopyHTMLEmail(order)}
           onPurge={() => handlePurgeOrder(order)}
+          onReEvaluateDA={() => handleReEvaluate(order)}
         />
 
         {isExpanded && (
@@ -172,7 +181,7 @@ export default function SupplierOrdersTable({
         )}
       </Fragment>
     );
-  }, [expandedOrderId, cachedLines, handleViewDetails, wrappedHandleStatusChange, handleExportCSV, handleSendEmail, handleCopyHTMLEmail, columns.length, orderLines, loading]);
+  }, [expandedOrderId, cachedLines, handleViewDetails, wrappedHandleStatusChange, handleExportCSV, handleSendEmail, handleCopyHTMLEmail, columns.length, orderLines, loading, handleReEvaluate]);
 
   return (
     <DataTable

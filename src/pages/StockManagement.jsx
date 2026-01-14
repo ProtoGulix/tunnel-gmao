@@ -46,6 +46,7 @@ import { usePurchaseRequestsManagement } from "@/hooks/usePurchaseRequestsManage
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
+import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
 import { STOCK_MANAGEMENT_TABS, DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
 import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 
@@ -325,6 +326,20 @@ export default function StockManagement() {
   const refreshSuppliers = async () => {
     await purchasing.loadSuppliers(false);
   };
+
+  // Hook pour gérer la suppression de DA avec callback refreshRequests
+  const { 
+    deleteConfirmId, 
+    deleteLoading, 
+    handleDeleteButtonClick 
+  } = useDeletePurchaseRequest(async () => {
+    await refreshRequests();
+    setDispatchResult({
+      type: 'success',
+      message: 'Demande d\'achat supprimée'
+    });
+    setTimeout(() => setDispatchResult(null), 3000);
+  });
 
   // Handlers passed to child components (memoized to reduce re-renders)
   const onAddSupplierRefForRequests = useCallback(async (stockItemId, refData) => {
