@@ -37,7 +37,7 @@ import PropTypes from "prop-types";
 const DEFAULT_BG_COLOR = "var(--gray-2)";
 
 /** Padding par défaut de la cellule */
-const DEFAULT_PADDING = 0;
+const DEFAULT_PADDING = 12;
 
 /** Margin par défaut du Box wrapper */
 const DEFAULT_CARD_MARGIN = "3";

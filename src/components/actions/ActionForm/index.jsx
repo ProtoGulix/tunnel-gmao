@@ -61,8 +61,8 @@ function ActionForm({ initialState = {}, metadata = {}, onCancel, onSubmit, styl
         <Flex direction="column" gap="3">
           {/* Header */}
           <Flex align="center" gap="2">
-            <Activity size={20} color="var(--blue-9)" />
-            <Text size="3" weight="bold" color="blue">
+            <Plus size={20} color="var(--blue-9)" />
+            <Text size="3" weight="bold">
               Nouvelle action
             </Text>
           </Flex>
@@ -115,17 +115,18 @@ function ActionForm({ initialState = {}, metadata = {}, onCancel, onSubmit, styl
               />
 
               {/* Buttons */}
-              <Flex justify="between" gap="2">
-                <Button type="button" variant="soft" onClick={handleCancel}>
+              <Flex justify="end" gap="2">
+                <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  size="3"
-                  style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
+                  color="blue"
+                  size="2"
+                  disabled={form.validation.errors.length > 0}
                 >
                   <Plus size={16} />
-                  Ajouter l&apos;action
+                  Enregistrer
                 </Button>
               </Flex>
             </Flex>

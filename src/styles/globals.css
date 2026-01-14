@@ -504,3 +504,14 @@ aside::-webkit-scrollbar-thumb:hover {
     font-size: 16px !important;
   }
 }
+
+/* ===== Radix UI Select Dropdown Improvements ===== */
+/* Ajoute de la marge/padding à l'intérieur des dropdowns pour meilleure intégration */
+.rt-SelectContent {
+  padding: 6px !important;
+}
+
+.rt-SelectItem {
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}

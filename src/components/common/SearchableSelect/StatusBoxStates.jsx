@@ -91,9 +91,43 @@ SpecialRequestOption.propTypes = {
 };
 
 /**
+ * Option pour créer un nouveau fournisseur
+ */
+export function CreateNewSupplierOption({ search, onSelect }) {
+  return (
+    <Box
+      p="2"
+      style={{
+        cursor: 'pointer',
+        background: 'var(--blue-2)',
+        borderTop: '1px solid var(--blue-7)',
+        transition: 'background-color 0.15s ease'
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--blue-3)'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--blue-2)'}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onSelect({ id: 'new-supplier', name: search, isNewSupplier: true });
+      }}
+    >
+      <Flex align='center' gap='2'>
+        <AlertCircle size={16} color='var(--blue-9)' />
+        <Text size='2' weight='medium' color='blue'>Créer un nouveau :</Text>
+        <Text size='2' weight='bold'>{search}</Text>
+      </Flex>
+    </Box>
+  );
+}
+
+CreateNewSupplierOption.propTypes = {
+  search: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired
+};
+
+/**
  * Liste de suggestions
  */
-export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect, search, showSpecialRequest }) {
+export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect, search, showSpecialRequest, showCreateNew, onCreateNew }) {
   const defaultRender = (item) => (
     <Box>
       <Text size="2" weight="bold">{getDisplayText(item)}</Text>
@@ -121,6 +155,9 @@ export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSel
           {renderItem ? renderItem(item) : defaultRender(item)}
         </Box>
       ))}
+      {showCreateNew && search.trim() && (
+        <CreateNewSupplierOption search={search} onSelect={onCreateNew || onSelect} />
+      )}
       {showSpecialRequest && search.trim() && (
         <SpecialRequestOption search={search} onSelect={onSelect} />
       )}
@@ -134,5 +171,7 @@ SuggestionsList.propTypes = {
   getDisplayText: PropTypes.func.isRequired,
   onSelect: PropTypes.func.isRequired,
   search: PropTypes.string,
-  showSpecialRequest: PropTypes.bool
+  showSpecialRequest: PropTypes.bool,
+  showCreateNew: PropTypes.bool,
+  onCreateNew: PropTypes.func,
 };

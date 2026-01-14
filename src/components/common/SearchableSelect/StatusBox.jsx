@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Box } from '@radix-ui/themes';
-import { EmptyState, SuggestionsList, SpecialRequestOption } from './StatusBoxStates';
+import { EmptyState, SuggestionsList, SpecialRequestOption, CreateNewSupplierOption } from './StatusBoxStates';
 
 /**
  * Boîte de statut qui affiche l'état actuel de la sélection
@@ -13,7 +13,8 @@ export default function StatusBox({
   renderSelected,
   getDisplayText,
   onSelectItem,
-  allowSpecialRequest = true
+  allowSpecialRequest = true,
+  allowCreateNew = false
 }) {
   // Ne rien afficher si un item est sélectionné
   if (selectedItem) {
@@ -54,8 +55,12 @@ export default function StatusBox({
           getDisplayText={getDisplayText}
           onSelect={onSelectItem}
           search={search}
-          showSpecialRequest={allowSpecialRequest}
+          showSpecialRequest={allowSpecialRequest && !allowCreateNew}
+          showCreateNew={allowCreateNew}
+          onCreateNew={allowCreateNew ? onSelectItem : undefined}
         />
+      ) : allowCreateNew ? (
+        <CreateNewSupplierOption search={search} onSelect={onSelectItem} />
       ) : allowSpecialRequest ? (
         <SpecialRequestOption search={search} onSelect={onSelectItem} />
       ) : (
@@ -73,5 +78,6 @@ StatusBox.propTypes = {
   renderSelected: PropTypes.func,
   getDisplayText: PropTypes.func.isRequired,
   onSelectItem: PropTypes.func.isRequired,
-  allowSpecialRequest: PropTypes.bool
+  allowSpecialRequest: PropTypes.bool,
+  allowCreateNew: PropTypes.bool
 };

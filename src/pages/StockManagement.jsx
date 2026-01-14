@@ -31,7 +31,7 @@ import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseReques
 import StockItemSearch from "@/components/stock/StockItemSearch";
 import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
 import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
-import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
+import SuppliersInlinePanel from "@/components/purchase/suppliers/SuppliersInlinePanel";
 import TableHeader from "@/components/common/TableHeader";
 import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
 import StockItemsTable from "@/components/stock/StockItemsTable";
@@ -64,7 +64,6 @@ export default function StockManagement() {
 
   // Search & filter state - Synchronized with URL
   const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
-  const [stockFamilyFilter, setStockFamilyFilter] = useState("all");
   const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('search', '');
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -72,9 +71,6 @@ export default function StockManagement() {
   const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', '');
   const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
   const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
-
-  // Ref to SuppliersTable for triggering add dialog from TableHeader
-  const suppliersTableRef = useRef(null);
 
   // Expansion state (pour PurchaseRequestsTable)
   const [expandedRequestId, setExpandedRequestId] = useState(null);
@@ -173,11 +169,6 @@ export default function StockManagement() {
   }, [baseFilteredRequests]);
 
   // ========== 4. COMPUTED VALUES (useMemo) ==========
-  const families = useMemo(
-    () => ["all", ...new Set(stock.stockItems.map(item => item.family_code).filter(Boolean))],
-    [stock.stockItems]
-  );
-
   // Supplier ref counts are now provided by the database (supplier_refs_count field)
   // No need to calculate them in the frontend anymore
   const supplierRefsCounts = useMemo(() => {
@@ -196,11 +187,9 @@ export default function StockManagement() {
         item.ref?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
         item.family_code?.toLowerCase().includes(stockSearchTerm.toLowerCase());
       
-      const matchesFamily = stockFamilyFilter === "all" || item.family_code === stockFamilyFilter;
-      
-      return matchesSearch && matchesFamily;
+      return matchesSearch;
     });
-  }, [stock.stockItems, stockSearchTerm, stockFamilyFilter]);
+  }, [stock.stockItems, stockSearchTerm]);
 
   const filteredSupplierOrders = useMemo(() => {
     let orders = purchasing.supplierOrders;
@@ -261,9 +250,8 @@ export default function StockManagement() {
   const stockStats = useMemo(
     () => ({
       total: stock.stockItems.length,
-      families: families.length - 1,
     }),
-    [stock.stockItems.length, families.length]
+    [stock.stockItems.length]
   );
 
   const readyCount = useMemo(() => {
@@ -327,12 +315,54 @@ export default function StockManagement() {
     await purchasing.loadSuppliers(false);
   };
 
+  // Callbacks pour SuppliersInlinePanel
+  const onAddSupplier = useCallback(async (supplierData) => {
+    setFormLoading(true);
+    try {
+      const newSupplier = await purchasing.createSupplier(supplierData);
+      await purchasing.loadSuppliers(false);
+      setDispatchResult({ type: 'success', message: 'Fournisseur créé avec succès' });
+      return newSupplier;
+    } catch (err) {
+      setDispatchResult({ type: 'error', message: 'Erreur lors de la création du fournisseur' });
+      throw err;
+    } finally {
+      setFormLoading(false);
+    }
+  }, [purchasing, setFormLoading, setDispatchResult]);
+
+  const onUpdateSupplier = useCallback(async (supplierId, supplierData) => {
+    setFormLoading(true);
+    try {
+      const updatedSupplier = await purchasing.updateSupplier(supplierId, supplierData);
+      await purchasing.loadSuppliers(false);
+      setDispatchResult({ type: 'success', message: 'Fournisseur mis à jour avec succès' });
+      return updatedSupplier;
+    } catch (err) {
+      setDispatchResult({ type: 'error', message: 'Erreur lors de la mise à jour du fournisseur' });
+      throw err;
+    } finally {
+      setFormLoading(false);
+    }
+  }, [purchasing, setFormLoading, setDispatchResult]);
+
+  const onDeleteSupplier = useCallback(async (supplierId) => {
+    setFormLoading(true);
+    try {
+      await purchasing.deleteSupplier(supplierId);
+      await purchasing.loadSuppliers(false);
+      setDispatchResult({ type: 'success', message: 'Fournisseur supprimé avec succès' });
+    } catch (err) {
+      setDispatchResult({ type: 'error', message: 'Erreur lors de la suppression du fournisseur' });
+      throw err;
+    } finally {
+      setFormLoading(false);
+    }
+  }, [purchasing, setFormLoading, setDispatchResult]);
+
   // Hook pour gérer la suppression de DA avec callback refreshRequests
-  const { 
-    deleteConfirmId, 
-    deleteLoading, 
-    handleDeleteButtonClick 
-  } = useDeletePurchaseRequest(async () => {
+  // Note: Les valeurs retournées ne sont pas utilisées actuellement
+  useDeletePurchaseRequest(async () => {
     await refreshRequests();
     setDispatchResult({
       type: 'success',
@@ -418,7 +448,57 @@ export default function StockManagement() {
     }
   }, [stock, purchases, setDispatchResult]);
 
-  // Handlers for StockItemsTable supplier refs management
+  const onUpdateStandardSpecForRequests = useCallback(async (specId, specsData) => {
+    try {
+      setFormLoading(true);
+      await stock.updateStockItemStandardSpec(specId, {
+        title: specsData.title,
+        spec_text: specsData.spec_text,
+        is_default: specsData.is_default ?? false,
+      });
+      await Promise.all([
+        stock.loadStockItems(false),
+        purchases.loadRequests(false),
+      ]);
+      setDispatchResult({
+        type: 'success',
+        message: 'Spécification mise à jour',
+      });
+      setTimeout(() => setDispatchResult(null), 3000);
+    } catch (err) {
+      console.error('Erreur mise à jour spécification:', err);
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la mise à jour de la spécification',
+      });
+    } finally {
+      setFormLoading(false);
+    }
+  }, [stock, purchases, setDispatchResult]);
+
+  const onDeleteStandardSpecForRequests = useCallback(async (specId) => {
+    try {
+      setFormLoading(true);
+      await stock.deleteStockItemStandardSpec(specId);
+      await Promise.all([
+        stock.loadStockItems(false),
+        purchases.loadRequests(false),
+      ]);
+      setDispatchResult({
+        type: 'success',
+        message: 'Spécification supprimée',
+      });
+      setTimeout(() => setDispatchResult(null), 3000);
+    } catch (err) {
+      console.error('Erreur suppression spécification:', err);
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la suppression de la spécification',
+      });
+    } finally {
+      setFormLoading(false);
+    }
+  }, [stock, purchases, setDispatchResult]);
   const handleAddSupplierRef = useCallback(async (stockItemId) => {
     // Capture les valeurs IMMÉDIATEMENT pour éviter les race conditions
     const currentFormData = { ...supplierRefFormData };
@@ -1112,6 +1192,12 @@ export default function StockManagement() {
                       compact={compactRows}
                       onAddSupplierRef={onAddSupplierRefForRequests}
                       onAddStandardSpec={onAddStandardSpecForRequests}
+                      onDeleteSupplierRef={handleDeleteSupplierRef}
+                      onUpdateSupplierRef={handleUpdateSupplierRef}
+                      onDeleteStandardSpec={onDeleteStandardSpecForRequests}
+                      onUpdateStandardSpec={onUpdateStandardSpecForRequests}
+                      onCreateSupplier={purchasing.createSupplier}
+                      allManufacturers={allManufacturers}
                       renderExpandedContent={(request) => (
                         <StockItemSearch
                           requestId={request.id}
@@ -1147,6 +1233,12 @@ export default function StockManagement() {
                             compact={compactRows}
                             onAddSupplierRef={onAddSupplierRefForRequests}
                             onAddStandardSpec={onAddStandardSpecForRequests}
+                            onDeleteSupplierRef={handleDeleteSupplierRef}
+                            onUpdateSupplierRef={handleUpdateSupplierRef}
+                            onDeleteStandardSpec={onDeleteStandardSpecForRequests}
+                            onUpdateStandardSpec={onUpdateStandardSpecForRequests}
+                            onCreateSupplier={purchasing.createSupplier}
+                            allManufacturers={allManufacturers}
                             renderExpandedContent={(request) => (
                               <StockItemSearch
                                 requestId={request.id}
@@ -1281,7 +1373,6 @@ export default function StockManagement() {
                         color="gray"
                         onClick={() => {
                           setStockSearchTerm("");
-                          setStockFamilyFilter("all");
                         }}
                       >
                         Réinitialiser les filtres
@@ -1318,27 +1409,12 @@ export default function StockManagement() {
             {/* ===== TAB: SUPPLIERS ===== */}
             <Tabs.Content value="suppliers">
               <Flex direction="column" gap="3">
-                <TableHeader
-                  icon={Building2}
-                  title="Fournisseurs"
-                  count={filteredSuppliers.length}
-                  searchValue={supplierSearchTerm}
-                  onSearchChange={setSupplierSearchTerm}
-                  searchPlaceholder="Recherche (nom, contact, email...)"
-                  showRefreshButton={false}
-                   actions={
-                     <Button onClick={() => suppliersTableRef.current?.openAddDialog()}>
-                       <Plus size={16} />
-                       Ajouter un fournisseur
-                     </Button>
-                   }
-                />
-                <SuppliersTable
-                  ref={suppliersTableRef}
+                <SuppliersInlinePanel
                   suppliers={filteredSuppliers}
-                  onRefresh={async () => { await refreshSuppliers(); }}
-                  searchTerm={supplierSearchTerm}
-                  onSearchChange={setSupplierSearchTerm}
+                  onAdd={onAddSupplier}
+                  onUpdate={onUpdateSupplier}
+                  onDelete={onDeleteSupplier}
+                  loading={formLoading}
                 />
               </Flex>
             </Tabs.Content>

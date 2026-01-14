@@ -759,15 +759,16 @@ Pour les formulaires au sein de panneaux expandables (édition, ajout dans liste
   isEditingMode && (
     <Card
       style={{
-        background: 'var(--[color]-1)',
-        borderLeft: '4px solid var(--[color]-9)',
+        backgroundColor: 'var(--blue-2)', // Bleu pour tous les formulaires
+        border: '1px solid var(--blue-6)',
       }}
     >
       <Flex direction="column" gap="3">
-        {/* 1. En-tête avec contexte */}
-        <Flex align="center" justify="between">
-          <Text weight="bold" size="2">
-            Action / Titre du formulaire
+        {/* 1. En-tête avec icône */}
+        <Flex align="center" gap="2">
+          <Plus size={20} color="var(--blue-9)" />
+          <Text weight="bold" size="3">
+            Ajouter [entité]
           </Text>
         </Flex>
 
@@ -950,9 +951,10 @@ export default function MyPanel() {
 
 1. **Couleur du Panel:**
 
-   - Utiliser `background: "var(--[color]-1)"` pour fond léger
-   - Utiliser `borderLeft: "4px solid var(--color]-9)"` pour accent
-   - Couleurs: `blue` (défaut), `green` (succès), `amber` (warning), `red` (erreur)
+   - Utiliser `background: "var(--blue-2)"` pour fond léger
+   - Utiliser `border: "1px solid var(--blue-6)"` pour bordure
+   - Icônes et accents: `var(--blue-9)` pour cohérence visuelle
+   - Cette couleur bleue est utilisée pour tous les formulaires (ajout et édition)
 
 2. **Positionnement des Suggestions:**
 
@@ -974,21 +976,40 @@ export default function MyPanel() {
    - Désactiver Enregistrer si données invalides
 
 5. **Responsive:**
+
    - `flex: "1"` + `minWidth: "200px"` pour champs flexibles
    - `gap="2" wrap="wrap"` pour reflow mobile
    - `align="end"` pour aligner boutons sur ligne des champs
 
+6. **Visibilité et Contraste (MANDATORY):**
+   - **Champs de formulaire** : Toujours avec bordure visible `1px solid var(--gray-7)` minimum
+   - **Labels** : `weight="bold"` et `color` non grisé (éviter `color="gray"`)
+   - **Placeholders** : Texte explicite, pas de dépendance au placeholder pour comprendre le champ
+   - **Focus** : État focus natif Radix UI (contour bleu visible)
+   - **Disabled** : `opacity: 0.5` avec curseur `not-allowed`
+   - **Required** : Astérisque `*` après le label ou indication visuelle claire
+   - **Contraste minimum** : Ratio 4.5:1 pour le texte (WCAG AA)
+   - **Taille texte** : `size="2"` minimum pour les labels et champs (14px)
+   - **Erreurs** : Fond `var(--red-3)` + bordure `var(--red-7)` + texte `color="red"`
+
 #### 7.2.4 Checklist Implémentation
 
-- [ ] Couleur de Card cohérente avec action (blue = edit, green = success)
-- [ ] En-tête descriptif (`Ajouter/Modifier...`)
+- [ ] Couleur de Card cohérente : `var(--blue-2)` (tous les formulaires)
+- [ ] Border : `1px solid var(--blue-6)` (cohérent avec standalone)
+- [ ] En-tête avec icône (Plus/Edit2) `size={20}` + titre `size="3"`
 - [ ] Tous les champs ont labels explicites
 - [ ] Au moins 1 champ a suggestions autocomplete
 - [ ] `onMouseDown` sur suggestions (pas `onClick`)
 - [ ] `e.preventDefault()` dans `onMouseDown`
 - [ ] Délai `setTimeout` sur `onBlur` pour suggestions
 - [ ] Message ✓ vert pour nouvelles valeurs
-- [ ] Boutons Enregistrer (vert) et Annuler (gris)
+- [ ] Boutons : "Enregistrer" (bleu) + "Annuler" (gris soft)
+- [ ] `size="2"` sur tous les boutons
+- [ ] Bordures visibles sur tous les champs (pas de champs "fantômes")
+- [ ] Labels en gras et non grisés
+- [ ] Champs required marqués avec `*`
+- [ ] États focus clairement visibles
+- [ ] Contraste texte suffisant (ratio 4.5:1 minimum)
 - [ ] Logs de débogage supprimés
 - [ ] Aucun warning dans console
 
@@ -999,6 +1020,224 @@ Voir implémentation: [src/components/stock/SupplierRefsInlinePanel.jsx](../../s
 - Formulaire édition fabricant (lignes ~370-510)
 - Formulaire création référence fournisseur (lignes ~515-775)
 - Patterns appliqués: suggestions, feedback, responsive, colors
+
+---
+
+### 7.3 Pattern: Formulaires Standalone/Modaux
+
+Pour les formulaires de création/édition affichés comme composants indépendants (non inline dans des tableaux), utiliser ce pattern :
+
+#### 7.3.1 Structure de Base
+
+```jsx
+export default function EntityForm({ initialState, metadata, onCancel, onSubmit }) {
+  const form = useEntityForm(initialState); // Hook pour logique métier
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.validate()) return;
+    onSubmit(form.state);
+  };
+
+  return (
+    <Card
+      style={{
+        backgroundColor: 'var(--blue-2)', // Bleu pour tous les formulaires
+        border: '1px solid var(--blue-6)',
+      }}
+    >
+      <Flex direction="column" gap="3">
+        {/* En-tête avec icône */}
+        <Flex align="center" gap="2">
+          <Plus size={20} color="var(--blue-9)" />
+          <Text size="3" weight="bold">
+            Nouvelle entité
+          </Text>
+        </Flex>
+
+        {/* Erreurs de validation */}
+        {form.errors.length > 0 && (
+          <Box
+            style={{
+              background: 'var(--red-3)',
+              border: '1px solid var(--red-7)',
+              borderRadius: '6px',
+              padding: '12px',
+            }}
+          >
+            <Text color="red" weight="bold" size="2" mb="2">
+              Erreurs de validation
+            </Text>
+            <Flex direction="column" gap="1">
+              {form.errors.map((error, idx) => (
+                <Text key={idx} color="red" size="1">
+                  • {error}
+                </Text>
+              ))}
+            </Flex>
+          </Box>
+        )}
+
+        {/* Formulaire */}
+        <form onSubmit={handleSubmit}>
+          <Flex direction="column" gap="3">
+            {/* Champs du formulaire */}
+            <EntityFormFields state={form.state} handlers={form.handlers} />
+
+            {/* Boutons alignés à droite */}
+            <Flex justify="end" gap="2">
+              <Button type="button" variant="soft" color="gray" onClick={onCancel} size="2">
+                Annuler
+              </Button>
+              <Button type="submit" color="blue" size="2" disabled={!form.isValid}>
+                <Plus size={16} />
+                Enregistrer
+              </Button>
+            </Flex>
+          </Flex>
+        </form>
+      </Flex>
+    </Card>
+  );
+}
+```
+
+#### 7.3.2 Règles d'Esthétique
+
+1. **Couleur de la Card :**
+
+   - **Standard** : `var(--blue-2)` + border `var(--blue-6)` + icône/bouton bleu
+   - Utilisé pour tous les formulaires (création et édition)
+   - **Erreur/Critique** : `var(--red-2)` + border `var(--red-6)` (cas exceptionnels uniquement)
+
+2. **En-tête :**
+
+   - Icône de contexte (Plus pour création, Edit2 pour édition) size={20}
+   - Titre explicite : "Nouvelle [entité]" / "Modifier [entité]"
+   - Text size="3" weight="bold"
+
+3. **Erreurs de Validation :**
+
+   - Box séparé avec fond `var(--red-3)` et border `var(--red-7)`
+   - Liste à puces avec bullets "•"
+   - Affiché conditionnellement (`{errors.length > 0 && ...}`)
+
+4. **Boutons :**
+
+   - **Position** : `justify="end"` (alignés à droite)
+   - **Ordre** : Annuler (gauche) + Action principale (droite)
+   - **Annuler** : `variant="soft"` `color="gray"` `size="2"`
+   - **Action principale** :
+     - Couleur : `color="blue"` (cohérent avec le formulaire)
+     - Icône : Plus (création) ou Check/Edit2 (édition)
+     - Texte : "Enregistrer" (standardisé)
+   - **Size** : `size="2"` pour tous les boutons (cohérence)
+
+5. **Spacing :**
+
+   - `gap="3"` pour séparation entre sections
+   - `gap="2"` pour boutons
+
+6. **Visibilité et Contraste (MANDATORY):**
+   - **Champs de formulaire** : Bordure visible `1px solid var(--gray-7)` minimum
+   - **Labels** : Toujours présents, `weight="bold"`, pas de `color="gray"`
+   - **Placeholders** : Exemples explicites, ne remplacent jamais le label
+   - **Focus** : Contour bleu natif Radix UI visible et distinct
+   - **Disabled** : `opacity: 0.5` + curseur `not-allowed`
+   - **Required** : Marquage visuel clair (astérisque `*` ou indication)
+   - **Contraste** : Ratio minimum 4.5:1 pour tout texte (WCAG AA)
+   - **Taille minimum** : `size="2"` (14px) pour labels et valeurs
+   - **Erreurs** : Bloc séparé rouge + bordure + liste à puces
+   - **Background Card** : Suffisamment contrasté avec le fond de page
+
+#### 7.3.3 Variante: Formulaire d'Édition
+
+```jsx
+<Card
+  style={{
+    backgroundColor: 'var(--blue-2)', // Bleu pour édition
+    border: '1px solid var(--blue-6)',
+  }}
+>
+  <Flex direction="column" gap="3">
+    {/* En-tête */}
+    <Flex align="center" gap="2">
+      <Edit2 size={20} color="var(--blue-9)" />
+      <Text size="3" weight="bold">
+        Modifier l'entité
+      </Text>
+    </Flex>
+
+    {/* Form + Boutons */}
+    <form onSubmit={handleSubmit}>
+      <Flex direction="column" gap="3">
+        {/* Champs */}
+        <EntityFormFields />
+
+        {/* Boutons */}
+        <Flex justify="end" gap="2">
+          <Button type="button" variant="soft" color="gray" onClick={onCancel} size="2">
+            Annuler
+          </Button>
+          <Button type="submit" color="blue" size="2">
+            <Check size={16} />
+            Enregistrer
+          </Button>
+        </Flex>
+      </Flex>
+    </form>
+  </Flex>
+</Card>
+```
+
+#### 7.3.4 Checklist Implémentation
+
+- [ ] Couleur de Card cohérente : `var(--blue-2)` (tous les formulaires)
+- [ ] Icône dans l'en-tête (Plus, Edit2, etc.)
+- [ ] Titre explicite size="3" weight="bold"
+- [ ] Bloc d'erreurs séparé avec fond rouge
+- [ ] Boutons alignés à droite (`justify="end"`)
+- [ ] Bouton Annuler : soft + gray
+- [ ] Bouton principal : bleu + icône + "Enregistrer"
+- [ ] `size="2"` sur tous les boutons
+- [ ] Tous les champs ont des bordures visibles
+- [ ] Labels toujours présents, en gras, non grisés
+- [ ] Champs obligatoires marqués avec `*`
+- [ ] Focus visible sur tous les éléments interactifs
+- [ ] Contraste texte ≥ 4.5:1 (vérifiable avec DevTools)
+- [ ] Pas de dépendance aux placeholders pour comprendre les champs
+- [ ] Validation avant submit
+- [ ] PropTypes complets
+- [ ] Hook personnalisé pour logique métier
+
+#### 7.3.5 Cohérence Visuelle avec §7.2 (Formulaires Inline)
+
+**Éléments IDENTIQUES (pour homogénéité totale) :**
+
+- ✅ Couleurs : `var(--blue-2)` (fond) + `var(--blue-6)` (bordure) pour tous les formulaires
+- ✅ En-tête : Icône `size={20}` + Titre `size="3"` `weight="bold"`
+- ✅ Boutons : "Enregistrer" (bleu) + "Annuler" (gris soft) + `size="2"`
+- ✅ Spacing : `gap="3"` entre sections, `gap="2"` pour boutons
+- ✅ Texte standardisé : "Enregistrer" au lieu de "Ajouter"/"Mettre à jour"
+- ✅ Visibilité : Bordures visibles, labels en gras, contraste 4.5:1
+
+**Seules DIFFÉRENCES (selon contexte d'usage) :**
+
+| Critère      | Formulaires Inline (§7.2)         | Formulaires Standalone (§7.3)      |
+| ------------ | --------------------------------- | ---------------------------------- |
+| **Position** | Dans Table.Row ou liste           | Composant indépendant (Card)       |
+| **Layout**   | Responsive horizontal (flex wrap) | Vertical (colonne)                 |
+| **Boutons**  | Alignés avec champs (align="end") | Alignés à droite (justify="end")   |
+| **Usage**    | Ajout/édition dans tableaux       | Création/édition standalone/modale |
+
+#### 7.3.6 Exemple Réel
+
+Voir implémentation : [src/components/actions/ActionForm/index.jsx](../../src/components/actions/ActionForm/index.jsx)
+
+- Formulaire de création d'action dans une intervention
+- Hook useActionForm pour logique métier
+- Validation avec affichage d'erreurs
+- Sous-composants : ActionFormFields, ActionFormDescription, ActionFormComplexity
 
 ---
 
