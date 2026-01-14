@@ -91,6 +91,7 @@ export const fetchSupplierOrder = async (id: string) => {
 
 export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
   return apiCall(async () => {
+    console.log(`[fetchSupplierOrderLines] Loading lines for order ${supplierOrderId}`);
     // 1. Fetch supplier order lines (with consultation fields)
     const { data: linesData } = await api.get('/items/supplier_order_line', {
       params: {
@@ -131,6 +132,7 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
     });
     
     const lines = linesData?.data || [];
+    console.log(`[fetchSupplierOrderLines] Loaded ${lines.length} lines:`, lines);
     
     // 2. Fetch all stock_item_supplier links with manufacturer data
     const { data: suppliersData } = await api.get('/items/stock_item_supplier', {
@@ -169,6 +171,7 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
       };
     });
     
+    console.log(`[fetchSupplierOrderLines] Enriched lines:`, enrichedLines);
     return enrichedLines;
   }, 'FetchSupplierOrderLines');
 };

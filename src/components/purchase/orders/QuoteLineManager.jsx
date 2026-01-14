@@ -43,46 +43,48 @@ export default function QuoteLineManager({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    quoteReceived: line.quoteReceived ?? false,
-    quotePrice: line.quotePrice ?? '',
-    leadTimeDays: line.leadTimeDays ?? '',
+    // Accepter à la fois camelCase (local) et snake_case (API)
+    quoteReceived: line.quoteReceived ?? line.quote_received ?? false,
+    quotePrice: line.quotePrice ?? line.quote_price ?? '',
+    leadTimeDays: line.leadTimeDays ?? line.lead_time_days ?? '',
     manufacturer: line.manufacturer ?? '',
-    manufacturerRef: line.manufacturerRef ?? '',
+    manufacturerRef: line.manufacturerRef ?? line.manufacturer_ref ?? '',
   });
 
-  // Vérifier si au moins un fournisseur a répondu
-  const hasAnyResponse = allLinesForItem.some((l) => l.quoteReceived);
-  const isCurrentlySelected = line.isSelected ?? false;
+  // Vérifier si au moins un fournisseur a répondu (accepter les deux formats)
+  const hasAnyResponse = allLinesForItem.some((l) => l.quoteReceived ?? l.quote_received);
+  const isCurrentlySelected = line.isSelected ?? line.is_selected ?? false;
 
   const handleEditStart = () => {
     setFormData({
-      quoteReceived: line.quoteReceived ?? false,
-      quotePrice: line.quotePrice ?? '',
-      leadTimeDays: line.leadTimeDays ?? '',
+      quoteReceived: line.quoteReceived ?? line.quote_received ?? false,
+      quotePrice: line.quotePrice ?? line.quote_price ?? '',
+      leadTimeDays: line.leadTimeDays ?? line.lead_time_days ?? '',
       manufacturer: line.manufacturer ?? '',
-      manufacturerRef: line.manufacturerRef ?? '',
+      manufacturerRef: line.manufacturerRef ?? line.manufacturer_ref ?? '',
     });
     setIsEditing(true);
   };
 
   const handleSave = () => {
     const updates = {};
-    if (formData.quoteReceived !== (line.quoteReceived ?? false)) {
+    // Comparer avec les deux formats possibles (camelCase et snake_case)
+    if (formData.quoteReceived !== (line.quoteReceived ?? line.quote_received ?? false)) {
       updates.quoteReceived = formData.quoteReceived;
       if (formData.quoteReceived) {
         updates.quoteReceivedAt = new Date().toISOString();
       }
     }
-    if (formData.quotePrice !== (line.quotePrice ?? '')) {
+    if (formData.quotePrice !== (line.quotePrice ?? line.quote_price ?? '')) {
       updates.quotePrice = formData.quotePrice ? parseFloat(formData.quotePrice) : null;
     }
-    if (formData.leadTimeDays !== (line.leadTimeDays ?? '')) {
+    if (formData.leadTimeDays !== (line.leadTimeDays ?? line.lead_time_days ?? '')) {
       updates.leadTimeDays = formData.leadTimeDays ? parseInt(formData.leadTimeDays) : null;
     }
     if (formData.manufacturer !== (line.manufacturer ?? '')) {
       updates.manufacturer = formData.manufacturer || null;
     }
-    if (formData.manufacturerRef !== (line.manufacturerRef ?? '')) {
+    if (formData.manufacturerRef !== (line.manufacturerRef ?? line.manufacturer_ref ?? '')) {
       updates.manufacturerRef = formData.manufacturerRef || null;
     }
     if (Object.keys(updates).length > 0) {
@@ -96,7 +98,8 @@ export default function QuoteLineManager({
       onUpdate(line.id, { isSelected: false });
     } else {
       allLinesForItem.forEach((l) => {
-        if (l.id !== line.id && l.isSelected) {
+        // Accepter les deux formats pour is_selected
+        if (l.id !== line.id && (l.isSelected || l.is_selected)) {
           onUpdate(l.id, { isSelected: false });
         }
       });
@@ -105,12 +108,15 @@ export default function QuoteLineManager({
   };
 
   if (!isEditing) {
+    // Vérifier si le devis a déjà été reçu
+    const quoteAlreadyReceived = line.quoteReceived || line.quote_received;
+
     return (
       <Box>
         <Flex direction="column" gap="2">
           <Flex align="center" justify="between" gap="2">
             <Flex align="center" gap="2">
-              {line.quoteReceived ? (
+              {quoteAlreadyReceived ? (
                 <Badge color="green" variant="soft" size="2">
                   <Check size={12} /> Devis reçu
                 </Badge>
@@ -121,7 +127,7 @@ export default function QuoteLineManager({
               )}
             </Flex>
             <Flex gap="2" align="center">
-              {!isLocked && (
+              {!isLocked && !quoteAlreadyReceived && (
                 <Button
                   size="1"
                   variant="soft"
@@ -135,23 +141,23 @@ export default function QuoteLineManager({
             </Flex>
           </Flex>
 
-          {line.quoteReceived && (
+          {quoteAlreadyReceived && (
             <Flex direction="column" gap="1" style={{ fontSize: '0.85rem' }}>
-              {line.quotePrice && (
+              {line.quotePrice ?? line.quote_price ? (
                 <Text color="gray">
-                  Prix: <Text weight="bold">{line.quotePrice} €</Text>
+                  Prix: <Text weight="bold">{line.quotePrice ?? line.quote_price} €</Text>
                 </Text>
-              )}
-              {line.leadTimeDays && (
+              ) : null}
+              {line.leadTimeDays ?? line.lead_time_days ? (
                 <Text color="gray">
-                  Délai: <Text weight="bold">{line.leadTimeDays} j</Text>
+                  Délai: <Text weight="bold">{line.leadTimeDays ?? line.lead_time_days} j</Text>
                 </Text>
-              )}
-              {line.manufacturer && (
+              ) : null}
+              {line.manufacturer ? (
                 <Text color="gray">
                   Fabricant: <Text weight="bold">{line.manufacturer}</Text>
                 </Text>
-              )}
+              ) : null}
             </Flex>
           )}
 

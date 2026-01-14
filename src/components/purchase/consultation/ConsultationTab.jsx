@@ -93,19 +93,25 @@ export default function ConsultationTab({ disabled = false }) {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('[ConsultationTab.loadData] Starting with filterStatus:', filterStatus);
 
       // Charger les paniers
       const orders = await suppliersApi.fetchSupplierOrders(
         filterStatus === 'open' ? 'OPEN' : null
       );
+      console.log('[ConsultationTab.loadData] Loaded orders:', orders);
 
       // Charger les lignes de tous les paniers OPEN
       const allLines = [];
       const openOrders = orders.filter((o) => o.status === 'OPEN' || !o.status);
+      console.log('[ConsultationTab.loadData] Filtered to OPEN orders:', openOrders.length);
 
       for (const order of openOrders) {
         try {
+          console.log(`[ConsultationTab.loadData] Loading lines for order ${order.id}...`);
           const orderLines = await suppliersApi.fetchSupplierOrderLines(order.id);
+          console.log(`[ConsultationTab.loadData] Got ${orderLines.length} lines for order ${order.id}:`, orderLines);
+          
           const enriched = orderLines.map((line) => ({
             ...line,
             supplierId: order.supplier_id?.id ?? order.supplier_id,
@@ -118,6 +124,7 @@ export default function ConsultationTab({ disabled = false }) {
         }
       }
 
+      console.log('[ConsultationTab.loadData] Total lines loaded:', allLines.length);
       setLines(allLines);
     } catch (err) {
       console.error('Erreur chargement consultation:', err);
@@ -140,14 +147,59 @@ export default function ConsultationTab({ disabled = false }) {
         setUpdateInProgress(true);
 
         // Mettre à jour via API
-        await suppliersApi.updateSupplierOrderLine(lineId, updates);
+        const response = await suppliersApi.updateSupplierOrderLine(lineId, updates);
+        console.log('[ConsultationTab] Update response:', response);
 
-        // Mettre à jour localement
-        setLines((prev) =>
-          prev.map((line) =>
-            line.id === lineId ? { ...line, ...updates } : line
-          )
-        );
+        // Synchroniser les champs: camelCase → snake_case pour la cohérence locale
+        const snakeUpdates = {};
+        const fieldMapping = {
+          quoteReceived: 'quote_received',
+          isSelected: 'is_selected',
+          quotePrice: 'quote_price',
+          leadTimeDays: 'lead_time_days',
+          manufacturer: 'manufacturer',
+          manufacturerRef: 'manufacturer_ref',
+          quoteReceivedAt: 'quote_received_at',
+          rejectedReason: 'rejected_reason',
+        };
+
+        for (const [camelKey, value] of Object.entries(updates)) {
+          const snakeKey = fieldMapping[camelKey] || camelKey;
+          snakeUpdates[snakeKey] = value;
+        }
+
+        console.log('[ConsultationTab] Snake updates:', snakeUpdates);
+
+        // Mettre à jour localement avec les champs snake_case
+        setLines((prev) => {
+          const updated = prev.map((line) => {
+            if (line.id === lineId) {
+              const merged = { ...line, ...snakeUpdates };
+              console.log('[ConsultationTab] Updated line:', merged);
+              return merged;
+            }
+            return line;
+          });
+          console.log('[ConsultationTab] Lines after update:', updated);
+          return updated;
+        });
+
+        // Recharger les données du panier pour synchroniser
+        const orderId = lines.find((l) => l.id === lineId)?.orderId;
+        if (orderId) {
+          console.log(`[ConsultationTab] Reloading panier ${orderId} after update...`);
+          const freshLines = await suppliersApi.fetchSupplierOrderLines(orderId);
+          console.log(`[ConsultationTab] Reloaded ${freshLines.length} fresh lines from panier`);
+          
+          setLines((prev) => {
+            // Remplacer les lignes du panier mis à jour
+            const updated = prev.map((line) => {
+              const fresh = freshLines.find((f) => f.id === line.id);
+              return fresh || line;
+            });
+            return updated;
+          });
+        }
       } catch (err) {
         console.error('Erreur mise à jour ligne:', err);
         showError('Impossible de mettre à jour la ligne');
@@ -155,7 +207,7 @@ export default function ConsultationTab({ disabled = false }) {
         setUpdateInProgress(false);
       }
     },
-    [showError]
+    [lines, showError]
   );
 
   /**

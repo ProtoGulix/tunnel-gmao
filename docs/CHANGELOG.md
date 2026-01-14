@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.1 - 2026-01-14
+
+### Corrections
+
+- **Fix: Affichage des références en Consultation** : Correction de la synchronisation camelCase/snake_case entre les composants React et l'API Directus. Les champs de consultation (`quote_received`, `is_selected`, `quote_price`, etc.) sont maintenant correctement affichés après mise à jour.
+  - `QuoteLineManager` : Support des deux formats de champs (camelCase local et snake_case API)
+  - `ConsultationTab` : Synchronisation correcte des mises à jour avec conversion camelCase → snake_case
+  - Affichage unifié des données indépendamment du format reçu de l'API
+
 ## 1.5.0 - 2026-01-13
 
 ### 🎯 Système de consultation fournisseurs
