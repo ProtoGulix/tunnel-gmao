@@ -18,6 +18,7 @@
 #### Nouveaux champs et tables
 
 - **supplier_order_line** : Ajout de 8 nouveaux champs de consultation
+
   - `quote_received` : Indique si le devis fournisseur a été reçu
   - `is_selected` : Indique le fournisseur sélectionné (un seul par référence)
   - `quote_price` : Prix du devis proposé
@@ -81,6 +82,7 @@
 ### Migration recommandée
 
 Pour les installations existantes :
+
 1. Appliquer le schéma SQL : `db/schema/01_core/supplier_order_line.sql` (champs consultation)
 2. Appliquer la fonction modifiée : `db/schema/05_triggers/fn_dispatch_purchase_requests.sql`
 3. **Purger manuellement** les paniers existants en base de données (ils n'ont pas les liens M2M)
