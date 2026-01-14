@@ -303,6 +303,15 @@ export interface SupplierOrderLine {
     };
     quantity: number;
   }>;
+  // CONSULTATION: Champs devis et sélection fournisseur
+  quoteReceived?: boolean;      // Indique si un devis a été reçu
+  isSelected?: boolean;          // Indique que ce fournisseur est sélectionné pour cette référence
+  quotePrice?: number;           // Prix du devis
+  leadTimeDays?: number;         // Délai de livraison en jours
+  manufacturer?: string;         // Nom du fabricant proposé
+  manufacturerRef?: string;      // Référence fabricant proposée
+  quoteReceivedAt?: string;      // Date réception devis
+  rejectedReason?: string;       // Raison du rejet
 }
 
 export interface DispatchResult {
@@ -430,6 +439,11 @@ export interface SuppliersNamespace {
   createSupplier(supplier: Partial<Supplier>): Promise<Supplier>;
   updateSupplier(id: string, updates: Partial<Supplier>): Promise<Supplier>;
   deleteSupplier(id: string): Promise<void | true>;
+  purgeSupplierOrder(orderId: string): Promise<{
+    resetRequests: string[];
+    deletedLines: string[];
+    deletedOrder: string;
+  }>;
   dispatchPurchaseRequests(): Promise<{
     dispatched: string[];
     toQualify: string[];

@@ -33,6 +33,8 @@
 -- Contenu: (ajoutez ici le contenu de supplier_order_line_purchase_request.sql)
 -- Fichier: 01_core/supplier_order_line.sql
 -- Contenu: (ajoutez ici le contenu de supplier_order_line.sql)
+-- Fichier: 01_core/supplier_order_line_consultation.sql
+-- Contenu: (ajoutez ici le contenu de supplier_order_line_consultation.sql)
 -- Fichier: 01_core/supplier_order.sql
 -- Contenu: (ajoutez ici le contenu de supplier_order.sql)
 -- Fichier: 01_core/supplier.sql

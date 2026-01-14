@@ -16,6 +16,7 @@ import {
   Building2,
   Factory,
   Plus,
+  FileText,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -36,6 +37,7 @@ import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
 import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
 import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
+import ConsultationTab from "@/components/purchase/consultation/ConsultationTab";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks pour la logique métier
@@ -975,6 +977,14 @@ export default function StockManagement() {
               </Flex>
             </Tabs.Trigger>
 
+            {/* CONSULTATION: Onglet consultation fournisseurs */}
+            <Tabs.Trigger value="consultation">
+              <Flex align="center" gap="2">
+                <FileText size={14} />
+                <Text>Consultation</Text>
+              </Flex>
+            </Tabs.Trigger>
+
             <Tabs.Trigger value="stock">
               <Flex align="center" gap="2">
                 <Package size={14} />
@@ -1223,6 +1233,11 @@ export default function StockManagement() {
                   </Flex>
                 )}
               </Flex>
+            </Tabs.Content>
+
+            {/* ===== TAB: CONSULTATION ===== */}
+            <Tabs.Content value="consultation">
+              <ConsultationTab disabled={!purchasing.supplierOrders.length} />
             </Tabs.Content>
 
             {/* ===== TAB: STOCK ITEMS ===== */}

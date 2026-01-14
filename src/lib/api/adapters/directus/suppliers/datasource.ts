@@ -91,7 +91,7 @@ export const fetchSupplierOrder = async (id: string) => {
 
 export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
   return apiCall(async () => {
-    // 1. Fetch supplier order lines
+    // 1. Fetch supplier order lines (with consultation fields)
     const { data: linesData } = await api.get('/items/supplier_order_line', {
       params: {
         filter: { supplier_order_id: { _eq: supplierOrderId } },
@@ -111,6 +111,19 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
           'unit_price',
           'total_price',
           'created_at',
+          // CONSULTATION: Champs de devis et sélection fournisseur
+          'quote_received',
+          'is_selected',
+          'quote_price',
+          'lead_time_days',
+          'manufacturer',
+          'manufacturer_ref',
+          'quote_received_at',
+          'rejected_reason',
+          // Liens vers demandes d'achat (pour remise en attente/purge)
+          'purchase_requests.id',
+          'purchase_requests.purchase_request_id.id',
+          'purchase_requests.purchase_request_id.status',
         ].join(','),
         sort: 'created_at',
         _t: Date.now(),
@@ -160,6 +173,100 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
   }, 'FetchSupplierOrderLines');
 };
 
+    /**
+     * PURGE PANIER FOURNISSEUR
+     * Supprime toutes les lignes d'un panier et remet les demandes d'achat associées en status "open".
+     */
+    export const purgeSupplierOrder = async (supplierOrderId: string) => {
+      return apiCall(async () => {
+        // 1) Récupérer toutes les lignes du panier
+        const { data: linesData } = await api.get('/items/supplier_order_line', {
+          params: {
+            filter: { supplier_order_id: { _eq: supplierOrderId } },
+            fields: ['id'].join(','),
+            limit: -1,
+          },
+        });
+
+        const lines = linesData?.data || [];
+        const lineIds = lines.map((l: any) => l.id).filter(Boolean);
+
+        // 2) Récupérer tous les liens M2M pour ces lignes
+        const { data: m2mData } = await api.get('/items/supplier_order_line_purchase_request', {
+          params: {
+            filter: { supplier_order_line_id: { _in: lineIds } },
+            fields: ['id', 'purchase_request_id'].join(','),
+            limit: -1,
+          },
+        });
+
+        const m2mLinks = m2mData?.data || [];
+        console.log('[PurgeSupplierOrder] M2M Links raw:', m2mLinks);
+        
+        const m2mLinkIds = m2mLinks.map((link: any) => link.id).filter(Boolean);
+        
+        // Extraire les IDs des purchase_requests
+        const purchaseRequestIds = Array.from(
+          new Set(
+            m2mLinks.map((link: any) => {
+              // purchase_request_id peut être un ID direct ou un objet
+              const prId = typeof link.purchase_request_id === 'object' 
+                ? link.purchase_request_id?.id 
+                : link.purchase_request_id;
+              console.log('[PurgeSupplierOrder] Extracted PR ID:', prId, 'from:', link.purchase_request_id);
+              return prId;
+            }).filter(Boolean)
+          )
+        );
+
+        console.log('[PurgeSupplierOrder] Found:', {
+          lineIds: lineIds.length,
+          m2mLinkIds: m2mLinkIds.length,
+          purchaseRequestIds: purchaseRequestIds,
+        });
+
+        // 3) Remettre les DA en attente de dispatch
+        let resetCount = 0;
+        for (const prId of purchaseRequestIds) {
+          try {
+            console.log(`[PurgeSupplierOrder] Attempting to reset PR ${prId} to open...`);
+            const response = await api.patch(`/items/purchase_request/${prId}`, { status: 'open' });
+            console.log(`[PurgeSupplierOrder] Successfully reset PR ${prId}:`, response.data);
+            resetCount++;
+          } catch (err) {
+            console.error(`[PurgeSupplierOrder] Failed to reset PR ${prId}:`, err);
+            if (err && typeof err === 'object' && 'response' in err) {
+              console.error('[PurgeSupplierOrder] Error response:', (err as any).response);
+            }
+          }
+        }
+        console.log(`[PurgeSupplierOrder] Reset ${resetCount}/${purchaseRequestIds.length} purchase requests`);
+
+        // 4) Supprimer les liens M2M individuellement
+        for (const m2mId of m2mLinkIds) {
+          await api.delete(`/items/supplier_order_line_purchase_request/${m2mId}`);
+        }
+
+        // 5) Supprimer les lignes du panier individuellement
+        for (const lineId of lineIds) {
+          await api.delete(`/items/supplier_order_line/${lineId}`);
+        }
+
+        // 6) Supprimer le panier lui-même
+        await api.delete(`/items/supplier_order/${supplierOrderId}`);
+
+        invalidateCache('supplierOrderLines');
+        invalidateCache('supplierOrders');
+        invalidateCache('purchaseRequests');
+
+        return {
+          resetRequests: purchaseRequestIds,
+          deletedLines: lineIds,
+          deletedOrder: supplierOrderId,
+        };
+      }, 'PurgeSupplierOrder');
+    };
+
 export const updateSupplierOrder = async (id: string, updates: Record<string, unknown>) => {
   return apiCall(async () => {
     const { data } = await api.patch(`/items/supplier_order/${id}`, updates);
@@ -170,142 +277,206 @@ export const updateSupplierOrder = async (id: string, updates: Record<string, un
 
 export const dispatchPurchaseRequests = async () => {
   return apiCall(async () => {
-    // Call custom Directus extension endpoint that executes the PostgreSQL function
-    // For now, fallback to direct implementation if extension not available
-    // TODO: Create Directus extension endpoint POST /extensions/dispatch
+    // Appeler la fonction PL/pgSQL via une requête SQL brute
+    // Directus n'expose pas directement les fonctions, on doit passer par un query custom
+    const query = `SELECT * FROM dispatch_purchase_requests();`;
     
-    // 1. Fetch all non-archived purchase requests with stock items
-    const { data: reqData } = await api.get('/items/purchase_request', {
-      params: {
-        limit: -1,
-        fields: ['id', 'stock_item_id', 'quantity', 'status', 'created_at'].join(','),
-        _t: Date.now(),
-      },
-    });
-    const purchaseRequests = reqData?.data || [];
+    try {
+      // Essayer d'exécuter via le SDK Directus (si configuré pour les requêtes SQL)
+      const { data } = await api.post('/utils/query', {
+        query,
+      });
+      
+      const result = data?.data?.[0]?.dispatch_purchase_requests || data?.[0]?.dispatch_purchase_requests || { dispatched: [], toQualify: [], errors: [] };
+      
+      invalidateCache('purchaseRequests');
+      invalidateCache('supplierOrders');
+      
+      return result;
+    } catch (error) {
+      console.error('[DispatchPurchaseRequests] SQL query failed, falling back to manual implementation', error);
+      
+      // Si l'appel SQL échoue, on revient à l'implémentation manuelle
+      // mais cette fois on s'assure de tout faire correctement
+      return await manualDispatch();
+    }
+  }, 'DispatchPurchaseRequests');
+};
 
-    // 2. Fetch supplier orders (to find or use existing baskets)
-    const { data: ordersData } = await api.get('/items/supplier_order', {
-      params: {
-        limit: -1,
-        sort: '-created_at',
-        fields: ['id', 'supplier_id', 'status'].join(','),
-        _t: Date.now(),
-      },
-    });
-    const supplierOrders = ordersData?.data || [];
-
-    // 3. Fetch all stock supplier links to find preferred suppliers
-    const { data: refsData } = await api.get('/items/stock_item_supplier', {
-      params: {
-        limit: -1,
-        fields: ['id', 'stock_item_id', 'supplier_id', 'supplier_ref', 'is_preferred'].join(','),
-        _t: Date.now(),
-      },
-    });
-    const supplierRefs = refsData?.data || [];
-
-    const dispatched: string[] = [];
-    const toQualify: string[] = [];
-    const errors: Array<{ id: string; error: string }> = [];
-
-    // 4. Process each open purchase request
-    for (const req of purchaseRequests) {
-      const statusId = typeof req.status === 'string' ? req.status : req.status?.id;
-      if (statusId !== 'open' || !req.stock_item_id) {
-        continue;
-      }
-
-      // Find preferred supplier for this item
-      const prefRef = supplierRefs.find(
-        (r) => r.stock_item_id === req.stock_item_id && r.is_preferred === true
-      );
-
-      if (!prefRef) {
-        toQualify.push(req.id);
-        continue;
-      }
-
+// Implémentation manuelle du dispatch (fallback si la fonction SQL n'est pas accessible)
+async function manualDispatch() {
+  const { data: reqData } = await api.get('/items/purchase_request', {
+    params: {
+      filter: { status: { _eq: 'open' } },
+      fields: ['id', 'stock_item_id', 'quantity'].join(','),
+      limit: -1,
+    },
+  });
+  const purchaseRequests = reqData?.data || [];
+  
+  const { data: suppliersData } = await api.get('/items/stock_item_supplier', {
+    params: {
+      fields: ['stock_item_id', 'supplier_id', 'supplier_ref'].join(','),
+      limit: -1,
+    },
+  });
+  const supplierRefs = suppliersData?.data || [];
+  
+  const dispatched: string[] = [];
+  const toQualify: string[] = [];
+  const errors: any[] = [];
+  
+  for (const req of purchaseRequests) {
+    if (!req.stock_item_id) continue;
+    
+    const itemSuppliers = supplierRefs.filter((s: any) => s.stock_item_id === req.stock_item_id);
+    
+    if (itemSuppliers.length === 0) {
+      toQualify.push(req.id);
+      continue;
+    }
+    
+    let hasDispatched = false;
+    
+    for (const sup of itemSuppliers) {
       try {
-        // Find or create supplier order for this supplier
-        let supplierOrder = supplierOrders.find(
-          (o) => o.supplier_id === prefRef.supplier_id && o.status === 'OPEN'
-        );
-
-        if (!supplierOrder) {
-          // Generate order number: CMD-YYYYMMDD-NNNN
+        // Trouver ou créer le panier OPEN
+        const { data: ordersData } = await api.get('/items/supplier_order', {
+          params: {
+            filter: { supplier_id: { _eq: sup.supplier_id }, status: { _eq: 'OPEN' } },
+            limit: 1,
+            sort: '-created_at',
+          },
+        });
+        
+        let orderId = ordersData?.data?.[0]?.id;
+        
+        if (!orderId) {
           const today = new Date();
           const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
           const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-          const orderNumber = `CMD-${dateStr}-${randomNum}`;
           
-          // Create new supplier order for this supplier
           const { data: newOrder } = await api.post('/items/supplier_order', {
-            order_number: orderNumber,
-            supplier_id: prefRef.supplier_id,
+            order_number: `CMD-${dateStr}-${randomNum}`,
+            supplier_id: sup.supplier_id,
             status: 'OPEN',
             total_amount: 0,
           });
-          supplierOrder = newOrder?.data;
-          
-          // Add to local array so next items use the same basket
-          if (supplierOrder) {
-            supplierOrders.push(supplierOrder);
-          }
+          orderId = newOrder?.data?.id;
         }
-
-        // Create supplier_order_line or update quantity if it already exists
-        const { data: existingLineRes } = await api.get('/items/supplier_order_line', {
+        
+        // Chercher ligne existante
+        const { data: linesData } = await api.get('/items/supplier_order_line', {
           params: {
             filter: {
-              supplier_order_id: { _eq: supplierOrder.id },
+              supplier_order_id: { _eq: orderId },
               stock_item_id: { _eq: req.stock_item_id },
             },
             limit: 1,
-            fields: ['id', 'quantity'].join(','),
-            _t: Date.now(),
           },
         });
-
-        const existingLine = existingLineRes?.data?.[0];
-
-        if (existingLine?.id) {
-          // Increment quantity
-          await api.patch(`/items/supplier_order_line/${existingLine.id}`, {
-            quantity: (existingLine.quantity || 0) + (req.quantity || 1),
+        
+        let lineId = linesData?.data?.[0]?.id;
+        
+        if (lineId) {
+          // Incrémenter quantité
+          await api.patch(`/items/supplier_order_line/${lineId}`, {
+            quantity: (linesData.data[0].quantity || 0) + (req.quantity || 1),
           });
         } else {
-          await api.post('/items/supplier_order_line', {
-            supplier_order_id: supplierOrder.id,
+          // Créer nouvelle ligne
+          const { data: newLine } = await api.post('/items/supplier_order_line', {
+            supplier_order_id: orderId,
             stock_item_id: req.stock_item_id,
-            supplier_ref_snapshot: prefRef.supplier_ref,
+            supplier_ref_snapshot: sup.supplier_ref,
             quantity: req.quantity || 1,
-            unit_price: null,
-            total_price: null,
+            quote_received: false,
+            is_selected: false,
           });
+          lineId = newLine?.data?.id;
         }
-
-        // Update purchase request status to in_progress
-        await api.patch(`/items/purchase_request/${req.id}`, {
-          status: 'in_progress',
-        });
-
-        invalidateCache('purchaseRequests');
-        invalidateCache('supplierOrders');
-
-        dispatched.push(req.id);
+        
+        // Créer lien M2M (avec ON CONFLICT géré par la contrainte unique)
+        if (lineId) {
+          try {
+            await api.post('/items/supplier_order_line_purchase_request', {
+              supplier_order_line_id: lineId,
+              purchase_request_id: req.id,
+              quantity: req.quantity || 1,
+            });
+          } catch (m2mError: any) {
+            // Ignorer les erreurs de doublon (contrainte unique)
+            if (!m2mError?.response?.data?.errors?.[0]?.message?.includes('duplicate')) {
+              throw m2mError;
+            }
+          }
+        }
+        
+        hasDispatched = true;
       } catch (err) {
-        errors.push({
-          id: req.id,
-          error: err instanceof Error ? err.message : 'Unknown error',
-        });
+        errors.push({ id: req.id, error: err instanceof Error ? err.message : 'Unknown error' });
       }
     }
+    
+    if (hasDispatched) {
+      await api.patch(`/items/purchase_request/${req.id}`, { status: 'in_progress' });
+      dispatched.push(req.id);
+    }
+  }
+  
+  invalidateCache('purchaseRequests');
+  invalidateCache('supplierOrders');
+  
+  return { dispatched, toQualify, errors };
+}
 
-    return {
-      dispatched,
-      toQualify,
-      errors,
+/**
+ * CONSULTATION: Mettre à jour une ligne de panier (devis, sélection)
+ *
+ * @param {string} lineId - ID de la ligne
+ * @param {Object} updates - Champs à mettre à jour
+ *   - quoteReceived (boolean)
+ *   - isSelected (boolean)
+ *   - quotePrice (number)
+ *   - leadTimeDays (number)
+ *   - manufacturer (string)
+ *   - manufacturerRef (string)
+ *   - rejectedReason (string)
+ * @returns {Promise<Object>} Ligne mise à jour
+ */
+export const updateSupplierOrderLine = async (
+  lineId: string,
+  updates: Record<string, unknown>
+) => {
+  return apiCall(async () => {
+    // Mapper les champs camelCase en snake_case pour l'API
+    const backendUpdates: Record<string, unknown> = {};
+
+    const fieldMapping: Record<string, string> = {
+      quoteReceived: 'quote_received',
+      isSelected: 'is_selected',
+      quotePrice: 'quote_price',
+      leadTimeDays: 'lead_time_days',
+      manufacturer: 'manufacturer',
+      manufacturerRef: 'manufacturer_ref',
+      quoteReceivedAt: 'quote_received_at',
+      rejectedReason: 'rejected_reason',
     };
-  }, 'DispatchPurchaseRequests');
+
+    for (const [camelKey, value] of Object.entries(updates)) {
+      const snakeKey = fieldMapping[camelKey] || camelKey;
+      backendUpdates[snakeKey] = value;
+    }
+
+    const { data } = await api.patch(
+      `/items/supplier_order_line/${lineId}`,
+      backendUpdates
+    );
+
+    invalidateCache('supplierOrderLines');
+    invalidateCache('supplierOrders');
+
+    return data?.data;
+  }, 'UpdateSupplierOrderLine');
 };
+

@@ -60,6 +60,14 @@ export const fetchSupplierOrder = async (id: string) => {
 const { fetchSupplierOrderLines } = datasource;
 export { fetchSupplierOrderLines };
 
+// CONSULTATION: Exporter la fonction de mise à jour des lignes de panier
+const { updateSupplierOrderLine } = datasource;
+export { updateSupplierOrderLine };
+
+// PURGE: supprimer un panier et remettre les DA associées en attente
+const { purgeSupplierOrder } = datasource;
+export { purgeSupplierOrder };
+
 export const updateSupplierOrder = async (id: string, updates: Record<string, unknown>) => {
   const backendUpdates = mapper.mapSupplierOrderUpdatesToBackend(updates);
   const raw = await datasource.updateSupplierOrder(id, backendUpdates);
@@ -84,5 +92,7 @@ export const suppliersAdapter = {
   fetchSupplierOrder,
   fetchSupplierOrderLines,
   updateSupplierOrder,
+  updateSupplierOrderLine,
+  purgeSupplierOrder,
   dispatchPurchaseRequests,
 };

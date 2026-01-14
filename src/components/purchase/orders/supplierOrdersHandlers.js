@@ -115,6 +115,12 @@ const STATUS_MAPPING = {
 
 /**
  * Handle status change with cascade updates
+ *
+ * RÈGLES MÉTIER (Consultation):
+ * - Avant de passer un panier à l'état ORDERED, vérifier qu'au moins une ligne a is_selected = true
+ * - Seules les lignes sélectionnées sont commandées
+ * - Les lignes non sélectionnées sont ignorées ou marquées rejetées
+ *
  * @param {string} orderId - Order ID
  * @param {string} newStatus - New status
  * @param {Array} orders - All orders
@@ -143,6 +149,77 @@ export const handleStatusChange = async (
     if (!daStatus) {
       console.error('Statut invalide:', newStatus);
       return;
+    }
+
+    // CONSULTATION: Vérification intelligente avant passage à ORDERED
+    // - Article avec 1 seul fournisseur → auto-sélection
+    // - Article avec plusieurs fournisseurs → sélection obligatoire via Consultation
+    if (newStatus === 'SENT' || newStatus === 'RECEIVED') {
+      // Grouper les lignes par stock_item_id pour identifier les articles avec plusieurs fournisseurs
+      const itemGroups = new Map();
+
+      for (const line of lines) {
+        const stockItemId = line.stock_item_id?.id || line.stock_item_id;
+        if (!itemGroups.has(stockItemId)) {
+          itemGroups.set(stockItemId, []);
+        }
+        itemGroups.get(stockItemId).push(line);
+      }
+
+      // Vérifier chaque article
+      const itemsNeedingSelection = [];
+      const linesToAutoSelect = [];
+
+      for (const [stockItemId, itemLines] of itemGroups) {
+        const hasSelection = itemLines.some((l) => l.is_selected || l.isSelected);
+
+        if (itemLines.length === 1) {
+          // Un seul fournisseur pour cet article → auto-sélection si pas déjà sélectionné
+          if (!hasSelection) {
+            linesToAutoSelect.push(itemLines[0]);
+          }
+        } else {
+          // Plusieurs fournisseurs pour cet article → sélection obligatoire
+          if (!hasSelection) {
+            const itemName =
+              itemLines[0].stock_item_id?.name || itemLines[0].stock_item_id?.ref || 'Article';
+            itemsNeedingSelection.push(itemName);
+          }
+        }
+      }
+
+      // Si des articles avec plusieurs fournisseurs n'ont pas de sélection → bloquer
+      if (itemsNeedingSelection.length > 0) {
+        const itemsList = itemsNeedingSelection.slice(0, 3).join(', ');
+        const more =
+          itemsNeedingSelection.length > 3
+            ? ` et ${itemsNeedingSelection.length - 3} autre(s)`
+            : '';
+
+        showError(
+          new Error(
+            `Certains articles ont plusieurs fournisseurs (${itemsList}${more}). ` +
+              `Veuillez passer par l'onglet Consultation pour sélectionner un fournisseur.`
+          )
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Auto-sélectionner les lignes des articles à fournisseur unique
+      if (linesToAutoSelect.length > 0) {
+        console.log(
+          '[StatusChange] Auto-selecting lines for single-supplier items:',
+          linesToAutoSelect.length
+        );
+        await Promise.all(
+          linesToAutoSelect.map((line) =>
+            suppliers.updateSupplierOrderLine(line.id, {
+              isSelected: true,
+            })
+          )
+        );
+      }
     }
 
     const allRequests = Array.from(

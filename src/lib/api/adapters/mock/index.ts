@@ -311,6 +311,14 @@ const suppliers = {
       errors: [],
     };
   },
+
+  async purgeSupplierOrder(orderId: string) {
+    return {
+      resetRequests: [],
+      deletedLines: [],
+      deletedOrder: orderId,
+    };
+  },
 };
 
 /**

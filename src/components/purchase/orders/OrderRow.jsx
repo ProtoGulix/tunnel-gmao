@@ -103,6 +103,7 @@ export default function OrderRow({
   onExportCSV,
   onSendEmail,
   onCopyHTMLEmail,
+  onPurge,
 }) {
   const lineCount = getLineCount(order);
   const ageDays = getAgeInDays(getCreatedAt(order));
@@ -164,6 +165,10 @@ export default function OrderRow({
                 <DropdownMenu.Item onSelect={onExportCSV}>Export CSV</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={onSendEmail}>📧 Email texte (mailto)</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={onCopyHTMLEmail}>📋 Copier email HTML</DropdownMenu.Item>
+                <DropdownMenu.Separator />
+                <DropdownMenu.Item color="red" onSelect={onPurge}>
+                  🗑️ Purger le panier
+                </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
             <Select.Root
@@ -213,4 +218,5 @@ OrderRow.propTypes = {
   onExportCSV: PropTypes.func.isRequired,
   onSendEmail: PropTypes.func.isRequired,
   onCopyHTMLEmail: PropTypes.func.isRequired,
+  onPurge: PropTypes.func.isRequired,
 };

@@ -84,6 +84,37 @@ export default function SupplierOrdersTable({
     [localOrders, onRefresh, expandedOrderId, showError]
   );
 
+  const handlePurgeOrder = useCallback(
+    async (order) => {
+      const confirmed = window.confirm(
+        "Purger ce panier ? Toutes les lignes seront supprimées et les demandes d'achat repasseront en attente de dispatch."
+      ); // eslint-disable-line no-alert
+      if (!confirmed) return;
+
+      try {
+        setLoading(true);
+        await suppliers.purgeSupplierOrder(order.id);
+        setLocalOrders((prev) => prev.filter((o) => o.id !== order.id));
+        setCachedLines((prev) => {
+          const next = new Map(prev);
+          next.delete(order.id);
+          return next;
+        });
+        if (expandedOrderId === order.id) {
+          setExpandedOrderId(null);
+          setOrderLines([]);
+        }
+        await onRefresh?.();
+      } catch (error) {
+        console.error('Erreur purge panier:', error);
+        showError(error instanceof Error ? error : new Error('Erreur lors de la purge du panier'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [expandedOrderId, onRefresh, showError]
+  );
+
   const headerProps = useMemo(() => {
     if (!showHeader) return null;
     return {
@@ -131,6 +162,7 @@ export default function SupplierOrdersTable({
           onExportCSV={() => handleExportCSV(order)}
           onSendEmail={() => handleSendEmail(order)}
           onCopyHTMLEmail={() => handleCopyHTMLEmail(order)}
+          onPurge={() => handlePurgeOrder(order)}
         />
 
         {isExpanded && (

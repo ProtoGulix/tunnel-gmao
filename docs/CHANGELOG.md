@@ -1,5 +1,82 @@
 # Changelog
 
+## 1.5.0 - 2026-01-13
+
+### 🎯 Système de consultation fournisseurs
+
+**BREAKING CHANGE**: Modification majeure du processus d'achat fournisseur. Les paniers existants créés avant cette version ne disposent pas des liens M2M `supplier_order_line_purchase_request` et ne peuvent pas être purgés correctement.
+
+#### Nouveaux champs et tables
+
+- **supplier_order_line** : Ajout de 8 nouveaux champs de consultation
+  - `quote_received` : Indique si le devis fournisseur a été reçu
+  - `is_selected` : Indique le fournisseur sélectionné (un seul par référence)
+  - `quote_price` : Prix du devis proposé
+  - `lead_time_days` : Délai de livraison en jours
+  - `manufacturer` : Fabricant proposé par le fournisseur
+  - `manufacturer_ref` : Référence fabricant proposée
+  - `quote_received_at` : Date/heure de réception du devis
+  - `rejected_reason` : Raison du rejet
+
+- **supplier_order_line_purchase_request** : Table de liaison M2M entre lignes de panier et demandes d'achat, créée automatiquement lors du dispatch
+
+#### Fonction dispatch modifiée
+
+- **Dispatch vers TOUS les fournisseurs** : Les demandes d'achat sont désormais dispatchées vers les paniers OPEN de TOUS les fournisseurs associés à une référence (au lieu d'un seul fournisseur préféré)
+- **Création automatique des liens M2M** : La fonction PL/pgSQL `dispatch_purchase_requests()` crée automatiquement les entrées dans `supplier_order_line_purchase_request`
+- **Initialisation des champs consultation** : Tous les champs de consultation sont initialisés à leurs valeurs par défaut (`quote_received=false`, `is_selected=false`, etc.)
+
+#### Fonctionnalité de purge
+
+- **Purge des paniers fournisseurs** : Nouveau endpoint `purgeSupplierOrder(orderId)` pour supprimer complètement un panier
+- **Remise en attente des DAs** : Les demandes d'achat associées repassent automatiquement au statut `open` pour être dispatchées à nouveau
+- **Nettoyage complet** : Suppression des liens M2M, des lignes de panier et du panier lui-même
+
+#### Validation intelligente pré-commande
+
+- **Auto-sélection pour fournisseur unique** : Si une référence n'a qu'un seul fournisseur associé, elle est automatiquement sélectionnée lors du passage en commande
+- **Sélection obligatoire pour multi-fournisseurs** : Si plusieurs fournisseurs sont disponibles, l'utilisateur DOIT passer par l'onglet Consultation pour sélectionner explicitement un fournisseur
+- **Blocage avec message explicite** : Le système empêche la commande et liste les articles nécessitant une sélection
+
+#### Interface Consultation
+
+- **Nouvel onglet Consultation** : Vue transversale pour gérer les devis et la sélection des fournisseurs
+- **Composants de gestion des devis** :
+  - `ConsultationTab` : Vue d'ensemble avec statistiques (total, devis reçus, sélectionnés, en attente)
+  - `QuoteLineManager` : Gestionnaire par ligne avec saisie devis et bouton de sélection
+  - `QuoteLineForm` : Formulaire de saisie des devis (prix, délai, fabricant, référence)
+- **Regroupement par article** : Affichage de toutes les options fournisseurs disponibles pour chaque référence
+- **Sélection exclusive** : Un seul fournisseur peut être sélectionné par référence (désélection automatique des autres)
+
+#### Modifications API
+
+- **ApiAdapter.ts** : Ajout des champs consultation dans `SupplierOrderLine`, nouvelle signature `purgeSupplierOrder`
+- **datasource.ts** : Implémentation `purgeSupplierOrder`, `updateSupplierOrderLine`, fallback manuel pour dispatch
+- **adapter.ts** : Export des nouvelles fonctions `purgeSupplierOrder` et `updateSupplierOrderLine`
+- **Mock adapter** : Implémentation mock de `purgeSupplierOrder`
+
+#### Interface utilisateur
+
+- **OrderRow** : Ajout du menu "🗑️ Purger le panier" avec confirmation
+- **SupplierOrdersTable** : Gestion de la purge avec nettoyage du cache et rafraîchissement
+- **StockManagement** : Intégration de l'onglet Consultation entre "Paniers" et "Stock"
+
+### ⚠️ Breaking Changes
+
+1. **Structure de dispatch modifiée** : Les paniers sont maintenant créés pour TOUS les fournisseurs (au lieu d'un seul fournisseur préféré). Les anciennes données ne suivent pas ce modèle.
+
+2. **Liens M2M obligatoires** : La fonction de purge nécessite l'existence des liens M2M `supplier_order_line_purchase_request`. Les paniers créés avant cette version ne disposent pas de ces liens et ne peuvent pas être purgés correctement.
+
+3. **Validation pré-commande stricte** : Le passage en commande est bloqué pour les références ayant plusieurs fournisseurs si aucune sélection explicite n'a été faite dans l'onglet Consultation.
+
+### Migration recommandée
+
+Pour les installations existantes :
+1. Appliquer le schéma SQL : `db/schema/01_core/supplier_order_line.sql` (champs consultation)
+2. Appliquer la fonction modifiée : `db/schema/05_triggers/fn_dispatch_purchase_requests.sql`
+3. **Purger manuellement** les paniers existants en base de données (ils n'ont pas les liens M2M)
+4. Redispatcher les demandes d'achat pour créer les nouveaux paniers avec liens M2M
+
 ## 1.4.3 - 2026-01-13
 
 ### Améliorations
