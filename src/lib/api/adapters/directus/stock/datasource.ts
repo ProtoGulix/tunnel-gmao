@@ -12,10 +12,11 @@ export const fetchPurchaseRequestsFromBackend = async () => {
   return apiCall(async () => {
     const { data } = await api.get('/items/purchase_request', {
       params: {
+        filter: { status: { _neq: 'received' } },
         limit: -1,
         sort: '-created_at',
         fields: [
-          'id','stock_item_id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
+          'id','stock_item_id.id','stock_item_id.ref','stock_item_id.supplier_refs.id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
         ].join(','),
         _t: Date.now(),
       },
@@ -33,7 +34,7 @@ export const fetchPurchaseRequestsByInterventionFromBackend = async (interventio
         limit: -1,
         sort: '-created_at',
         fields: [
-          'id','stock_item_id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
+          'id','stock_item_id.id','stock_item_id.ref','stock_item_id.supplier_refs.id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
         ].join(','),
         _t: Date.now(),
       },

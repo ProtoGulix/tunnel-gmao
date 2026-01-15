@@ -16,7 +16,6 @@ import {
   Building2,
   Factory,
   Plus,
-  FileText,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -37,7 +36,6 @@ import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
 import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
 import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
-import ConsultationTab from "@/components/purchase/consultation/ConsultationTab";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks pour la logique métier
@@ -140,23 +138,9 @@ export default function StockManagement() {
       });
   }, [baseFilteredRequests, stock.supplierRefsByItem]);
 
-  // Précharger les refs fournisseurs uniquement pour les demandes visibles
-  useEffect(() => {
-    const itemIds = filteredRequests.map((req) => req.stockItemId).filter(Boolean);
-    stock.prefetchSupplierRefsForItems?.(itemIds);
-  }, [filteredRequests, stock]);
-
-  // Précharger les refs pour toutes les demandes non archivées (open/in_progress/ordered)
-  useEffect(() => {
-    const activeItemIds = purchases.requests
-      .filter((req) => {
-        const statusId = typeof req.status === 'string' ? req.status : req.status?.id;
-        return statusId !== 'received' && statusId !== 'closed' && statusId !== 'cancelled';
-      })
-      .map((req) => req.stockItemId)
-      .filter(Boolean);
-    stock.prefetchSupplierRefsForItems?.(activeItemIds);
-  }, [purchases.requests, stock]);
+  // Note: Les références fournisseurs sont chargées à la demande (lazy loading)
+  // quand l'utilisateur ouvre le panel de détails d'une demande.
+  // Cela évite de charger des dizaines de requêtes HTTP au chargement initial.
 
   const receivedRequests = useMemo(() => {
     return [...baseFilteredRequests]
@@ -259,17 +243,15 @@ export default function StockManagement() {
     // Une demande est prête au dispatch si :
     // 1. Status = "open"
     // 2. Un article est lié (stock_item_id)
-    // 3. L'article a un fournisseur préféré défini
+    // 3. L'article a au moins 1 fournisseur (via la relation M2O déjà chargée)
     return purchases.requests.filter((r) => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
       if (statusId !== "open" || !r.stockItemId) return false;
       
-      // Vérifier si l'article lié a un fournisseur préféré
-      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
-      
-      return supplierRefs.some(ref => ref.isPreferred);
+      // Utiliser le count depuis la relation M2O (déjà chargé)
+      return (r.stockItemSupplierRefsCount ?? 0) > 0;
     }).length;
-  }, [purchases.requests, stock.supplierRefsByItem]);
+  }, [purchases.requests]);
 
   const toQualifyCount = useMemo(
     () => purchases.requests.filter((r) => {
@@ -277,12 +259,10 @@ export default function StockManagement() {
       if (statusId !== "open") return false;
       if (!r.stockItemId) return false;
       
-      // Demande a un article mais pas de fournisseur préféré
-      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
-      const hasPreferredSupplier = supplierRefs.some(ref => ref.isPreferred);
-      return !hasPreferredSupplier;
+      // Demande a un article mais pas de fournisseur (via relation M2O)
+      return (r.stockItemSupplierRefsCount ?? 0) === 0;
     }).length,
-    [purchases.requests, stock.supplierRefsByItem]
+    [purchases.requests]
   );
 
   const unlinkedCount = useMemo(
@@ -658,20 +638,33 @@ export default function StockManagement() {
     setExpandedRequestId(prev => prev === requestId ? null : requestId);
   };
 
-  // Quand on ouvre une demande, charger au besoin les refs/specifics liées à l'article
-  useEffect(() => {
-    if (!expandedRequestId) return;
-    const req = purchases.requests.find((r) => r.id === expandedRequestId);
+  // Charger les refs/specs à la demande quand on ouvre le panel de détails
+  // (pas le formulaire de qualification, mais le panel "Détails")
+  const [detailsLoadingStates, setDetailsLoadingStates] = useState({});
+
+  const handleLoadDetailsForRequest = useCallback(async (requestId) => {
+    const req = purchases.requests.find((r) => r.id === requestId);
     const stockItemId = req?.stockItemId;
     if (!stockItemId) return;
 
-    if (!stock.supplierRefsByItem?.[stockItemId]) {
-      stock.loadSupplierRefs?.(stockItemId);
+    // Si déjà chargé, ne rien faire
+    if (stock.supplierRefsByItem?.[stockItemId] && stock.standardSpecsByItem?.[stockItemId]) {
+      return;
     }
-    if (!stock.standardSpecsByItem?.[stockItemId]) {
-      stock.loadStandardSpecs?.(stockItemId);
+
+    // Marquer comme en chargement
+    setDetailsLoadingStates(prev => ({ ...prev, [requestId]: true }));
+
+    try {
+      // Charger en parallèle
+      await Promise.all([
+        !stock.supplierRefsByItem?.[stockItemId] ? stock.loadSupplierRefs?.(stockItemId) : Promise.resolve(),
+        !stock.standardSpecsByItem?.[stockItemId] ? stock.loadStandardSpecs?.(stockItemId) : Promise.resolve(),
+      ]);
+    } finally {
+      setDetailsLoadingStates(prev => ({ ...prev, [requestId]: false }));
     }
-  }, [expandedRequestId, purchases.requests, stock]);
+  }, [purchases.requests, stock]);
 
   const handleLinkExisting = async (requestId, stockItem) => {
     try {
@@ -797,19 +790,18 @@ export default function StockManagement() {
   };
 
   const handleDispatchClick = () => {
-    // Compter les demandes vraiment prêtes (open + article + fournisseur préféré)
-    const trueReadyCount = filteredRequests.filter(r => {
+    // Compter les demandes dispatchables (open + article lié)
+    // Le backend déterminera lesquelles ont un fournisseur préféré
+    const dispatchableCount = filteredRequests.filter(r => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      if (statusId !== "open" || !r.stockItemId) return false;
-      const supplierRefs = stock.supplierRefsByItem?.[r.stockItemId] || [];
-      return supplierRefs.some(ref => ref.isPreferred);
+      return statusId === "open" && r.stockItemId;
     }).length;
 
-    if (trueReadyCount === 0) {
+    if (dispatchableCount === 0) {
       setDispatchResult({
         type: 'warning',
-        message: 'Aucune demande prête pour dispatch',
-        details: 'Les demandes ouvertes doivent avoir : 1) un article lié, 2) un fournisseur préféré défini pour cet article'
+        message: 'Aucune demande dispatchable',
+        details: 'Les demandes ouvertes doivent avoir un article lié'
       });
       setTimeout(() => setDispatchResult(null), 6000);
       return;
@@ -1079,14 +1071,6 @@ export default function StockManagement() {
               </Flex>
             </Tabs.Trigger>
 
-            {/* CONSULTATION: Onglet consultation fournisseurs */}
-            <Tabs.Trigger value="consultation">
-              <Flex align="center" gap="2">
-                <FileText size={14} />
-                <Text>Consultation</Text>
-              </Flex>
-            </Tabs.Trigger>
-
             <Tabs.Trigger value="stock">
               <Flex align="center" gap="2">
                 <Package size={14} />
@@ -1184,7 +1168,7 @@ export default function StockManagement() {
                 ) : (
                   <Flex direction="column" gap="4">
                     <PurchaseRequestsTable
-                      key={`${filteredRequests.length}-${stock.stockItems.length}-${Object.keys(stock.standardSpecsByItem || {}).length}-${Object.keys(stock.supplierRefsByItem || {}).length}`}
+                      key={`${filteredRequests.length}-${stock.stockItems.length}`}
                       requests={filteredRequests}
                       expandedRequestId={expandedRequestId}
                       onToggleExpand={toggleExpand}
@@ -1205,6 +1189,8 @@ export default function StockManagement() {
                       onUpdateStandardSpec={onUpdateStandardSpecForRequests}
                       onCreateSupplier={purchasing.createSupplier}
                       allManufacturers={allManufacturers}
+                      onLoadDetailsData={handleLoadDetailsForRequest}
+                      detailsLoadingStates={detailsLoadingStates}
                       renderExpandedContent={(request) => (
                         <StockItemSearch
                           requestId={request.id}
@@ -1246,6 +1232,8 @@ export default function StockManagement() {
                             onUpdateStandardSpec={onUpdateStandardSpecForRequests}
                             onCreateSupplier={purchasing.createSupplier}
                             allManufacturers={allManufacturers}
+                            onLoadDetailsData={handleLoadDetailsForRequest}
+                            detailsLoadingStates={detailsLoadingStates}
                             renderExpandedContent={(request) => (
                               <StockItemSearch
                                 requestId={request.id}
@@ -1349,11 +1337,6 @@ export default function StockManagement() {
                   </Flex>
                 )}
               </Flex>
-            </Tabs.Content>
-
-            {/* ===== TAB: CONSULTATION ===== */}
-            <Tabs.Content value="consultation">
-              <ConsultationTab disabled={!purchasing.supplierOrders.length} />
             </Tabs.Content>
 
             {/* ===== TAB: STOCK ITEMS ===== */}

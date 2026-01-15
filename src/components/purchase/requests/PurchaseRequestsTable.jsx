@@ -36,6 +36,8 @@ export default function PurchaseRequestsTable({
   onCreateSupplier,
   onToggleExpand = () => {},
   allManufacturers = [],
+  onLoadDetailsData = () => {},
+  detailsLoadingStates = {},
 }) {
   const [detailsExpandedId, setDetailsExpandedId] = useState(null);
 
@@ -68,18 +70,6 @@ export default function PurchaseRequestsTable({
     if (!stockItemId) return [];
     return standardSpecs[stockItemId] || [];
   };
-
-  const getPreferredSupplier = useCallback((stockItemId) => {
-    const refs = supplierRefs[stockItemId] || [];
-    const pref = refs.find((r) => r.isPreferred);
-    return pref?.supplier?.name || pref?.supplier?.id || null;
-  }, [supplierRefs]);
-
-  const getStockItemRef = useCallback((stockItemId) => {
-    if (!stockItemId) return null;
-    const item = stockItems.find((i) => i.id === stockItemId) || null;
-    return item?.ref || null;
-  }, [stockItems]);
 
   const getAgeDays = (createdAt) => {
     const ms = Date.now() - new Date(createdAt).getTime();
@@ -142,11 +132,11 @@ export default function PurchaseRequestsTable({
     const getCompletenessScore = (request) => {
       let score = 0;
       const hasLink = !!request.stockItemId;
-      const hasRef = !!getStockItemRef(request.stockItemId);
-      const hasPrefSupp = !!getPreferredSupplier(request.stockItemId);
+      const hasRef = !!request.stockItemRef;
+      const hasSupplier = (request.stockItemSupplierRefsCount ?? 0) > 0;
       if (hasLink) score += 100;
       if (hasRef) score += 100;
-      if (hasPrefSupp) score += 100;
+      if (hasSupplier) score += 100;
       return score;
     };
 
@@ -170,14 +160,13 @@ export default function PurchaseRequestsTable({
       const ageB = getAgeDays(b.createdAt);
       return ageB - ageA;
     });
-  }, [requests, getStockItemRef, getPreferredSupplier]);
+  }, [requests]);
 
   const columns = useMemo(() => ([
     { key: "item", header: "Article" },
     { key: "state", header: "État" },
     { key: "ref", header: "Référence" },
     { key: "qty", header: "Qté" },
-    { key: "supplier", header: "Fournisseur" },
     { key: "age", header: "Âge (j)" },
     { key: "action", header: "Action" },
   ]), []);
@@ -188,13 +177,28 @@ export default function PurchaseRequestsTable({
     const age = getAgeDays(request.createdAt);
     const bg = getRowAgeColor(age);
     const stockItem = getStockItemDetails(request.stockItemId);
-    const supplierName = getPreferredSupplier(request.stockItemId);
-    const stockRef = getStockItemRef(request.stockItemId);
+    
+    // Utiliser la référence depuis la relation M2O (déjà chargée)
+    const stockRef = request.stockItemRef;
+    
+    // Debug log pour voir ce qu'on reçoit
+    if (process.env.NODE_ENV === 'development' && request.stockItemId) {
+      console.log('[PurchaseRequestsTable] request:', {
+        id: request.id,
+        itemLabel: request.itemLabel,
+        stockItemId: request.stockItemId,
+        stockItemRef: request.stockItemRef,
+        stockItemSupplierRefsCount: request.stockItemSupplierRefsCount
+      });
+    }
+    
     const hasLink = !!request.stockItemId;
     const hasQty = Number(request.quantity) > 0;
     const hasRef = !!stockRef;
-    const hasPrefSupp = !!supplierName;
-    const hasMissing = !(hasLink && hasQty && hasRef && hasPrefSupp);
+    
+    // Utiliser le count depuis la relation M2O (déjà chargé)
+    const hasSupplier = (request.stockItemSupplierRefsCount ?? 0) > 0;
+    const hasMissing = !(hasLink && hasQty && hasRef && hasSupplier);
 
     return (
       <Fragment key={request.id}>
@@ -206,28 +210,18 @@ export default function PurchaseRequestsTable({
             <StatusBadges request={request} hasMissing={hasMissing} age={age} />
           </Table.Cell>
           <Table.Cell>
-            {hasMissing ? (
-              <Badge color="amber" variant="outline">
-                À qualifier
-              </Badge>
-            ) : stockRef ? (
+            {stockRef ? (
               <StockRefLink reference={stockRef} tab="stock" color="green" variant="soft" />
+            ) : hasLink ? (
+              <Badge color="amber" variant="outline">
+                À définir
+              </Badge>
             ) : (
               <Text color="gray" size="2">-</Text>
             )}
           </Table.Cell>
           <Table.Cell>
             <Text weight="medium">{request.quantity || "-"}</Text>
-          </Table.Cell>
-          <Table.Cell>
-            {supplierName ? (
-              <Text>{supplierName}</Text>
-            ) : (
-              <Flex align="center" gap="1">
-                <AlertTriangle size={14} color="var(--amber-9)" />
-                <Text color="amber" size="2">À définir</Text>
-              </Flex>
-            )}
           </Table.Cell>
           <Table.Cell style={{ background: getAgeColor(age) }}>
             <Text weight="medium">{age}j</Text>
@@ -238,13 +232,18 @@ export default function PurchaseRequestsTable({
                 size="1"
                 variant={detailsExpandedId === request.id || expandedRequestId === request.id ? "solid" : "soft"}
                 color={detailsExpandedId === request.id || expandedRequestId === request.id ? "blue" : "gray"}
-                onClick={() => {
+                loading={detailsLoadingStates[request.id]}
+                onClick={async () => {
                   if (hasMissing) {
                     // Si à qualifier: ouvrir le formulaire de qualification
                     onToggleExpand(request.id);
                   } else if (request.stockItemId) {
-                    // Si qualifié: ouvrir le panel détails
-                    setDetailsExpandedId(detailsExpandedId === request.id ? null : request.id);
+                    // Si qualifié: charger les données puis ouvrir le panel détails
+                    const newExpandedId = detailsExpandedId === request.id ? null : request.id;
+                    if (newExpandedId) {
+                      await onLoadDetailsData(request.id);
+                    }
+                    setDetailsExpandedId(newExpandedId);
                   }
                 }}
               >
@@ -290,12 +289,13 @@ export default function PurchaseRequestsTable({
       </Fragment>
     );
   }, [
-    getAgeDays, getRowAgeColor, getStockItemDetails, getPreferredSupplier, getStockItemRef,
+    getAgeDays, getRowAgeColor, getStockItemDetails,
     getSupplierRefsForItem, getStandardSpecsForItem, getAgeColor, StatusBadges,
     detailsExpandedId, expandedRequestId, renderExpandedContent, suppliers, loading,
     deleteConfirmId, deleteLoading, handleDeleteButtonClick, colSpan,
     onAddSupplierRef, onDeleteSupplierRef, onUpdateSupplierRef, onAddStandardSpec, 
-    onDeleteStandardSpec, onUpdateStandardSpec, onCreateSupplier
+    onDeleteStandardSpec, onUpdateStandardSpec, onCreateSupplier, allManufacturers,
+    onToggleExpand, onLoadDetailsData, detailsLoadingStates
   ]);
 
   return (
@@ -338,4 +338,6 @@ PurchaseRequestsTable.propTypes = {
   allManufacturers: PropTypes.array,
   onDeleteStandardSpec: PropTypes.func,
   onUpdateStandardSpec: PropTypes.func,
+  onLoadDetailsData: PropTypes.func,
+  detailsLoadingStates: PropTypes.object,
 };

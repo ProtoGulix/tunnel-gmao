@@ -7,9 +7,31 @@
 // PurchaseRequest
 export const mapPurchaseRequestToDomain = (item: Record<string, unknown>) => {
   if (!item) return null;
+  
+  // Extraire les données de la relation M2O stock_item_id
+  const stockItemRelation = typeof item.stock_item_id === 'object' && item.stock_item_id !== null
+    ? item.stock_item_id as Record<string, unknown>
+    : null;
+  
+  // Debug log pour voir ce qu'on reçoit
+  if (process.env.NODE_ENV === 'development' && stockItemRelation) {
+    console.log('[Mapper] stock_item_id relation:', {
+      id: stockItemRelation.id,
+      ref: stockItemRelation.ref,
+      supplier_refs: stockItemRelation.supplier_refs
+    });
+  }
+  
+  // Compter les supplier_refs (c'est un array d'objets {id: "..."} ou null/undefined)
+  const supplierCount = Array.isArray(stockItemRelation?.supplier_refs) 
+    ? stockItemRelation.supplier_refs.length 
+    : 0;
+  
   return {
     id: item.id,
-    stockItemId: item.stock_item_id ?? undefined,
+    stockItemId: stockItemRelation?.id ?? (typeof item.stock_item_id === 'string' ? item.stock_item_id : undefined),
+    stockItemRef: stockItemRelation?.ref ?? undefined,
+    stockItemSupplierRefsCount: supplierCount,
     itemLabel: item.item_label ?? undefined,
     quantity: item.quantity ?? undefined,
     unit: item.unit ?? undefined,

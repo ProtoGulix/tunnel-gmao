@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.5.3 - 2026-01-15
+
+### Améliorations majeures
+
+- **Performance: Chargement lazy des références fournisseurs** : Élimination du problème N+1 queries en différant le chargement des références fournisseurs à la demande
+  - **Avant** : ~30 requêtes XHR au chargement initial de la page (1 par article visible)
+  - **Après** : 0 requête au chargement initial, chargement uniquement quand l'utilisateur clique sur "Détails"
+  - **PurchaseRequestsTable** : Ajout du callback `onLoadDetailsData` et des états de chargement `detailsLoadingStates`
+  - **StockManagement** : Suppression des `useEffect` de préchargement, ajout de `handleLoadDetailsForRequest`
+  - Spinner visible sur le bouton "Détails" pendant le chargement
+  - Impact positif majeur sur le temps de chargement initial
+
+- **Optimisation: Relation M2O pour les données stock_item** : Utilisation des relations Directus pour charger les données en une seule requête au lieu de lookups côté client
+  - **datasource.ts** : Expansion de `stock_item_id.id`, `stock_item_id.ref`, `stock_item_id.supplier_refs.id`
+  - **mapper.ts** : Extraction des données depuis l'objet relation + comptage des supplier_refs en JS
+  - **PurchaseRequestsTable** : Utilisation directe de `request.stockItemRef` et `request.stockItemSupplierRefsCount`
+  - Élimination des fonctions `getStockItemRef()` et `getPreferredSupplier()`
+  - Tri et filtrage simplifiés sans dépendances sur les lookups
+
+- **Simplification: Suppression de la colonne "Fournisseur"** : Retrait de la colonne redondante dans le tableau des demandes d'achat
+  - Information déjà visible via le badge "État" (vert si fournisseur préféré défini)
+  - Réduction de la largeur du tableau pour meilleure lisibilité
+  - Logique métier maintenue via `stockItemSupplierRefsCount`
+
+- **Architecture: Suppression du module Consultation** : Allègement du code en retirant le système de consultation fournisseurs non utilisé
+  - Suppression du composant `ConsultationTab.jsx` (~435 lignes)
+  - Retrait de l'onglet "Consultation" de StockManagement
+  - Nettoyage des imports inutilisés (FileText icon)
+  - Réduction de la complexité globale de l'application
+
+### Corrections
+
+- **Fix: Filtrage des DA reçues** : Les demandes d'achat avec statut `received` ne sont plus chargées au démarrage
+  - **datasource.ts** : Ajout du filtre `status: { _neq: 'received' }` sur `fetchPurchaseRequestsFromBackend`
+  - Les DA reçues restent visibles dans la section "Demandes archivées" au bas du tableau
+  - Amélioration de la clarté de l'affichage principal
+
+- **Fix: Logique de dispatch simplifiée** : Le dispatch vérifie uniquement que les DA ont un article lié, le backend détermine la dispatchabilité
+  - **StockManagement.handleDispatchClick** : Suppression de la vérification frontend du fournisseur préféré
+  - Le backend SQL `dispatch_purchase_requests()` gère toute la logique métier
+  - Message utilisateur plus clair: "Aucune demande dispatchable" au lieu de "Aucune demande prête pour dispatch"
+
+- **Fix: Comptage des supplier_refs** : Utilisation d'un comptage array-based au lieu du champ trigger cassé
+  - **datasource.ts** : Chargement de `stock_item_id.supplier_refs.id` (array minimal)
+  - **mapper.ts** : Comptage avec `Array.isArray() ? .length : 0`
+  - Plus fiable que le champ `supplier_refs_count` maintenu par trigger
+  - Temps réel garanti (pas de lag de synchronisation)
+
+### Technique
+
+- **Debug logs** : Ajout de logs de développement pour tracer les données M2O
+  - `mapper.ts` : Log de la structure `stock_item_id` relation
+  - `PurchaseRequestsTable.jsx` : Log des données reçues par requête
+  - Activés uniquement en `NODE_ENV === 'development'`
+
 ## 1.5.2 - 2026-01-14
 
 ### Améliorations
