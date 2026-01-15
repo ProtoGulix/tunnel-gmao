@@ -11,9 +11,11 @@
  * @requires lucide-react
  */
 
+import { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Table, Flex, Text, Box, Badge } from "@radix-ui/themes";
-import { Package } from "lucide-react";
+import { Table, Flex, Text, Box, Badge, Checkbox } from "@radix-ui/themes";
+import { Package, Ban } from "lucide-react";
+import { suppliers } from '@/lib/api/facade';
 
 // ===== DTO ACCESSORS =====
 const getStock = (line) => line.stockItem ?? line.stock_item_id;
@@ -81,14 +83,36 @@ const renderRequesters = (prs) => {
  * @component
  * @param {Object} props
  * @param {Object} props.line - Ligne de commande
+ * @param {Function} props.onToggleSelected - Callback changement sélection
+ * @param {boolean} props.disabled - Désactiver la checkbox
  * @returns {JSX.Element}
  */
-function OrderLineRow({ line }) {
+function OrderLineRow({ line, onToggleSelected, disabled }) {
   const stock = getStock(line);
   const prs = getPurchaseRequests(line);
   const interventionCode = getInterventionCode(line);
+  const isSelected = line.is_selected ?? line.isSelected ?? false;
+  
+  const handleCheckboxChange = useCallback((checked) => {
+    onToggleSelected(line.id, checked);
+  }, [line.id, onToggleSelected]);
+  
   return (
     <Table.Row key={line.id}>
+      <Table.Cell>
+        <Flex align="center" gap="2">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={handleCheckboxChange}
+            disabled={disabled}
+            aria-label="Sélectionner cette ligne pour commande"
+          />
+          {disabled && (
+            <Ban size={14} color="var(--red-9)" style={{ opacity: 0.6 }} />
+          )}
+        </Flex>
+      </Table.Cell>
+      
       <Table.Cell>
         <Text weight="medium">{stock?.name || "—"}</Text>
       </Table.Cell>
@@ -132,11 +156,15 @@ OrderLineRow.propTypes = {
     quantity: PropTypes.number,
     supplierRefSnapshot: PropTypes.string,
     supplier_ref_snapshot: PropTypes.string,
+    is_selected: PropTypes.bool,
+    isSelected: PropTypes.bool,
     stockItem: PropTypes.object,
     stock_item_id: PropTypes.object,
     purchaseRequests: PropTypes.array,
     purchase_requests: PropTypes.array,
   }).isRequired,
+  onToggleSelected: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
 };
 
 /**
@@ -146,12 +174,47 @@ OrderLineRow.propTypes = {
  * @param {Object} props
  * @param {Object} props.order - Commande parente
  * @param {Array} props.orderLines - Lignes de la commande
+ * @param {Function} props.onLineUpdate - Callback pour mise à jour locale optimiste d'une ligne
+ * @param {Function} props.onRefresh - Callback pour rafraîchir après modification (optionnel)
  * @returns {JSX.Element}
  */
-export default function OrderLineTable({ order, orderLines = [] }) {
+export default function OrderLineTable({ order, orderLines = [], onLineUpdate, onRefresh }) {
   // Dedup lines by id to avoid double display when backend returns duplicates
   const uniqueLines = Array.from(new Map(orderLines.map((l) => [l.id, l])).values());
-  const isLocked = ['RECEIVED', 'CLOSED'].includes(order.status);
+  // Verrouiller quand le statut n'est pas OPEN (consultation lancée)
+  const isLocked = (order.status || '').toLowerCase() !== 'open';
+  const [updating, setUpdating] = useState(false);
+
+  // Debug: log du statut pour vérifier
+  useEffect(() => {
+    console.log('[OrderLineTable] Order status:', order.status, 'isLocked:', isLocked);
+  }, [order.status, isLocked]);
+
+  const handleToggleSelected = useCallback(async (lineId, isSelected) => {
+    // Ne pas appeler l'API si le panier est verrouillé
+    if (isLocked) {
+      return;
+    }
+
+    // Mise à jour optimiste locale immédiate (pas de rechargement)
+    if (onLineUpdate) {
+      onLineUpdate(lineId, { is_selected: isSelected });
+    }
+    
+    try {
+      setUpdating(true);
+      // Mise à jour API en arrière-plan
+      await suppliers.updateSupplierOrderLine(lineId, { is_selected: isSelected });
+    } catch (error) {
+      console.error('Erreur mise à jour sélection ligne:', error);
+      // En cas d'erreur, recharger depuis l'API pour corriger
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } finally {
+      setUpdating(false);
+    }
+  }, [isLocked, onLineUpdate, onRefresh]);
 
   return (
     <Box>
@@ -161,7 +224,7 @@ export default function OrderLineTable({ order, orderLines = [] }) {
         </Text>
         {isLocked && (
           <Badge color="red" variant="soft" size="1">
-            🔒 Panier verrouillé
+            🔒 Panier verrouillé - Modification interdite
           </Badge>
         )}
       </Flex>
@@ -169,6 +232,7 @@ export default function OrderLineTable({ order, orderLines = [] }) {
       <Table.Root variant="surface" size="1">
         <Table.Header style={{ position: 'sticky', top: 0, background: 'var(--gray-1)', zIndex: 1 }}>
           <Table.Row>
+            <Table.ColumnHeaderCell>Sélection</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Article</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Réf.</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Réf. fournisseur</Table.ColumnHeaderCell>
@@ -180,7 +244,12 @@ export default function OrderLineTable({ order, orderLines = [] }) {
 
         <Table.Body>
           {uniqueLines.map((line) => (
-            <OrderLineRow key={line.id} line={line} />
+            <OrderLineRow 
+              key={line.id} 
+              line={line} 
+              onToggleSelected={handleToggleSelected}
+              disabled={isLocked || updating}
+            />
           ))}
         </Table.Body>
       </Table.Root>
@@ -198,4 +267,6 @@ OrderLineTable.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     })
   ),
+  onLineUpdate: PropTypes.func,
+  onRefresh: PropTypes.func,
 };

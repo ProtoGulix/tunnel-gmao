@@ -38,7 +38,7 @@ const renderAmount = (status, amount, currency) => {
     ? <Text weight="medium">{Number(amount).toFixed(2)} {currency || "EUR"}</Text>
     : isOpen
     ? <Text color="gray">—</Text>
-    : <Text color="amber" size="1" style={{ fontStyle: "italic" }}>À saisir</Text>;
+    : <Text color="gray" size="1" style={{ fontStyle: "italic" }}>À saisir</Text>;
 };
 
 const renderOrderNumber = (order, isBlocking, isUrgent) => (
@@ -118,30 +118,35 @@ export default function OrderRow({
   return (
     <Fragment>
       <Table.Row>
+        {/* Commande / Fournisseur (fusion visuelle) */}
         <Table.Cell>
-          {renderOrderNumber(order, isBlocking, isUrgent)}
+          <Flex direction="column" gap="1">
+            {renderOrderNumber(order, isBlocking, isUrgent)}
+            <Text color="gray" size="1">{getSupplierObj(order)?.name || "—"}</Text>
+          </Flex>
         </Table.Cell>
 
-        <Table.Cell>
-          <Text weight="medium">{getSupplierObj(order)?.name || "—"}</Text>
-        </Table.Cell>
-
+        {/* Statut (seule vraie couleur) */}
         <Table.Cell>
           {renderStatusBadge(statusConfig)}
         </Table.Cell>
 
-        <Table.Cell>
-          {renderLineCountBadge(lineCount)}
-        </Table.Cell>
-
-        <Table.Cell>
-          {renderAmount(order.status, getTotalAmount(order), order.currency)}
-        </Table.Cell>
-
+        {/* Âge (j) - signal visuel simple */}
         <Table.Cell>
           {renderAgeBadge(ageDays, ageColor)}
         </Table.Cell>
 
+        {/* Nb lignes */}
+        <Table.Cell>
+          {renderLineCountBadge(lineCount)}
+        </Table.Cell>
+
+        {/* Montant (secondaire) */}
+        <Table.Cell>
+          {renderAmount(order.status, getTotalAmount(order), order.currency)}
+        </Table.Cell>
+
+        {/* Actions */}
         <Table.Cell>
           <Flex gap="2" wrap="wrap" align="center">
             {primaryAction && (

@@ -21,6 +21,7 @@ import { supplierOrdersTablePropTypes } from "./supplierOrdersTablePropTypes";
 export default function SupplierOrdersTable({
   orders,
   onRefresh,
+  onOrderLineUpdate, // Callback pour mise à jour optimiste d'une ligne
   // Optional header controls (when you want the table to manage its own header)
   showHeader = false,
   searchTerm = "",
@@ -36,17 +37,79 @@ export default function SupplierOrdersTable({
   const [orderLines, setOrderLines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [cachedLines, setCachedLines] = useState(new Map());
 
   useEffect(() => {
     setLocalOrders(orders);
   }, [orders]);
 
+  // Callback pour mise à jour optimiste d'une ligne dans les détails
+  const handleLineUpdate = useCallback((lineId, updates) => {
+    // Mise à jour locale immédiate dans orderLines
+    setOrderLines(prev => 
+      prev.map(line => 
+        line.id === lineId ? { ...line, ...updates } : line
+      )
+    );
+    
+    // Mise à jour dans le cache
+    if (expandedOrderId && cachedLines.has(expandedOrderId)) {
+      const updatedLines = cachedLines.get(expandedOrderId).map(line =>
+        line.id === lineId ? { ...line, ...updates } : line
+      );
+      setCachedLines(prev => new Map(prev).set(expandedOrderId, updatedLines));
+    }
+    
+    // Propager au parent si disponible
+    if (onOrderLineUpdate) {
+      onOrderLineUpdate(expandedOrderId, lineId, updates);
+    }
+  }, [expandedOrderId, cachedLines, onOrderLineUpdate]);
+
   // Tri par défaut : paniers non commandés d'abord, puis âge décroissant
-  const sortedOrders = useMemo(() => sortOrdersByStatusAndAge(localOrders), [localOrders]);
+  // Sorting state: default helper or quick sort by 'status' or 'age'
+  const [sortKey, setSortKey] = useState(null); // 'status' | 'age' | null
+  const [sortDir, setSortDir] = useState('desc'); // 'asc' | 'desc'
+
+  const toggleSort = useCallback((key) => {
+    setSortKey((prevKey) => {
+      if (prevKey !== key) {
+        setSortDir('desc');
+        return key;
+      }
+      setSortDir((prevDir) => (prevDir === 'asc' ? 'desc' : 'asc'));
+      return prevKey;
+    });
+  }, []);
+
+  const sortedOrders = useMemo(() => {
+    if (!Array.isArray(localOrders)) return [];
+    if (!sortKey) return sortOrdersByStatusAndAge(localOrders);
+    const ordersCopy = [...localOrders];
+    if (sortKey === 'age') {
+      // Age by createdAt
+      ordersCopy.sort((a, b) => {
+        const getAge = (o) => {
+          const createdAt = o?.createdAt ?? o?.created_at;
+          if (!createdAt) return 0;
+          return Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000*60*60*24)));
+        };
+        const av = getAge(a);
+        const bv = getAge(b);
+        return sortDir === 'asc' ? av - bv : bv - av;
+      });
+    } else if (sortKey === 'status') {
+      const rank = { OPEN: 1, SENT: 2, ACK: 3, RECEIVED: 4, CLOSED: 5, CANCELLED: 6 };
+      ordersCopy.sort((a, b) => {
+        const av = rank[a?.status?.toUpperCase?.() || 'OPEN'] || 99;
+        const bv = rank[b?.status?.toUpperCase?.() || 'OPEN'] || 99;
+        return sortDir === 'asc' ? av - bv : bv - av;
+      });
+    }
+    return ordersCopy;
+  }, [localOrders, sortKey, sortDir]);
 
   // Fonction utilitaire pour récupérer les lignes (mise en cache)
-  const [cachedLines, setCachedLines] = useState(new Map());
-  
   const getOrderLines = useCallback(
     async (orderId, { forceRefresh = false } = {}) => {
       // Force a refetch when exports need up-to-date manufacturer info
@@ -148,14 +211,21 @@ export default function SupplierOrdersTable({
   }, [showHeader, orders.length, searchTerm, onSearchChange, onRefresh, statusFilter, onStatusFilterChange, supplierFilter, onSupplierFilterChange, supplierOptions]);
 
   const columns = useMemo(() => ([
-    { key: "orderNumber", header: "N° Commande" },
-    { key: "supplier", header: "Fournisseur" },
-    { key: "status", header: "Statut" },
+    { key: "orderSupplier", header: "Commande / Fournisseur" },
+    { key: "status", header: (
+      <span style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>
+        Statut{sortKey === 'status' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+      </span>
+    ) },
+    { key: "age", header: (
+      <span style={{ cursor: 'pointer' }} onClick={() => toggleSort('age')}>
+        Âge (j){sortKey === 'age' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+      </span>
+    ) },
     { key: "lineCount", header: "Nb lignes" },
     { key: "amount", header: "Montant" },
-    { key: "age", header: "Âge (j)" },
     { key: "actions", header: "Actions" },
-  ]), []);
+  ]), [sortKey, sortDir, toggleSort]);
 
   const rowRenderer = useCallback((order) => {
     const isExpanded = expandedOrderId === order.id;
@@ -176,7 +246,12 @@ export default function SupplierOrdersTable({
 
         {isExpanded && (
           <ExpandableDetailsRow colSpan={columns.length} withCard={true}>
-            <OrderLineTable order={order} orderLines={orderLines} />
+            <OrderLineTable 
+              order={order} 
+              orderLines={orderLines}
+              onLineUpdate={handleLineUpdate}
+              onRefresh={onRefresh}
+            />
           </ExpandableDetailsRow>
         )}
       </Fragment>

@@ -64,19 +64,10 @@ export const getLineCount = (order) => Number(order?.lineCount ?? order?.line_co
 export const getAgeColor = (order) => {
   const ageDays = getAgeInDays(getCreatedAt(order));
   if (ageDays == null) return 'gray';
-
-  if (order.status === 'OPEN') {
-    if (ageDays >= STALE_OPEN_DAYS) return 'red';
-    if (ageDays >= 3) return 'amber';
-    if (ageDays >= 1) return 'yellow';
-    return 'gray';
-  }
-
-  if (order.status === 'SENT') {
-    if (ageDays >= STALE_SENT_DAYS) return 'amber';
-    return 'gray';
-  }
-
+  // Simplified, status-agnostic signal:
+  // >14j = red, >7j = orange, else gray
+  if (ageDays > 14) return 'red';
+  if (ageDays > 7) return 'orange';
   return 'gray';
 };
 

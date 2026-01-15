@@ -194,8 +194,8 @@ export default function StockManagement() {
   const filteredSupplierOrders = useMemo(() => {
     let orders = purchasing.supplierOrders;
     
-    // Exclure les paniers clôturés et annulés
-    orders = orders.filter((order) => !["CLOSED", "CANCELLED"].includes(order.status));
+    // Exclure les paniers clôturés et annulés (case-insensitive)
+    orders = orders.filter((order) => !["closed", "cancelled"].includes((order.status || "").toLowerCase()));
     
     // Appliquer le filtre de statut
     if (supplierOrderStatusFilter !== "all") {
@@ -222,6 +222,7 @@ export default function StockManagement() {
   const supplierOrderSupplierOptions = useMemo(() => {
     const names = new Set(
       purchasing.supplierOrders
+        .filter((o) => !["closed", "cancelled"].includes((o.status || "").toLowerCase()))
         .map((o) => o.supplier_id?.name)
         .filter((n) => typeof n === "string" && n.trim().length > 0)
     );
@@ -232,7 +233,7 @@ export default function StockManagement() {
   }, [purchasing.supplierOrders]);
 
   const archivedSupplierOrders = useMemo(() => {
-    return purchasing.supplierOrders.filter((order) => ["CLOSED", "CANCELLED"].includes(order.status));
+    return purchasing.supplierOrders.filter((order) => ["closed", "cancelled"].includes((order.status || "").toLowerCase()));
   }, [purchasing.supplierOrders]);
 
   const filteredSuppliers = useMemo(() => {
@@ -375,6 +376,9 @@ export default function StockManagement() {
   const onAddSupplierRefForRequests = useCallback(async (stockItemId, refData) => {
     try {
       setFormLoading(true);
+      // If this item has no refs yet, make the new ref preferred by default
+      const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
+      const makePreferred = existingRefs.length === 0;
       let manufacturer_item_id = null;
       // Créer/récupérer le fabricant si au moins un champ (nom OU référence) est renseigné
       const manuName = refData.manufacturer_name?.trim() || '';
@@ -395,7 +399,7 @@ export default function StockManagement() {
           supplier_ref: refData.supplier_ref?.trim() || '',
           unit_price: refData.unit_price,
           delivery_time_days: refData.delivery_time_days,
-          is_preferred: false,
+          is_preferred: refData.is_preferred ?? makePreferred,
           ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
         }
       );
@@ -548,13 +552,17 @@ export default function StockManagement() {
         manufacturer_item_id = manu?.id || null;
       }
 
+      // If this item has no refs yet, make the new ref preferred by default unless user explicitly set it
+      const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
+      const makePreferred = existingRefs.length === 0;
+
       const payload = {
         stock_item_id: stockItemId,
         supplier_id: trimmedSupplierId,
         supplier_ref: trimmedSupplierRef,
         unit_price: parseFloat(currentFormData.unit_price) || null,
         delivery_time_days: parseInt(currentFormData.delivery_time_days) || null,
-        is_preferred: currentFormData.is_preferred,
+        is_preferred: currentFormData.is_preferred ?? makePreferred,
         ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
       };
 
@@ -855,13 +863,14 @@ export default function StockManagement() {
   }, [purchases, purchasing, stock]); // Pas de dépendances - charge une seule fois
 
   // Auto-refresh silencieux (pas de spinner pour éviter le clignotement)
+  // Réduit à 30 secondes pour éviter les rechargements excessifs
   useAutoRefresh(async () => {
     await Promise.all([
       stock.loadStockItems(false),
       purchases.loadRequests(false),
       purchasing.loadAll(false)
     ]);
-  }, 5, true);
+  }, 30, true); // 30 secondes au lieu de 5
 
   // Loading and error state - derived from hooks
   const isLoading = stock.loading || purchases.loading || purchasing.loading;
@@ -1028,16 +1037,14 @@ export default function StockManagement() {
         {/* Alert à qualifier */}
         {unlinkedCount > 0 && (
           <StatusCallout type="warning">
-            {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} sans article lié : 
-            vous devez lier ces demandes à un article en stock avant de pouvoir les dispatcher
+            ⚠️ {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} non liée{unlinkedCount > 1 ? "s" : ""} à un article stock
           </StatusCallout>
         )}
 
         {/* Alert sans fournisseur préféré */}
         {toQualifyCount > 0 && (
           <StatusCallout type="warning">
-            {toQualifyCount} demande{toQualifyCount > 1 ? "s" : ""} sans fournisseur préféré : 
-            définissez un fournisseur préféré pour chaque article lié avant de dispatcher
+            ⚠️ {toQualifyCount} demande{toQualifyCount > 1 ? "s" : ""} sans fournisseur préféré
           </StatusCallout>
         )}
 
@@ -1321,6 +1328,7 @@ export default function StockManagement() {
                     <SupplierOrdersTable
                       orders={filteredSupplierOrders}
                       onRefresh={refreshOrders}
+                      onOrderLineUpdate={purchasing.updateOrderLine}
                     />
 
                     {/* Section Paniers archivés (clôturés/annulés) */}
@@ -1333,6 +1341,7 @@ export default function StockManagement() {
                           <SupplierOrdersTable
                             orders={archivedSupplierOrders}
                             onRefresh={refreshOrders}
+                            onOrderLineUpdate={purchasing.updateOrderLine}
                           />
                         </Flex>
                       </Card>

@@ -10,7 +10,7 @@ import {
   generateEmailBody,
   generateFullEmailHTML,
 } from '@/lib/utils/exportGenerator';
-import { suppliers, stock } from '@/lib/api/facade';
+import { suppliers, stock, client } from '@/lib/api/facade';
 
 /**
  * Handle CSV export for supplier order
@@ -159,74 +159,74 @@ export const handleStatusChange = async (
       return;
     }
 
-    // CONSULTATION: Vérification intelligente avant passage à ORDERED
-    // - Article avec 1 seul fournisseur → auto-sélection
-    // - Article avec plusieurs fournisseurs → sélection obligatoire via Consultation
-    if (newStatus === 'SENT' || newStatus === 'RECEIVED') {
-      // Grouper les lignes par stock_item_id pour identifier les articles avec plusieurs fournisseurs
-      const itemGroups = new Map();
+    // CONSULTATION: Vérification avant passage à RECEIVED (commandé)
+    // S'assurer qu'au moins une ligne est sélectionnée
+    if (newStatus === 'RECEIVED') {
+      const hasAnySelection = lines.some((l) => l.is_selected || l.isSelected);
 
-      for (const line of lines) {
-        const stockItemId = line.stock_item_id?.id || line.stock_item_id;
-        if (!itemGroups.has(stockItemId)) {
-          itemGroups.set(stockItemId, []);
-        }
-        itemGroups.get(stockItemId).push(line);
-      }
-
-      // Vérifier chaque article
-      const itemsNeedingSelection = [];
-      const linesToAutoSelect = [];
-
-      for (const [stockItemId, itemLines] of itemGroups) {
-        const hasSelection = itemLines.some((l) => l.is_selected || l.isSelected);
-
-        if (itemLines.length === 1) {
-          // Un seul fournisseur pour cet article → auto-sélection si pas déjà sélectionné
-          if (!hasSelection) {
-            linesToAutoSelect.push(itemLines[0]);
-          }
-        } else {
-          // Plusieurs fournisseurs pour cet article → sélection obligatoire
-          if (!hasSelection) {
-            const itemName =
-              itemLines[0].stock_item_id?.name || itemLines[0].stock_item_id?.ref || 'Article';
-            itemsNeedingSelection.push(itemName);
-          }
-        }
-      }
-
-      // Si des articles avec plusieurs fournisseurs n'ont pas de sélection → bloquer
-      if (itemsNeedingSelection.length > 0) {
-        const itemsList = itemsNeedingSelection.slice(0, 3).join(', ');
-        const more =
-          itemsNeedingSelection.length > 3
-            ? ` et ${itemsNeedingSelection.length - 3} autre(s)`
-            : '';
-
+      if (!hasAnySelection) {
         showError(
           new Error(
-            `Certains articles ont plusieurs fournisseurs (${itemsList}${more}). ` +
-              `Veuillez passer par l'onglet Consultation pour sélectionner un fournisseur.`
+            'Aucune ligne sélectionnée. Veuillez sélectionner au moins un article avant de passer la commande.'
           )
         );
         setLoading(false);
         return;
       }
+    }
 
-      // Auto-sélectionner les lignes des articles à fournisseur unique
-      if (linesToAutoSelect.length > 0) {
-        console.log(
-          '[StatusChange] Auto-selecting lines for single-supplier items:',
-          linesToAutoSelect.length
-        );
-        await Promise.all(
-          linesToAutoSelect.map((line) =>
-            suppliers.updateSupplierOrderLine(line.id, {
-              isSelected: true,
-            })
+    // PURGE: Si passage à RECEIVED, supprimer les lignes non sélectionnées et redispatcher les DA
+    if (newStatus === 'RECEIVED') {
+      const unselectedLines = lines.filter((l) => !(l.is_selected || l.isSelected));
+      
+      if (unselectedLines.length > 0) {
+        // Message d'alerte conforme à la convention
+        const unselectedCount = unselectedLines.length;
+        const unselectedItems = unselectedLines
+          .map((l) => l.stock_item_id?.name || l.stock_item_id?.ref || 'Article')
+          .slice(0, 3)
+          .join(', ');
+        const more = unselectedLines.length > 3 ? ` et ${unselectedLines.length - 3} autre(s)` : '';
+        
+        showError(
+          new Error(
+            `⚠️ Purge de ${unselectedCount} ligne(s) non sélectionnée(s): ${unselectedItems}${more}. ` +
+            `Ces articles seront redispatchers si présents dans d'autres paniers.`
           )
         );
+
+        // Récupérer toutes les DA associées aux lignes non sélectionnées
+        const unselectedPRs = Array.from(
+          new Set(
+            unselectedLines.flatMap((line) => {
+              const prs = line.purchase_requests ?? line.purchaseRequests ?? [];
+              return prs.map((pr) => {
+                const prField = pr.purchase_request_id ?? pr.purchaseRequest;
+                if (prField && typeof prField === 'object') return prField.id;
+                return prField || null;
+              });
+            })
+          )
+        ).filter(Boolean);
+
+        console.log('[StatusChange] Unselected PR IDs for redispatch:', unselectedPRs);
+
+        // Supprimer les lignes non sélectionnées via l'API Directus
+        await Promise.all(
+          unselectedLines.map((line) => 
+            // Supprimer directement via l'API client
+            client.api.delete(`/items/supplier_order_line/${line.id}`)
+          )
+        );
+
+        // Redispatcher les DA (les remettre en statut 'in_progress' pour nouvelle consultation)
+        if (unselectedPRs.length > 0) {
+          await Promise.all(
+            unselectedPRs.map((prId) => 
+              stock.updatePurchaseRequest(prId, { status: 'in_progress' })
+            )
+          );
+        }
       }
     }
 

@@ -1,53 +1,55 @@
 import { useCallback, useState } from 'react';
 import { suppliers as suppliersApi } from '@/lib/api/facade';
+import { useOptimisticData } from './useOptimisticData';
 
 /**
  * Hook pour gérer la logique des achats (fournisseurs et paniers)
  * Centralise: fetch suppliers, supplier orders, dispatch logic
+ * Utilise des mises à jour optimistes pour éviter les rechargements
  */
 export const usePurchasingManagement = (onError) => {
-  const [suppliers, setSuppliers] = useState([]);
-  const [supplierOrders, setSupplierOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [dispatching, setDispatching] = useState(false);
 
-  const loadSuppliers = useCallback(
-    async (isInitial = false) => {
-      try {
-        if (isInitial) setLoading(true);
-
-        const data = await suppliersApi.fetchSuppliers();
-        setSuppliers(data);
-        return data;
-      } catch (error) {
-        console.error('Erreur chargement fournisseurs:', error);
-        onError?.('Impossible de charger les fournisseurs');
-        return [];
-      } finally {
-        if (isInitial) setLoading(false);
-      }
-    },
-    [onError]
+  // Hook optimiste pour les fournisseurs
+  const suppliersOptimistic = useOptimisticData(
+    () => suppliersApi.fetchSuppliers(),
+    onError
   );
 
-  const loadSupplierOrders = useCallback(
-    async (isInitial = false) => {
-      try {
-        if (isInitial) setLoading(true);
-
-        const data = await suppliersApi.fetchSupplierOrders();
-        setSupplierOrders(data);
-        return data;
-      } catch (error) {
-        console.error('Erreur chargement paniers:', error);
-        onError?.('Impossible de charger les paniers');
-        return [];
-      } finally {
-        if (isInitial) setLoading(false);
-      }
-    },
-    [onError]
+  // Hook optimiste pour les commandes fournisseurs
+  const ordersOptimistic = useOptimisticData(
+    () => suppliersApi.fetchSupplierOrders(),
+    onError
   );
+
+  /**
+   * Met à jour une ligne de commande localement (optimiste)
+   */
+  const updateOrderLine = useCallback((orderId, lineId, lineUpdates) => {
+    ordersOptimistic.setData(prev => 
+      prev.map(order => {
+        if (order.id !== orderId) return order;
+        
+        const lines = order.lines || order.orderLines || [];
+        return {
+          ...order,
+          lines: lines.map(line => 
+            line.id === lineId ? { ...line, ...lineUpdates } : line
+          ),
+          orderLines: lines.map(line => 
+            line.id === lineId ? { ...line, ...lineUpdates } : line
+          ),
+        };
+      })
+    );
+  }, [ordersOptimistic]);
+
+  /**
+   * Met à jour le statut d'une commande localement (optimiste)
+   */
+  const updateOrderStatus = useCallback((orderId, newStatus) => {
+    ordersOptimistic.updateLocal(orderId, { status: newStatus });
+  }, [ordersOptimistic]);
 
   const dispatch = useCallback(async () => {
     try {
@@ -55,7 +57,7 @@ export const usePurchasingManagement = (onError) => {
       const results = await suppliersApi.dispatchPurchaseRequests();
 
       // Recharger les paniers après dispatch
-      await loadSupplierOrders(false);
+      await ordersOptimistic.invalidate();
 
       return results;
     } catch (error) {
@@ -64,26 +66,34 @@ export const usePurchasingManagement = (onError) => {
     } finally {
       setDispatching(false);
     }
-  }, [loadSupplierOrders]);
+  }, [ordersOptimistic]);
 
   const loadAll = useCallback(
     async (isInitial = false) => {
-      return Promise.all([loadSuppliers(isInitial), loadSupplierOrders(isInitial)]);
+      return Promise.all([
+        suppliersOptimistic.load(isInitial),
+        ordersOptimistic.load(isInitial)
+      ]);
     },
-    [loadSuppliers, loadSupplierOrders]
+    [suppliersOptimistic, ordersOptimistic]
   );
 
   return {
     // State
-    suppliers,
-    supplierOrders,
-    loading,
+    suppliers: suppliersOptimistic.data,
+    supplierOrders: ordersOptimistic.data,
+    loading: suppliersOptimistic.loading || ordersOptimistic.loading,
     dispatching,
+    version: suppliersOptimistic.version + ordersOptimistic.version,
 
     // Methods
-    loadSuppliers,
-    loadSupplierOrders,
+    loadSuppliers: suppliersOptimistic.load,
+    loadSupplierOrders: ordersOptimistic.load,
     loadAll,
     dispatch,
+    updateOrderLine,
+    updateOrderStatus,
+    invalidateSuppliers: suppliersOptimistic.invalidate,
+    invalidateOrders: ordersOptimistic.invalidate,
   };
 };
