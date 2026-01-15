@@ -21,6 +21,12 @@ export const mapStockSupplierLinkToDomain = (item: Record<string, unknown> | nul
     ? manufacturerItemId as Record<string, unknown>
     : null;
 
+  // Debug: Log pour voir ce qui arrive de l'API
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Mapper] manufacturer_item_id brut:', manufacturerItemId);
+    console.log('[Mapper] manufacturerObj après cast:', manufacturerObj);
+  }
+
   return {
     id: item.id,
     stockItemId: stockItemObj?.id ?? stockItemId,
