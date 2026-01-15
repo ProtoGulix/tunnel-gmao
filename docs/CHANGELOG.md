@@ -13,6 +13,7 @@
 ### Restructuration : Paniers fournisseurs avec logique métier automatisée
 
 - **Remplacement "À préparer" → "Mutualisation"** : État métier clair avec calculs automatiques
+
   - Calcul automatique de l'urgence globale (MAX des urgences des lignes)
   - Calcul automatique de l'âge maximum (MAX des âges des lignes)
   - Détection automatique de rupture de mutualisation (ligne urgente OU ligne normale >7j)
@@ -29,17 +30,20 @@
 ### Amélioration UX : Affichage des paniers fournisseurs (OrderRow)
 
 - **Mise en évidence du fournisseur** : Mental model aligné sur "commande chez REXEL" plutôt que "commande #12345"
+
   - Nom fournisseur en gras, taille 2, ligne principale
   - N° commande en badge gris discret monospace en dessous
   - Badges URGENT (orange) et ⚠>7j (rouge) sur la ligne fournisseur
 
 - **Fusion badge statut + sélecteur** : Un seul composant avec icônes, couleurs et interaction
+
   - Select.Trigger avec `color={statusConfig.color}` pour couleur du statut
   - Icône dynamique selon le statut (FolderOpen, Send, Mail, PackageCheck, Archive, XCircle)
   - Label français visible : "Ouvert", "Envoyé (attente)", "Réponse reçue", etc.
   - Suppression de la colonne "Status" badge redondante
 
 - **Nouvelle colonne Urgence** : Remplacement de la colonne Montant par niveau d'urgence
+
   - Badge "URGENT" (orange/solid) pour paniers avec au moins une ligne urgente
   - Badge "Normal" (gris/soft) pour les autres paniers
   - Information plus pertinente pour prioriser les actions
