@@ -9,13 +9,15 @@ import {
   Badge,
 } from "@radix-ui/themes";
 import {
-  Package,
   ShoppingCart,
   TruckIcon,
   Zap,
-  Building2,
-  Factory,
-  Plus,
+  PackagePlus,
+  Send,
+  PackageCheck,
+  Archive,
+  Users,
+  AlertTriangle,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -28,66 +30,58 @@ import { useRequestStats } from "@/hooks/useStockData";
 import FilterSelect from "@/components/common/FilterSelect";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
 import StockItemSearch from "@/components/stock/StockItemSearch";
-import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
 import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
-import SuppliersInlinePanel from "@/components/purchase/suppliers/SuppliersInlinePanel";
 import TableHeader from "@/components/common/TableHeader";
 import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
-import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
-import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
 import StatusCallout from "@/components/common/StatusCallout";
 
-// Custom hooks pour la logique métier
+// Custom hooks
 import { useStockItemsManagement } from "@/hooks/useStockItemsManagement";
 import { usePurchaseRequestsManagement } from "@/hooks/usePurchaseRequestsManagement";
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
-import { STOCK_MANAGEMENT_TABS, DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
 import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 
-export default function StockManagement() {
-  // ========== 1. CUSTOM HOOKS (Logique métier) ==========
+const PROCUREMENT_TABS = {
+  REQUESTS: "requests",
+  POOLING: "pooling",
+  SENT: "sent",
+  ORDERED: "ordered",
+  CLOSED: "closed",
+};
+
+export default function Procurement() {
+  // ========== STATE ==========
   const [error, setError] = useState(null);
   const stock = useStockItemsManagement(setError);
   const purchases = usePurchaseRequestsManagement(setError);
   const purchasing = usePurchasingManagement(setError);
 
-  // ========== 2. UI STATE ==========
-  const [activeTab, setActiveTab] = useTabNavigation(STOCK_MANAGEMENT_TABS.REQUESTS, 'tab');
+  const [activeTab, setActiveTab] = useTabNavigation(PROCUREMENT_TABS.REQUESTS, 'tab');
   const [dispatchResult, setDispatchResult] = useState(null);
   const [showDispatchConfirm, setShowDispatchConfirm] = useState(false);
 
-  // Search & filter state - Synchronized with URL
-  const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
   const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('search', '');
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [supplierOrderStatusFilter, setSupplierOrderStatusFilter] = useState("all");
   const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', '');
   const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
-  const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
 
-  // Expansion state (pour PurchaseRequestsTable)
   const [expandedRequestId, setExpandedRequestId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-
-  // Supplier refs form state (pour StockItemsTable)
-  const [supplierRefFormData, setSupplierRefFormData] = useState(DEFAULT_SUPPLIER_REF_FORM);
-  
   const [compactRows, setCompactRows] = useState(false);
 
-  // Load manufacturers once at parent level
+  // Load manufacturers
   const [allManufacturers, setAllManufacturers] = useState([]);
-  const [manufacturersVersion, setManufacturersVersion] = useState(0);
   
   const refreshManufacturers = useCallback(async () => {
     try {
       const items = await manufacturerItems.fetchManufacturerItems();
       setAllManufacturers(items || []);
-      setManufacturersVersion(v => v + 1); // Force re-render
     } catch (error) {
       console.error('Erreur rechargement fabricants:', error);
     }
@@ -97,14 +91,13 @@ export default function StockManagement() {
     refreshManufacturers();
   }, [refreshManufacturers]);
 
-  // Load stock families once at parent level
+  // Load stock families
   const [stockFamilies, setStockFamilies] = useState([]);
   useEffect(() => {
     stockAPI.fetchStockFamilies().then(families => setStockFamilies(families || []));
   }, []);
 
-  // ========== 3. CUSTOM HOOKS VARIABLES ==========
-  // availableStatuses not used; removed to satisfy ESLint
+  // ========== COMPUTED VALUES ==========
   const requestStats = useRequestStats(purchases.requests);
   const baseFilteredRequests = usePurchaseRequestFilters(
     purchases.requests,
@@ -112,8 +105,6 @@ export default function StockManagement() {
     urgencyFilter,
     statusFilter
   );
-
-  // Note: Removed unused STATUS_PRIORITY constant to satisfy ESLint.
 
   const filteredRequests = useMemo(() => {
     const hasMissingInfo = (req) => {
@@ -138,10 +129,6 @@ export default function StockManagement() {
       });
   }, [baseFilteredRequests, stock.supplierRefsByItem]);
 
-  // Note: Les références fournisseurs sont chargées à la demande (lazy loading)
-  // quand l'utilisateur ouvre le panel de détails d'une demande.
-  // Cela évite de charger des dizaines de requêtes HTTP au chargement initial.
-
   const receivedRequests = useMemo(() => {
     return [...baseFilteredRequests]
       .filter(req => req.status === 'received')
@@ -152,40 +139,99 @@ export default function StockManagement() {
       });
   }, [baseFilteredRequests]);
 
-  // ========== 4. COMPUTED VALUES (useMemo) ==========
-  // Supplier ref counts are now provided by the database (supplier_refs_count field)
-  // No need to calculate them in the frontend anymore
-  const supplierRefsCounts = useMemo(() => {
-    const counts = {};
-    stock.stockItems.forEach(item => {
-      // Use the database-calculated count if available, otherwise fallback to 0
-      counts[item.id] = item.supplierRefsCount ?? 0;
-    });
-    return counts;
-  }, [stock.stockItems]);
-  
-  const filteredStockItems = useMemo(() => {
-    return stock.stockItems.filter(item => {
-      const matchesSearch = !stockSearchTerm || 
-        item.name?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-        item.ref?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-        item.family_code?.toLowerCase().includes(stockSearchTerm.toLowerCase());
-      
-      return matchesSearch;
-    });
-  }, [stock.stockItems, stockSearchTerm]);
+  // Séparer les paniers par état métier
+  const ordersByState = useMemo(() => {
+    const pooling = [];
+    const sent = [];
+    const ordered = [];
+    const closed = [];
 
+    purchasing.supplierOrders.forEach((order) => {
+      const status = (order.status || "").toUpperCase();
+      
+      if (status === "OPEN" || status === "POOLING") {
+        pooling.push(order);
+      } else if (status === "SENT") {
+        sent.push(order);
+      } else if (["ACK", "RECEIVED"].includes(status)) {
+        ordered.push(order);
+      } else if (["CLOSED", "CANCELLED"].includes(status)) {
+        closed.push(order);
+      }
+    });
+
+    return { pooling, sent, ordered, closed };
+  }, [purchasing.supplierOrders]);
+
+  // Calcul de l'urgence globale et de l'âge max pour les paniers en mutualisation
+  const enrichedPoolingOrders = useMemo(() => {
+    return ordersByState.pooling.map(order => {
+      const lines = order.lines || [];
+      let maxUrgency = 'low';
+      let maxAge = 0;
+      let hasUrgent = false;
+      let hasNormalOver7Days = false;
+      
+      lines.forEach(line => {
+        const urgency = line.urgency || 'normal';
+        const lineAge = line.createdAt ? Math.floor((Date.now() - new Date(line.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+        
+        // Calculer l'urgence max
+        if (urgency === 'high') {
+          maxUrgency = 'high';
+          hasUrgent = true;
+        } else if (urgency === 'normal' && maxUrgency === 'low') {
+          maxUrgency = 'normal';
+        }
+        
+        // Calculer l'âge max
+        if (lineAge > maxAge) {
+          maxAge = lineAge;
+        }
+        
+        // Détecter rupture de mutualisation
+        if (urgency === 'high') {
+          hasUrgent = true;
+        }
+        if (urgency === 'normal' && lineAge > 7) {
+          hasNormalOver7Days = true;
+        }
+      });
+      
+      const poolingBroken = hasUrgent || hasNormalOver7Days;
+      
+      return {
+        ...order,
+        globalUrgency: maxUrgency,
+        maxLineAge: maxAge,
+        poolingBroken,
+        hasUrgentLines: hasUrgent,
+      };
+    });
+  }, [ordersByState.pooling]);
+
+  // Filtrage dynamique selon l'onglet actif
   const filteredSupplierOrders = useMemo(() => {
-    let orders = purchasing.supplierOrders;
+    let orders = [];
     
-    // Exclure les paniers clôturés et annulés (case-insensitive)
-    orders = orders.filter((order) => !["closed", "cancelled"].includes((order.status || "").toLowerCase()));
-    
-    // Appliquer le filtre de statut
-    if (supplierOrderStatusFilter !== "all") {
-      orders = orders.filter((order) => order.status === supplierOrderStatusFilter);
+    switch (activeTab) {
+      case PROCUREMENT_TABS.POOLING:
+        orders = enrichedPoolingOrders;
+        break;
+      case PROCUREMENT_TABS.SENT:
+        orders = ordersByState.sent;
+        break;
+      case PROCUREMENT_TABS.ORDERED:
+        orders = ordersByState.ordered;
+        break;
+      case PROCUREMENT_TABS.CLOSED:
+        orders = ordersByState.closed;
+        break;
+      default:
+        return [];
     }
-    // Appliquer la recherche (n°, fournisseur)
+    
+    // Appliquer la recherche
     if (supplierOrderSearchTerm.trim()) {
       const term = supplierOrderSearchTerm.toLowerCase();
       orders = orders.filter((order) => {
@@ -194,19 +240,37 @@ export default function StockManagement() {
         return number.includes(term) || supplierName.includes(term);
       });
     }
+    
     // Filtre par fournisseur
     if (supplierOrderSupplierFilter !== "all") {
       orders = orders.filter((order) => (order.supplier_id?.name || "") === supplierOrderSupplierFilter);
     }
     
     return orders;
-  }, [purchasing.supplierOrders, supplierOrderStatusFilter, supplierOrderSearchTerm, supplierOrderSupplierFilter]);
+  }, [activeTab, ordersByState, supplierOrderSearchTerm, supplierOrderSupplierFilter]);
 
-  // Options fournisseurs (pour le filtre Fournisseur du header)
   const supplierOrderSupplierOptions = useMemo(() => {
+    // Options de fournisseurs basées sur l'onglet actif
+    let relevantOrders = [];
+    switch (activeTab) {
+      case PROCUREMENT_TABS.POOLING:
+        relevantOrders = enrichedPoolingOrders;
+        break;
+      case PROCUREMENT_TABS.SENT:
+        relevantOrders = ordersByState.sent;
+        break;
+      case PROCUREMENT_TABS.ORDERED:
+        relevantOrders = ordersByState.ordered;
+        break;
+      case PROCUREMENT_TABS.CLOSED:
+        relevantOrders = ordersByState.closed;
+        break;
+      default:
+        relevantOrders = [];
+    }
+    
     const names = new Set(
-      purchasing.supplierOrders
-        .filter((o) => !["closed", "cancelled"].includes((o.status || "").toLowerCase()))
+      relevantOrders
         .map((o) => o.supplier_id?.name)
         .filter((n) => typeof n === "string" && n.trim().length > 0)
     );
@@ -214,41 +278,15 @@ export default function StockManagement() {
       { value: "all", label: "Tous" },
       ...Array.from(names).sort((a, b) => a.localeCompare(b)).map((n) => ({ value: n, label: n })),
     ];
-  }, [purchasing.supplierOrders]);
+  }, [activeTab, ordersByState]);
 
-  const archivedSupplierOrders = useMemo(() => {
-    return purchasing.supplierOrders.filter((order) => ["closed", "cancelled"].includes((order.status || "").toLowerCase()));
-  }, [purchasing.supplierOrders]);
 
-  const filteredSuppliers = useMemo(() => {
-    if (!supplierSearchTerm.trim()) return purchasing.suppliers;
-    const term = supplierSearchTerm.toLowerCase();
-    return purchasing.suppliers.filter(supplier => 
-      supplier.name?.toLowerCase().includes(term) ||
-      supplier.code?.toLowerCase().includes(term) ||
-      supplier.email?.toLowerCase().includes(term)
-    );
-  }, [purchasing.suppliers, supplierSearchTerm]);
-
-  // Sorted supplier-refs list removed (context moved under Suppliers)
-  
-  const stockStats = useMemo(
-    () => ({
-      total: stock.stockItems.length,
-    }),
-    [stock.stockItems.length]
-  );
 
   const readyCount = useMemo(() => {
-    // Une demande est prête au dispatch si :
-    // 1. Status = "open"
-    // 2. Un article est lié (stock_item_id)
-    // 3. L'article a au moins 1 fournisseur (via la relation M2O déjà chargée)
     return purchases.requests.filter((r) => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
       if (statusId !== "open" || !r.stockItemId) return false;
       
-      // Utiliser le count depuis la relation M2O (déjà chargé)
       return (r.stockItemSupplierRefsCount ?? 0) > 0;
     }).length;
   }, [purchases.requests]);
@@ -259,7 +297,6 @@ export default function StockManagement() {
       if (statusId !== "open") return false;
       if (!r.stockItemId) return false;
       
-      // Demande a un article mais pas de fournisseur (via relation M2O)
       return (r.stockItemSupplierRefsCount ?? 0) === 0;
     }).length,
     [purchases.requests]
@@ -273,13 +310,17 @@ export default function StockManagement() {
     [purchases.requests]
   );
 
-  const openOrdersCount = useMemo(
-    () => purchasing.supplierOrders.filter((o) => o.status === "OPEN").length,
-    [purchasing.supplierOrders]
+  const totalOrdersCount = useMemo(
+    () => ordersByState.pooling.length + ordersByState.sent.length + ordersByState.ordered.length,
+    [ordersByState.pooling.length, ordersByState.sent.length, ordersByState.ordered.length]
   );
 
-  // ========== 4. CALLBACKS (useCallback) ==========
-  // Refresh functions now delegate to hooks
+  const poolingBrokenCount = useMemo(
+    () => enrichedPoolingOrders.filter(o => o.poolingBroken).length,
+    [enrichedPoolingOrders]
+  );
+
+  // ========== CALLBACKS ==========
   const refreshRequests = async () => {
     await purchases.loadRequests(false);
   };
@@ -292,57 +333,6 @@ export default function StockManagement() {
     await stock.loadStockItems(false);
   };
 
-  const refreshSuppliers = async () => {
-    await purchasing.loadSuppliers(false);
-  };
-
-  // Callbacks pour SuppliersInlinePanel
-  const onAddSupplier = useCallback(async (supplierData) => {
-    setFormLoading(true);
-    try {
-      const newSupplier = await purchasing.createSupplier(supplierData);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur créé avec succès' });
-      return newSupplier;
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la création du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
-  const onUpdateSupplier = useCallback(async (supplierId, supplierData) => {
-    setFormLoading(true);
-    try {
-      const updatedSupplier = await purchasing.updateSupplier(supplierId, supplierData);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur mis à jour avec succès' });
-      return updatedSupplier;
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la mise à jour du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
-  const onDeleteSupplier = useCallback(async (supplierId) => {
-    setFormLoading(true);
-    try {
-      await purchasing.deleteSupplier(supplierId);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur supprimé avec succès' });
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la suppression du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
-  // Hook pour gérer la suppression de DA avec callback refreshRequests
-  // Note: Les valeurs retournées ne sont pas utilisées actuellement
   useDeletePurchaseRequest(async () => {
     await refreshRequests();
     setDispatchResult({
@@ -352,15 +342,13 @@ export default function StockManagement() {
     setTimeout(() => setDispatchResult(null), 3000);
   });
 
-  // Handlers passed to child components (memoized to reduce re-renders)
   const onAddSupplierRefForRequests = useCallback(async (stockItemId, refData) => {
     try {
       setFormLoading(true);
-      // If this item has no refs yet, make the new ref preferred by default
       const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
       const makePreferred = existingRefs.length === 0;
       let manufacturer_item_id = null;
-      // Créer/récupérer le fabricant si au moins un champ (nom OU référence) est renseigné
+      
       const manuName = refData.manufacturer_name?.trim() || '';
       const manuRef = refData.manufacturer_ref?.trim() || '';
       if (manuName || manuRef) {
@@ -483,109 +471,6 @@ export default function StockManagement() {
       setFormLoading(false);
     }
   }, [stock, purchases, setDispatchResult]);
-  const handleAddSupplierRef = useCallback(async (stockItemId) => {
-    // Capture les valeurs IMMÉDIATEMENT pour éviter les race conditions
-    const currentFormData = { ...supplierRefFormData };
-    const trimmedSupplierRef = (currentFormData.supplier_ref || '').trim();
-    const trimmedSupplierId = (currentFormData.supplier_id || '').trim();
-
-    // If called without form data, just reload the refs (refresh call from useEffect)
-    if (!trimmedSupplierId && !trimmedSupplierRef) {
-      try {
-        await stock.loadSupplierRefs(stockItemId);
-      } catch (error) {
-        console.error('Erreur rechargement références:', error);
-      }
-      return;
-    }
-
-    console.warn('[DEBUG] handleAddSupplierRef called with:', {
-      stockItemId,
-      currentFormData,
-      trimmed: { trimmedSupplierId, trimmedSupplierRef }
-    });
-
-    if (!trimmedSupplierId || !trimmedSupplierRef) {
-      console.error('[DEBUG] Validation FAILED - Missing data:', {
-        supplier_id: trimmedSupplierId ? '✓ OK' : '✗ MISSING',
-        supplier_ref: trimmedSupplierRef ? '✓ OK' : '✗ MISSING',
-      });
-      setDispatchResult({
-        type: 'warning',
-        message: 'Veuillez remplir le fournisseur et la référence',
-      });
-      return;
-    }
-
-    try {
-      setFormLoading(true);
-      let manufacturer_item_id = null;
-      // Créer/récupérer le fabricant si au moins un champ (nom OU référence) est renseigné
-      const manuName = currentFormData.manufacturer_name?.trim() || '';
-      const manuRef = currentFormData.manufacturer_ref?.trim() || '';
-      if (manuName || manuRef) {
-        const manu = await manufacturerItems.getOrCreateManufacturerItem({
-          name: manuName,
-          ref: manuRef,
-          designation: currentFormData.manufacturer_designation?.trim() || '',
-        });
-        manufacturer_item_id = manu?.id || null;
-      }
-
-      // If this item has no refs yet, make the new ref preferred by default unless user explicitly set it
-      const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
-      const makePreferred = existingRefs.length === 0;
-
-      const payload = {
-        stock_item_id: stockItemId,
-        supplier_id: trimmedSupplierId,
-        supplier_ref: trimmedSupplierRef,
-        unit_price: parseFloat(currentFormData.unit_price) || null,
-        delivery_time_days: parseInt(currentFormData.delivery_time_days) || null,
-        is_preferred: currentFormData.is_preferred ?? makePreferred,
-        ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
-      };
-
-      console.warn('[DEBUG] Sending payload to API:', payload);
-
-      // Call addSupplierRef with correct signature: (stockItemId, refData)
-      // But payload already has stock_item_id, so extract it
-      const refData = {
-        supplier_id: payload.supplier_id,
-        supplier_ref: payload.supplier_ref,
-        unit_price: payload.unit_price,
-        delivery_time_days: payload.delivery_time_days,
-        is_preferred: payload.is_preferred,
-        ...(payload.manufacturer_item_id ? { manufacturer_item_id: payload.manufacturer_item_id } : {}),
-      };
-
-      await stock.addSupplierRef(stockItemId, refData);
-
-      await Promise.all([
-        stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
-      ]);
-
-      setSupplierRefFormData(DEFAULT_SUPPLIER_REF_FORM);
-      setDispatchResult({
-        type: 'success',
-        message: 'Référence fournisseur ajoutée',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (error) {
-      console.error("Erreur ajout référence:", error);
-      const isDuplicate = error?.code === 'DUPLICATE_SUPPLIER_REF' || /unique/i.test(error?.message || '');
-      setDispatchResult({
-        type: 'error',
-        message: isDuplicate
-          ? 'Ce fournisseur est déjà associé à cet article (référence existante).'
-          : 'Erreur lors de l\'ajout de la référence',
-        details: error.message,
-      });
-    } finally {
-      setFormLoading(false);
-    }
-  }, [stock, supplierRefFormData, setDispatchResult]);
 
   const handleDeleteSupplierRef = useCallback(async (refId, stockItemId) => {
     try {
@@ -615,8 +500,6 @@ export default function StockManagement() {
       await Promise.all([
         stock.loadSupplierRefs(stockItemId),
         stock.loadStockItems(false),
-        // Recharger les demandes d'achat car le backend peut avoir changé leur statut
-        // si c'est un changement de fournisseur préféré
         purchases.loadRequests(false),
       ]);
       
@@ -638,8 +521,6 @@ export default function StockManagement() {
     setExpandedRequestId(prev => prev === requestId ? null : requestId);
   };
 
-  // Charger les refs/specs à la demande quand on ouvre le panel de détails
-  // (pas le formulaire de qualification, mais le panel "Détails")
   const [detailsLoadingStates, setDetailsLoadingStates] = useState({});
 
   const handleLoadDetailsForRequest = useCallback(async (requestId) => {
@@ -647,16 +528,13 @@ export default function StockManagement() {
     const stockItemId = req?.stockItemId;
     if (!stockItemId) return;
 
-    // Si déjà chargé, ne rien faire
     if (stock.supplierRefsByItem?.[stockItemId] && stock.standardSpecsByItem?.[stockItemId]) {
       return;
     }
 
-    // Marquer comme en chargement
     setDetailsLoadingStates(prev => ({ ...prev, [requestId]: true }));
 
     try {
-      // Charger en parallèle
       await Promise.all([
         !stock.supplierRefsByItem?.[stockItemId] ? stock.loadSupplierRefs?.(stockItemId) : Promise.resolve(),
         !stock.standardSpecsByItem?.[stockItemId] ? stock.loadStandardSpecs?.(stockItemId) : Promise.resolve(),
@@ -675,8 +553,8 @@ export default function StockManagement() {
       
       setDispatchResult({
         type: 'success',
-        message: 'Article lié avec succès',
-        details: `"${stockItem.name}" a été lié à la demande`
+        message: 'Pièce liée avec succès',
+        details: `"${stockItem.name}" a été liée à la demande`
       });
       setTimeout(() => setDispatchResult(null), 4000);
     } catch (error) {
@@ -707,8 +585,8 @@ export default function StockManagement() {
       
       setDispatchResult({
         type: 'success',
-        message: 'Article créé et lié avec succès',
-        details: `"${newStockItem.name}" (${newStockItem.ref}) a été créé et lié à la demande`
+        message: 'Pièce créée et liée avec succès',
+        details: `"${newStockItem.name}" (${newStockItem.ref}) a été créée et liée à la demande`
       });
       setTimeout(() => setDispatchResult(null), 5000);
     } catch (error) {
@@ -721,56 +599,6 @@ export default function StockManagement() {
       setTimeout(() => setDispatchResult(null), 6000);
     } finally {
       setFormLoading(false);
-    }
-  };
-
-  const handleAddStockItem = async (itemData) => {
-    try {
-      const newItem = await stock.addStockItem(itemData);
-      await refreshStock();
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Article ajouté avec succès',
-        details: `"${newItem.name}" a été ajouté au stock`
-      });
-      setTimeout(() => setDispatchResult(null), 4000);
-    } catch (error) {
-      console.error("Erreur ajout article:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de l\'ajout',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-    }
-  };
-
-  const handleUpdateStockItem = async (itemId, itemData) => {
-    try {
-      // Préparer les données pour l'API (retirer les champs temporaires fabricant)
-      const apiData = { ...itemData };
-      delete apiData.manufacturer_name;
-      delete apiData.manufacturer_ref;
-      delete apiData.manufacturer_designation;
-
-      const updatedItem = await stock.updateItem(itemId, apiData);
-      await refreshStock();
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Article modifié avec succès',
-        details: `"${updatedItem.name}" a été mis à jour`
-      });
-      setTimeout(() => setDispatchResult(null), 4000);
-    } catch (error) {
-      console.error("Erreur modification article:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la modification',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
     }
   };
 
@@ -790,8 +618,6 @@ export default function StockManagement() {
   };
 
   const handleDispatchClick = () => {
-    // Compter les demandes dispatchables (open + article lié)
-    // Le backend déterminera lesquelles ont un fournisseur préféré
     const dispatchableCount = filteredRequests.filter(r => {
       const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
       return statusId === "open" && r.stockItemId;
@@ -801,7 +627,7 @@ export default function StockManagement() {
       setDispatchResult({
         type: 'warning',
         message: 'Aucune demande dispatchable',
-        details: 'Les demandes ouvertes doivent avoir un article lié'
+        details: 'Les demandes ouvertes doivent avoir une pièce liée'
       });
       setTimeout(() => setDispatchResult(null), 6000);
       return;
@@ -838,12 +664,10 @@ export default function StockManagement() {
     }
   };
 
-  // ========== 5. EFFECTS (useEffect) ==========
-  // Protéger contre React StrictMode et les dépendances instables
+  // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
   
   useEffect(() => {
-    // Charger les données UNE SEULE FOIS au montage
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
 
@@ -852,50 +676,48 @@ export default function StockManagement() {
       purchases.loadRequests(true),
       purchasing.loadAll(true)
     ]);
-  }, [purchases, purchasing, stock]); // Pas de dépendances - charge une seule fois
+  }, [purchases, purchasing, stock]);
 
-  // Auto-refresh silencieux (pas de spinner pour éviter le clignotement)
-  // Réduit à 30 secondes pour éviter les rechargements excessifs
   useAutoRefresh(async () => {
     await Promise.all([
       stock.loadStockItems(false),
       purchases.loadRequests(false),
       purchasing.loadAll(false)
     ]);
-  }, 30, true); // 30 secondes au lieu de 5
+  }, 30, true);
 
-  // Loading and error state - derived from hooks
   const isLoading = stock.loading || purchases.loading || purchasing.loading;
-  const componentError = error; // From useState at the top
+  const componentError = error;
 
-  // ========== 6. HEADER PROPS ==========
+  // ========== HEADER ==========
   const headerProps = usePageHeaderProps({
     subtitle:
-      activeTab === "stock"
-        ? `${filteredStockItems.length} article${filteredStockItems.length > 1 ? "s" : ""}`
-        : activeTab === "requests"
+      activeTab === "requests"
         ? `${filteredRequests.length} demande${filteredRequests.length > 1 ? "s" : ""}`
-        : activeTab === "orders"
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""}`
-        : activeTab === "suppliers"
-        ? `${filteredSuppliers.length} fournisseur${filteredSuppliers.length > 1 ? "s" : ""}`
-        : `Fabricants`,
+        : activeTab === PROCUREMENT_TABS.POOLING
+        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} en mutualisation`
+        : activeTab === PROCUREMENT_TABS.SENT
+        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} envoyé${filteredSupplierOrders.length > 1 ? "s" : ""}`
+        : activeTab === PROCUREMENT_TABS.ORDERED
+        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} commandé${filteredSupplierOrders.length > 1 ? "s" : ""}`
+        : activeTab === PROCUREMENT_TABS.CLOSED
+        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} clôturé${filteredSupplierOrders.length > 1 ? "s" : ""}`
+        : "",
     urgentBadge:
       requestStats.urgent > 0
         ? { count: requestStats.urgent, label: "urgent" }
         : null,
     stats: !isLoading && !componentError ? [
-      { label: "Articles", value: stockStats.total },
       { label: "Demandes", value: requestStats.total },
       { label: "Prêtes", value: readyCount },
       { label: "À qualifier", value: toQualifyCount },
-      { label: "Paniers ouverts", value: openOrdersCount },
+      { label: "Paniers actifs", value: totalOrdersCount },
     ] : [],
     onRefresh: () => Promise.all([
       stock.loadStockItems(true),
       purchases.loadRequests(true),
       purchasing.loadAll(true)
-    ]), // Refresh manuel avec spinner
+    ]),
   });
 
   if (isLoading) {
@@ -903,7 +725,7 @@ export default function StockManagement() {
       <Box>
         <PageHeader {...headerProps} />
         <PageContainer>
-          <LoadingState message="Chargement du stock et des achats..." />
+          <LoadingState message="Chargement des approvisionnements..." />
         </PageContainer>
       </Box>
     );
@@ -921,7 +743,7 @@ export default function StockManagement() {
               purchases.loadRequests(true),
               purchasing.loadAll(true)
             ])}
-            title="Erreur de chargement du stock"
+            title="Erreur de chargement des approvisionnements"
           />
         </PageContainer>
       </Box>
@@ -943,6 +765,7 @@ export default function StockManagement() {
             <Text size="2">Affichage compact</Text>
           </label>
         </Flex>
+
         {dispatchResult && (
           <StatusCallout type={dispatchResult.type} title={dispatchResult.message}>
             <Flex direction="column" gap="1">
@@ -964,7 +787,6 @@ export default function StockManagement() {
           </StatusCallout>
         )}
 
-        {/* Confirmation dispatch */}
         {showDispatchConfirm && (
           <StatusCallout type="info" dialog title="Confirmer le dispatch">
             <Flex direction="column" gap="3">
@@ -997,7 +819,6 @@ export default function StockManagement() {
           </StatusCallout>
         )}
 
-        {/* Alert dispatch automatique */}
         {readyCount > 0 && !showDispatchConfirm && (
           <Card mb="3" style={{ background: "var(--blue-2)" }}>
             <Flex align="center" justify="between" gap="3">
@@ -1008,7 +829,7 @@ export default function StockManagement() {
                     {readyCount} demande{readyCount > 1 ? "s" : ""} ouverte{readyCount > 1 ? "s" : ""} prête{readyCount > 1 ? "s" : ""} pour dispatch
                   </Text>
                   <Text size="2" color="gray" style={{ display: "block" }}>
-                    Ces demandes ont un article lié et peuvent être dispatchées automatiquement
+                    Ces demandes ont une pièce liée et peuvent être dispatchées automatiquement
                   </Text>
                 </Box>
               </Flex>
@@ -1026,14 +847,12 @@ export default function StockManagement() {
           </Card>
         )}
 
-        {/* Alert à qualifier */}
         {unlinkedCount > 0 && (
           <StatusCallout type="warning">
-            ⚠️ {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} non liée{unlinkedCount > 1 ? "s" : ""} à un article stock
+            ⚠️ {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} non liée{unlinkedCount > 1 ? "s" : ""} à une pièce
           </StatusCallout>
         )}
 
-        {/* Alert sans fournisseur préféré */}
         {toQualifyCount > 0 && (
           <StatusCallout type="warning">
             ⚠️ {toQualifyCount} demande{toQualifyCount > 1 ? "s" : ""} sans fournisseur préféré
@@ -1059,46 +878,62 @@ export default function StockManagement() {
               </Flex>
             </Tabs.Trigger>
 
-            <Tabs.Trigger value="orders">
+            <Tabs.Trigger value={PROCUREMENT_TABS.POOLING}>
               <Flex align="center" gap="2">
-                <TruckIcon size={14} />
-                <Text>Paniers fournisseurs</Text>
-                {openOrdersCount > 0 && (
-                  <Badge color="gray" variant="solid" size="1">
-                    {openOrdersCount}
+                <Users size={14} />
+                <Text>Mutualisation</Text>
+                {ordersByState.pooling.length > 0 && (
+                  <Badge color="purple" variant="solid" size="1">
+                    {ordersByState.pooling.length}
+                  </Badge>
+                )}
+                {poolingBrokenCount > 0 && (
+                  <Badge color="red" variant="solid" size="1">
+                    {poolingBrokenCount}
                   </Badge>
                 )}
               </Flex>
             </Tabs.Trigger>
 
-            <Tabs.Trigger value="stock">
+            <Tabs.Trigger value={PROCUREMENT_TABS.SENT}>
               <Flex align="center" gap="2">
-                <Package size={14} />
-                <Text>Articles en stock</Text>
+                <Send size={14} />
+                <Text>Envoyés</Text>
+                {ordersByState.sent.length > 0 && (
+                  <Badge color="blue" variant="solid" size="1">
+                    {ordersByState.sent.length}
+                  </Badge>
+                )}
               </Flex>
             </Tabs.Trigger>
 
-            <Tabs.Trigger value="suppliers">
+            <Tabs.Trigger value={PROCUREMENT_TABS.ORDERED}>
               <Flex align="center" gap="2">
-                <Building2 size={14} />
-                <Text>Fournisseurs</Text>
-                <Badge color="gray" variant="soft" size="1">
-                  {purchasing.suppliers.length}
-                </Badge>
+                <PackageCheck size={14} />
+                <Text>Commandés</Text>
+                {ordersByState.ordered.length > 0 && (
+                  <Badge color="green" variant="solid" size="1">
+                    {ordersByState.ordered.length}
+                  </Badge>
+                )}
               </Flex>
             </Tabs.Trigger>
 
-            {/* Supplier-refs tab removed: handled under Suppliers */}
-            <Tabs.Trigger value="manufacturers">
+            <Tabs.Trigger value={PROCUREMENT_TABS.CLOSED}>
               <Flex align="center" gap="2">
-                <Factory size={14} />
-                <Text>Fabricants</Text>
+                <Archive size={14} />
+                <Text>Clôturés</Text>
+                {ordersByState.closed.length > 0 && (
+                  <Badge color="gray" variant="soft" size="1">
+                    {ordersByState.closed.length}
+                  </Badge>
+                )}
               </Flex>
             </Tabs.Trigger>
           </Tabs.List>
 
           <Box pt="4">
-            {/* ===== TAB: PURCHASE REQUESTS ===== */}
+            {/* ===== TAB: DEMANDES D'ACHAT ===== */}
             <Tabs.Content value="requests">
               <Flex direction="column" gap="3">
                 <TableHeader
@@ -1107,7 +942,7 @@ export default function StockManagement() {
                   count={filteredRequests.length}
                   searchValue={requestSearchTerm}
                   onSearchChange={setRequestSearchTerm}
-                  searchPlaceholder="Recherche (article, demandeur...)"
+                  searchPlaceholder="Recherche (pièce, demandeur...)"
                   onRefresh={refreshRequests}
                   showRefreshButton={false}
                   actions={
@@ -1145,7 +980,7 @@ export default function StockManagement() {
                   <EmptyState
                     icon={<ShoppingCart size={64} />}
                     title="Aucune demande trouvée"
-                    description="Ajustez ou réinitialisez les filtres pour afficher les demandes d&#39;achat"
+                    description="Ajustez ou réinitialisez les filtres"
                     actions={[
                       <Button
                         key="reset-filters-requests"
@@ -1203,7 +1038,6 @@ export default function StockManagement() {
                       )}
                     />
 
-                    {/* Section Demandes terminées (reçues) */}
                     {receivedRequests.length > 0 && (
                       <Card>
                         <Flex direction="column" gap="3">
@@ -1253,12 +1087,23 @@ export default function StockManagement() {
               </Flex>
             </Tabs.Content>
 
-            {/* ===== TAB: SUPPLIER ORDERS ===== */}
-            <Tabs.Content value="orders">
+            {/* ===== TAB: MUTUALISATION ===== */}
+            <Tabs.Content value={PROCUREMENT_TABS.POOLING}>
               <Flex direction="column" gap="3">
+                {poolingBrokenCount > 0 && (
+                  <StatusCallout type="warning">
+                    <Flex align="center" gap="2">
+                      <AlertTriangle size={16} />
+                      <Text size="2">
+                        {poolingBrokenCount} panier{poolingBrokenCount > 1 ? 's' : ''} en rupture de mutualisation (ligne urgente ou ligne normale &gt; 7 jours)
+                      </Text>
+                    </Flex>
+                  </StatusCallout>
+                )}
+                
                 <TableHeader
-                  icon={TruckIcon}
-                  title="Paniers fournisseurs"
+                  icon={Users}
+                  title="Paniers en mutualisation"
                   count={filteredSupplierOrders.length}
                   searchValue={supplierOrderSearchTerm}
                   onSearchChange={setSupplierOrderSearchTerm}
@@ -1266,154 +1111,165 @@ export default function StockManagement() {
                   onRefresh={refreshOrders}
                   showRefreshButton={false}
                   actions={
-                    <Flex align="center" gap="2">
-                      <FilterSelect
-                        label="Statut"
-                        value={supplierOrderStatusFilter}
-                        onValueChange={setSupplierOrderStatusFilter}
-                        minWidth="200px"
-                        options={[
-                          { value: "all", label: "Tous" },
-                          { value: "OPEN", label: "Ouverts" },
-                          { value: "SENT", label: "Envoyés (attente réponse)" },
-                          { value: "ACK", label: "Réponse reçue" },
-                          { value: "RECEIVED", label: "Commandés" },
-                          { value: "CLOSED", label: "Clôturés" },
-                        ]}
-                      />
-                      <FilterSelect
-                        label="Fournisseur"
-                        value={supplierOrderSupplierFilter}
-                        onValueChange={setSupplierOrderSupplierFilter}
-                        minWidth="220px"
-                        options={supplierOrderSupplierOptions}
-                      />
-                    </Flex>
+                    <FilterSelect
+                      label="Fournisseur"
+                      value={supplierOrderSupplierFilter}
+                      onValueChange={setSupplierOrderSupplierFilter}
+                      minWidth="220px"
+                      options={supplierOrderSupplierOptions}
+                    />
                   }
                 />
+
                 {filteredSupplierOrders.length === 0 ? (
                   <EmptyState
-                    icon={<TruckIcon size={64} />}
-                    title="Aucun panier fournisseur"
-                    description="Créez une commande ou modifiez les filtres pour voir les paniers existants"
+                    icon={<Users size={64} />}
+                    title="Aucun panier en mutualisation"
+                    description="Les paniers en attente volontaire apparaîtront ici"
                     actions={[
                       <Button key="refresh-orders" size="2" onClick={refreshOrders}>
                         Rafraîchir
                       </Button>,
-                      <Button
-                        key="reset-filter-orders"
-                        size="2"
-                        variant="soft"
-                        color="gray"
-                        onClick={() => { setSupplierOrderStatusFilter("all"); setSupplierOrderSupplierFilter("all"); setSupplierOrderSearchTerm(""); }}
-                      >
-                        Réinitialiser le filtre
-                      </Button>
                     ]}
                   />
                 ) : (
-                  <Flex direction="column" gap="4">
-                    <SupplierOrdersTable
-                      orders={filteredSupplierOrders}
-                      onRefresh={refreshOrders}
-                      onOrderLineUpdate={purchasing.updateOrderLine}
-                    />
-
-                    {/* Section Paniers archivés (clôturés/annulés) */}
-                    {archivedSupplierOrders.length > 0 && (
-                      <Card>
-                        <Flex direction="column" gap="3">
-                          <Text size="3" weight="bold">
-                            Paniers archivés ({archivedSupplierOrders.length})
-                          </Text>
-                          <SupplierOrdersTable
-                            orders={archivedSupplierOrders}
-                            onRefresh={refreshOrders}
-                            onOrderLineUpdate={purchasing.updateOrderLine}
-                          />
-                        </Flex>
-                      </Card>
-                    )}
-                  </Flex>
+                  <SupplierOrdersTable
+                    orders={filteredSupplierOrders}
+                    onRefresh={refreshOrders}
+                    onOrderLineUpdate={purchasing.updateOrderLine}
+                    showPoolingColumns
+                  />
                 )}
               </Flex>
             </Tabs.Content>
 
-            {/* ===== TAB: STOCK ITEMS ===== */}
-            <Tabs.Content value="stock">
+            <Tabs.Content value={PROCUREMENT_TABS.SENT}>
               <Flex direction="column" gap="3">
                 <TableHeader
-                  icon={Package}
-                  title="Articles en stock"
-                  count={filteredStockItems.length}
-                  searchValue={stockSearchTerm}
-                  onSearchChange={setStockSearchTerm}
-                  searchPlaceholder="Recherche (nom, ref, famille...)"
+                  icon={Send}
+                  title="Paniers envoyés"
+                  count={filteredSupplierOrders.length}
+                  searchValue={supplierOrderSearchTerm}
+                  onSearchChange={setSupplierOrderSearchTerm}
+                  searchPlaceholder="Recherche (n°, fournisseur...)"
+                  onRefresh={refreshOrders}
                   showRefreshButton={false}
-                  actions={<AddStockItemDialog onAdd={handleAddStockItem} loading={isLoading} stockFamilies={stockFamilies} />}
+                  actions={
+                    <FilterSelect
+                      label="Fournisseur"
+                      value={supplierOrderSupplierFilter}
+                      onValueChange={setSupplierOrderSupplierFilter}
+                      minWidth="220px"
+                      options={supplierOrderSupplierOptions}
+                    />
+                  }
                 />
-                {filteredStockItems.length === 0 ? (
+
+                {filteredSupplierOrders.length === 0 ? (
                   <EmptyState
-                    icon={<Package size={64} />}
-                    title="Aucun article en stock"
-                    description="Ajoutez un article ou modifiez les filtres pour voir la liste"
+                    icon={<TruckIcon size={64} />}
+                    title="Aucun panier envoyé"
+                    description="Les paniers envoyés aux fournisseurs apparaîtront ici"
                     actions={[
-                      <Button
-                        key="reset-filters-stock"
-                        size="2"
-                        variant="soft"
-                        color="gray"
-                        onClick={() => {
-                          setStockSearchTerm("");
-                        }}
-                      >
-                        Réinitialiser les filtres
+                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
+                        Rafraîchir
                       </Button>,
-                      <Button key="refresh-stock" size="2" onClick={refreshStock}>Rafraîchir</Button>
                     ]}
                   />
                 ) : (
-                  <StockItemsTable
-                    key={`stock-items-${manufacturersVersion}`}
-                    items={filteredStockItems}
-                    compactRows={compactRows}
-                    specsCounts={stock.specsCounts}
-                    specsHasDefault={stock.specsHasDefault}
-                    supplierRefsCounts={supplierRefsCounts}
-                    onEditStockItem={handleUpdateStockItem}
-                    suppliers={purchasing.suppliers}
-                    refs={stock.supplierRefsByItem}
-                    formData={supplierRefFormData}
-                    setFormData={setSupplierRefFormData}
-                    onAdd={handleAddSupplierRef}
-                    onUpdatePreferred={handleUpdateSupplierRef}
-                    onDelete={handleDeleteSupplierRef}
-                    onLoadSupplierRefs={stock.loadSupplierRefs}
-                    loading={isLoading}
-                    showStockCol={true}
-                    allManufacturers={allManufacturers}
-                    stockFamilies={stockFamilies}
+                  <SupplierOrdersTable
+                    orders={filteredSupplierOrders}
+                    onRefresh={refreshOrders}
+                    onOrderLineUpdate={purchasing.updateOrderLine}
                   />
                 )}
               </Flex>
             </Tabs.Content>
 
-            {/* ===== TAB: SUPPLIERS ===== */}
-            <Tabs.Content value="suppliers">
+            <Tabs.Content value={PROCUREMENT_TABS.ORDERED}>
               <Flex direction="column" gap="3">
-                <SuppliersInlinePanel
-                  suppliers={filteredSuppliers}
-                  onAdd={onAddSupplier}
-                  onUpdate={onUpdateSupplier}
-                  onDelete={onDeleteSupplier}
-                  loading={formLoading}
+                <TableHeader
+                  icon={PackageCheck}
+                  title="Paniers commandés"
+                  count={filteredSupplierOrders.length}
+                  searchValue={supplierOrderSearchTerm}
+                  onSearchChange={setSupplierOrderSearchTerm}
+                  searchPlaceholder="Recherche (n°, fournisseur...)"
+                  onRefresh={refreshOrders}
+                  showRefreshButton={false}
+                  actions={
+                    <FilterSelect
+                      label="Fournisseur"
+                      value={supplierOrderSupplierFilter}
+                      onValueChange={setSupplierOrderSupplierFilter}
+                      minWidth="220px"
+                      options={supplierOrderSupplierOptions}
+                    />
+                  }
                 />
+
+                {filteredSupplierOrders.length === 0 ? (
+                  <EmptyState
+                    icon={<TruckIcon size={64} />}
+                    title="Aucun panier commandé"
+                    description="Les paniers validés et commandés apparaîtront ici"
+                    actions={[
+                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
+                        Rafraîchir
+                      </Button>,
+                    ]}
+                  />
+                ) : (
+                  <SupplierOrdersTable
+                    orders={filteredSupplierOrders}
+                    onRefresh={refreshOrders}
+                    onOrderLineUpdate={purchasing.updateOrderLine}
+                  />
+                )}
               </Flex>
             </Tabs.Content>
 
-            {/* ===== TAB: MANUFACTURERS ===== */}
-            <Tabs.Content value="manufacturers">
-              <ManufacturersTable onManufacturerAdded={refreshManufacturers} />
+            <Tabs.Content value={PROCUREMENT_TABS.CLOSED}>
+              <Flex direction="column" gap="3">
+                <TableHeader
+                  icon={Archive}
+                  title="Paniers clôturés"
+                  count={filteredSupplierOrders.length}
+                  searchValue={supplierOrderSearchTerm}
+                  onSearchChange={setSupplierOrderSearchTerm}
+                  searchPlaceholder="Recherche (n°, fournisseur...)"
+                  onRefresh={refreshOrders}
+                  showRefreshButton={false}
+                  actions={
+                    <FilterSelect
+                      label="Fournisseur"
+                      value={supplierOrderSupplierFilter}
+                      onValueChange={setSupplierOrderSupplierFilter}
+                      minWidth="220px"
+                      options={supplierOrderSupplierOptions}
+                    />
+                  }
+                />
+
+                {filteredSupplierOrders.length === 0 ? (
+                  <EmptyState
+                    icon={<TruckIcon size={64} />}
+                    title="Aucun panier clôturé"
+                    description="Les paniers archivés apparaîtront ici"
+                    actions={[
+                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
+                        Rafraîchir
+                      </Button>,
+                    ]}
+                  />
+                ) : (
+                  <SupplierOrdersTable
+                    orders={filteredSupplierOrders}
+                    onRefresh={refreshOrders}
+                    onOrderLineUpdate={purchasing.updateOrderLine}
+                  />
+                )}
+              </Flex>
             </Tabs.Content>
           </Box>
         </Tabs.Root>

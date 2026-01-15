@@ -1,10 +1,90 @@
 # Changelog
 
+## 1.5.4 - 2026-01-15
+
+### Refonte majeure : Séparation Pièces/Approvisionnements
+
+- **Nouvelle architecture : Pages Parts et Procurement** : Séparation claire entre le référentiel technique et le flux d'achat
+  - **Parts.jsx** : Référentiel technique pur (Pièces, Fournisseurs, Fabricants) sans quantités stock
+  - **Procurement.jsx** : Flux d'achat complet (Demandes d'achat, Mutualisation, Envoyés, Commandés, Clôturés)
+  - **menuConfig.js** : Nouvelles routes `parts` et `procurement`, suppression de `stock`
+  - **routes.js** : Import des nouveaux composants, retrait de StockManagement.jsx
+
+### Restructuration : Paniers fournisseurs avec logique métier automatisée
+
+- **Remplacement "À préparer" → "Mutualisation"** : État métier clair avec calculs automatiques
+  - Calcul automatique de l'urgence globale (MAX des urgences des lignes)
+  - Calcul automatique de l'âge maximum (MAX des âges des lignes)
+  - Détection automatique de rupture de mutualisation (ligne urgente OU ligne normale >7j)
+  - Badge violet pour paniers en mutualisation, badge rouge pour ruptures
+  - Alert visible indiquant le nombre de paniers en rupture de mutualisation
+
+- **Onglets suivant le processus métier** : DA → Mutualisation → Envoyés → Commandés → Clôturés
+  - **POOLING** : Paniers OPEN avec logique de mutualisation automatique
+  - **SENT** : Paniers envoyés aux fournisseurs (status SENT)
+  - **ORDERED** : Paniers commandés (status ACK ou RECEIVED)
+  - **CLOSED** : Paniers clôturés ou annulés (status CLOSED ou CANCELLED)
+  - Icônes contextuelles : ShoppingCart, Users, Send, PackageCheck, Archive
+
+### Amélioration UX : Affichage des paniers fournisseurs (OrderRow)
+
+- **Mise en évidence du fournisseur** : Mental model aligné sur "commande chez REXEL" plutôt que "commande #12345"
+  - Nom fournisseur en gras, taille 2, ligne principale
+  - N° commande en badge gris discret monospace en dessous
+  - Badges URGENT (orange) et ⚠>7j (rouge) sur la ligne fournisseur
+
+- **Fusion badge statut + sélecteur** : Un seul composant avec icônes, couleurs et interaction
+  - Select.Trigger avec `color={statusConfig.color}` pour couleur du statut
+  - Icône dynamique selon le statut (FolderOpen, Send, Mail, PackageCheck, Archive, XCircle)
+  - Label français visible : "Ouvert", "Envoyé (attente)", "Réponse reçue", etc.
+  - Suppression de la colonne "Status" badge redondante
+
+- **Nouvelle colonne Urgence** : Remplacement de la colonne Montant par niveau d'urgence
+  - Badge "URGENT" (orange/solid) pour paniers avec au moins une ligne urgente
+  - Badge "Normal" (gris/soft) pour les autres paniers
+  - Information plus pertinente pour prioriser les actions
+
+- **Réorganisation des colonnes** : Ordre logique pour consultation rapide
+  - Fournisseur / N° (colonne principale élargie)
+  - Âge (j) avec code couleur (gris → jaune → orange → rouge)
+  - Nb lignes (badge gris)
+  - Urgence (URGENT/Normal)
+  - Statut (sélecteur avec icône et couleur)
+  - Actions (alignées à droite, largeur fixe 200px)
+
+### Refactorisation : ToggleDetailsButton
+
+- **Design cohérent avec texte et flèche** : Meilleure affordance pour l'interaction
+  - Texte "Détails" avec prop `showText` (défaut: true)
+  - Flèche dynamique : ChevronRight (fermé) → ChevronDown (ouvert)
+  - Changement de couleur : gris (fermé) → bleu (ouvert)
+  - Taille par défaut 2, override à 1 dans les paniers pour compacité
+  - Utilisé dans Parts.jsx (références fournisseurs) et Procurement.jsx (paniers)
+
+### Simplification : Actions paniers
+
+- **3 niveaux d'actions clairs** : Détails / Email / Autres
+  - Bouton "Détails" (ToggleDetailsButton) : Expand/collapse des lignes
+  - Bouton "Email" (bleu/soft) : Action principale d'envoi
+  - Dropdown "..." (gris/ghost) : Actions secondaires et sensibles
+    - Copier email HTML
+    - Export CSV
+    - Réévaluer statuts DA (orange, si applicable)
+    - Purger le panier (rouge, destructif)
+  - Tous les boutons en taille 1 pour cohérence visuelle
+
+### Nettoyage
+
+- **Suppression StockManagement.jsx** : Fichier obsolète (~1200 lignes) remplacé par Parts + Procurement
+- **Suppression imports inutilisés** : ChevronRight (remplacé par ToggleDetailsButton), primaryAction non utilisé
+- **Suppression renderAmount/renderOrderNumber** : Fonctions helper non utilisées après refonte
+
 ## 1.5.3 - 2026-01-15
 
 ### Améliorations majeures
 
 - **Performance: Chargement lazy des références fournisseurs** : Élimination du problème N+1 queries en différant le chargement des références fournisseurs à la demande
+
   - **Avant** : ~30 requêtes XHR au chargement initial de la page (1 par article visible)
   - **Après** : 0 requête au chargement initial, chargement uniquement quand l'utilisateur clique sur "Détails"
   - **PurchaseRequestsTable** : Ajout du callback `onLoadDetailsData` et des états de chargement `detailsLoadingStates`
@@ -13,6 +93,7 @@
   - Impact positif majeur sur le temps de chargement initial
 
 - **Optimisation: Relation M2O pour les données stock_item** : Utilisation des relations Directus pour charger les données en une seule requête au lieu de lookups côté client
+
   - **datasource.ts** : Expansion de `stock_item_id.id`, `stock_item_id.ref`, `stock_item_id.supplier_refs.id`
   - **mapper.ts** : Extraction des données depuis l'objet relation + comptage des supplier_refs en JS
   - **PurchaseRequestsTable** : Utilisation directe de `request.stockItemRef` et `request.stockItemSupplierRefsCount`
@@ -20,6 +101,7 @@
   - Tri et filtrage simplifiés sans dépendances sur les lookups
 
 - **Simplification: Suppression de la colonne "Fournisseur"** : Retrait de la colonne redondante dans le tableau des demandes d'achat
+
   - Information déjà visible via le badge "État" (vert si fournisseur préféré défini)
   - Réduction de la largeur du tableau pour meilleure lisibilité
   - Logique métier maintenue via `stockItemSupplierRefsCount`
@@ -33,11 +115,13 @@
 ### Corrections
 
 - **Fix: Filtrage des DA reçues** : Les demandes d'achat avec statut `received` ne sont plus chargées au démarrage
+
   - **datasource.ts** : Ajout du filtre `status: { _neq: 'received' }` sur `fetchPurchaseRequestsFromBackend`
   - Les DA reçues restent visibles dans la section "Demandes archivées" au bas du tableau
   - Amélioration de la clarté de l'affichage principal
 
 - **Fix: Logique de dispatch simplifiée** : Le dispatch vérifie uniquement que les DA ont un article lié, le backend détermine la dispatchabilité
+
   - **StockManagement.handleDispatchClick** : Suppression de la vérification frontend du fournisseur préféré
   - Le backend SQL `dispatch_purchase_requests()` gère toute la logique métier
   - Message utilisateur plus clair: "Aucune demande dispatchable" au lieu de "Aucune demande prête pour dispatch"
@@ -69,6 +153,7 @@
 ### Corrections
 
 - **Fix: Synchronisation du statut des DA lors du changement de statut panier** : Le statut des demandes d'achat est maintenant correctement mis à jour lorsqu'un panier fournisseur change de statut
+
   - **datasource.ts** : Ajout du chargement manuel des relations M2M `supplier_order_line_purchase_request`
   - **supplierOrdersHandlers.js** : Restructuration de `handleStatusChange` pour garantir la mise à jour des DA pour TOUS les changements de statut
   - **STATUS_MAPPING** : Correction du mapping OPEN → `in_progress` (au lieu de `open`)

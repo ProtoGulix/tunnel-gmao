@@ -15,8 +15,9 @@
 
 import { Table, Button, Flex, Text, Box } from "@radix-ui/themes";
 import PropTypes from "prop-types";
-import { ArrowRight } from "@/lib/icons";
+import { ArrowRight, ChevronDown, ChevronUp } from "@/lib/icons";
 import LoadingState from "@/components/common/LoadingState";
+import { useState } from "react";
 
 /**
  * Composant de table interactive avec lignes cliquables
@@ -31,6 +32,7 @@ import LoadingState from "@/components/common/LoadingState";
  * @param {Function} props.getRowStyle - Fonction pour obtenir les styles de ligne (row) => Object
  * @param {string} props.actionLabel - Label du bouton d'action (défaut: "Voir")
  * @param {string} props.emptyMessage - Message si aucune donnée
+ * @param {boolean} props.defaultCollapsed - Section repliée par défaut (défaut: false)
  * 
  * @returns {JSX.Element}
  */
@@ -46,7 +48,10 @@ export default function InteractiveTable({
   emptyMessage = "Aucune donnée",
   loading = false,
   loadingMessage = "Chargement...",
+  defaultCollapsed = false,
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
   if (loading) {
     return (
       <Box>
@@ -72,9 +77,20 @@ export default function InteractiveTable({
 
   return (
     <Box>
-      {/* Titre avec badge */}
+      {/* Titre avec badge (cliquable si collapsible) */}
       {title && (
-        <Flex align="center" gap="2" mb="3">
+        <Flex 
+          align="center" 
+          gap="2" 
+          mb={isCollapsed ? "0" : "3"}
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+        >
+          {defaultCollapsed && (
+            <Box as="span" style={{ fontSize: '1rem', lineHeight: '1' }}>
+              {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+            </Box>
+          )}
           <Text size="5" weight="bold">{title}</Text>
           {badge && (
             <Box as="span" style={{ fontSize: '0.875rem' }}>
@@ -84,8 +100,9 @@ export default function InteractiveTable({
         </Flex>
       )}
 
-      {/* Table */}
-      <Table.Root variant="surface" size="1">
+      {/* Table (masquée si collapsed) */}
+      {!isCollapsed && (
+        <Table.Root variant="surface" size="1">
         <Table.Header>
           <Table.Row>
             {columns.map((col) => (
@@ -167,6 +184,7 @@ export default function InteractiveTable({
           })}
         </Table.Body>
       </Table.Root>
+      )}
     </Box>
   );
 }

@@ -13,7 +13,8 @@
 import { Fragment } from "react";
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Button, Badge, Select, DropdownMenu } from "@radix-ui/themes";
-import { MoreHorizontal, FolderOpen, Send, Mail, PackageCheck, Archive, XCircle, RotateCcw } from "lucide-react";
+import { MoreHorizontal, Copy, Download, Mail, FolderOpen, Send, PackageCheck, Archive, XCircle } from "lucide-react";
+import ToggleDetailsButton from "@/components/common/ToggleDetailsButton";
 import {
   getOrderNumber,
   getCreatedAt,
@@ -80,6 +81,12 @@ const renderAgeBadge = (ageDays, ageColor) => (
   </Badge>
 );
 
+const renderUrgencyBadge = (isUrgent) => (
+  <Badge color={isUrgent ? "orange" : "gray"} variant={isUrgent ? "solid" : "soft"}>
+    {isUrgent ? "URGENT" : "Normal"}
+  </Badge>
+);
+
 /**
  * Ligne du tableau des paniers fournisseurs
  * @component
@@ -98,6 +105,7 @@ export default function OrderRow({
   order,
   loading = false,
   cachedLines = new Map(),
+  isExpanded = false,
   onViewDetails,
   onStatusChange,
   onExportCSV,
@@ -118,17 +126,18 @@ export default function OrderRow({
   return (
     <Fragment>
       <Table.Row>
-        {/* Commande / Fournisseur (fusion visuelle) */}
+        {/* Fournisseur / N° Commande (fournisseur en évidence) */}
         <Table.Cell>
-          <Flex direction="column" gap="1">
-            {renderOrderNumber(order, isBlocking, isUrgent)}
-            <Text color="gray" size="1">{getSupplierObj(order)?.name || "—"}</Text>
+          <Flex direction="column" gap="2" align="start" justify="center">
+            <Flex gap="2" align="center" wrap="wrap">
+              <Text weight="bold" size="2">{getSupplierObj(order)?.name || "—"}</Text>
+              {isUrgent && <Badge color="orange" size="1">URGENT</Badge>}
+              {isBlocking && <Badge color="red" size="1">⚠ &gt;7j</Badge>}
+            </Flex>
+            <Badge variant="soft" color="gray" size="1" style={{ fontFamily: 'monospace' }}>
+              {getOrderNumber(order)}
+            </Badge>
           </Flex>
-        </Table.Cell>
-
-        {/* Statut (seule vraie couleur) */}
-        <Table.Cell>
-          {renderStatusBadge(statusConfig)}
         </Table.Cell>
 
         {/* Âge (j) - signal visuel simple */}
@@ -141,65 +150,84 @@ export default function OrderRow({
           {renderLineCountBadge(lineCount)}
         </Table.Cell>
 
-        {/* Montant (secondaire) */}
+        {/* Urgence */}
         <Table.Cell>
-          {renderAmount(order.status, getTotalAmount(order), order.currency)}
+          {renderUrgencyBadge(isUrgent)}
+        </Table.Cell>
+
+        {/* Statut avec sélecteur */}
+        <Table.Cell>
+          <Select.Root
+            value={order.status}
+            onValueChange={(value) => onStatusChange(order.id, value)}
+            disabled={loading}
+          >
+            <Select.Trigger variant="soft" size="1" color={statusConfig.color}>
+              <Flex align="center" gap="1">
+                {statusConfig.icon && (() => {
+                  const Icon = STATUS_ICONS[statusConfig.icon];
+                  return Icon ? <Icon size={14} /> : null;
+                })()}
+                {statusConfig.label}
+              </Flex>
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="OPEN">Ouvert</Select.Item>
+              <Select.Item value="SENT">Envoyé (attente)</Select.Item>
+              <Select.Item value="ACK">Réponse reçue</Select.Item>
+              <Select.Item value="RECEIVED">Commandé</Select.Item>
+              <Select.Item value="CLOSED">Clôturé</Select.Item>
+              <Select.Item value="CANCELLED">Annulé</Select.Item>
+            </Select.Content>
+          </Select.Root>
         </Table.Cell>
 
         {/* Actions */}
-        <Table.Cell>
-          <Flex gap="2" wrap="wrap" align="center">
-            {primaryAction && (
-              <Button
-                size="1"
-                variant="solid"
-                color={primaryAction.color}
-                onClick={primaryAction.onClick}
-                disabled={loading}
-              >
-                {primaryAction.label}
-              </Button>
-            )}
+        <Table.Cell style={{ width: '200px' }}>
+          <Flex gap="2" align="center" justify="end">
+            <ToggleDetailsButton
+              isExpanded={isExpanded}
+              onToggle={onViewDetails}
+              showText={true}
+              size="1"
+              label="Afficher/masquer les détails du panier"
+            />
+            <Button
+              size="1"
+              variant="soft"
+              color="blue"
+              onClick={onSendEmail}
+            >
+              <Mail size={16} />
+              Email
+            </Button>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>
-                <Button size="1" variant="ghost" color="gray" aria-label="Autres actions">
+                <Button size="1" variant="ghost" color="gray">
                   <MoreHorizontal size={16} />
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Content>
-                <DropdownMenu.Item onSelect={onViewDetails}>Voir les détails</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={onExportCSV}>Export CSV</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={onSendEmail}>📧 Email texte (mailto)</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={onCopyHTMLEmail}>📋 Copier email HTML</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={onCopyHTMLEmail}>
+                  Copier email HTML
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={onExportCSV}>
+                  Export CSV
+                </DropdownMenu.Item>
                 {onReEvaluateDA && (
                   <>
                     <DropdownMenu.Separator />
                     <DropdownMenu.Item onSelect={onReEvaluateDA} color="orange">
-                      🔄 Réévaluer statuts DA
+                      Réévaluer statuts DA
                     </DropdownMenu.Item>
                   </>
                 )}
                 <DropdownMenu.Separator />
                 <DropdownMenu.Item color="red" onSelect={onPurge}>
-                  🗑️ Purger le panier
+                  Purger le panier
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
-            <Select.Root
-              value={order.status}
-              onValueChange={(value) => onStatusChange(order.id, value)}
-              disabled={loading}
-            >
-              <Select.Trigger variant="soft" size="1" style={{ minWidth: '140px' }} />
-              <Select.Content>
-                <Select.Item value="OPEN">Ouvert</Select.Item>
-                <Select.Item value="SENT">Envoyé (attente)</Select.Item>
-                <Select.Item value="ACK">Réponse reçue</Select.Item>
-                <Select.Item value="RECEIVED">Commandé</Select.Item>
-                <Select.Item value="CLOSED">Clôturé</Select.Item>
-                <Select.Item value="CANCELLED">Annulé</Select.Item>
-              </Select.Content>
-            </Select.Root>
           </Flex>
         </Table.Cell>
       </Table.Row>
@@ -227,6 +255,7 @@ OrderRow.propTypes = {
   }).isRequired,
   loading: PropTypes.bool,
   cachedLines: PropTypes.instanceOf(Map),
+  isExpanded: PropTypes.bool,
   onViewDetails: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func.isRequired,
   onExportCSV: PropTypes.func.isRequired,

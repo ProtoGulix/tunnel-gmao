@@ -211,19 +211,15 @@ export default function SupplierOrdersTable({
   }, [showHeader, orders.length, searchTerm, onSearchChange, onRefresh, statusFilter, onStatusFilterChange, supplierFilter, onSupplierFilterChange, supplierOptions]);
 
   const columns = useMemo(() => ([
-    { key: "orderSupplier", header: "Commande / Fournisseur" },
-    { key: "status", header: (
-      <span style={{ cursor: 'pointer' }} onClick={() => toggleSort('status')}>
-        Statut{sortKey === 'status' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-      </span>
-    ) },
+    { key: "orderSupplier", header: "Fournisseur / N°" },
     { key: "age", header: (
       <span style={{ cursor: 'pointer' }} onClick={() => toggleSort('age')}>
         Âge (j){sortKey === 'age' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
       </span>
     ) },
     { key: "lineCount", header: "Nb lignes" },
-    { key: "amount", header: "Montant" },
+    { key: "urgency", header: "Urgence" },
+    { key: "statusSelect", header: "Statut" },
     { key: "actions", header: "Actions" },
   ]), [sortKey, sortDir, toggleSort]);
 
@@ -235,6 +231,7 @@ export default function SupplierOrdersTable({
           order={order}
           loading={loading}
           cachedLines={cachedLines}
+          isExpanded={isExpanded}
           onViewDetails={() => handleViewDetails(order)}
           onStatusChange={wrappedHandleStatusChange}
           onExportCSV={() => handleExportCSV(order)}

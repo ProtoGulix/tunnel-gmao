@@ -248,22 +248,28 @@ export default function InterventionsList() {
 
   // Configuration des colonnes pour BLOC 1 : À faire maintenant
   const actionnableColumns = [
-    { key: 'intervention', header: 'Intervention', width: undefined, align: 'left' },
+    { key: 'code', header: 'Code', width: '180px', align: 'left' },
+    { key: 'title', header: 'Intervention', width: undefined, align: 'left' },
+    { key: 'info', header: 'Info', width: '140px', align: 'left' },
     { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }
   ];
 
   // Configuration des colonnes pour BLOC 2 : Bloqué
   const bloqueColumns = [
-    { key: 'intervention', header: 'Intervention bloquée', width: undefined, align: 'left' },
+    { key: 'code', header: 'Code', width: '180px', align: 'left' },
+    { key: 'title', header: 'Intervention bloquée', width: undefined, align: 'left' },
+    { key: 'info', header: 'Info', width: '140px', align: 'left' },
+    { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }
   ];
 
   // Configuration des colonnes pour BLOC 3 & 4 : Projets et Archivé
   const standardColumns = [
+    { key: 'code', header: 'Code', width: '180px', align: 'left' },
     { key: 'title', header: 'Titre', width: undefined, align: 'left' },
-    { key: 'status', header: 'Statut', width: undefined, align: 'left' },
-    { key: 'age', header: 'Âge', width: undefined, align: 'left' },
+    { key: 'info', header: 'Info', width: '140px', align: 'left' },
+    { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }
   ];
 
@@ -274,44 +280,71 @@ export default function InterventionsList() {
     const ageColor = getAgeColor(age);
     const showAge = shouldShowAge(age, interv.priority);
     const machineCode = interv.machine?.code || 'SUPP';
+    const machineSite = interv.machine?.site || '—';
     const intervCode = interv.code || '';
     const responsableInitiales = (interv.techInitials || '—').toUpperCase();
+    const typeLabel = interv.type?.toUpperCase() || 'CUR';
+    const priorityLower = interv.priority?.toLowerCase() || 'normal';
+    const priorityVariant = priorityLower === 'important' ? 'solid' : 'soft';
 
     switch (column.key) {
-      case 'intervention':
+      case 'code':
         return (
-          <Flex direction="column" gap="2">
-            <Flex align="center" gap="2" wrap="wrap">
-              <Badge color={priorityConfig.color} size="1" variant="solid">
-                {interv.priority || 'Normal'}
-              </Badge>
+          <Flex direction="column" gap="1">
+            <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+              {intervCode}
+            </Badge>
+            <Flex align="center" gap="1">
               <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                 {machineCode}
               </Badge>
-              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                {intervCode}
-              </Badge>
-              {interv.printedFiche && (
-                <Tooltip content="Fiche imprimée et classée">
-                  <Badge color="green" variant="soft" size="1">
-                    <FileText size={12} style={{ marginRight: '2px' }} />
-                    ✓ Imprimée
-                  </Badge>
-                </Tooltip>
-              )}
-              <Text size="2" style={{ color: 'var(--gray-10)' }}>·</Text>
-              <Text size="2" style={{ color: 'var(--gray-11)' }}>
-                {responsableInitiales}
+              <Text size="1" style={{ color: 'var(--gray-11)' }}>
+                {machineSite}
               </Text>
             </Flex>
-            <Text size="3">
+          </Flex>
+        );
+      
+      case 'title':
+        return (
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium" style={{ lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {interv.title || 'Sans titre'}
+            </Text>
+            <Flex align="center" gap="1" wrap="wrap">
+              {interv.printedFiche && (
+                <Badge color="green" variant="soft" size="1">
+                  ✓ Imprimée
+                </Badge>
+              )}
+            </Flex>
+          </Flex>
+        );
+      
+      case 'info':
+        return (
+          <Flex direction="column" gap="1">
+            <Flex align="center" gap="1" wrap="wrap">
+              <Badge color="gray" variant="soft" size="1">
+                {typeLabel}
+              </Badge>
+              <Badge color="gray" variant="soft" size="1">
+                {machineSite}
+              </Badge>
+              <Badge color={priorityConfig.color} size="1" variant={priorityVariant}>
+                {interv.priority || 'Normal'}
+              </Badge>
+            </Flex>
+            <Text size="1" style={{ color: 'var(--gray-11)' }}>
+              {responsableInitiales}
             </Text>
           </Flex>
         );
       
       case 'age':
-        if (!showAge) return null;
+        if (!showAge) {
+          return <Text size="2" color="gray">{age}j</Text>;
+        }
         return (
           <Badge color={ageColor} variant="soft" size="1">
             {age}j
@@ -327,96 +360,158 @@ export default function InterventionsList() {
   const renderBloqueCell = useCallback((interv, column) => {
     const age = calculateAge(interv.reportedDate);
     const machineCode = interv.machine?.code || 'SUPP';
+    const machineSite = interv.machine?.site || '—';
     const intervCode = interv.code || '';
     const responsableInitiales = (interv.techInitials || '—').toUpperCase();
-    const cause = interv.status?.id === 'attente_pieces' ? 'attente achat' : 'attente fournisseur';
-    const messageBloque = `En ${cause} depuis ${age}j`;
+    const causeKey = interv.status?.id === 'attente_pieces' ? 'FOURNISSEUR' : 'INTERNE';
+    const typeLabel = interv.type?.toUpperCase() || 'CUR';
+    const ageColor = getAgeColor(age);
 
     switch (column.key) {
-      case 'intervention':
+      case 'code':
         return (
-          <Flex direction="column" gap="0">
-            <Text size="2" weight="medium" style={{ marginBottom: '2px' }}>
-              {interv.title || 'Sans titre'}
-            </Text>
-            <Text size="2" style={{ color: 'var(--amber-10)', fontWeight: '500', marginBottom: '4px' }}>
-              {messageBloque}
-            </Text>
-            <Flex align="center" gap="2" style={{ opacity: 0.75 }}>
+          <Flex direction="column" gap="1">
+            <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+              {intervCode}
+            </Badge>
+            <Flex align="center" gap="1">
               <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                 {machineCode}
               </Badge>
-              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                {intervCode}
-              </Badge>
-              {interv.printedFiche && (
-                <Tooltip content="Fiche imprimée et classée">
-                  <Badge color="green" variant="soft" size="1">
-                    <FileText size={12} style={{ marginRight: '2px' }} />
-                    ✓ Imprimée
-                  </Badge>
-                </Tooltip>
-              )}
-              <Text size="1" style={{ color: 'var(--gray-10)' }}>·</Text>
-              <Text size="1" style={{ color: 'var(--gray-10)' }}>
-                {responsableInitiales}
+              <Text size="1" style={{ color: 'var(--gray-11)' }}>
+                {machineSite}
               </Text>
             </Flex>
           </Flex>
         );
       
+      case 'title':
+        return (
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium" style={{ lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {interv.title || 'Sans titre'}
+            </Text>
+            <Flex align="center" gap="1" wrap="wrap">
+              <Badge color="amber" variant="soft" size="1">
+                ⏸ {causeKey}
+              </Badge>
+              {interv.printedFiche && (
+                <Badge color="green" variant="soft" size="1">
+                  ✓ Imprimée
+                </Badge>
+              )}
+            </Flex>
+          </Flex>
+        );
+      
+      case 'info':
+        return (
+          <Flex direction="column" gap="1">
+            <Flex align="center" gap="1" wrap="wrap">
+              <Badge color="gray" variant="soft" size="1">
+                {typeLabel}
+              </Badge>
+              <Badge color="gray" variant="soft" size="1">
+                {machineSite}
+              </Badge>
+            </Flex>
+            <Text size="1" style={{ color: 'var(--gray-11)' }}>
+              {responsableInitiales}
+            </Text>
+          </Flex>
+        );
+      
+      case 'age':
+        return (
+          <Badge color={ageColor} variant="soft" size="1">
+            {age}j
+          </Badge>
+        );
+      
       default:
         return null;
     }
-  }, [calculateAge]);
+  }, [calculateAge, getAgeColor]);
 
   // Fonction de rendu des cellules pour BLOC 3 & 4 : Projets et Archivé
   const renderStandardCell = useCallback((interv, column) => {
     const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ouvert;
     const age = calculateAge(interv.reportedDate);
     const machineCode = interv.machine?.code || 'SUPP';
+    const machineSite = interv.machine?.site || '—';
     const intervCode = interv.code || '';
+    const responsableInitiales = (interv.techInitials || '—').toUpperCase();
+    const typeLabel = interv.type?.toUpperCase() || 'CUR';
+    const ageColor = getAgeColor(age);
 
     switch (column.key) {
-      case 'title':
+      case 'code':
         return (
           <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">
-              {interv.title || 'Sans titre'}
-            </Text>
-            <Flex align="center" gap="2" style={{ opacity: 0.65 }}>
+            <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+              {intervCode}
+            </Badge>
+            <Flex align="center" gap="1">
               <Badge color="gray" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
                 {machineCode}
               </Badge>
-              <Badge color="blue" variant="solid" size="1" style={{ fontFamily: 'monospace', fontWeight: '600' }}>
-                {intervCode}
+              <Text size="1" style={{ color: 'var(--gray-11)' }}>
+                {machineSite}
+              </Text>
+            </Flex>
+          </Flex>
+        );
+      
+      case 'title':
+        return (
+          <Flex direction="column" gap="1">
+            <Text size="2" weight="medium" style={{ lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {interv.title || 'Sans titre'}
+            </Text>
+            <Flex align="center" gap="1" wrap="wrap">
+              <Badge color={statusConfig.color} size="1" variant="soft">
+                {statusConfig.label}
               </Badge>
               {interv.printedFiche && (
-                <Tooltip content="Fiche imprimée et classée">
-                  <Badge color="green" variant="soft" size="1">
-                    <FileText size={12} style={{ marginRight: '2px' }} />
-                    ✓ Imprimée
-                  </Badge>
-                </Tooltip>
+                <Badge color="green" variant="soft" size="1">
+                  ✓ Imprimée
+                </Badge>
               )}
             </Flex>
           </Flex>
         );
       
-      case 'status':
+      case 'info':
         return (
-          <Badge color={statusConfig.color} size="1" variant="soft">
-            {statusConfig.label}
-          </Badge>
+          <Flex direction="column" gap="1">
+            <Flex align="center" gap="1" wrap="wrap">
+              <Badge color="gray" variant="soft" size="1">
+                {typeLabel}
+              </Badge>
+              <Badge color="gray" variant="soft" size="1">
+                {machineSite}
+              </Badge>
+            </Flex>
+            <Text size="1" style={{ color: 'var(--gray-11)' }}>
+              {responsableInitiales}
+            </Text>
+          </Flex>
         );
       
       case 'age':
+        if (age > 30) {
+          return (
+            <Badge color={ageColor} variant="soft" size="1">
+              {age}j
+            </Badge>
+          );
+        }
         return <Text size="2" color="gray">{age}j</Text>;
       
       default:
         return null;
     }
-  }, [calculateAge]);
+  }, [calculateAge, getAgeColor]);
 
   // Fonction de style des lignes pour BLOC 1 : À faire maintenant
   const getActionnableRowStyle = useCallback((interv) => {
@@ -554,6 +649,7 @@ export default function InterventionsList() {
               renderCell={renderStandardCell}
               getRowStyle={getStandardRowStyle}
               actionLabel="Ouvrir"
+              defaultCollapsed={true}
             />
           </Flex>
         )}
