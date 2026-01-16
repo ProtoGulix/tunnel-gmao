@@ -1,9 +1,11 @@
 # Changelog
+
 ## 1.5.5 - 2026-01-16
 
 ### Affichage de l'urgence et correction du champ unité
 
 - **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
+
   - Nouvelle colonne positionnée entre "État" et "Référence"
   - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
     - `high` : Badge orange solide "URGENT"
@@ -22,11 +24,13 @@
 - La priorité des demandes d'achat est maintenant visible dans le tableau principal
 - Les champs `unit` et `urgency` sont correctement retournés après création/modification d'une demande
 - Amélioration de la prise de décision grâce à la visibilité de l'urgence
+
 ## 1.5.5 - 2026-01-16
 
 ### Affichage de l'urgence et correction du champ unité
 
 - **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
+
   - Nouvelle colonne positionnée entre "État" et "Référence"
   - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
     - `high` : Badge orange solide "URGENT"
