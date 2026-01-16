@@ -17,6 +17,7 @@ import {
   handleReEvaluateDA,
 } from "./supplierOrdersHandlers";
 import { supplierOrdersTablePropTypes } from "./supplierOrdersTablePropTypes";
+import { normalizeBasketStatus } from "@/lib/purchasing/basketItemRules";
 
 export default function SupplierOrdersTable({
   orders,
@@ -31,6 +32,11 @@ export default function SupplierOrdersTable({
   supplierFilter = undefined,
   onSupplierFilterChange = () => {},
   supplierOptions = [],
+  // Props de gestion de sélection des items
+  itemSelectionByBasket = {},
+  onToggleItemSelection = () => {},
+  onBasketStatusChange = () => {},
+  canModifyItem = () => true,
 }) {
   const { showError } = useError();
   const [localOrders, setLocalOrders] = useState(orders);
@@ -225,6 +231,10 @@ export default function SupplierOrdersTable({
 
   const rowRenderer = useCallback((order) => {
     const isExpanded = expandedOrderId === order.id;
+    const basketStatus = normalizeBasketStatus(order.status);
+    const isLocked = ['ORDERED', 'CLOSED'].includes(basketStatus);
+    const selectionState = itemSelectionByBasket[order.id] || {};
+    
     return (
       <Fragment key={order.id}>
         <OrderRow
@@ -239,6 +249,11 @@ export default function SupplierOrdersTable({
           onCopyHTMLEmail={() => handleCopyHTMLEmail(order)}
           onPurge={() => handlePurgeOrder(order)}
           onReEvaluateDA={() => handleReEvaluate(order)}
+          basketStatus={basketStatus}
+          isLocked={isLocked}
+          selectionState={selectionState}
+          onToggleItemSelection={onToggleItemSelection}
+          onBasketStatusChange={onBasketStatusChange}
         />
 
         {isExpanded && (
@@ -248,12 +263,17 @@ export default function SupplierOrdersTable({
               orderLines={orderLines}
               onLineUpdate={handleLineUpdate}
               onRefresh={onRefresh}
+              basketStatus={basketStatus}
+              isLocked={isLocked}
+              selectionState={selectionState}
+              onToggleItemSelection={onToggleItemSelection}
+              canModifyItem={canModifyItem}
             />
           </ExpandableDetailsRow>
         )}
       </Fragment>
     );
-  }, [expandedOrderId, cachedLines, handleViewDetails, wrappedHandleStatusChange, handleExportCSV, handleSendEmail, handleCopyHTMLEmail, columns.length, orderLines, loading, handleReEvaluate]);
+  }, [expandedOrderId, cachedLines, handleViewDetails, wrappedHandleStatusChange, handleExportCSV, handleSendEmail, handleCopyHTMLEmail, columns.length, orderLines, loading, handleReEvaluate, itemSelectionByBasket, onToggleItemSelection, onBasketStatusChange]);
 
   return (
     <DataTable

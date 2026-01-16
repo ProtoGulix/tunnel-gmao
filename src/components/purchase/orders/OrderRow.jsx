@@ -120,6 +120,11 @@ export default function OrderRow({
   onCopyHTMLEmail,
   onPurge,
   onReEvaluateDA,
+  basketStatus,
+  isLocked = false,
+  selectionState = {},
+  onToggleItemSelection = () => {},
+  onBasketStatusChange = () => {},
 }) {
   const lineCount = getLineCount(order);
   const ageDays = getAgeInDays(getCreatedAt(order));
@@ -168,15 +173,16 @@ export default function OrderRow({
           <Select.Root
             value={order.status}
             onValueChange={(value) => onStatusChange(order.id, value)}
-            disabled={loading}
+            disabled={loading || isLocked}
           >
-            <Select.Trigger variant="soft" size="1" color={statusConfig.color}>
+            <Select.Trigger variant="soft" size="1" color={statusConfig.color} disabled={isLocked}>
               <Flex align="center" gap="1">
                 {statusConfig.icon && (() => {
                   const Icon = STATUS_ICONS[statusConfig.icon];
                   return Icon ? <Icon size={14} /> : null;
                 })()}
                 {statusConfig.label}
+                {isLocked && <span title="Panier verrouillé">🔒</span>}
               </Flex>
             </Select.Trigger>
             <Select.Content>

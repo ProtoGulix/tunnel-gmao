@@ -44,6 +44,13 @@ import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
 import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
+import {
+  canSelectItem,
+  canDeselectItem,
+  canModifyItem,
+  getInitialItemSelection,
+  normalizeBasketStatus,
+} from "@/lib/purchasing/basketItemRules";
 
 const PROCUREMENT_TABS = {
   REQUESTS: "requests",
@@ -74,6 +81,9 @@ export default function Procurement() {
   const [expandedRequestId, setExpandedRequestId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [compactRows, setCompactRows] = useState(false);
+  
+  // État de sélection des items par panier
+  const [itemSelectionByBasket, setItemSelectionByBasket] = useState({});
 
   // Load manufacturers
   const [allManufacturers, setAllManufacturers] = useState([]);
@@ -327,6 +337,8 @@ export default function Procurement() {
 
   const refreshOrders = async () => {
     await purchasing.loadSupplierOrders(false);
+    // Réinitialiser l'état de sélection après rafraîchissement
+    initializeItemSelection();
   };
 
   const refreshStock = async () => {
@@ -616,6 +628,134 @@ export default function Procurement() {
       setTimeout(() => setDispatchResult(null), 6000);
     }
   };
+
+  // ========== GESTION SÉLECTION ITEMS PANIER ==========
+  const initializeItemSelection = useCallback(() => {
+    const newSelection = {};
+    purchasing.supplierOrders.forEach(basket => {
+      newSelection[basket.id] = getInitialItemSelection(basket);
+    });
+    setItemSelectionByBasket(newSelection);
+  }, [purchasing.supplierOrders]);
+
+  useEffect(() => {
+    if (purchasing.supplierOrders.length > 0) {
+      initializeItemSelection();
+    }
+  }, [purchasing.supplierOrders, initializeItemSelection]);
+
+  const handleToggleItemSelection = useCallback((basketId, itemId) => {
+    const basket = purchasing.supplierOrders.find(b => b.id === basketId);
+    if (!basket) return;
+
+    const currentSelection = itemSelectionByBasket[basketId] || {};
+    const isCurrentlySelected = currentSelection[itemId] !== false;
+    const item = basket.lines?.find(l => l.id === itemId);
+    if (!item) return;
+
+    // Vérifier si on peut sélectionner/désélectionner
+    if (isCurrentlySelected) {
+      // On veut désélectionner
+      const result = canDeselectItem(basket, item, purchasing.supplierOrders);
+      if (!result.canDeselect) {
+        setDispatchResult({
+          type: 'warning',
+          message: 'Désélection impossible',
+          details: result.reason
+        });
+        setTimeout(() => setDispatchResult(null), 5000);
+        return;
+      }
+    } else {
+      // On veut sélectionner
+      const result = canSelectItem(basket, item);
+      if (!result.canSelect) {
+        setDispatchResult({
+          type: 'warning',
+          message: 'Sélection impossible',
+          details: result.reason
+        });
+        setTimeout(() => setDispatchResult(null), 5000);
+        return;
+      }
+    }
+
+    // Mettre à jour la sélection
+    setItemSelectionByBasket(prev => ({
+      ...prev,
+      [basketId]: {
+        ...prev[basketId],
+        [itemId]: !isCurrentlySelected
+      }
+    }));
+  }, [itemSelectionByBasket, purchasing.supplierOrders]);
+
+  const handleBasketStatusChange = useCallback(async (basketId, newStatus) => {
+    const basket = purchasing.supplierOrders.find(b => b.id === basketId);
+    if (!basket) return;
+
+    const currentSelection = itemSelectionByBasket[basketId] || {};
+    
+    // Vérifier si la transition est possible
+    const transitionResult = canTransitionBasket(
+      basket,
+      newStatus,
+      currentSelection,
+      purchasing.supplierOrders
+    );
+
+    if (!transitionResult.canTransition) {
+      setDispatchResult({
+        type: 'error',
+        message: 'Transition impossible',
+        details: transitionResult.reason
+      });
+      setTimeout(() => setDispatchResult(null), 6000);
+      return;
+    }
+
+    try {
+      setFormLoading(true);
+      
+      // Si des items doivent être supprimés (transition POOLING -> SENT)
+      if (transitionResult.itemsToRemove.length > 0) {
+        // Supprimer chaque item désélectionné du panier
+        for (const item of transitionResult.itemsToRemove) {
+          try {
+            // TODO: Appeler l'API de suppression d'item et retour à "à dispatcher"
+            // await suppliers.deleteSupplierOrderLine(item.id);
+            // await purchases.setPurchaseRequestStatus(item.purchaseRequestUid, 'open');
+            console.log(`Supprimer item ${item.id} et retourner DA ${item.purchaseRequestUid} à dispatcher`);
+          } catch (err) {
+            console.error(`Erreur suppression item ${item.id}:`, err);
+          }
+        }
+      }
+
+      // Effectuer la transition de statut du panier
+      // TODO: Appeler l'API pour changer le statut
+      // await suppliers.updateSupplierOrder(basketId, { status: newStatus });
+      console.log(`Transition panier ${basketId} vers ${newStatus}`);
+
+      await refreshOrders();
+      
+      setDispatchResult({
+        type: 'success',
+        message: 'Statut du panier mis à jour',
+      });
+      setTimeout(() => setDispatchResult(null), 3000);
+    } catch (error) {
+      console.error('Erreur transition panier:', error);
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la transition',
+        details: error.response?.data?.errors?.[0]?.message || error.message
+      });
+      setTimeout(() => setDispatchResult(null), 6000);
+    } finally {
+      setFormLoading(false);
+    }
+  }, [itemSelectionByBasket, purchasing.supplierOrders, refreshOrders]);
 
   const handleDispatchClick = () => {
     const dispatchableCount = filteredRequests.filter(r => {
@@ -1138,6 +1278,10 @@ export default function Procurement() {
                     onRefresh={refreshOrders}
                     onOrderLineUpdate={purchasing.updateOrderLine}
                     showPoolingColumns
+                    itemSelectionByBasket={itemSelectionByBasket}
+                    onToggleItemSelection={handleToggleItemSelection}
+                    onBasketStatusChange={handleBasketStatusChange}
+                    canModifyItem={canModifyItem}
                   />
                 )}
               </Flex>
@@ -1181,6 +1325,10 @@ export default function Procurement() {
                     orders={filteredSupplierOrders}
                     onRefresh={refreshOrders}
                     onOrderLineUpdate={purchasing.updateOrderLine}
+                    itemSelectionByBasket={itemSelectionByBasket}
+                    onToggleItemSelection={handleToggleItemSelection}
+                    onBasketStatusChange={handleBasketStatusChange}
+                    canModifyItem={canModifyItem}
                   />
                 )}
               </Flex>
@@ -1224,6 +1372,10 @@ export default function Procurement() {
                     orders={filteredSupplierOrders}
                     onRefresh={refreshOrders}
                     onOrderLineUpdate={purchasing.updateOrderLine}
+                    itemSelectionByBasket={itemSelectionByBasket}
+                    onToggleItemSelection={handleToggleItemSelection}
+                    onBasketStatusChange={handleBasketStatusChange}
+                    canModifyItem={canModifyItem}
                   />
                 )}
               </Flex>
@@ -1267,6 +1419,10 @@ export default function Procurement() {
                     orders={filteredSupplierOrders}
                     onRefresh={refreshOrders}
                     onOrderLineUpdate={purchasing.updateOrderLine}
+                    itemSelectionByBasket={itemSelectionByBasket}
+                    onToggleItemSelection={handleToggleItemSelection}
+                    onBasketStatusChange={handleBasketStatusChange}
+                    canModifyItem={canModifyItem}
                   />
                 )}
               </Flex>

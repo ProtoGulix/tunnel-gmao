@@ -13,15 +13,6 @@ export const mapPurchaseRequestToDomain = (item: Record<string, unknown>) => {
     ? item.stock_item_id as Record<string, unknown>
     : null;
   
-  // Debug log pour voir ce qu'on reçoit
-  if (process.env.NODE_ENV === 'development' && stockItemRelation) {
-    console.log('[Mapper] stock_item_id relation:', {
-      id: stockItemRelation.id,
-      ref: stockItemRelation.ref,
-      supplier_refs: stockItemRelation.supplier_refs
-    });
-  }
-  
   // Compter les supplier_refs (c'est un array d'objets {id: "..."} ou null/undefined)
   const supplierCount = Array.isArray(stockItemRelation?.supplier_refs) 
     ? stockItemRelation.supplier_refs.length 

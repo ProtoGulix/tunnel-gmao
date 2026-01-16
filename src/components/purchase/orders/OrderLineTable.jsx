@@ -15,9 +15,10 @@ import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Box, Badge, Checkbox } from "@radix-ui/themes";
-import { Package, Ban, ExternalLink } from "lucide-react";
+import { Package, Ban, ExternalLink, Lock } from "lucide-react";
 import { suppliers } from '@/lib/api/facade';
 import { URGENCY_LEVELS } from '@/config/stockManagementConfig';
+import { normalizeBasketStatus } from "@/lib/purchasing/basketItemRules";
 
 // ===== DTO ACCESSORS =====
 const getStock = (line) => line.stockItem ?? line.stock_item_id;
@@ -123,7 +124,7 @@ const renderRequesters = (prs) => {
  * @param {boolean} props.disabled - Désactiver la checkbox
  * @returns {JSX.Element}
  */
-function OrderLineRow({ line, onToggleSelected, disabled }) {
+function OrderLineRow({ line, onToggleSelected, disabled, isPooling = false }) {
   const stock = getStock(line);
   const prs = getPurchaseRequests(line);
   const interventionInfo = getInterventionInfo(line);
@@ -135,17 +136,23 @@ function OrderLineRow({ line, onToggleSelected, disabled }) {
   }, [line.id, onToggleSelected]);
   
   return (
-    <Table.Row key={line.id}>
+    <Table.Row key={line.id} style={{
+      opacity: !isSelected && disabled ? 0.5 : 1,
+      backgroundColor: !isSelected && disabled ? 'var(--gray-2)' : 'transparent',
+    }}>
       <Table.Cell>
         <Flex align="center" gap="2">
           <Checkbox
-            checked={isSelected}
+            checked={isSelected || isPooling}
             onCheckedChange={handleCheckboxChange}
-            disabled={disabled}
+            disabled={disabled || isPooling}
             aria-label="Sélectionner cette ligne pour commande"
           />
-          {disabled && (
-            <Ban size={14} color="var(--red-9)" style={{ opacity: 0.6 }} />
+          {disabled && !isPooling && (
+            <Ban size={14} color="var(--red-9)" style={{ opacity: 0.6 }} title="Élément désélectionné" />
+          )}
+          {isPooling && (
+            <Lock size={14} color="var(--blue-9)" style={{ opacity: 0.6 }} title="Mutualisation en cours" />
           )}
         </Flex>
       </Table.Cell>
@@ -217,6 +224,7 @@ OrderLineRow.propTypes = {
   }).isRequired,
   onToggleSelected: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
+  isPooling: PropTypes.bool,
 };
 
 /**
@@ -230,24 +238,44 @@ OrderLineRow.propTypes = {
  * @param {Function} props.onRefresh - Callback pour rafraîchir après modification (optionnel)
  * @returns {JSX.Element}
  */
-export default function OrderLineTable({ order, orderLines = [], onLineUpdate, onRefresh }) {
+export default function OrderLineTable({ 
+  order, 
+  orderLines = [], 
+  onLineUpdate, 
+  onRefresh,
+  basketStatus = 'UNKNOWN',
+  isLocked = false,
+  selectionState = {},
+  onToggleItemSelection = () => {},
+  canModifyItem = () => true,
+}) {
   // Dedup lines by id to avoid double display when backend returns duplicates
   const uniqueLines = Array.from(new Map(orderLines.map((l) => [l.id, l])).values());
-  // Verrouiller quand le statut n'est pas OPEN (consultation lancée)
-  const isLocked = (order.status || '').toLowerCase() !== 'open';
+  // Déterminer le statut normalisé
+  const normalizedStatus = basketStatus || normalizeBasketStatus(order.status || '');
+  const isPooling = normalizedStatus === 'POOLING';
+  const isCommandeOrClosed = ['ORDERED', 'CLOSED'].includes(normalizedStatus);
   const [updating, setUpdating] = useState(false);
 
   // Debug: log du statut pour vérifier
   useEffect(() => {
-    console.log('[OrderLineTable] Order status:', order.status, 'isLocked:', isLocked);
-  }, [order.status, isLocked]);
+    console.log('[OrderLineTable] Order status:', order.status, 'normalizedStatus:', normalizedStatus, 'isLocked:', isLocked);
+  }, [order.status, normalizedStatus, isLocked]);
 
   const handleToggleSelected = useCallback(async (lineId, isSelected) => {
-    // Ne pas appeler l'API si le panier est verrouillé
-    if (isLocked) {
+    // En mutualisation: tous les items sont auto-sélectionnés, pas de changement possible
+    if (isPooling) {
       return;
     }
 
+    // Si verrouillé ou commandé/clôturé, ne pas autoriser
+    if (isLocked || isCommandeOrClosed) {
+      return;
+    }
+
+    // Appeler la logique du parent pour vérifier les règles métier
+    onToggleItemSelection(order.id, lineId);
+    
     // Mise à jour optimiste locale immédiate (pas de rechargement)
     if (onLineUpdate) {
       onLineUpdate(lineId, { is_selected: isSelected });
@@ -266,7 +294,7 @@ export default function OrderLineTable({ order, orderLines = [], onLineUpdate, o
     } finally {
       setUpdating(false);
     }
-  }, [isLocked, onLineUpdate, onRefresh]);
+  }, [isPooling, isLocked, isCommandeOrClosed, order.id, onToggleItemSelection, onLineUpdate, onRefresh]);
 
   return (
     <Box>
@@ -274,9 +302,14 @@ export default function OrderLineTable({ order, orderLines = [], onLineUpdate, o
         <Text size="2" weight="bold">
           Lignes de commande ({orderLines.length})
         </Text>
-        {isLocked && (
+        {isCommandeOrClosed && (
           <Badge color="red" variant="soft" size="1">
             🔒 Panier verrouillé - Modification interdite
+          </Badge>
+        )}
+        {isPooling && (
+          <Badge color="blue" variant="soft" size="1">
+            🤝 Mutualisation - Tous les items sélectionnés
           </Badge>
         )}
       </Flex>
@@ -301,7 +334,8 @@ export default function OrderLineTable({ order, orderLines = [], onLineUpdate, o
               key={line.id} 
               line={line} 
               onToggleSelected={handleToggleSelected}
-              disabled={isLocked || updating}
+              disabled={isCommandeOrClosed || updating}
+              isPooling={isPooling}
             />
           ))}
         </Table.Body>
@@ -322,4 +356,9 @@ OrderLineTable.propTypes = {
   ),
   onLineUpdate: PropTypes.func,
   onRefresh: PropTypes.func,
+  basketStatus: PropTypes.string,
+  isLocked: PropTypes.bool,
+  selectionState: PropTypes.object,
+  onToggleItemSelection: PropTypes.func,
+  canModifyItem: PropTypes.func,
 };
