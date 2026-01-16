@@ -39,15 +39,27 @@ export const fetchSupplierOrders = async (status: string | null = null) => {
   const rawOrders = await datasource.fetchSupplierOrders(status);
   return Promise.all(
     rawOrders.map(async (order: Record<string, unknown>) => {
-      let lineCount = 0;
-      try {
-        // You may want to move this to datasource if needed
-        // For now, keep logic here for line count
-        // ...
-      } catch {
-        lineCount = 0;
-      }
-      return mapper.mapSupplierOrderToDomain(order, lineCount);
+      const lines = Array.isArray((order as Record<string, unknown>).order_lines)
+        ? ((order as Record<string, unknown>).order_lines as Record<string, unknown>[])
+        : [];
+      const lineCount = lines.length;
+      
+      // Calculer le niveau d'urgence max du panier à partir des lignes
+      const urgencyPriority = { high: 3, normal: 2, low: 1 };
+      let maxUrgency = 'low';
+      let maxPriority = urgencyPriority.low;
+      
+      lines.forEach((line) => {
+        // L'urgence est directement sur la ligne (snapshot au moment de la création)
+        const urgency = String(line.urgency || 'low').toLowerCase();
+        const priority = urgencyPriority[urgency as keyof typeof urgencyPriority] || urgencyPriority.low;
+        if (priority > maxPriority) {
+          maxPriority = priority;
+          maxUrgency = urgency;
+        }
+      });
+      
+      return mapper.mapSupplierOrderToDomain(order, lineCount, maxUrgency);
     })
   );
 };

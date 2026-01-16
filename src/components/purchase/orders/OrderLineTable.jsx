@@ -12,18 +12,39 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Box, Badge, Checkbox } from "@radix-ui/themes";
-import { Package, Ban } from "lucide-react";
+import { Package, Ban, ExternalLink } from "lucide-react";
 import { suppliers } from '@/lib/api/facade';
+import { URGENCY_LEVELS } from '@/config/stockManagementConfig';
 
 // ===== DTO ACCESSORS =====
 const getStock = (line) => line.stockItem ?? line.stock_item_id;
 const getPurchaseRequests = (line) => line?.purchaseRequests ?? line?.purchase_requests ?? [];
 const getPurchaseRequest = (pr) => {
   if (!pr) return null;
-  if (pr.purchaseRequest || pr.purchase_request_id) return pr.purchaseRequest ?? pr.purchase_request_id;
-  return pr; // already normalized object
+  // Handle M2M structure: { id, purchase_request_id: {...} }
+  if (pr.purchase_request_id) return pr.purchase_request_id;
+  if (pr.purchaseRequest) return pr.purchaseRequest;
+  // Direct PR object
+  return pr;
+};
+
+const getMaxUrgency = (line) => {
+  // Priorité : urgence sur la ligne, sinon max des DA liées
+  const rank = { high: 3, normal: 2, low: 1 };
+  const lineUrgency = line.urgency || line.urgency_level;
+  let best = lineUrgency || null;
+  getPurchaseRequests(line).forEach((pr) => {
+    const prObj = getPurchaseRequest(pr);
+    const u = prObj?.urgency;
+    if (!u) return;
+    if (!best || (rank[u] || 0) > (rank[best] || 0)) {
+      best = u;
+    }
+  });
+  return best;
 };
 
 /**
@@ -37,16 +58,19 @@ const getIntervCode = (interv) => {
 };
 
 /**
- * Récupère le code intervention d'une ligne
+ * Récupère les infos intervention d'une ligne
  * @param {Object} line - Ligne de commande
- * @returns {string|null} Code intervention ou null
+ * @returns {{id: string|null, code: string|null}}
  */
-const getInterventionCode = (line) => {
+const getInterventionInfo = (line) => {
   const prs = getPurchaseRequests(line);
   const first = getPurchaseRequest(prs[0]);
   if (!first) return null;
   const interv = first.intervention ?? first.intervention_id;
-  return getIntervCode(interv);
+  if (!interv) return null;
+  const code = getIntervCode(interv);
+  const id = typeof interv === 'object' ? interv.id : interv;
+  return { id: id || null, code: code || id || null };
 };
 
 /**
@@ -57,6 +81,18 @@ const getInterventionCode = (line) => {
 const getRequesterName = (pr) => {
   const prObj = getPurchaseRequest(pr);
   return prObj?.requested_by || prObj?.requestedBy || "—";
+};
+
+const renderUrgencyBadge = (urgency) => {
+  const urgencyConfig = URGENCY_LEVELS.find(u => u.value === urgency);
+  if (!urgencyConfig || urgencyConfig.value === 'all') {
+    return <Badge color="gray" variant="soft" size="1">Inconnue</Badge>;
+  }
+  return (
+    <Badge color={urgencyConfig.color} variant={urgencyConfig.variant} size="1">
+      {urgencyConfig.label}
+    </Badge>
+  );
 };
 
 const renderRequesters = (prs) => {
@@ -90,9 +126,10 @@ const renderRequesters = (prs) => {
 function OrderLineRow({ line, onToggleSelected, disabled }) {
   const stock = getStock(line);
   const prs = getPurchaseRequests(line);
-  const interventionCode = getInterventionCode(line);
+  const interventionInfo = getInterventionInfo(line);
   const isSelected = line.is_selected ?? line.isSelected ?? false;
-  
+  const urgency = getMaxUrgency(line) || 'normal';
+    
   const handleCheckboxChange = useCallback((checked) => {
     onToggleSelected(line.id, checked);
   }, [line.id, onToggleSelected]);
@@ -138,8 +175,23 @@ function OrderLineRow({ line, onToggleSelected, disabled }) {
       </Table.Cell>
 
       <Table.Cell>
-        {interventionCode ? (
-          <Badge color="blue" variant="soft" size="1">{interventionCode}</Badge>
+        {renderUrgencyBadge(urgency)}
+      </Table.Cell>
+
+      <Table.Cell>
+        {interventionInfo ? (
+          <Link
+            to={`/intervention/${interventionInfo.id}`}
+            style={{ textDecoration: 'none' }}
+            title={`Ouvrir l'intervention ${interventionInfo.code || interventionInfo.id}`}
+          >
+            <Badge color="blue" variant="soft" size="1" style={{ cursor: 'pointer' }}>
+              <Flex align="center" gap="1">
+                {interventionInfo.code || interventionInfo.id}
+                <ExternalLink size={10} />
+              </Flex>
+            </Badge>
+          </Link>
         ) : (
           <Text color="gray" size="1">—</Text>
         )}
@@ -237,6 +289,7 @@ export default function OrderLineTable({ order, orderLines = [], onLineUpdate, o
             <Table.ColumnHeaderCell>Réf.</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Réf. fournisseur</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Qté</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Urgence</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Intervention</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Demandeur</Table.ColumnHeaderCell>
           </Table.Row>

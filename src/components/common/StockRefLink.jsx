@@ -4,11 +4,11 @@ import { ExternalLink } from 'lucide-react';
 import PropTypes from 'prop-types';
 
 /**
- * Composant Badge cliquable avec icône qui redirige vers StockManagement avec recherche pré-remplie
+ * Composant Badge cliquable avec icône qui redirige vers la page Pièces (Parts) avec recherche pré-remplie
  * 
  * @param {Object} props
  * @param {string} props.reference - Référence de l'article à rechercher
- * @param {string} [props.tab='stock'] - Onglet de destination ('stock', 'requests', 'orders', 'suppliers')
+ * @param {string} [props.tab='items'] - Onglet de destination ('items', 'suppliers', 'manufacturers')
  * @param {string} [props.color='gray'] - Couleur du badge
  * @param {string} [props.variant='outline'] - Variante du badge
  * @param {string} [props.size='2'] - Taille du badge
@@ -28,7 +28,7 @@ import PropTypes from 'prop-types';
  */
 export default function StockRefLink({ 
   reference, 
-  tab = 'stock',
+  tab = 'items',
   color = 'gray',
   variant = 'outline',
   size = '2'
@@ -36,7 +36,13 @@ export default function StockRefLink({
   if (!reference) return null;
 
   // Construire l'URL avec les query params
-  const url = `/stock?tab=${tab}&search=${encodeURIComponent(reference)}`;
+  const normalizedTab = (() => {
+    if (tab === 'stock') return 'items';
+    if (tab === 'supplier-refs') return 'suppliers';
+    return tab;
+  })();
+
+  const url = `/parts?tab=${normalizedTab}&search=${encodeURIComponent(reference)}`;
 
   return (
     <Link 
@@ -45,7 +51,7 @@ export default function StockRefLink({
         textDecoration: 'none',
         display: 'inline-flex'
       }}
-      title={`Rechercher "${reference}" dans Gestion du stock`}
+      title={`Rechercher "${reference}" dans Pièces`}
     >
       <Badge 
         color={color} 
@@ -64,7 +70,7 @@ export default function StockRefLink({
 
 StockRefLink.propTypes = {
   reference: PropTypes.string.isRequired,
-  tab: PropTypes.oneOf(['stock', 'requests', 'orders', 'suppliers', 'supplier-refs']),
+  tab: PropTypes.oneOf(['items', 'suppliers', 'manufacturers', 'stock', 'supplier-refs']),
   color: PropTypes.string,
   variant: PropTypes.string,
   size: PropTypes.string,

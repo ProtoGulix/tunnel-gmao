@@ -1,5 +1,55 @@
 # Changelog
 
+## 1.6.0 - 2026-01-16 ⚠️ BREAKING CHANGES
+
+### ⚠️ Modifications de base de données requises
+
+**Relation O2M sur `supplier_order`** :
+- Ajout de la relation `order_lines` (O2M vers `supplier_order_line`)
+- L'alias de relation doit être configuré comme `order_lines` dans Directus
+- Champs requis : `order_lines.id`, `order_lines.urgency`
+
+**Impact** : Les paniers fournisseurs ne s'afficheront pas correctement sans cette relation
+
+### Calcul automatique des indicateurs de panier
+
+**Nombre de lignes** :
+- Calcul automatique côté serveur via `order_lines.length`
+- Suppression du préchargement complet des lignes (amélioration des performances)
+- Affichage immédiat du nombre de lignes dans la liste des paniers
+
+**Niveau d'urgence** :
+- Calcul du niveau d'urgence maximum du panier (high/normal/low)
+- Logique : le panier hérite du niveau d'urgence le plus élevé de ses lignes
+- Lecture directe de `supplier_order_line.urgency` (snapshot au moment du dispatch)
+- Badge coloré cohérent :
+  - 🔴 **URGENT** (rouge, solid) pour "high"
+  - 🟠 **Normal** (amber, soft) pour "normal"
+  - ⚪ **Faible** (gris, soft) pour "low"
+
+**Affichage** :
+- Suppression du badge URGENT en double dans la colonne fournisseur
+- Colonne dédiée "Urgence" avec les 3 niveaux
+- Harmonisation des couleurs entre liste des paniers et lignes détaillées
+
+### Centralisation de la configuration
+
+**colorPalette.js** :
+- Ajout de `COLOR_USAGE.urgency` pour les niveaux d'urgence
+- Mapping des niveaux vers la palette industrielle
+
+**stockManagementConfig.js** :
+- Enrichissement de `URGENCY_LEVELS` avec `color` et `variant`
+- Source unique de vérité pour l'affichage des badges d'urgence
+- Réutilisable dans OrderRow et OrderLineTable
+
+### Impact utilisateur
+
+- ✅ Visibilité immédiate du niveau d'urgence de chaque panier
+- ✅ Affichage cohérent entre la liste et les détails
+- ✅ Performance améliorée (un seul appel API au lieu de charger toutes les lignes)
+- ✅ Indicateurs calculés automatiquement sans cache complexe
+
 ## 1.5.5 - 2026-01-16
 
 ### Affichage de l'urgence et correction du champ unité
