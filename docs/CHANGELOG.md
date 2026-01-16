@@ -1,4 +1,50 @@
 # Changelog
+## 1.5.5 - 2026-01-16
+
+### Affichage de l'urgence et correction du champ unité
+
+- **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
+  - Nouvelle colonne positionnée entre "État" et "Référence"
+  - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
+    - `high` : Badge orange solide "URGENT"
+    - `low` : Badge bleu soft "Faible"
+    - `normal` : Badge gris soft "Normal"
+  - Alignement avec l'affichage de l'urgence dans les paniers fournisseurs (OrderRow)
+
+- **datasource.ts** : Correction du retour des champs lors de la création/modification
+  - Ajout du paramètre `fields` dans `createPurchaseRequestInBackend` (POST)
+  - Ajout du paramètre `fields` dans `updatePurchaseRequestInBackend` (PATCH)
+  - Résout le problème : Directus retourne maintenant tous les champs (`unit`, `urgency`, etc.) après création/modification
+  - Garantit la cohérence des données entre requête et réponse
+
+### Impact utilisateur
+
+- La priorité des demandes d'achat est maintenant visible dans le tableau principal
+- Les champs `unit` et `urgency` sont correctement retournés après création/modification d'une demande
+- Amélioration de la prise de décision grâce à la visibilité de l'urgence
+## 1.5.5 - 2026-01-16
+
+### Affichage de l'urgence et correction du champ unité
+
+- **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
+  - Nouvelle colonne positionnée entre "État" et "Référence"
+  - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
+    - `high` : Badge orange solide "URGENT"
+    - `low` : Badge bleu soft "Faible"
+    - `normal` : Badge gris soft "Normal"
+  - Alignement avec l'affichage de l'urgence dans les paniers fournisseurs (OrderRow)
+
+- **datasource.ts** : Correction du retour des champs lors de la création/modification
+  - Ajout du paramètre `fields` dans `createPurchaseRequestInBackend` (POST)
+  - Ajout du paramètre `fields` dans `updatePurchaseRequestInBackend` (PATCH)
+  - Résout le problème : Directus retourne maintenant tous les champs (`unit`, `urgency`, etc.) après création/modification
+  - Garantit la cohérence des données entre requête et réponse
+
+### Impact utilisateur
+
+- La priorité des demandes d'achat est maintenant visible dans le tableau principal
+- Les champs `unit` et `urgency` sont correctement retournés après création/modification d'une demande
+- Amélioration de la prise de décision grâce à la visibilité de l'urgence
 
 ## 1.5.4 - 2026-01-15
 

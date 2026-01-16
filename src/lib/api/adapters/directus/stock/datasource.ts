@@ -46,7 +46,13 @@ export const fetchPurchaseRequestsByInterventionFromBackend = async (interventio
 // Create purchase request (raw backend)
 export const createPurchaseRequestInBackend = async (backendPayload: Record<string, unknown>) => {
   return apiCall(async () => {
-    const { data } = await api.post('/items/purchase_request', backendPayload);
+    const { data } = await api.post('/items/purchase_request', backendPayload, {
+      params: {
+        fields: [
+          'id','stock_item_id.id','stock_item_id.ref','stock_item_id.supplier_refs.id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
+        ].join(','),
+      },
+    });
     return data.data;
   }, 'CreatePurchaseRequest');
 };
@@ -54,7 +60,13 @@ export const createPurchaseRequestInBackend = async (backendPayload: Record<stri
 // Update purchase request (raw backend)
 export const updatePurchaseRequestInBackend = async (id: string, backendUpdates: Record<string, unknown>) => {
   return apiCall(async () => {
-    const { data } = await api.patch(`/items/purchase_request/${id}`, backendUpdates);
+    const { data } = await api.patch(`/items/purchase_request/${id}`, backendUpdates, {
+      params: {
+        fields: [
+          'id','stock_item_id.id','stock_item_id.ref','stock_item_id.supplier_refs.id','item_label','quantity','unit','urgency','requested_by','reason','notes','status','created_at','intervention_id',
+        ].join(','),
+      },
+    });
     return data.data;
   }, 'UpdatePurchaseRequest');
 };

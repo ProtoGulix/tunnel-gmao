@@ -128,6 +128,29 @@ export default function PurchaseRequestsTable({
     return <Badge variant="soft">-</Badge>;
   }, []);
 
+  const renderUrgencyBadge = useCallback((urgency) => {
+    if (urgency === "high") {
+      return (
+        <Badge color="orange" variant="solid">
+          URGENT
+        </Badge>
+      );
+    }
+    if (urgency === "low") {
+      return (
+        <Badge color="blue" variant="soft">
+          Faible
+        </Badge>
+      );
+    }
+    // "normal" ou undefined
+    return (
+      <Badge color="gray" variant="soft">
+        Normal
+      </Badge>
+    );
+  }, []);
+
   const sortedRequests = useMemo(() => {
     const getCompletenessScore = (request) => {
       let score = 0;
@@ -165,6 +188,7 @@ export default function PurchaseRequestsTable({
   const columns = useMemo(() => ([
     { key: "item", header: "Article" },
     { key: "state", header: "État" },
+    { key: "urgency", header: "Urgence" },
     { key: "ref", header: "Référence" },
     { key: "qty", header: "Qté" },
     { key: "age", header: "Âge (j)" },
@@ -208,6 +232,9 @@ export default function PurchaseRequestsTable({
           </Table.Cell>
           <Table.Cell>
             <StatusBadges request={request} hasMissing={hasMissing} age={age} />
+          </Table.Cell>
+          <Table.Cell>
+            {renderUrgencyBadge(request.urgency)}
           </Table.Cell>
           <Table.Cell>
             {stockRef ? (
