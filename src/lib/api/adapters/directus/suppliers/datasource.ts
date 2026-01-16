@@ -61,6 +61,8 @@ export const fetchSupplierOrders = async (status: string | null = null) => {
         'supplier_id.name',
         'supplier_id.email',
         'supplier_id.contact_name',
+        'order_lines.id',
+        'order_lines.urgency',
         'status',
         'total_amount',
         'created_at',
@@ -92,7 +94,7 @@ export const fetchSupplierOrder = async (id: string) => {
 export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
   return apiCall(async () => {
     console.log(`[fetchSupplierOrderLines] Loading lines for order ${supplierOrderId}`);
-    // 1. Fetch supplier order lines (with consultation fields)
+    // 1. Fetch lines with embedded purchase_requests (M2M) already joined
     const { data: linesData } = await api.get('/items/supplier_order_line', {
       params: {
         filter: { supplier_order_id: { _eq: supplierOrderId } },
@@ -109,10 +111,10 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
           'stock_item_id.unit',
           'supplier_ref_snapshot',
           'quantity',
+          'urgency',
           'unit_price',
           'total_price',
           'created_at',
-          // CONSULTATION: Champs de devis et sélection fournisseur
           'quote_received',
           'is_selected',
           'quote_price',
@@ -121,10 +123,14 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
           'manufacturer_ref',
           'quote_received_at',
           'rejected_reason',
-          // Liens vers demandes d'achat (pour remise en attente/purge)
+          // Relations M2M déjà embarquées
           'purchase_requests.id',
           'purchase_requests.purchase_request_id.id',
           'purchase_requests.purchase_request_id.status',
+          'purchase_requests.purchase_request_id.urgency',
+          'purchase_requests.purchase_request_id.requested_by',
+          'purchase_requests.purchase_request_id.intervention_id',
+          'purchase_requests.purchase_request_id.intervention_id.code',
         ].join(','),
         sort: 'created_at',
         _t: Date.now(),
@@ -132,36 +138,12 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
     });
     
     const lines = linesData?.data || [];
-    console.log(`[fetchSupplierOrderLines] Loaded ${lines.length} lines:`, lines);
-    
-    // 2. Fetch purchase_requests via M2M table
-    const lineIds = lines.map((l: any) => l.id).filter(Boolean);
-    let purchaseRequestsByLine: Record<string, any[]> = {};
-    
-    if (lineIds.length > 0) {
-      const { data: m2mData } = await api.get('/items/supplier_order_line_purchase_request', {
-        params: {
-          filter: { supplier_order_line_id: { _in: lineIds } },
-          fields: ['id', 'supplier_order_line_id', 'purchase_request_id.id', 'purchase_request_id.status'].join(','),
-          limit: -1,
-          _t: Date.now(),
-        },
-      });
-      
-      const m2mLinks = m2mData?.data || [];
-      console.log(`[fetchSupplierOrderLines] Loaded ${m2mLinks.length} M2M links:`, m2mLinks);
-      
-      // Group by line
-      m2mLinks.forEach((link: any) => {
-        const lineId = link.supplier_order_line_id;
-        if (!purchaseRequestsByLine[lineId]) {
-          purchaseRequestsByLine[lineId] = [];
-        }
-        purchaseRequestsByLine[lineId].push(link);
-      });
+    console.log(`[fetchSupplierOrderLines] Loaded ${lines.length} lines`);
+    if (lines.length > 0) {
+      console.log('[fetchSupplierOrderLines] First line structure:', JSON.stringify(lines[0], null, 2));
     }
-    
-    // 3. Fetch all stock_item_supplier links with manufacturer data
+
+    // 2. Fetch all stock_item_supplier links with manufacturer data
     const { data: suppliersData } = await api.get('/items/stock_item_supplier', {
       params: {
         fields: [
@@ -180,29 +162,25 @@ export const fetchSupplierOrderLines = async (supplierOrderId: string) => {
     
     const supplierLinks = suppliersData?.data || [];
     
-    // 4. Enrich lines with manufacturer data and purchase_requests
+    // 3. Enrich lines with manufacturer data (purchase_requests already embedded)
     const enrichedLines = lines.map((line: Record<string, unknown>) => {
       const stockItem = line.stock_item_id as Record<string, unknown> | undefined;
       const stockItemId = stockItem?.id || line.stock_item_id;
       const supplierRef = line.supplier_ref_snapshot;
       
-      // Find matching supplier link
+      // Find matching supplier link for manufacturer data
       const matchingLink = supplierLinks.find(
         (link: Record<string, unknown>) =>
           link.stock_item_id === stockItemId && link.supplier_ref === supplierRef
       );
       
-      // Add purchase_requests from M2M table
-      const purchaseRequests = purchaseRequestsByLine[line.id as string] || [];
-      
       return {
         ...line,
         manufacturer_item_id: matchingLink?.manufacturer_item_id || null,
-        purchase_requests: purchaseRequests,
       };
     });
     
-    console.log(`[fetchSupplierOrderLines] Enriched lines:`, enrichedLines);
+    console.log(`[fetchSupplierOrderLines] Enriched ${enrichedLines.length} lines with PR and manufacturer data`);
     return enrichedLines;
   }, 'FetchSupplierOrderLines');
 };
@@ -342,7 +320,7 @@ async function manualDispatch() {
   const { data: reqData } = await api.get('/items/purchase_request', {
     params: {
       filter: { status: { _eq: 'open' } },
-      fields: ['id', 'stock_item_id', 'quantity'].join(','),
+      fields: ['id', 'stock_item_id', 'quantity', 'urgency'].join(','),
       limit: -1,
     },
   });
@@ -406,16 +384,26 @@ async function manualDispatch() {
               supplier_order_id: { _eq: orderId },
               stock_item_id: { _eq: req.stock_item_id },
             },
+            fields: ['id', 'urgency', 'quantity'].join(','),
             limit: 1,
           },
         });
         
         let lineId = linesData?.data?.[0]?.id;
+        const currentLineUrgency = linesData?.data?.[0]?.urgency;
+        const prioritizeUrgency = (a?: string, b?: string) => {
+          const rank: Record<string, number> = { high: 3, normal: 2, low: 1 };
+          const va = rank[a || ''] || 0;
+          const vb = rank[b || ''] || 0;
+          return va >= vb ? a : b;
+        };
+        const nextUrgency = prioritizeUrgency(currentLineUrgency, req.urgency);
         
         if (lineId) {
           // Incrémenter quantité
           await api.patch(`/items/supplier_order_line/${lineId}`, {
             quantity: (linesData.data[0].quantity || 0) + (req.quantity || 1),
+            ...(nextUrgency ? { urgency: nextUrgency } : {}),
           });
         } else {
           // Créer nouvelle ligne
@@ -424,6 +412,7 @@ async function manualDispatch() {
             stock_item_id: req.stock_item_id,
             supplier_ref_snapshot: sup.supplier_ref,
             quantity: req.quantity || 1,
+            ...(req.urgency ? { urgency: req.urgency } : {}),
             quote_received: false,
             is_selected: false,
           });

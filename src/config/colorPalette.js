@@ -21,20 +21,20 @@
 
 export const COLOR_PALETTE = {
   // Couleurs fixes
-  primary: "#1F3A5F", // Bleu industriel
-  text: "#2E2E2E", // Gris foncé (texte/icônes)
-  background: "#F4F6F8", // Gris clair (fond)
+  primary: '#1F3A5F', // Bleu industriel
+  text: '#2E2E2E', // Gris foncé (texte/icônes)
+  background: '#F4F6F8', // Gris clair (fond)
 
   // Couleurs état
-  success: "#2E7D32", // Vert OK/clôturé
-  warning: "#ED6C02", // Orange attente
-  error: "#C62828", // Rouge bloqué
+  success: '#2E7D32', // Vert OK/clôturé
+  warning: '#ED6C02', // Orange attente
+  error: '#C62828', // Rouge bloqué
 
   // Nuances utilitaires (dérivées de la palette)
-  textSecondary: "#616161", // Texte secondaire
-  border: "#E0E0E0", // Bordures
-  divider: "#BDBDBD", // Séparateurs
-  surface: "#FFFFFF", // Surface cards/modals
+  textSecondary: '#616161', // Texte secondaire
+  border: '#E0E0E0', // Bordures
+  divider: '#BDBDBD', // Séparateurs
+  surface: '#FFFFFF', // Surface cards/modals
 };
 
 /**
@@ -43,16 +43,16 @@ export const COLOR_PALETTE = {
  */
 export const RADIX_COLOR_MAP = {
   // Couleur primaire → blue (bleu industriel)
-  primary: "blue",
+  primary: 'blue',
 
   // États
-  success: "green",
-  warning: "amber",
-  error: "red",
+  success: 'green',
+  warning: 'amber',
+  error: 'red',
 
   // Neutres
-  gray: "gray",
-  neutral: "gray",
+  gray: 'gray',
+  neutral: 'gray',
 };
 
 /**
@@ -73,6 +73,13 @@ export const COLOR_USAGE = {
     important: COLOR_PALETTE.warning, // Orange
     normal: COLOR_PALETTE.primary, // Bleu
     faible: COLOR_PALETTE.textSecondary, // Gris
+  },
+
+  // Niveaux d'urgence (achats/demandes)
+  urgency: {
+    high: COLOR_PALETTE.error, // Rouge
+    normal: COLOR_PALETTE.warning, // Orange
+    low: COLOR_PALETTE.textSecondary, // Gris
   },
 
   // Achats

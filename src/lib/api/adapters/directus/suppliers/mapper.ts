@@ -21,7 +21,7 @@ export const mapSupplierToDomain = (item: Record<string, unknown> | null, itemCo
   };
 };
 
-export const mapSupplierOrderToDomain = (order: Record<string, unknown> | null, lineCount = 0) => {
+export const mapSupplierOrderToDomain = (order: Record<string, unknown> | null, lineCount = 0, urgencyLevel: string = 'low') => {
   if (!order) return null;
   const supplier = order.supplier_id as Record<string, unknown> | undefined;
   return {
@@ -41,6 +41,7 @@ export const mapSupplierOrderToDomain = (order: Record<string, unknown> | null, 
     orderedAt: order.ordered_at ?? undefined,
     receivedAt: order.received_at ?? undefined,
     lineCount,
+    urgencyLevel,
   };
 };
 

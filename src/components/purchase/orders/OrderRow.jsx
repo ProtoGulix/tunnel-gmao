@@ -26,6 +26,7 @@ import {
   isBlockingOrder,
 } from "./supplierOrdersConfig";
 import { getSupplierOrderStatus } from "@/config/purchasingConfig";
+import { URGENCY_LEVELS } from "@/config/stockManagementConfig";
 import { isUrgentOrder, getPrimaryActionConfig, shouldShowAmount } from "./orderRowHelpers";
 
 /**
@@ -81,11 +82,17 @@ const renderAgeBadge = (ageDays, ageColor) => (
   </Badge>
 );
 
-const renderUrgencyBadge = (isUrgent) => (
-  <Badge color={isUrgent ? "orange" : "gray"} variant={isUrgent ? "solid" : "soft"}>
-    {isUrgent ? "URGENT" : "Normal"}
-  </Badge>
-);
+const renderUrgencyBadge = (urgencyLevel) => {
+  const urgencyConfig = URGENCY_LEVELS.find(u => u.value === urgencyLevel);
+  if (!urgencyConfig || urgencyConfig.value === 'all') {
+    return <Badge color="gray" variant="soft">Inconnue</Badge>;
+  }
+  return (
+    <Badge color={urgencyConfig.color} variant={urgencyConfig.variant}>
+      {urgencyConfig.label}
+    </Badge>
+  );
+};
 
 /**
  * Ligne du tableau des paniers fournisseurs
@@ -118,7 +125,9 @@ export default function OrderRow({
   const ageDays = getAgeInDays(getCreatedAt(order));
   const isBlocking = isBlockingOrder(order.status, ageDays);
   const ageColor = getAgeColor(order);
-  const isUrgent = isUrgentOrder(cachedLines, order.id);
+  // Utiliser urgencyLevel de l'order si disponible, sinon fallback sur le cache
+  const urgencyLevel = order.urgencyLevel || 'low';
+  const isUrgent = urgencyLevel === 'high' || isUrgentOrder(cachedLines, order.id);
   const statusConfig = getSupplierOrderStatus(order.status);
 
   const primaryAction = getPrimaryActionConfig(order.status, onViewDetails, onSendEmail);
@@ -131,7 +140,6 @@ export default function OrderRow({
           <Flex direction="column" gap="2" align="start" justify="center">
             <Flex gap="2" align="center" wrap="wrap">
               <Text weight="bold" size="2">{getSupplierObj(order)?.name || "—"}</Text>
-              {isUrgent && <Badge color="orange" size="1">URGENT</Badge>}
               {isBlocking && <Badge color="red" size="1">⚠ &gt;7j</Badge>}
             </Flex>
             <Badge variant="soft" color="gray" size="1" style={{ fontFamily: 'monospace' }}>
@@ -152,7 +160,7 @@ export default function OrderRow({
 
         {/* Urgence */}
         <Table.Cell>
-          {renderUrgencyBadge(isUrgent)}
+          {renderUrgencyBadge(urgencyLevel)}
         </Table.Cell>
 
         {/* Statut avec sélecteur */}
@@ -250,6 +258,7 @@ OrderRow.propTypes = {
     currency: PropTypes.string,
     lineCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     line_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    urgencyLevel: PropTypes.oneOf(['low', 'normal', 'high']),
     supplier: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
     supplier_id: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
   }).isRequired,
