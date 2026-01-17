@@ -11,7 +11,7 @@
  * @requires lucide-react
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Table, Flex, Text, Box, Badge, Checkbox } from "@radix-ui/themes";
@@ -19,6 +19,8 @@ import { Package, Ban, ExternalLink, Lock } from "lucide-react";
 import { suppliers } from '@/lib/api/facade';
 import { URGENCY_LEVELS } from '@/config/stockManagementConfig';
 import { normalizeBasketStatus } from "@/lib/purchasing/basketItemRules";
+import useTwinLinesValidation from '@/hooks/useTwinLinesValidation';
+import TwinLinesValidationAlert from './TwinLinesValidationAlert';
 
 // ===== DTO ACCESSORS =====
 const getStock = (line) => line.stockItem ?? line.stock_item_id;
@@ -84,6 +86,63 @@ const getRequesterName = (pr) => {
   return prObj?.requested_by || prObj?.requestedBy || "—";
 };
 
+/**
+ * Compte le nombre de DA (purchase requests) liées à une ligne
+ * @param {Object} line - Ligne de commande
+ * @returns {number} Nombre de DA
+ */
+const countPurchaseRequests = (line) => {
+  const prs = getPurchaseRequests(line);
+  return prs.length;
+};
+
+/**
+ * Détecte si une ligne a des lignes jumelles (même DA chez d'autres fournisseurs)
+ * @param {Object} line - Ligne de commande
+ * @returns {{hasTwin: boolean, twinCount: number, totalLines: number}} Info sur les jumelles
+ */
+const detectTwinLines = (line) => {
+  const prs = getPurchaseRequests(line);
+  if (prs.length === 0) {
+    return { hasTwin: false, twinCount: 0, totalLines: 0 };
+  }
+
+  // Pour chaque DA, vérifier combien de supplier_order_line_ids elle a
+  let maxTotalLines = 0;
+  let hasTwin = false;
+
+  prs.forEach((pr) => {
+    const prObj = getPurchaseRequest(pr);
+    if (!prObj) return;
+    
+    // Récupérer tous les supplier_order_line_ids de cette DA
+    let supplierOrderLineIds = prObj.supplier_order_line_ids || [];
+    
+    // Si c'est un array d'objets avec purchase_request_id nested, extraire la vraie liste
+    if (supplierOrderLineIds.length > 0 && typeof supplierOrderLineIds[0] === 'object') {
+      // Prendre le premier élément et extraire son supplier_order_line_ids nested
+      const firstItem = supplierOrderLineIds[0];
+      if (firstItem.purchase_request_id && firstItem.purchase_request_id.supplier_order_line_ids) {
+        supplierOrderLineIds = firstItem.purchase_request_id.supplier_order_line_ids;
+      }
+    }
+    
+    // Compter le nombre de lignes (gérer array de strings ou d'objets)
+    const count = Array.isArray(supplierOrderLineIds) ? supplierOrderLineIds.length : 0;
+    
+    if (count > 1) {
+      hasTwin = true;
+      maxTotalLines = Math.max(maxTotalLines, count);
+    }
+  });
+
+  return { 
+    hasTwin, 
+    twinCount: hasTwin ? maxTotalLines - 1 : 0,
+    totalLines: maxTotalLines
+  };
+};
+
 const renderUrgencyBadge = (urgency) => {
   const urgencyConfig = URGENCY_LEVELS.find(u => u.value === urgency);
   if (!urgencyConfig || urgencyConfig.value === 'all') {
@@ -124,13 +183,58 @@ const renderRequesters = (prs) => {
  * @param {boolean} props.disabled - Désactiver la checkbox
  * @returns {JSX.Element}
  */
-function OrderLineRow({ line, onToggleSelected, disabled, isPooling = false }) {
+/**
+ * Composant wrapper pour une ligne avec validation des jumelles
+ */
+function OrderLineRowWithValidation({ line, onToggleSelected, disabled, isPooling, onValidationUpdate }) {
   const stock = getStock(line);
   const prs = getPurchaseRequests(line);
   const interventionInfo = getInterventionInfo(line);
   const isSelected = line.is_selected ?? line.isSelected ?? false;
   const urgency = getMaxUrgency(line) || 'normal';
+  const prCount = countPurchaseRequests(line);
+  const twinInfo = detectTwinLines(line);
+  
+  // Utiliser le hook de validation des jumelles
+  const {
+    twinLines,
+    loading: twinLoading,
+    validationErrors,
+    validationWarnings,
+    hasTwins,
+    isValid,
+  } = useTwinLinesValidation(line);
+  
+  // Utiliser une ref pour éviter les mises à jour inutiles
+  const lastValidationRef = useRef(null);
+  
+  // Propager les infos de validation au parent seulement si elles ont changé
+  useEffect(() => {
+    if (!onValidationUpdate) return;
     
+    const currentValidation = {
+      twinLines,
+      validationErrors,
+      validationWarnings,
+      hasTwins: hasTwins(),
+      isValid,
+    };
+    
+    // Comparer avec la dernière validation pour éviter les mises à jour inutiles
+    const lastValidation = lastValidationRef.current;
+    const hasChanged = !lastValidation ||
+      lastValidation.isValid !== currentValidation.isValid ||
+      lastValidation.hasTwins !== currentValidation.hasTwins ||
+      JSON.stringify(lastValidation.validationErrors) !== JSON.stringify(currentValidation.validationErrors) ||
+      JSON.stringify(lastValidation.validationWarnings) !== JSON.stringify(currentValidation.validationWarnings);
+    
+    if (hasChanged) {
+      lastValidationRef.current = currentValidation;
+      onValidationUpdate(line.id, currentValidation);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line.id, twinLines.length, validationErrors.length, validationWarnings.length, isValid]);
+  
   const handleCheckboxChange = useCallback((checked) => {
     onToggleSelected(line.id, checked);
   }, [line.id, onToggleSelected]);
@@ -175,8 +279,18 @@ function OrderLineRow({ line, onToggleSelected, disabled, isPooling = false }) {
         <Flex align="center" gap="1">
           <Package size={12} />
           <Text weight="medium">{line.quantity}</Text>
-          {prs.length > 1 && (
-            <Badge color="gray" size="1">{prs.length} DAs</Badge>
+        </Flex>
+      </Table.Cell>
+
+      <Table.Cell>
+        <Flex direction="column" gap="1">
+          <Badge color="blue" variant="soft" size="1">
+            {prCount} DA{prCount > 1 ? 's' : ''}
+          </Badge>
+          {twinInfo.hasTwin && (
+            <Badge color="amber" variant="soft" size="1" title={`Cette ligne a ${twinInfo.twinCount} jumelle(s) - ${twinInfo.totalLines} fournisseurs au total`}>
+              🔗 {twinInfo.twinCount} jumelle{twinInfo.twinCount > 1 ? 's' : ''}
+            </Badge>
           )}
         </Flex>
       </Table.Cell>
@@ -209,7 +323,7 @@ function OrderLineRow({ line, onToggleSelected, disabled, isPooling = false }) {
   );
 }
 
-OrderLineRow.propTypes = {
+OrderLineRowWithValidation.propTypes = {
   line: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     quantity: PropTypes.number,
@@ -225,6 +339,7 @@ OrderLineRow.propTypes = {
   onToggleSelected: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   isPooling: PropTypes.bool,
+  onValidationUpdate: PropTypes.func,
 };
 
 /**
@@ -248,6 +363,8 @@ export default function OrderLineTable({
   selectionState = {},
   onToggleItemSelection = () => {},
   canModifyItem = () => true,
+  twinValidationsByLine = {},
+  onTwinValidationUpdate = () => {},
 }) {
   // Dedup lines by id to avoid double display when backend returns duplicates
   const uniqueLines = Array.from(new Map(orderLines.map((l) => [l.id, l])).values());
@@ -257,10 +374,43 @@ export default function OrderLineTable({
   const isCommandeOrClosed = ['ORDERED', 'CLOSED'].includes(normalizedStatus);
   const [updating, setUpdating] = useState(false);
 
+  // Callback pour recevoir les mises à jour de validation de chaque ligne
+  const handleValidationUpdate = useCallback((lineId, validation) => {
+    onTwinValidationUpdate(prev => ({
+      ...prev,
+      [lineId]: validation
+    }));
+  }, [onTwinValidationUpdate]);
+
   // Debug: log du statut pour vérifier
   useEffect(() => {
     console.log('[OrderLineTable] Order status:', order.status, 'normalizedStatus:', normalizedStatus, 'isLocked:', isLocked);
   }, [order.status, normalizedStatus, isLocked]);
+
+  // Calculer les alertes globales pour toutes les lignes
+  const globalValidationAlerts = useMemo(() => {
+    const linesWithErrors = [];
+    const linesWithWarnings = [];
+    
+    uniqueLines.forEach(line => {
+      const validation = twinValidationsByLine[line.id];
+      if (!validation || !validation.hasTwins) return;
+      
+      if (validation.validationErrors && validation.validationErrors.length > 0) {
+        linesWithErrors.push({
+          line,
+          ...validation
+        });
+      } else if (validation.validationWarnings && validation.validationWarnings.length > 0) {
+        linesWithWarnings.push({
+          line,
+          ...validation
+        });
+      }
+    });
+    
+    return { linesWithErrors, linesWithWarnings };
+  }, [uniqueLines, twinValidationsByLine]);
 
   const handleToggleSelected = useCallback(async (lineId, isSelected) => {
     // En mutualisation: tous les items sont auto-sélectionnés, pas de changement possible
@@ -313,6 +463,27 @@ export default function OrderLineTable({
           </Badge>
         )}
       </Flex>
+      
+      {/* Afficher les alertes de validation globales */}
+      {globalValidationAlerts.linesWithErrors.length > 0 && (
+        <TwinLinesValidationAlert
+          currentLine={globalValidationAlerts.linesWithErrors[0]?.line}
+          twinLines={globalValidationAlerts.linesWithErrors[0]?.twinLines || []}
+          validationErrors={globalValidationAlerts.linesWithErrors[0]?.validationErrors || []}
+          validationWarnings={[]}
+          loading={false}
+        />
+      )}
+      
+      {globalValidationAlerts.linesWithWarnings.length > 0 && globalValidationAlerts.linesWithErrors.length === 0 && (
+        <TwinLinesValidationAlert
+          currentLine={globalValidationAlerts.linesWithWarnings[0]?.line}
+          twinLines={globalValidationAlerts.linesWithWarnings[0]?.twinLines || []}
+          validationErrors={[]}
+          validationWarnings={globalValidationAlerts.linesWithWarnings[0]?.validationWarnings || []}
+          loading={false}
+        />
+      )}
 
       <Table.Root variant="surface" size="1">
         <Table.Header style={{ position: 'sticky', top: 0, background: 'var(--gray-1)', zIndex: 1 }}>
@@ -322,6 +493,7 @@ export default function OrderLineTable({
             <Table.ColumnHeaderCell>Réf.</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Réf. fournisseur</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Qté</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>DA / Jumelles</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Urgence</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Intervention</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Demandeur</Table.ColumnHeaderCell>
@@ -330,12 +502,13 @@ export default function OrderLineTable({
 
         <Table.Body>
           {uniqueLines.map((line) => (
-            <OrderLineRow 
+            <OrderLineRowWithValidation
               key={line.id} 
               line={line} 
               onToggleSelected={handleToggleSelected}
               disabled={isCommandeOrClosed || updating}
               isPooling={isPooling}
+              onValidationUpdate={handleValidationUpdate}
             />
           ))}
         </Table.Body>
@@ -361,4 +534,6 @@ OrderLineTable.propTypes = {
   selectionState: PropTypes.object,
   onToggleItemSelection: PropTypes.func,
   canModifyItem: PropTypes.func,
+  twinValidationsByLine: PropTypes.object,
+  onTwinValidationUpdate: PropTypes.func,
 };

@@ -38,7 +38,7 @@ const TEXT_CENTER_STYLE = { textAlign: "center" };
 
 /**
  * Rend l'icône selon son type (string emoji ou composant React)
- * @param {string|React.ReactElement} icon - Icône à afficher
+ * @param {string|React.ReactElement|React.ComponentType} icon - Icône à afficher
  * @returns {JSX.Element} Élément icône stylisé
  */
 function IconDisplay({ icon }) {
@@ -46,6 +46,17 @@ function IconDisplay({ icon }) {
     return <Text size="9" style={ICON_STYLE}>{icon}</Text>;
   }
 
+  // Si c'est un composant React (fonction/classe), l'instancier
+  if (typeof icon === "function") {
+    const IconComponent = icon;
+    return (
+      <Box style={ICON_STYLE}>
+        <IconComponent size={48} />
+      </Box>
+    );
+  }
+
+  // Si c'est déjà un élément React instancié
   return (
     <Box style={ICON_STYLE}>
       {isValidElement(icon) ? icon : null}
@@ -54,7 +65,11 @@ function IconDisplay({ icon }) {
 }
 
 IconDisplay.propTypes = {
-  icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
+  icon: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element,
+    PropTypes.elementType
+  ]),
 };
 
 /**

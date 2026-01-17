@@ -43,6 +43,7 @@ import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
+import useTwinLinesValidation from "@/hooks/useTwinLinesValidation";
 import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 import {
   canSelectItem,
@@ -51,6 +52,7 @@ import {
   getInitialItemSelection,
   normalizeBasketStatus,
 } from "@/lib/purchasing/basketItemRules";
+import TwinLinesValidationAlert from "@/components/purchase/orders/TwinLinesValidationAlert";
 
 const PROCUREMENT_TABS = {
   REQUESTS: "requests",
@@ -84,6 +86,9 @@ export default function Procurement() {
   
   // État de sélection des items par panier
   const [itemSelectionByBasket, setItemSelectionByBasket] = useState({});
+  
+  // État des validations de jumelles (stocke les infos par ligne)
+  const [twinValidationsByLine, setTwinValidationsByLine] = useState({});
 
   // Load manufacturers
   const [allManufacturers, setAllManufacturers] = useState([]);
@@ -690,11 +695,81 @@ export default function Procurement() {
     }));
   }, [itemSelectionByBasket, purchasing.supplierOrders]);
 
+  /**
+   * Valide les lignes jumelles d'un panier
+   * Retourne les erreurs trouvées
+   */
+  const validateBasketTwinLines = useCallback((basket) => {
+    const errors = [];
+    const warnings = [];
+    const lines = basket.lines || [];
+    
+    // Pour chaque ligne, vérifier s'il y a des problèmes de validation de jumelles
+    lines.forEach(line => {
+      const validation = twinValidationsByLine[line.id];
+      if (!validation) return;
+      
+      // Si la ligne a des jumelles et des erreurs de validation
+      if (validation.hasTwins && validation.validationErrors.length > 0) {
+        errors.push({
+          lineId: line.id,
+          stockItem: line.stock_item_id?.name || 'Article inconnu',
+          errors: validation.validationErrors
+        });
+      }
+      
+      // Collecter aussi les warnings
+      if (validation.hasTwins && validation.validationWarnings.length > 0) {
+        warnings.push({
+          lineId: line.id,
+          stockItem: line.stock_item_id?.name || 'Article inconnu',
+          warnings: validation.validationWarnings
+        });
+      }
+    });
+    
+    return { errors, warnings };
+  }, [twinValidationsByLine]);
+
   const handleBasketStatusChange = useCallback(async (basketId, newStatus) => {
     const basket = purchasing.supplierOrders.find(b => b.id === basketId);
     if (!basket) return;
 
     const currentSelection = itemSelectionByBasket[basketId] || {};
+    
+    // Valider les lignes jumelles si on passe de ASK (SENT) vers ORDERED
+    const currentStatus = normalizeBasketStatus(basket.status || '');
+    if (currentStatus === 'SENT' && newStatus === 'ORDERED') {
+      const twinValidation = validateBasketTwinLines(basket);
+      
+      if (twinValidation.errors.length > 0) {
+        const errorDetails = twinValidation.errors.map(e => 
+          `${e.stockItem}: ${e.errors.join(', ')}`
+        ).join('\n');
+        
+        setDispatchResult({
+          type: 'error',
+          message: 'Validation des jumelles échouée',
+          details: `${twinValidation.errors.length} ligne(s) avec erreurs :\n${errorDetails}`
+        });
+        setTimeout(() => setDispatchResult(null), 8000);
+        return;
+      }
+      
+      // Afficher un avertissement si des warnings existent
+      if (twinValidation.warnings.length > 0) {
+        const warningDetails = twinValidation.warnings.map(w => 
+          `${w.stockItem}: ${w.warnings.join(', ')}`
+        ).join('\n');
+        
+        setDispatchResult({
+          type: 'warning',
+          message: 'Avertissements sur les jumelles',
+          details: `${twinValidation.warnings.length} ligne(s) avec avertissements :\n${warningDetails}`
+        });
+        setTimeout(() => setDispatchResult(null), 6000);
+      }
+    }
     
     // Vérifier si la transition est possible
     const transitionResult = canTransitionBasket(
@@ -755,7 +830,7 @@ export default function Procurement() {
     } finally {
       setFormLoading(false);
     }
-  }, [itemSelectionByBasket, purchasing.supplierOrders, refreshOrders]);
+  }, [itemSelectionByBasket, purchasing.supplierOrders, refreshOrders, validateBasketTwinLines]);
 
   const handleDispatchClick = () => {
     const dispatchableCount = filteredRequests.filter(r => {
@@ -1282,6 +1357,8 @@ export default function Procurement() {
                     onToggleItemSelection={handleToggleItemSelection}
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
+                    twinValidationsByLine={twinValidationsByLine}
+                    onTwinValidationUpdate={setTwinValidationsByLine}
                   />
                 )}
               </Flex>
@@ -1329,6 +1406,8 @@ export default function Procurement() {
                     onToggleItemSelection={handleToggleItemSelection}
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
+                    twinValidationsByLine={twinValidationsByLine}
+                    onTwinValidationUpdate={setTwinValidationsByLine}
                   />
                 )}
               </Flex>
@@ -1376,6 +1455,8 @@ export default function Procurement() {
                     onToggleItemSelection={handleToggleItemSelection}
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
+                    twinValidationsByLine={twinValidationsByLine}
+                    onTwinValidationUpdate={setTwinValidationsByLine}
                   />
                 )}
               </Flex>
@@ -1423,6 +1504,8 @@ export default function Procurement() {
                     onToggleItemSelection={handleToggleItemSelection}
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
+                    twinValidationsByLine={twinValidationsByLine}
+                    onTwinValidationUpdate={setTwinValidationsByLine}
                   />
                 )}
               </Flex>

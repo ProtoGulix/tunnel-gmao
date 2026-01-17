@@ -73,7 +73,7 @@ function ActionButton({ action, onActionClick }) {
  * @component
  * @param {Object} props
  * @param {boolean} props.show - Afficher ou masquer l'alerte
- * @param {string} [props.title="⚠️ Attention requise"] - Titre de l'alerte
+ * @param {string} [props.title="Attention requise"] - Titre de l'alerte
  * @param {string} [props.message] - Message descriptif
  * @param {('warning'|'error'|'critical')} [props.severity='error'] - Niveau de sévérité
  * @param {number} [props.urgencyCount] - Nombre d'éléments urgents à afficher
@@ -116,7 +116,7 @@ function ActionButton({ action, onActionClick }) {
 export default function CriticalAlert(props) {
   const {
     show,
-    title = "⚠️ Attention requise",
+    title = "Attention requise",
     message,
     severity = "error",
     urgencyCount,

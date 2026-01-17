@@ -1,6 +1,6 @@
 import { Grid, Card, Box, Flex, Heading, Text, Badge } from "@radix-ui/themes";
 import PropTypes from "prop-types";
-import { Wrench, Clock, BarChart3, AlertCircle } from "lucide-react";
+import { Wrench, Clock, BarChart3, AlertCircle, Check } from "lucide-react";
 
 // ============================================================================
 // DTO ACCESSORS
@@ -90,9 +90,17 @@ export default function ActionStatsCards({ stats, totalAnomalies }) {
           <Badge 
             color={totalAnomalies > 0 ? "red" : "green"}
             size="1"
-            style={{ marginTop: '4px' }}
+            style={{ 
+              marginTop: '4px',
+              ...(totalAnomalies === 0 && { display: 'inline-flex', alignItems: 'center', gap: '4px' })
+            }}
           >
-            {totalAnomalies > 0 ? "À traiter" : "✓ Aucune"}
+            {totalAnomalies > 0 ? "À traiter" : (
+              <>
+                <Check size={12} />
+                Aucune
+              </>
+            )}
           </Badge>
         </Box>
       </Card>

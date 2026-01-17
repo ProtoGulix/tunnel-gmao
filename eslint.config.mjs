@@ -73,6 +73,12 @@ export default defineConfig([
           selector: 'Literal[value=/_raw/]',
           message: 'Backend-specific field "_raw" must not appear in domain code.',
         },
+        {
+          selector:
+            'Literal[value=/[\\u{1F300}-\\u{1F9FF}\\u{2600}-\\u{27BF}\\u{2B50}\\u{2705}\\u{274C}\\u{2714}\\u{26A0}\\u{2192}\\u{21BB}\\u{00B7}\\u{25C6}]/u]',
+          message:
+            'Les emojis et caractères Unicode décoratifs sont interdits dans le code. Utilisez les icônes Lucide React (import { Icon } from "lucide-react").',
+        },
       ],
     },
   },

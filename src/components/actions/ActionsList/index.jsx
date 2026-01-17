@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Box, Text } from "@radix-ui/themes";
-import { List } from "lucide-react";
+import { List, Search } from "lucide-react";
 import { AnalysisHeader } from "@/components/common/AnalysisComponents";
 import { useActionsList } from "./useActionsList";
 import ActionsListFilters from "./ActionsListFilters";
@@ -35,7 +35,7 @@ export default function ActionsList({ actions, ui }) {
   // ==================== CONFIG ====================
   
   const emptyStateConfig = ui?.emptyState || {
-    icon: "🔍",
+    icon: Search,
     title: "Aucune action trouvée",
     description: "Ajustez vos filtres pour voir les résultats"
   };

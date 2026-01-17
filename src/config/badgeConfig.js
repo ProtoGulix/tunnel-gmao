@@ -9,11 +9,31 @@
 /**
  * Mapping des niveaux de priorité vers leurs badges
  */
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  ArrowDown,
+  Clock,
+  Timer,
+  Check,
+  X,
+  Pause,
+  CircleDot,
+  Circle,
+  HelpCircle,
+  Zap,
+  Flame,
+  Repeat,
+  Star,
+  Diamond,
+} from 'lucide-react';
+
 export const PRIORITY_BADGES = {
-  urgent: { color: 'red', icon: '🚨', label: 'Urgent' },
-  haute: { color: 'amber', icon: '⚠️', label: 'Haute' },
-  normal: { color: 'blue', icon: '→', label: 'Normal' },
-  basse: { color: 'gray', icon: '↓', label: 'Basse' },
+  urgent: { color: 'red', icon: AlertCircle, label: 'Urgent' },
+  haute: { color: 'amber', icon: AlertTriangle, label: 'Haute' },
+  normal: { color: 'blue', icon: ArrowRight, label: 'Normal' },
+  basse: { color: 'gray', icon: ArrowDown, label: 'Basse' },
 };
 
 /**
@@ -21,7 +41,7 @@ export const PRIORITY_BADGES = {
  */
 export const DEFAULT_PRIORITY_BADGE = {
   color: 'gray',
-  icon: '?',
+  icon: HelpCircle,
   label: 'N/A',
 };
 
@@ -29,11 +49,11 @@ export const DEFAULT_PRIORITY_BADGE = {
  * Mapping des statuts d'actions vers leurs badges
  */
 export const STATUS_BADGES = {
-  'en attente': { color: 'gray', icon: '⏳', label: 'En attente' },
-  'en cours': { color: 'blue', icon: '⏱️', label: 'En cours' },
-  completée: { color: 'green', icon: '✓', label: 'Complétée' },
-  annulée: { color: 'red', icon: '✗', label: 'Annulée' },
-  suspendue: { color: 'orange', icon: '⏸', label: 'Suspendue' },
+  'en attente': { color: 'gray', icon: Clock, label: 'En attente' },
+  'en cours': { color: 'blue', icon: Timer, label: 'En cours' },
+  completée: { color: 'green', icon: Check, label: 'Complétée' },
+  annulée: { color: 'red', icon: X, label: 'Annulée' },
+  suspendue: { color: 'orange', icon: Pause, label: 'Suspendue' },
 };
 
 /**
@@ -41,7 +61,7 @@ export const STATUS_BADGES = {
  */
 export const DEFAULT_STATUS_BADGE = {
   color: 'gray',
-  icon: '?',
+  icon: HelpCircle,
   label: 'N/A',
 };
 
@@ -49,9 +69,9 @@ export const DEFAULT_STATUS_BADGE = {
  * Mapping des niveaux de sévérité vers leurs badges
  */
 export const SEVERITY_BADGES = {
-  high: { color: 'red', icon: '🔴', label: 'Haute', textColor: 'tomato' },
-  medium: { color: 'amber', icon: '🟠', label: 'Moyenne', textColor: 'amber' },
-  low: { color: 'amber', icon: '🟡', label: 'Basse', textColor: 'amber' },
+  high: { color: 'red', icon: CircleDot, label: 'Haute', textColor: 'tomato' },
+  medium: { color: 'amber', icon: CircleDot, label: 'Moyenne', textColor: 'amber' },
+  low: { color: 'amber', icon: Circle, label: 'Basse', textColor: 'amber' },
 };
 
 /**
@@ -59,7 +79,7 @@ export const SEVERITY_BADGES = {
  */
 export const DEFAULT_SEVERITY_BADGE = {
   color: 'gray',
-  icon: '⚪',
+  icon: Circle,
   label: 'N/A',
   textColor: 'gray',
 };
@@ -72,7 +92,7 @@ export const COMPLEXITY_THRESHOLDS = [
     max: 2,
     badge: {
       color: 'green',
-      icon: '✓',
+      icon: Check,
       label: 'Simple',
       description: 'Tâche facile et rapide',
     },
@@ -81,7 +101,7 @@ export const COMPLEXITY_THRESHOLDS = [
     max: 4,
     badge: {
       color: 'blue',
-      icon: '◆',
+      icon: Diamond,
       label: 'Facile',
       description: 'Tâche standard',
     },
@@ -90,7 +110,7 @@ export const COMPLEXITY_THRESHOLDS = [
     max: 6,
     badge: {
       color: 'amber',
-      icon: '◆◆',
+      icon: Diamond,
       label: 'Moyen',
       description: "Requiert de l'expérience",
     },
@@ -99,7 +119,7 @@ export const COMPLEXITY_THRESHOLDS = [
     max: 8,
     badge: {
       color: 'red',
-      icon: '◆◆◆',
+      icon: Diamond,
       label: 'Difficile',
       description: 'Tâche complexe',
     },
@@ -111,7 +131,7 @@ export const COMPLEXITY_THRESHOLDS = [
  */
 export const MAX_COMPLEXITY_BADGE = {
   color: 'crimson',
-  icon: '⚡',
+  icon: Zap,
   label: 'Très difficile',
   description: 'Tâche très complexe ou dangereuse',
 };
@@ -124,7 +144,7 @@ export const LOAD_PRIORITY_BADGES = [
     rank: 0,
     badge: {
       color: 'red',
-      icon: '🔥',
+      icon: Flame,
       label: 'Critique',
       description: 'Charge de travail très élevée',
     },
@@ -133,7 +153,7 @@ export const LOAD_PRIORITY_BADGES = [
     rank: 1,
     badge: {
       color: 'amber',
-      icon: '⚠️',
+      icon: AlertTriangle,
       label: 'Élevée',
       description: 'Charge importante à surveiller',
     },
@@ -142,7 +162,7 @@ export const LOAD_PRIORITY_BADGES = [
     rank: 2,
     badge: {
       color: 'amber',
-      icon: '⚡',
+      icon: Zap,
       label: 'Haute',
       description: 'Charge significative',
     },
@@ -151,7 +171,7 @@ export const LOAD_PRIORITY_BADGES = [
     maxRank: 4,
     badge: {
       color: 'blue',
-      icon: '→',
+      icon: ArrowRight,
       label: 'Moyenne',
       description: 'Charge modérée',
     },
@@ -163,7 +183,7 @@ export const LOAD_PRIORITY_BADGES = [
  */
 export const LOW_LOAD_BADGE = {
   color: 'gray',
-  icon: '·',
+  icon: Circle,
   label: 'Faible',
   description: 'Charge réduite',
 };
@@ -176,7 +196,7 @@ export const RECURRENCE_BADGES = [
     rank: 0,
     badge: {
       color: 'red',
-      icon: '🔁',
+      icon: Repeat,
       label: 'Très récurrent',
       description: 'Intervention la plus fréquente',
     },
@@ -185,7 +205,7 @@ export const RECURRENCE_BADGES = [
     rank: 1,
     badge: {
       color: 'amber',
-      icon: '🔄',
+      icon: Repeat,
       label: 'Récurrent',
       description: 'Intervention fréquente',
     },
@@ -194,7 +214,7 @@ export const RECURRENCE_BADGES = [
     rank: 2,
     badge: {
       color: 'amber',
-      icon: '↻',
+      icon: Repeat,
       label: 'Régulier',
       description: 'Intervention régulière',
     },
@@ -203,7 +223,7 @@ export const RECURRENCE_BADGES = [
     maxRank: 4,
     badge: {
       color: 'blue',
-      icon: '→',
+      icon: ArrowRight,
       label: 'Occasionnel',
       description: 'Intervention occasionnelle',
     },
@@ -215,7 +235,7 @@ export const RECURRENCE_BADGES = [
  */
 export const RARE_RECURRENCE_BADGE = {
   color: 'gray',
-  icon: '·',
+  icon: Circle,
   label: 'Rare',
   description: 'Intervention rare',
 };
@@ -229,7 +249,7 @@ export const PRODUCTIVITY_THRESHOLDS = [
     badge: {
       color: 'green',
       label: 'Excellent',
-      icon: '⭐',
+      icon: Star,
     },
   },
   {
@@ -237,7 +257,7 @@ export const PRODUCTIVITY_THRESHOLDS = [
     badge: {
       color: 'blue',
       label: 'Bon',
-      icon: '✓',
+      icon: Check,
     },
   },
   {
@@ -245,7 +265,7 @@ export const PRODUCTIVITY_THRESHOLDS = [
     badge: {
       color: 'orange',
       label: 'Moyen',
-      icon: '→',
+      icon: ArrowRight,
     },
   },
 ];
@@ -256,5 +276,5 @@ export const PRODUCTIVITY_THRESHOLDS = [
 export const LOW_PRODUCTIVITY_BADGE = {
   color: 'red',
   label: 'Faible',
-  icon: '⚠️',
+  icon: AlertTriangle,
 };

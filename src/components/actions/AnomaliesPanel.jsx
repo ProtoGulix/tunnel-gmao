@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge, Tabs } from "@radix-ui/themes";
 
 // 3. Icons
-import { Zap, CircleCheck } from "lucide-react";
+import { Zap, CircleCheck, AlertTriangle } from "lucide-react";
 
 // 4. Custom Components
 import { AnalysisHeader, AdviceCallout } from "@/components/common/AnalysisComponents";
@@ -138,7 +138,7 @@ export default function AnomaliesPanel({ anomalies }) {
                   type="warnings"
                   title={`Type ${tab.typeLabel} : ${tab.label}`}
                   items={[tab.description]}
-                  customConfig={{ color: tab.color, icon: '⚠️' }}
+                  customConfig={{ color: tab.color, icon: AlertTriangle }}
                 />
                 
                 {anomalyCount === 0 ? (

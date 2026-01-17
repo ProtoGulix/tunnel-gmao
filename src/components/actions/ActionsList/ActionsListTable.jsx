@@ -79,6 +79,7 @@ function ActionTableRow({ action }) {
   // Extraction des données
   const complexity = getActionComplexityScore(action);
   const complexityBadge = getComplexityBadge(complexity);
+  const ComplexityIcon = complexityBadge.icon;
   const subcategory = action.action_subcategory ?? action.subcategory;
   const categoryColor = getCategoryColor(subcategory);
   const timeSpent = getActionTimeSpent(action);
@@ -162,8 +163,9 @@ function ActionTableRow({ action }) {
 
       {/* Complexité */}
       <Table.Cell style={{ textAlign: 'center' }}>
-        <Badge color={complexityBadge.color} size="1">
-          {complexityBadge.icon} {complexity}/10
+        <Badge color={complexityBadge.color} size="1" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <ComplexityIcon size={12} />
+          {complexity}/10
         </Badge>
       </Table.Cell>
 

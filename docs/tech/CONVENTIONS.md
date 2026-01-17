@@ -148,6 +148,60 @@ import Button from '../../../../components/Button';
 import Button from '@/components/ui/Button';
 ```
 
+### 2.3 Interdiction des Emojis (MANDATORY)
+
+**Règle absolue** : Aucun emoji dans le code source.
+
+```javascript
+// ❌ INTERDIT : Emojis dans le code
+const message = '✅ Validation réussie';
+const error = '❌ Erreur critique';
+return <Text>📦 Article : {name}</Text>;
+
+// ✅ AUTORISÉ : Icônes Lucide React uniquement
+import { CheckCircle2, AlertTriangle, Package } from 'lucide-react';
+
+const message = 'Validation réussie';
+const error = 'Erreur critique';
+return (
+  <Flex align="center" gap="2">
+    <Package size={16} />
+    <Text>Article : {name}</Text>
+  </Flex>
+);
+```
+
+**Pourquoi cette règle ?**
+
+- Cohérence visuelle avec le design system
+- Contrôle total sur la taille et la couleur des icônes
+- Accessibilité garantie (aria-label, screen readers)
+- Rendu uniforme sur tous les navigateurs et OS
+- Code professionnel et maintenable
+
+**Icônes Lucide recommandées par contexte :**
+
+| Contexte      | Icône Lucide               | Usage                    |
+| ------------- | -------------------------- | ------------------------ |
+| Succès        | `CheckCircle2`, `Check`    | Validation, confirmation |
+| Erreur        | `AlertTriangle`, `XCircle` | Erreurs, échecs          |
+| Avertissement | `AlertTriangle`, `Info`    | Warnings, attention      |
+| Information   | `Info`, `HelpCircle`       | Infos, aide              |
+| Article/Stock | `Package`, `Box`           | Produits, inventaire     |
+| Document      | `FileText`, `File`         | Documents, fichiers      |
+| Ajout         | `Plus`, `PlusCircle`       | Création, ajout          |
+| Suppression   | `Trash2`, `X`              | Suppression              |
+| Édition       | `Edit2`, `Edit3`           | Modification             |
+| Recherche     | `Search`                   | Recherche, filtres       |
+| Paramètres    | `Settings`, `Sliders`      | Configuration            |
+| Utilisateur   | `User`, `Users`            | Profils, équipes         |
+
+**Application de la règle :**
+
+- ESLint : Ajouter une règle custom pour détecter les emojis
+- Code review : Rejeter tout PR contenant des emojis
+- Migration : Remplacer progressivement les emojis existants
+
 ---
 
 ## 3. Naming Conventions
@@ -197,6 +251,91 @@ function InterventionCard({
   return ...;
 }
 ```
+
+### 3.4 Style de Code Naturel (MANDATORY)
+
+**Objectif** : Écrire du code qui semble écrit par un développeur expérimenté, pas généré par l'IA.
+
+#### 3.4.1 Éviter les Patterns "IA"
+
+```javascript
+// ❌ MAUVAIS : Commentaires robotiques et sur-documentés
+/**
+ * This function handles the click event
+ * @param {Event} e - The click event object
+ * @returns {void} Nothing is returned
+ */
+const handleClick = (e) => {
+  // Prevent the default behavior of the event
+  e.preventDefault();
+  // Update the state with the new value
+  setState(newValue);
+};
+
+// ✅ BON : Commentaires concis et pertinents
+const handleClick = (e) => {
+  e.preventDefault();
+  setState(newValue);
+};
+```
+
+#### 3.4.2 Nommage Authentique
+
+```javascript
+// ❌ MAUVAIS : Noms génériques et verbeux
+const handleButtonClickEvent = () => {};
+const processDataAndReturnResult = () => {};
+const isUserCurrentlyAuthenticated = false;
+
+// ✅ BON : Noms naturels et directs
+const handleSave = () => {};
+const processData = () => {};
+const isAuthenticated = false;
+```
+
+#### 3.4.3 Structure de Code Pragmatique
+
+```javascript
+// ❌ MAUVAIS : Sur-ingénierie
+const DataProcessor = {
+  process: (data) => {
+    return DataProcessor.validate(data)
+      ? DataProcessor.transform(data)
+      : DataProcessor.handleError();
+  },
+  validate: (data) => data !== null,
+  transform: (data) => data.map((x) => x.value),
+  handleError: () => null,
+};
+
+// ✅ BON : Simple et direct
+const processData = (data) => {
+  if (!data) return null;
+  return data.map((x) => x.value);
+};
+```
+
+#### 3.4.4 Gestion d'Erreurs Réaliste
+
+```javascript
+// ❌ MAUVAIS : Messages trop formels
+throw new Error('An unexpected error has occurred while processing the request');
+setError('The operation could not be completed successfully');
+
+// ✅ BON : Messages directs
+throw new Error('Impossible de traiter la demande');
+setError("Échec de l'opération");
+```
+
+#### 3.4.5 Checklist Code Naturel
+
+- [ ] Pas de commentaires évidents ("// Import React", "// Return JSX")
+- [ ] Variables nommées de façon concise
+- [ ] Pas de sur-découpage en micro-fonctions
+- [ ] Messages d'erreur directs et contextuels
+- [ ] Pas de patterns répétitifs (copier-coller détectable)
+- [ ] Code idiomatique JavaScript/React
+- [ ] Utilisation naturelle des hooks (pas d'enchaînements artificiels)
 
 ---
 
@@ -950,33 +1089,28 @@ export default function MyPanel() {
 #### 7.2.3 Règles d'UX/UI
 
 1. **Couleur du Panel:**
-
    - Utiliser `background: "var(--blue-2)"` pour fond léger
    - Utiliser `border: "1px solid var(--blue-6)"` pour bordure
    - Icônes et accents: `var(--blue-9)` pour cohérence visuelle
    - Cette couleur bleue est utilisée pour tous les formulaires (ajout et édition)
 
 2. **Positionnement des Suggestions:**
-
    - `position: "absolute"` + `bottom: "100%"` pour suggestions au-dessus du champ
    - `zIndex: 10000` pour surpasser autres éléments
    - `maxHeight: "220px"` + `overflowY: "auto"` pour listes longues
    - `boxShadow: "0 4px 6px rgba(0,0,0,0.1)"` pour profondeur
 
 3. **Interaction Suggestions:**
-
    - `onMouseDown` au lieu de `onClick` (empêche le blur de TextField)
    - `e.preventDefault()` pour garder le focus dans le champ
    - `setTimeout(..., 200)` au `onBlur` pour délai de fermeture
 
 4. **Feedback Utilisateur:**
-
    - Message ✓ vert si nouvelle valeur (n'existe pas en suggestions)
    - Message gris si suggestions vides mais champ non vide (ambiguïté)
    - Désactiver Enregistrer si données invalides
 
 5. **Responsive:**
-
    - `flex: "1"` + `minWidth: "200px"` pour champs flexibles
    - `gap="2" wrap="wrap"` pour reflow mobile
    - `align="end"` pour aligner boutons sur ligne des champs
@@ -1105,25 +1239,21 @@ export default function EntityForm({ initialState, metadata, onCancel, onSubmit 
 #### 7.3.2 Règles d'Esthétique
 
 1. **Couleur de la Card :**
-
    - **Standard** : `var(--blue-2)` + border `var(--blue-6)` + icône/bouton bleu
    - Utilisé pour tous les formulaires (création et édition)
    - **Erreur/Critique** : `var(--red-2)` + border `var(--red-6)` (cas exceptionnels uniquement)
 
 2. **En-tête :**
-
    - Icône de contexte (Plus pour création, Edit2 pour édition) size={20}
    - Titre explicite : "Nouvelle [entité]" / "Modifier [entité]"
    - Text size="3" weight="bold"
 
 3. **Erreurs de Validation :**
-
    - Box séparé avec fond `var(--red-3)` et border `var(--red-7)`
    - Liste à puces avec bullets "•"
    - Affiché conditionnellement (`{errors.length > 0 && ...}`)
 
 4. **Boutons :**
-
    - **Position** : `justify="end"` (alignés à droite)
    - **Ordre** : Annuler (gauche) + Action principale (droite)
    - **Annuler** : `variant="soft"` `color="gray"` `size="2"`
@@ -1134,7 +1264,6 @@ export default function EntityForm({ initialState, metadata, onCancel, onSubmit 
    - **Size** : `size="2"` pour tous les boutons (cohérence)
 
 5. **Spacing :**
-
    - `gap="3"` pour séparation entre sections
    - `gap="2"` pour boutons
 
@@ -1565,85 +1694,94 @@ console.log(userData); // Sécurité !
 
 ---
 
-### 14.3 Feedback Utilisateur (UI) — Interdiction de `alert()`
+### 14.3 Système de Notification Unif
 
-- MANDATORY: Ne jamais utiliser `window.alert()`, `window.confirm()` ou `window.prompt()` dans l’application.
-- Intégrer toutes les erreurs et confirmations dans l’interface utilisateur.
-- Objectifs: non bloquant, accessible, contextualisé, et cohérent avec le design system.
+ié (MANDATORY)
 
-Recommandations pratiques:
+#### 14.3.1 Interdiction de `alert()` / `confirm()` / `prompt()`
 
-- Erreurs de champ: afficher le message à proximité du champ, avec état visuel (couleur, bordure) et `aria-describedby`.
-- Erreur globale de formulaire: bannière/boîte d’erreur au-dessus du formulaire (avec `aria-live="polite"`).
-- Notifications non bloquantes: utiliser une bannière/zone dédiée; éviter les modales sauf confirmation critique.
+**Règle absolue** : Ne jamais utiliser les dialogues natifs du navigateur.
 
-Exemple — Remplacer `alert()` par un message d’erreur intégré:
+```javascript
+// ❌ INTERDIT
+window.alert('Opération réussie');
+if (window.confirm('Supprimer ?')) { ... }
+const name = window.prompt('Nom :');
 
-```jsx
-import React, { useState } from 'react';
-import { Box, Text, Button } from '@radix-ui/themes';
-
-function ExampleForm({ onSubmit }) {
-  const [value, setValue] = useState('');
-  const [formError, setFormError] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!value.trim()) {
-      // ❌ Ne pas faire: alert('Champ requis')
-      // ✅ Faire: message d’erreur dans l’UI
-      setFormError('Le champ est requis.');
-      return;
-    }
-
-    try {
-      await onSubmit({ value });
-    } catch (err) {
-      setFormError('Une erreur est survenue. Veuillez réessayer.');
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} aria-live="polite">
-      {formError && (
-        <Box
-          mb="2"
-          style={{
-            background: 'var(--red-3)',
-            border: '1px solid var(--red-7)',
-            borderRadius: 6,
-            padding: 12,
-          }}
-        >
-          <Text color="red" weight="medium">
-            {formError}
-          </Text>
-        </Box>
-      )}
-
-      <input
-        aria-invalid={Boolean(formError)}
-        aria-describedby={formError ? 'field-error' : undefined}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
-      {formError && (
-        <Text id="field-error" size="1" color="red" style={{ display: 'block', marginTop: 4 }}>
-          {formError}
-        </Text>
-      )}
-
-      <Button type="submit">Envoyer</Button>
-    </form>
-  );
-}
+// ✅ AUTORISÉ : Composants React intégrés
+<SuccessNotification message="Opération réussie" />
+<ConfirmDialog onConfirm={handleDelete}>Supprimer ?</ConfirmDialog>
+<InputDialog onSubmit={handleSubmit} label="Nom :" />
 ```
+
+**Objectifs** : Notifications non bloquantes, accessibles, contextualisées et cohérentes avec le design system.
+
+#### 14.3.2 Types de Notifications Standardisées
+
+**1. Erreurs Inline (validation de formulaire)**
+
+```javascript
+<Box>
+  <Text as="label" weight="bold" size="2">
+    Email *
+  </Text>
+  <TextField.Root
+    value={email}
+    onChange={handleEmailChange}
+    aria-invalid={!!errors.email}
+    aria-describedby="email-error"
+    style={{ borderColor: errors.email ? 'var(--red-7)' : undefined }}
+  />
+  {errors.email && (
+    <Flex align="center" gap="1" mt="1">
+      <AlertTriangle size={12} color="var(--red-9)" />
+      <Text id="email-error" size="1" color="red">
+        {errors.email}
+      </Text>
+    </Flex>
+  )}
+</Box>
+```
+
+**2. Erreurs Globales / Avertissements / Info / Succès**
+
+```javascript
+// Erreur
+<Callout.Root color="red" size="2" mb="3">
+  <Callout.Icon>
+    <AlertTriangle size={18} />
+  </Callout.Icon>
+  <Callout.Text>
+    <Text weight="bold" size="2" mb="1" as="div">
+      Erreur
+    </Text>
+    <Text size="2">Message d'erreur</Text>
+  </Callout.Text>
+</Callout.Root>
+
+// Avertissement (amber), Info (blue), Succès (green) : même structure
+```
+
+#### 14.3.3 Palette de Couleurs Standardisée
+
+| Type              | Couleur | Fond             | Texte            | Icône                      |
+| ----------------- | ------- | ---------------- | ---------------- | -------------------------- |
+| **Erreur**        | `red`   | `var(--red-3)`   | `color="red"`    | `AlertTriangle`, `XCircle` |
+| **Avertissement** | `amber` | `var(--amber-3)` | `color="orange"` | `AlertTriangle`            |
+| **Succès**        | `green` | `var(--green-3)` | `color="green"`  | `CheckCircle2`, `Check`    |
+| **Info**          | `blue`  | `var(--blue-3)`  | `color="blue"`   | `Info`, `HelpCircle`       |
+
+#### 14.3.4 Checklist
+
+- [ ] Aucun `alert()`, `confirm()`, `prompt()`
+- [ ] Icônes Lucide React uniquement (pas d'emojis)
+- [ ] Couleurs Radix UI standardisées
+- [ ] `aria-live="polite"` pour notifications dynamiques
+- [ ] `aria-describedby` pour erreurs de champs
 
 Linting:
 
-- La règle ESLint `no-alert` est activée (au minimum en warning). En cas de besoin, nous pourrons la passer en `error` pour l’appliquer strictement.
+- La règle ESLint `no-alert` est activée.
 
 ---
 

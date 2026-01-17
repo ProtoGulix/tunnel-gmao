@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Box, Flex, Text, Table, Badge } from "@radix-ui/themes";
 import PropTypes from "prop-types";
-import { Repeat2, TrendingUp } from "lucide-react";
+import { Repeat2, TrendingUp, CircleDot, AlertTriangle, Check } from "lucide-react";
 import { AnalysisHeader, AdviceCallout } from "../common/AnalysisComponents";
 import EmptyState from "../common/EmptyState";
 
@@ -99,16 +99,19 @@ export default function TopInterventionsTable({
             const recurrenceScore = getRecurrenceScore(interv);
 
             // Déterminer le statut
-            let statusBadge, statusColor;
+            let statusBadge, statusColor, StatusIcon;
             if (index < 5) {
-              statusBadge = "🔴 Critique";
+              statusBadge = "Critique";
               statusColor = "red";
+              StatusIcon = CircleDot;
             } else if (index < 10) {
-              statusBadge = "⚠️ Attention";
+              statusBadge = "Attention";
               statusColor = "orange";
+              StatusIcon = AlertTriangle;
             } else {
-              statusBadge = "✓ Normal";
+              statusBadge = "Normal";
               statusColor = "green";
+              StatusIcon = Check;
             }
 
             return (
@@ -172,7 +175,14 @@ export default function TopInterventionsTable({
                   </Text>
                 </Table.Cell>
                 <Table.Cell style={{ textAlign: "center" }}>
-                  <Badge color={statusColor} size="1">{statusBadge}</Badge>
+                  <Badge 
+                    color={statusColor} 
+                    size="1"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <StatusIcon size={12} />
+                    {statusBadge}
+                  </Badge>
                 </Table.Cell>
               </Table.Row>
             );
@@ -196,7 +206,7 @@ export default function TopInterventionsTable({
           type="recommendations"
           title="Recommandations :"
           items={[
-            "Statut critique (🔴) : Planifier une maintenance préventive approfondie",
+            "Statut critique : Planifier une maintenance préventive approfondie",
             "Score élevé : Intervention consommant beaucoup de ressources, prioriser l'optimisation",
             "Haute diversité : Problème systémique possible, analyser les causes racines"
           ]}

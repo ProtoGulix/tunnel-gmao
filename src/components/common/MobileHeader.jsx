@@ -7,6 +7,7 @@
  */
 
 import PropTypes from 'prop-types';
+import { X, Menu } from 'lucide-react';
 import BrandLogo from '@/components/common/BrandLogo';
 
 /**
@@ -52,7 +53,7 @@ export default function MobileHeader({ menuOpen, onToggle, colors }) {
         }}
         aria-label='Toggle menu'
       >
-        {menuOpen ? '✕' : '☰'}
+        {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
       
       <BrandLogo size="mobile" showTitle={true} />

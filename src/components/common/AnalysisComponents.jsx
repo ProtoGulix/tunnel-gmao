@@ -1,6 +1,7 @@
 import { isValidElement } from "react";
 import PropTypes from "prop-types";
 import { Card, Box, Flex, Heading, Text, Callout, Badge, Tooltip } from "@radix-ui/themes";
+import { BarChart3, Lightbulb, AlertTriangle, Info as InfoIcon } from "lucide-react";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -175,17 +176,19 @@ AnalysisHeader.propTypes = {
  */
 export function AdviceCallout({ type = 'indicators', title, items, customConfig = {} }) {
   const config = {
-    indicators: { color: 'orange', icon: '📊' },
-    recommendations: { color: 'blue', icon: '💡' },
-    warnings: { color: 'red', icon: '⚠️' },
-    info: { color: 'gray', icon: 'ℹ️' },
+    indicators: { color: 'orange', icon: BarChart3 },
+    recommendations: { color: 'blue', icon: Lightbulb },
+    warnings: { color: 'red', icon: AlertTriangle },
+    info: { color: 'gray', icon: InfoIcon },
     custom: customConfig
   };
   const { color, icon } = config[type] || config.indicators;
 
+  const IconComponent = isValidElement(icon) ? () => icon : icon;
+  
   return (
-    <Callout.Root color={color} size="1">
-      <Callout.Icon>{icon}</Callout.Icon>
+    <Callout.Root color={color} size="2">
+      <Callout.Icon>{typeof icon === 'function' || typeof icon === 'object' ? <IconComponent size={18} /> : icon}</Callout.Icon>
       <Box style={{ flex: 1 }}>
         <Text weight="bold" size="2" style={{ display: 'block', marginBottom: '8px' }}>
           {title}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { Text, Separator } from "@radix-ui/themes";
+import { Text, Separator, Flex } from "@radix-ui/themes";
+import { AlertTriangle } from "lucide-react";
 import { AnomalyContainer, AnomalyHeader, SingleActionDetail } from "./AnomalyHelpers";
 
 // DTO-friendly accessors with legacy fallback
@@ -81,7 +82,12 @@ export default function AnomalyTypeC({ item }) {
       <SingleActionDetail
         item={item}
         warningColor="orange"
-        warningMessage="⚠️ Durée anormalement longue pour cette catégorie"
+        warningMessage={
+          <Flex align="center" gap="1">
+            <AlertTriangle size={14} />
+            <span>Durée anormalement longue pour cette catégorie</span>
+          </Flex>
+        }
       />
     </AnomalyContainer>
   );

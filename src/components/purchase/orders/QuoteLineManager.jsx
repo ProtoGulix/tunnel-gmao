@@ -15,6 +15,7 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Check } from 'lucide-react';
 import {
   Flex,
   Text,
@@ -170,7 +171,10 @@ export default function QuoteLineManager({
                 variant={isCurrentlySelected ? 'solid' : 'outline'}
                 style={{ width: '100%' }}
               >
-                {isCurrentlySelected ? '✓ Sélectionné' : 'Sélectionner ce fournisseur'}
+                <Flex align="center" gap="1">
+                  {isCurrentlySelected && <Check size={14} />}
+                  <Text>{isCurrentlySelected ? 'Sélectionné' : 'Sélectionner ce fournisseur'}</Text>
+                </Flex>
               </Button>
             </Box>
           )}

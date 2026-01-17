@@ -222,7 +222,7 @@ const fetchServiceTimeBreakdown = async (startDate, endDate) => {
       action.intervention?.createdAt;
 
     if (!actionDate) {
-      console.warn('⚠️ Action sans date:', action.id);
+      console.warn('Action sans date:', action.id);
       return false; // Exclure les actions sans date
     }
 
@@ -305,7 +305,7 @@ export function useServiceData(startDate, endDate) {
           setData(result);
         }
       } catch (err) {
-        console.error('❌ useServiceData - Error:', err);
+        console.error('useServiceData - Error:', err);
         if (isMounted) {
           setError(err);
         }

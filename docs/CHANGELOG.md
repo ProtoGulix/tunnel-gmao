@@ -1,15 +1,160 @@
 # Changelog
 
+## 1.7.0 - 2026-01-17 ⚠️ BREAKING CHANGES
+
+### ⚠️ Modifications de conventions requises
+
+**Migration complète Emojis → Lucide React** :
+
+- **Règle ESLint obligatoire** : Détection automatique des emojis et caractères Unicode décoratifs
+  - Pattern regex étendu : emojis standard + caractères décoratifs (→, ↻, ·, ◆)
+  - Message : "Les emojis et caractères Unicode décoratifs sont interdits dans le code. Utilisez les icônes Lucide React"
+  - Fichier : `eslint.config.mjs` ligne ~74
+- **Breaking change** : Tout code contenant des emojis sera rejeté par le linter
+- **Impact** : ~45-50 instances d'emojis/Unicode remplacées dans 13 fichiers
+
+**Modifications du schéma de données** :
+
+- Migration des configurations de badges vers composants React uniquement
+- Tous les champs `icon` dans `badgeConfig.js` sont maintenant des composants Lucide
+- Suppression des chaînes Unicode dans les configurations
+
+### Nouvelles conventions (CONVENTIONS.md)
+
+**Section 2.3 - Interdiction des Emojis (MANDATORY)** :
+
+- ❌ Interdit : Emojis dans code source (✅, ❌, 📦, etc.)
+- ✅ Autorisé : Icônes Lucide React uniquement
+- Objectifs : Cohérence visuelle, contrôle taille/couleur, accessibilité, rendu uniforme
+- Table de correspondance par contexte (Succès → CheckCircle2, Erreur → AlertTriangle, etc.)
+
+**Section 3.4 - Style de Code Naturel (MANDATORY)** :
+
+- Éviter les patterns "IA" : commentaires robotiques, noms verbeux, sur-ingénierie
+- Nommage authentique et concis
+- Code pragmatique et idiomatique
+- Messages d'erreur directs et contextuels
+- Checklist de code naturel (7 points)
+
+**Section 14.3 - Système de Notification Unifié (MANDATORY)** :
+
+- ❌ Interdit : `alert()`, `confirm()`, `prompt()` natifs
+- ✅ Autorisé : Composants React (Callout, Dialog, TextField)
+- Palette de couleurs standardisée (Erreur: red, Avertissement: amber, Succès: green, Info: blue)
+- Notifications non bloquantes et accessibles
+- Support `aria-live`, `aria-describedby`
+
+### Composants migrés (13 fichiers)
+
+**Composants actions/** :
+
+- `ActionStatsCards.jsx` : Badge "Aucune" avec Check icon + inline-flex style
+- `ActionsListTable.jsx` : ComplexityIcon extraction + Badge fix
+- `AnomaliesPanel.jsx` : CircleCheck component
+
+**Composants purchase/** :
+
+- `TwinLinesValidationAlert.jsx` : 4 badges (LineBadges function + twin list) avec Check/Circle/Clock
+- `QuoteLineManager.jsx` : Badge sélection avec Check icon
+
+**Composants common/** :
+
+- `EmptyState.jsx` : Support pour composants non instanciés (`typeof icon === "function"`)
+- `AnalysisComponents.jsx` : 4 icônes AdviceCallout (BarChart3, Lightbulb, AlertTriangle, InfoIcon)
+- `MobileHeader.jsx` : Menu toggle avec X/Menu icons
+- `CriticalAlert.jsx` : JSDoc et default prop nettoyés
+
+**Configurations** :
+
+- `badgeConfig.js` : 19 emojis + 6 Unicode → 100% Lucide React (18 icônes importées)
+  - Diamond (◆), ArrowRight (→), Circle (·), Repeat (↻)
+  - ComplexityBadges, LoadPriorityBadges, RecurrenceBadges, ProductivityThresholds
+
+**Hooks & Contexts** :
+
+- `useServiceData.js` : Console.log emojis supprimés (⚠️, ❌)
+- `CacheContext.jsx` : Console.warn emoji supprimé (🗑️)
+- `TopInterventionsTable.jsx` : Status badges avec StatusIcon (CircleDot/AlertTriangle/Check)
+
+### Corrections architecturales
+
+**Contrainte Radix UI découverte** :
+
+- Les composants `<Badge>` ne peuvent pas contenir `<Flex>` en enfant
+- Erreur : "String contains an invalid character" (DOMException)
+- Solution : `style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}`
+- Appliqué : 5 fichiers, 8 instances de badges
+
+**Gestion des icônes comme props** :
+
+- Pattern standardisé : `const Icon = badge.icon; <Icon size={12} />`
+- EmptyState.jsx : Support universel (string/element/elementType)
+- PropTypes : `PropTypes.oneOfType([PropTypes.string, PropTypes.element, PropTypes.elementType])`
+
+### Icônes Lucide déployées
+
+**18 icônes uniques utilisées** :
+
+- **Validation** : Check, CheckCircle2
+- **Erreur** : XCircle, AlertTriangle
+- **État** : Circle, CircleDot, Clock, Timer
+- **Navigation** : Menu, X, ArrowRight, ArrowDown
+- **Actions** : Search, Plus, Edit2, Pause
+- **Métier** : Package, Star, Diamond, Repeat
+- **Info** : Info/InfoIcon, BarChart3, Lightbulb, HelpCircle, Zap, Flame
+
+**Standards de taille** :
+
+- 12px : Petits badges, icônes inline
+- 14-16px : Standard inline/texte
+- 18px : Icônes callout
+- 24px : Contrôles UI (menu, boutons)
+- 48px : Icônes EmptyState
+
+### Impact développeur
+
+- ✅ ESLint bloque automatiquement les emojis/Unicode (CI/CD safe)
+- ✅ Code professionnel et maintenable
+- ✅ Accessibilité garantie (aria-label, screen readers)
+- ✅ Contrôle total sur la taille et la couleur des icônes
+- ✅ Rendu uniforme sur tous les navigateurs et OS
+- ✅ Type safety : Tous les champs `icon` sont des composants React
+- ✅ Build stable : 0 erreurs, 977.87 kB bundle
+
+### Impact utilisateur
+
+- Cohérence visuelle totale de l'interface
+- Icônes uniformes et professionnelles
+- Meilleure accessibilité (support lecteurs d'écran)
+- Affichage identique quel que soit le système d'exploitation
+
+### Migration
+
+- 13 fichiers migrés
+- ~45-50 emojis/Unicode remplacés
+- 0 violation ESLint restante
+- Tous les builds passent (977.87 kB, 25.13s)
+- Documentation complète dans CONVENTIONS.md
+
+### Notes techniques
+
+- **ESLint rule** : `no-restricted-syntax` avec pattern Unicode étendu
+- **Radix UI constraint** : Badge ne peut pas contenir Flex (DOM structure)
+- **React rendering** : Instantiation de composants vs. passage d'objets
+- **badgeConfig.js** : Migration critique (configuration exportée utilisée partout)
+
 ## 1.6.0 - 2026-01-16 ⚠️ BREAKING CHANGES
 
 ### ⚠️ Modifications de base de données requises
 
 **Relation O2M sur `supplier_order`** :
+
 - Ajout de la relation `order_lines` (O2M vers `supplier_order_line`)
 - L'alias de relation doit être configuré comme `order_lines` dans Directus
 - Champs requis : `order_lines.id`, `order_lines.urgency`
 
 **Relation M2M sur `supplier_order_line`** :
+
 - Ajout de la relation `purchase_requests` (M2M via table existante `supplier_order_line_purchase_request`)
 - L'alias de relation doit être configuré comme `purchase_requests` dans Directus
 - Champs requis : `purchase_requests.id`, `purchase_requests.purchase_request_id.id`, `purchase_requests.purchase_request_id.status`, `purchase_requests.purchase_request_id.urgency`, `purchase_requests.purchase_request_id.requested_by`, `purchase_requests.purchase_request_id.intervention_id`
@@ -20,11 +165,13 @@
 ### Calcul automatique des indicateurs de panier
 
 **Nombre de lignes** :
+
 - Calcul automatique côté serveur via `order_lines.length`
 - Suppression du préchargement complet des lignes (amélioration des performances)
 - Affichage immédiat du nombre de lignes dans la liste des paniers
 
 **Niveau d'urgence** :
+
 - Calcul du niveau d'urgence maximum du panier (high/normal/low)
 - Logique : le panier hérite du niveau d'urgence le plus élevé de ses lignes
 - Lecture directe de `supplier_order_line.urgency` (snapshot au moment du dispatch)
@@ -34,6 +181,7 @@
   - ⚪ **Faible** (gris, soft) pour "low"
 
 **Affichage** :
+
 - Suppression du badge URGENT en double dans la colonne fournisseur
 - Colonne dédiée "Urgence" avec les 3 niveaux
 - Harmonisation des couleurs entre liste des paniers et lignes détaillées
@@ -41,10 +189,12 @@
 ### Centralisation de la configuration
 
 **colorPalette.js** :
+
 - Ajout de `COLOR_USAGE.urgency` pour les niveaux d'urgence
 - Mapping des niveaux vers la palette industrielle
 
 **stockManagementConfig.js** :
+
 - Enrichissement de `URGENCY_LEVELS` avec `color` et `variant`
 - Source unique de vérité pour l'affichage des badges d'urgence
 - Réutilisable dans OrderRow et OrderLineTable
@@ -61,7 +211,6 @@
 ### Affichage de l'urgence et correction du champ unité
 
 - **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
-
   - Nouvelle colonne positionnée entre "État" et "Référence"
   - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
     - `high` : Badge orange solide "URGENT"
@@ -86,7 +235,6 @@
 ### Affichage de l'urgence et correction du champ unité
 
 - **PurchaseRequestsTable.jsx** : Ajout de la colonne "Urgence" pour les demandes d'achat
-
   - Nouvelle colonne positionnée entre "État" et "Référence"
   - Fonction `renderUrgencyBadge` : Affichage visuel cohérent de la priorité
     - `high` : Badge orange solide "URGENT"
@@ -119,7 +267,6 @@
 ### Restructuration : Paniers fournisseurs avec logique métier automatisée
 
 - **Remplacement "À préparer" → "Mutualisation"** : État métier clair avec calculs automatiques
-
   - Calcul automatique de l'urgence globale (MAX des urgences des lignes)
   - Calcul automatique de l'âge maximum (MAX des âges des lignes)
   - Détection automatique de rupture de mutualisation (ligne urgente OU ligne normale >7j)
@@ -136,20 +283,17 @@
 ### Amélioration UX : Affichage des paniers fournisseurs (OrderRow)
 
 - **Mise en évidence du fournisseur** : Mental model aligné sur "commande chez REXEL" plutôt que "commande #12345"
-
   - Nom fournisseur en gras, taille 2, ligne principale
   - N° commande en badge gris discret monospace en dessous
   - Badges URGENT (orange) et ⚠>7j (rouge) sur la ligne fournisseur
 
 - **Fusion badge statut + sélecteur** : Un seul composant avec icônes, couleurs et interaction
-
   - Select.Trigger avec `color={statusConfig.color}` pour couleur du statut
   - Icône dynamique selon le statut (FolderOpen, Send, Mail, PackageCheck, Archive, XCircle)
   - Label français visible : "Ouvert", "Envoyé (attente)", "Réponse reçue", etc.
   - Suppression de la colonne "Status" badge redondante
 
 - **Nouvelle colonne Urgence** : Remplacement de la colonne Montant par niveau d'urgence
-
   - Badge "URGENT" (orange/solid) pour paniers avec au moins une ligne urgente
   - Badge "Normal" (gris/soft) pour les autres paniers
   - Information plus pertinente pour prioriser les actions
@@ -194,7 +338,6 @@
 ### Améliorations majeures
 
 - **Performance: Chargement lazy des références fournisseurs** : Élimination du problème N+1 queries en différant le chargement des références fournisseurs à la demande
-
   - **Avant** : ~30 requêtes XHR au chargement initial de la page (1 par article visible)
   - **Après** : 0 requête au chargement initial, chargement uniquement quand l'utilisateur clique sur "Détails"
   - **PurchaseRequestsTable** : Ajout du callback `onLoadDetailsData` et des états de chargement `detailsLoadingStates`
@@ -203,7 +346,6 @@
   - Impact positif majeur sur le temps de chargement initial
 
 - **Optimisation: Relation M2O pour les données stock_item** : Utilisation des relations Directus pour charger les données en une seule requête au lieu de lookups côté client
-
   - **datasource.ts** : Expansion de `stock_item_id.id`, `stock_item_id.ref`, `stock_item_id.supplier_refs.id`
   - **mapper.ts** : Extraction des données depuis l'objet relation + comptage des supplier_refs en JS
   - **PurchaseRequestsTable** : Utilisation directe de `request.stockItemRef` et `request.stockItemSupplierRefsCount`
@@ -211,7 +353,6 @@
   - Tri et filtrage simplifiés sans dépendances sur les lookups
 
 - **Simplification: Suppression de la colonne "Fournisseur"** : Retrait de la colonne redondante dans le tableau des demandes d'achat
-
   - Information déjà visible via le badge "État" (vert si fournisseur préféré défini)
   - Réduction de la largeur du tableau pour meilleure lisibilité
   - Logique métier maintenue via `stockItemSupplierRefsCount`
@@ -225,13 +366,11 @@
 ### Corrections
 
 - **Fix: Filtrage des DA reçues** : Les demandes d'achat avec statut `received` ne sont plus chargées au démarrage
-
   - **datasource.ts** : Ajout du filtre `status: { _neq: 'received' }` sur `fetchPurchaseRequestsFromBackend`
   - Les DA reçues restent visibles dans la section "Demandes archivées" au bas du tableau
   - Amélioration de la clarté de l'affichage principal
 
 - **Fix: Logique de dispatch simplifiée** : Le dispatch vérifie uniquement que les DA ont un article lié, le backend détermine la dispatchabilité
-
   - **StockManagement.handleDispatchClick** : Suppression de la vérification frontend du fournisseur préféré
   - Le backend SQL `dispatch_purchase_requests()` gère toute la logique métier
   - Message utilisateur plus clair: "Aucune demande dispatchable" au lieu de "Aucune demande prête pour dispatch"
@@ -263,7 +402,6 @@
 ### Corrections
 
 - **Fix: Synchronisation du statut des DA lors du changement de statut panier** : Le statut des demandes d'achat est maintenant correctement mis à jour lorsqu'un panier fournisseur change de statut
-
   - **datasource.ts** : Ajout du chargement manuel des relations M2M `supplier_order_line_purchase_request`
   - **supplierOrdersHandlers.js** : Restructuration de `handleStatusChange` pour garantir la mise à jour des DA pour TOUS les changements de statut
   - **STATUS_MAPPING** : Correction du mapping OPEN → `in_progress` (au lieu de `open`)
@@ -300,7 +438,6 @@
 #### Nouveaux champs et tables
 
 - **supplier_order_line** : Ajout de 8 nouveaux champs de consultation
-
   - `quote_received` : Indique si le devis fournisseur a été reçu
   - `is_selected` : Indique le fournisseur sélectionné (un seul par référence)
   - `quote_price` : Prix du devis proposé

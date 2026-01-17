@@ -37,6 +37,9 @@ export default function SupplierOrdersTable({
   onToggleItemSelection = () => {},
   onBasketStatusChange = () => {},
   canModifyItem = () => true,
+  // Props de validation des lignes jumelles
+  twinValidationsByLine = {},
+  onTwinValidationUpdate = () => {},
 }) {
   const { showError } = useError();
   const [localOrders, setLocalOrders] = useState(orders);
@@ -268,6 +271,8 @@ export default function SupplierOrdersTable({
               selectionState={selectionState}
               onToggleItemSelection={onToggleItemSelection}
               canModifyItem={canModifyItem}
+              twinValidationsByLine={twinValidationsByLine}
+              onTwinValidationUpdate={onTwinValidationUpdate}
             />
           </ExpandableDetailsRow>
         )}
