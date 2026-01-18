@@ -2045,22 +2045,94 @@ Attendu :
 
 ---
 
-### 18.4 PATCH / MINOR / MAJOR (VERROUILLÉ)
+### 18.4 PATCH vs MINOR — Règles d'Or (BLOQUANTES)
 
-- **PATCH (X.Y.Z)**
-  - Aucun changement fonctionnel visible
-  - Stabilisation, dette ou sécurisation uniquement
+#### PATCH (X.Y.Z++) — Règle du "1 seul changement simple"
 
-- **MINOR (X.Y.0)**
-  - Nouvelle capacité utilisateur
-  - UX, règles métier, visibilité
+**Limite absolue :**
+- ✅ Impact utilisateur : **1 seule phrase claire** (max 100 caractères)
+- ✅ Aucun jargon technique (hook, callback, synchronisation, optimiste, etc.)
+- ✅ Vocabulaire utilisateur final UNIQUEMENT
+- ✅ Pas de section "Stabilisation / Dette technique" (sauf sécurité critique)
+- ✅ "Composants concernés" : ≤ 2 fichiers listés (sinon c'est un MINOR)
+- ✅ "Points de vigilance" : uniquement si l'utilisateur doit agir
 
-- **MAJOR (X.0.0)**
-  - Rupture de modèle mental
-  - Migration requise
-  - Changement de conventions fondamentales
+**Template PATCH (copier-coller) :**
 
-Une version = **un seul type**.
+```markdown
+## X.Y.Z - YYYY-MM-DD
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- [UNE PHRASE SIMPLE décrivant ce qui change pour l'utilisateur]
+```
+
+**Exemples valides :**
+
+```markdown
+## 1.7.2 - 2026-01-18
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Les demandes d'achat créées s'affichent immédiatement
+```
+
+```markdown
+## 1.5.3 - 2026-01-15
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Correction du calcul des totaux dans les paniers fournisseurs
+```
+
+**Exemples INTERDITS :**
+
+```markdown
+❌ "Implémentation des mises à jour optimistes"
+❌ "Centralisation via useOptimisticPurchaseRequests"
+❌ "Callback de notification parent-enfant"
+❌ "Refactoring de la couche de données"
+```
+
+**Test de validation avant commit :**
+
+1. Lis le changelog à voix haute
+2. Un chef de projet / utilisateur final comprend-il en 10 secondes ?
+3. Peut-il l'expliquer à un client sans dire "code", "technique", "hook" ?
+
+Si NON → **réécriture obligatoirement**
+
+---
+
+#### MINOR (X.Y.0) — Nouvelles capacités
+
+**Autorisé :**
+- Section "Stabilisation / Dette technique" détaillée
+- Plusieurs points en "Impact fonctionnel"
+- Liste complète des composants concernés
+
+**Règles :**
+- Nouvelle capacité utilisateur
+- UX, règles métier, visibilité améliorée
+- Changement de comportement perceptible
+
+---
+
+#### MAJOR (X.0.0) — Ruptures
+
+**Critères :**
+- Rupture de modèle mental
+- Migration requise pour l'utilisateur
+- Changement de conventions fondamentales
+- Suppression de fonctionnalités
+
+**Règle absolue :** Une version = **un seul type** (pas de mix PATCH + MINOR)
 
 ---
 

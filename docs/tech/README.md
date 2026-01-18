@@ -195,7 +195,7 @@ npm run dev
 
 # Tests avant commit
 npm run lint
-npm run test -- --run
+npm run changelog:check  # ⚡ Valide le changelog (PATCH)
 
 # Commit
 git commit -m "feat(domain): description courte"
