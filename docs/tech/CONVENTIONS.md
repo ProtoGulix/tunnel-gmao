@@ -1886,11 +1886,21 @@ git checkout -b refactor/error-handling
 
 ## 18. Changelog & Versioning
 
-### 18.1 Format Standardisé de Changelog
+### 18.1 Finalité du changelog (NON NÉGOCIABLE)
 
-Chaque version doit suivre ce format pour communiquer clairement l'**impact pour l'utilisateur final**.
+Le changelog est un **outil de lecture produit et de pilotage**, pas un journal de développement.
 
-#### Format
+Il doit permettre, en moins de 30 secondes, de répondre à :
+
+- Qu'est-ce qui change **pour l'utilisateur** ?
+- Le risque augmente-t-il ou diminue-t-il ?
+- Cette version est-elle **fiable** ou **à surveiller** ?
+
+Tout contenu ne répondant pas explicitement à ces questions est **interdit**.
+
+---
+
+### 18.2 Format standardisé (OBLIGATOIRE)
 
 ```markdown
 ## X.Y.Z - YYYY-MM-DD
@@ -1899,119 +1909,186 @@ Stabilité : 🟢 stable | 🟡 en consolidation | 🔴 expérimental
 
 ### 🎯 Impact fonctionnel
 
-- Ce qui change pour l'utilisateur
-- Ce qui est maintenant possible / plus simple / plus fiable
-- Suppressions visibles incluses
+- Changements visibles pour l'utilisateur final UNIQUEMENT
+- Comportement, capacité, limitation ou suppression
+- "Aucun changement visible pour l'utilisateur" est un contenu valide
 
 ### 🧱 Stabilisation / Dette technique
 
-- Nettoyage
-- Refactor structurant
-- Sécurisation
-  (Sans détail de code)
+- Changements invisibles MAIS ayant un impact sur la fiabilité
+- Formulation orientée risque évité / robustesse accrue
+- ZÉRO détail d'implémentation
 
 ### 🧩 Composants / Modules concernés
 
-- Liste factuelle
+- Liste factuelle de périmètre
+- Aucun commentaire
+
+### ⚠️ Points de vigilance
+
+- Ce qui peut casser
+- Ce qui devient critique
+- Contraintes pour les versions suivantes
+```
+
+Aucune section supplémentaire n'est autorisée par défaut.
+
+---
+
+### 18.3 Règles de rédaction (ANTI-DÉRIVE)
+
+#### 1. 🎯 Impact fonctionnel (MANDATORY)
+
+Règle absolue :
+Si un utilisateur final ne peut pas le constater ou en subir l'effet → **interdit ici**.
+
+Autorisé :
+
+- "Aucun changement visible pour l'utilisateur"
+- "Comportement fonctionnel inchangé"
+
+Interdit (exemples) :
+
+- ❌ "Build plus rapide"
+- ❌ "Code plus maintenable"
+- ❌ "Fichiers < 200 lignes"
+- ❌ "Complexité réduite"
+- ❌ "Refactor massif"
+
+Verbes autorisés :
+
+- Permet
+- Corrige
+- Améliore
+- Supprime
+- Bloque
+- Empêche
+- Rend possible
+
+---
+
+#### 2. Stabilité (MANDATORY, RÈGLES STRICTES)
+
+- 🟢 **stable**
+  - Aucun `eslint-disable`
+  - Aucun refactor structurel récent
+  - Minimum 2 versions consécutives sans modification du périmètre
+
+- 🟡 **en consolidation**
+  - Refactor récent
+  - Nettoyage large
+  - Sécurisation sans recul d'usage
+
+- 🔴 **expérimental**
+  - Nouvelle logique
+  - Règles non figées
+  - Feedback requis
+
+Toute dérogation (`eslint-disable`, TODO critique, fallback temporaire) **interdit le statut 🟢 stable**.
+
+---
+
+#### 3. 🧱 Stabilisation / Dette technique (CADRÉE)
+
+Objectif : décrire **le risque évité**, jamais la solution technique.
+
+Format recommandé :
+
+```
+- [Action] → [Risque réduit]
+```
+
+Exemples acceptés :
+
+- "Découpage de composants critiques → réduction du risque de régression"
+- "Sécurisation des interfaces publiques → détection précoce des erreurs"
+
+Exemples interdits :
+
+- ❌ "Ajout de PropTypes"
+- ❌ "Extraction de helpers"
+- ❌ "Migration vers X"
+- ❌ "Optimisation bundler / hooks / build"
+
+---
+
+#### 4. 🧩 Composants / Modules concernés
+
+Règles :
+
+- Noms exacts
+- Chemins courts
+- Pas de hiérarchie
 - Pas de description
 
-### ⚠️ Points de vigilance
+---
 
-- Zones sensibles
-- Régressions possibles
-- Contraintes à respecter pour la suite
-```
+#### 5. ⚠️ Points de vigilance (MANDATORY)
 
-#### 18.2 Règles de Rédaction
+Doit être renseigné dès qu'il y a :
 
-1. **Impact fonctionnel (MANDATORY)**
-   - ✅ Orientation **utilisateur final**
-   - ✅ Pas de jargon technique
-   - ✅ Verbes d'action : "Permet", "Corrige", "Améliore", "Supprime"
-   - ❌ Pas de détails d'implémentation
-   - ❌ Pas d'adresses de commits
+- refactor
+- changement de convention
+- nettoyage large
+- dette partiellement résolue
 
-   **Exemples :**
+Interdit :
 
-   ```
-   ✅ "Permet le tri des interventions par statut et date"
-   ❌ "Ajout du champ sortOrder en base de données"
+- "Performance identique"
+- "Rien à signaler" (si refactor)
 
-   ✅ "Corrige les calculs de coût de stock (arrondi incorrect)"
-   ❌ "Utilisation de toFixed(2) au lieu de Math.round()"
+Attendu :
 
-   ✅ "Supprime l'import inutile de machines dans les actions"
-   ❌ "Refactor API response handling"
-   ```
+- contraintes nouvelles
+- zones sensibles
+- règles implicites désormais explicites
 
-2. **Stabilité (MANDATORY)**
-   - 🟢 **stable** : Code en production depuis ≥ 2 releases
-   - 🟡 **en consolidation** : Nouvelle feature testée mais peu d'usage réel
-   - 🔴 **expérimental** : À usage interne, feedback souhaité
+---
 
-3. **Stabilisation / Dette technique**
-   - Comportements non visibles (nettoyage, optimisations, sécurité)
-   - Sans détail technique : "Sécurisation des requêtes API" pas "Migration vers axios v1.6"
-   - Raison si nécessaire : "Préparation pour migration PostgreSQL"
+### 18.4 PATCH / MINOR / MAJOR (VERROUILLÉ)
 
-4. **Composants / Modules**
-   - Liste factuelle : `actions/`, `stock/DetailModal`, `useApiCall()`
-   - Pas de hiérarchie
-   - Pas de description
+- **PATCH (X.Y.Z)**
+  - Aucun changement fonctionnel visible
+  - Stabilisation, dette ou sécurisation uniquement
 
-5. **Points de vigilance**
-   - Informations pour maintainers/développeurs
-   - Zones sensibles
-   - Régressions à surveiller
-   - Contraintes pour futures releases
+- **MINOR (X.Y.0)**
+  - Nouvelle capacité utilisateur
+  - UX, règles métier, visibilité
 
-#### 18.3 Exemple Réel
+- **MAJOR (X.0.0)**
+  - Rupture de modèle mental
+  - Migration requise
+  - Changement de conventions fondamentales
 
-```markdown
-## 2.1.0 - 2026-01-15
+Une version = **un seul type**.
 
-Stabilité : 🟢 stable
+---
 
-### 🎯 Impact fonctionnel
+### 18.5 Clause anti-auto-justification (CRITIQUE)
 
-- Permet de trier les interventions par machine, date et statut
-- Corrige les calculs de coût de stock (arrondi à 2 décimales maintenant appliqué)
-- Supprime la synchronisation automatique délai des machines (manuel avec bouton Refresh)
-- Améliore l'affichage mobile des tableaux de stock (colonnes repliables)
+Interdit dans tout le changelog :
 
-### 🧱 Stabilisation / Dette technique
+- métriques internes (lignes, fichiers, kB, temps de build)
+- justification esthétique ou morale
+- valorisation du travail de développement
+- comparaison technique "avant / après"
 
-- Refactor du système de cache pour cohérence entre pages
-- Migration des stylesheets SCSS vers Radix UI
-- Sécurisation des requêtes API avec validation stricte des entrées
+Le changelog **ne sert pas à prouver que le travail est bien fait**.
 
-### 🧩 Composants / Modules concernés
+---
 
-- `components/interventions/InterventionsList`
-- `hooks/useApiCall`
-- `lib/api/stock`
-- `config/interventionTypes`
+### 18.6 Checklist finale (BLOQUANTE)
 
-### ⚠️ Points de vigilance
+Avant commit :
 
-- Cache ne se réinitialise pas au logout (veiller au contexte d'authentification)
-- Tri sur `dateDebut` remplace `date_creation` dans certaines views
-- Colonnes stock repliables : vérifier affichage sur écrans < 768px
-```
+- [ ] Impact utilisateur explicite ou explicitement nul
+- [ ] Aucun détail d'implémentation
+- [ ] Aucune métrique interne
+- [ ] Stabilité cohérente avec le contenu
+- [ ] Points de vigilance renseignés si refactor
+- [ ] Lecture possible par un non-développeur
 
-#### 18.4 Checklist de Rédaction
-
-Avant de finaliser un changelog :
-
-- [ ] **Impact fonctionnel** rédigé pour utilisateur final (pas tech)
-- [ ] Verbes d'action présents : "Permet", "Corrige", "Améliore", "Supprime"
-- [ ] Pas de détails de code ou implémentation
-- [ ] Stabilité marquée (🟢/🟡/🔴)
-- [ ] Composants listés correctement
-- [ ] Points de vigilance contextualisés
-- [ ] Aucun commit hash ou détail technique
-- [ ] Français correcte et lisible
-- [ ] Format markdown valide
+Si un point échoue → **réécriture obligatoire**.
 
 ---
 
