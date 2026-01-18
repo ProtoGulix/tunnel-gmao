@@ -1884,6 +1884,137 @@ git checkout -b refactor/error-handling
 
 ---
 
+## 18. Changelog & Versioning
+
+### 18.1 Format Standardisé de Changelog
+
+Chaque version doit suivre ce format pour communiquer clairement l'**impact pour l'utilisateur final**.
+
+#### Format
+
+```markdown
+## X.Y.Z - YYYY-MM-DD
+
+Stabilité : 🟢 stable | 🟡 en consolidation | 🔴 expérimental
+
+### 🎯 Impact fonctionnel
+
+- Ce qui change pour l'utilisateur
+- Ce qui est maintenant possible / plus simple / plus fiable
+- Suppressions visibles incluses
+
+### 🧱 Stabilisation / Dette technique
+
+- Nettoyage
+- Refactor structurant
+- Sécurisation
+  (Sans détail de code)
+
+### 🧩 Composants / Modules concernés
+
+- Liste factuelle
+- Pas de description
+
+### ⚠️ Points de vigilance
+
+- Zones sensibles
+- Régressions possibles
+- Contraintes à respecter pour la suite
+```
+
+#### 18.2 Règles de Rédaction
+
+1. **Impact fonctionnel (MANDATORY)**
+   - ✅ Orientation **utilisateur final**
+   - ✅ Pas de jargon technique
+   - ✅ Verbes d'action : "Permet", "Corrige", "Améliore", "Supprime"
+   - ❌ Pas de détails d'implémentation
+   - ❌ Pas d'adresses de commits
+
+   **Exemples :**
+
+   ```
+   ✅ "Permet le tri des interventions par statut et date"
+   ❌ "Ajout du champ sortOrder en base de données"
+
+   ✅ "Corrige les calculs de coût de stock (arrondi incorrect)"
+   ❌ "Utilisation de toFixed(2) au lieu de Math.round()"
+
+   ✅ "Supprime l'import inutile de machines dans les actions"
+   ❌ "Refactor API response handling"
+   ```
+
+2. **Stabilité (MANDATORY)**
+   - 🟢 **stable** : Code en production depuis ≥ 2 releases
+   - 🟡 **en consolidation** : Nouvelle feature testée mais peu d'usage réel
+   - 🔴 **expérimental** : À usage interne, feedback souhaité
+
+3. **Stabilisation / Dette technique**
+   - Comportements non visibles (nettoyage, optimisations, sécurité)
+   - Sans détail technique : "Sécurisation des requêtes API" pas "Migration vers axios v1.6"
+   - Raison si nécessaire : "Préparation pour migration PostgreSQL"
+
+4. **Composants / Modules**
+   - Liste factuelle : `actions/`, `stock/DetailModal`, `useApiCall()`
+   - Pas de hiérarchie
+   - Pas de description
+
+5. **Points de vigilance**
+   - Informations pour maintainers/développeurs
+   - Zones sensibles
+   - Régressions à surveiller
+   - Contraintes pour futures releases
+
+#### 18.3 Exemple Réel
+
+```markdown
+## 2.1.0 - 2026-01-15
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Permet de trier les interventions par machine, date et statut
+- Corrige les calculs de coût de stock (arrondi à 2 décimales maintenant appliqué)
+- Supprime la synchronisation automatique délai des machines (manuel avec bouton Refresh)
+- Améliore l'affichage mobile des tableaux de stock (colonnes repliables)
+
+### 🧱 Stabilisation / Dette technique
+
+- Refactor du système de cache pour cohérence entre pages
+- Migration des stylesheets SCSS vers Radix UI
+- Sécurisation des requêtes API avec validation stricte des entrées
+
+### 🧩 Composants / Modules concernés
+
+- `components/interventions/InterventionsList`
+- `hooks/useApiCall`
+- `lib/api/stock`
+- `config/interventionTypes`
+
+### ⚠️ Points de vigilance
+
+- Cache ne se réinitialise pas au logout (veiller au contexte d'authentification)
+- Tri sur `dateDebut` remplace `date_creation` dans certaines views
+- Colonnes stock repliables : vérifier affichage sur écrans < 768px
+```
+
+#### 18.4 Checklist de Rédaction
+
+Avant de finaliser un changelog :
+
+- [ ] **Impact fonctionnel** rédigé pour utilisateur final (pas tech)
+- [ ] Verbes d'action présents : "Permet", "Corrige", "Améliore", "Supprime"
+- [ ] Pas de détails de code ou implémentation
+- [ ] Stabilité marquée (🟢/🟡/🔴)
+- [ ] Composants listés correctement
+- [ ] Points de vigilance contextualisés
+- [ ] Aucun commit hash ou détail technique
+- [ ] Français correcte et lisible
+- [ ] Format markdown valide
+
+---
+
 ## 📎 Ressources
 
 - [React Hooks Best Practices](https://react.dev/reference/react)

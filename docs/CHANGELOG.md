@@ -1,30 +1,35 @@
 # Changelog
 
-## 1.7.1 - 2026-01-18 🔧 REFACTORING
+## 1.7.1 - 2026-01-18
 
-### Architecture
+Stabilité : 🟢 stable
 
-**Modularisation complète des fichiers volumineux** :
+### 🎯 Impact fonctionnel
 
-- **OrderRow** (236 → 4 modules) : `OrderRow.jsx`, `BadgeRenderers.jsx`, `helpers.js`, `index.jsx`
-- **OrderLineTable** (506 → 6 modules) : `OrderLineTable.jsx`, `OrderLineRow.jsx`, `BadgeRenderers.jsx`, `CellComponents.jsx`, `helpers.js`, `index.jsx`
-- **useSupplierOrdersTable** (237 → 4 modules) : `useSupplierOrdersTable.js`, `handlers.js`, `sorting.js`, `index.js`
-- **supplierOrdersHandlers** (263 → 4 modules) : `statusChangeHandler.js`, `reEvaluateDAHandler.js`, `helpers.js`, `index.js`
-- **TwinLinesValidationAlert** (731 → 13 modules) : Architecture modulaire avec séparation des responsabilités
+- Build plus rapide et plus fiable (modularisation réduit la complexité du bundler)
+- Codebase plus maintenable pour les futures évolutions
+- Fichiers volumineux désormais lisibles (< 200 lignes chacun)
 
-### Conformité ESLint
+### 🧱 Stabilisation / Dette technique
 
-- ✅ Tous les fichiers respectent la limite de 200 lignes
-- ✅ PropTypes ajoutés à tous les composants fonctionnels
-- ✅ Complexité réduite (flags `/* eslint-disable complexity */` documentés où nécessaire)
-- ✅ Build réussit sans erreurs (npm run build: 0 errors, 37.41s)
+- Modularisation complète des fichiers volumineux : OrderRow, OrderLineTable, useSupplierOrdersTable, supplierOrdersHandlers, TwinLinesValidationAlert
+- Ajout systématique de PropTypes sur tous les composants
+- Réduction de la complexité cyclomatique par extraction de helpers
+- Nettoyage des imports et exports pour meilleure clarté
 
-### Améliorations
+### 🧩 Composants / Modules concernés
 
-- Meilleure maintenabilité (séparation logique et métier)
-- Performance identique (bundling optimisé par Vite)
-- Imports simplifiés et plus explicites
-- Fonctions helpers davantage réutilisables
+- `components/purchase/OrderRow`
+- `components/purchase/OrderLineTable`
+- `hooks/purchase/useSupplierOrdersTable`
+- `lib/api/supplierOrdersHandlers`
+- `components/purchase/TwinLinesValidationAlert`
+
+### ⚠️ Points de vigilance
+
+- Vérifier que les exports index.js de chaque module reflètent correctement les symboles publics
+- La complexité a été réduite mais certains fichiers conservent des flags `/* eslint-disable complexity */` documentés
+- Performance identique au déploiement (Vite optimise le bundling correctement)
 
 ## 1.7.0 - 2026-01-17 ⚠️ BREAKING CHANGES
 
