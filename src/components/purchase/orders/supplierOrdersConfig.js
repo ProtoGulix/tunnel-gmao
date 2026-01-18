@@ -47,19 +47,16 @@ export const getAgeInDays = (date) => {
 export const getOrderNumber = (order) => order?.orderNumber ?? order?.order_number;
 export const getCreatedAt = (order) => order?.createdAt ?? order?.created_at;
 export const getSupplierObj = (order) => order?.supplier ?? order?.supplier_id;
-export const getTotalAmount = (order) => order?.totalAmount ?? order?.total_amount;
 export const getLineCount = (order) => Number(order?.lineCount ?? order?.line_count ?? 0);
 
 /**
- * Détermine la couleur d'affichage selon l'âge et le statut
+ * Détermine la couleur d'affichage selon l'âge du panier
  *
- * Hiérarchie visuelle:
- * - OPEN: gris (<1j), jaune (1-2j), amber (3-4j), rouge (5j+)
- * - SENT: gris (<3j), amber (3j+)
- * - Autres: gris
+ * Seuils:
+ * - >14j = rouge, >7j = orange, sinon gris
  *
  * @param {Object} order - Commande
- * @returns {string} Couleur Radix UI (gray, yellow, amber, red)
+ * @returns {string} Couleur Radix UI (gray, orange, red)
  */
 export const getAgeColor = (order) => {
   const ageDays = getAgeInDays(getCreatedAt(order));
@@ -70,14 +67,6 @@ export const getAgeColor = (order) => {
   if (ageDays > 7) return 'orange';
   return 'gray';
 };
-
-/**
- * Vérifie si une commande doit afficher un montant
- *
- * @param {string} status - Statut de la commande
- * @returns {boolean} true si montant doit être affiché
- */
-export const canShowAmount = (status) => ['ACK', 'RECEIVED', 'CLOSED'].includes(status);
 
 /**
  * Vérifie si une commande est bloquée (urgente)
@@ -92,14 +81,4 @@ export const isBlockingOrder = (status, ageDays) => {
     (status === 'OPEN' && ageDays > STALE_OPEN_DAYS) ||
     (status === 'SENT' && ageDays > STALE_SENT_DAYS)
   );
-};
-
-/**
- * Texte de raison pour commande bloquée
- *
- * @param {string} status - Statut de la commande
- * @returns {string} Raison du blocage
- */
-export const getBlockingReason = (status) => {
-  return status === 'OPEN' ? 'Panier ouvert depuis plusieurs jours' : 'Envoyé sans réponse';
 };

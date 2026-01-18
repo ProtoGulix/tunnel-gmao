@@ -1,45 +1,49 @@
+/**
+ * @fileoverview PropTypes pour SupplierOrdersTable
+ *
+ * @module components/purchase/orders/supplierOrdersTablePropTypes
+ * @requires prop-types
+ */
+
 import PropTypes from 'prop-types';
 
+/**
+ * Shape d'un panier fournisseur
+ * Support snake_case (backend) et camelCase (normalisé)
+ */
 export const orderShape = PropTypes.shape({
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  order_number: PropTypes.string,
-  orderNumber: PropTypes.string,
   status: PropTypes.string.isRequired,
+  order_number: PropTypes.string,
   created_at: PropTypes.string,
-  createdAt: PropTypes.string,
-  ordered_at: PropTypes.string,
-  orderedAt: PropTypes.string,
-  received_at: PropTypes.string,
-  receivedAt: PropTypes.string,
-  total_amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  totalAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  currency: PropTypes.string,
   line_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  lineCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  urgencyLevel: PropTypes.string,
   supplier_id: PropTypes.shape({
-    name: PropTypes.string,
-    email: PropTypes.string,
-  }),
-  supplier: PropTypes.shape({
     name: PropTypes.string,
     email: PropTypes.string,
   }),
 });
 
+/**
+ * PropTypes du composant SupplierOrdersTable
+ * @see {@link file://./SupplierOrdersTable.jsx}
+ */
 export const supplierOrdersTablePropTypes = {
+  // Required
   orders: PropTypes.arrayOf(orderShape).isRequired,
   onRefresh: PropTypes.func.isRequired,
-  showHeader: PropTypes.bool,
-  searchTerm: PropTypes.string,
-  onSearchChange: PropTypes.func,
-  statusFilter: PropTypes.string,
-  onStatusFilterChange: PropTypes.func,
-  supplierFilter: PropTypes.string,
-  onSupplierFilterChange: PropTypes.func,
-  supplierOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      value: PropTypes.string,
-      label: PropTypes.string,
-    })
-  ),
+
+  // Callbacks
+  onOrderLineUpdate: PropTypes.func,
+  onToggleItemSelection: PropTypes.func,
+  onTwinValidationUpdate: PropTypes.func,
+  onBasketStatusChange: PropTypes.func,
+
+  // State
+  itemSelectionByBasket: PropTypes.object,
+  twinValidationsByLine: PropTypes.object,
+
+  // Flags
+  showPoolingColumns: PropTypes.bool,
+  canModifyItem: PropTypes.func,
 };

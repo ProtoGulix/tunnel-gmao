@@ -552,10 +552,14 @@ export default function Procurement() {
     setDetailsLoadingStates(prev => ({ ...prev, [requestId]: true }));
 
     try {
-      await Promise.all([
-        !stock.supplierRefsByItem?.[stockItemId] ? stock.loadSupplierRefs?.(stockItemId) : Promise.resolve(),
-        !stock.standardSpecsByItem?.[stockItemId] ? stock.loadStandardSpecs?.(stockItemId) : Promise.resolve(),
-      ]);
+      const loadPromises = [];
+      if (!stock.supplierRefsByItem?.[stockItemId]) {
+        loadPromises.push(stock.loadSupplierRefs?.(stockItemId));
+      }
+      if (!stock.standardSpecsByItem?.[stockItemId]) {
+        loadPromises.push(stock.loadStandardSpecs?.(stockItemId));
+      }
+      await Promise.all(loadPromises);
     } finally {
       setDetailsLoadingStates(prev => ({ ...prev, [requestId]: false }));
     }

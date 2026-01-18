@@ -32,4 +32,40 @@ export const STATUS_FILTER_OPTIONS = [
   { value: 'ACK', label: 'Réponse reçue' },
   { value: 'RECEIVED', label: 'Commandés' },
   { value: 'CLOSED', label: 'Clôturés' },
+  { value: 'CANCELLED', label: 'Annulés' },
 ];
+
+const STATUS_RANK = { OPEN: 1, SENT: 2, ACK: 3, RECEIVED: 4, CLOSED: 5, CANCELLED: 6 };
+
+const sortByAge = (orders, sortDir) => {
+  const sorted = [...orders];
+  sorted.sort((a, b) => {
+    const ageA = getAgeInDays(getCreatedAt(a)) || 0;
+    const ageB = getAgeInDays(getCreatedAt(b)) || 0;
+    return sortDir === 'asc' ? ageA - ageB : ageB - ageA;
+  });
+  return sorted;
+};
+
+const getStatusRank = (order) => {
+  const status = order?.status?.toUpperCase?.() || 'OPEN';
+  return STATUS_RANK[status] || 99;
+};
+
+const sortByStatus = (orders, sortDir) => {
+  const sorted = [...orders];
+  sorted.sort((a, b) => {
+    const av = getStatusRank(a);
+    const bv = getStatusRank(b);
+    return sortDir === 'asc' ? av - bv : bv - av;
+  });
+  return sorted;
+};
+
+export const sortOrders = (orders, sortKey, sortDir) => {
+  if (!Array.isArray(orders)) return [];
+  if (!sortKey) return sortOrdersByStatusAndAge(orders);
+  if (sortKey === 'age') return sortByAge(orders, sortDir);
+  if (sortKey === 'status') return sortByStatus(orders, sortDir);
+  return [...orders];
+};

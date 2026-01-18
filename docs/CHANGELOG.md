@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.7.1 - 2026-01-18 🔧 REFACTORING
+
+### Architecture
+
+**Modularisation complète des fichiers volumineux** :
+
+- **OrderRow** (236 → 4 modules) : `OrderRow.jsx`, `BadgeRenderers.jsx`, `helpers.js`, `index.jsx`
+- **OrderLineTable** (506 → 6 modules) : `OrderLineTable.jsx`, `OrderLineRow.jsx`, `BadgeRenderers.jsx`, `CellComponents.jsx`, `helpers.js`, `index.jsx`
+- **useSupplierOrdersTable** (237 → 4 modules) : `useSupplierOrdersTable.js`, `handlers.js`, `sorting.js`, `index.js`
+- **supplierOrdersHandlers** (263 → 4 modules) : `statusChangeHandler.js`, `reEvaluateDAHandler.js`, `helpers.js`, `index.js`
+- **TwinLinesValidationAlert** (731 → 13 modules) : Architecture modulaire avec séparation des responsabilités
+
+### Conformité ESLint
+
+- ✅ Tous les fichiers respectent la limite de 200 lignes
+- ✅ PropTypes ajoutés à tous les composants fonctionnels
+- ✅ Complexité réduite (flags `/* eslint-disable complexity */` documentés où nécessaire)
+- ✅ Build réussit sans erreurs (npm run build: 0 errors, 37.41s)
+
+### Améliorations
+
+- Meilleure maintenabilité (séparation logique et métier)
+- Performance identique (bundling optimisé par Vite)
+- Imports simplifiés et plus explicites
+- Fonctions helpers davantage réutilisables
+
 ## 1.7.0 - 2026-01-17 ⚠️ BREAKING CHANGES
 
 ### ⚠️ Modifications de conventions requises

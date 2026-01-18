@@ -90,14 +90,12 @@ export default function Parts() {
   }, [stock.stockItems]);
   
   const filteredStockItems = useMemo(() => {
-    return stock.stockItems.filter(item => {
-      const matchesSearch = !stockSearchTerm || 
-        item.name?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-        item.ref?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-        item.family_code?.toLowerCase().includes(stockSearchTerm.toLowerCase());
-      
-      return matchesSearch;
-    });
+    return stock.stockItems.filter(item => (
+      !stockSearchTerm ||
+      item.name?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
+      item.ref?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
+      item.family_code?.toLowerCase().includes(stockSearchTerm.toLowerCase())
+    ));
   }, [stock.stockItems, stockSearchTerm]);
 
   const filteredSuppliers = useMemo(() => {
