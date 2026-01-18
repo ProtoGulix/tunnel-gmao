@@ -1,3 +1,33 @@
+## 1.7.2 - 2026-01-18
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Les demandes d'achat créées à partir d'une action apparaissent **immédiatement** sans nécessiter de resynchronisation
+- Le badge compteur de demandes d'achat se met à jour instantanément lors de l'ajout
+- La liste des demandes d'achat de l'intervention se met à jour en direct
+- Meilleure réactivité perçue de l'interface lors de la création de demandes d'achat
+
+### 🧱 Stabilisation / Dette technique
+
+- Implémentation des mises à jour optimistes pour les demandes d'achat → suppression des latences perceptibles
+- Centralisation de la gestion optimiste via `useOptimisticPurchaseRequests` → cohérence accrue entre composants
+- Callback de notification parent-enfant → synchronisation fiable sans rechargement complet
+
+### 🧩 Composants / Modules concernés
+
+- pages/InterventionDetail
+- components/actions/ActionItemCard
+- components/interventions/InterventionTabs/ActionsTab
+- components/interventions/InterventionTabs/TimelineItemRenderer
+- hooks/useOptimisticData
+
+### ⚠️ Points de vigilance
+
+- Les demandes d'achat créées sont ajoutées localement avant confirmation du serveur
+- En cas d'erreur réseau, un rechargement automatique est déclenché (`invalidate()`)
+- L'état local est toujours la source de vérité jusqu'à synchronisation serveur
 ## 1.7.0 - 2026-01-17
 Stabilité : 🟡 en consolidation
 

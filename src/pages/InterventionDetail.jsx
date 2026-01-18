@@ -20,6 +20,7 @@ import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { useError } from '@/contexts/ErrorContext';
 import { useAuth } from '@/auth/useAuth';
+import { useOptimisticPurchaseRequests } from '@/hooks/useOptimisticData';
 
 // 7. Components
 import PageContainer from '@/components/layout/PageContainer';
@@ -133,13 +134,18 @@ export default function InterventionDetail() {
 
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
-  const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [stockItems, setStockItems] = useState([]);
   const [supplierList, setSupplierList] = useState([]);
   const [supplierRefs, setSupplierRefs] = useState({});
   const [standardSpecs, setStandardSpecs] = useState({});
   const [summaryDataLoaded, setSummaryDataLoaded] = useState(false);
   const [actionDataLoaded, setActionDataLoaded] = useState(false);
+
+  // Hook optimiste pour les demandes d'achat
+  const purchaseRequests = useOptimisticPurchaseRequests(
+    () => stock.fetchPurchaseRequestsByIntervention(id),
+    (error) => showError(error)
+  );
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
@@ -171,15 +177,7 @@ export default function InterventionDetail() {
     refetchStatusLog();
     
     // Charger les purchase requests pour afficher le badge
-    const loadBadgesData = async () => {
-      try {
-        const requestsData = await stock.fetchPurchaseRequestsByIntervention(id);
-        setPurchaseRequests(requestsData || []);
-      } catch (error) {
-        showError(error);
-      }
-    };
-    loadBadgesData();
+    purchaseRequests.load(false, true); // load silencieusement
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -210,24 +208,23 @@ export default function InterventionDetail() {
       const loadSummaryData = async () => {
         try {
           // Charger stocks, fournisseurs et purchase requests en parallèle
-          const [itemsData, suppliersData, requestsData] = await Promise.all([
+          const [itemsData, suppliersData] = await Promise.all([
             stock.fetchStockItems(),
             suppliers.fetchSuppliers(),
-            stock.fetchPurchaseRequestsByIntervention(id)
+            purchaseRequests.load(false, true) // Charger silencieusement
           ]);
 
           setStockItems(itemsData || []);
           setSupplierList(suppliersData || []);
-          setPurchaseRequests(requestsData || []);
 
           // Charger supplier refs et standard specs uniquement pour les articles des purchase requests
-          if (requestsData && requestsData.length > 0) {
+          if (purchaseRequests.requests && purchaseRequests.requests.length > 0) {
             const refsGrouped = {};
             const specsGrouped = {};
 
             // Extraire les stock_item_id uniques des purchase requests
             const uniqueStockItemIds = [...new Set(
-              requestsData
+              purchaseRequests.requests
                 .map(pr => pr.stockItemId)
                 .filter(Boolean)
             )];
@@ -261,18 +258,10 @@ export default function InterventionDetail() {
       };
       loadSummaryData();
     } else if (activeTab === 'summary' && summaryDataLoaded) {
-      // Recharger uniquement les purchase requests lors des accès suivants
-      const refreshPurchaseRequests = async () => {
-        try {
-          const requestsData = await stock.fetchPurchaseRequestsByIntervention(id);
-          setPurchaseRequests(requestsData || []);
-        } catch (error) {
-          showError(error);
-        }
-      };
-      refreshPurchaseRequests();
+      // Recharger uniquement les purchase requests lors des accès suivants (silencieusement)
+      purchaseRequests.load(false, true);
     }
-  }, [activeTab, summaryDataLoaded, id, showError]);
+  }, [activeTab, summaryDataLoaded, showError, purchaseRequests]);
 
   // Injection de styles responsive pour timeline et boutons d'action
   useEffect(() => {
@@ -422,9 +411,9 @@ export default function InterventionDetail() {
   }, [interv?.code, id]);
 
   const purchaseRequestsCount = useMemo(() => {
-    // Plus besoin de filtrer, les demandes sont déjà filtrées
-    return purchaseRequests.length;
-  }, [purchaseRequests]);
+    // Utiliser les données du hook optimiste
+    return purchaseRequests.requests?.length || 0;
+  }, [purchaseRequests.requests]);
 
   // État initial du formulaire d'action avec catégorie par défaut
   const actionFormInitialState = useMemo(() => {
@@ -487,28 +476,31 @@ export default function InterventionDetail() {
 
   const handleCreatePurchaseRequest = useCallback(async (requestData) => {
     try {
-      await stock.createPurchaseRequest({
+      const created = await stock.createPurchaseRequest({
         ...requestData,
         intervention_id: id
       });
-      // Recharger les purchase requests après création
-      const updated = await stock.fetchPurchaseRequestsByIntervention(id);
-      setPurchaseRequests(updated || []);
+      // Mise à jour optimiste : ajouter à l'état local immédiatement
+      purchaseRequests.addLocal(created);
     } catch (error) {
       showError(error);
+      // En cas d'erreur, recharger depuis l'API
+      purchaseRequests.invalidate();
     }
-  }, [id, showError]);
+  }, [id, showError, purchaseRequests]);
 
-  const handleUpdatePurchaseRequest = useCallback(async (requestId, updates) => {
-    try {
-      await stock.updatePurchaseRequest(requestId, updates);
-      // Recharger les purchase requests après mise à jour
-      const updated = await stock.fetchPurchaseRequestsByIntervention(id);
-      setPurchaseRequests(updated || []);
-    } catch (error) {
-      showError(error);
+  const handleRefreshSummary = useCallback(async () => {
+    // Recharger l'intervention ET les demandes d'achat
+    refetchIntervention();
+    await purchaseRequests.invalidate();
+  }, [refetchIntervention, purchaseRequests]);
+
+  const handlePurchaseRequestCreated = useCallback((createdRequest) => {
+    // Ajouter optimistically la demande créée à l'état du parent
+    if (createdRequest?.id) {
+      purchaseRequests.addLocal(createdRequest);
     }
-  }, [id, showError]);
+  }, [purchaseRequests]);
 
   const handleAddSupplierRef = useCallback(async (stockItemId, supplierRefData) => {
     try {
@@ -684,6 +676,7 @@ export default function InterventionDetail() {
             metadata={{
               statusLog
             }}
+            onPurchaseRequestCreated={handlePurchaseRequestCreated}
           />
         </Tabs.Content>
 
@@ -693,11 +686,11 @@ export default function InterventionDetail() {
             model={{
               interv,
               loading,
-              purchaseRequests
+              purchaseRequests: purchaseRequests.requests
             }}
             handlers={{
               onCreatePurchaseRequest: handleCreatePurchaseRequest,
-              onRefresh: refetchIntervention,
+              onRefresh: handleRefreshSummary,
               onAddSupplierRef: handleAddSupplierRef,
               onAddStandardSpec: handleAddStandardSpec
             }}

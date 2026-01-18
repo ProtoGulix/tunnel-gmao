@@ -12,7 +12,7 @@ import { STATE_COLORS } from "@/config/interventionTypes";
  * - Pas de callbacks inline
  * - Complexité réduite par extraction
  */
-export default function TimelineItemRenderer({ item, interventionId }) {
+export default function TimelineItemRenderer({ item, interventionId, onPurchaseRequestCreated }) {
   const statusConfig = STATE_COLORS[item.data.to?.id];
 
   // Early return pour changement de statut
@@ -34,6 +34,7 @@ export default function TimelineItemRenderer({ item, interventionId }) {
       interventionId={interventionId}
       getCategoryColor={getCategoryColor}
       sanitizeDescription={sanitizeDescription}
+      onPurchaseRequestCreated={onPurchaseRequestCreated}
     />
   );
 }
@@ -46,5 +47,6 @@ TimelineItemRenderer.propTypes = {
     date: PropTypes.string.isRequired,
     data: PropTypes.object.isRequired
   }).isRequired,
-  interventionId: PropTypes.string
+  interventionId: PropTypes.string,
+  onPurchaseRequestCreated: PropTypes.func
 };

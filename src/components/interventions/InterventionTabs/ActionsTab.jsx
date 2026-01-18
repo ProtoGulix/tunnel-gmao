@@ -20,7 +20,7 @@ import { getTimeDiff } from "@/lib/utils/interventionUtils";
  * 
  * Contraintes : 3 props max, pas de callback inline, <150 lignes
  */
-export default function ActionsTab({ model, handlers, metadata }) {
+export default function ActionsTab({ model, handlers, metadata, onPurchaseRequestCreated }) {
   const { filteredTimeline, actionCount } = useActionsTab(
     model.interv,
     model.searchActions,
@@ -78,7 +78,7 @@ export default function ActionsTab({ model, handlers, metadata }) {
         {filteredTimeline.length > 0 ? (
           <Timeline
             items={filteredTimeline}
-            renderItem={(item) => <TimelineItemRenderer item={item} interventionId={model.interv?.id} />}
+            renderItem={(item) => <TimelineItemRenderer item={item} interventionId={model.interv?.id} onPurchaseRequestCreated={onPurchaseRequestCreated} />}
             getStatusColor={(dayGroup) => {
               const dayEnd = new Date(dayGroup.date.split('/').reverse().join('-'));
               dayEnd.setHours(23, 59, 59, 999);
@@ -115,5 +115,6 @@ ActionsTab.propTypes = {
   }).isRequired,
   metadata: PropTypes.shape({
     statusLog: PropTypes.array
-  }).isRequired
+  }).isRequired,
+  onPurchaseRequestCreated: PropTypes.func
 };

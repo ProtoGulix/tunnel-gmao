@@ -30,7 +30,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription }) {
+export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -184,6 +184,12 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
             delete: []
           }
         });
+
+        // Optimistic update: add to local state immediately
+        setPurchaseRequests(prev => [...prev, created]);
+
+        // Notify parent if callback provided
+        onPurchaseRequestCreated?.(created);
       }
 
       // Close the form on success
@@ -191,7 +197,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     } catch (error) {
       console.error('Error creating purchase request:', error);
     }
-  }, [localAction, action, interventionId]);
+  }, [localAction, action, interventionId, onPurchaseRequestCreated]);
 
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
@@ -355,4 +361,5 @@ ActionItemCard.propTypes = {
   interventionId: PropTypes.string,
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
+  onPurchaseRequestCreated: PropTypes.func,
 };
