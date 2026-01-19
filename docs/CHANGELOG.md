@@ -1,3 +1,37 @@
+## 1.9.0 - 2026-01-19
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Nouvelle page "Pupitre Atelier" : tableau de bord pour techniciens avec indicateurs clés (urgences, interventions ouvertes, anomalies hygiènes)
+- Landing page intelligente : utilisateurs authentifiés sont automatiquement redirigés vers le pupitre atelier
+- Utilisateurs non-authentifiés accèdent toujours à la page d'accueil publique
+- Bug fix InterventionDetail : affichage priorité/urgence corrigé (mapPriorityToConfigKey)
+- Amélioration lisibilité détail intervention : header hiérarchisé (dropdowns statut/priorité déplacés dans actions)
+
+### 🧱 Stabilisation / Dette technique
+
+- Système de redirection au niveau du routeur (App.jsx) : logique centralisée et maintenable
+- Respect des conventions : HomeRedirect() suit le pattern existant des composants
+- Cohérence avec le flow d'authentification existant (Login.jsx → TechnicianHome)
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/TechnicianHome.jsx : nouveau composant pupitre atelier
+- src/App.jsx : ajout HomeRedirect(), modification du routing
+- src/pages/Login.jsx : redirection défaut `/technician` (au lieu de `/interventions`)
+- src/config/menuConfig.js : technician-home configuration
+- src/pages/routes.js : TechnicianHome mapping
+- src/pages/InterventionDetail.jsx : refactoring header + fix affichage priorité
+- src/components/layout/HierarchicalHeaderLayout.jsx : amélioration responsive dropdowns
+- src/config/interventionTypes.js : ajout labels PRIORITY_COLORS
+
+### ⚠️ Points de vigilance
+
+- La route `/` maintient le pattern de ProtectedRoute interne pour utilisateurs authentifiés
+- Les utilisateurs avec redirect_after_login stocké conservent leur destination prévue
+
 ## 1.8.0 - 2026-01-19
 
 Stabilité : 🟡 en consolidation

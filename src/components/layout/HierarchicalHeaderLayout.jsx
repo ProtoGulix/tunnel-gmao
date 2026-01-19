@@ -84,7 +84,6 @@ export default function HierarchicalHeaderLayout(props) {
 
       {/* Ligne 2 : État décisionnel (Statut + Priorité + Actions) */}
       <Flex
-        justify="between"
         align="center"
         wrap="wrap"
         gap="2"
@@ -92,7 +91,7 @@ export default function HierarchicalHeaderLayout(props) {
           paddingLeft: Icon ? "44px" : "0",
         }}
       >
-        <Flex align="center" gap="2" style={{ flex: "1 1 auto" }}>
+        <Flex align="center" gap="2" wrap="nowrap" style={{ flex: "0 1 auto", minWidth: "0" }}>
           {statusDropdown}
           {priorityDropdown}
 
