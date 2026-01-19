@@ -54,41 +54,19 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     setLocalAction(action);
   }, [action]);
 
-  // Load purchase requests when action has linked requests
+  // Use complete purchase requests from action data (already loaded from intervention)
   useEffect(() => {
-    const loadPurchaseRequests = async () => {
-      if (localAction?.purchaseRequestIds && localAction.purchaseRequestIds.length > 0) {
-        try {
-          const [allRequests, allStockItems] = await Promise.all([
-            stock.fetchPurchaseRequests(),
-            stock.fetchStockItems()
-          ]);
-          
-          const requests = localAction.purchaseRequestIds
-            .map(id => allRequests.find(pr => pr.id === id))
-            .filter(Boolean)
-            .map(pr => {
-              // Add stockItemCode if stockItemId exists
-              if (pr.stockItemId) {
-                const stockItem = allStockItems.find(item => item.id === pr.stockItemId);
-                return {
-                  ...pr,
-                  stockItemCode: stockItem?.ref || null
-                };
-              }
-              return pr;
-            });
-          
-          setPurchaseRequests(requests);
-        } catch (error) {
-          console.error('Error loading purchase requests:', error);
-        }
-      } else {
-        setPurchaseRequests([]);
-      }
-    };
-    loadPurchaseRequests();
-  }, [localAction?.purchaseRequestIds]);
+    if (localAction?.purchaseRequests && Array.isArray(localAction.purchaseRequests)) {
+      // Purchase requests are already complete with stock_item_ref data
+      const requests = localAction.purchaseRequests.map(pr => ({
+        ...pr,
+        stockItemCode: pr.stockItemRef || null
+      }));
+      setPurchaseRequests(requests);
+    } else {
+      setPurchaseRequests([]);
+    }
+  }, [localAction?.purchaseRequests]);
 
   // Compute initial state fresh from current localAction
   const buildInitialEditState = () => {

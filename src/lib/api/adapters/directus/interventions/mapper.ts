@@ -82,12 +82,44 @@ export const mapActionToDomain = (item: any) => {
     timeSpent: item.time_spent,
     complexityScore: item.complexity_score,
     createdAt: item.created_at,
+    // Maps complete purchase requests instead of just IDs
+    // Data comes from junction table: purchase_request_ids[].purchase_request_id
+    purchaseRequests: Array.isArray(item.purchase_request_ids)
+      ? item.purchase_request_ids
+          .map((junction: any) => {
+            // Extract the actual purchase_request from the junction table
+            const pr = junction?.purchase_request_id;
+            if (!pr || typeof pr === 'string') return null;
+            
+            const stockItemRelation = typeof pr.stock_item_id === 'object' && pr.stock_item_id !== null
+              ? pr.stock_item_id
+              : null;
+            const supplierCount = Array.isArray(stockItemRelation?.supplier_refs) 
+              ? stockItemRelation.supplier_refs.length 
+              : 0;
+            return {
+              id: pr.id,
+              stockItemId: stockItemRelation?.id ?? undefined,
+              stockItemRef: stockItemRelation?.ref ?? undefined,
+              stockItemSupplierRefsCount: supplierCount,
+              itemLabel: pr.item_label ?? undefined,
+              quantity: pr.quantity ?? undefined,
+              unit: pr.unit ?? undefined,
+              urgency: pr.urgency ?? undefined,
+              requestedBy: pr.requested_by ?? undefined,
+              reason: pr.reason ?? undefined,
+              notes: pr.notes ?? undefined,
+              status: pr.status ?? undefined,
+              createdAt: pr.created_at ?? undefined,
+              interventionId: pr.intervention_id ?? undefined,
+            };
+          })
+          .filter(Boolean)
+      : [],
+    // Legacy IDs-only field for backwards compatibility
     purchaseRequestIds: Array.isArray(item.purchase_request_ids)
       ? item.purchase_request_ids
-          .map((link: any) => {
-            const pr = link?.purchase_request_id;
-            return typeof pr === 'object' ? pr?.id : pr;
-          })
+          .map((junction: any) => junction?.purchase_request_id?.id)
           .filter(Boolean)
       : [],
     technician: item.tech

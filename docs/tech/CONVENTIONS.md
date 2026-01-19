@@ -2050,6 +2050,7 @@ Attendu :
 #### PATCH (X.Y.Z++) — Règle du "1 seul changement simple"
 
 **Limite absolue :**
+
 - ✅ Impact utilisateur : **1 seule phrase claire** (max 100 caractères)
 - ✅ Aucun jargon technique (hook, callback, synchronisation, optimiste, etc.)
 - ✅ Vocabulaire utilisateur final UNIQUEMENT
@@ -2113,11 +2114,13 @@ Si NON → **réécriture obligatoirement**
 #### MINOR (X.Y.0) — Nouvelles capacités
 
 **Autorisé :**
+
 - Section "Stabilisation / Dette technique" détaillée
 - Plusieurs points en "Impact fonctionnel"
 - Liste complète des composants concernés
 
 **Règles :**
+
 - Nouvelle capacité utilisateur
 - UX, règles métier, visibilité améliorée
 - Changement de comportement perceptible
@@ -2127,6 +2130,7 @@ Si NON → **réécriture obligatoirement**
 #### MAJOR (X.0.0) — Ruptures
 
 **Critères :**
+
 - Rupture de modèle mental
 - Migration requise pour l'utilisateur
 - Changement de conventions fondamentales

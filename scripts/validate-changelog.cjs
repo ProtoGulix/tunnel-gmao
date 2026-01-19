@@ -2,7 +2,7 @@
 
 /**
  * Validation automatique des changelogs
- * 
+ *
  * Bloque les commits si le changelog PATCH ne respecte pas les règles :
  * - Max 1 bullet point en "Impact fonctionnel"
  * - Pas de section "Stabilisation / Dette technique"
@@ -93,7 +93,7 @@ function main() {
   if (bulletText.length > 120) {
     log('red', `❌ PATCH: Bullet trop long (${bulletText.length} caractères, max 100)`);
     log('yellow', `💡 Texte actuel: "${bulletText}"`);
-    log('yellow', '💡 Simplifier la phrase pour qu\'elle soit claire et concise');
+    log('yellow', "💡 Simplifier la phrase pour qu'elle soit claire et concise");
     process.exit(1);
   }
 
@@ -122,7 +122,10 @@ function main() {
 
   if (foundBanned.length > 0) {
     log('red', `❌ PATCH: Jargon technique détecté: ${foundBanned.join(', ')}`);
-    log('yellow', '💡 Utiliser vocabulaire utilisateur : affichage, création, modification, correction');
+    log(
+      'yellow',
+      '💡 Utiliser vocabulaire utilisateur : affichage, création, modification, correction'
+    );
     process.exit(1);
   }
 

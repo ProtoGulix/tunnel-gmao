@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 // ===== IMPORTS =====
 // 1. React core
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
@@ -20,7 +21,6 @@ import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { useError } from '@/contexts/ErrorContext';
 import { useAuth } from '@/auth/useAuth';
-import { useOptimisticPurchaseRequests } from '@/hooks/useOptimisticData';
 
 // 7. Components
 import PageContainer from '@/components/layout/PageContainer';
@@ -134,18 +134,10 @@ export default function InterventionDetail() {
 
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
-  const [stockItems, setStockItems] = useState([]);
-  const [supplierList, setSupplierList] = useState([]);
   const [supplierRefs, setSupplierRefs] = useState({});
   const [standardSpecs, setStandardSpecs] = useState({});
   const [summaryDataLoaded, setSummaryDataLoaded] = useState(false);
   const [actionDataLoaded, setActionDataLoaded] = useState(false);
-
-  // Hook optimiste pour les demandes d'achat
-  const purchaseRequests = useOptimisticPurchaseRequests(
-    () => stock.fetchPurchaseRequestsByIntervention(id),
-    (error) => showError(error)
-  );
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
@@ -175,9 +167,6 @@ export default function InterventionDetail() {
     
     refetchIntervention();
     refetchStatusLog();
-    
-    // Charger les purchase requests pour afficher le badge
-    purchaseRequests.load(false, true); // load silencieusement
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -207,49 +196,43 @@ export default function InterventionDetail() {
     if (activeTab === 'summary' && !summaryDataLoaded) {
       const loadSummaryData = async () => {
         try {
-          // Charger stocks, fournisseurs et purchase requests en parallèle
-          const [itemsData, suppliersData] = await Promise.all([
-            stock.fetchStockItems(),
-            suppliers.fetchSuppliers(),
-            purchaseRequests.load(false, true) // Charger silencieusement
-          ]);
-
-          setStockItems(itemsData || []);
-          setSupplierList(suppliersData || []);
-
           // Charger supplier refs et standard specs uniquement pour les articles des purchase requests
-          if (purchaseRequests.requests && purchaseRequests.requests.length > 0) {
-            const refsGrouped = {};
-            const specsGrouped = {};
-
-            // Extraire les stock_item_id uniques des purchase requests
-            const uniqueStockItemIds = [...new Set(
-              purchaseRequests.requests
-                .map(pr => pr.stockItemId)
-                .filter(Boolean)
-            )];
-
-            await Promise.all(
-              uniqueStockItemIds.map(async (stockItemId) => {
-                try {
-                  const refs = await stockSuppliers.fetchStockItemSuppliers(stockItemId);
-                  if (refs && refs.length > 0) {
-                    refsGrouped[stockItemId] = refs;
+          // Les purchase requests sont maintenant dans interv.action[].purchaseRequests
+          const uniqueStockItemIds = new Set();
+          if (interv?.action && Array.isArray(interv.action)) {
+            interv.action.forEach(action => {
+              if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
+                action.purchaseRequests.forEach(pr => {
+                  if (pr.stockItemId) {
+                    uniqueStockItemIds.add(pr.stockItemId);
                   }
-
-                  const specs = await stock.fetchStockItemStandardSpecs(stockItemId);
-                  if (specs && specs.length > 0) {
-                    specsGrouped[stockItemId] = specs;
-                  }
-                } catch {
-                  // Silently skip individual item load failures
-                }
-              })
-            );
-
-            setSupplierRefs(refsGrouped);
-            setStandardSpecs(specsGrouped);
+                });
+              }
+            });
           }
+
+          const stockItemIdsArray = Array.from(uniqueStockItemIds);
+
+          // Load supplier refs in a single bulk API call instead of N individual calls
+          const refsGrouped = await stockSuppliers.fetchStockItemSuppliersBulk(stockItemIdsArray);
+
+          // Load standard specs (still individual calls, could be optimized later)
+          const specsGrouped = {};
+          await Promise.all(
+            stockItemIdsArray.map(async (stockItemId) => {
+              try {
+                const specs = await stock.fetchStockItemStandardSpecs(stockItemId);
+                if (specs && specs.length > 0) {
+                  specsGrouped[stockItemId] = specs;
+                }
+              } catch {
+                // Silently skip individual item load failures
+              }
+            })
+          );
+
+          setSupplierRefs(refsGrouped);
+          setStandardSpecs(specsGrouped);
           
           setSummaryDataLoaded(true);
         } catch (error) {
@@ -257,11 +240,8 @@ export default function InterventionDetail() {
         }
       };
       loadSummaryData();
-    } else if (activeTab === 'summary' && summaryDataLoaded) {
-      // Recharger uniquement les purchase requests lors des accès suivants (silencieusement)
-      purchaseRequests.load(false, true);
     }
-  }, [activeTab, summaryDataLoaded, showError, purchaseRequests]);
+  }, [activeTab, summaryDataLoaded, showError, interv?.action]);
 
   // Injection de styles responsive pour timeline et boutons d'action
   useEffect(() => {
@@ -411,9 +391,21 @@ export default function InterventionDetail() {
   }, [interv?.code, id]);
 
   const purchaseRequestsCount = useMemo(() => {
-    // Utiliser les données du hook optimiste
-    return purchaseRequests.requests?.length || 0;
-  }, [purchaseRequests.requests]);
+    // Try to use root-level purchase_request_id array first (from backend)
+    if (Array.isArray(interv?.purchase_request_id)) {
+      return interv.purchase_request_id.length;
+    }
+    // Fallback: count from action data (embedded)
+    let count = 0;
+    if (interv?.action && Array.isArray(interv.action)) {
+      interv.action.forEach(action => {
+        if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
+          count += action.purchaseRequests.length;
+        }
+      });
+    }
+    return count;
+  }, [interv?.purchase_request_id, interv?.action]);
 
   // État initial du formulaire d'action avec catégorie par défaut
   const actionFormInitialState = useMemo(() => {
@@ -476,31 +468,31 @@ export default function InterventionDetail() {
 
   const handleCreatePurchaseRequest = useCallback(async (requestData) => {
     try {
-      const created = await stock.createPurchaseRequest({
+      // Créer la purchase request
+      await stock.createPurchaseRequest({
         ...requestData,
         intervention_id: id
       });
-      // Mise à jour optimiste : ajouter à l'état local immédiatement
-      purchaseRequests.addLocal(created);
+      // Rafraîchir l'intervention pour mettre à jour les purchase requests embarqués
+      refetchIntervention();
     } catch (error) {
       showError(error);
       // En cas d'erreur, recharger depuis l'API
-      purchaseRequests.invalidate();
+      refetchIntervention();
     }
-  }, [id, showError, purchaseRequests]);
+  }, [id, showError, refetchIntervention]);
 
   const handleRefreshSummary = useCallback(async () => {
-    // Recharger l'intervention ET les demandes d'achat
+    // Recharger l'intervention (qui contient maintenant tous les purchase requests)
     refetchIntervention();
-    await purchaseRequests.invalidate();
-  }, [refetchIntervention, purchaseRequests]);
+  }, [refetchIntervention]);
 
   const handlePurchaseRequestCreated = useCallback((createdRequest) => {
-    // Ajouter optimistically la demande créée à l'état du parent
+    // Rafraîchir l'intervention pour mettre à jour les purchase requests embarqués
     if (createdRequest?.id) {
-      purchaseRequests.addLocal(createdRequest);
+      refetchIntervention();
     }
-  }, [purchaseRequests]);
+  }, [refetchIntervention]);
 
   const handleAddSupplierRef = useCallback(async (stockItemId, supplierRefData) => {
     try {
@@ -593,7 +585,7 @@ export default function InterventionDetail() {
           { label: "Actions", value: interv.action?.length || 0 },
           { label: "Temps", value: `${totalTime}h` },
           ...(lastUpdateDate ? [{ label: "Dernière MAJ", value: lastUpdateDate }] : []),
-          ...(uniqueTechs.length > 0 ? [{ label: "Techs", value: uniqueTechs.join(' · ') }] : [])
+          ...(uniqueTechs.length > 0 ? [{ label: "Techs", value: uniqueTechs.join(' - ') }] : [])
         ]}
         actions={[
           {
@@ -686,7 +678,18 @@ export default function InterventionDetail() {
             model={{
               interv,
               loading,
-              purchaseRequests: purchaseRequests.requests
+              purchaseRequests: (() => {
+                // Extract and flatten purchase requests from actions
+                const allRequests = [];
+                if (interv?.action && Array.isArray(interv.action)) {
+                  interv.action.forEach(action => {
+                    if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
+                      allRequests.push(...action.purchaseRequests);
+                    }
+                  });
+                }
+                return allRequests;
+              })()
             }}
             handlers={{
               onCreatePurchaseRequest: handleCreatePurchaseRequest,
@@ -695,10 +698,10 @@ export default function InterventionDetail() {
               onAddStandardSpec: handleAddStandardSpec
             }}
             metadata={{
-              stockItems,
+              stockItems: [],
               supplierRefs,
               standardSpecs,
-              suppliers: supplierList
+              suppliers: []
             }}
           />
         </Tabs.Content>

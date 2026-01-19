@@ -7,6 +7,20 @@ export const fetchStockItemSuppliers = async (stockItemId: string) => {
   return rawLinks.map((link: Record<string, unknown>) => mapper.mapStockSupplierLinkToDomain(link));
 };
 
+export const fetchStockItemSuppliersBulk = async (stockItemIds: string[]) => {
+  const grouped = await datasource.fetchStockItemSuppliersBulk(stockItemIds);
+  
+  // Map each group
+  const result: Record<string, any[]> = {};
+  for (const [stockItemId, links] of Object.entries(grouped)) {
+    result[stockItemId] = links.map((link: Record<string, unknown>) => 
+      mapper.mapStockSupplierLinkToDomain(link)
+    );
+  }
+  
+  return result;
+};
+
 export const fetchSupplierRefsBySupplier = async (supplierId: string) => {
   const rawLinks = await datasource.fetchSupplierRefsBySupplier(supplierId);
   return rawLinks.map((link: Record<string, unknown>) => mapper.mapStockSupplierLinkToDomain(link));
@@ -70,6 +84,7 @@ export { deleteStockItemSupplier };
 
 export const stockSuppliersAdapter = {
   fetchStockItemSuppliers,
+  fetchStockItemSuppliersBulk,
   fetchSupplierRefsBySupplier,
   createStockItemSupplier,
   updateStockItemSupplier,

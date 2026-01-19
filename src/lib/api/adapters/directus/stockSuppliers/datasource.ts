@@ -29,6 +29,55 @@ export const fetchStockItemSuppliers = async (stockItemId: string) => {
   }, 'FetchStockItemSuppliers');
 };
 
+/**
+ * Fetch stock item suppliers for multiple stock items in a single API call
+ * @param stockItemIds - Array of stock item IDs
+ * @returns Object mapping stock item IDs to their supplier refs
+ */
+export const fetchStockItemSuppliersBulk = async (stockItemIds: string[]) => {
+  if (!stockItemIds || stockItemIds.length === 0) {
+    return {};
+  }
+
+  return apiCall(async () => {
+    const { data } = await api.get('/items/stock_item_supplier', {
+      params: {
+        filter: { stock_item_id: { _in: stockItemIds } },
+        fields: [
+          'id',
+          'stock_item_id',
+          'supplier_id.id',
+          'supplier_id.name',
+          'supplier_ref',
+          'is_preferred',
+          'unit_price',
+          'delivery_time_days',
+          'manufacturer_item_id.id',
+          'manufacturer_item_id.manufacturer_name',
+          'manufacturer_item_id.manufacturer_ref',
+          'manufacturer_item_id.designation',
+        ].join(','),
+        limit: -1,
+        _t: Date.now(),
+      },
+    });
+
+    // Group by stock_item_id
+    const grouped: Record<string, any[]> = {};
+    const items = data?.data || [];
+    
+    items.forEach((item: any) => {
+      const stockItemId = item.stock_item_id;
+      if (!grouped[stockItemId]) {
+        grouped[stockItemId] = [];
+      }
+      grouped[stockItemId].push(item);
+    });
+
+    return grouped;
+  }, 'FetchStockItemSuppliersBulk');
+};
+
 export const fetchSupplierRefsBySupplier = async (supplierId: string) => {
   return apiCall(async () => {
     const { data } = await api.get('/items/stock_item_supplier', {

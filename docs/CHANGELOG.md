@@ -1,122 +1,154 @@
+## 1.7.3 - 2026-01-19
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Le panneau de détails des demandes d'achat se charge correctement et affiche les références fournisseurs et spécifications
+- Les couleurs de fond des lignes sont moins intenses pour améliorer la lisibilité
+
 ## 1.7.2 - 2026-01-18
 
 Stabilité : 🟢 stable
 
 ### 🎯 Impact fonctionnel
+
 - Les demandes d'achat créées s'affichent immédiatement
 
 ## 1.7.0 - 2026-01-17
+
 Stabilité : 🟡 en consolidation
 
 ### 🎯 Impact fonctionnel
+
 - Interface uniformisée : remplacement de tous les pictogrammes hétérogènes par un jeu d’icônes cohérent
 - Meilleure lisibilité des statuts, alertes et badges dans toute l’application
 - Amélioration de l’accessibilité (lecture écran, contraste, cohérence visuelle)
 - Suppression des symboles ambigus ou dépendants du système d’exploitation
 
 ### 🧱 Stabilisation / Dette technique
+
 - Standardisation complète du système d’icônes → élimination des comportements visuels incohérents
 - Centralisation des conventions UI → réduction du risque de dérive future
 - Sécurisation des composants d’alerte et de notification → comportements maîtrisés et prévisibles
 
 ### 🧩 Composants / Modules concernés
-- components/actions/*
-- components/purchase/*
-- components/common/*
-- components/service/*
+
+- components/actions/\*
+- components/purchase/\*
+- components/common/\*
+- components/service/\*
 - config/badgeConfig
-- hooks/*
-- context/*
+- hooks/\*
+- context/\*
 
 ### ⚠️ Points de vigilance
+
 - Toute icône doit désormais respecter la convention définie (pas de symboles libres)
 - Les composants UI deviennent dépendants du système d’icônes centralisé
 - Toute nouvelle vue doit s’aligner strictement sur ces conventions
 
 ## 1.6.0 - 2026-01-16
+
 Stabilité : 🟡 en consolidation
 
 ### 🎯 Impact fonctionnel
+
 - Les paniers fournisseurs affichent désormais des indicateurs fiables et cohérents
 - Le niveau d’urgence d’un panier est automatiquement visible et priorisable
 - Les informations affichées correspondent exactement à l’état réel des demandes associées
 - Les paniers incomplets ou incohérents sont évités par construction
 
 ### 🧱 Stabilisation / Dette technique
+
 - Centralisation des règles de calcul des indicateurs → réduction des incohérences d’affichage
 - Automatisation des indicateurs clés → suppression de dépendances implicites côté interface
 - Alignement strict entre données et affichage → fiabilité accrue des décisions utilisateur
 
 ### 🧩 Composants / Modules concernés
+
 - components/purchase/OrderRow
 - components/purchase/OrderLineTable
 - components/purchase/SupplierOrdersTable
 - config/stockManagementConfig
 - config/colorPalette
-- lib/api/*
+- lib/api/\*
 
 ### ⚠️ Points de vigilance
+
 - Les indicateurs reposent désormais sur des règles automatiques non modifiables côté interface
 - Toute évolution des règles d’urgence doit être faite de manière centralisée
 - Les installations existantes doivent être vérifiées pour cohérence des données
 
 ## 1.5.x - 2026-01-16
+
 Stabilité : 🟡 en consolidation
 
 ### 🎯 Impact fonctionnel
+
 - Le processus d’achat fournisseur est désormais complet et cohérent de bout en bout
 - Les demandes d’achat sont correctement liées aux actions et aux paniers fournisseurs
 - L’utilisateur est guidé et bloqué lorsque des informations obligatoires manquent
 - Les paniers fournisseurs reflètent fidèlement l’état réel des demandes associées
 
 ### 🧱 Stabilisation / Dette technique
+
 - Centralisation de la logique de dispatch et de synchronisation des statuts → suppression des incohérences
 - Sécurisation des suppressions et des changements de statut → prévention des pertes de données
 - Simplification du chargement des données → amélioration de la fiabilité et des performances perçues
 
 ### 🧩 Composants / Modules concernés
-- components/purchase/*
-- components/actions/*
-- components/common/*
-- hooks/*
-- lib/api/*
-- config/*
+
+- components/purchase/\*
+- components/actions/\*
+- components/common/\*
+- hooks/\*
+- lib/api/\*
+- config/\*
 
 ### ⚠️ Points de vigilance
+
 - Les paniers créés avant cette version peuvent nécessiter une remise à plat
 - Le processus d’achat impose désormais des règles strictes non contournables
 - Toute évolution doit préserver la cohérence entre demandes, lignes et paniers
 
 ## 1.4.x - 2026-01-12
+
 Stabilité : 🟢 stable
 
 ### 🎯 Impact fonctionnel
+
 - Les demandes d’achat peuvent être créées, suivies et supprimées directement depuis les actions
 - La qualification des demandes est plus claire et plus rapide
 - L’utilisateur visualise immédiatement les liens entre interventions, actions et achats
 - Les erreurs de saisie ou de synchronisation sont fortement réduites
 
 ### 🧱 Stabilisation / Dette technique
+
 - Unification des règles de liaison entre actions et demandes d’achat → fiabilité accrue
 - Sécurisation des suppressions et des mises à jour → prévention des incohérences
 - Clarification du modèle de données côté utilisateur → compréhension facilitée
 
 ### 🧩 Composants / Modules concernés
-- components/actions/*
-- components/purchase/*
-- components/interventions/*
-- lib/api/*
-- hooks/*
+
+- components/actions/\*
+- components/purchase/\*
+- components/interventions/\*
+- lib/api/\*
+- hooks/\*
 
 ### ⚠️ Points de vigilance
+
 - Les règles de liaison action ↔ demande d’achat sont désormais structurantes
 - Toute modification future doit respecter ces relations
 - Vérifier les cas limites lors de suppressions multiples
 
 ## Versions antérieures (≤ 1.3.x) — Historique consolidé
+
 Stabilité : 🟢 stable
 
 ### 🎯 Impact fonctionnel
+
 - Mise en place des fondations de la GMAO : machines, interventions, actions
 - Création et suivi des demandes d’achat liées aux interventions
 - Visualisation structurée de l’activité maintenance (temps, catégories, statuts)
@@ -124,27 +156,32 @@ Stabilité : 🟢 stable
 - Navigation unifiée et accès cohérent aux données principales
 
 ### 🧱 Stabilisation / Dette technique
+
 - Structuration progressive du modèle de données maintenance
 - Mise en place des premières conventions UI et métier
 - Sécurisation des flux principaux (création, modification, suppression)
 - Nettoyage des incohérences initiales liées aux itérations rapides
 
 ### 🧩 Composants / Modules concernés
-- components/interventions/*
-- components/actions/*
-- components/purchase/*
-- components/machines/*
-- components/service/*
-- hooks/*
-- lib/api/*
-- config/*
+
+- components/interventions/\*
+- components/actions/\*
+- components/purchase/\*
+- components/machines/\*
+- components/service/\*
+- hooks/\*
+- lib/api/\*
+- config/\*
 
 ### ⚠️ Points de vigilance
+
 - Certaines décisions historiques limitent encore la flexibilité
 - Le modèle initial a été construit par itérations rapides
 - Toute refonte majeure doit tenir compte de cet héritage
 
 ---
+
 Les versions antérieures à la 1.4.x ont été regroupées afin de préserver la lisibilité
 et d’éviter toute dérive vers un journal de développement.
+
 ---

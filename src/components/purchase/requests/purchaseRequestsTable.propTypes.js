@@ -1,0 +1,26 @@
+import PropTypes from 'prop-types';
+
+export const purchaseRequestsTablePropTypes = {
+  requests: PropTypes.array.isRequired,
+  expandedRequestId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  renderExpandedContent: PropTypes.func,
+  stockItems: PropTypes.array,
+  supplierRefs: PropTypes.object,
+  standardSpecs: PropTypes.object,
+  onRefresh: PropTypes.func,
+  onAddSupplierRef: PropTypes.func,
+  onAddStandardSpec: PropTypes.func,
+  suppliers: PropTypes.array,
+  loading: PropTypes.bool,
+  setDispatchResult: PropTypes.func,
+  compact: PropTypes.bool,
+  onDeleteSupplierRef: PropTypes.func,
+  onUpdateSupplierRef: PropTypes.func,
+  onCreateSupplier: PropTypes.func,
+  onToggleExpand: PropTypes.func,
+  allManufacturers: PropTypes.array,
+  onDeleteStandardSpec: PropTypes.func,
+  onUpdateStandardSpec: PropTypes.func,
+  onLoadDetailsData: PropTypes.func,
+  detailsLoadingStates: PropTypes.object,
+};
