@@ -75,6 +75,7 @@ export const STATE_COLORS = {
  */
 export const PRIORITY_COLORS = {
   urgent: {
+    label: 'Urgent',
     activeBg: 'var(--red-9)', // Rouge bloqué
     hoverBg: 'var(--red-7)',
     inactiveBg: 'var(--gray-3)',
@@ -82,6 +83,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   important: {
+    label: 'Important',
     activeBg: 'var(--amber-9)', // Orange attente
     hoverBg: 'var(--amber-7)',
     inactiveBg: 'var(--gray-3)',
@@ -89,6 +91,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   normal: {
+    label: 'Normal',
     activeBg: 'var(--blue-9)', // Bleu industriel
     hoverBg: 'var(--blue-7)',
     inactiveBg: 'var(--gray-3)',
@@ -96,6 +99,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   faible: {
+    label: 'Faible',
     activeBg: 'var(--gray-9)',
     hoverBg: 'var(--gray-7)',
     inactiveBg: 'var(--gray-2)',

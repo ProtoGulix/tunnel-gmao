@@ -17,6 +17,7 @@ import Parts from './Parts';
 import Procurement from './Procurement';
 import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
 import ServiceStatus from './ServiceStatus';
+import TechnicianHome from './TechnicianHome';
 
 /**
  * Map des composants par ID de page
@@ -25,6 +26,7 @@ import ServiceStatus from './ServiceStatus';
 export const ROUTE_COMPONENTS = {
   home: PublicHome,
   login: Login,
+  'technician-home': TechnicianHome,
   'intervention-request': InterventionRequestForm,
   'purchase-request': PurchaseRequestPage,
   interventions: InterventionsList,

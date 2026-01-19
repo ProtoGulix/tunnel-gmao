@@ -7,13 +7,13 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // 3. UI Libraries (Radix)
-import { Button, Tabs, Flex, Text, Badge } from '@radix-ui/themes';
+import { Tabs, Flex, Text, Badge } from '@radix-ui/themes';
 
 // 4. Icons
-import { Wrench, Plus } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 
 // 5. API / Lib
-import { interventions, actions, interventionStatusLogs, suppliers, stock, stockSuppliers, actionSubcategories } from '@/lib/api/facade';
+import { interventions, actions, interventionStatusLogs, stock, stockSuppliers, actionSubcategories } from '@/lib/api/facade';
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
@@ -52,6 +52,20 @@ import {
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // STATUS MAPPING (DTO ↔ Backend French)
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Maps priority value to config key for UI display.
+ * @param {string} priorityValue - Priority value from backend
+ * @returns {string} Config key for PRIORITY_COLORS
+ */
+const mapPriorityToConfigKey = (priorityValue) => {
+  if (!priorityValue) return 'normal';
+  const key = priorityValue.toLowerCase().trim();
+  return key === 'urgent' ? 'urgent'
+    : key === 'important' ? 'important'
+    : key === 'faible' ? 'faible'
+    : 'normal'; // Default fallback
+};
 
 /**
  * Maps domain DTO status to config key for UI display.
@@ -466,22 +480,6 @@ export default function InterventionDetail() {
     await mutateUpdateIntervention({ printedFiche: true });
   }, [mutateUpdateIntervention]);
 
-  const handleCreatePurchaseRequest = useCallback(async (requestData) => {
-    try {
-      // Créer la purchase request
-      await stock.createPurchaseRequest({
-        ...requestData,
-        intervention_id: id
-      });
-      // Rafraîchir l'intervention pour mettre à jour les purchase requests embarqués
-      refetchIntervention();
-    } catch (error) {
-      showError(error);
-      // En cas d'erreur, recharger depuis l'API
-      refetchIntervention();
-    }
-  }, [id, showError, refetchIntervention]);
-
   const handleRefreshSummary = useCallback(async () => {
     // Recharger l'intervention (qui contient maintenant tous les purchase requests)
     refetchIntervention();
@@ -555,32 +553,6 @@ export default function InterventionDetail() {
         icon={Wrench}
         title={`${interv.machine?.name || "Machine"} • ${interv.code || `INT-${id}`}`}
         subtitle={interv.title || "Intervention"}
-        statusDropdown={
-          <DropdownButton
-            label={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.label || 'En cours'}
-            color={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.activeBg || 'var(--blue-6)'}
-            textColor={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.textActive || 'white'}
-            items={[
-              { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
-              { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },
-              { label: STATE_COLORS.attente_prod.label, color: STATE_COLORS.attente_prod.activeBg, onClick: () => handleStatusChange('attente_prod') },
-              { label: STATE_COLORS.ferme.label, color: STATE_COLORS.ferme.activeBg, onClick: () => handleStatusChange('ferme') }
-            ]}
-          />
-        }
-        priorityDropdown={
-          <DropdownButton
-            label={PRIORITY_COLORS[interv.priority?.toLowerCase()]?.label || 'Normal'}
-            color={PRIORITY_COLORS[interv.priority?.toLowerCase()]?.activeBg || 'var(--gray-6)'}
-            textColor={PRIORITY_COLORS[interv.priority?.toLowerCase()]?.textActive || 'white'}
-            items={[
-              { label: 'Urgent', color: PRIORITY_COLORS.urgent.activeBg, onClick: () => handlePriorityChange('urgent') },
-              { label: 'Important', color: PRIORITY_COLORS.important.activeBg, onClick: () => handlePriorityChange('important') },
-              { label: 'Normal', color: PRIORITY_COLORS.normal.activeBg, onClick: () => handlePriorityChange('normal') },
-              { label: 'Faible', color: PRIORITY_COLORS.faible.activeBg, onClick: () => handlePriorityChange('faible') }
-            ]}
-          />
-        }
         stats={[
           { label: "Actions", value: interv.action?.length || 0 },
           { label: "Temps", value: `${totalTime}h` },
@@ -590,14 +562,32 @@ export default function InterventionDetail() {
         actions={[
           {
             label: (
-              <Button
-                size="2"
-                onClick={() => setShowActionForm(!showActionForm)}
-                style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
-              >
-                <Plus size={16} />
-                + Action
-              </Button>
+              <DropdownButton
+                label={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.label || 'En cours'}
+                color={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.activeBg || 'var(--blue-6)'}
+                textColor={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.textActive || 'white'}
+                items={[
+                  { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
+                  { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },
+                  { label: STATE_COLORS.attente_prod.label, color: STATE_COLORS.attente_prod.activeBg, onClick: () => handleStatusChange('attente_prod') },
+                  { label: STATE_COLORS.ferme.label, color: STATE_COLORS.ferme.activeBg, onClick: () => handleStatusChange('ferme') }
+                ]}
+              />
+            )
+          },
+          {
+            label: (
+              <DropdownButton
+                label={PRIORITY_COLORS[mapPriorityToConfigKey(interv.priority)]?.label || 'Normal'}
+                color={PRIORITY_COLORS[mapPriorityToConfigKey(interv.priority)]?.activeBg || 'var(--gray-6)'}
+                textColor={PRIORITY_COLORS[mapPriorityToConfigKey(interv.priority)]?.textActive || 'white'}
+                items={[
+                  { label: 'Urgent', color: PRIORITY_COLORS.urgent.activeBg, onClick: () => handlePriorityChange('urgent') },
+                  { label: 'Important', color: PRIORITY_COLORS.important.activeBg, onClick: () => handlePriorityChange('important') },
+                  { label: 'Normal', color: PRIORITY_COLORS.normal.activeBg, onClick: () => handlePriorityChange('normal') },
+                  { label: 'Faible', color: PRIORITY_COLORS.faible.activeBg, onClick: () => handlePriorityChange('faible') }
+                ]}
+              />
             )
           }
         ]}
@@ -692,7 +682,6 @@ export default function InterventionDetail() {
               })()
             }}
             handlers={{
-              onCreatePurchaseRequest: handleCreatePurchaseRequest,
               onRefresh: handleRefreshSummary,
               onAddSupplierRef: handleAddSupplierRef,
               onAddStandardSpec: handleAddStandardSpec
