@@ -2,6 +2,7 @@
 // 1. React core
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import packageJson from '../package.json';
 
 // 2. UI Libraries (Radix)
 import { Theme } from '@radix-ui/themes';
@@ -17,6 +18,9 @@ import { ErrorProvider } from '@/contexts/ErrorContext';
 
 // 5. Global Styles
 import '@/styles/globals.css';
+
+// ===== SET DYNAMIC TITLE =====
+document.title = `TUNNEL v${packageJson.version}`;
 
 // ===== RENDER =====
 ReactDOM.createRoot(document.getElementById('root')).render(
