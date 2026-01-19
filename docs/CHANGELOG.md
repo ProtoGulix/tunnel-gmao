@@ -1,11 +1,34 @@
-## 1.7.3 - 2026-01-19
+## 1.8.0 - 2026-01-19
 
-Stabilité : 🟢 stable
+Stabilité : 🟡 en consolidation
 
 ### 🎯 Impact fonctionnel
 
 - Le panneau de détails des demandes d'achat se charge correctement et affiche les références fournisseurs et spécifications
 - Les couleurs de fond des lignes sont moins intenses pour améliorer la lisibilité
+- Interface de tableau de demandes d'achat optimisée et plus réactive
+
+### 🧱 Stabilisation / Dette technique
+
+- Refactoring majeur du composant PurchaseRequestsTable : séparation en modules indépendants
+- Réduction de la complexité cyclomatique (18 → 10) pour respecter les standards de qualité
+- Extraction de helpers réutilisables (couleurs d'âge, tri, définition des colonnes)
+- Création de composants enfants pour meilleure maintenabilité (PurchaseRequestRow)
+- Centralisation des PropTypes et des constantes
+- Amélioration de la séparation des responsabilités
+
+### 🧩 Composants / Modules concernés
+
+- components/purchase/requests/PurchaseRequestsTable.jsx
+- components/purchase/requests/PurchaseRequestRow.jsx (nouveau)
+- components/purchase/requests/purchaseRequestsTable.helpers.jsx (nouveau)
+- components/purchase/requests/purchaseRequestRow.helpers.jsx (nouveau)
+- components/purchase/requests/purchaseRequestsTable.propTypes.js (nouveau)
+
+### ⚠️ Points de vigilance
+
+- Architecture modulaire : les changements futurs doivent respecter la séparation des composants
+- Les props du composant parent restent nombreuses → à surveiller pour prochaines itérations
 
 ## 1.7.2 - 2026-01-18
 
