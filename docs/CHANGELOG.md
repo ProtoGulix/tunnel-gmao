@@ -1,3 +1,33 @@
+## 1.10.0 - 2026-01-20
+
+Stabilité : 🟡 en consolidation
+
+### 🎯 Impact fonctionnel
+
+- Gestion des familles et sous-familles de pièces disponible depuis l’onglet Pièces
+- Tableau Fournisseurs modernisé : actions regroupées et panneau d’extension pour les références par fournisseur
+
+### 🧱 Stabilisation / Dette technique
+
+- Mutualisation du tableau fournisseurs sur le composant DataTable pour cohérence UI
+- Ajout des opérations CRUD familles/sous-familles dans l’adapter Directus (cache invalidé)
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/Parts.jsx
+- src/components/purchase/suppliers/SuppliersTable.jsx
+- src/components/purchase/suppliers/SupplierRefsBySupplierPanel.jsx
+- src/components/stock/StockFamiliesTable.jsx (nouveau)
+- src/components/stock/FamilyRow.jsx (nouveau)
+- src/components/stock/SubfamilyRow.jsx (nouveau)
+- src/lib/api/adapters/directus/stock/adapter.ts
+- src/lib/api/adapters/directus/stock/datasource.ts
+
+### ⚠️ Points de vigilance
+
+- Suppression de SuppliersInlinePanel.jsx : vérifier les intégrations externes éventuelles
+- Le panneau familles/sous-familles déclenche des confirmations navigateur (window.confirm) conservées temporairement
+
 ## 1.9.1 - 2026-01-20
 
 Stabilité : 🟢 stable
@@ -6,7 +36,7 @@ Stabilité : 🟢 stable
 
 - Amélioration interne : optimisation code TechnicianHome et InterventionCreate
 
-### � Composants / Modules concernés
+### 🧩 Composants / Modules concernés
 
 - src/pages/TechnicianHome.jsx
 - src/hooks/useTechnicianHome.js (nouveau)

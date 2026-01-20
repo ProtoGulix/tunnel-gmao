@@ -20,6 +20,12 @@ import {
   deleteStockItemStandardSpecInBackend,
   fetchStockFamiliesFromBackend,
   fetchStockSubFamiliesFromBackend,
+  createStockFamilyInBackend,
+  updateStockFamilyInBackend,
+  deleteStockFamilyInBackend,
+  createStockSubFamilyInBackend,
+  updateStockSubFamilyInBackend,
+  deleteStockSubFamilyInBackend,
 } from './datasource';
 import {
   mapPurchaseRequestToDomain,
@@ -124,9 +130,45 @@ export const fetchStockFamilies = async () => {
   return items.map(mapStockFamilyToDomain);
 };
 
+export const createStockFamily = async (familyData: Record<string, unknown>) => {
+  const created = await createStockFamilyInBackend(familyData);
+  invalidateCache('stockFamilies');
+  return mapStockFamilyToDomain(created);
+};
+
+export const updateStockFamily = async (code: string, updates: Record<string, unknown>) => {
+  const updated = await updateStockFamilyInBackend(code, updates);
+  invalidateCache('stockFamilies');
+  return mapStockFamilyToDomain(updated);
+};
+
+export const deleteStockFamily = async (code: string) => {
+  await deleteStockFamilyInBackend(code);
+  invalidateCache('stockFamilies');
+  return true;
+};
+
 export const fetchStockSubFamilies = async (familyCode: string) => {
   const items = await fetchStockSubFamiliesFromBackend(familyCode);
   return items.map(mapStockSubFamilyToDomain);
+};
+
+export const createStockSubFamily = async (subfamilyData: Record<string, unknown>) => {
+  const created = await createStockSubFamilyInBackend(subfamilyData);
+  invalidateCache('stockFamilies');
+  return mapStockSubFamilyToDomain(created);
+};
+
+export const updateStockSubFamily = async (id: string, updates: Record<string, unknown>) => {
+  const updated = await updateStockSubFamilyInBackend(id, updates);
+  invalidateCache('stockFamilies');
+  return mapStockSubFamilyToDomain(updated);
+};
+
+export const deleteStockSubFamily = async (id: string) => {
+  await deleteStockSubFamilyInBackend(id);
+  invalidateCache('stockFamilies');
+  return true;
 };
 
 // Export as adapter object
@@ -145,5 +187,11 @@ export const stockAdapter = {
   updateStockItemStandardSpec,
   deleteStockItemStandardSpec,
   fetchStockFamilies,
+  createStockFamily,
+  updateStockFamily,
+  deleteStockFamily,
   fetchStockSubFamilies,
+  createStockSubFamily,
+  updateStockSubFamily,
+  deleteStockSubFamily,
 };
