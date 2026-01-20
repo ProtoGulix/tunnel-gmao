@@ -26,7 +26,9 @@ export const createRowRenderer = ({
   const renderer = (order) => {
     const isExpanded = expandedOrderId === order.id;
     const basketStatus = normalizeBasketStatus(order.status);
-    const isLocked = ['ORDERED', 'CLOSED'].includes(basketStatus);
+    // Autoriser le changement de statut pour les paniers commandés (ORDERED/RECEIVED)
+    // On ne verrouille que les paniers clôturés pour garder la dropdown active.
+    const isLocked = basketStatus === 'CLOSED';
 
     return (
       <Fragment key={order.id}>

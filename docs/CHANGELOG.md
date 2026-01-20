@@ -1,3 +1,19 @@
+## 1.11.3 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Le statut des paniers commandés peut être clôturé (dropdown déverrouillée en ORDERED/RECEIVED)
+
+### 🧱 Stabilisation / Dette technique
+
+- Verrouillage limité aux paniers clôturés (CLOSED), maintien du lock sur les lignes
+
+### ⚠️ Points de vigilance
+
+- Les lignes restent non éditables en statut ORDERED/RECEIVED (logique métier conservée)
+
 ## 1.11.2 - 2026-01-20
 
 Stabilité : 🟢 stable
