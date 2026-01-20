@@ -1,3 +1,19 @@
+## 1.9.1 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Amélioration interne : optimisation code TechnicianHome et InterventionCreate
+
+### � Composants / Modules concernés
+
+- src/pages/TechnicianHome.jsx
+- src/hooks/useTechnicianHome.js (nouveau)
+- src/components/technician/ActionCard.jsx (nouveau)
+- src/pages/InterventionCreate.jsx
+- src/hooks/useInterventionCreate.js
+
 ## 1.9.0 - 2026-01-19
 
 Stabilité : 🟢 stable

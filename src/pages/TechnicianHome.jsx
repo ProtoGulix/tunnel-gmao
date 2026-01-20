@@ -1,12 +1,12 @@
 // ===== IMPORTS =====
 // 1. React core
-import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
 // 2. React Router
 import { useNavigate } from 'react-router-dom';
 
 // 3. UI Libraries (Radix)
-import { Container, Box, Flex, Text, Heading, Badge, Card, Grid } from '@radix-ui/themes';
+import { Container, Box, Flex, Text, Heading, Badge, Grid } from '@radix-ui/themes';
 
 // 4. Icons
 import { AlertTriangle, Wrench, ShoppingCart, ClipboardCheck, Settings, FileText } from 'lucide-react';
@@ -15,39 +15,25 @@ import { AlertTriangle, Wrench, ShoppingCart, ClipboardCheck, Settings, FileText
 import PageContainer from '@/components/layout/PageContainer';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import ActionCard from '@/components/technician/ActionCard';
 
 // 6. Hooks
-import { useApiCall } from '@/hooks/useApiCall';
-import { useAutoRefresh } from '@/hooks/useAutoRefresh';
+import useTechnicianHome from '@/hooks/useTechnicianHome';
 
 // 7. API
-import { interventions } from '@/lib/api/facade';
+// (utilisé dans le hook)
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-/** Seuil d'alerte pour interventions en cours (heures) */
-const IN_PROGRESS_THRESHOLD_HOURS = 24;
-
-/** Intervalle de rafraîchissement automatique (secondes) */
-const AUTO_REFRESH_INTERVAL = 30;
+// (déplacé dans le hook)
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-/**
- * Calcule l'âge d'une intervention en heures
- * @param {string} dateString - Date ISO
- * @returns {number} Âge en heures
- */
-const calculateAge = (dateString) => {
-  if (!dateString) return 0;
-  const created = new Date(dateString);
-  const now = new Date();
-  return Math.floor((now - created) / (1000 * 60 * 60));
-};
+// (déplacé dans le hook)
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -79,11 +65,6 @@ const calculateAge = (dateString) => {
  */
 export default function TechnicianHome() {
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // STATE & REFS
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const initialLoadRef = useRef(false);
-
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // ROUTER HOOKS
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const navigate = useNavigate();
@@ -91,98 +72,15 @@ export default function TechnicianHome() {
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // DATA FETCHING
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const {
-    data: allInterventions = [],
     loading,
     error,
-    execute: refetchInterventions,
-    executeSilent: backgroundRefetch,
-  } = useApiCall(interventions.fetchInterventions, { autoExecute: false });
-
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // EFFECTS
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  
-  // Initial load (protection React StrictMode)
-  useEffect(() => {
-    if (initialLoadRef.current) return;
-    initialLoadRef.current = true;
-    refetchInterventions();
-  }, [refetchInterventions]);
-
-  // Auto-refresh silencieux
-  useAutoRefresh(backgroundRefetch, AUTO_REFRESH_INTERVAL, true);
-
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // COMPUTED VALUES
-  // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const urgentCount = useMemo(() => {
-    if (!allInterventions) return 0;
-    return allInterventions.filter(
-      (interv) => interv.priority === 'urgent' && interv.status === 'open'
-    ).length;
-  }, [allInterventions]);
-
-  const openInterventionsCount = useMemo(() => {
-    if (!allInterventions) return 0;
-    return allInterventions.filter(
-      (interv) => ['open', 'waiting_part', 'waiting_prod'].includes(interv.status)
-    ).length;
-  }, [allInterventions]);
-
-  const hygieneIssues = useMemo(() => {
-    const issues = {
-      inProgressTooLong: [],
-      closedWithoutActions: [],
-      actionsWithoutTime: [],
-    };
-
-    if (!allInterventions) return issues;
-
-    allInterventions.forEach((interv) => {
-      if (interv.status === 'in_progress') {
-        const age = calculateAge(interv.reportedDate || interv.dateCreation);
-        if (age > IN_PROGRESS_THRESHOLD_HOURS) {
-          issues.inProgressTooLong.push(interv);
-        }
-      }
-
-      if (interv.status === 'closed') {
-        const hasActions = interv.action && interv.action.length > 0;
-        if (!hasActions) {
-          issues.closedWithoutActions.push(interv);
-        }
-      }
-
-      if (interv.action && Array.isArray(interv.action)) {
-        interv.action.forEach((action) => {
-          if (!action.timeSpent || action.timeSpent === 0) {
-            issues.actionsWithoutTime.push({
-              intervention: interv,
-              action,
-            });
-          }
-        });
-      }
-    });
-
-    return issues;
-  }, [allInterventions]);
-
-  const anomaliesCount = useMemo(() => {
-    return (
-      hygieneIssues.inProgressTooLong.length +
-      hygieneIssues.closedWithoutActions.length +
-      hygieneIssues.actionsWithoutTime.length
-    );
-  }, [hygieneIssues]);
-
-  const serviceStatus = useMemo(() => {
-    return urgentCount > 0 ? 'URGENT' : 'NORMAL';
-  }, [urgentCount]);
+    urgentCount,
+    openInterventionsCount,
+    anomaliesCount,
+    serviceStatus,
+    refetchInterventions,
+  } = useTechnicianHome();
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // HANDLERS & CALLBACKS
@@ -196,7 +94,7 @@ export default function TechnicianHome() {
   }, [navigate]);
 
   const handlePurchases = useCallback(() => {
-    navigate('/purchase-requests');
+    navigate('/procurement');
   }, [navigate]);
 
   const handleMonitoring = useCallback(() => {
@@ -243,133 +141,72 @@ export default function TechnicianHome() {
           {/* GRILLE DE CARTES */}
           <Grid columns={{ initial: '1', sm: '2', md: '3' }} gap="3">
             {/* CARTE : URGENCES */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: urgentCount > 0 ? '2px solid var(--red-9)' : '1px solid var(--gray-6)',
-                backgroundColor: urgentCount > 0 ? 'var(--red-2)' : 'var(--gray-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Urgences"
+              Icon={AlertTriangle}
               onClick={handleUrgencies}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <AlertTriangle size={40} color={urgentCount > 0 ? 'var(--red-9)' : 'var(--gray-9)'} />
-                <Text size="4" weight="bold" align="center">
-                  Urgences
-                </Text>
-                {urgentCount > 0 && (
-                  <Badge size="2" color="red" variant="solid" radius="full">
-                    {urgentCount}
-                  </Badge>
-                )}
-              </Flex>
-            </Card>
+              badgeCount={urgentCount}
+              badgeColor="red"
+              borderColor={urgentCount > 0 ? 'var(--red-9)' : 'var(--gray-6)'}
+              backgroundColor={urgentCount > 0 ? 'var(--red-2)' : 'var(--gray-1)'}
+              iconColor={urgentCount > 0 ? 'var(--red-9)' : 'var(--gray-9)'}
+            />
 
             {/* CARTE : INTERVENIR */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: '1px solid var(--blue-6)',
-                backgroundColor: 'var(--blue-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Intervenir"
+              Icon={Wrench}
               onClick={handleIntervene}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <Wrench size={40} color="var(--blue-9)" />
-                <Text size="4" weight="bold" align="center">
-                  Intervenir
-                </Text>
-                {openInterventionsCount > 0 && (
-                  <Badge size="1" color="blue" variant="soft">
-                    {openInterventionsCount} ouvertes
-                  </Badge>
-                )}
-              </Flex>
-            </Card>
+              badgeCount={openInterventionsCount}
+              badgeLabel="ouvertes"
+              badgeColor="blue"
+              borderColor={'var(--blue-6)'}
+              backgroundColor={'var(--blue-1)'}
+              iconColor={'var(--blue-9)'}
+            />
 
             {/* CARTE : ACHATS */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: '1px solid var(--blue-6)',
-                backgroundColor: 'var(--blue-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Achats"
+              Icon={ShoppingCart}
               onClick={handlePurchases}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <ShoppingCart size={40} color="var(--blue-9)" />
-                <Text size="4" weight="bold" align="center">
-                  Achats
-                </Text>
-              </Flex>
-            </Card>
+              borderColor={'var(--blue-6)'}
+              backgroundColor={'var(--blue-1)'}
+              iconColor={'var(--blue-9)'}
+            />
 
             {/* CARTE : SUIVI */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: anomaliesCount > 0 ? '1px solid var(--amber-6)' : '1px solid var(--gray-6)',
-                backgroundColor: anomaliesCount > 0 ? 'var(--amber-1)' : 'var(--gray-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Suivi"
+              Icon={ClipboardCheck}
               onClick={handleMonitoring}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <ClipboardCheck size={40} color={anomaliesCount > 0 ? 'var(--amber-9)' : 'var(--gray-9)'} />
-                <Text size="4" weight="bold" align="center">
-                  Suivi
-                </Text>
-                {anomaliesCount > 0 && (
-                  <Badge size="1" color="amber" variant="soft">
-                    {anomaliesCount} anomalies
-                  </Badge>
-                )}
-              </Flex>
-            </Card>
+              badgeCount={anomaliesCount}
+              badgeLabel="anomalies"
+              badgeColor="amber"
+              borderColor={anomaliesCount > 0 ? 'var(--amber-6)' : 'var(--gray-6)'}
+              backgroundColor={anomaliesCount > 0 ? 'var(--amber-1)' : 'var(--gray-1)'}
+              iconColor={anomaliesCount > 0 ? 'var(--amber-9)' : 'var(--gray-9)'}
+            />
 
             {/* CARTE : MACHINES */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: '1px solid var(--gray-6)',
-                backgroundColor: 'var(--gray-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Machines"
+              Icon={Settings}
               onClick={handleMachines}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <Settings size={40} color="var(--gray-9)" />
-                <Text size="4" weight="bold" align="center">
-                  Machines
-                </Text>
-              </Flex>
-            </Card>
+              borderColor={'var(--gray-6)'}
+              backgroundColor={'var(--gray-1)'}
+              iconColor={'var(--gray-9)'}
+            />
 
             {/* CARTE : ACTIONS */}
-            <Card
-              style={{
-                padding: '1.5rem',
-                cursor: 'pointer',
-                border: '1px solid var(--gray-6)',
-                backgroundColor: 'var(--gray-1)',
-                minHeight: '140px',
-              }}
+            <ActionCard
+              title="Actions"
+              Icon={FileText}
               onClick={handleActions}
-            >
-              <Flex direction="column" align="center" justify="center" gap="2" style={{ height: '100%' }}>
-                <FileText size={40} color="var(--gray-9)" />
-                <Text size="4" weight="bold" align="center">
-                  Actions
-                </Text>
-              </Flex>
-            </Card>
+              borderColor={'var(--gray-6)'}
+              backgroundColor={'var(--gray-1)'}
+              iconColor={'var(--gray-9)'}
+            />
           </Grid>
         </Flex>
       </Container>
