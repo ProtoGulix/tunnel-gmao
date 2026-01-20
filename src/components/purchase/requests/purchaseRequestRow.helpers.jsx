@@ -2,9 +2,11 @@ import PropTypes from "prop-types";
 import { Badge, Flex } from "@radix-ui/themes";
 import { AlertTriangle, AlertCircle } from "lucide-react";
 import { COLOR_USAGE } from "@/config/colorPalette";
+import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
 export const StatusBadges = ({ request, hasMissing, age }) => {
-  const statusId = typeof request.status === "string" ? request.status : request.status?.id;
+  const derivedStatus = request.derived_status || derivePurchaseRequestStatus(request);
+  const statusId = typeof derivedStatus === "string" ? derivedStatus : derivedStatus?.id;
 
   if (hasMissing) {
     return (
@@ -28,18 +30,10 @@ export const StatusBadges = ({ request, hasMissing, age }) => {
     );
   }
 
-  if (statusId === "ordered") {
+  if (statusId === "pooling") {
     return (
-      <Badge color="green" variant="soft">
-        Commandée
-      </Badge>
-    );
-  }
-
-  if (statusId === "in_progress") {
-    return (
-      <Badge color="blue" variant="soft">
-        En attente
+      <Badge color="purple" variant="soft">
+        Mutualisation
       </Badge>
     );
   }
@@ -52,7 +46,43 @@ export const StatusBadges = ({ request, hasMissing, age }) => {
     );
   }
 
-  return <Badge variant="soft">-</Badge>;
+  if (statusId === "ordered") {
+    return (
+      <Badge color="green" variant="soft">
+        Commandée
+      </Badge>
+    );
+  }
+
+  if (statusId === "received") {
+    return (
+      <Badge color="green" variant="solid">
+        Reçue
+      </Badge>
+    );
+  }
+
+  if (statusId === "cancelled") {
+    return (
+      <Badge color="red" variant="soft">
+        Annulée
+      </Badge>
+    );
+  }
+
+  if (statusId === "in_progress") {
+    return (
+      <Badge color="blue" variant="soft">
+        En attente
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="soft">
+      Ouverte
+    </Badge>
+  );
 };
 
 StatusBadges.propTypes = {

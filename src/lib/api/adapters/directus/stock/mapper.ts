@@ -18,6 +18,11 @@ export const mapPurchaseRequestToDomain = (item: Record<string, unknown>) => {
     ? stockItemRelation.supplier_refs.length 
     : 0;
   
+  // Mapper les relations M2M supplier_order_line_ids (pour dériver le statut)
+  const supplierOrderLineIds = Array.isArray(item.supplier_order_line_ids)
+    ? item.supplier_order_line_ids
+    : undefined;
+  
   return {
     id: item.id,
     stockItemId: stockItemRelation?.id ?? (typeof item.stock_item_id === 'string' ? item.stock_item_id : undefined),
@@ -33,6 +38,7 @@ export const mapPurchaseRequestToDomain = (item: Record<string, unknown>) => {
     status: item.status ?? undefined,
     createdAt: item.created_at ?? undefined,
     interventionId: item.intervention_id ?? undefined,
+    supplier_order_line_ids: supplierOrderLineIds,
   };
 };
 

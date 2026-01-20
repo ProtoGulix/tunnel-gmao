@@ -10,6 +10,7 @@ import {
   handlePurgeUnselectedLines,
   updatePurchaseRequestStatuses,
 } from './helpers';
+import { processOrderReception } from '@/lib/purchasing/orderReceptionUtils';
 
 /**
  * Gère la transition vers le statut RECEIVED avec validation de sélection
@@ -89,6 +90,12 @@ export const handleStatusChange = async (
     else if (newStatus === 'CLOSED') updateData.received_at = new Date().toISOString();
 
     await suppliers.updateSupplierOrder(orderId, updateData);
+
+    // Si la commande passe en CLOSED, traiter la réception
+    if (newStatus === 'CLOSED') {
+      await processOrderReception(orderId, lines);
+    }
+
     await onRefresh();
 
     if (expandedOrderId === orderId) {

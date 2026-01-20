@@ -7,6 +7,7 @@ import {
   Card,
   Button,
   Badge,
+  AlertDialog,
 } from "@radix-ui/themes";
 import {
   ShoppingCart,
@@ -18,6 +19,7 @@ import {
   Archive,
   Users,
   AlertTriangle,
+  Settings,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -53,6 +55,8 @@ import {
   normalizeBasketStatus,
 } from "@/lib/purchasing/basketItemRules";
 import TwinLinesValidationAlert from "@/components/purchase/orders/TwinLinesValidationAlert";
+import { recalculateAllOrderTotals } from "@/lib/purchasing/lineCalculationUtils";
+import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
 const PROCUREMENT_TABS = {
   REQUESTS: "requests",
@@ -89,6 +93,10 @@ export default function Procurement() {
   
   // État des validations de jumelles (stocke les infos par ligne)
   const [twinValidationsByLine, setTwinValidationsByLine] = useState({});
+
+  // État pour le recalcul des totaux
+  const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   // Load manufacturers
   const [allManufacturers, setAllManufacturers] = useState([]);
@@ -132,7 +140,10 @@ export default function Procurement() {
     };
 
     return [...baseFilteredRequests]
-      .filter(req => req.status !== 'received')
+      .filter(req => {
+        const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
+        return derivedStatus !== 'received';
+      })
       .sort((a, b) => {
         const aMissing = hasMissingInfo(a) ? 1 : 0;
         const bMissing = hasMissingInfo(b) ? 1 : 0;
@@ -146,7 +157,10 @@ export default function Procurement() {
 
   const receivedRequests = useMemo(() => {
     return [...baseFilteredRequests]
-      .filter(req => req.status === 'received')
+      .filter(req => {
+        const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
+        return derivedStatus === 'received';
+      })
       .sort((a, b) => {
         const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
         const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
@@ -162,15 +176,17 @@ export default function Procurement() {
     const closed = [];
 
     purchasing.supplierOrders.forEach((order) => {
-      const status = (order.status || "").toUpperCase();
-      
-      if (status === "OPEN" || status === "POOLING") {
+      const statusValue = order.status?.id ?? order.status;
+      const normalizedStatus = normalizeBasketStatus(statusValue);
+
+      if (normalizedStatus === "POOLING") {
         pooling.push(order);
-      } else if (status === "SENT") {
+      } else if (normalizedStatus === "SENT") {
         sent.push(order);
-      } else if (["ACK", "RECEIVED"].includes(status)) {
+      } else if (normalizedStatus === "ORDERED") {
         ordered.push(order);
-      } else if (["CLOSED", "CANCELLED"].includes(status)) {
+      } else if (normalizedStatus === "CLOSED") {
+        // Les paniers reçus ou clôturés vont dans l'onglet Clôturé
         closed.push(order);
       }
     });
@@ -299,8 +315,9 @@ export default function Procurement() {
 
   const readyCount = useMemo(() => {
     return purchases.requests.filter((r) => {
-      const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      if (statusId !== "open" || !r.stockItemId) return false;
+      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
+      // Statut 'open' = à dispatcher (selon SUPPLIER_ORDER_LIFECYCLE.md)
+      if (derivedStatus !== "open" || !r.stockItemId) return false;
       
       return (r.stockItemSupplierRefsCount ?? 0) > 0;
     }).length;
@@ -308,8 +325,9 @@ export default function Procurement() {
 
   const toQualifyCount = useMemo(
     () => purchases.requests.filter((r) => {
-      const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      if (statusId !== "open") return false;
+      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
+      // Statut 'open' = à dispatcher
+      if (derivedStatus !== "open") return false;
       if (!r.stockItemId) return false;
       
       return (r.stockItemSupplierRefsCount ?? 0) === 0;
@@ -319,8 +337,9 @@ export default function Procurement() {
 
   const unlinkedCount = useMemo(
     () => purchases.requests.filter((r) => {
-      const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      return statusId === "open" && !r.stockItemId;
+      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
+      // Statut 'open' = à dispatcher
+      return derivedStatus === "open" && !r.stockItemId;
     }).length,
     [purchases.requests]
   );
@@ -623,21 +642,6 @@ export default function Procurement() {
     }
   };
 
-  const handleStatusChange = async (requestId, newStatus) => {
-    try {
-      await purchases.updateStatus(requestId, newStatus);
-      await refreshRequests();
-    } catch (error) {
-      console.error("Erreur changement statut:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors du changement de statut',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-    }
-  };
-
   // ========== GESTION SÉLECTION ITEMS PANIER ==========
   const initializeItemSelection = useCallback(() => {
     const newSelection = {};
@@ -916,6 +920,35 @@ export default function Procurement() {
     ]);
   }, [purchases, purchasing, stock]);
 
+  // ========== RECALCUL DES TOTAUX ==========
+  const handleRecalculateAllTotals = useCallback(async () => {
+    setIsRecalculating(true);
+    try {
+      const results = await recalculateAllOrderTotals(purchasing.supplierOrders);
+      if (results.failed === 0) {
+        setError(null);
+        // Rafraîchir après succès
+        await Promise.all([
+          stock.loadStockItems(true),
+          purchases.loadRequests(true),
+          purchasing.loadAll(true)
+        ]);
+        // Afficher un succès
+        console.log(`✅ Recalcul réussi: ${results.success} commande(s) traitée(s)`);
+      } else {
+        setError(new Error(
+          `Recalcul partiellement réussi: ${results.success} succès, ${results.failed} erreur(s)`
+        ));
+      }
+    } catch (err) {
+      setError(err);
+      console.error('Erreur lors du recalcul:', err);
+    } finally {
+      setIsRecalculating(false);
+      setShowRecalculateDialog(false);
+    }
+  }, [purchasing.supplierOrders, stock, purchases, purchasing]);
+
   useAutoRefresh(async () => {
     await Promise.all([
       stock.loadStockItems(false),
@@ -935,7 +968,7 @@ export default function Procurement() {
         : activeTab === PROCUREMENT_TABS.POOLING
         ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} en mutualisation`
         : activeTab === PROCUREMENT_TABS.SENT
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} envoyé${filteredSupplierOrders.length > 1 ? "s" : ""}`
+        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} en chiffrage`
         : activeTab === PROCUREMENT_TABS.ORDERED
         ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} commandé${filteredSupplierOrders.length > 1 ? "s" : ""}`
         : activeTab === PROCUREMENT_TABS.CLOSED
@@ -951,6 +984,15 @@ export default function Procurement() {
       { label: "À qualifier", value: toQualifyCount },
       { label: "Paniers actifs", value: totalOrdersCount },
     ] : [],
+    actions: [
+      {
+        label: "Outils",
+        icon: Settings,
+        onClick: () => setShowRecalculateDialog(true),
+        variant: "soft",
+        color: "gray",
+      },
+    ],
     onRefresh: () => Promise.all([
       stock.loadStockItems(true),
       purchases.loadRequests(true),
@@ -1136,7 +1178,7 @@ export default function Procurement() {
             <Tabs.Trigger value={PROCUREMENT_TABS.SENT}>
               <Flex align="center" gap="2">
                 <Send size={14} />
-                <Text>Envoyés</Text>
+                <Text>En chiffrage</Text>
                 {ordersByState.sent.length > 0 && (
                   <Badge color="blue" variant="solid" size="1">
                     {ordersByState.sent.length}
@@ -1245,7 +1287,6 @@ export default function Procurement() {
                       requests={filteredRequests}
                       expandedRequestId={expandedRequestId}
                       onToggleExpand={toggleExpand}
-                      onStatusChange={handleStatusChange}
                       stockItems={stock.stockItems}
                       supplierRefs={stock.supplierRefsByItem || {}}
                       standardSpecs={stock.standardSpecsByItem || {}}
@@ -1287,7 +1328,6 @@ export default function Procurement() {
                             requests={receivedRequests}
                             expandedRequestId={expandedRequestId}
                             onToggleExpand={toggleExpand}
-                            onStatusChange={handleStatusChange}
                             stockItems={stock.stockItems}
                             supplierRefs={stock.supplierRefsByItem || {}}
                             standardSpecs={stock.standardSpecsByItem || {}}
@@ -1391,7 +1431,7 @@ export default function Procurement() {
               <Flex direction="column" gap="3">
                 <TableHeader
                   icon={Send}
-                  title="Paniers envoyés"
+                  title="Paniers en chiffrage"
                   count={filteredSupplierOrders.length}
                   searchValue={supplierOrderSearchTerm}
                   onSearchChange={setSupplierOrderSearchTerm}
@@ -1412,8 +1452,8 @@ export default function Procurement() {
                 {filteredSupplierOrders.length === 0 ? (
                   <EmptyState
                     icon={<TruckIcon size={64} />}
-                    title="Aucun panier envoyé"
-                    description="Les paniers envoyés aux fournisseurs apparaîtront ici"
+                    title="Aucun panier en chiffrage"
+                    description="Les paniers envoyés aux fournisseurs pour devis apparaîtront ici"
                     actions={[
                       <Button key="refresh-orders" size="2" onClick={refreshOrders}>
                         Rafraîchir
@@ -1535,6 +1575,40 @@ export default function Procurement() {
             </Tabs.Content>
           </Box>
         </Tabs.Root>
+
+        {/* Dialog Recalcul des totaux */}
+        <AlertDialog.Root open={showRecalculateDialog} onOpenChange={setShowRecalculateDialog}>
+          <AlertDialog.Content maxWidth="450px">
+            <AlertDialog.Title>Recalculer tous les totaux</AlertDialog.Title>
+            <AlertDialog.Description size="2">
+              Cette action va recalculer les totaux des lignes pour <strong>toutes les commandes</strong>.
+              <br />
+              Utile pour corriger les incohérences de calcul.
+              <br />
+              <br />
+              <Text size="1" color="gray">
+                ⏱️ Cette opération peut prendre quelques secondes selon le nombre de commandes.
+              </Text>
+            </AlertDialog.Description>
+
+            <Flex gap="3" mt="4" justify="end">
+              <AlertDialog.Cancel asChild>
+                <Button variant="soft" color="gray">
+                  Annuler
+                </Button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <Button
+                  onClick={handleRecalculateAllTotals}
+                  disabled={isRecalculating}
+                  loading={isRecalculating}
+                >
+                  {isRecalculating ? "Recalcul en cours..." : "Recalculer"}
+                </Button>
+              </AlertDialog.Action>
+            </Flex>
+          </AlertDialog.Content>
+        </AlertDialog.Root>
       </PageContainer>
     </Box>
   );

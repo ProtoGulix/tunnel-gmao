@@ -18,14 +18,20 @@ export const STALE_OPEN_DAYS = 5;
 export const STALE_SENT_DAYS = 3;
 
 // ===== MAPPING STATUTS =====
-/** Mapping statut commande → statut demande d'achat */
+/** Mapping statut commande → label UI (SUPPLIER_ORDER_LIFECYCLE.md) */
+// - OPEN      → En mutualisation
+// - SENT      → En chiffrage
+// - ACK       → Commandé
+// - RECEIVED  → Commandé
+// - CLOSED    → Clôturé
+// - CANCELLED → Annulé
 export const STATUS_MAPPING = {
-  OPEN: 'in_progress',
-  SENT: 'ordered',
-  ACK: 'ordered',
-  RECEIVED: 'ordered',
-  CLOSED: 'received',
-  CANCELLED: 'cancelled',
+  OPEN: 'En mutualisation',
+  SENT: 'En chiffrage',
+  ACK: 'Commandé',
+  RECEIVED: 'Commandé',
+  CLOSED: 'Clôturé',
+  CANCELLED: 'Annulé',
 };
 
 // ===== HELPERS =====

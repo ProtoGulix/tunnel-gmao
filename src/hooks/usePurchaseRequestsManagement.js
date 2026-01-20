@@ -4,8 +4,10 @@ import { useOptimisticPurchaseRequests } from './useOptimisticData';
 
 /**
  * Hook pour gérer la logique des demandes d'achat
- * Centralise: fetch, update status, link items
+ * Centralise: fetch, link items, delete
  * Utilise des mises à jour optimistes pour éviter les rechargements complets
+ * 
+ * Note: Le statut est maintenant dérivé depuis supplier_order, plus de updateStatus
  */
 export const usePurchaseRequestsManagement = (onError) => {
   // Hook optimiste pour gérer les données
@@ -13,21 +15,6 @@ export const usePurchaseRequestsManagement = (onError) => {
     () => stock.fetchPurchaseRequests(),
     onError
   );
-
-  const updateStatus = useCallback(async (requestId, newStatus) => {
-    // Mise à jour optimiste locale immédiate
-    optimistic.updateStatus(requestId, newStatus);
-    
-    try {
-      // Mise à jour API en arrière-plan
-      await stock.updatePurchaseRequest(requestId, { status: newStatus });
-    } catch (error) {
-      console.error('Erreur changement statut:', error);
-      // En cas d'erreur, recharger depuis l'API pour corriger
-      optimistic.invalidate();
-      throw error;
-    }
-  }, [optimistic]);
 
   const linkExistingItem = useCallback(async (requestId, stockItem) => {
     // Mise à jour optimiste locale immédiate
@@ -94,7 +81,6 @@ export const usePurchaseRequestsManagement = (onError) => {
 
     // Actions
     loadRequests: optimistic.load,
-    updateStatus,
     linkExistingItem,
     createAndLink,
     deleteRequest,
