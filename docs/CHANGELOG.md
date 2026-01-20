@@ -1,3 +1,36 @@
+## 1.11.0 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Gestion des catégories et sous-catégories d'actions disponible dans l'onglet Actions
+- Version du logiciel affichée dynamiquement dans le titre de la page
+- Palette de couleurs étendue avec 50 nuances pour personnalisation avancée
+
+### 🧱 Stabilisation / Dette technique
+
+- Refactoring enrichissement client-side des sous-catégories pour résoudre erreur permissions Directus
+- Extension COLOR_PALETTE avec variations de tons (primaryTone1-10, successTone1-10, etc.)
+- Sélection de couleurs strictement conforme à la palette approuvée
+
+### 🧩 Composants / Modules concernés
+
+- src/main.jsx (import version dynamique)
+- src/pages/ActionsPage.jsx (ajout onglet categories)
+- src/components/actions/ActionCategoriesTable.jsx (nouveau)
+- src/components/actions/CategoryRow.jsx (nouveau)
+- src/components/actions/SubcategoryRow.jsx (nouveau)
+- src/config/actionPageConfig.js (configuration onglet)
+- src/config/colorPalette.js (50 nouvelles couleurs)
+- src/lib/api/adapters/directus/actionSubcategories/adapter.ts (enrichissement client-side)
+- src/lib/api/adapters/directus/actionSubcategories/datasource.ts (suppression nested fields)
+
+### ⚠️ Points de vigilance
+
+- API create/delete pour catégories préparées mais non activées (attente endpoints backend)
+- Dropdown de sélection de couleur contient 54 options (peut nécessiter groupement UX en 1.12.0)
+
 ## 1.10.0 - 2026-01-20
 
 Stabilité : 🟡 en consolidation
