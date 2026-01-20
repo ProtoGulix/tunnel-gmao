@@ -191,3 +191,51 @@ export const fetchStockSubFamiliesFromBackend = async (familyCode: string) => {
     return data?.data || [];
   }, 'FetchStockSubFamilies');
 };
+
+// Create stock family (raw backend)
+export const createStockFamilyInBackend = async (backendPayload: Record<string, unknown>) => {
+  return apiCall(async () => {
+    const { data } = await api.post('/items/stock_family', backendPayload);
+    return data.data;
+  }, 'CreateStockFamily');
+};
+
+// Update stock family (raw backend)
+export const updateStockFamilyInBackend = async (code: string, backendUpdates: Record<string, unknown>) => {
+  return apiCall(async () => {
+    const { data } = await api.patch(`/items/stock_family/${code}`, backendUpdates);
+    return data.data;
+  }, 'UpdateStockFamily');
+};
+
+// Delete stock family (raw backend)
+export const deleteStockFamilyInBackend = async (code: string) => {
+  return apiCall(async () => {
+    await api.delete(`/items/stock_family/${code}`);
+    return true;
+  }, 'DeleteStockFamily');
+};
+
+// Create stock subfamily (raw backend)
+export const createStockSubFamilyInBackend = async (backendPayload: Record<string, unknown>) => {
+  return apiCall(async () => {
+    const { data } = await api.post('/items/stock_sub_family', backendPayload);
+    return data.data;
+  }, 'CreateStockSubFamily');
+};
+
+// Update stock subfamily (raw backend)
+export const updateStockSubFamilyInBackend = async (id: string, backendUpdates: Record<string, unknown>) => {
+  return apiCall(async () => {
+    const { data } = await api.patch(`/items/stock_sub_family/${id}`, backendUpdates);
+    return data.data;
+  }, 'UpdateStockSubFamily');
+};
+
+// Delete stock subfamily (raw backend)
+export const deleteStockSubFamilyInBackend = async (id: string) => {
+  return apiCall(async () => {
+    await api.delete(`/items/stock_sub_family/${id}`);
+    return true;
+  }, 'DeleteStockSubFamily');
+};

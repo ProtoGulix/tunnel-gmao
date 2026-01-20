@@ -75,6 +75,15 @@ export const PAGES_CONFIG = [
 
   // Pages privées
   {
+    id: 'technician-home',
+    path: '/technician',
+    label: 'Accueil Atelier',
+    icon: Wrench,
+    pageTitle: 'Interventions en attente',
+    pageSubtitle: 'PC commun atelier',
+    requiresAuth: true,
+  },
+  {
     id: 'interventions',
     path: '/interventions',
     label: 'Interventions',

@@ -1,11 +1,9 @@
 import PropTypes from "prop-types";
-import { Box, Flex, Button, Card } from "@radix-ui/themes";
-import { Plus, Package } from "lucide-react";
+import { Box, Flex } from "@radix-ui/themes";
+import { Package } from "lucide-react";
 import LoadingState from "@/components/common/LoadingState";
 import TableHeader from "@/components/common/TableHeader";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
-import PurchaseRequestForm from "@/components/purchase/requests/PurchaseRequestForm";
-import { useSummaryTab } from "./useSummaryTab";
 
 /**
  * Tab Summary : Demandes d'achat liées à l'intervention
@@ -18,9 +16,6 @@ import { useSummaryTab } from "./useSummaryTab";
  * Contraintes : 3 props max, pas de callback inline, <120 lignes
  */
 export default function SummaryTab({ model, handlers, metadata }) {
-  const { showForm, submitting } = useSummaryTab(model.interv.id);
-  const { toggleForm, submit, cancel } = useSummaryTab(model.interv.id).handlers;
-
   // Early return si chargement
   if (!model.interv || model.loading) {
     return <LoadingState message="Chargement des demandes d'achat..." />;
@@ -30,19 +25,6 @@ export default function SummaryTab({ model, handlers, metadata }) {
   const interventionRequests = model.purchaseRequests.filter(
     req => req.interventionId === model.interv.id
   );
-
-  // Event adapter
-  const handleFormSubmit = (formData) => {
-    submit(formData, handlers.onCreatePurchaseRequest);
-  };
-
-  const handleToggle = () => {
-    toggleForm();
-  };
-
-  const handleCancel = () => {
-    cancel();
-  };
 
   return (
     <Box pt="4">
@@ -54,30 +36,7 @@ export default function SummaryTab({ model, handlers, metadata }) {
           onRefresh={handlers.onRefresh}
           loading={false}
           showRefreshButton={true}
-          actions={
-            <Button
-              size="2"
-              onClick={handleToggle}
-              style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
-            >
-              <Plus size={16} />
-              Nouvelle demande
-            </Button>
-          }
         />
-
-        {/* Formulaire création */}
-        {showForm && (
-          <Card style={{ backgroundColor: 'var(--gray-2)' }}>
-            <PurchaseRequestForm
-              onSubmit={handleFormSubmit}
-              loading={submitting}
-              onCancel={handleCancel}
-              submitLabel="Créer la demande"
-              compact={true}
-            />
-          </Card>
-        )}
 
         {/* Table demandes */}
         <Box mt="2">

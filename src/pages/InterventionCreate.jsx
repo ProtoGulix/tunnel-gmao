@@ -1,6 +1,17 @@
+/**
+ * @fileoverview Page de création d'interventions
+ * Formulaire pour ajouter une nouvelle intervention avec machine, type, priorité
+ * 
+ * @module pages/InterventionCreate
+ * @requires react
+ * @requires react-router-dom
+ * @requires hooks/useApiCall
+ * @requires hooks/useInterventionCreate (personnalisé)
+ */
+
 // ===== IMPORTS =====
 // 1. React Core
-import { useState, useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
 // 2. React Router
 import { useNavigate } from "react-router-dom";
@@ -16,183 +27,200 @@ import {
   Button, 
   Card, 
   Select,
-  Spinner,
   Badge,
-  IconButton
+  Spinner
 } from "@radix-ui/themes";
 
-// 4. Custom Components
+// 4. Icons
+import { Plus } from 'lucide-react';
+
+// 5. Custom Components
 import SearchableSelect from "@/components/common/SearchableSelect";
 import SelectionSummary from "@/components/common/SelectionSummary";
-import ErrorDisplay from "@/components/ErrorDisplay";
+import PageHeader from "@/components/layout/PageHeader";
+import { usePageHeaderProps } from "@/hooks/usePageConfig";
 
-// 5. Icons
-import { CheckCircle, X } from 'lucide-react';
-
-// 5. Custom Hooks
-import { useApiMutation } from "@/hooks/useApiCall";
+// 6. Custom Hooks
 import { useAuth } from "@/auth/AuthContext";
+import { useInterventionCreate } from "@/hooks/useInterventionCreate";
 
-// 6. API
-import { interventions, machines } from "@/lib/api/facade";
+// 7. Config
 import { INTERVENTION_TYPES } from "@/config/interventionTypes";
+import PropTypes from "prop-types";
 
-// Normalize default datetime-local value (local time, no timezone drift)
-const getDefaultDateTimeLocal = () => {
-  const now = new Date();
-  const offsetMs = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 16);
-};
+// ===== CONSTANTS =====
+/** Priorités disponibles pour les interventions */
+const PRIORITY_OPTIONS = [
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'important', label: 'Important' },
+  { value: 'normale', label: 'Normal' },
+  { value: 'faible', label: 'Faible' },
+];
+
+// Note: date par défaut gérée dans useInterventionCreate
 
 // ===== COMPONENT =====
 /**
- * Intervention creation page with form.
- * Allows users to create a new intervention with title, machine, type, and priority.
- * Redirects to intervention detail page upon successful creation.
- *
+ * Page de création d'intervention
+ * 
+ * Formulaire standalone conforme aux conventions §7.3 :
+ * - Couleurs standardisées (blue-2 / blue-6)
+ * - En-tête avec icône Plus
+ * - Bloc d'erreurs séparé en rouge
+ * - Boutons alignés à droite (Annuler / Enregistrer)
+ * - Hook personnalisé useInterventionCreate pour logique métier
+ * 
  * @component
- * @returns {JSX.Element} Intervention creation form page
- *
+ * @returns {JSX.Element} Page avec formulaire de création
+ * 
  * @example
- * <Route path="/intervention/create" element={<InterventionCreate />} />
+ * <Route path="/intervention/new" element={<InterventionCreate />} />
  */
 export default function InterventionCreate() {
-  // ----- Router Hooks -----
   const navigate = useNavigate();
-
-  // ----- Custom Hooks -----
-  // Note: user authentication handled by ProtectedRoute
   const { user } = useAuth();
+  const headerProps = usePageHeaderProps('interventions-new');
+  // Override title for clearer intent
+  const pageHeader = {
+    ...headerProps,
+    title: headerProps?.title || 'Nouvelle intervention',
+    subtitle: headerProps?.subtitle || "Créer une intervention curative ou autre",
+  };
 
-  // ----- State -----
-  const [machinesList, setMachinesList] = useState([]);
-  const [formData, setFormData] = useState({
-    title: "",
-    type_inter: "CUR",
-    priority: "normale",
-    machine_id: null,
-    reportedBy_id: null,
-    createdAt: getDefaultDateTimeLocal(),
-  });
-
-  const [localError, setLocalError] = useState(null);
-  const [searchTermMachine, setSearchTermMachine] = useState('');
-
-  // ----- Load machines -----
-  useEffect(() => {
-    machines.fetchMachines()
-      .then(setMachinesList)
-      .catch((err) => {
-        console.error("Erreur chargement machines:", err);
-        setLocalError("Erreur lors du chargement des machines");
-      });
-  }, []);
-
-  // ----- API Calls -----
-  const { mutate: createNewIntervention, loading } = useApiMutation(
-    interventions.createIntervention,
-    {
-      onSuccess: (newIntervention) => {
-        navigate(`/intervention/${newIntervention.id}`);
-      },
-      onError: (error) => {
-        setLocalError(error.message || "Error during creation");
-      }
-    }
-  );
-
-  // ----- Callbacks -----
-  const handleChange = useCallback((field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setLocalError(null);
-
-    // Validation
-    if (!formData.title.trim()) {
-      setLocalError("Title is required");
-      return;
-    }
-
-    if (!formData.machine_id) {
-      setLocalError("Please select a machine");
-      return;
-    }
-
-    if (!formData.createdAt || Number.isNaN(Date.parse(formData.createdAt))) {
-      setLocalError("Please provide a valid creation date");
-      return;
-    }
-
-    // Payload - using domain DTO structure (API_CONTRACTS.md compliant)
-    const initials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
-    const payload = {
-      title: formData.title,
-      type: formData.type_inter,
-      priority: formData.priority,
-      machine: { id: formData.machine_id },
-      status: "open",
-      createdAt: new Date(formData.createdAt).toISOString(),
-      reportedDate: new Date().toISOString(),
-      reportedBy: formData.reportedBy_id ? { id: formData.reportedBy_id } : undefined,
-      techInitials: initials ? initials.toUpperCase() : undefined,
-    };
-
-    await createNewIntervention(payload);
-  }, [formData, createNewIntervention, user]);
+  const {
+    formData,
+    setFormData,
+    machinesList,
+    error,
+    loading,
+    searchTermMachine,
+    setSearchTermMachine,
+    handleSubmit,
+  } = useInterventionCreate({ user, navigate });
 
   const handleCancel = useCallback(() => {
     navigate("/interventions");
   }, [navigate]);
 
-  // ----- Main Render -----
   return (
     <Container size="2" style={{ paddingTop: "2rem", paddingBottom: "2rem" }}>
-      <Card>
-        <Heading size="7" mb="4">New Intervention</Heading>
+      <PageHeader {...pageHeader} />
+      <InterventionCreateForm
+        formData={formData}
+        setFormData={setFormData}
+        machinesList={machinesList}
+        error={error}
+        loading={loading}
+        setSearchTermMachine={setSearchTermMachine}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+      />
+    </Container>
+  );
+}
 
-        {localError && (
-          <Box mb="4">
-            <ErrorDisplay error={localError} />
+/**
+ * Formulaire de création d'intervention (sous-composant)
+ * 
+ * @component
+ * @param {Object} props - Props du formulaire
+ * @param {Object} props.formData - État du formulaire
+ * @param {Function} props.setFormData - Setter pour formData
+ * @param {Array} props.machinesList - Liste des machines disponibles
+ * @param {string} [props.error] - Message d'erreur
+ * @param {boolean} props.loading - État de chargement
+ * @param {string} props.searchTermMachine - Terme recherche machines
+ * @param {Function} props.setSearchTermMachine - Setter recherche
+ * @param {Function} props.onSubmit - Callback submit
+ * @param {Function} props.onCancel - Callback annulation
+ * @returns {JSX.Element} Formulaire Card
+ */
+function InterventionCreateForm({
+  formData,
+  setFormData,
+  machinesList,
+  error,
+  loading,
+  setSearchTermMachine,
+  onSubmit,
+  onCancel,
+}) {
+  const handleChange = useCallback((field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, [setFormData]);
+
+  const selectedMachine = machinesList.find(m => m.id === formData.machine_id);
+
+  return (
+    <Card
+      style={{
+        padding: '1.5rem',
+        backgroundColor: 'var(--blue-2)',
+        border: '1px solid var(--blue-6)',
+      }}
+    >
+      <Flex direction="column" gap="3">
+        {/* EN-TÊTE */}
+        <Flex align="center" gap="3">
+          <Plus size={20} color="var(--blue-9)" />
+          <Heading size="4" weight="bold">
+            Nouvelle intervention
+          </Heading>
+        </Flex>
+
+        {/* BLOC ERREURS */}
+        {error && (
+          <Box
+            style={{
+              backgroundColor: 'var(--red-3)',
+              border: '1px solid var(--red-7)',
+              borderRadius: '4px',
+              padding: '0.75rem',
+            }}
+          >
+            <Text size="2" color="red" weight="medium">
+              {error}
+            </Text>
           </Box>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <Flex direction="column" gap="4">
-            {/* Title */}
+        {/* FORMULAIRE */}
+        <form onSubmit={onSubmit}>
+          <Flex direction="column" gap="3">
+            {/* Titre */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
-                Title <Text color="red">*</Text>
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Titre <Text color="red">*</Text>
               </Text>
               <TextField.Root
-                placeholder="Intervention title"
+                placeholder="Titre de l'intervention"
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 required
+                style={{ borderColor: 'var(--gray-7)' }}
               />
             </Box>
 
-            {/* Creation Date */}
+            {/* Date de création */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
-                Creation Date <Text color="red">*</Text>
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Date de création <Text color="red">*</Text>
               </Text>
               <TextField.Root
                 type="datetime-local"
                 value={formData.createdAt}
                 onChange={(e) => handleChange("createdAt", e.target.value)}
                 required
+                style={{ borderColor: 'var(--gray-7)' }}
               />
             </Box>
 
             {/* Machine */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Machine <Text color="red">*</Text>
               </Text>
               <Box style={{ position: 'relative', zIndex: 5 }}>
@@ -221,43 +249,43 @@ export default function InterventionCreate() {
                 />
               </Box>
 
-              {formData.machine_id && (
+              {selectedMachine && (
                 <SelectionSummary
                   variant="stock"
-                  badgeText={machinesList.find(m => m.id === formData.machine_id)?.code || ''}
-                  mainText={machinesList.find(m => m.id === formData.machine_id)?.name || ''}
-                  rightText={machinesList.find(m => m.id === formData.machine_id)?.equipement_mere || ''}
+                  badgeText={selectedMachine.code || ''}
+                  mainText={selectedMachine.name || ''}
+                  rightText={selectedMachine.equipement_mere || ''}
                   onClear={() => {
-                    const selectedMachine = machinesList.find(m => m.id === formData.machine_id);
-                    setSearchTermMachine(`${selectedMachine?.code || ''} - ${selectedMachine?.name || ''}`);
+                    setSearchTermMachine(`${selectedMachine.code || ''} - ${selectedMachine.name || ''}`);
                     handleChange('machine_id', null);
                   }}
                 />
               )}
             </Box>
 
-            {/* Reporter (Optional) */}
+            {/* Signalé par (optionnel) */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
-                Reported By (Optional)
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Signalé par (optionnel)
               </Text>
               <TextField.Root
-                placeholder="User ID or name"
+                placeholder="ID utilisateur ou nom"
                 value={formData.reportedBy_id || ""}
                 onChange={(e) => handleChange("reportedBy_id", e.target.value || null)}
+                style={{ borderColor: 'var(--gray-7)' }}
               />
             </Box>
 
             {/* Type */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Type
               </Text>
               <Select.Root 
                 value={formData.type_inter} 
                 onValueChange={(value) => handleChange("type_inter", value)}
               >
-                <Select.Trigger />
+                <Select.Trigger style={{ borderColor: 'var(--gray-7)' }} />
                 <Select.Content>
                   {INTERVENTION_TYPES.map((type) => (
                     <Select.Item key={type.id} value={type.id}>
@@ -268,45 +296,68 @@ export default function InterventionCreate() {
               </Select.Root>
             </Box>
 
-            {/* Priority */}
+            {/* Priorité */}
             <Box>
-              <Text as="label" size="2" weight="bold" mb="2">
-                Priority
+              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Priorité
               </Text>
               <Select.Root 
                 value={formData.priority} 
                 onValueChange={(value) => handleChange("priority", value)}
               >
-                <Select.Trigger />
+                <Select.Trigger style={{ borderColor: 'var(--gray-7)' }} />
                 <Select.Content>
-                  <Select.Item value="urgent">Urgent</Select.Item>
-                  <Select.Item value="important">Important</Select.Item>
-                  <Select.Item value="normale">Normal</Select.Item>
-                  <Select.Item value="faible">Low</Select.Item>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <Select.Item key={option.value} value={option.value}>
+                      {option.label}
+                    </Select.Item>
+                  ))}
                 </Select.Content>
               </Select.Root>
             </Box>
 
-            {/* Buttons */}
-            <Flex gap="3" justify="end" mt="4">
+            {/* BOUTONS */}
+            <Flex gap="3" justify="end" style={{ marginTop: '0.5rem' }}>
               <Button 
                 type="button" 
                 variant="soft" 
-                onClick={handleCancel}
+                color="gray"
+                size="2"
+                onClick={onCancel}
                 disabled={loading}
               >
-                Cancel
+                Annuler
               </Button>
               <Button 
                 type="submit"
+                size="2"
                 disabled={loading}
+                style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
               >
-                {loading ? <Spinner size="2" /> : "Create"}
+                {loading ? <Spinner size="2" /> : "Enregistrer"}
               </Button>
             </Flex>
           </Flex>
         </form>
-      </Card>
-    </Container>
+      </Flex>
+    </Card>
   );
 }
+
+InterventionCreateForm.propTypes = {
+  formData: PropTypes.shape({
+    title: PropTypes.string,
+    type_inter: PropTypes.string,
+    priority: PropTypes.string,
+    machine_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    reportedBy_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    createdAt: PropTypes.string,
+  }).isRequired,
+  setFormData: PropTypes.func.isRequired,
+  machinesList: PropTypes.array.isRequired,
+  error: PropTypes.string,
+  loading: PropTypes.bool,
+  setSearchTermMachine: PropTypes.func,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};

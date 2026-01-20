@@ -1,4 +1,4 @@
-import { useState, Fragment, forwardRef, useImperativeHandle, useCallback } from "react";
+import { useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useError } from '@/contexts/ErrorContext';
 import {
@@ -13,82 +13,52 @@ import {
 } from "@radix-ui/themes";
 import { Building2, Pencil, Trash2, Plus, ChevronDown, Mail } from "lucide-react";
 import { suppliers as suppliersApi } from "@/lib/api/facade";
+import DataTable from "@/components/common/DataTable";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import SupplierRefsBySupplierPanel from "@/components/purchase/suppliers/SupplierRefsBySupplierPanel";
-import EmptyState from "@/components/common/EmptyState";
+
+const SUPPLIER_COLUMNS = [
+  { key: "name", header: "Nom" },
+  { key: "contact", header: "Contact" },
+  { key: "email", header: "Email" },
+  { key: "phone", header: "Téléphone" },
+  { key: "preferred", header: "Préférées", width: 110 },
+  { key: "leadtime", header: "Délai moyen", width: 130 },
+  { key: "items", header: "Articles liés", width: 120 },
+  { key: "actions", header: "Actions", width: 180 },
+];
+
+const DEFAULT_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  contact_name: "",
+};
 
 /**
  * Table de gestion des fournisseurs avec expansion inline pour références
  * Permet CRUD complet, affichage métriques (préférées, délai moyen, articles liés)
- * 
- * ✅ Implémenté :
- * - CRUD complet : Create, Update, Delete avec validation
- * - forwardRef avec useImperativeHandle pour contrôle externe (openAddDialog)
- * - Expansion inline pour voir/gérer références fournisseur par article
- * - Cache métriques : refCount, preferredCount, avgLeadTime depuis panneau enfant
- * - Protection suppression : interdite si refs ou préférées existent
- * - Email mailto pré-rempli avec refs préférées (slice 8 max)
- * - Badge avec compteurs : préférées (vert), articles liés (bleu)
- * - Bouton toggle avec rotation chevron 180° pour expansion
- * - Highlight ligne expandée (background bleu)
- * - EmptyState avec actions si aucun fournisseur
- * - Dialog formulaire avec 5 champs (nom*, contact, email, tél, adresse)
- * - Bouton email désactivé si pas d'email + tooltip explicatif
- * - Bouton delete désactivé si refs liées + tooltip sécurité
- * 
- * TODO: Améliorations futures :
- * - Tri cliquable sur colonnes (nom, préférées, délai, articles)
- * - Filtres avancés : par délai (<7j, 7-14j, >14j), par nb références
- * - Import CSV en masse pour création multiple fournisseurs
- * - Export Excel de la liste complète avec métriques
- * - Score fournisseur : fiabilité, délai respecté, prix compétitif
- * - Historique commandes passées par fournisseur (montant total, nb commandes)
- * - Tags/labels personnalisés (local, international, premium...)
- * - Notes/commentaires sur chaque fournisseur avec markdown
- * - Alertes email si fournisseur inactif depuis X jours
- * - Fusion de fournisseurs doublons avec transfert références
- * - API externe : enrichissement auto (SIRET, TVA intracommunautaire)
- * - Gestion conditions commerciales : remises, minimums commande, franco de port
- * - Timeline interactions : emails, appels, relances
  */
-const SuppliersTable = forwardRef(function SuppliersTable(
-  { suppliers, onRefresh },
-  ref
-) {
+const SuppliersTable = forwardRef(function SuppliersTable({ suppliers, onRefresh }, ref) {
   const { showError } = useError();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState(null);
+  const [expandedSupplierId, setExpandedSupplierId] = useState(null);
+  const [supplierSummaries, setSupplierSummaries] = useState({});
+  const [formData, setFormData] = useState(DEFAULT_FORM);
+  const [loading, setLoading] = useState(false);
+
+  const getContactName = useCallback((s) => s?.contactName ?? s?.contact_name ?? "", []);
+  const getItemCount = useCallback((s) => s?.itemCount ?? s?.item_count ?? 0, []);
 
   useImperativeHandle(ref, () => ({
     openAddDialog: () => {
       setEditingSupplier(null);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        contact_name: "",
-      });
+      setFormData(DEFAULT_FORM);
       setDialogOpen(true);
     }
   }));
-
-  // État pour tracker la ligne expansible du fournisseur sélectionné
-  const [expandedSupplierId, setExpandedSupplierId] = useState(null);
-  // Cache des métriques calculées côté panneau (refs/preferred/délai)
-  const [supplierSummaries, setSupplierSummaries] = useState({});
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    contact_name: "",
-  });
-  const [loading, setLoading] = useState(false);
-
-  // DTO-friendly getters (camelCase with legacy fallback)
-  const getContactName = (s) => s?.contactName ?? s?.contact_name ?? "";
-  const getItemCount = (s) => s?.itemCount ?? s?.item_count ?? 0;
 
   const handleOpenDialog = useCallback((supplier = null) => {
     if (supplier) {
@@ -102,16 +72,10 @@ const SuppliersTable = forwardRef(function SuppliersTable(
       });
     } else {
       setEditingSupplier(null);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        contact_name: "",
-      });
+      setFormData(DEFAULT_FORM);
     }
     setDialogOpen(true);
-  }, []);
+  }, [getContactName]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -137,7 +101,6 @@ const SuppliersTable = forwardRef(function SuppliersTable(
   }, [formData, editingSupplier, onRefresh, showError]);
 
   const handleDelete = useCallback(async (supplierId) => {
-    // Sécurise la suppression : interdite si refs ou refs préférées existent
     const summary = supplierSummaries[supplierId];
     const hasRefs = summary?.refCount > 0;
     const hasPreferred = summary?.preferredCount > 0;
@@ -161,13 +124,11 @@ const SuppliersTable = forwardRef(function SuppliersTable(
     }
   }, [supplierSummaries, onRefresh, showError]);
 
-  // Alimente le cache des métriques depuis le panneau enfant
   const handleSummary = useCallback((supplierId, summary) => {
     setSupplierSummaries((prev) => ({ ...prev, [supplierId]: summary }));
   }, []);
 
   const buildMailto = useCallback((supplier) => {
-    // Pré-remplit un mail avec les refs préférées connues pour ce fournisseur
     const summary = supplierSummaries[supplier.id];
     const preferredLines = summary?.preferredRefs?.slice(0, 8).map((r) => `- ${r}`) || [];
     const bodyLines = [
@@ -181,248 +142,205 @@ const SuppliersTable = forwardRef(function SuppliersTable(
     const subject = encodeURIComponent(`Demande d'information - ${supplier.name}`);
     const body = encodeURIComponent(bodyLines.join("\n"));
     return `mailto:${supplier.email || ""}?subject=${subject}&body=${body}`;
-  }, [supplierSummaries]);
+  }, [supplierSummaries, getContactName]);
+
+  const renderRow = (supplier) => {
+    const summary = supplierSummaries[supplier.id] || {};
+    const isExpanded = expandedSupplierId === supplier.id;
+
+    return (
+      <>
+        <Table.Row
+          key={`row-${supplier.id}`}
+          style={{ background: isExpanded ? "var(--blue-2)" : undefined }}
+        >
+          <Table.Cell>
+            <Flex align="center" gap="2">
+              <Building2 size={16} color="var(--gray-9)" />
+              <Text weight="bold">{supplier.name}</Text>
+            </Flex>
+          </Table.Cell>
+          <Table.Cell>
+            <Text size="2" color="gray">{getContactName(supplier) || "-"}</Text>
+          </Table.Cell>
+          <Table.Cell>
+            <Text size="2" color="gray">{supplier.email || "-"}</Text>
+          </Table.Cell>
+          <Table.Cell>
+            <Text size="2" color="gray">{supplier.phone || "-"}</Text>
+          </Table.Cell>
+          <Table.Cell>
+            <Badge color="green" variant="soft">{summary.preferredCount ?? "-"}</Badge>
+          </Table.Cell>
+          <Table.Cell>
+            <Text size="2" color="gray">
+              {summary.avgLeadTime != null ? `${summary.avgLeadTime} j` : "-"}
+            </Text>
+          </Table.Cell>
+          <Table.Cell>
+            <Badge color="blue" variant="soft">{getItemCount(supplier)}</Badge>
+          </Table.Cell>
+          <Table.Cell>
+            <Flex gap="2" align="center">
+              <Button
+                size="1"
+                variant={isExpanded ? "solid" : "soft"}
+                color="gray"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedSupplierId(isExpanded ? null : supplier.id);
+                }}
+                aria-label={isExpanded ? "Masquer les références" : "Afficher les références"}
+              >
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s"
+                  }}
+                />
+              </Button>
+              <Button
+                size="1"
+                variant="soft"
+                color="gray"
+                onClick={() => handleOpenDialog(supplier)}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Pencil size={14} />
+              </Button>
+              <Button
+                size="1"
+                variant="soft"
+                color="blue"
+                asChild
+                disabled={!supplier.email}
+                title={supplier.email ? "Contacter le fournisseur" : "Email indisponible"}
+              >
+                <a href={buildMailto(supplier)} onMouseDown={(e) => e.stopPropagation()}>
+                  <Mail size={14} />
+                </a>
+              </Button>
+              <Button
+                size="1"
+                variant="soft"
+                color="red"
+                onClick={() => handleDelete(supplier.id)}
+                onMouseDown={(e) => e.stopPropagation()}
+                disabled={(summary.refCount || 0) > 0 || (summary.preferredCount || 0) > 0}
+                title={(summary.refCount || 0) > 0 || (summary.preferredCount || 0) > 0
+                  ? "Impossible de supprimer un fournisseur ayant des références/préférences"
+                  : "Supprimer le fournisseur"}
+              >
+                <Trash2 size={14} />
+              </Button>
+            </Flex>
+          </Table.Cell>
+        </Table.Row>
+
+        {isExpanded && (
+          <ExpandableDetailsRow key={`expanded-${supplier.id}`} colSpan={SUPPLIER_COLUMNS.length} withCard>
+            <SupplierRefsBySupplierPanel
+              supplier={supplier}
+              onChanged={async () => { await onRefresh(); }}
+              onSummary={(summaryData) => handleSummary(supplier.id, summaryData)}
+            />
+          </ExpandableDetailsRow>
+        )}
+      </>
+    );
+  };
+
+  const emptyState = {
+    icon: Building2,
+    title: "Aucun fournisseur trouvé",
+    description: "Ajoutez un fournisseur ou modifiez votre recherche",
+    action: (
+      <Button size="2" onClick={() => handleOpenDialog()}>
+        <Plus size={16} />
+        Créer un fournisseur
+      </Button>
+    )
+  };
 
   return (
     <Box>
-      {suppliers.length === 0 ? (
-        <EmptyState
-          icon={<Building2 size={64} />}
-          title="Aucun fournisseur trouvé"
-          description="Ajoutez un fournisseur ou modifiez votre recherche"
-          actions={[
-            <Button key="add-supplier" size="2" onClick={() => handleOpenDialog()}>
-              <Plus size={16} />
-              Créer un fournisseur
-            </Button>,
-          ]}
-        />
-      ) : (
-        <Flex direction="column" gap="3">
-          <Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog.Content style={{ maxWidth: 500 }}>
+          <Dialog.Title>
+            {editingSupplier ? "Modifier le fournisseur" : "Nouveau fournisseur"}
+          </Dialog.Title>
 
-          <Dialog.Content style={{ maxWidth: 500 }}>
-            <Dialog.Title>
-              {editingSupplier
-                ? "Modifier le fournisseur"
-                : "Nouveau fournisseur"}
-            </Dialog.Title>
+          <form onSubmit={handleSubmit}>
+            <Flex direction="column" gap="3" mt="4">
+              <label>
+                <Text size="2" weight="bold" mb="1" as="div">Nom *</Text>
+                <TextField.Root
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: WURTH, MANUTAN..."
+                  required
+                />
+              </label>
 
-            <form onSubmit={handleSubmit}>
-              <Flex direction="column" gap="3" mt="4">
-                <label>
-                  <Text size="2" weight="bold" mb="1" as="div">
-                    Nom *
-                  </Text>
-                  <TextField.Root
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="Ex: WURTH, MANUTAN..."
-                    required
-                  />
-                </label>
+              <label>
+                <Text size="2" weight="bold" mb="1" as="div">Contact</Text>
+                <TextField.Root
+                  value={formData.contact_name}
+                  onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                  placeholder="Nom du contact"
+                />
+              </label>
 
-                <label>
-                  <Text size="2" weight="bold" mb="1" as="div">
-                    Contact
-                  </Text>
-                  <TextField.Root
-                    value={formData.contact_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, contact_name: e.target.value })
-                    }
-                    placeholder="Nom du contact"
-                  />
-                </label>
+              <label>
+                <Text size="2" weight="bold" mb="1" as="div">Email</Text>
+                <TextField.Root
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="contact@fournisseur.com"
+                />
+              </label>
 
-                <label>
-                  <Text size="2" weight="bold" mb="1" as="div">
-                    Email
-                  </Text>
-                  <TextField.Root
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="contact@fournisseur.com"
-                  />
-                </label>
+              <label>
+                <Text size="2" weight="bold" mb="1" as="div">Téléphone</Text>
+                <TextField.Root
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+33 1 23 45 67 89"
+                />
+              </label>
 
-                <label>
-                  <Text size="2" weight="bold" mb="1" as="div">
-                    Téléphone
-                  </Text>
-                  <TextField.Root
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="+33 1 23 45 67 89"
-                  />
-                </label>
+              <label>
+                <Text size="2" weight="bold" mb="1" as="div">Adresse</Text>
+                <TextField.Root
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Adresse complète"
+                />
+              </label>
+            </Flex>
 
-                <label>
-                  <Text size="2" weight="bold" mb="1" as="div">
-                    Adresse
-                  </Text>
-                  <TextField.Root
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    placeholder="Adresse complète"
-                  />
-                </label>
-              </Flex>
+            <Flex gap="3" mt="4" justify="end">
+              <Dialog.Close>
+                <Button variant="soft" color="gray" type="button">Annuler</Button>
+              </Dialog.Close>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Enregistrement..." : editingSupplier ? "Modifier" : "Créer"}
+              </Button>
+            </Flex>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
-              <Flex gap="3" mt="4" justify="end">
-                <Dialog.Close>
-                  <Button variant="soft" color="gray" type="button">
-                    Annuler
-                  </Button>
-                </Dialog.Close>
-                <Button type="submit" disabled={loading}>
-                  {loading
-                    ? "Enregistrement..."
-                    : editingSupplier
-                    ? "Modifier"
-                    : "Créer"}
-                </Button>
-              </Flex>
-            </form>
-          </Dialog.Content>
-        </Dialog.Root>
-
-        <Table.Root variant="surface">
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeaderCell>Nom</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Contact</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Téléphone</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Préférées</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Délai moyen</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Articles liés</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Actions</Table.ColumnHeaderCell>
-            </Table.Row>
-          </Table.Header>
-
-          <Table.Body>
-            {suppliers.map((supplier) => (
-                <Fragment key={`supplier-${supplier.id}`}>
-                  <Table.Row
-                    style={{ background: expandedSupplierId === supplier.id ? 'var(--blue-2)' : undefined }}
-                  >
-                    <Table.Cell>
-                      <Flex align="center" gap="2">
-                        <Building2 size={16} color="var(--gray-9)" />
-                        <Text weight="bold">{supplier.name}</Text>
-                      </Flex>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2" color="gray">
-                        {getContactName(supplier) || "-"}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2" color="gray">
-                        {supplier.email || "-"}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2" color="gray">
-                        {supplier.phone || "-"}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Badge color="green" variant="soft">
-                        {supplierSummaries[supplier.id]?.preferredCount ?? "-"}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2" color="gray">
-                        {supplierSummaries[supplier.id]?.avgLeadTime != null
-                          ? `${supplierSummaries[supplier.id].avgLeadTime} j`
-                          : "-"}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Badge color="blue" variant="soft">
-                        {getItemCount(supplier)}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Flex gap="2" align="center">
-                        {/* Bouton toggle pour afficher les références */}
-                        <Button
-                          size="1"
-                          variant={expandedSupplierId === supplier.id ? "solid" : "soft"}
-                          color="gray"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedSupplierId(expandedSupplierId === supplier.id ? null : supplier.id);
-                          }}
-                          aria-label={expandedSupplierId === supplier.id ? "Masquer les références" : "Afficher les références"}
-                        >
-                          <ChevronDown size={14} style={{ transform: expandedSupplierId === supplier.id ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-                        </Button>
-                        <Button
-                          size="1"
-                          variant="soft"
-                          color="gray"
-                          onClick={() => handleOpenDialog(supplier)}
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <Pencil size={14} />
-                        </Button>
-                        <Button
-                          size="1"
-                          variant="soft"
-                          color="blue"
-                          asChild
-                          disabled={!supplier.email}
-                          title={supplier.email ? "Contacter le fournisseur" : "Email indisponible"}
-                        >
-                          <a href={buildMailto(supplier)} onMouseDown={(e) => e.stopPropagation()}>
-                            <Mail size={14} />
-                          </a>
-                        </Button>
-                        <Button
-                          size="1"
-                          variant="soft"
-                          color="red"
-                          onClick={() => handleDelete(supplier.id)}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          disabled={(supplierSummaries[supplier.id]?.refCount || 0) > 0 || (supplierSummaries[supplier.id]?.preferredCount || 0) > 0}
-                          title={(supplierSummaries[supplier.id]?.refCount || 0) > 0 || (supplierSummaries[supplier.id]?.preferredCount || 0) > 0
-                            ? "Impossible de supprimer un fournisseur ayant des références/préférences"
-                            : "Supprimer le fournisseur"}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </Flex>
-                    </Table.Cell>
-                  </Table.Row>
-                  
-                  {/* Ligne expansible avec les références du fournisseur */}
-                  {expandedSupplierId === supplier.id && (
-                    <ExpandableDetailsRow colSpan={8} withCard={true}>
-                      <SupplierRefsBySupplierPanel
-                        supplier={supplier}
-                        onChanged={async () => { await onRefresh(); }}
-                        onSummary={(summary) => handleSummary(supplier.id, summary)}
-                      />
-                    </ExpandableDetailsRow>
-                  )}
-                </Fragment>
-              ))}
-          </Table.Body>
-        </Table.Root>
-        </Flex>
-      )}
+      <DataTable
+        columns={SUPPLIER_COLUMNS}
+        data={suppliers}
+        variant="surface"
+        size="2"
+        emptyState={emptyState}
+        rowRenderer={renderRow}
+      />
     </Box>
   );
 });

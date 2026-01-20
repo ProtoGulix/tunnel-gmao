@@ -11,6 +11,7 @@ import {
   Package,
   Building2,
   Factory,
+  Boxes,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -22,8 +23,9 @@ import TableHeader from "@/components/common/TableHeader";
 import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
 import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
-import SuppliersInlinePanel from "@/components/purchase/suppliers/SuppliersInlinePanel";
+import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
 import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
+import StockFamiliesTable from "@/components/stock/StockFamiliesTable";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks
@@ -38,6 +40,7 @@ const PARTS_TABS = {
   ITEMS: "items",
   SUPPLIERS: "suppliers",
   MANUFACTURERS: "manufacturers",
+  FAMILIES: "families",
 };
 
 export default function Parts() {
@@ -52,7 +55,6 @@ export default function Parts() {
   const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
   const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
   const [compactRows, setCompactRows] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
   
   const [supplierRefFormData, setSupplierRefFormData] = useState(DEFAULT_SUPPLIER_REF_FORM);
 
@@ -296,50 +298,6 @@ export default function Parts() {
     }
   }, [stock, setDispatchResult]);
 
-  const onAddSupplier = useCallback(async (supplierData) => {
-    setFormLoading(true);
-    try {
-      const newSupplier = await purchasing.createSupplier(supplierData);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur créé avec succès' });
-      return newSupplier;
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la création du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
-  const onUpdateSupplier = useCallback(async (supplierId, supplierData) => {
-    setFormLoading(true);
-    try {
-      const updatedSupplier = await purchasing.updateSupplier(supplierId, supplierData);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur mis à jour avec succès' });
-      return updatedSupplier;
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la mise à jour du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
-  const onDeleteSupplier = useCallback(async (supplierId) => {
-    setFormLoading(true);
-    try {
-      await purchasing.deleteSupplier(supplierId);
-      await purchasing.loadSuppliers(false);
-      setDispatchResult({ type: 'success', message: 'Fournisseur supprimé avec succès' });
-    } catch (err) {
-      setDispatchResult({ type: 'error', message: 'Erreur lors de la suppression du fournisseur' });
-      throw err;
-    } finally {
-      setFormLoading(false);
-    }
-  }, [purchasing, setFormLoading, setDispatchResult]);
-
   // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
   
@@ -463,6 +421,13 @@ export default function Parts() {
                 <Text>Fabricants</Text>
               </Flex>
             </Tabs.Trigger>
+
+            <Tabs.Trigger value="families">
+              <Flex align="center" gap="2">
+                <Boxes size={14} />
+                <Text>Familles</Text>
+              </Flex>
+            </Tabs.Trigger>
           </Tabs.List>
 
           <Box pt="4">
@@ -526,12 +491,9 @@ export default function Parts() {
             {/* ===== TAB: FOURNISSEURS ===== */}
             <Tabs.Content value="suppliers">
               <Flex direction="column" gap="3">
-                <SuppliersInlinePanel
+                <SuppliersTable
                   suppliers={filteredSuppliers}
-                  onAdd={onAddSupplier}
-                  onUpdate={onUpdateSupplier}
-                  onDelete={onDeleteSupplier}
-                  loading={formLoading}
+                  onRefresh={refreshSuppliers}
                 />
               </Flex>
             </Tabs.Content>
@@ -539,6 +501,13 @@ export default function Parts() {
             {/* ===== TAB: FABRICANTS ===== */}
             <Tabs.Content value="manufacturers">
               <ManufacturersTable onManufacturerAdded={refreshManufacturers} />
+            </Tabs.Content>
+
+            {/* ===== TAB: FAMILLES ===== */}
+            <Tabs.Content value="families">
+              <StockFamiliesTable onFamiliesUpdated={() => {
+                stock.loadStockItems(false);
+              }} />
             </Tabs.Content>
           </Box>
         </Tabs.Root>

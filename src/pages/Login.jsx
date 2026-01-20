@@ -65,7 +65,7 @@ export default function Login() {
       localStorage.removeItem("redirect_after_login");
       navigate(decodeURIComponent(redirectUrl), { replace: true });
     } else {
-      navigate("/interventions", { replace: true });
+      navigate("/technician", { replace: true });
     }
   }, [navigate]);
 

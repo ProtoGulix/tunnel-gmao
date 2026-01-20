@@ -1,3 +1,83 @@
+## 1.10.0 - 2026-01-20
+
+Stabilité : 🟡 en consolidation
+
+### 🎯 Impact fonctionnel
+
+- Gestion des familles et sous-familles de pièces disponible depuis l’onglet Pièces
+- Tableau Fournisseurs modernisé : actions regroupées et panneau d’extension pour les références par fournisseur
+
+### 🧱 Stabilisation / Dette technique
+
+- Mutualisation du tableau fournisseurs sur le composant DataTable pour cohérence UI
+- Ajout des opérations CRUD familles/sous-familles dans l’adapter Directus (cache invalidé)
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/Parts.jsx
+- src/components/purchase/suppliers/SuppliersTable.jsx
+- src/components/purchase/suppliers/SupplierRefsBySupplierPanel.jsx
+- src/components/stock/StockFamiliesTable.jsx (nouveau)
+- src/components/stock/FamilyRow.jsx (nouveau)
+- src/components/stock/SubfamilyRow.jsx (nouveau)
+- src/lib/api/adapters/directus/stock/adapter.ts
+- src/lib/api/adapters/directus/stock/datasource.ts
+
+### ⚠️ Points de vigilance
+
+- Suppression de SuppliersInlinePanel.jsx : vérifier les intégrations externes éventuelles
+- Le panneau familles/sous-familles déclenche des confirmations navigateur (window.confirm) conservées temporairement
+
+## 1.9.1 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Amélioration interne : optimisation code TechnicianHome et InterventionCreate
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/TechnicianHome.jsx
+- src/hooks/useTechnicianHome.js (nouveau)
+- src/components/technician/ActionCard.jsx (nouveau)
+- src/pages/InterventionCreate.jsx
+- src/hooks/useInterventionCreate.js
+
+## 1.9.0 - 2026-01-19
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Nouvelle page "Pupitre Atelier" : tableau de bord pour techniciens avec indicateurs clés (urgences, interventions ouvertes, anomalies hygiènes)
+- Landing page intelligente : utilisateurs authentifiés sont automatiquement redirigés vers le pupitre atelier
+- Utilisateurs non-authentifiés accèdent toujours à la page d'accueil publique
+- Bug fix InterventionDetail : affichage priorité/urgence corrigé (mapPriorityToConfigKey)
+- Amélioration lisibilité détail intervention : header hiérarchisé (dropdowns statut/priorité déplacés dans actions)
+
+### 🧱 Stabilisation / Dette technique
+
+- Système de redirection au niveau du routeur (App.jsx) : logique centralisée et maintenable
+- Respect des conventions : HomeRedirect() suit le pattern existant des composants
+- Cohérence avec le flow d'authentification existant (Login.jsx → TechnicianHome)
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/TechnicianHome.jsx : nouveau composant pupitre atelier
+- src/App.jsx : ajout HomeRedirect(), modification du routing
+- src/pages/Login.jsx : redirection défaut `/technician` (au lieu de `/interventions`)
+- src/config/menuConfig.js : technician-home configuration
+- src/pages/routes.js : TechnicianHome mapping
+- src/pages/InterventionDetail.jsx : refactoring header + fix affichage priorité
+- src/components/layout/HierarchicalHeaderLayout.jsx : amélioration responsive dropdowns
+- src/config/interventionTypes.js : ajout labels PRIORITY_COLORS
+
+### ⚠️ Points de vigilance
+
+- La route `/` maintient le pattern de ProtectedRoute interne pour utilisateurs authentifiés
+- Les utilisateurs avec redirect_after_login stocké conservent leur destination prévue
+
 ## 1.8.0 - 2026-01-19
 
 Stabilité : 🟡 en consolidation
