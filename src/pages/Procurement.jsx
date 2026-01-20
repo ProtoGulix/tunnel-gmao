@@ -44,7 +44,7 @@ import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
 import useTwinLinesValidation from "@/hooks/useTwinLinesValidation";
-import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
+import { manufacturerItems, stock as stockAPI, suppliers as suppliersApi } from "@/lib/api/facade";
 import {
   canSelectItem,
   canDeselectItem,
@@ -653,17 +653,20 @@ export default function Procurement() {
     }
   }, [purchasing.supplierOrders, initializeItemSelection]);
 
-  const handleToggleItemSelection = useCallback((basketId, itemId) => {
+  const handleToggleItemSelection = useCallback(async (basketId, itemId, nextSelected, updatedLines = []) => {
     const basket = purchasing.supplierOrders.find(b => b.id === basketId);
-    if (!basket) return;
+    const lines = updatedLines.length > 0
+      ? updatedLines
+      : basket?.lines || basket?.orderLines || [];
+    const item = lines.find((l) => l.id === itemId);
+    if (!basket || !item) return;
 
     const currentSelection = itemSelectionByBasket[basketId] || {};
     const isCurrentlySelected = currentSelection[itemId] !== false;
-    const item = basket.lines?.find(l => l.id === itemId);
-    if (!item) return;
+    const targetSelected = typeof nextSelected === 'boolean' ? nextSelected : !isCurrentlySelected;
 
     // Vérifier si on peut sélectionner/désélectionner
-    if (isCurrentlySelected) {
+    if (!targetSelected && isCurrentlySelected) {
       // On veut désélectionner
       const result = canDeselectItem(basket, item, purchasing.supplierOrders);
       if (!result.canDeselect) {
@@ -675,7 +678,7 @@ export default function Procurement() {
         setTimeout(() => setDispatchResult(null), 5000);
         return;
       }
-    } else {
+    } else if (targetSelected && !isCurrentlySelected) {
       // On veut sélectionner
       const result = canSelectItem(basket, item);
       if (!result.canSelect) {
@@ -694,10 +697,26 @@ export default function Procurement() {
       ...prev,
       [basketId]: {
         ...prev[basketId],
-        [itemId]: !isCurrentlySelected
-      }
+        [itemId]: targetSelected,
+      },
     }));
-  }, [itemSelectionByBasket, purchasing.supplierOrders]);
+
+    purchasing.updateOrderLine(basketId, itemId, {
+      is_selected: targetSelected,
+      isSelected: targetSelected,
+    });
+
+    try {
+      await suppliersApi.updateSupplierOrderLine(itemId, { isSelected: targetSelected });
+    } catch (err) {
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la mise à jour de la sélection',
+        details: err?.message,
+      });
+      setTimeout(() => setDispatchResult(null), 5000);
+    }
+  }, [itemSelectionByBasket, purchasing.supplierOrders, purchasing, suppliersApi]);
 
   /**
    * Valide les lignes jumelles d'un panier

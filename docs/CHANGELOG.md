@@ -1,3 +1,19 @@
+## 1.11.2 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Sélection des lignes de commande dans les paniers fournisseurs persistée correctement
+
+### 🧱 Stabilisation / Dette technique
+
+- Patch de sélection : fallback sur les lignes chargées localement lors du toggle
+
+### ⚠️ Points de vigilance
+
+- Vérifier le statut RECEIVED après sélection : au moins une ligne doit être cochée
+
 ## 1.11.1 - 2026-01-20
 
 Stabilité : 🟢 stable
