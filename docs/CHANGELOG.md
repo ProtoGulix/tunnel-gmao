@@ -1,3 +1,11 @@
+## 1.11.1 - 2026-01-20
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Correction : ajout de référence fournisseur fonctionne correctement
+
 ## 1.11.0 - 2026-01-20
 
 Stabilité : 🟢 stable

@@ -51,6 +51,7 @@ export default function Parts() {
 
   const [activeTab, setActiveTab] = useTabNavigation(PARTS_TABS.ITEMS, 'tab');
   const [dispatchResult, setDispatchResult] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
   
   const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
   const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
