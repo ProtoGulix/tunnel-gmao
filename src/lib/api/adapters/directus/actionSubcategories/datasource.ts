@@ -22,13 +22,12 @@ export const actionSubcategoriesDatasource = {
     const { data } = await api.get('/items/action_subcategory', {
       params: {
         limit: -1,
-        sort: 'category_id.code,code',
+        // Avoid nested field access due to permissions; sort client-side later if needed
+        sort: 'category_id,code',
         fields: [
           'id',
-          'category_id.id',
-          'category_id.code',
-          'category_id.name',
-          'category_id.color',
+          // Only request the foreign key; enrich with categories client-side
+          'category_id',
           'code',
           'name',
         ].join(','),
@@ -48,10 +47,7 @@ export const actionSubcategoriesDatasource = {
       params: {
         fields: [
           'id',
-          'category_id.id',
-          'category_id.code',
-          'category_id.name',
-          'category_id.color',
+          'category_id',
           'code',
           'name',
         ].join(','),
@@ -78,30 +74,49 @@ export const actionSubcategoriesDatasource = {
   },
 
   /**
-   * Fetch subcategories by category code from Directus.
-   * @param categoryCode - Category code (e.g., 'DEP', 'COR')
+   * Fetch subcategories by category id from Directus.
+   * @param categoryId - Category id
    * @returns Raw Directus response data
    */
-  async fetchByCategory(categoryCode: string) {
+  async fetchByCategoryId(categoryId: number) {
     const { data } = await api.get('/items/action_subcategory', {
       params: {
         filter: {
-          'category_id.code': { _eq: categoryCode },
+          category_id: { _eq: categoryId },
         },
         limit: -1,
         sort: 'code',
         fields: [
           'id',
-          'category_id.id',
-          'category_id.code',
-          'category_id.name',
-          'category_id.color',
+          'category_id',
           'code',
           'name',
         ].join(','),
         _t: Date.now(),
       },
     });
+    return data.data;
+  },
+
+  /**
+   * Update an action category in Directus.
+   * @param id - Category ID
+   * @param payload - Partial update data
+   * @returns Raw Directus updated item
+   */
+  async updateCategory(id: number, payload: { code?: string; name?: string; color?: string }) {
+    const { data } = await api.patch(`/items/action_category/${id}`, payload);
+    return data.data;
+  },
+
+  /**
+   * Update an action subcategory in Directus.
+   * @param id - Subcategory ID
+   * @param payload - Partial update data
+   * @returns Raw Directus updated item
+   */
+  async updateSubcategory(id: number, payload: { code?: string; name?: string; category_id?: number }) {
+    const { data } = await api.patch(`/items/action_subcategory/${id}`, payload);
     return data.data;
   },
 };

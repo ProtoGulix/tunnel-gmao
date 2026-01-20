@@ -23,8 +23,23 @@ export const actionSubcategoriesAdapter = {
    */
   async fetchActionSubcategories() {
     return apiCall(async () => {
-      const raw = await actionSubcategoriesDatasource.fetchAll();
-      return raw.map(mapActionSubcategoryToDomain);
+      const [rawSubcategories, rawCategories] = await Promise.all([
+        actionSubcategoriesDatasource.fetchAll(),
+        actionSubcategoriesDatasource.fetchCategories(),
+      ]);
+
+      const categories = rawCategories.map(mapActionCategoryToDomain);
+      const categoryMap = new Map<number, any>(
+        categories.map((c: any) => [c.id, c])
+      );
+
+      const augmented = rawSubcategories.map((item: any) => ({
+        ...item,
+        // Enrich with domain category object using FK id
+        category_id: categoryMap.get(item.category_id),
+      }));
+
+      return augmented.map(mapActionSubcategoryToDomain);
     }, 'FetchActionSubcategories');
   },
 
@@ -35,8 +50,22 @@ export const actionSubcategoriesAdapter = {
    */
   async fetchActionSubcategory(id: string) {
     return apiCall(async () => {
-      const raw = await actionSubcategoriesDatasource.fetchById(id);
-      return mapActionSubcategoryToDomain(raw);
+      const [raw, rawCategories] = await Promise.all([
+        actionSubcategoriesDatasource.fetchById(id),
+        actionSubcategoriesDatasource.fetchCategories(),
+      ]);
+
+      const categories = rawCategories.map(mapActionCategoryToDomain);
+      const categoryMap = new Map<number, any>(
+        categories.map((c: any) => [c.id, c])
+      );
+
+      const augmented = {
+        ...raw,
+        category_id: categoryMap.get(raw.category_id),
+      };
+
+      return mapActionSubcategoryToDomain(augmented);
     }, 'FetchActionSubcategory');
   },
 
@@ -58,8 +87,65 @@ export const actionSubcategoriesAdapter = {
    */
   async fetchSubcategoriesByCategory(categoryCode: string) {
     return apiCall(async () => {
-      const raw = await actionSubcategoriesDatasource.fetchByCategory(categoryCode);
-      return raw.map(mapActionSubcategoryToDomain);
+      const rawCategories = await actionSubcategoriesDatasource.fetchCategories();
+      const categories = rawCategories.map(mapActionCategoryToDomain);
+      const category = categories.find((c: any) => c.code === categoryCode);
+
+      if (!category) return [];
+
+      const rawSubcategories = await actionSubcategoriesDatasource.fetchByCategoryId(category.id);
+
+      const categoryMap = new Map<number, any>(
+        categories.map((c: any) => [c.id, c])
+      );
+
+      const augmented = rawSubcategories.map((item: any) => ({
+        ...item,
+        category_id: categoryMap.get(item.category_id),
+      }));
+
+      return augmented.map(mapActionSubcategoryToDomain);
     }, 'FetchSubcategoriesByCategory');
+  },
+
+  /**
+   * Update a category.
+   */
+  async updateActionCategory(update: { id: number; code?: string; name?: string; color?: string }) {
+    return apiCall(async () => {
+      const raw = await actionSubcategoriesDatasource.updateCategory(update.id, {
+        code: update.code,
+        name: update.name,
+        color: update.color,
+      });
+      return mapActionCategoryToDomain(raw);
+    }, 'UpdateActionCategory');
+  },
+
+  /**
+   * Update a subcategory.
+   */
+  async updateActionSubcategory(update: { id: number; code?: string; name?: string; categoryId?: number }) {
+    return apiCall(async () => {
+      const raw = await actionSubcategoriesDatasource.updateSubcategory(update.id, {
+        code: update.code,
+        name: update.name,
+        category_id: update.categoryId,
+      });
+
+      // Enrich with category for mapper
+      const rawCategories = await actionSubcategoriesDatasource.fetchCategories();
+      const categories = rawCategories.map(mapActionCategoryToDomain);
+      const categoryMap = new Map<number, any>(
+        categories.map((c: any) => [c.id, c])
+      );
+
+      const augmented = {
+        ...raw,
+        category_id: categoryMap.get(raw.category_id),
+      };
+
+      return mapActionSubcategoryToDomain(augmented);
+    }, 'UpdateActionSubcategory');
   },
 };

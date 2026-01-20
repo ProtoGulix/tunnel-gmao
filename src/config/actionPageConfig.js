@@ -18,6 +18,7 @@ import {
   Search,
   RotateCw,
   Zap,
+  FolderTree,
 } from 'lucide-react';
 
 // ===== ACTION TABS =====
@@ -55,6 +56,13 @@ export const ACTION_TABS = [
     icon: RefreshCw,
     color: 'blue',
     description: 'Interventions les plus fréquentes et complexes',
+  },
+  {
+    value: 'categories',
+    label: 'Categories',
+    icon: FolderTree,
+    color: 'purple',
+    description: 'Gestion des catégories et sous-catégories d\'actions',
   },
   {
     value: 'anomalies',

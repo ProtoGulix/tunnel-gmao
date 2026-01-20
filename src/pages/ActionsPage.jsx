@@ -22,6 +22,7 @@ import LoadAnalysisTable from "@/components/actions/LoadAnalysisTable";
 import TopInterventionsTable from "@/components/actions/TopInterventionsTable";
 import AnomaliesPanel from "@/components/actions/AnomaliesPanel";
 import ActionsList from "@/components/actions/ActionsList/";
+import ActionCategoriesTable from "@/components/actions/ActionCategoriesTable";
 
 // 5. Custom Hooks
 import { useApiCall } from "@/hooks/useApiCall";
@@ -46,18 +47,19 @@ import { ACTION_TABS } from "@/config/actionPageConfig";
  * Actions management page with workload analysis.
  * 
  * Displays the list of intervention actions with comprehensive statistics,
- * load analysis, top interventions ranking, and anomaly detection.
+ * load analysis, top interventions ranking, categories management, and anomaly detection.
  * 
  * Features:
  * - List view with filtering and date range selection
  * - Load analysis by category with complexity and priority badges
  * - Top interventions ranking by recurrence and complexity
+ * - Categories and subcategories management (read-only for now, create/delete to be implemented)
  * - Anomaly detection (6 types: repetitive, fragmented, too long, classification, back-to-back, low value)
  * - Auto-refresh every 5 minutes
  * - Backend-agnostic via facade pattern
  * 
  * @component
- * @returns {JSX.Element} Actions page with tabs (list, load analysis, top interventions, anomalies)
+ * @returns {JSX.Element} Actions page with tabs (list, load analysis, top interventions, categories, anomalies)
  * 
  * @example
  * <Route path="/actions" element={<ActionsPage />} />
@@ -220,6 +222,7 @@ export default function ActionsPage() {
                 if (tab.value === "list") badgeCount = filteredActions?.length || 0;
                 else if (tab.value === "load") badgeCount = stats.categories.length;
                 else if (tab.value === "interventions") badgeCount = stats.topInterventions.length;
+                else if (tab.value === "categories") badgeCount = 0;
                 else if (tab.value === "anomalies") badgeCount = totalAnomalies;
 
                 return (
@@ -264,6 +267,11 @@ export default function ActionsPage() {
                 getRecurrenceBadge={getRecurrenceBadge}
                 getComplexityBadge={getComplexityBadge}
               />
+            </Tabs.Content>
+
+            {/* Tab: Categories */}
+            <Tabs.Content value="categories">
+              <ActionCategoriesTable onCategoriesUpdated={refetchActions} />
             </Tabs.Content>
 
             {/* Tab: Anomalies */}
