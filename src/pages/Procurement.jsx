@@ -176,8 +176,8 @@ export default function Procurement() {
     const closed = [];
 
     purchasing.supplierOrders.forEach((order) => {
-      const statusValue = order.status?.id ?? order.status;
-      const normalizedStatus = normalizeBasketStatus(statusValue);
+      // order.status est déjà une string normalisée en minuscules par le mapper
+      const normalizedStatus = normalizeBasketStatus(order.status);
 
       if (normalizedStatus === "POOLING") {
         pooling.push(order);

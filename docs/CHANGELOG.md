@@ -1,3 +1,36 @@
+## 1.11.4 - 2026-01-20
+
+Stabilité : 🟡 en consolidation
+
+### 🎯 Impact fonctionnel
+
+- Les statuts de vos demandes d'achat sont toujours à jour
+
+### 🧱 Stabilisation / Dette technique
+
+- Dérivation automatique du statut depuis les commandes fournisseurs → suppression des incohérences
+- Sécurisation des transitions de statut avec documentation lifecycle verrouillée
+- Correction du calcul de statut multi-fournisseur → seules les lignes sélectionnées comptent
+
+### 🧩 Composants / Modules concernés
+
+- src/lib/purchasing/purchaseRequestStatusUtils.js (nouveau)
+- src/lib/purchasing/orderReceptionUtils.js (nouveau)
+- src/lib/purchasing/lineCalculationUtils.js (nouveau)
+- src/pages/Procurement.jsx
+- src/components/purchase/requests/purchaseRequestRow.helpers.jsx
+- src/lib/api/adapters/directus/stock/datasource.ts
+- src/lib/api/adapters/directus/stock/mapper.ts
+- docs/features/SUPPLIER_ORDER_LIFECYCLE.md (nouveau)
+- docs/tech/PURCHASE_REQUEST_STATUS_REFACTOR.md (nouveau)
+- db/schema/migrations/20260120_add_trigger_update_purchase_on_order_received.sql (nouveau)
+
+### ⚠️ Points de vigilance
+
+- Le champ `purchase_request.status` en base sera progressivement déprécié au profit de la dérivation
+- Handlers de changement de statut manuel (handleStatusChange) supprimés du code frontend
+- La réception automatique via trigger DB nécessite PostgreSQL (testé en dev uniquement)
+
 ## 1.11.3 - 2026-01-20
 
 Stabilité : 🟢 stable
