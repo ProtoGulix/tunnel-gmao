@@ -83,38 +83,8 @@ export function canDeselectItem(basket, item, allBaskets = []) {
     };
   }
 
-  // Envoyé : vérifier qu'il existe une alternative
+  // Envoyé : on autorise la désélection sans condition pour permettre de résoudre les conflits de jumelles
   if (status === 'SENT') {
-    const purchaseRequestUid = item.purchase_request_uid || item.purchaseRequestUid;
-
-    if (!purchaseRequestUid) {
-      return { canDeselect: false, reason: "Item sans UID de demande d'achat" };
-    }
-
-    // Chercher un autre panier actif avec le même UID
-    const hasAlternative = allBaskets.some((otherBasket) => {
-      // Ne pas compter le panier courant
-      if (otherBasket.id === basket.id) return false;
-
-      // Vérifier que le panier est actif (pas clôturé)
-      const otherStatus = normalizeBasketStatus(otherBasket.status);
-      if (otherStatus === 'CLOSED') return false;
-
-      // Chercher un item avec le même UID dans ce panier
-      return (otherBasket.lines || []).some((line) => {
-        const lineUid = line.purchase_request_uid || line.purchaseRequestUid;
-        return lineUid === purchaseRequestUid;
-      });
-    });
-
-    if (!hasAlternative) {
-      return {
-        canDeselect: false,
-        reason:
-          "Impossible de désélectionner : aucun autre panier actif ne contient cette demande d'achat",
-      };
-    }
-
     return { canDeselect: true, reason: '' };
   }
 

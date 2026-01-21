@@ -19,7 +19,7 @@ import { extractOrderInfo, extractStockItemInfo } from './helpers';
  * @param {Array<Object>} props.twinLines - Lignes jumelles
  * @param {Array<string>} props.validationErrors - Erreurs de validation
  */
-export default function ErrorSection({ currentLine, twinLines, validationErrors }) {
+export default function ErrorSection({ currentLine, twinLines, validationErrors, currentOrderId, onToggleLineSelection }) {
   const allLines = currentLine ? [currentLine, ...twinLines] : twinLines;
   const linesWithWrongStatus = allLines.filter(l => {
     const { status } = extractOrderInfo(l.supplier_order_id);
@@ -35,11 +35,11 @@ export default function ErrorSection({ currentLine, twinLines, validationErrors 
       <Callout.Icon>
         <AlertTriangle size={18} />
       </Callout.Icon>
-      <Callout.Text>
-        <Box>
+      <Callout.Text asChild>
+        <div>
           <Flex align="center" gap="2" mb="2">
             <AlertTriangle size={18} />
-            <Text weight="bold" size="2">
+            <Text as="div" weight="bold" size="2">
               Validation des jumelles échouée - Action requise
             </Text>
           </Flex>
@@ -56,8 +56,13 @@ export default function ErrorSection({ currentLine, twinLines, validationErrors 
             selectedCount={selectedCount}
           />
           
-          <TwinLinesList currentLine={currentLine} twinLines={twinLines} />
-        </Box>
+          <TwinLinesList 
+            currentLine={currentLine} 
+            twinLines={twinLines}
+            currentOrderId={currentOrderId}
+            onToggleLineSelection={onToggleLineSelection}
+          />
+        </div>
       </Callout.Text>
     </Callout.Root>
   );
@@ -67,4 +72,6 @@ ErrorSection.propTypes = {
   currentLine: PropTypes.object,
   twinLines: PropTypes.arrayOf(PropTypes.object).isRequired,
   validationErrors: PropTypes.arrayOf(PropTypes.string).isRequired,
+  currentOrderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onToggleLineSelection: PropTypes.func,
 };

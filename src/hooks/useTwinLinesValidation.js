@@ -8,37 +8,8 @@
  */
 
 import { useMemo } from 'react';
-
-/**
- * Extrait les infos d'une purchase request depuis différentes structures possibles
- */
-const getPurchaseRequest = (pr) => {
-  if (!pr) return null;
-  if (pr.purchase_request_id) return pr.purchase_request_id;
-  if (pr.purchaseRequest) return pr.purchaseRequest;
-  return pr;
-};
-
-/**
- * Extrait les lignes jumelles depuis les supplier_order_line_ids
- */
-const extractTwinLines = (prObj, currentLineId) => {
-  if (!prObj) return [];
-
-  const supplierOrderLineIds = prObj.supplier_order_line_ids || [];
-  const twinLines = [];
-
-  // Parcourir tous les supplier_order_line_ids
-  supplierOrderLineIds.forEach((item) => {
-    // Structure: { id, supplier_order_line_id: { id, is_selected, ... } }
-    const lineData = item.supplier_order_line_id;
-    if (!lineData || lineData.id === currentLineId) return;
-
-    twinLines.push(lineData);
-  });
-
-  return twinLines;
-};
+import { STATUS_MAPPING } from '@/components/purchase/orders/supplierOrdersConfig';
+import { extractTwinLinesForLine } from '@/components/purchase/orders/OrderLineTable/helpers';
 
 /**
  * Hook pour détecter et valider les lignes jumelles
@@ -48,21 +19,11 @@ const extractTwinLines = (prObj, currentLineId) => {
  */
 export function useTwinLinesValidation(line) {
   /**
-   * Détecte et récupère les lignes jumelles depuis les données déjà chargées
+   * Détecte et récupère les lignes jumelles depuis la fonction partagée
    */
   const twinLines = useMemo(() => {
-    if (!line) return [];
-
-    const prs = line.purchaseRequests || line.purchase_requests || [];
-    const allTwins = new Set();
-
-    prs.forEach((pr) => {
-      const prObj = getPurchaseRequest(pr);
-      const twins = extractTwinLines(prObj, line.id);
-      twins.forEach((twin) => allTwins.add(JSON.stringify(twin)));
-    });
-
-    return Array.from(allTwins).map((t) => JSON.parse(t));
+    const { twinLines: extracted } = extractTwinLinesForLine(line);
+    return extracted;
   }, [line]);
 
   /**
@@ -72,68 +33,36 @@ export function useTwinLinesValidation(line) {
     const errors = [];
     const warnings = [];
 
-    if (twinLines.length === 0) {
-      return { validationErrors: errors, validationWarnings: warnings };
-    }
+    const getStatus = (order) => {
+      const raw = typeof order === 'object' ? order?.status : order;
+      if (!raw) return null;
+      const upper = String(raw).toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(STATUS_MAPPING, upper)) return upper;
+      return upper;
+    };
 
-    // Récupérer le statut de l'ordre parent de la ligne actuelle
+    // Ensemble complet : ligne courante + toutes jumelles
     const currentOrder = line.supplier_order_id || line.supplierOrderId;
-    const currentOrderStatus = typeof currentOrder === 'object' ? currentOrder.status : null;
+    const fullLines = [{ ...line, supplier_order_id: currentOrder }, ...twinLines];
 
-    // Filtrer les jumelles avec statut non ORDERED et non CLOSED
-    const activeTwins = twinLines.filter((twin) => {
-      const twinOrder = twin.supplier_order_id;
-      const status = typeof twinOrder === 'object' ? twinOrder.status : null;
-      return status && status !== 'ORDERED' && status !== 'CLOSED';
-    });
-
-    if (activeTwins.length === 0) {
-      return { validationErrors: errors, validationWarnings: warnings };
-    }
-
-    // Vérifier que tous les ordres (ligne actuelle + jumelles) sont en statut SENT (ASK)
-    const allLines = [{ ...line, supplier_order_id: currentOrder }, ...activeTwins];
-
-    const nonSentLines = allLines.filter((l) => {
-      const order = l.supplier_order_id;
-      const status = typeof order === 'object' ? order.status : null;
-      return status !== 'SENT';
-    });
-
-    if (nonSentLines.length > 0) {
-      errors.push(
-        `Toutes les lignes jumelles doivent être en statut "SENT" (demande de devis) pour comparaison. ` +
-          `${nonSentLines.length} ligne(s) ont un statut différent.`
+    // Règle unique demandée : si une ligne est déjà commandée/close, aucune autre ne doit être sélectionnée
+    const CLOSED_STATUSES = ['CLOSED', 'RECEIVED', 'ACK', 'CANCELLED'];
+    const closedLines = fullLines.filter((l) =>
+      CLOSED_STATUSES.includes(getStatus(l.supplier_order_id))
+    );
+    if (closedLines.length > 0) {
+      const selectedNonClosed = fullLines.filter(
+        (l) => l.is_selected === true && !CLOSED_STATUSES.includes(getStatus(l.supplier_order_id))
       );
+      if (selectedNonClosed.length > 0) {
+        errors.push(
+          `Une ligne jumelle est déjà commandée (statut "CLOSED/RECEIVED"). ` +
+            `Désélectionnez les autres lignes pour éviter une double commande.`
+        );
+      }
     }
 
-    // Vérifier qu'au maximum 1 ligne est sélectionnée
-    const selectedLines = allLines.filter((l) => l.is_selected === true);
-
-    if (selectedLines.length > 1) {
-      errors.push(
-        `Une seule ligne peut être sélectionnée parmi les jumelles. ` +
-          `Actuellement ${selectedLines.length} lignes sont sélectionnées.`
-      );
-    }
-
-    // Vérifier que les devis ont été reçus
-    const linesWithoutQuote = allLines.filter((l) => !l.quote_received);
-
-    if (linesWithoutQuote.length > 0) {
-      warnings.push(
-        `${linesWithoutQuote.length} ligne(s) n'ont pas encore reçu de devis. ` +
-          `Il est recommandé d'attendre tous les devis avant de comparer.`
-      );
-    }
-
-    // Si aucune ligne n'est sélectionnée, avertir
-    if (selectedLines.length === 0 && activeTwins.length > 0) {
-      warnings.push(
-        `Aucune ligne n'est sélectionnée. Vous devez comparer les offres et sélectionner la meilleure.`
-      );
-    }
-
+    // On stoppe ici : autres règles mises en pause comme demandé
     return { validationErrors: errors, validationWarnings: warnings };
   }, [line, twinLines]);
 

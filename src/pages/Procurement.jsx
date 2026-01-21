@@ -93,6 +93,14 @@ export default function Procurement() {
   
   // État des validations de jumelles (stocke les infos par ligne)
   const [twinValidationsByLine, setTwinValidationsByLine] = useState({});
+  
+  // Callback pour mettre à jour les validations de jumelles
+  const handleTwinValidationUpdate = useCallback((lineId, validation) => {
+    setTwinValidationsByLine(prev => ({
+      ...prev,
+      [lineId]: validation,
+    }));
+  }, []);
 
   // État pour le recalcul des totaux
   const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
@@ -1421,7 +1429,7 @@ export default function Procurement() {
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
                     twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={setTwinValidationsByLine}
+                    onTwinValidationUpdate={handleTwinValidationUpdate}
                   />
                 )}
               </Flex>
@@ -1470,7 +1478,7 @@ export default function Procurement() {
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
                     twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={setTwinValidationsByLine}
+                    onTwinValidationUpdate={handleTwinValidationUpdate}
                   />
                 )}
               </Flex>
@@ -1519,7 +1527,7 @@ export default function Procurement() {
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
                     twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={setTwinValidationsByLine}
+                    onTwinValidationUpdate={handleTwinValidationUpdate}
                   />
                 )}
               </Flex>
@@ -1568,7 +1576,7 @@ export default function Procurement() {
                     onBasketStatusChange={handleBasketStatusChange}
                     canModifyItem={canModifyItem}
                     twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={setTwinValidationsByLine}
+                    onTwinValidationUpdate={handleTwinValidationUpdate}
                   />
                 )}
               </Flex>

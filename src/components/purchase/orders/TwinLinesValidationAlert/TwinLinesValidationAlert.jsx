@@ -14,8 +14,8 @@
 import PropTypes from 'prop-types';
 import { Callout, Flex, Text } from '@radix-ui/themes';
 import { Info, CheckCircle2, Check } from 'lucide-react';
-import ErrorSection from './ErrorSection';
-import WarningSection from './WarningSection';
+import ErrorSection from './ErrorSection.jsx';
+import WarningSection from './WarningSection.jsx';
 
 /**
  * Composant d'alerte pour la validation des lignes jumelles
@@ -47,6 +47,8 @@ export default function TwinLinesValidationAlert({
   validationWarnings,
   loading,
   currentLine,
+  currentOrderId,
+  onToggleLineSelection,
 }) {
   // Ne rien afficher si pas de jumelles
   if (!loading && twinLines.length === 0) {
@@ -74,6 +76,8 @@ export default function TwinLinesValidationAlert({
         currentLine={currentLine}
         twinLines={twinLines}
         validationErrors={validationErrors}
+        currentOrderId={currentOrderId}
+        onToggleLineSelection={onToggleLineSelection}
       />
     );
   }
@@ -85,6 +89,8 @@ export default function TwinLinesValidationAlert({
         currentLine={currentLine}
         twinLines={twinLines}
         validationWarnings={validationWarnings}
+        currentOrderId={currentOrderId}
+        onToggleLineSelection={onToggleLineSelection}
       />
     );
   }
@@ -139,6 +145,8 @@ TwinLinesValidationAlert.propTypes = {
     ]),
     stockItem: PropTypes.object,
   }),
+  currentOrderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onToggleLineSelection: PropTypes.func,
 };
 
 TwinLinesValidationAlert.defaultProps = {
@@ -147,4 +155,6 @@ TwinLinesValidationAlert.defaultProps = {
   validationWarnings: [],
   loading: false,
   currentLine: null,
+  currentOrderId: null,
+  onToggleLineSelection: null,
 };

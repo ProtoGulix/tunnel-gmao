@@ -1,3 +1,31 @@
+## 1.11.5 - 2026-01-21
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Détection fiable des lignes jumelles (même DA chez plusieurs fournisseurs)
+- Badge jumelles affiche uniquement les lignes sélectionnées en conflit
+- Validation bloquante si ligne jumelle déjà commandée (CLOSED/RECEIVED/ACK/CANCELLED)
+
+### 🧱 Stabilisation / Dette technique
+
+- Centralisation logique de détection des jumelles via `extractTwinLinesForLine()`
+- Groupement par `purchase_request.id` comme clé de détection
+- Filtrage strict sur `is_selected=true` pour éviter faux positifs
+- Synchronisation badge/hook de validation pour cohérence affichage
+
+### 🧩 Composants / Modules concernés
+
+- src/components/purchase/orders/OrderLineTable/helpers.js (extractTwinLinesForLine)
+- src/hooks/useTwinLinesValidation.js
+- src/components/purchase/orders/TwinLinesValidationAlert/
+
+### ⚠️ Points de vigilance
+
+- Nécessite vidage cache PWA pour voir changements (service worker)
+- Validation stricte : impossible de sélectionner si jumelle en statut fermé
+
 ## 1.11.4 - 2026-01-20
 
 Stabilité : 🟡 en consolidation

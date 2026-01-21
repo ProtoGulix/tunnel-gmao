@@ -9,6 +9,7 @@ import { Info } from 'lucide-react';
 import ArticleInfo from './ArticleInfo';
 import WarningRecommendations from './WarningRecommendations';
 import OffersComparison from './OffersComparison';
+import TwinLinesList from './TwinLinesList';
 import { extractStockItemInfo } from './helpers';
 
 /**
@@ -19,7 +20,7 @@ import { extractStockItemInfo } from './helpers';
  * @param {Array<Object>} props.twinLines - Lignes jumelles
  * @param {Array<string>} props.validationWarnings - Avertissements
  */
-export default function WarningSection({ currentLine, twinLines, validationWarnings }) {
+export default function WarningSection({ currentLine, twinLines, validationWarnings, currentOrderId, onToggleLineSelection }) {
   const allLines = currentLine ? [currentLine, ...twinLines] : twinLines;
   const linesWithoutQuote = allLines.filter(l => !l.quote_received);
   const selectedCount = allLines.filter(l => l.is_selected === true).length;
@@ -31,11 +32,11 @@ export default function WarningSection({ currentLine, twinLines, validationWarni
       <Callout.Icon>
         <Info size={18} />
       </Callout.Icon>
-      <Callout.Text>
-        <Box>
+      <Callout.Text asChild>
+        <div>
           <Flex align="center" gap="2" mb="2">
             <Info size={18} />
-            <Text weight="bold" size="2">
+            <Text as="div" weight="bold" size="2">
               Comparaison de devis recommandée
             </Text>
           </Flex>
@@ -50,9 +51,16 @@ export default function WarningSection({ currentLine, twinLines, validationWarni
             linesWithoutQuote={linesWithoutQuote}
             selectedCount={selectedCount}
           />
+
+          <TwinLinesList 
+            currentLine={currentLine}
+            twinLines={twinLines}
+            currentOrderId={currentOrderId}
+            onToggleLineSelection={onToggleLineSelection}
+          />
           
           <OffersComparison currentLine={currentLine} twinLines={twinLines} />
-        </Box>
+        </div>
       </Callout.Text>
     </Callout.Root>
   );
@@ -62,4 +70,6 @@ WarningSection.propTypes = {
   currentLine: PropTypes.object,
   twinLines: PropTypes.arrayOf(PropTypes.object).isRequired,
   validationWarnings: PropTypes.arrayOf(PropTypes.string).isRequired,
+  currentOrderId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onToggleLineSelection: PropTypes.func,
 };

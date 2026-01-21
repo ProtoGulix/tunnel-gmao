@@ -33,6 +33,79 @@ export const getPurchaseRequest = (pr) => {
 };
 
 /**
+ * Extrait les jumelles d'une ligne en groupant par purchase_request.id
+ * Jumelles = plusieurs supplier_order_lines avec le même purchase_request.id
+ * Utilisé par useTwinLinesValidation et detectTwinLines
+ * @param {Object} line - Ligne de commande
+ * @returns {{twinLines: Array, twinCount: number, totalLines: number}}
+ */
+export const extractTwinLinesForLine = (line) => {
+  if (!line) {
+    return { twinLines: [], twinCount: 0, totalLines: 0 };
+  }
+
+  const prs = getPurchaseRequests(line);
+  if (prs.length === 0) {
+    return { twinLines: [], twinCount: 0, totalLines: 0 };
+  }
+
+  const currentLineId = line.id;
+  // Grouper par purchase_request.id pour identifier les jumelles
+  // Jumelles = tous les supplier_order_lines partageant le même purchase_request.id
+  const linesByPrId = new Map();
+
+  prs.forEach((pr) => {
+    const prObj = getPurchaseRequest(pr);
+    if (!prObj) return;
+
+    const prId = prObj.id;
+    const supplierOrderLineIds = prObj.supplier_order_line_ids || [];
+
+    if (!Array.isArray(supplierOrderLineIds)) return;
+
+    supplierOrderLineIds.forEach((item) => {
+      const lineData = item.supplier_order_line_id;
+      if (!lineData) return;
+
+      // Grouper toutes les lignes par leur purchase_request.id
+      if (!linesByPrId.has(prId)) {
+        linesByPrId.set(prId, []);
+      }
+      linesByPrId.get(prId).push(lineData);
+    });
+  });
+
+  // Extraire les jumelles :
+  // - Parcourir chaque groupe de PR
+  // - Compter TOUTES les lignes sélectionnées (hors ligne courante)
+  // - Ce sont les jumelles actives qu'on doit signaler à l'utilisateur
+  const twinsByLineId = new Map();
+  linesByPrId.forEach((linesForPr) => {
+    // Parcourir toutes les lignes du groupe
+    linesForPr.forEach((lineData) => {
+      // Garder uniquement les lignes sélectionnées (hors ligne courante)
+      if (
+        lineData.id !== currentLineId &&
+        lineData.is_selected === true &&
+        !twinsByLineId.has(lineData.id)
+      ) {
+        twinsByLineId.set(lineData.id, lineData);
+      }
+    });
+  });
+
+  const twinLines = Array.from(twinsByLineId.values());
+  const twinCount = twinLines.length;
+  const totalLines = twinCount + 1; // Jumelles + ligne courante
+
+  return {
+    twinLines,
+    twinCount,
+    totalLines,
+  };
+};
+
+/**
  * Récupère l'urgence maximale d'une ligne
  * @param {Object} line - Ligne de commande
  * @returns {string} Niveau d'urgence (high, normal, low)
@@ -102,6 +175,7 @@ export const countPurchaseRequests = (line) => {
 
 /**
  * Détecte si une ligne a des lignes jumelles
+ * Filtre exactement comme le hook useTwinLinesValidation pour éviter les faux positifs
  * @param {Object} line - Ligne de commande
  * @returns {{hasTwin: boolean, twinCount: number, totalLines: number}}
  */
@@ -111,30 +185,35 @@ export const detectTwinLines = (line) => {
     return { hasTwin: false, twinCount: 0, totalLines: 0 };
   }
 
-  let maxTotalLines = 0;
-  let hasTwin = false;
+  // Dédupliquer les jumelles par ID (comme dans le hook)
+  const twinsByLineId = new Map();
+  const currentLineId = line.id;
 
   prs.forEach((pr) => {
     const prObj = getPurchaseRequest(pr);
     if (!prObj) return;
 
-    let supplierOrderLineIds = prObj.supplier_order_line_ids || [];
-    if (!Array.isArray(supplierOrderLineIds)) {
-      supplierOrderLineIds = [];
-    }
+    const supplierOrderLineIds = prObj.supplier_order_line_ids || [];
+    if (!Array.isArray(supplierOrderLineIds)) return;
 
-    const totalLines = supplierOrderLineIds.length;
-    if (totalLines > maxTotalLines) {
-      maxTotalLines = totalLines;
-      if (totalLines > 1) {
-        hasTwin = true;
+    supplierOrderLineIds.forEach((item) => {
+      const lineData = item.supplier_order_line_id;
+      // Exclure la ligne courante
+      if (!lineData || lineData.id === currentLineId) return;
+      // Dédupliquer par ID
+      if (!twinsByLineId.has(lineData.id)) {
+        twinsByLineId.set(lineData.id, lineData);
       }
-    }
+    });
   });
+
+  const twinCount = twinsByLineId.size;
+  const hasTwin = twinCount > 0;
+  const totalLines = twinCount + 1; // Jumelles + ligne courante
 
   return {
     hasTwin,
-    twinCount: hasTwin ? maxTotalLines - 1 : 0,
-    totalLines: maxTotalLines,
+    twinCount,
+    totalLines,
   };
 };

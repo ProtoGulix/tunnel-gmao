@@ -141,6 +141,8 @@ export default function OrderLineTable({
           validationErrors={globalValidationAlerts.linesWithErrors[0]?.validationErrors || []}
           validationWarnings={[]}
           loading={false}
+          currentOrderId={order.id}
+          onToggleLineSelection={(line, next) => handleToggleSelected(line.id, next)}
         />
       )}
 
@@ -152,6 +154,8 @@ export default function OrderLineTable({
             validationErrors={[]}
             validationWarnings={globalValidationAlerts.linesWithWarnings[0]?.validationWarnings || []}
             loading={false}
+            currentOrderId={order.id}
+            onToggleLineSelection={(line, next) => handleToggleSelected(line.id, next)}
           />
         )}
 

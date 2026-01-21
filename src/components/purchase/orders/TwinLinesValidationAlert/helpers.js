@@ -9,14 +9,18 @@
  * @returns {{status: string, supplier: string, orderNumber: string, orderId: string}}
  */
 export const extractOrderInfo = (order) => {
-  const status = typeof order === 'object' ? order.status : '?';
+  if (!order) {
+    return { status: 'UNKNOWN', supplier: '?', orderNumber: '—', orderId: null };
+  }
+
+  const status = typeof order === 'object' ? order.status || 'UNKNOWN' : '?';
   const supplier =
     typeof order === 'object' && order.supplier_id
       ? typeof order.supplier_id === 'object'
-        ? order.supplier_id.name
+        ? order.supplier_id.name || '?'
         : '?'
       : '?';
-  const orderNumber = typeof order === 'object' ? order.order_number : '—';
+  const orderNumber = typeof order === 'object' ? order.order_number || '—' : '—';
   const orderId = typeof order === 'object' ? order.id : order;
 
   return { status, supplier, orderNumber, orderId };
