@@ -21,27 +21,22 @@ export default function SummaryTab({ model, handlers, metadata }) {
     return <LoadingState message="Chargement des demandes d'achat..." />;
   }
 
-  // Filtrer demandes liées à cette intervention
-  const interventionRequests = model.purchaseRequests.filter(
-    req => req.interventionId === model.interv.id
-  );
-
   return (
     <Box pt="4">
       <Flex direction="column" gap="3">
         <TableHeader
           icon={Package}
           title="Demandes d'achat"
-          count={interventionRequests.length}
+          count={model.purchaseRequests.length}
           onRefresh={handlers.onRefresh}
           loading={false}
           showRefreshButton={true}
         />
 
-        {/* Table demandes */}
+        {/* Table demandes - Déjà filtrées par l'API */}
         <Box mt="2">
           <PurchaseRequestsTable
-            requests={interventionRequests}
+            requests={model.purchaseRequests}
             stockItems={metadata.stockItems}
             supplierRefs={metadata.supplierRefs}
             standardSpecs={metadata.standardSpecs}

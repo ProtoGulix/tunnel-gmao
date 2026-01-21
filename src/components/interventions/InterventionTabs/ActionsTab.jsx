@@ -78,7 +78,14 @@ export default function ActionsTab({ model, handlers, metadata, onPurchaseReques
         {filteredTimeline.length > 0 ? (
           <Timeline
             items={filteredTimeline}
-            renderItem={(item) => <TimelineItemRenderer item={item} interventionId={model.interv?.id} onPurchaseRequestCreated={onPurchaseRequestCreated} />}
+            renderItem={(item) => (
+              <TimelineItemRenderer 
+                item={item} 
+                interventionId={model.interv?.id} 
+                onPurchaseRequestCreated={onPurchaseRequestCreated}
+                purchaseRequests={model.purchaseRequests}
+              />
+            )}
             getStatusColor={(dayGroup) => {
               const dayEnd = new Date(dayGroup.date.split('/').reverse().join('-'));
               dayEnd.setHours(23, 59, 59, 999);
@@ -106,7 +113,8 @@ ActionsTab.propTypes = {
     interv: PropTypes.object.isRequired,
     searchActions: PropTypes.string.isRequired,
     timelineByDay: PropTypes.array.isRequired,
-    loading: PropTypes.bool
+    loading: PropTypes.bool,
+    purchaseRequests: PropTypes.array
   }).isRequired,
   handlers: PropTypes.shape({
     onSearchChange: PropTypes.func.isRequired,

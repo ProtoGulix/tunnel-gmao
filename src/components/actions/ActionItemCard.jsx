@@ -19,9 +19,6 @@ const getTechnician = (action) => action?.technician ?? null;
 const getCreatedAt = (action) => action?.createdAt ?? action?.created_at ?? null;
 const getDescription = (action) => action?.description ?? "";
 const getComplexityFactors = (action) => action?.complexityFactors ?? [];
-const getTechnicianFirstName = (technician) => technician?.firstName ?? technician?.first_name ?? "—";
-const getTechnicianLastName = (technician) => technician?.lastName ?? technician?.last_name ?? "—";
-const getSubcategoryCode = (subcategory) => subcategory?.code ?? "—";
 
 const getComplexityColor = (score) => {
   const complexityScore = parseInt(score);
@@ -30,7 +27,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated }) {
+export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated, purchaseRequests: externalPurchaseRequests }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -54,19 +51,27 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     setLocalAction(action);
   }, [action]);
 
-  // Use complete purchase requests from action data (already loaded from intervention)
+  // Use purchase requests from API (passed as prop) instead of embedded data
+  // Filter by matching purchase request IDs from the embedded action data
   useEffect(() => {
-    if (localAction?.purchaseRequests && Array.isArray(localAction.purchaseRequests)) {
-      // Purchase requests are already complete with stock_item_ref data
-      const requests = localAction.purchaseRequests.map(pr => ({
-        ...pr,
-        stockItemCode: pr.stockItemRef || null
-      }));
-      setPurchaseRequests(requests);
+    if (externalPurchaseRequests && Array.isArray(externalPurchaseRequests)) {
+      // Get purchase request IDs from embedded action data (junction table)
+      const embeddedPrIds = new Set();
+      if (localAction?.purchaseRequests && Array.isArray(localAction.purchaseRequests)) {
+        localAction.purchaseRequests.forEach(pr => {
+          if (pr?.id) embeddedPrIds.add(String(pr.id));
+        });
+      }
+      
+      // Filter API purchase requests by matching IDs
+      const filtered = externalPurchaseRequests.filter(pr => 
+        embeddedPrIds.has(String(pr.id))
+      );
+      setPurchaseRequests(filtered);
     } else {
       setPurchaseRequests([]);
     }
-  }, [localAction?.purchaseRequests]);
+  }, [externalPurchaseRequests, localAction?.purchaseRequests]);
 
   // Compute initial state fresh from current localAction
   const buildInitialEditState = () => {
@@ -340,4 +345,5 @@ ActionItemCard.propTypes = {
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
   onPurchaseRequestCreated: PropTypes.func,
+  purchaseRequests: PropTypes.array,
 };

@@ -7,12 +7,17 @@ import { useOptimisticPurchaseRequests } from './useOptimisticData';
  * Centralise: fetch, link items, delete
  * Utilise des mises à jour optimistes pour éviter les rechargements complets
  * 
+ * @param {Function} onError - Callback en cas d'erreur
+ * @param {string} interventionId - (Optionnel) Filtre par intervention pour charger uniquement les demandes liées
+ * 
  * Note: Le statut est maintenant dérivé depuis supplier_order, plus de updateStatus
  */
-export const usePurchaseRequestsManagement = (onError) => {
+export const usePurchaseRequestsManagement = (onError, interventionId = null) => {
   // Hook optimiste pour gérer les données
   const optimistic = useOptimisticPurchaseRequests(
-    () => stock.fetchPurchaseRequests(),
+    () => interventionId 
+      ? stock.fetchPurchaseRequestsByIntervention(interventionId)
+      : stock.fetchPurchaseRequests(),
     onError
   );
 

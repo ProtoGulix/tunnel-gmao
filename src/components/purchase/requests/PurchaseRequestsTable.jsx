@@ -14,6 +14,7 @@ import { purchaseRequestsTablePropTypes } from "@/components/purchase/requests/p
 // eslint-disable-next-line complexity
 export default function PurchaseRequestsTable({
   requests,
+  interventionId, // Si fourni, filtre les demandes par intervention
   expandedRequestId,
   renderExpandedContent = () => null,
   stockItems = [],
@@ -37,6 +38,12 @@ export default function PurchaseRequestsTable({
   detailsLoadingStates = {},
 }) {
   const [detailsExpandedId, setDetailsExpandedId] = useState(null);
+
+  // Filtrage automatique par intervention si interventionId fourni
+  const filteredRequests = useMemo(() => {
+    if (!interventionId) return requests;
+    return requests.filter(req => req.interventionId === interventionId);
+  }, [requests, interventionId]);
 
   // Hook pour gérer la suppression avec double-clic
   const {
@@ -73,7 +80,7 @@ export default function PurchaseRequestsTable({
     return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
   }, []);
 
-  const sortedRequests = useMemo(() => sortRequests(requests, getAgeDays), [requests, getAgeDays]);
+  const sortedRequests = useMemo(() => sortRequests(filteredRequests, getAgeDays), [filteredRequests, getAgeDays]);
 
   const columns = useMemo(() => COLUMNS, []);
 

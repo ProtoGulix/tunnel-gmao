@@ -1,3 +1,45 @@
+## 1.11.6 - 2026-01-21
+
+Stabilité : 🟢 stable
+
+### 🎯 Impact fonctionnel
+
+- Affichage cohérent des demandes d'achat entre page Procurement et détail Intervention
+- Numéro de panier visible sur toutes les DA (badge 📦 → icône Package)
+- Chargement optimisé : 1 seule requête API au lieu de 116 (filtrage serveur)
+
+### 🧱 Stabilisation / Dette technique
+
+- Unification source de données : InterventionDetail utilise maintenant usePurchaseRequestsManagement (même hook que Procurement)
+- Filtrage côté backend via fetchPurchaseRequestsByIntervention(interventionId)
+- Suppression des données embarquées obsolètes (interv.action[].purchaseRequests)
+- Extraction des helpers dans PurchaseRequestList (getSelectedBasketInfo, getStatusBadgeProps)
+- Nettoyage accessors inutilisés (getTechnicianFirstName, getTechnicianLastName, getSubcategoryCode)
+
+### 🧩 Composants / Modules concernés
+
+- src/pages/InterventionDetail.jsx
+- src/components/common/PurchaseRequestList.jsx (conformité §4.0 standards)
+- src/components/actions/ActionItemCard.jsx
+- src/components/interventions/InterventionTabs/ActionsTab.jsx
+- src/components/interventions/InterventionTabs/SummaryTab.jsx
+- src/components/interventions/InterventionTabs/TimelineItemRenderer.jsx
+- src/components/purchase/requests/PurchaseRequestsTable.jsx
+- src/components/purchase/requests/purchaseRequestRow.helpers.jsx
+- src/hooks/usePurchaseRequestsManagement.js
+- src/lib/api/adapters/directus/stock/datasource.ts
+
+### 📚 Documentation
+
+- Ajout JSDoc complet sur PurchaseRequestList (§4.0.2)
+- PropTypes exhaustifs avec derived_status, supplier_order_line_ids
+- Extraction constantes (STATUS_BADGE_CONFIG) et helpers documentés
+
+### ⚠️ Points de vigilance
+
+- Nécessite vidage cache PWA pour voir numéros de panier
+- API charge maintenant is_selected + order_number dans supplier_order relations
+
 ## 1.11.5 - 2026-01-21
 
 Stabilité : 🟢 stable

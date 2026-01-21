@@ -17,6 +17,7 @@ import { interventions, actions, interventionStatusLogs, stock, stockSuppliers, 
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
+import { usePurchaseRequestsManagement } from '@/hooks/usePurchaseRequestsManagement';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { useError } from '@/contexts/ErrorContext';
@@ -153,6 +154,10 @@ export default function InterventionDetail() {
   const [summaryDataLoaded, setSummaryDataLoaded] = useState(false);
   const [actionDataLoaded, setActionDataLoaded] = useState(false);
 
+  // Charger les purchase requests via l'API (même source que Procurement)
+  // Filtrage côté backend pour charger uniquement les demandes de cette intervention
+  const purchases = usePurchaseRequestsManagement(showError, id);
+
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -181,6 +186,7 @@ export default function InterventionDetail() {
     
     refetchIntervention();
     refetchStatusLog();
+    purchases.loadRequests(); // Charger les purchase requests dès l'ouverture (pour le badge)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -210,20 +216,13 @@ export default function InterventionDetail() {
     if (activeTab === 'summary' && !summaryDataLoaded) {
       const loadSummaryData = async () => {
         try {
-          // Charger supplier refs et standard specs uniquement pour les articles des purchase requests
-          // Les purchase requests sont maintenant dans interv.action[].purchaseRequests
+          // Charger supplier refs et standard specs pour les stock items des purchase requests
           const uniqueStockItemIds = new Set();
-          if (interv?.action && Array.isArray(interv.action)) {
-            interv.action.forEach(action => {
-              if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
-                action.purchaseRequests.forEach(pr => {
-                  if (pr.stockItemId) {
-                    uniqueStockItemIds.add(pr.stockItemId);
-                  }
-                });
-              }
-            });
-          }
+          purchases.requests.forEach(pr => {
+            if (pr.stockItemId) {
+              uniqueStockItemIds.add(pr.stockItemId);
+            }
+          });
 
           const stockItemIdsArray = Array.from(uniqueStockItemIds);
 
@@ -255,7 +254,7 @@ export default function InterventionDetail() {
       };
       loadSummaryData();
     }
-  }, [activeTab, summaryDataLoaded, showError, interv?.action]);
+  }, [activeTab, summaryDataLoaded, showError, purchases.requests]);
 
   // Injection de styles responsive pour timeline et boutons d'action
   useEffect(() => {
@@ -404,22 +403,10 @@ export default function InterventionDetail() {
     return `${base}.pdf`;
   }, [interv?.code, id]);
 
+  // Compter les purchase requests de cette intervention (déjà filtrées par l'API)
   const purchaseRequestsCount = useMemo(() => {
-    // Try to use root-level purchase_request_id array first (from backend)
-    if (Array.isArray(interv?.purchase_request_id)) {
-      return interv.purchase_request_id.length;
-    }
-    // Fallback: count from action data (embedded)
-    let count = 0;
-    if (interv?.action && Array.isArray(interv.action)) {
-      interv.action.forEach(action => {
-        if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
-          count += action.purchaseRequests.length;
-        }
-      });
-    }
-    return count;
-  }, [interv?.purchase_request_id, interv?.action]);
+    return purchases.requests.length;
+  }, [purchases.requests]);
 
   // État initial du formulaire d'action avec catégorie par défaut
   const actionFormInitialState = useMemo(() => {
@@ -481,16 +468,16 @@ export default function InterventionDetail() {
   }, [mutateUpdateIntervention]);
 
   const handleRefreshSummary = useCallback(async () => {
-    // Recharger l'intervention (qui contient maintenant tous les purchase requests)
-    refetchIntervention();
-  }, [refetchIntervention]);
+    // Recharger les purchase requests depuis l'API (comme Procurement)
+    purchases.invalidate();
+  }, [purchases]);
 
   const handlePurchaseRequestCreated = useCallback((createdRequest) => {
-    // Rafraîchir l'intervention pour mettre à jour les purchase requests embarqués
+    // Rafraîchir les purchase requests depuis l'API
     if (createdRequest?.id) {
-      refetchIntervention();
+      purchases.invalidate();
     }
-  }, [refetchIntervention]);
+  }, [purchases]);
 
   const handleAddSupplierRef = useCallback(async (stockItemId, supplierRefData) => {
     try {
@@ -648,7 +635,8 @@ export default function InterventionDetail() {
               interv,
               searchActions,
               timelineByDay,
-              loading
+              loading,
+              purchaseRequests: purchases.requests
             }}
             handlers={{
               onSearchChange: setSearchActions,
@@ -667,19 +655,8 @@ export default function InterventionDetail() {
           <SummaryTab
             model={{
               interv,
-              loading,
-              purchaseRequests: (() => {
-                // Extract and flatten purchase requests from actions
-                const allRequests = [];
-                if (interv?.action && Array.isArray(interv.action)) {
-                  interv.action.forEach(action => {
-                    if (action.purchaseRequests && Array.isArray(action.purchaseRequests)) {
-                      allRequests.push(...action.purchaseRequests);
-                    }
-                  });
-                }
-                return allRequests;
-              })()
+              loading: loading || purchases.loading,
+              purchaseRequests: purchases.requests
             }}
             handlers={{
               onRefresh: handleRefreshSummary,

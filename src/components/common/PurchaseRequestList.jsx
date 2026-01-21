@@ -1,15 +1,82 @@
+/**
+ * @fileoverview Composant d'affichage de liste de demandes d'achat avec suppression inline
+ * @module components/common/PurchaseRequestList
+ * @requires react
+ * @requires prop-types
+ * @requires @radix-ui/themes
+ * @requires lucide-react
+ */
 import { Flex, Text, Badge, Button } from "@radix-ui/themes";
-import { ShoppingCart, Trash2, AlertTriangle, X, Check } from "lucide-react";
+import { ShoppingCart, Trash2, AlertTriangle, X, Check, Package } from "lucide-react";
 import PropTypes from "prop-types";
 import { useState } from "react";
 import StockRefLink from "@/components/common/StockRefLink";
+import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
+
+/** Configuration des badges de statut */
+const STATUS_BADGE_CONFIG = {
+  pooling: { color: 'purple', label: 'Mutualisation' },
+  sent: { color: 'blue', label: 'Devis envoyé' },
+  ordered: { color: 'green', label: 'Commandée' },
+  received: { color: 'green', label: 'Reçue' },
+  cancelled: { color: 'red', label: 'Annulée' },
+  open: { color: 'blue', label: 'En attente' },
+  in_progress: { color: 'blue', label: 'En attente' },
+  default: { color: 'gray', label: 'Ouverte' }
+};
 
 /**
- * PurchaseRequestItem - Individual purchase request item with inline delete confirmation
+ * Récupère le numéro du panier sélectionné depuis les relations supplier_order
+ * @param {Object} pr - Purchase request avec relations supplier_order_line_ids
+ * @returns {string|null} Numéro du panier ou null si non trouvé
+ */
+const getSelectedBasketInfo = (pr) => {
+  const orderLineRelations = pr.supplier_order_line_ids || pr.supplierOrderLineIds || [];
+  const selectedLine = orderLineRelations.find(relation => {
+    const lineData = relation.supplier_order_line_id || relation.supplierOrderLineId;
+    return lineData && (lineData.is_selected === true || lineData.isSelected === true);
+  });
+  
+  if (selectedLine) {
+    const lineData = selectedLine.supplier_order_line_id || selectedLine.supplierOrderLineId;
+    const supplierOrder = lineData?.supplier_order_id || lineData?.supplierOrderId;
+    return supplierOrder?.order_number || supplierOrder?.orderNumber || null;
+  }
+  return null;
+};
+
+/**
+ * Détermine les props du badge de statut (couleur + label)
+ * @param {string} statusId - Identifiant du statut
+ * @returns {{color: string, label: string}} Configuration du badge
+ */
+const getStatusBadgeProps = (statusId) => {
+  return STATUS_BADGE_CONFIG[statusId] || STATUS_BADGE_CONFIG.default;
+};
+
+/**
+ * Élément individuel de demande d'achat avec confirmation de suppression inline
+ * @component
+ * @param {Object} props
+ * @param {Object} props.pr - Purchase request avec relations et données
+ * @param {Function} [props.onDelete] - Callback de suppression (requestId)
+ * @returns {JSX.Element} Item de demande d'achat
+ * @example
+ * <PurchaseRequestItem 
+ *   pr={purchaseRequest} 
+ *   onDelete={(id) => handleDelete(id)}
+ * />
  */
 function PurchaseRequestItem({ pr, onDelete }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Dériver le statut depuis supplier_order
+  const derivedStatus = pr.derived_status || derivePurchaseRequestStatus(pr);
+  const statusId = typeof derivedStatus === "string" ? derivedStatus : derivedStatus?.id;
+
+  const basketNumber = getSelectedBasketInfo(pr);
+  const statusBadge = getStatusBadgeProps(statusId);
 
   const handleDeleteClick = () => {
     setShowConfirm(true);
@@ -32,6 +99,9 @@ function PurchaseRequestItem({ pr, onDelete }) {
 
   const isToQualify = !pr.stockItemId || pr.itemLabel === "À qualifier";
 
+  // Récupérer la référence stock
+  const stockRef = pr.stockItemRef || pr.stock_item_ref || pr.stockItemCode;
+
   return (
     <Flex 
       align="center" 
@@ -45,9 +115,9 @@ function PurchaseRequestItem({ pr, onDelete }) {
     >
       <ShoppingCart size={14} color={isToQualify ? "var(--amber-9)" : "var(--orange-9)"} style={{ flexShrink: 0 }} />
       
-      {pr.stockItemCode && (
+      {stockRef && (
         <StockRefLink 
-          reference={pr.stockItemCode}
+          reference={stockRef}
           tab="stock"
           color="gray"
           variant="outline"
@@ -55,7 +125,17 @@ function PurchaseRequestItem({ pr, onDelete }) {
         />
       )}
 
-      <Text size="2" weight="medium" style={{ flex: 1, minWidth: 0 }}>
+      <Text 
+        size="2" 
+        weight="medium" 
+        style={{ 
+          flex: 1, 
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}
+      >
         {pr.itemLabel}
       </Text>
 
@@ -80,13 +160,24 @@ function PurchaseRequestItem({ pr, onDelete }) {
           {pr.urgency}
         </Badge>
         <Badge 
-          color={pr.status === 'open' ? 'blue' : pr.status === 'ordered' ? 'orange' : 'green'} 
+          color={statusBadge.color} 
           variant="soft" 
           size="1"
         >
-          {pr.status}
+          {statusBadge.label}
         </Badge>
-
+        {basketNumber && (
+          <Badge 
+            color="indigo" 
+            variant="outline" 
+            size="1"
+          >
+            <Flex align="center" gap="1">
+              <Package size={12} />
+              {basketNumber}
+            </Flex>
+          </Badge>
+        )}
         {onDelete && !showConfirm && (
           <button
             title="Supprimer cette demande d'achat"
@@ -162,16 +253,30 @@ PurchaseRequestItem.propTypes = {
     itemLabel: PropTypes.string.isRequired,
     stockItemId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     stockItemCode: PropTypes.string,
+    stockItemRef: PropTypes.string,
+    stock_item_ref: PropTypes.string,
     quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     unit: PropTypes.string.isRequired,
     urgency: PropTypes.string.isRequired,
-    status: PropTypes.string.isRequired,
+    derived_status: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    supplier_order_line_ids: PropTypes.array,
+    supplierOrderLineIds: PropTypes.array,
   }).isRequired,
   onDelete: PropTypes.func,
 };
 
 /**
- * PurchaseRequestList - Displays a list of linked purchase requests
+ * Liste de demandes d'achat liées à une action/intervention
+ * @component
+ * @param {Object} props
+ * @param {Array} [props.purchaseRequests] - Liste des demandes d'achat
+ * @param {Function} [props.onDelete] - Callback de suppression (requestId)
+ * @returns {JSX.Element|null} Liste des demandes ou null si vide
+ * @example
+ * <PurchaseRequestList 
+ *   purchaseRequests={requests}
+ *   onDelete={(id) => handleDelete(id)}
+ * />
  */
 export default function PurchaseRequestList({ purchaseRequests, onDelete }) {
   if (!purchaseRequests || purchaseRequests.length === 0) {
@@ -205,10 +310,14 @@ PurchaseRequestList.propTypes = {
       itemLabel: PropTypes.string.isRequired,
       stockItemId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       stockItemCode: PropTypes.string,
+      stockItemRef: PropTypes.string,
+      stock_item_ref: PropTypes.string,
       quantity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       unit: PropTypes.string.isRequired,
       urgency: PropTypes.string.isRequired,
-      status: PropTypes.string.isRequired,
+      derived_status: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+      supplier_order_line_ids: PropTypes.array,
+      supplierOrderLineIds: PropTypes.array,
     })
   ),
   onDelete: PropTypes.func,
