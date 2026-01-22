@@ -41,8 +41,9 @@ export default function PurchaseRequestsTable({
 
   // Filtrage automatique par intervention si interventionId fourni
   const filteredRequests = useMemo(() => {
-    if (!interventionId) return requests;
-    return requests.filter(req => req.interventionId === interventionId);
+    return interventionId 
+      ? requests.filter(req => req.interventionId === interventionId)
+      : requests;
   }, [requests, interventionId]);
 
   // Hook pour gérer la suppression avec double-clic

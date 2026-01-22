@@ -27,7 +27,6 @@ import { usePageHeaderProps } from "@/hooks/usePageConfig";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LoadingState from "@/components/common/LoadingState";
-import { usePurchaseRequestFilters } from "@/hooks/useFilters";
 import { useRequestStats } from "@/hooks/useStockData";
 import FilterSelect from "@/components/common/FilterSelect";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
@@ -77,24 +76,38 @@ export default function Procurement() {
   const [dispatchResult, setDispatchResult] = useState(null);
   const [showDispatchConfirm, setShowDispatchConfirm] = useState(false);
 
-  const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('search', '');
+  // Clés distinctes pour éviter que les recherches se masquent entre elles
+  const legacySearch = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('search') || '';
+  }, []);
+
+  const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('reqSearch', legacySearch);
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [supplierOrderStatusFilter, setSupplierOrderStatusFilter] = useState("all");
-  const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', '');
+  // Compatibilité : on lit aussi l'ancien paramètre ?search= pour pré-remplir
+  const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', legacySearch);
+
+  // Si une URL fournit encore ?search=, on réplique vers les nouvelles clés pour que la navigation/Back fonctionne
+  useEffect(() => {
+    if (!legacySearch) return;
+    if (!supplierOrderSearchTerm) setSupplierOrderSearchTerm(legacySearch);
+    if (!requestSearchTerm) setRequestSearchTerm(legacySearch);
+  }, [legacySearch, requestSearchTerm, setRequestSearchTerm, supplierOrderSearchTerm, setSupplierOrderSearchTerm]);
   const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
 
   const [expandedRequestId, setExpandedRequestId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [compactRows, setCompactRows] = useState(false);
-  
-  // État de sélection des items par panier
   const [itemSelectionByBasket, setItemSelectionByBasket] = useState({});
-  
-  // État des validations de jumelles (stocke les infos par ligne)
   const [twinValidationsByLine, setTwinValidationsByLine] = useState({});
-  
-  // Callback pour mettre à jour les validations de jumelles
+  const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [allManufacturers, setAllManufacturers] = useState([]);
+  const [stockFamilies, setStockFamilies] = useState([]);
+
+  // ========== CALLBACKS ==========
   const handleTwinValidationUpdate = useCallback((lineId, validation) => {
     setTwinValidationsByLine(prev => ({
       ...prev,
@@ -102,13 +115,6 @@ export default function Procurement() {
     }));
   }, []);
 
-  // État pour le recalcul des totaux
-  const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
-  const [isRecalculating, setIsRecalculating] = useState(false);
-
-  // Load manufacturers
-  const [allManufacturers, setAllManufacturers] = useState([]);
-  
   const refreshManufacturers = useCallback(async () => {
     try {
       const items = await manufacturerItems.fetchManufacturerItems();
@@ -117,25 +123,17 @@ export default function Procurement() {
       console.error('Erreur rechargement fabricants:', error);
     }
   }, []);
-  
+
   useEffect(() => {
     refreshManufacturers();
   }, [refreshManufacturers]);
 
-  // Load stock families
-  const [stockFamilies, setStockFamilies] = useState([]);
   useEffect(() => {
     stockAPI.fetchStockFamilies().then(families => setStockFamilies(families || []));
   }, []);
 
   // ========== COMPUTED VALUES ==========
   const requestStats = useRequestStats(purchases.requests);
-  const baseFilteredRequests = usePurchaseRequestFilters(
-    purchases.requests,
-    requestSearchTerm,
-    urgencyFilter,
-    statusFilter
-  );
 
   const filteredRequests = useMemo(() => {
     const hasMissingInfo = (req) => {
@@ -147,7 +145,7 @@ export default function Procurement() {
       return !(hasLink && hasQty && hasSupplierInfo && hasRef);
     };
 
-    return [...baseFilteredRequests]
+    return [...purchases.requests]
       .filter(req => {
         const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
         return derivedStatus !== 'received';
@@ -161,10 +159,10 @@ export default function Procurement() {
         const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
         return ageB - ageA;
       });
-  }, [baseFilteredRequests, stock.supplierRefsByItem]);
+  }, [purchases.requests, stock.supplierRefsByItem]);
 
   const receivedRequests = useMemo(() => {
-    return [...baseFilteredRequests]
+    return [...purchases.requests]
       .filter(req => {
         const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
         return derivedStatus === 'received';
@@ -174,7 +172,7 @@ export default function Procurement() {
         const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
         return ageB - ageA;
       });
-  }, [baseFilteredRequests]);
+  }, [purchases.requests]);
 
   // Séparer les paniers par état métier
   const ordersByState = useMemo(() => {
@@ -270,23 +268,12 @@ export default function Procurement() {
         return [];
     }
     
-    // Appliquer la recherche
-    if (supplierOrderSearchTerm.trim()) {
-      const term = supplierOrderSearchTerm.toLowerCase();
-      orders = orders.filter((order) => {
-        const number = (order.order_number || "").toLowerCase();
-        const supplierName = (order.supplier_id?.name || "").toLowerCase();
-        return number.includes(term) || supplierName.includes(term);
-      });
-    }
-    
-    // Filtre par fournisseur
     if (supplierOrderSupplierFilter !== "all") {
       orders = orders.filter((order) => (order.supplier_id?.name || "") === supplierOrderSupplierFilter);
     }
     
     return orders;
-  }, [activeTab, ordersByState, supplierOrderSearchTerm, supplierOrderSupplierFilter]);
+  }, [activeTab, ordersByState, supplierOrderSupplierFilter]);
 
   const supplierOrderSupplierOptions = useMemo(() => {
     // Options de fournisseurs basées sur l'onglet actif
@@ -1042,18 +1029,6 @@ export default function Procurement() {
     <Box>
       <PageHeader {...headerProps} />
       <PageContainer>
-        <Flex justify="end" mb="2" align="center" gap="2">
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="checkbox"
-              checked={compactRows}
-              onChange={(e) => setCompactRows(e.target.checked)}
-              aria-label="Basculer l'affichage compact des tableaux"
-            />
-            <Text size="2">Affichage compact</Text>
-          </label>
-        </Flex>
-
         {dispatchResult && (
           <StatusCallout type={dispatchResult.type} title={dispatchResult.message}>
             <Flex direction="column" gap="1">
@@ -1228,40 +1203,9 @@ export default function Procurement() {
                   icon={ShoppingCart}
                   title="Demandes d'achat"
                   count={filteredRequests.length}
-                  searchValue={requestSearchTerm}
-                  onSearchChange={setRequestSearchTerm}
-                  searchPlaceholder="Recherche (pièce, demandeur...)"
                   onRefresh={refreshRequests}
                   showRefreshButton={false}
-                  actions={
-                    <Flex align="end" gap="2">
-                      <FilterSelect
-                        label="Statut"
-                        value={statusFilter}
-                        onValueChange={setStatusFilter}
-                        minWidth="180px"
-                        options={[
-                          { value: "all", label: "Tous" },
-                          ...Object.values(PURCHASE_REQUEST_STATUS).map((s) => ({
-                            value: s.id,
-                            label: s.label,
-                          })),
-                        ]}
-                      />
-                      <FilterSelect
-                        label="Urgence"
-                        value={urgencyFilter}
-                        onValueChange={setUrgencyFilter}
-                        minWidth="150px"
-                        options={[
-                          { value: "all", label: "Toutes" },
-                          { value: "high", label: "Urgent" },
-                          { value: "normal", label: "Normal" },
-                          { value: "low", label: "Faible" },
-                        ]}
-                      />
-                    </Flex>
-                  }
+                  showSearchInput={false}
                 />
 
                 {filteredRequests.length === 0 ? (
@@ -1302,7 +1246,6 @@ export default function Procurement() {
                       suppliers={purchasing.suppliers}
                       loading={formLoading}
                       setDispatchResult={setDispatchResult}
-                      compact={compactRows}
                       onAddSupplierRef={onAddSupplierRefForRequests}
                       onAddStandardSpec={onAddStandardSpecForRequests}
                       onDeleteSupplierRef={handleDeleteSupplierRef}
@@ -1343,7 +1286,6 @@ export default function Procurement() {
                             suppliers={purchasing.suppliers}
                             loading={formLoading}
                             setDispatchResult={setDispatchResult}
-                            compact={compactRows}
                             onAddSupplierRef={onAddSupplierRefForRequests}
                             onAddStandardSpec={onAddStandardSpecForRequests}
                             onDeleteSupplierRef={handleDeleteSupplierRef}
@@ -1391,20 +1333,9 @@ export default function Procurement() {
                   icon={Users}
                   title="Paniers en mutualisation"
                   count={filteredSupplierOrders.length}
-                  searchValue={supplierOrderSearchTerm}
-                  onSearchChange={setSupplierOrderSearchTerm}
-                  searchPlaceholder="Recherche (n°, fournisseur...)"
                   onRefresh={refreshOrders}
                   showRefreshButton={false}
-                  actions={
-                    <FilterSelect
-                      label="Fournisseur"
-                      value={supplierOrderSupplierFilter}
-                      onValueChange={setSupplierOrderSupplierFilter}
-                      minWidth="220px"
-                      options={supplierOrderSupplierOptions}
-                    />
-                  }
+                  showSearchInput={false}
                 />
 
                 {filteredSupplierOrders.length === 0 ? (
@@ -1441,20 +1372,9 @@ export default function Procurement() {
                   icon={Send}
                   title="Paniers en chiffrage"
                   count={filteredSupplierOrders.length}
-                  searchValue={supplierOrderSearchTerm}
-                  onSearchChange={setSupplierOrderSearchTerm}
-                  searchPlaceholder="Recherche (n°, fournisseur...)"
                   onRefresh={refreshOrders}
                   showRefreshButton={false}
-                  actions={
-                    <FilterSelect
-                      label="Fournisseur"
-                      value={supplierOrderSupplierFilter}
-                      onValueChange={setSupplierOrderSupplierFilter}
-                      minWidth="220px"
-                      options={supplierOrderSupplierOptions}
-                    />
-                  }
+                  showSearchInput={false}
                 />
 
                 {filteredSupplierOrders.length === 0 ? (
@@ -1490,20 +1410,9 @@ export default function Procurement() {
                   icon={PackageCheck}
                   title="Paniers commandés"
                   count={filteredSupplierOrders.length}
-                  searchValue={supplierOrderSearchTerm}
-                  onSearchChange={setSupplierOrderSearchTerm}
-                  searchPlaceholder="Recherche (n°, fournisseur...)"
                   onRefresh={refreshOrders}
                   showRefreshButton={false}
-                  actions={
-                    <FilterSelect
-                      label="Fournisseur"
-                      value={supplierOrderSupplierFilter}
-                      onValueChange={setSupplierOrderSupplierFilter}
-                      minWidth="220px"
-                      options={supplierOrderSupplierOptions}
-                    />
-                  }
+                  showSearchInput={false}
                 />
 
                 {filteredSupplierOrders.length === 0 ? (
@@ -1539,20 +1448,9 @@ export default function Procurement() {
                   icon={Archive}
                   title="Paniers clôturés"
                   count={filteredSupplierOrders.length}
-                  searchValue={supplierOrderSearchTerm}
-                  onSearchChange={setSupplierOrderSearchTerm}
-                  searchPlaceholder="Recherche (n°, fournisseur...)"
                   onRefresh={refreshOrders}
                   showRefreshButton={false}
-                  actions={
-                    <FilterSelect
-                      label="Fournisseur"
-                      value={supplierOrderSupplierFilter}
-                      onValueChange={setSupplierOrderSupplierFilter}
-                      minWidth="220px"
-                      options={supplierOrderSupplierOptions}
-                    />
-                  }
+                  showSearchInput={false}
                 />
 
                 {filteredSupplierOrders.length === 0 ? (

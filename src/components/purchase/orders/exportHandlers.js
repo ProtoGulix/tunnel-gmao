@@ -31,7 +31,7 @@ import {
 export const createHandleExportCSV = (getOrderLines, showError) => async (order) => {
   try {
     const lines = await getOrderLines(order.id, { forceRefresh: true });
-    const csvContent = generateCSVContent(order, lines);
+    const csvContent = generateCSVContent(lines);
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
     const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

@@ -1,3 +1,11 @@
+## 1.11.7 - 2026-01-22
+
+Stabilite : STABLE
+
+### 🎯 Impact fonctionnel
+
+- Correction export CSV + nettoyage Procurement (bug lines.map, suppression recherche et affichage compact)
+
 ## 1.11.6 - 2026-01-21
 
 Stabilité : 🟢 stable

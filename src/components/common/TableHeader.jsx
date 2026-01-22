@@ -68,6 +68,7 @@ function ControlBar(props) {
     onSearchChange,
     searchLabel,
     searchPlaceholder,
+    showSearchInput,
     showResetButton,
     showRefreshButton,
     onRefresh,
@@ -78,12 +79,14 @@ function ControlBar(props) {
   return (
     <Flex align="end" gap="2">
       {actions}
-      <SearchInput
-        value={searchValue}
-        onChange={onSearchChange}
-        label={searchLabel}
-        placeholder={searchPlaceholder}
-      />
+      {showSearchInput && (
+        <SearchInput
+          value={searchValue}
+          onChange={onSearchChange}
+          label={searchLabel}
+          placeholder={searchPlaceholder}
+        />
+      )}
       {showResetButton && hasFilters && (
         <Button variant="soft" color="gray" onClick={() => onSearchChange('')} size="2">
           Réinitialiser
@@ -105,6 +108,7 @@ ControlBar.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
   searchLabel: PropTypes.string.isRequired,
   searchPlaceholder: PropTypes.string.isRequired,
+  showSearchInput: PropTypes.bool.isRequired,
   showResetButton: PropTypes.bool.isRequired,
   showRefreshButton: PropTypes.bool.isRequired,
   onRefresh: PropTypes.func.isRequired,
@@ -125,6 +129,7 @@ ControlBar.propTypes = {
  * @param {boolean} [props.loading=false] - État de chargement
  * @param {string} [props.searchPlaceholder] - Placeholder
  * @param {string} [props.searchLabel] - Label
+ * @param {boolean} [props.showSearchInput=true] - Afficher le champ de recherche
  * @param {boolean} [props.showResetButton=true] - Afficher réinitialisation
  * @param {boolean} [props.showRefreshButton=true] - Afficher rafraîchissement
  * @param {string} [props.mb='3'] - Marge inférieure
@@ -151,6 +156,7 @@ function TableHeader({
   loading = false,
   searchPlaceholder = DEFAULTS.SEARCH_PLACEHOLDER,
   searchLabel = DEFAULTS.SEARCH_LABEL,
+  showSearchInput = true,
   showResetButton = true,
   showRefreshButton = true,
   mb = DEFAULTS.MARGIN_BOTTOM,
@@ -167,6 +173,7 @@ function TableHeader({
           onSearchChange={onSearchChange}
           searchLabel={searchLabel}
           searchPlaceholder={searchPlaceholder}
+          showSearchInput={showSearchInput}
           showResetButton={showResetButton}
           showRefreshButton={showRefreshButton}
           onRefresh={onRefresh}
@@ -201,6 +208,7 @@ TableHeader.propTypes = {
   loading: PropTypes.bool,
   searchPlaceholder: PropTypes.string,
   searchLabel: PropTypes.string,
+  showSearchInput: PropTypes.bool,
   showResetButton: PropTypes.bool,
   showRefreshButton: PropTypes.bool,
   mb: PropTypes.string,
