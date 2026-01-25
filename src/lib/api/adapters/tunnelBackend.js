@@ -85,6 +85,7 @@ const mapMachine = (raw = {}) => ({
   code: raw.code || undefined,
   name: raw.name || raw.code || 'Équipement',
   location: raw.affectation || undefined,
+  isMere: raw.is_mere || false,
   parent: raw.parent
     ? {
         id: raw.parent.id?.toString() || '',
@@ -100,14 +101,18 @@ const mapMachine = (raw = {}) => ({
       : undefined,
 });
 
-const mapMachineWithStats = (raw = {}) => ({
-  ...mapMachine(raw),
-  status: raw.status || 'ok',
-  statusColor: raw.status_color || 'green',
-  openInterventionsCount: raw.open_interventions_count ?? 0,
-  interventionsByType: raw.interventions_by_type || {},
-  interventions: [],
-});
+const mapMachineWithStats = (raw = {}) => {
+  const stats = raw.stats || {};
+
+  return {
+    ...mapMachine(raw),
+    status: raw.status || 'ok',
+    statusColor: raw.status_color || 'green',
+    openInterventionsCount: stats.open_interventions_count ?? 0,
+    interventionsByStatus: stats.by_status || {},
+    interventions: [],
+  };
+};
 
 const mapDecisionalIntervention = (raw = {}) => ({
   id: raw.id?.toString() || '',
@@ -185,7 +190,17 @@ const interventions = {
 };
 
 const interventionStatusRefs = {
-  fetchStatusRefs: notImplemented('InterventionStatusRefs.fetchStatusRefs'),
+  async fetchStatusRefs() {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get('/intervention_status');
+      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return list.map((item) => ({
+        id: item?.id?.toString() || '',
+        name: item?.name || '',
+        color: item?.color || undefined,
+      }));
+    }, 'TunnelInterventionStatusRefs.fetchStatusRefs');
+  },
 };
 
 const interventionStatusLogs = {
@@ -250,7 +265,7 @@ const machines = {
   },
   async fetchMachinesWithInterventions() {
     return errors.apiCall(async () => {
-      const response = await tunnelApi.get('/equipements/list');
+      const response = await tunnelApi.get('/equipements');
       const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
       return list.map(mapMachineWithStats);
     }, 'TunnelMachines.fetchMachinesWithInterventions');

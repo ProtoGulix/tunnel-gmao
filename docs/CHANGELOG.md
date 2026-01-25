@@ -1,3 +1,37 @@
+## 2.0.0 - 2026-01-25
+
+Stabilité : 🟡 BETA (architecture backend)
+
+### 📊 Réorganisation des responsabilités métier
+
+#### Migration du frontend vers le backend
+- **Calcul des statuts équipements** : logique de détermination du statut (ok/maintenance/warning/critical) déménagée au backend
+  - Critères : urgent → critical, ≥3 interventions ouvertes → warning, >0 ouvertes → maintenance
+  - Source unique de vérité côté serveur
+  
+- **Statistiques consolidées** : comptages d'interventions par statut générés par le backend
+  - Chaque équipement fournit son décompte d'interventions ouvertes
+  - Répartition par statut d'intervention disponible directement
+  
+- **Référentiels de validation** : les statuts d'intervention gérés par le backend
+  - Le frontend consulte les statuts disponibles plutôt que les écrire en dur
+
+#### Impact utilisateur
+- ✅ Affichage fiable et cohérent des statuts (une seule source de vérité)
+- ✅ Statistiques toujours à jour et synchronisées
+- ✅ Moins de risques d'incohérences entre frontend et backend
+
+#### Changements visibles
+- **GET /equipements** : liste des équipements avec statuts et statistiques pré-calculés
+- **GET /intervention_status** : référentiel des statuts d'intervention
+
+### 🔄 Branche & Déploiement
+
+- Branche : `dev-2.x` (pas de merge sur main)
+- Version : 2.0.0-beta
+
+---
+
 ## 1.11.7 - 2026-01-22
 
 Stabilite : STABLE
