@@ -18,13 +18,16 @@ export function useEquipements() {
   const initialLoadRef = useRef(false);
 
   const {
-    data: equipements = [],
+    data: rawEquipements,
     loading,
     error,
     execute,
   } = useApiCall(adapter.equipements.fetchEquipements, {
     autoExecute: false,
   });
+
+  // S'assurer que equipements est toujours un array
+  const equipements = Array.isArray(rawEquipements) ? rawEquipements : [];
 
   // Charger une seule fois au montage
   useEffect(() => {

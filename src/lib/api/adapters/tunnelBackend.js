@@ -321,16 +321,14 @@ const machines = {
     return errors.apiCall(async () => {
       const response = await tunnelApi.get(`/equipements/${id}`);
       const raw = response.data?.data || response.data || {};
-      
+
       if (!Array.isArray(raw.children_ids)) {
         return [];
       }
 
       // Récupérer les détails des enfants (devrait être fait via cache)
       return Promise.all(
-        raw.children_ids.map((childId) =>
-          equipements.fetchEquipement(childId).catch(() => null)
-        )
+        raw.children_ids.map((childId) => equipements.fetchEquipement(childId).catch(() => null))
       ).then((results) => results.filter(Boolean));
     }, 'TunnelMachines.fetchSubEquipements');
   },

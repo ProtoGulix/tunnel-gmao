@@ -52,7 +52,7 @@ export default function EquipementDetail() {
   });
 
   const {
-    data: interventions = [],
+    data: rawInterventions,
     loading: intLoading,
     error: intError,
     execute: loadInterventions,
@@ -66,6 +66,9 @@ export default function EquipementDetail() {
       }),
     { autoExecute: false }
   );
+
+  // S'assurer que interventions est toujours un array
+  const interventions = Array.isArray(rawInterventions) ? rawInterventions : [];
 
   const {
     data: stats,

@@ -160,7 +160,7 @@ export const PAGES_CONFIG = [
     path: '/equipements/:id',
     label: 'Détail équipement',
     icon: Settings,
-    pageTitle: 'Détail de l\'équipement',
+    pageTitle: "Détail de l'équipement",
     pageSubtitle: null, // Sera défini dynamiquement
     requiresAuth: true,
     showInMenu: false,

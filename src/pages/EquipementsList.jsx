@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Flex, TextField, Table, Text, Button, Container } from '@radix-ui/themes';
+import { Box, Flex, Table, Text, Button, Container } from '@radix-ui/themes';
 import { Search, Eye } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -30,17 +30,23 @@ export default function EquipementsList() {
 
   // Charger cache des équipements
   const {
-    equipements,
+    equipements: rawEquipements,
     getParentInfo,
-    loading: cacheLoa,
+    loading: cacheLoading,
     error: cacheError,
   } = useEquipements();
 
+  // S'assurer que c'est un array
+  const equipementList = Array.isArray(rawEquipements) ? rawEquipements : [];
+
   // Charger la liste complète (depuis le cache)
-  const { data: list = [], loading, error } = useApiCall(
+  const { data: rawList, loading, error } = useApiCall(
     adapter.equipements.fetchEquipements,
     { autoExecute: true }
   );
+
+  // S'assurer que list est toujours un array
+  const list = Array.isArray(rawList) ? rawList : [];
 
   // Filtrer par recherche
   const filteredEquipements = useMemo(() => {
@@ -69,15 +75,23 @@ export default function EquipementsList() {
 
       {/* Recherche */}
       <Box mb="4">
-        <Flex align="center" gap="2" mb="3">
-          <Search size={18} />
-          <TextField.Root>
-            <TextField.Input
+        <Flex align="center" gap="2" mb="3" asChild>
+          <label>
+            <Search size={18} />
+            <input
+              type="text"
               placeholder="Rechercher par code ou nom..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid var(--gray-7)',
+                borderRadius: '4px',
+                flex: 1,
+                fontSize: '14px',
+              }}
             />
-          </TextField.Root>
+          </label>
         </Flex>
         <Text size="1" color="gray">
           {filteredEquipements.length} équipement{filteredEquipements.length !== 1 ? 's' : ''} trouvé
