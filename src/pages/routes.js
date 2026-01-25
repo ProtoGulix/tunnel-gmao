@@ -12,6 +12,8 @@ import InterventionDetail from './InterventionDetail';
 import InterventionCreate from './InterventionCreate';
 import MachineList from './MachineList';
 import MachineDetail from './MachineDetail';
+import EquipementsList from './EquipementsList';
+import EquipementDetail from './EquipementDetail';
 import ActionsPage from './ActionsPage';
 import Parts from './Parts';
 import Procurement from './Procurement';
@@ -35,6 +37,8 @@ export const ROUTE_COMPONENTS = {
   actions: ActionsPage,
   machines: MachineList,
   'machine-detail': MachineDetail,
+  equipements: EquipementsList,
+  'equipement-detail': EquipementDetail,
   'preventive-management': PreventiveSuggestionsPage,
   parts: Parts,
   procurement: Procurement,

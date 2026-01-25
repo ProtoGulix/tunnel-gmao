@@ -147,6 +147,25 @@ export const PAGES_CONFIG = [
     showInMenu: false,
   },
   {
+    id: 'equipements',
+    path: '/equipements',
+    label: 'Équipements',
+    icon: Settings,
+    pageTitle: 'Parc équipements',
+    pageSubtitle: 'Gestion et suivi de tous les équipements',
+    requiresAuth: true,
+  },
+  {
+    id: 'equipement-detail',
+    path: '/equipements/:id',
+    label: 'Détail équipement',
+    icon: Settings,
+    pageTitle: 'Détail de l\'équipement',
+    pageSubtitle: null, // Sera défini dynamiquement
+    requiresAuth: true,
+    showInMenu: false,
+  },
+  {
     id: 'preventive-management',
     path: '/preventive-management',
     label: 'Préventif',

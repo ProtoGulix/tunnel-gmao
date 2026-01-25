@@ -80,39 +80,41 @@ const mapIntervention = (raw = {}) => ({
     : undefined,
 });
 
-const mapMachine = (raw = {}) => ({
+// Mapper pour GET /equipements (liste)
+const mapEquipement = (raw = {}) => ({
   id: raw.id?.toString() || '',
   code: raw.code || undefined,
   name: raw.name || raw.code || 'Équipement',
-  location: raw.affectation || undefined,
-  isMere: raw.is_mere || false,
-  parent: raw.parent
-    ? {
-        id: raw.parent.id?.toString() || '',
-        code: raw.parent.code || undefined,
-        name: raw.parent.name || raw.parent.code || 'Équipement',
-      }
-    : raw.equipement_mere
-      ? {
-          id: raw.equipement_mere.toString(),
-          code: undefined,
-          name: undefined,
-        }
-      : undefined,
+  health: {
+    level: raw.health?.level || 'ok',
+    reason: raw.health?.reason || 'Aucun point bloquant',
+  },
+  parentId: raw.parent_id || null,
 });
 
-const mapMachineWithStats = (raw = {}) => {
-  const stats = raw.stats || {};
+// Mapper pour GET /equipements/{id} (détail)
+const mapEquipementDetail = (raw = {}) => ({
+  id: raw.id?.toString() || '',
+  code: raw.code || undefined,
+  name: raw.name || raw.code || 'Équipement',
+  health: {
+    level: raw.health?.level || 'ok',
+    reason: raw.health?.reason || 'Aucun point bloquant',
+    rulesTriggered: raw.health?.rules_triggered || [],
+  },
+  parentId: raw.parent_id || null,
+  childrenIds: Array.isArray(raw.children_ids) ? raw.children_ids : [],
+});
 
-  return {
-    ...mapMachine(raw),
-    status: raw.status || 'ok',
-    statusColor: raw.status_color || 'green',
-    openInterventionsCount: stats.open_interventions_count ?? 0,
-    interventionsByStatus: stats.by_status || {},
-    interventions: [],
-  };
-};
+// Mapper pour GET /equipements/{id}/stats
+const mapEquipementStats = (raw = {}) => ({
+  interventions: {
+    open: raw.interventions?.open ?? 0,
+    closed: raw.interventions?.closed ?? 0,
+    byStatus: raw.interventions?.by_status || {},
+    byPriority: raw.interventions?.by_priority || {},
+  },
+});
 
 const mapDecisionalIntervention = (raw = {}) => ({
   id: raw.id?.toString() || '',
@@ -248,62 +250,88 @@ const anomalyConfig = {
   invalidateCache: async () => {},
 };
 
+const equipements = {
+  async fetchEquipements() {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get('/equipements');
+      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return list.map(mapEquipement);
+    }, 'TunnelEquipements.fetchEquipements');
+  },
+  async fetchEquipement(id) {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get(`/equipements/${id}`);
+      const raw = response.data?.data || response.data || {};
+      return mapEquipementDetail(raw);
+    }, 'TunnelEquipements.fetchEquipement');
+  },
+  async fetchEquipementStats(id, startDate, endDate) {
+    return errors.apiCall(async () => {
+      const params = {};
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+
+      const response = await tunnelApi.get(`/equipements/${id}/stats`, { params });
+      const raw = response.data?.data || response.data || {};
+      return mapEquipementStats(raw);
+    }, 'TunnelEquipements.fetchEquipementStats');
+  },
+  async fetchEquipementHealth(id) {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get(`/equipements/${id}/health`);
+      const raw = response.data?.data || response.data || {};
+      return {
+        level: raw.level || 'ok',
+        reason: raw.reason || 'Aucun point bloquant',
+      };
+    }, 'TunnelEquipements.fetchEquipementHealth');
+  },
+};
+
 const machines = {
   async fetchMachines() {
     return errors.apiCall(async () => {
       const response = await tunnelApi.get('/equipements');
       const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapMachine);
+      return list.map(mapEquipement);
     }, 'TunnelMachines.fetchMachines');
   },
   async fetchMachine(id) {
     return errors.apiCall(async () => {
       const response = await tunnelApi.get(`/equipements/${id}`);
       const raw = response.data?.data || response.data || {};
-      return mapMachine(raw);
+      return mapEquipementDetail(raw);
     }, 'TunnelMachines.fetchMachine');
   },
   async fetchMachinesWithInterventions() {
     return errors.apiCall(async () => {
       const response = await tunnelApi.get('/equipements');
       const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapMachineWithStats);
+      return list.map(mapEquipement);
     }, 'TunnelMachines.fetchMachinesWithInterventions');
   },
-  async fetchMachineDetail(id, periodDays = 30) {
+  async fetchMachineDetail(id) {
     return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/equipements/${id}/detail`, {
-        params: { period_days: periodDays },
-      });
+      const response = await tunnelApi.get(`/equipements/${id}`);
       const raw = response.data?.data || response.data || {};
-
-      const machine = mapMachine(raw);
-
-      return {
-        ...machine,
-        status: raw.status || 'ok',
-        statusColor: raw.status_color || 'green',
-        parent: raw.parent
-          ? {
-              id: raw.parent.id?.toString() || '',
-              code: raw.parent.code || undefined,
-              name: raw.parent.name || raw.parent.code || 'Équipement',
-            }
-          : undefined,
-        interventions: Array.isArray(raw.interventions)
-          ? raw.interventions.map(mapDecisionalIntervention)
-          : [],
-        actions: Array.isArray(raw.actions) ? raw.actions.map(mapDecisionalAction) : [],
-        timeSpentPeriodHours: raw.time_spent_period_hours ?? 0,
-        periodDays: raw.period_days ?? periodDays,
-      };
+      return mapEquipementDetail(raw);
     }, 'TunnelMachines.fetchMachineDetail');
   },
   async fetchSubEquipements(id) {
     return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/equipements/${id}/sous_equipements`);
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapMachine);
+      const response = await tunnelApi.get(`/equipements/${id}`);
+      const raw = response.data?.data || response.data || {};
+      
+      if (!Array.isArray(raw.children_ids)) {
+        return [];
+      }
+
+      // Récupérer les détails des enfants (devrait être fait via cache)
+      return Promise.all(
+        raw.children_ids.map((childId) =>
+          equipements.fetchEquipement(childId).catch(() => null)
+        )
+      ).then((results) => results.filter(Boolean));
     }, 'TunnelMachines.fetchSubEquipements');
   },
   updateMachine: notImplemented('Machines.updateMachine'),
@@ -374,6 +402,7 @@ export const adapter = {
   actions,
   actionSubcategories,
   anomalyConfig,
+  equipements,
   machines,
   preventive,
   stock,
