@@ -24,7 +24,9 @@ import EquipementHierarchy from '@/components/common/EquipementHierarchy';
 import { useApiCall } from '@/hooks/useApiCall';
 import { useEquipements } from '@/hooks/useEquipements';
 import { useEquipementHealth } from '@/hooks/useEquipementHealth';
-import { adapter } from '@/lib/api/adapters/tunnelBackend';
+import { getApiAdapter } from '@/lib/api/adapters/provider';
+
+const adapter = getApiAdapter();
 
 /**
  * Page détail d'un équipement

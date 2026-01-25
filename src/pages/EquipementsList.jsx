@@ -12,7 +12,9 @@ import ErrorDisplay from '@/components/ErrorDisplay';
 import EquipementHealthBadge from '@/components/common/EquipementHealthBadge';
 import { useEquipements } from '@/hooks/useEquipements';
 import { useApiCall } from '@/hooks/useApiCall';
-import { adapter } from '@/lib/api/adapters/tunnelBackend';
+import { getApiAdapter } from '@/lib/api/adapters/provider';
+
+const adapter = getApiAdapter();
 
 /**
  * Page liste des équipements

@@ -4,7 +4,9 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { adapter } from '@/lib/api/adapters/tunnelBackend';
+import { getApiAdapter } from '@/lib/api/adapters/provider';
+
+const adapter = getApiAdapter();
 
 const POLLING_DELAY = 60000; // 60 secondes minimum
 const ACTIVITY_THRESHOLD = 5 * 60 * 1000; // 5 minutes

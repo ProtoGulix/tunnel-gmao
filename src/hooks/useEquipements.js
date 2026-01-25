@@ -5,7 +5,9 @@
 
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useApiCall } from '@/hooks/useApiCall';
-import { adapter } from '@/lib/api/adapters/tunnelBackend';
+import { getApiAdapter } from '@/lib/api/adapters/provider';
+
+const adapter = getApiAdapter();
 
 /**
  * Hook pour gérer le cache global des équipements

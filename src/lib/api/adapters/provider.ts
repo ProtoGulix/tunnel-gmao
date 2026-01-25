@@ -14,7 +14,7 @@
 import type { ApiAdapter } from './ApiAdapter';
 import { adapter as directusAdapter } from './directus';
 import { adapter as mockAdapter } from './mock';
-import { adapter as tunnelBackendAdapter } from './tunnelBackend';
+import { adapter as tunnelBackendAdapter } from './tunnel/adapter';
 import { adapter as hybridAdapter } from './hybrid';
 
 /**

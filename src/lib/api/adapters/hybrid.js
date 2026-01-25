@@ -14,7 +14,7 @@
  */
 
 import { adapter as directusAdapter } from './directus';
-import { adapter as tunnelBackendAdapter } from './tunnelBackend';
+import { adapter as tunnelBackendAdapter } from './tunnel/adapter';
 
 /**
  * Hybrid adapter implementation

@@ -35,14 +35,6 @@ const notImplemented = (fnName) => async () => {
   throw new errors.APIError(`${fnName} not implemented for tunnel-backend`, 501);
 };
 
-const mapStatus = (status) => {
-  if (!status) return 'open';
-  const normalized = String(status).toLowerCase();
-  if (['open', 'in_progress', 'closed'].includes(normalized)) return normalized;
-  if (normalized === 'in-progress') return 'in_progress';
-  return 'open';
-};
-
 const mapAction = (action = {}) => ({
   id: action.id?.toString() || '',
   description: action.description || '',
@@ -64,7 +56,8 @@ const mapIntervention = (raw = {}) => ({
   id: raw.id?.toString() || '',
   code: raw.code || '',
   title: raw.title || raw.description || '',
-  status: mapStatus(raw.status_actual || raw.status),
+  // Pass-through status to stay aligned with backend contract (no legacy mapping)
+  status: raw.status_actual || raw.status || '',
   type: raw.type_inter || raw.type || 'CUR',
   priority: raw.priority,
   createdAt: raw.reported_date || raw.created_at,
@@ -114,24 +107,6 @@ const mapEquipementStats = (raw = {}) => ({
     byStatus: raw.interventions?.by_status || {},
     byPriority: raw.interventions?.by_priority || {},
   },
-});
-
-const mapDecisionalIntervention = (raw = {}) => ({
-  id: raw.id?.toString() || '',
-  code: raw.code || '',
-  title: raw.title || '',
-  status: mapStatus(raw.status),
-  type: raw.type_inter || 'CUR',
-  priority: raw.priority,
-  reportedDate: raw.reported_date,
-  closedDate: raw.closed_date,
-});
-
-const mapDecisionalAction = (raw = {}) => ({
-  id: raw.id?.toString() || '',
-  interventionId: raw.intervention_id?.toString() || '',
-  timeSpent: Number(raw.time_spent ?? 0),
-  createdAt: raw.created_at || new Date().toISOString(),
 });
 
 const auth = {
@@ -209,7 +184,9 @@ const interventionStatusRefs = {
       const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
       return list.map((item) => ({
         id: item?.id?.toString() || '',
-        name: item?.name || '',
+        code: item?.code || item?.value || '',
+        name: item?.name || item?.label || '',
+        value: item?.value || undefined,
         color: item?.color || undefined,
       }));
     }, 'TunnelInterventionStatusRefs.fetchStatusRefs');
@@ -299,53 +276,6 @@ const equipements = {
   },
 };
 
-const machines = {
-  async fetchMachines() {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get('/equipements');
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapEquipement);
-    }, 'TunnelMachines.fetchMachines');
-  },
-  async fetchMachine(id) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/equipements/${id}`);
-      const raw = response.data?.data || response.data || {};
-      return mapEquipementDetail(raw);
-    }, 'TunnelMachines.fetchMachine');
-  },
-  async fetchMachinesWithInterventions() {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get('/equipements');
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapEquipement);
-    }, 'TunnelMachines.fetchMachinesWithInterventions');
-  },
-  async fetchMachineDetail(id) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/equipements/${id}`);
-      const raw = response.data?.data || response.data || {};
-      return mapEquipementDetail(raw);
-    }, 'TunnelMachines.fetchMachineDetail');
-  },
-  async fetchSubEquipements(id) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/equipements/${id}`);
-      const raw = response.data?.data || response.data || {};
-
-      if (!Array.isArray(raw.children_ids)) {
-        return [];
-      }
-
-      // Récupérer les détails des enfants (devrait être fait via cache)
-      return Promise.all(
-        raw.children_ids.map((childId) => equipements.fetchEquipement(childId).catch(() => null))
-      ).then((results) => results.filter(Boolean));
-    }, 'TunnelMachines.fetchSubEquipements');
-  },
-  updateMachine: notImplemented('Machines.updateMachine'),
-};
-
 const preventive = {
   fetchAllPreventiveSuggestions: notImplemented('Preventive.fetchAllPreventiveSuggestions'),
   fetchPreventiveSuggestions: notImplemented('Preventive.fetchPreventiveSuggestions'),
@@ -412,7 +342,6 @@ export const adapter = {
   actionSubcategories,
   anomalyConfig,
   equipements,
-  machines,
   preventive,
   stock,
   stockSpecs,
