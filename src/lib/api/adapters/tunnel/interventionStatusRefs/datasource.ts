@@ -8,24 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import axios from 'axios';
-
-const TUNNEL_BACKEND_URL = import.meta.env.VITE_TUNNEL_BACKEND_URL || 'http://localhost:8000';
-
-const tunnelApi = axios.create({
-  baseURL: TUNNEL_BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-tunnelApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import { tunnelApi } from '../client';
 
 export const fetchStatusRefsRaw = async () => {
   const response = await tunnelApi.get('/intervention_status');

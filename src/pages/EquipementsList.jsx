@@ -3,7 +3,7 @@
  * @module EquipementsList
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Table, Text, Button, Container } from '@radix-ui/themes';
 import { Search, Eye } from 'lucide-react';
@@ -42,10 +42,19 @@ export default function EquipementsList() {
   const equipementList = Array.isArray(rawEquipements) ? rawEquipements : [];
 
   // Charger la liste complète (depuis le cache)
-  const { data: rawList, loading, error } = useApiCall(
-    adapter.equipements.fetchEquipements,
-    { autoExecute: true }
+  const fetchEquipementsFn = useCallback(
+    () => adapter.equipements.fetchEquipements(),
+    []
   );
+  
+  const { data: rawList, loading, error, execute } = useApiCall(
+    fetchEquipementsFn
+  );
+
+  // Exécuter l'appel au montage
+  useEffect(() => {
+    execute();
+  }, [execute]);
 
   // S'assurer que list est toujours un array
   const list = Array.isArray(rawList) ? rawList : [];

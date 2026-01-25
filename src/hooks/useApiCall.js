@@ -19,7 +19,7 @@ export const useApiCall = (apiFunction, options = {}) => {
   const abortControllerRef = useRef(null);
 
   // Extraire les options pour stabiliser les dépendances
-  const {disableGlobalError, throwError} = options;
+  const { disableGlobalError, throwError } = options;
 
   // Cleanup: annuler les requêtes en cours lors du démontage
   useEffect(() => {

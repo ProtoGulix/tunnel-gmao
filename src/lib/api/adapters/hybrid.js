@@ -30,7 +30,6 @@ export const adapter = {
 
   // Directus namespaces
   auth: directusAdapter.auth,
-  interventions: directusAdapter.interventions,
   interventionStatusRefs: directusAdapter.interventionStatusRefs,
   interventionStatusLogs: directusAdapter.interventionStatusLogs,
   actions: directusAdapter.actions,
@@ -46,4 +45,6 @@ export const adapter = {
   // Tunnel-backend namespaces
   stats: tunnelBackendAdapter.stats,
   machines: tunnelBackendAdapter.machines,
+  equipements: tunnelBackendAdapter.equipements,
+  interventions: tunnelBackendAdapter.interventions,
 };

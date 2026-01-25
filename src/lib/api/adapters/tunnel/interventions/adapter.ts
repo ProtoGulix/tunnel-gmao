@@ -22,7 +22,7 @@ export const interventionsAdapter = {
   async fetchIntervention(id: string) {
     return apiCall(async () => {
       const raw = await datasource.fetchInterventionRaw(id);
-      const intervention = mapper.mapInterventionToDomain(raw);
+      const intervention = mapper.mapInterventionToDomain(raw) as any;
 
       // Map nested actions if present
       if (Array.isArray(raw.actions)) {

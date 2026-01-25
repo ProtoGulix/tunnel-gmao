@@ -8,24 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import axios from 'axios';
-
-const TUNNEL_BACKEND_URL = import.meta.env.VITE_TUNNEL_BACKEND_URL || 'http://localhost:8000';
-
-const tunnelApi = axios.create({
-  baseURL: TUNNEL_BACKEND_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-tunnelApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import { tunnelApi } from '../client';
 
 export const fetchInterventionRaw = async (id: string) => {
   const response = await tunnelApi.get(`/interventions/${id}`);
@@ -33,12 +16,16 @@ export const fetchInterventionRaw = async (id: string) => {
 };
 
 export const fetchInterventionsRaw = async (filters: any = {}) => {
-  const params = {
+  const params: any = {
     skip: filters.skip ?? 0,
     limit: filters.limit ?? 100,
   };
 
-  if (filters.equipement_id) params.equipement_id = filters.equipement_id;
+  if (filters.equipement_id) {
+    // Convertir en string si nécessaire
+    const equipementId = String(filters.equipement_id);
+    params.equipement_id = equipementId;
+  }
   if (filters.status) params.status = filters.status;
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;

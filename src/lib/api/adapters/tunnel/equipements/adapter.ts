@@ -6,7 +6,7 @@
  * @module lib/api/adapters/tunnel/equipements/adapter
  */
 
-import { apiCall } from '@/lib/api/errors';
+import { apiCall } from '@/lib/api/errors.js';
 import * as datasource from './datasource';
 import * as mapper from './mapper';
 
@@ -14,7 +14,8 @@ export const equipementsAdapter = {
   async fetchEquipements() {
     return apiCall(async () => {
       const raw = await datasource.fetchEquipementsRaw();
-      return raw.map(mapper.mapEquipementToDomain).filter(Boolean);
+      const mapped = raw.map(mapper.mapEquipementToDomain).filter(Boolean);
+      return mapped;
     }, 'TunnelEquipements.fetchEquipements');
   },
 
@@ -42,3 +43,5 @@ export const equipementsAdapter = {
     }, `TunnelEquipements.fetchEquipementHealth:${id}`);
   },
 };
+
+

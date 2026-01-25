@@ -21,6 +21,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import EquipementHealthBadge from '@/components/common/EquipementHealthBadge';
 import EquipementHierarchy from '@/components/common/EquipementHierarchy';
+import OpenInterventionsTable from '@/components/machine/OpenInterventionsTable';
 import { useApiCall } from '@/hooks/useApiCall';
 import { useEquipements } from '@/hooks/useEquipements';
 import { useEquipementHealth } from '@/hooks/useEquipementHealth';
@@ -49,7 +50,12 @@ export default function EquipementDetail() {
     loading: eqLoading,
     error: eqError,
     execute: reloadEquipement,
-  } = useApiCall(() => adapter.equipements.fetchEquipement(id), {
+  } = useApiCall(() => {
+    if (!id || typeof id !== 'string') {
+      return Promise.resolve(null);
+    }
+    return adapter.equipements.fetchEquipement(id);
+  }, {
     autoExecute: false,
   });
 
@@ -59,13 +65,17 @@ export default function EquipementDetail() {
     error: intError,
     execute: loadInterventions,
   } = useApiCall(
-    () =>
-      adapter.interventions.fetchInterventions({
+    () => {
+      // Vérifier que id est une string valide
+      if (!id || typeof id !== 'string') {
+        return Promise.resolve([]);
+      }
+      return adapter.interventions.fetchInterventions({
         equipement_id: id,
-        status: 'ouvert,en_cours',
         sort: '-priority,-reported_date',
         limit: 50,
-      }),
+      });
+    },
     { autoExecute: false }
   );
 
@@ -77,7 +87,12 @@ export default function EquipementDetail() {
     loading: statsLoading,
     error: statsError,
     execute: loadStats,
-  } = useApiCall(() => adapter.equipements.fetchEquipementStats(id), {
+  } = useApiCall(() => {
+    if (!id || typeof id !== 'string') {
+      return Promise.resolve(null);
+    }
+    return adapter.equipements.fetchEquipementStats(id);
+  }, {
     autoExecute: false,
   });
 
@@ -89,11 +104,12 @@ export default function EquipementDetail() {
 
   // Chargement initial
   useEffect(() => {
-    if (id) {
+    // Vérifier que id est valide avant de charger
+    if (id && typeof id === 'string') {
       reloadEquipement();
       loadInterventions();
     }
-  }, [id, reloadEquipement, loadInterventions]);
+  }, [id]);
 
   // Charger stats au clic sur l'onglet
   useEffect(() => {
@@ -120,19 +136,17 @@ export default function EquipementDetail() {
 
   return (
     <Container>
-      {/* Bouton retour */}
-      <Button mb="4" variant="ghost" onClick={() => navigate('/equipements')}>
-        <ArrowLeft size={16} />
-        Retour aux équipements
-      </Button>
+      <PageHeader
+        title={`${equipement?.code || '—'} – ${equipement?.name || 'Équipement'}`}
+        description="Détails et interventions de l'équipement"
+        onBack={() => navigate('/equipements')}
+        backLabel="Retour aux équipements"
+      />
 
       {/* Bandeau santé */}
       <Card mb="6">
         <Flex justify="between" align="start" mb="4">
           <Flex direction="column" gap="2">
-            <Heading size="6">
-              {equipement?.code || '—'} – {equipement?.name}
-            </Heading>
             <Flex align="center" gap="3">
               <EquipementHealthBadge level={health.level} showLabel />
               <Text size="3" color="gray">
@@ -177,7 +191,7 @@ export default function EquipementDetail() {
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Trigger value="interventions">
-            Interventions actives ({interventions.length})
+            Interventions ({interventions.length})
           </Tabs.Trigger>
           <Tabs.Trigger value="hierarchy">Hiérarchie</Tabs.Trigger>
           <Tabs.Trigger value="stats">Stats</Tabs.Trigger>
@@ -187,81 +201,11 @@ export default function EquipementDetail() {
         <Tabs.Content value="interventions">
           <Box py="4">
             {intError && <ErrorDisplay error={intError} />}
-
-            {interventions.length === 0 && !intLoading && (
-              <Flex align="center" justify="center" py="6">
-                <Text color="gray">Aucune intervention ouverte</Text>
-              </Flex>
-            )}
-
-            {interventions.length > 0 && (
-              <Box overflowX="auto">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr
-                      style={{
-                        borderBottom: '1px solid var(--gray-6)',
-                      }}
-                    >
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>
-                        Priorité
-                      </th>
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>
-                        Statut
-                      </th>
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>Code</th>
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>
-                        Titre
-                      </th>
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>Date</th>
-                      <th style={{ textAlign: 'left', padding: '8px', fontWeight: 500 }}>Type</th>
-                      <th style={{ textAlign: 'right', padding: '8px', fontWeight: 500 }}>
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {interventions.map((inter) => (
-                      <tr
-                        key={inter.id}
-                        style={{
-                          borderBottom: '1px solid var(--gray-4)',
-                        }}
-                      >
-                        <td style={{ padding: '8px' }}>
-                          <Badge>{inter.priority || '—'}</Badge>
-                        </td>
-                        <td style={{ padding: '8px' }}>
-                          <Badge color="blue">{inter.status}</Badge>
-                        </td>
-                        <td style={{ padding: '8px' }}>{inter.code}</td>
-                        <td style={{ padding: '8px' }}>
-                          <Text size="2">{inter.title}</Text>
-                        </td>
-                        <td style={{ padding: '8px' }}>
-                          <Text size="2" color="gray">
-                            {inter.reportedDate
-                              ? new Date(inter.reportedDate).toLocaleDateString('fr-FR')
-                              : '—'}
-                          </Text>
-                        </td>
-                        <td style={{ padding: '8px' }}>
-                          <Badge variant="outline">{inter.type}</Badge>
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'right' }}>
-                          <Button
-                            size="1"
-                            variant="ghost"
-                            onClick={() => navigate(`/interventions/${inter.id}`)}
-                          >
-                            Voir
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Box>
+            {!intError && (
+              <OpenInterventionsTable
+                interventions={interventions}
+                machineId={id}
+              />
             )}
           </Box>
         </Tabs.Content>
