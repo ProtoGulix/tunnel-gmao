@@ -7,8 +7,8 @@
  */
 
 import { apiCall } from '@/lib/api/errors';
-import * as datasource from '../datasource';
-import * as mapper from '../mapper';
+import * as datasource from './datasource';
+import * as mapper from './mapper';
 
 export const statsAdapter = {
   async fetchServiceStatus(params: any = {}) {

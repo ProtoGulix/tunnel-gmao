@@ -1,178 +1,29 @@
 /**
- * Tunnel Backend Adapter
+ * Tunnel Backend Adapter (Main Composer)
  *
- * Backend-agnostic domain interface. Orchestrates datasource + mapper only.
- * No backend-specific logic. No HTTP calls. No tunnel-backend field names exposed.
+ * Composes all domain-specific adapters (auth, interventions, equipements, etc.)
+ * into a unified API contract.
  *
- * Uses:
- * - apiCall wrapper (error handling)
- * - Logical cache tags (not URL paths)
- * - Domain DTOs (as defined in API_CONTRACTS.md)
+ * Structure:
+ * - Each domain has its own datasource/mapper/adapter triplet
+ * - Main adapter orchestrates and exposes domain interfaces
+ * - No business logic here, pure composition
  *
  * @module lib/api/adapters/tunnel/adapter
  */
 
-import { apiCall } from '@/lib/api/errors';
-import { invalidateCache, clearAllCache } from '@/lib/api/client';
-import * as datasource from './datasource';
-import * as mapper from './mapper';
+import { authAdapter } from './auth/adapter';
+import { interventionsAdapter } from './interventions/adapter';
+import { actionsAdapter } from './actions/adapter';
+import { equipementsAdapter } from './equipements/adapter';
+import { interventionStatusRefsAdapter } from './interventionStatusRefs/adapter';
+import { actionSubcategoriesAdapter } from './actionSubcategories/adapter';
 import { statsAdapter } from './stats/adapter';
-
-// ============================================================================
-// Auth
-// ============================================================================
-
-const auth = {
-  async login(email: string, password: string) {
-    return apiCall(async () => {
-      const raw = await datasource.loginRaw(email, password);
-      return mapper.mapAuthTokens(raw);
-    }, 'TunnelAuth.login');
-  },
-
-  async logout() {
-    return apiCall(async () => {
-      await datasource.logoutRaw();
-      clearAllCache();
-    }, 'TunnelAuth.logout');
-  },
-
-  async getCurrentUser() {
-    throw new Error('getCurrentUser not implemented for tunnel-backend');
-  },
-
-  async refreshToken() {
-    throw new Error('refreshToken not implemented for tunnel-backend');
-  },
-};
-
-// ============================================================================
-// Interventions
-// ============================================================================
-
-const interventions = {
-  async fetchInterventions(filters: any = {}) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchInterventionsRaw(filters);
-      return raw.map(mapper.mapInterventionToDomain).filter(Boolean);
-    }, 'TunnelInterventions.fetchInterventions');
-  },
-
-  async fetchIntervention(id: string) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchInterventionRaw(id);
-      const intervention = mapper.mapInterventionToDomain(raw);
-
-      // Map nested actions if present
-      if (Array.isArray(raw.actions)) {
-        intervention.actions = raw.actions.map(mapper.mapActionToDomain).filter(Boolean);
-      }
-
-      return intervention;
-    }, `TunnelInterventions.fetchIntervention:${id}`);
-  },
-
-  createIntervention: undefined,
-  updateIntervention: undefined,
-  addAction: undefined,
-  addPart: undefined,
-};
-
-// ============================================================================
-// Intervention Status Refs
-// ============================================================================
-
-const interventionStatusRefs = {
-  async fetchStatusRefs() {
-    return apiCall(async () => {
-      const raw = await datasource.fetchStatusRefsRaw();
-      return raw.map(mapper.mapStatusRefToDomain).filter(Boolean);
-    }, 'TunnelInterventionStatusRefs.fetchStatusRefs');
-  },
-};
-
-// ============================================================================
-// Actions
-// ============================================================================
-
-const actions = {
-  async fetchActions(interventionId?: string) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchActionsRaw(interventionId);
-      return raw.map(mapper.mapActionToDomain).filter(Boolean);
-    }, interventionId ? `TunnelActions.fetchActions:${interventionId}` : 'TunnelActions.fetchActions');
-  },
-
-  createAction: undefined,
-  updateAction: undefined,
-  deleteAction: undefined,
-};
-
-// ============================================================================
-// Action Subcategories
-// ============================================================================
-
-const actionSubcategories = {
-  async fetchSubcategories() {
-    return apiCall(async () => {
-      const raw = await datasource.fetchSubcategoriesRaw();
-      return raw.map(mapper.mapSubcategoryToDomain).filter(Boolean);
-    }, 'TunnelActionSubcategories.fetchSubcategories');
-  },
-};
-
-// ============================================================================
-// Equipements
-// ============================================================================
-
-const equipements = {
-  async fetchEquipements() {
-    return apiCall(async () => {
-      const raw = await datasource.fetchEquipementsRaw();
-      return raw.map(mapper.mapEquipementToDomain).filter(Boolean);
-    }, 'TunnelEquipements.fetchEquipements');
-  },
-
-  async fetchEquipement(id: string) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchEquipementRaw(id);
-      return mapper.mapEquipementDetailToDomain(raw);
-    }, `TunnelEquipements.fetchEquipement:${id}`);
-  },
-
-  async fetchEquipementStats(id: string, startDate?: string, endDate?: string) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchEquipementStatsRaw(id, startDate, endDate);
-      return mapper.mapEquipementStatsToDomain(raw);
-    }, `TunnelEquipements.fetchEquipementStats:${id}`);
-  },
-
-  async fetchEquipementHealth(id: string) {
-    return apiCall(async () => {
-      const raw = await datasource.fetchEquipementHealthRaw(id);
-      return {
-        level: raw.level || 'ok',
-        reason: raw.reason || 'Aucun point bloquant',
-      };
-    }, `TunnelEquipements.fetchEquipementHealth:${id}`);
-  },
-};
-
-// ============================================================================
-// Stats (via stats/adapter)
-// ============================================================================
-
-const stats = statsAdapter;
+import { clearAllCache } from '@/lib/api/client';
 
 // ============================================================================
 // Stubs for unimplemented domains
 // ============================================================================
-
-const notImplemented = (domain: string) => ({
-  [domain]: () => {
-    throw new Error(`${domain} not implemented for tunnel-backend`);
-  },
-});
 
 const interventionStatusLogs = {
   fetchInterventionStatusLog: undefined,
@@ -246,20 +97,20 @@ const manufacturerItems = {
 
 export const adapter = {
   name: 'tunnel-backend',
-  client: { api: datasource, BASE_URL: process.env.VITE_TUNNEL_BACKEND_URL, clearAllCache },
-  auth,
-  interventions,
-  interventionStatusRefs,
+  client: { api: undefined, BASE_URL: import.meta.env.VITE_TUNNEL_BACKEND_URL, clearAllCache },
+  auth: authAdapter,
+  interventions: interventionsAdapter,
+  interventionStatusRefs: interventionStatusRefsAdapter,
   interventionStatusLogs,
-  actions,
-  actionSubcategories,
+  actions: actionsAdapter,
+  actionSubcategories: actionSubcategoriesAdapter,
   anomalyConfig,
-  equipements,
+  equipements: equipementsAdapter,
   preventive,
   stock,
   stockSpecs,
   manufacturerItems,
   suppliers,
   stockSuppliers,
-  stats,
+  stats: statsAdapter,
 };
