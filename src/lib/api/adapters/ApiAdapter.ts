@@ -176,6 +176,60 @@ export interface ManufacturerItem {
 }
 
 /**
+ * Service Status DTOs
+ */
+export interface ServiceStatusCause {
+  subcategoryId: string | number;
+  subcategoryCode?: string;
+  subcategoryName: string;
+  totalHours: number;
+  actionCount: number;
+  percent: number;
+}
+
+export interface ServiceStatusSiteConsumption {
+  equipmentId: string | number;
+  equipmentName: string;
+  equipmentCode?: string;
+  totalHours: number;
+  fragHours: number;
+  percentTotal: number;
+  percentFrag: number;
+}
+
+export interface ServiceStatusMetrics {
+  chargePercent: number;
+  fragPercent: number;
+  pilotPercent: number;
+  timeBreakdown: {
+    PROD: number;
+    DEP: number;
+    PILOT: number;
+    FRAG: number;
+  };
+  totalHours: number;
+  shortActionsPercent?: number;
+  fragmentation: {
+    total: number;
+    items: ServiceStatusCause[];
+    status?: {
+      color?: string;
+      text?: string;
+    };
+  };
+  siteConsumption: {
+    totalServiceHours: number;
+    totalFragHours: number;
+    items: ServiceStatusSiteConsumption[];
+  };
+  statuses?: {
+    charge?: { color?: string; text?: string };
+    frag?: { color?: string; text?: string };
+    pilot?: { color?: string; text?: string };
+  };
+}
+
+/**
  * Stock DTOs
  */
 export interface StockItem {
@@ -396,6 +450,13 @@ export interface ActionsNamespace {
 }
 
 /**
+ * Stats namespace
+ */
+export interface StatsNamespace {
+  fetchServiceStatus(params?: { startDate?: Date | string; endDate?: Date | string }): Promise<ServiceStatusMetrics>;
+}
+
+/**
  * Action Subcategories namespace
  */
 export interface ActionSubcategoriesNamespace {
@@ -530,6 +591,7 @@ export interface ApiAdapter {
   stockSuppliers: StockSuppliersNamespace;
   stockSpecs: StockSpecsNamespace;
   manufacturerItems: ManufacturerItemsNamespace;
+  stats: StatsNamespace;
   client: ClientNamespace;
   errors: ErrorsNamespace;
 }

@@ -199,6 +199,24 @@ const machines = {
 };
 
 /**
+ * Mock Stats namespace
+ */
+const stats = {
+  async fetchServiceStatus() {
+    return {
+      chargePercent: 0,
+      fragPercent: 0,
+      pilotPercent: 0,
+      timeBreakdown: { PROD: 0, DEP: 0, PILOT: 0, FRAG: 0 },
+      totalHours: 0,
+      fragmentation: { total: 0, items: [] },
+      siteConsumption: { totalServiceHours: 0, totalFragHours: 0, items: [] },
+      statuses: {},
+    };
+  },
+};
+
+/**
  * Mock Stock namespace
  */
 const stock = {
@@ -506,6 +524,7 @@ export const adapter: ApiAdapter = {
   stockSuppliers,
   stockSpecs,
   manufacturerItems,
+  stats,
   client,
   errors,
 };

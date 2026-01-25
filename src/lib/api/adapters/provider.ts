@@ -14,11 +14,13 @@
 import type { ApiAdapter } from './ApiAdapter';
 import { adapter as directusAdapter } from './directus';
 import { adapter as mockAdapter } from './mock';
+import { adapter as tunnelBackendAdapter } from './tunnelBackend';
+import { adapter as hybridAdapter } from './hybrid';
 
 /**
  * Supported backend provider keys
  */
-type ProviderKey = 'directus' | 'mock';
+type ProviderKey = 'directus' | 'mock' | 'tunnel-backend' | 'hybrid';
 
 /**
  * Typed adapter registry
@@ -27,6 +29,8 @@ type ProviderKey = 'directus' | 'mock';
 const ADAPTER_REGISTRY: Record<ProviderKey, ApiAdapter> = {
   directus: directusAdapter as unknown as ApiAdapter,
   mock: mockAdapter,
+  'tunnel-backend': tunnelBackendAdapter as unknown as ApiAdapter,
+  hybrid: hybridAdapter as unknown as ApiAdapter,
 } as const;
 
 /**

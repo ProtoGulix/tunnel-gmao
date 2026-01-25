@@ -117,20 +117,33 @@ const getPilotageInterpretation = (pilotPercent) => {
  * Calcule les métriques dérivées du service
  */
 const calculateMetrics = (serviceData) => {
-  const { chargePercent, timeBreakdown, totalHours } = serviceData;
-  
-  const fragPercent = totalHours > 0 ? (timeBreakdown.FRAG / totalHours) * 100 : 0;
-  const pilotPercent = totalHours > 0 ? (timeBreakdown.PILOT / totalHours) * 100 : 0;
+  const { chargePercent, timeBreakdown, totalHours, fragPercent: apiFragPercent, pilotPercent: apiPilotPercent, statuses } = serviceData;
+
+  const fragPercent = typeof apiFragPercent === 'number'
+    ? apiFragPercent
+    : totalHours > 0
+      ? (timeBreakdown.FRAG / totalHours) * 100
+      : 0;
+
+  const pilotPercent = typeof apiPilotPercent === 'number'
+    ? apiPilotPercent
+    : totalHours > 0
+      ? (timeBreakdown.PILOT / totalHours) * 100
+      : 0;
+
+  const chargeStatus = statuses?.charge;
+  const fragStatus = statuses?.frag;
+  const pilotStatus = statuses?.pilot;
 
   return {
     fragPercent,
     pilotPercent,
-    chargeColor: getChargeColor(chargePercent),
-    fragColor: getFragmentationColor(fragPercent),
-    pilotColor: getPilotageColor(pilotPercent),
-    chargeText: getChargeInterpretation(chargePercent),
-    fragText: getFragmentationInterpretation(fragPercent),
-    pilotText: getPilotageInterpretation(pilotPercent)
+    chargeColor: chargeStatus?.color || getChargeColor(chargePercent),
+    fragColor: fragStatus?.color || getFragmentationColor(fragPercent),
+    pilotColor: pilotStatus?.color || getPilotageColor(pilotPercent),
+    chargeText: chargeStatus?.text || getChargeInterpretation(chargePercent),
+    fragText: fragStatus?.text || getFragmentationInterpretation(fragPercent),
+    pilotText: pilotStatus?.text || getPilotageInterpretation(pilotPercent)
   };
 };
 

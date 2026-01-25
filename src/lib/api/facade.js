@@ -163,6 +163,16 @@ export const { interventionStatusLogs } = API;
 export const { actions } = API;
 
 /**
+ * **Service Stats**
+ *
+ * Functions:
+ * - `fetchServiceStatus({ startDate, endDate })` → `ServiceStatusMetrics`
+ *
+ * @type {Object}
+ */
+export const { stats } = API;
+
+/**
  * **Action Subcategories**
  *
  * Categorization for action types within interventions.

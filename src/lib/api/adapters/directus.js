@@ -47,6 +47,7 @@ import { stockAdapter as stock } from './directus/stock/adapter';
 import { stockSpecsAdapter as stockSpecs } from './directus/stockSpecs/adapter';
 import { stockSuppliersAdapter as stockSuppliers } from './directus/stockSuppliers/adapter';
 import { suppliersAdapter as suppliers } from './directus/suppliers/adapter';
+import { statsAdapter as stats } from './stats/adapter.ts';
 
 // ==============================
 // INFRASTRUCTURE
@@ -95,4 +96,6 @@ export const adapter = {
   // Suppliers & Purchasing
   suppliers,
   stockSuppliers,
+  // Stats
+  stats,
 };
