@@ -1,3 +1,48 @@
+## 2.1.0 - 2026-01-25
+
+Stabilité : 🟢 STABLE
+
+### 🎯 Pages Équipements - Implémentation complète
+
+#### Nouvelles pages
+
+- **EquipementsList.jsx** : Liste avec filtrage par code/nom, santé visuelle, hiérarchie parent
+- **EquipementDetail.jsx** : Détail équipement avec 3 onglets (interventions, hiérarchie, stats)
+
+#### Hooks personnalisés
+
+- **useEquipements.js** : Cache global équipements, résolution parent/children O(1)
+- **useInterventionStatusRefs.js** : Cache global statuts d'intervention (prévient flooding XHR)
+- **useEquipementHealth.js** : Polling optionnel santé (≥60s, après 5min inactif)
+- **useApiCall.js** : Support autoExecute au montage
+
+#### Adaptations backend
+
+- **equipements namespace** : fetchEquipements, fetchEquipement, fetchEquipementStats, fetchEquipementHealth
+- **interventionStatusRefs** : mappage code, value, id, name, color
+- **interventions** : support filter object (equipement_id, status, priority, sort)
+
+#### Patterns appliqués
+
+- ✅ Backend-driven : pas de logique métier frontend
+- ✅ Cache global : une seule requête /equipements au montage
+- ✅ Null-safety : Array.isArray() explicite
+- ✅ Pas de fonction anonyme dans useEffect dépendances
+
+#### Suppression
+
+- ❌ Pages Machine (MachineList, MachineDetail)
+- ❌ Composants machine/ (11 fichiers)
+- ❌ mapStatus hardcodé (utiliser /intervention_status)
+
+### 📊 Impacts
+
+- Build: 8.88s, 2357 modules, 1.04MB gzipped
+- Routes dynamiques via menuConfig
+- Zero statuts hardcodés frontend
+
+---
+
 ## 2.0.0 - 2026-01-25
 
 Stabilité : 🟡 BETA (architecture backend)
