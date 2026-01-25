@@ -165,9 +165,20 @@ const auth = {
 };
 
 const interventions = {
-  async fetchInterventions() {
+  async fetchInterventions(filters = {}) {
     return errors.apiCall(async () => {
-      const response = await tunnelApi.get('/interventions', { params: { skip: 0, limit: 100 } });
+      const params = {
+        skip: filters.skip ?? 0,
+        limit: filters.limit ?? 100,
+      };
+
+      // Ajouter les filtres optionnels
+      if (filters.equipement_id) params.equipement_id = filters.equipement_id;
+      if (filters.status) params.status = filters.status;
+      if (filters.priority) params.priority = filters.priority;
+      if (filters.sort) params.sort = filters.sort;
+
+      const response = await tunnelApi.get('/interventions', { params });
       const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
       return (list || []).map(mapIntervention);
     }, 'TunnelInterventions.fetchInterventions');
