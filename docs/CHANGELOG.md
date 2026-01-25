@@ -1,132 +1,76 @@
 ## 2.1.0 - 2026-01-25
 
-Stabilité : 🟢 STABLE
+Stabilité: STABLE
 
-### 🎯 Pages Équipements - Implémentation complète
+### Nouvelle page Équipements - Parc optimisé
 
-#### Nouvelles pages
+#### Ce que vous pouvez faire maintenant
 
-- **EquipementsList.jsx** : Liste avec filtrage par code/nom, santé visuelle, hiérarchie parent
-- **EquipementDetail.jsx** : Détail équipement avec 3 onglets (interventions, hiérarchie, stats)
+- Consulter la liste complète des équipements avec vue d'ensemble de leur santé (ok, maintenance, alerte, critique)
+- Filtrer rapidement par code ou nom d'équipement
+- Cliquer sur un équipement pour voir:
+  - Toutes ses interventions (passées et actuelles)
+  - Son parent et ses enfants (hiérarchie complète)
+  - Ses statistiques d'interventions (par statut et priorité)
+- Voir instantanément si un équipement a des problèmes via le badge santé coloré
 
-#### Hooks personnalisés
+#### Améliorations de performance
 
-- **useEquipements.js** : Cache global équipements, résolution parent/children O(1)
-- **useInterventionStatusRefs.js** : Cache global statuts d'intervention (prévient flooding XHR)
-- **useEquipementHealth.js** : Polling optionnel santé (≥60s, après 5min inactif)
-- **useApiCall.js** : Support autoExecute au montage
+- Les pages se chargent beaucoup plus rapidement (cache local des équipements)
+- Pas de ralentissements lors de la navigation entre équipements
+- Les statuts reflètent EXACTEMENT votre configuration serveur (zéro données hardcodées)
 
-#### Adaptations backend
+#### Impact métier
 
-- **equipements namespace** : fetchEquipements, fetchEquipement, fetchEquipementStats, fetchEquipementHealth
-- **interventionStatusRefs** : mappage code, value, id, name, color
-- **interventions** : support filter object (equipement_id, status, priority, sort)
-
-#### Patterns appliqués
-
-- ✅ Backend-driven : pas de logique métier frontend
-- ✅ Cache global : une seule requête /equipements au montage
-- ✅ Null-safety : Array.isArray() explicite
-- ✅ Pas de fonction anonyme dans useEffect dépendances
+- Les techniciens ont une vue claire de l'état du parc
+- Moins de confusion sur les statuts (une seule source de vérité)
+- Accès rapide à l'historique d'un équipement sans rechargement
 
 #### Suppression
 
-- ❌ Pages Machine (MachineList, MachineDetail)
-- ❌ Composants machine/ (11 fichiers)
-- ❌ mapStatus hardcodé (utiliser /intervention_status)
-
-### 📊 Impacts
-
-- Build: 8.88s, 2357 modules, 1.04MB gzipped
-- Routes dynamiques via menuConfig
-- Zero statuts hardcodés frontend
+- Ancienne page Machines (remplacée par Équipements)
+- Tous les composants machines associés
 
 ---
 
 ## 2.0.0 - 2026-01-25
 
-Stabilité : 🟡 BETA (architecture backend)
+Stabilité: BETA (architecture backend)
 
-### 📊 Réorganisation des responsabilités métier
+### Décisions prises au backend - Fiabilité accrue
 
-#### Migration du frontend vers le backend
+#### Ce qui a changé pour vous
 
-- **Calcul des statuts équipements** : logique de détermination du statut (ok/maintenance/warning/critical) déménagée au backend
-  - Critères : urgent → critical, ≥3 interventions ouvertes → warning, >0 ouvertes → maintenance
-  - Source unique de vérité côté serveur
-- **Statistiques consolidées** : comptages d'interventions par statut générés par le backend
-  - Chaque équipement fournit son décompte d'interventions ouvertes
-  - Répartition par statut d'intervention disponible directement
-- **Référentiels de validation** : les statuts d'intervention gérés par le backend
-  - Le frontend consulte les statuts disponibles plutôt que les écrire en dur
+- Les statuts équipements (ok/maintenance/alerte/critique) sont maintenant calculés par le serveur
+- Les statistiques d'interventions sont toujours à jour (générées automatiquement)
+- Les statuts d'intervention proviennent de votre configuration serveur (pas hardcodés)
 
-#### Impact utilisateur
+#### Avantage utilisateur
 
-- ✅ Affichage fiable et cohérent des statuts (une seule source de vérité)
-- ✅ Statistiques toujours à jour et synchronisées
-- ✅ Moins de risques d'incohérences entre frontend et backend
-
-#### Changements visibles
-
-- **GET /equipements** : liste des équipements avec statuts et statistiques pré-calculés
-- **GET /intervention_status** : référentiel des statuts d'intervention
-
-### 🔄 Branche & Déploiement
-
-- Branche : `dev-2.x` (pas de merge sur main)
-- Version : 2.0.0-beta
+- Plus de synchronisation manuelle frontend/backend
+- Affichage fiable et cohérent partout dans l'app
+- Moins de bugs liés à des données désynchronisées
 
 ---
 
 ## 1.11.7 - 2026-01-22
 
-Stabilite : STABLE
+Stabilité: STABLE
 
-### 🎯 Impact fonctionnel
+### Corrections Procurement
 
-- Correction export CSV + nettoyage Procurement (bug lines.map, suppression recherche et affichage compact)
+- Export CSV fonctionne correctement
+- Interface nettoyée et plus rapide
 
 ## 1.11.6 - 2026-01-21
 
-Stabilité : 🟢 stable
+Stabilité: STABLE
 
-### 🎯 Impact fonctionnel
+### Demandes d'achat - Affichage unifié
 
-- Affichage cohérent des demandes d'achat entre page Procurement et détail Intervention
-- Numéro de panier visible sur toutes les DA (badge 📦 → icône Package)
-- Chargement optimisé : 1 seule requête API au lieu de 116 (filtrage serveur)
-
-### 🧱 Stabilisation / Dette technique
-
-- Unification source de données : InterventionDetail utilise maintenant usePurchaseRequestsManagement (même hook que Procurement)
-- Filtrage côté backend via fetchPurchaseRequestsByIntervention(interventionId)
-- Suppression des données embarquées obsolètes (interv.action[].purchaseRequests)
-- Extraction des helpers dans PurchaseRequestList (getSelectedBasketInfo, getStatusBadgeProps)
-- Nettoyage accessors inutilisés (getTechnicianFirstName, getTechnicianLastName, getSubcategoryCode)
-
-### 🧩 Composants / Modules concernés
-
-- src/pages/InterventionDetail.jsx
-- src/components/common/PurchaseRequestList.jsx (conformité §4.0 standards)
-- src/components/actions/ActionItemCard.jsx
-- src/components/interventions/InterventionTabs/ActionsTab.jsx
-- src/components/interventions/InterventionTabs/SummaryTab.jsx
-- src/components/interventions/InterventionTabs/TimelineItemRenderer.jsx
-- src/components/purchase/requests/PurchaseRequestsTable.jsx
-- src/components/purchase/requests/purchaseRequestRow.helpers.jsx
-- src/hooks/usePurchaseRequestsManagement.js
-- src/lib/api/adapters/directus/stock/datasource.ts
-
-### 📚 Documentation
-
-- Ajout JSDoc complet sur PurchaseRequestList (§4.0.2)
-- PropTypes exhaustifs avec derived_status, supplier_order_line_ids
-- Extraction constantes (STATUS_BADGE_CONFIG) et helpers documentés
-
-### ⚠️ Points de vigilance
-
-- Nécessite vidage cache PWA pour voir numéros de panier
-- API charge maintenant is_selected + order_number dans supplier_order relations
+- Les demandes d'achat s'affichent de manière cohérente partout (Procurement et détails interventions)
+- Les numéros de paniers sont visibles sur toutes les demandes
+- Chargement optimisé (1 requête au lieu de 116)
 
 ## 1.11.5 - 2026-01-21
 
