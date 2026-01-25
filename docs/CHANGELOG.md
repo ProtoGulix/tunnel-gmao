@@ -1,3 +1,30 @@
+## 2.1.1 - 2026-01-26
+
+Stabilité: STABLE
+
+### Corrections et consolidation
+
+#### Ce qui a été corrigé
+
+- **Page équipements**: Les interventions s'affichent maintenant correctement
+- **Détails équipement**: Requêtes API optimisées, pas de boucles inutiles
+- **Affichage tableau**: Utilisation cohérente des composants communs (en ligne avec le reste de l'app)
+- **Gestion des erreurs**: Messages d'erreur API plus clairs
+
+#### Amélioration technique (invisible pour vous)
+
+- Restructuration des appels API pour plus de fiabilité
+- Code nettoyé et simplifié (moins de lignes, plus clair)
+- Meilleure cohérence dans la façon d'appeler l'API tunnel-backend
+
+#### Impact utilisateur
+
+- Navigation plus fluide entre la liste et le détail des équipements
+- Pas de ralentissement lors du chargement d'un équipement
+- Moins de risques d'erreur lors de la consultation des interventions
+
+---
+
 ## 2.1.0 - 2026-01-25
 
 Stabilité: STABLE
