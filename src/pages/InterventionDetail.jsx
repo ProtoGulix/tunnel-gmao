@@ -13,7 +13,7 @@ import { Tabs, Flex, Text, Badge } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
 
 // 5. API / Lib
-import { interventions, actions, interventionStatusLogs, stock, stockSuppliers, actionSubcategories } from '@/lib/api/facade';
+import { interventions, actions, stock, stockSuppliers, actionSubcategories } from '@/lib/api/facade';
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
@@ -44,9 +44,6 @@ import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
 // 9. Utils
 import {
-  calculateTotalTime,
-  getUniqueTechs,
-  getLastUpdateDate,
   groupTimelineByDay,
 } from '@/lib/utils/interventionUtils.jsx';
 
@@ -103,7 +100,7 @@ const mapDtoStatusToConfigKey = (dtoStatus) => {
  * - État : useState pour formulaires et UI, useRef pour anti-patterns
  * - Data fetching : useApiCall avec execute/executeSilent
  * - Mutations : useApiMutation avec callbacks onSuccess
- * - Computed : useMemo pour valeurs dérivées (stats, timeline)
+ * - Computed : useMemo pour valeurs dérivées (timeline, grouping)
  * - Effects : useEffect pour initialisation, lazy loading onglets, responsive styles
  * 
  * @performance
@@ -161,20 +158,16 @@ export default function InterventionDetail() {
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const { 
-    data: interv, 
-    loading, 
-    error, 
+  const {
+    data: interv,
+    loading,
+    error,
     execute: refetchIntervention,
-    executeSilent: backgroundRefetchIntervention 
+    executeSilent: backgroundRefetchIntervention
   } = useApiCall(() => interventions.fetchIntervention(id));
 
-  const { 
-    data: statusLog = [],
-    loading: statusLogLoading,
-    execute: refetchStatusLog,
-    executeSilent: backgroundRefetchStatusLog
-  } = useApiCall(() => interventionStatusLogs.fetchInterventionStatusLog(id));
+  // Status logs are now included in the intervention endpoint (interv.statusLogs)
+  const statusLog = useMemo(() => interv?.statusLogs || [], [interv?.statusLogs]);
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // INITIALIZATION - Protection React StrictMode
@@ -183,9 +176,8 @@ export default function InterventionDetail() {
     // Protection contre le double appel en React StrictMode (dev)
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
-    
+
     refetchIntervention();
-    refetchStatusLog();
     purchases.loadRequests(); // Charger les purchase requests dès l'ouverture (pour le badge)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -274,7 +266,6 @@ export default function InterventionDetail() {
   // Auto-refresh silencieux toutes les 30 secondes (pas de loader)
   useAutoRefresh(() => {
     backgroundRefetchIntervention();
-    backgroundRefetchStatusLog();
   }, 30, true);
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -355,8 +346,7 @@ export default function InterventionDetail() {
     (statusData) => interventions.updateStatus(id, statusData),
     {
       onSuccess: () => {
-        refetchIntervention();
-        refetchStatusLog();
+        refetchIntervention(); // Status logs are included in intervention endpoint
       }
     }
   );
@@ -369,11 +359,10 @@ export default function InterventionDetail() {
   );
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  // MEMOIZED VALUES
+  // MEMOIZED VALUES (UI-only, never business logic)
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  const totalTime = useMemo(() => calculateTotalTime(interv?.action), [interv?.action]);
-  const uniqueTechs = useMemo(() => getUniqueTechs(interv?.action), [interv?.action]);
-  const lastUpdateDate = useMemo(() => getLastUpdateDate(interv?.action), [interv?.action]);
+  // ⚠️ Timeline grouping is ONLY for UI display - no business calculations here
+  // Stats are passed directly from API (interv.stats.*), not recalculated from actions
   const timelineByDay = useMemo(() => groupTimelineByDay(interv?.action, statusLog, searchActions), [interv?.action, statusLog, searchActions]);
 
   const timeline = useMemo(() => {
@@ -541,10 +530,9 @@ export default function InterventionDetail() {
         title={`${interv.machine?.name || "Machine"} • ${interv.code || `INT-${id}`}`}
         subtitle={interv.title || "Intervention"}
         stats={[
-          { label: "Actions", value: interv.action?.length || 0 },
-          { label: "Temps", value: `${totalTime}h` },
-          ...(lastUpdateDate ? [{ label: "Dernière MAJ", value: lastUpdateDate }] : []),
-          ...(uniqueTechs.length > 0 ? [{ label: "Techs", value: uniqueTechs.join(' - ') }] : [])
+          // ⚠️ Stats from API ONLY (via mapper) - never calculated on frontend
+          { label: "Actions", value: interv.stats?.action_count || 0 },
+          { label: "Temps", value: `${interv.stats?.total_time || 0}h` }
         ]}
         actions={[
           {
@@ -693,12 +681,11 @@ export default function InterventionDetail() {
           <HistoryTab
             model={{
               timeline,
-              loading: statusLogLoading
+              loading: loading
             }}
             handlers={{
               onRefresh: () => {
-                refetchIntervention();
-                refetchStatusLog();
+                refetchIntervention(); // Status logs are included in intervention endpoint
               }
             }}
           />

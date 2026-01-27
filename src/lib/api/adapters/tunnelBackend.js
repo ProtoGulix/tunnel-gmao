@@ -193,10 +193,6 @@ const interventionStatusRefs = {
   },
 };
 
-const interventionStatusLogs = {
-  fetchInterventionStatusLog: notImplemented('InterventionStatusLogs.fetchInterventionStatusLog'),
-};
-
 const actions = {
   async fetchActions(interventionId) {
     return errors.apiCall(async () => {
@@ -337,7 +333,6 @@ export const adapter = {
   auth,
   interventions,
   interventionStatusRefs,
-  interventionStatusLogs,
   actions,
   actionSubcategories,
   anomalyConfig,

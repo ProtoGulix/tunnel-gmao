@@ -11,11 +11,14 @@
 import { tunnelApi } from '../client';
 
 export const fetchInterventionRaw = async (id: string) => {
+  // GET /interventions/{id} - Returns full intervention with actions and stats
   const response = await tunnelApi.get(`/interventions/${id}`);
   return response.data?.data || response.data || {};
 };
 
 export const fetchInterventionsRaw = async (filters: any = {}) => {
+  // GET /interventions - Returns list with filters, sort, pagination and stats
+  // Note: Returns actions: [] (empty), GET /interventions/{id} returns full actions
   const params: any = {
     skip: filters.skip ?? 0,
     limit: filters.limit ?? 100,

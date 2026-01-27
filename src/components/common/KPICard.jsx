@@ -55,7 +55,7 @@ export default function KPICard({ label, value, subtitle, color, progress, notic
 
   return (
     <Card>
-      <Box p="3" display="flex" flexDirection="column" height="100%">
+      <Box p="3" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         <Heading size="3" color={displayColor} mb="2">
           {label}
         </Heading>

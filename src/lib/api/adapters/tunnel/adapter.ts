@@ -25,10 +25,6 @@ import { clearAllCache } from '@/lib/api/client';
 // Stubs for unimplemented domains
 // ============================================================================
 
-const interventionStatusLogs = {
-  fetchInterventionStatusLog: undefined,
-};
-
 const anomalyConfig = {
   fetchAnomalyConfiguration: undefined,
   fetchCategoryMeta: undefined,
@@ -101,7 +97,6 @@ export const adapter = {
   auth: authAdapter,
   interventions: interventionsAdapter,
   interventionStatusRefs: interventionStatusRefsAdapter,
-  interventionStatusLogs,
   actions: actionsAdapter,
   actionSubcategories: actionSubcategoriesAdapter,
   anomalyConfig,

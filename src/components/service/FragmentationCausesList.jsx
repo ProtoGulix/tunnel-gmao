@@ -156,7 +156,7 @@ export default function FragmentationCausesList({ fragmentation }) {
         <DataTable
           columns={COLUMNS}
           data={tableData}
-          getRowKey={(row) => row.subcategoryId}
+          getRowKey={(row, index) => row.subcategoryId || `special-${index}`}
           rowHover
           variant="surface"
         />
@@ -167,9 +167,9 @@ export default function FragmentationCausesList({ fragmentation }) {
           <Info size={18} />
         </Callout.Icon>
         <Callout.Text>
-          <Box as="p" size="2">
+          <Text as="p" size="2">
             {EXPLANATION_TEXT}
-          </Box>
+          </Text>
         </Callout.Text>
       </Callout.Root>
     </Box>

@@ -31,7 +31,6 @@ export const adapter = {
   // Directus namespaces
   auth: directusAdapter.auth,
   interventionStatusRefs: directusAdapter.interventionStatusRefs,
-  interventionStatusLogs: directusAdapter.interventionStatusLogs,
   actions: directusAdapter.actions,
   actionSubcategories: directusAdapter.actionSubcategories,
   anomalyConfig: directusAdapter.anomalyConfig,

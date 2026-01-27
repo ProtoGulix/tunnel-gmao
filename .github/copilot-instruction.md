@@ -1,6 +1,7 @@
 ---
-applyTo: "**"
+applyTo: '**'
 ---
+
 # Copilot Instructions - Tunnel GMAO
 
 ## Objectif
@@ -37,6 +38,13 @@ Stabiliser les suggestions Copilot selon nos conventions pour produire un code s
 ## API, donnees, erreurs
 
 - Adapter pattern obligatoire: lib/api/adapters/\* mappe les DTOs selon API_CONTRACTS.md; aucune logique metier dans les pages.
+- **PHILOSOPHIE ARCHITECTURE: "L'API est la source de vérité, zéro calcul frontend"**
+  - **Stats métier** (action_count, total_time, avg_complexity, etc): viennent UNIQUEMENT de l'API via le mapper, jamais recalculées en frontend.
+  - **Pas d'agrégations**: interdiction de re-calculer des totaux, moyennes, comptages à partir des données brutes.
+  - **Timeline/grouping UI uniquement**: le groupement par jour est strictement pour l'affichage UI, jamais pour la logique métier.
+  - **Principe**: frontend reçoit des données COMPLÈTES et CALCULÉES du backend → affiche seulement, ne dérive/re-calcule rien.
+  - **Exemple MAUVAIS**: `const totalTime = useMemo(() => calculateTotalTime(actions), ...)` (calcul frontend).
+  - **Exemple BON**: `<Text>{interv.stats?.total_time || 0}h</Text>` (donnée API directe).
 - Validation et sanitization: utiliser utils htmlUtils (stripHtml, sanitizeHtml) et helpers de validation (ex email) avant envoi.
 - Erreurs: utiliser ErrorDisplay/ErrorNotification; pas de `alert/confirm/prompt`. Fournir retry quand pertinent.
 
@@ -63,9 +71,10 @@ Stabiliser les suggestions Copilot selon nos conventions pour produire un code s
 ## Ce que Copilot doit toujours faire
 
 1. Lire/aligner avec docs/tech/CONVENTIONS.md et API_CONTRACTS.md avant de suggerer.
-2. Reutiliser composants, hooks, helpers existants au lieu de recréer.
-3. Proposer code simple et decoupable, evitant duplication.
-4. Expliquer brièvement les choix lorsque la logique est non evidente (commentaire concis).
+2. **Appliquer la philosophie "API source de vérité"**: stats et métriques métier viennent UNIQUEMENT de l'API, zéro recalculs frontend.
+3. Reutiliser composants, hooks, helpers existants au lieu de recréer.
+4. Proposer code simple et decoupable, evitant duplication.
+5. Expliquer brièvement les choix lorsque la logique est non evidente (commentaire concis).
 
 ## Ce que Copilot ne doit jamais faire
 
@@ -73,6 +82,8 @@ Stabiliser les suggestions Copilot selon nos conventions pour produire un code s
 - Ajouter des dependances sans approbation explicite.
 - Ignorer les validations/metiers de REGLES_METIER.md.
 - Hardcoder des secrets, URLs, ou bypasser les adapters API.
+- **Recalculer des métriques métier en frontend** (stats, totaux, moyennes): utiliser l'API comme source unique de vérité.
+- **Créer des helpers/utils pour agréger des données métier** (ex: calculateTotalTime, getUniqueTechs): ces calculs doivent être au backend.
 
 ## Gabarit d'instruction Copilot (a coller dans VS Code)
 

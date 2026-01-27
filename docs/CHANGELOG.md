@@ -1,3 +1,30 @@
+## 2.1.2 - 2026-01-27
+
+Stabilité: STABLE
+
+### Corrections d'affichage et optimisations
+
+#### Ce qui a été corrigé
+
+- **Historique des interventions**: Les changements de statut apparaissent maintenant dans la chronologie
+- **Page État du service**: Se charge correctement sans message d'erreur
+- **Affichage des données**: Les informations se chargent plus rapidement
+
+#### Amélioration technique (invisible pour vous)
+
+- Les détails d'une intervention se chargent en une seule fois (au lieu de deux chargements successifs)
+- Suppression des doublons dans la façon de récupérer les informations
+- Nettoyage du code inutilisé pour alléger l'application
+
+#### Impact utilisateur
+
+- Navigation plus fluide : cliquer sur une intervention affiche tout immédiatement
+- Page "État du service" fonctionne sans erreur
+- L'historique complet des statuts est visible dès l'ouverture d'une intervention
+- Pas de ralentissement lors de la consultation des statistiques
+
+---
+
 ## 2.1.1 - 2026-01-26
 
 Stabilité: STABLE

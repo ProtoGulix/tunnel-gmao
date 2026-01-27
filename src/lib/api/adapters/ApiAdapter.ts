@@ -433,13 +433,6 @@ export interface InterventionStatusRefsNamespace {
 }
 
 /**
- * Intervention Status Logs namespace
- */
-export interface InterventionStatusLogsNamespace {
-  fetchInterventionStatusLog(interventionId: string): Promise<InterventionStatusLog[]>;
-}
-
-/**
  * Actions namespace
  */
 export interface ActionsNamespace {
@@ -582,7 +575,6 @@ export interface ApiAdapter {
   auth: AuthNamespace;
   interventions: InterventionsNamespace;
   interventionStatusRefs: InterventionStatusRefsNamespace;
-  interventionStatusLogs: InterventionStatusLogsNamespace;
   actions: ActionsNamespace;
   actionSubcategories: ActionSubcategoriesNamespace;
   machines: MachinesNamespace;

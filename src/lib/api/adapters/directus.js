@@ -19,7 +19,6 @@
  * @property {Object} auth - Authentication namespace
  * @property {Object} interventions - Interventions namespace
  * @property {Object} interventionStatusRefs - Status references namespace
- * @property {Object} interventionStatusLogs - Status logs namespace
  * @property {Object} actions - Actions namespace
  * @property {Object} actionSubcategories - Action subcategories namespace
  * @property {Object} machines - Machines namespace
@@ -37,7 +36,6 @@ import { actionSubcategoriesAdapter as actionSubcategories } from './directus/ac
 import { actionsAdapter as actions } from './directus/actions/adapter';
 import { anomalyConfigAdapter as anomalyConfig } from './directus/anomalyConfig/adapter';
 import { authAdapter as auth } from './directus/auth/adapter';
-import { interventionStatusLogsAdapter as interventionStatusLogs } from './directus/interventionStatusLogs/adapter';
 import { interventionStatusRefsAdapter as interventionStatusRefs } from './directus/interventionStatusRefs/adapter';
 import { interventionsAdapter as interventions } from './directus/interventions/adapter';
 import { machinesAdapter as machines } from './directus/machines/adapter';
@@ -80,7 +78,6 @@ export const adapter = {
   // Interventions & Actions
   interventions,
   interventionStatusRefs,
-  interventionStatusLogs,
   actions,
   actionSubcategories,
   // Anomaly Configuration

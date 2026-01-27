@@ -125,15 +125,6 @@ const interventionStatusRefs = {
 };
 
 /**
- * Mock Intervention Status Logs namespace
- */
-const interventionStatusLogs = {
-  async fetchInterventionStatusLog(interventionId: string) {
-    return [];
-  },
-};
-
-/**
  * Mock Actions namespace
  */
 const actions = {
@@ -515,7 +506,6 @@ export const adapter: ApiAdapter = {
   auth,
   interventions,
   interventionStatusRefs,
-  interventionStatusLogs,
   actions,
   actionSubcategories,
   machines,

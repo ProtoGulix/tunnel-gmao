@@ -64,7 +64,6 @@ import { exportAdapter } from './adapters/export.adapter';
  * @property {Object} auth - Authentication namespace
  * @property {Object} interventions - Interventions namespace
  * @property {Object} interventionStatusRefs - Status references namespace
- * @property {Object} interventionStatusLogs - Status logs namespace
  * @property {Object} actions - Actions namespace
  * @property {Object} actionSubcategories - Action subcategories namespace
  * @property {Object} machines - Machines namespace
@@ -134,18 +133,6 @@ export const { interventions } = API;
  * @type {Object}
  */
 export const { interventionStatusRefs } = API;
-
-/**
- * **Intervention Status Logs**
- *
- * Audit trail of status changes for interventions.
- *
- * Functions:
- * - `fetchInterventionStatusLog(interventionId)` → `InterventionStatusLog[]`
- *
- * @type {Object}
- */
-export const { interventionStatusLogs } = API;
 
 /**
  * **Actions (Intervention Subtasks)**
