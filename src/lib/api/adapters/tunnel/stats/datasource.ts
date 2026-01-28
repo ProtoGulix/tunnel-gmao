@@ -38,6 +38,6 @@ export const fetchServiceStatusRaw = async (startDate?: string | Date, endDate?:
   if (formattedStartDate) params.start_date = formattedStartDate;
   if (formattedEndDate) params.end_date = formattedEndDate;
 
-  const response = await tunnelApi.get('/stats/service-status', { params });
+  const response = await tunnelApi.get('/stats/service-status/', { params });
   return response.data || {};
 };

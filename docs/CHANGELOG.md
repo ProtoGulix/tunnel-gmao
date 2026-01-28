@@ -1,3 +1,30 @@
+## 2.1.4 - 2026-01-28
+
+Stabilité: STABLE
+
+### Optimisation de l'affichage des interventions
+
+#### Ce qui a changé
+
+- **Liste des interventions allégée**: Les fiches déjà imprimées et archivées ne sont plus chargées automatiquement
+- **Chargement plus rapide**: La page se charge beaucoup plus vite car elle ne récupère que les interventions actives
+- **Performance améliorée**: Moins de données à afficher = navigation plus fluide
+
+#### Amélioration technique (invisible pour vous)
+
+- Ajout d'un filtre `printed=false` au niveau de l'API pour exclure les interventions archivées
+- Le tri et le filtrage se font maintenant côté serveur au lieu du navigateur
+- Réduction de la quantité de données transférées du serveur vers votre appareil
+
+#### Impact utilisateur
+
+- La page "Interventions" s'ouvre instantanément, même avec un historique volumineux
+- Vous ne voyez que les interventions qui nécessitent encore votre attention
+- Les interventions déjà imprimées (donc traitées et archivées) ne polluent plus l'affichage
+- Navigation et recherche beaucoup plus rapides
+
+---
+
 ## 2.1.3 - 2026-01-28
 
 Stabilité: STABLE

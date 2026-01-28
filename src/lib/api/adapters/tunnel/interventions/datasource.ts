@@ -34,7 +34,7 @@ export const fetchInterventionsRaw = async (filters: any = {}) => {
   if (filters.sort) params.sort = filters.sort;
   if (filters.printed !== undefined) params.printed = filters.printed;
 
-  const response = await tunnelApi.get('/interventions', { params });
+  const response = await tunnelApi.get('/interventions/', { params });
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };

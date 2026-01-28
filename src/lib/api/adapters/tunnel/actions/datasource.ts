@@ -17,7 +17,7 @@ export const fetchActionsRaw = async (interventionId?: string) => {
     return list;
   }
 
-  const response = await tunnelApi.get('/intervention_actions');
+  const response = await tunnelApi.get('/intervention_actions/');
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list;
 };

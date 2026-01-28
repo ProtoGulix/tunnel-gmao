@@ -11,7 +11,7 @@
 import { tunnelApi } from '../client';
 
 export const fetchEquipementsRaw = async () => {
-  const response = await tunnelApi.get('/equipements');
+  const response = await tunnelApi.get('/equipements/');
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };

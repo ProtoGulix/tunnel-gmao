@@ -11,7 +11,7 @@
 import { tunnelApi } from '../client';
 
 export const fetchSubcategoriesRaw = async () => {
-  const response = await tunnelApi.get('/action_subcategories');
+  const response = await tunnelApi.get('/action_subcategories/');
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };

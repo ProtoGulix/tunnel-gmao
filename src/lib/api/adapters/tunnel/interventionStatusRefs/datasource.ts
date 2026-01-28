@@ -11,7 +11,7 @@
 import { tunnelApi } from '../client';
 
 export const fetchStatusRefsRaw = async () => {
-  const response = await tunnelApi.get('/intervention_status');
+  const response = await tunnelApi.get('/intervention_status/');
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };
