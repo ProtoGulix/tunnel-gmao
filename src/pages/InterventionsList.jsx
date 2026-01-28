@@ -106,14 +106,18 @@ export default function InterventionsList() {
   // État pour la recherche
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Récupération des interventions
-  const { 
-    data: allInterventions = [], 
-    loading, 
-    error, 
+  // Récupération des interventions (exclure les fiches imprimées/archivées par défaut)
+  const fetchInterventionsWithFilters = useCallback(() => {
+    return interventions.fetchInterventions({ printed: false });
+  }, []);
+
+  const {
+    data: allInterventions = [],
+    loading,
+    error,
     execute: refetchInterventions,
     executeSilent: backgroundRefetchInterventions
-  } = useApiCall(interventions.fetchInterventions);
+  } = useApiCall(fetchInterventionsWithFilters);
 
   // Chargement initial des données
   useEffect(() => {
