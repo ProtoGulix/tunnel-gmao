@@ -13,7 +13,7 @@
  * 4. SUGGESTIONS PRÉVENTIF : Top 5 → empêcher récurrence
  * 
  * Architecture:
- * - Hooks: useMachineData (chargement), useMachineStats (calculs statiques)
+ * - Hooks: useMachineData (chargement)
  * - Composants existants réutilisés (OpenInterventionsTable, PreventiveSuggestionsPanel)
  * - Pas de nouveaux composants, uniquement organisation / filtrage / masquage
  * - États: Loading/Error avec retry, CriticalAlert si urgent
@@ -30,7 +30,6 @@
  * 
  * @module pages/MachineDetail
  * @requires hooks/useMachineData - Chargement données
- * @requires hooks/useMachineStats - Calculs statistiques
  * @requires utils/interventionHelpers - Filtres interventions
  * @requires components/machine/OpenInterventionsTable - Table interventions
  * @requires components/preventive/PreventiveSuggestionsPanel - Suggestions

@@ -128,25 +128,6 @@ export const PAGES_CONFIG = [
     requiresAuth: true,
   },
   {
-    id: 'machines',
-    path: '/machines',
-    label: 'Machines',
-    icon: Settings,
-    pageTitle: 'Parc machines',
-    pageSubtitle: 'Gestion et suivi des machines',
-    requiresAuth: true,
-  },
-  {
-    id: 'machine-detail',
-    path: '/machines/:id',
-    label: 'Détail machine',
-    icon: Settings,
-    pageTitle: 'Détail de la machine',
-    pageSubtitle: null, // Sera défini dynamiquement
-    requiresAuth: true,
-    showInMenu: false,
-  },
-  {
     id: 'equipements',
     path: '/equipements',
     label: 'Équipements',

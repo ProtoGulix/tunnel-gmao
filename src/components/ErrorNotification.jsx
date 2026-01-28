@@ -10,10 +10,9 @@
  * - Bouton fermeture manuel (X)
  * - Z-index 10000 pour affichage au-dessus de tout
  * 
- * Utilisé via hook useError() dans 3 endroits :
+ * Utilisé via hook useError() dans 2 endroits :
  * - PurchaseRequestForm (erreur création demande)
  * - InterventionDetail (erreurs opérations CRUD)
- * - useExportAPI (erreur téléchargement PDF)
  * 
  * ✅ @features_implemented
  * - Early return si !error ou !isVisible

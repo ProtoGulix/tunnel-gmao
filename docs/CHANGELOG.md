@@ -1,3 +1,31 @@
+## 2.1.3 - 2026-01-28
+
+Stabilité: STABLE
+
+### Nettoyage et consolidation du code
+
+#### Ce qui a été fait
+
+- **Nettoyage du code interne**: Suppression de fonctionnalités non utilisées pour alléger l'application
+- **Simplification de la structure**: Retrait de composants et de hooks obsolètes qui n'étaient plus nécessaires
+- **Optimisation de la taille**: L'application est maintenant plus légère et plus rapide à charger
+
+#### Amélioration technique (invisible pour vous)
+
+- Suppression de 8 composants machines qui n'étaient plus utilisés depuis la version 2.1.0
+- Retrait de 4 hooks inutilisés (gestion d'exports, filtres, statistiques et rafraîchissement automatique)
+- Mise à jour de la documentation interne pour refléter la nouvelle architecture
+- Allègement du menu de navigation
+
+#### Impact utilisateur
+
+- Application plus rapide au démarrage
+- Moins de code = moins de risques de bugs
+- Aucun changement visible dans l'interface : tout fonctionne comme avant, en mieux
+- Préparation pour les futures évolutions avec une base de code plus propre
+
+---
+
 ## 2.1.2 - 2026-01-27
 
 Stabilité: STABLE
