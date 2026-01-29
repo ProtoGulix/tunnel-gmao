@@ -172,6 +172,19 @@ export const { stats } = API;
 export const { actionSubcategories } = API;
 
 /**
+ * **Complexity Factors**
+ *
+ * Complexity factor reference data for action annotations.
+ *
+ * Functions:
+ * - `fetchComplexityFactors()` → `ComplexityFactor[]`
+ * - `fetchComplexityFactor(code)` → `ComplexityFactor`
+ *
+ * @type {Object}
+ */
+export const { complexityFactors } = API;
+
+/**
  * **Anomaly Configuration**
  *
  * Dynamic configuration for anomaly detection in actions.

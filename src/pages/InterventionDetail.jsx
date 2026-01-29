@@ -13,7 +13,7 @@ import { Tabs, Flex, Text, Badge } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
 
 // 5. API / Lib
-import { interventions, actions, stock, stockSuppliers, actionSubcategories } from '@/lib/api/facade';
+import { interventions, actions, stock, stockSuppliers, actionSubcategories, complexityFactors } from '@/lib/api/facade';
 
 // 6. Hooks
 import { useApiCall, useApiMutation } from '@/hooks/useApiCall';
@@ -145,7 +145,7 @@ export default function InterventionDetail() {
   const [pdfUrl, setPdfUrl] = useState(null);
 
   const [subcategories, setSubcategories] = useState([]);
-  const [complexityFactors, setComplexityFactors] = useState([]);
+  const [complexityFactorsList, setComplexityFactorsList] = useState([]);
   const [supplierRefs, setSupplierRefs] = useState({});
   const [standardSpecs, setStandardSpecs] = useState({});
   const [summaryDataLoaded, setSummaryDataLoaded] = useState(false);
@@ -190,10 +190,10 @@ export default function InterventionDetail() {
           // Requêtes parallèles pour optimiser le temps de chargement
           const [subcatsData, factorsData] = await Promise.all([
             actionSubcategories.fetchActionSubcategories(),
-            interventions.fetchComplexityFactors()
+            complexityFactors.fetchComplexityFactors()
           ]);
           setSubcategories(subcatsData || []);
-          setComplexityFactors(factorsData || []);
+          setComplexityFactorsList(factorsData || []);
           setActionDataLoaded(true);
         } catch (error) {
           showError(error);
@@ -611,7 +611,7 @@ export default function InterventionDetail() {
               initialState={actionFormInitialState}
               metadata={{
                 subcategories: subcategories,
-                complexityFactors: complexityFactors
+                complexityFactors: complexityFactorsList
               }}
               onCancel={() => setShowActionForm(false)}
               onSubmit={handleAddAction}

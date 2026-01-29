@@ -1,3 +1,30 @@
+## 2.1.5 - 2026-01-29
+
+Stabilité: STABLE
+
+### Amélioration de la création d'actions
+
+#### Ce qui a changé
+
+- **Formulaire d'action amélioré**: L'ajout d'actions sur les interventions est plus rapide et plus fiable
+- **Facteurs de complexité fonctionnels**: Vous pouvez maintenant sélectionner les facteurs de complexité sans erreur
+- **Chargement optimisé**: Les données du formulaire se chargent plus rapidement
+
+#### Amélioration technique (invisible pour vous)
+
+- Migration vers une nouvelle architecture interne pour gérer les actions
+- Résolution de problèmes de communication avec le serveur
+- Correction de bugs d'affichage dans le formulaire
+
+#### Impact utilisateur
+
+- Le formulaire d'ajout d'action fonctionne maintenant parfaitement avec tous les champs
+- Plus d'erreur lors de l'ouverture du formulaire
+- Les actions sont enregistrées plus rapidement
+- Tout le reste continue de fonctionner normalement
+
+---
+
 ## 2.1.4 - 2026-01-28
 
 Stabilité: STABLE

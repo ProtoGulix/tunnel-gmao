@@ -11,6 +11,8 @@ import axios from 'axios';
 import { clearAllCache } from '@/lib/api/client';
 import * as errors from '@/lib/api/errors';
 import { statsAdapter as stats } from './stats/adapter.ts';
+import { actionsAdapter as actions } from './actions/adapter.ts';
+import { complexityFactorsAdapter } from './complexityFactors/adapter.ts';
 
 // Instance axios dédiée pour tunnel-backend
 const TUNNEL_BACKEND_URL = import.meta.env.VITE_TUNNEL_BACKEND_URL || 'http://localhost:8000';
@@ -175,6 +177,8 @@ const interventions = {
   updateIntervention: notImplemented('Interventions.updateIntervention'),
   addAction: notImplemented('Interventions.addAction'),
   addPart: notImplemented('Interventions.addPart'),
+  // Delegate to complexity factors adapter
+  fetchComplexityFactors: () => complexityFactorsAdapter.fetchComplexityFactors(),
 };
 
 const interventionStatusRefs = {
@@ -193,24 +197,7 @@ const interventionStatusRefs = {
   },
 };
 
-const actions = {
-  async fetchActions(interventionId) {
-    return errors.apiCall(async () => {
-      if (interventionId) {
-        const { data } = await tunnelApi.get(`/interventions/${interventionId}/actions`);
-        const list = Array.isArray(data) ? data : data?.data || [];
-        return list.map(mapAction);
-      }
-
-      const response = await tunnelApi.get('/intervention_actions');
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list.map(mapAction);
-    }, 'TunnelActions.fetchActions');
-  },
-  createAction: notImplemented('Actions.createAction'),
-  updateAction: notImplemented('Actions.updateAction'),
-  deleteAction: notImplemented('Actions.deleteAction'),
-};
+// Actions adapter imported from './actions/adapter.ts' - uses modern datasource/mapper/adapter pattern
 
 const actionSubcategories = {
   async fetchSubcategories() {
@@ -335,6 +322,7 @@ export const adapter = {
   interventionStatusRefs,
   actions,
   actionSubcategories,
+  complexityFactors: complexityFactorsAdapter,
   anomalyConfig,
   equipements,
   preventive,

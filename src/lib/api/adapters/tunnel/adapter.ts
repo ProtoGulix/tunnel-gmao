@@ -18,6 +18,7 @@ import { actionsAdapter } from './actions/adapter';
 import { equipementsAdapter } from './equipements/adapter';
 import { interventionStatusRefsAdapter } from './interventionStatusRefs/adapter';
 import { actionSubcategoriesAdapter } from './actionSubcategories/adapter';
+import { complexityFactorsAdapter } from './complexityFactors/adapter';
 import { statsAdapter } from './stats/adapter';
 import { clearAllCache } from '@/lib/api/client';
 
@@ -99,6 +100,7 @@ export const adapter = {
   interventionStatusRefs: interventionStatusRefsAdapter,
   actions: actionsAdapter,
   actionSubcategories: actionSubcategoriesAdapter,
+  complexityFactors: complexityFactorsAdapter,
   anomalyConfig,
   equipements: equipementsAdapter,
   preventive,

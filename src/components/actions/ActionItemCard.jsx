@@ -7,7 +7,7 @@ import PurchaseRequestForm from "@/components/purchase/requests/PurchaseRequestF
 import ActionMetadataHeader from "@/components/common/ActionMetadataHeader";
 import ActionButtons from "@/components/common/ActionButtons";
 import PurchaseRequestList from "@/components/common/PurchaseRequestList";
-import { actions, actionSubcategories, interventions, stock } from "@/lib/api/facade";
+import { actions, actionSubcategories, complexityFactors, stock } from "@/lib/api/facade";
 import { api } from "@/lib/api/client";
 import { useAuth } from "@/auth/useAuth";
 
@@ -92,7 +92,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       try {
         const [subcatsData, factorsData] = await Promise.all([
           actionSubcategories.fetchActionSubcategories(),
-          interventions.fetchComplexityFactors(),
+          complexityFactors.fetchComplexityFactors(),
         ]);
         setSubcategories(subcatsData || []);
         setComplexityFactors(factorsData || []);

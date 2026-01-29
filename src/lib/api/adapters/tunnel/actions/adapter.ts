@@ -18,7 +18,25 @@ export const actionsAdapter = {
     }, interventionId ? `TunnelActions.fetchActions:${interventionId}` : 'TunnelActions.fetchActions');
   },
 
-  createAction: undefined,
+  /**
+   * Create a new intervention action.
+   *
+   * @param payload - Domain InterventionAction payload
+   * @returns Created InterventionAction DTO
+   */
+  async createAction(payload: any) {
+    return apiCall(async () => {
+      // 1. Map domain payload to backend format
+      const backendPayload = mapper.mapActionPayloadToBackend(payload);
+
+      // 2. Create in backend
+      const rawAction = await datasource.createActionRaw(backendPayload);
+
+      // 3. Map response to domain DTO
+      return mapper.mapActionToDomain(rawAction);
+    }, 'TunnelActions.createAction');
+  },
+
   updateAction: undefined,
   deleteAction: undefined,
 };

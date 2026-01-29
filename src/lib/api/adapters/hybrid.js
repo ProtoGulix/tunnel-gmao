@@ -31,7 +31,6 @@ export const adapter = {
   // Directus namespaces
   auth: directusAdapter.auth,
   interventionStatusRefs: directusAdapter.interventionStatusRefs,
-  actions: directusAdapter.actions,
   actionSubcategories: directusAdapter.actionSubcategories,
   anomalyConfig: directusAdapter.anomalyConfig,
   preventive: directusAdapter.preventive,
@@ -46,4 +45,6 @@ export const adapter = {
   machines: tunnelBackendAdapter.machines,
   equipements: tunnelBackendAdapter.equipements,
   interventions: tunnelBackendAdapter.interventions,
+  actions: tunnelBackendAdapter.actions,
+  complexityFactors: tunnelBackendAdapter.complexityFactors,
 };

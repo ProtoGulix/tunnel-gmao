@@ -21,3 +21,14 @@ export const fetchActionsRaw = async (interventionId?: string) => {
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list;
 };
+
+/**
+ * Create a new intervention action (raw API call).
+ *
+ * @param payload - Backend-formatted payload
+ * @returns Raw backend response
+ */
+export const createActionRaw = async (payload: Record<string, unknown>) => {
+  const response = await tunnelApi.post('/intervention_actions/', payload);
+  return response.data?.data || response.data || {};
+};
