@@ -1,3 +1,52 @@
+## 2.1.6 - 2026-02-01
+
+Stabilité: STABLE
+
+### Refonte complète de la documentation métier
+
+#### Ce qui a changé
+
+- **Documentation accessible à tous**: Le document REGLES_METIER.md a été entièrement réécrit pour être compréhensible par tous (techniques et non-techniques)
+- **Système de stock clarifié**: Documentation du système crédit/dette (prise de pièce puis reconstitution via achat)
+- **Workflow d'achat détaillé**: Ajout de la qualification des demandes, des références fournisseur et du cycle de vie des paniers
+- **Suppression des concepts abandonnés**: Retrait du concept de sous-tâches qui n'est plus d'actualité
+
+#### Nouveaux concepts documentés
+
+- **Demandes d'achat qualifiées**: Processus de normalisation des nouvelles références
+- **Références fournisseur et fabricant**: Liaison entre références internes et externes
+- **Paniers fournisseur avec cycle de vie**: États critiques (taille, âge, urgence) et statut ASK
+- **Exemples concrets**: Deux scénarios complets illustrant les workflows réels
+
+#### Impact utilisateur
+
+- Documentation beaucoup plus claire et accessible
+- Meilleure compréhension des processus métier
+- Exemples pratiques pour se former
+- Alignement complet entre documentation et système réel
+
+### Nettoyage du code inutilisé
+
+#### Ce qui a été fait
+
+- **Composants machine supprimés**: 8 composants non utilisés retirés du dossier components/machine
+- **Hooks supprimés**: 4 hooks obsolètes retirés (useFilters, useRefresh, useMachineStats, useExportAPI)
+- **Références nettoyées**: Commentaires obsolètes supprimés dans MachineDetail.jsx et ErrorNotification.jsx
+
+#### Amélioration technique
+
+- Réduction de la taille du code source
+- Simplification de la maintenance
+- Élimination de code mort
+
+#### Impact utilisateur
+
+- Application plus légère et plus rapide
+- Aucun changement visible dans l'interface
+- Base de code plus propre pour les futures évolutions
+
+---
+
 ## 2.1.5 - 2026-01-29
 
 Stabilité: STABLE
@@ -22,6 +71,13 @@ Stabilité: STABLE
 - Plus d'erreur lors de l'ouverture du formulaire
 - Les actions sont enregistrées plus rapidement
 - Tout le reste continue de fonctionner normalement
+
+### Mise à jour de la documentation
+
+- **Documentation métier mise à jour**: Le document REGLES_METIER.md est maintenant conforme à l'implémentation réelle
+- **Ajout de détails techniques**: Nouveaux formats de données documentés pour les développeurs
+- **Clarification des concepts**: Les facteurs de complexité sont maintenant documentés
+- **Correction des exemples**: Tous les exemples utilisent le bon format de code d'intervention (INT-YYYYMMDD-NNN)
 
 ---
 
