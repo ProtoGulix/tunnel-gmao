@@ -21,6 +21,16 @@ export const stockSuppliersAdapter = {
    * Fetch all stock item supplier references
    */
   fetchStockItemSuppliers: async (params?: any) => {
+    if (typeof params === 'string' || typeof params === 'number') {
+      const raw = await fetchStockItemSuppliersForItemRaw(String(params));
+      return Array.isArray(raw) ? raw.map(mapStockItemSupplierToFrontend) : [];
+    }
+
+    if (params && typeof params === 'object' && params.stock_item_id) {
+      const raw = await fetchStockItemSuppliersForItemRaw(String(params.stock_item_id));
+      return Array.isArray(raw) ? raw.map(mapStockItemSupplierToFrontend) : [];
+    }
+
     const raw = await fetchStockItemSuppliersRaw(params);
     return Array.isArray(raw) ? raw.map(mapStockItemSupplierToFrontend) : [];
   },

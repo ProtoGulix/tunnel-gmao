@@ -1,3 +1,22 @@
+## 2.1.8 - 2026-02-04
+
+Stabilité: STABLE
+
+### Améliorations des demandes d'achat
+
+#### Ce qui a changé
+
+- **Détails visibles**: Les lignes de commande s’affichent correctement dans le détail des demandes
+- **Affichage plus clair**: 3 situations distinctes (à qualifier, sans référence fournisseur, déjà dispatchée)
+- **Statut fiable**: Le statut affiché correspond exactement à celui fourni par l’API
+
+#### Impact utilisateur
+
+- Accès immédiat aux informations utiles
+- Moins de confusion sur l’état des demandes
+
+---
+
 ## 2.1.7 - 2026-02-04
 
 Stabilité: STABLE

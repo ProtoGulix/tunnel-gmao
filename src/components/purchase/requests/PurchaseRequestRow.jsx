@@ -4,21 +4,27 @@
 
 import PropTypes from "prop-types";
 import { Fragment } from "react";
-import { Table, Text, Badge, Button, Flex } from "@radix-ui/themes";
+import { Table } from "@radix-ui/themes";
 
-import StockRefLink from "@/components/common/StockRefLink";
 import ExpandableDetailsRow from "@/components/common/ExpandableDetailsRow";
 import PurchaseRequestDetailsPanel from "@/components/purchase/requests/PurchaseRequestDetailsPanel";
-import DeletePurchaseRequestButton from "@/components/purchase/requests/DeletePurchaseRequestButton";
-import { StatusBadges, renderUrgencyBadge } from "@/components/purchase/requests/purchaseRequestRow.helpers";
+import {
+  getOrderLineRelations,
+  groupOrderLinesByOrder,
+  createDetailsClickHandler,
+  getExpandedStates,
+} from "@/components/purchase/requests/purchaseRequestOrderLines.helpers";
+import {
+  OrderLinesExpandedSection,
+  MainRowCells,
+  ActionsCell,
+} from "@/components/purchase/requests/PurchaseRequestRowCells";
 
-// eslint-disable-next-line complexity
 export default function PurchaseRequestRow({
   request,
   age,
   stockItem,
   stockRef,
-  hasMissing,
   hasLink,
   colSpan,
   renderExpandedContent,
@@ -45,86 +51,69 @@ export default function PurchaseRequestRow({
   onCreateSupplier,
   allManufacturers,
 }) {
+  const isToQualify = request?.derived_status?.code === "TO_QUALIFY";
+  const orderLineRelations = getOrderLineRelations(request);
+  const hasOrderLines = Array.isArray(orderLineRelations) && orderLineRelations.length > 0;
+  const groupedOrders = groupOrderLinesByOrder(orderLineRelations, request);
+  const isExpanded = detailsExpandedId === request.id || expandedRequestId === request.id;
+  const supplierRefsForItem = request?.stockItemId ? getSupplierRefsForItem(request.stockItemId) : [];
+  const hasSupplierRefs = (request?.stockItemSupplierRefsCount ?? supplierRefsForItem.length ?? 0) > 0;
+
+  const handleDetailsClick = createDetailsClickHandler({
+    request,
+    isToQualify,
+    hasOrderLines,
+    hasSupplierRefs,
+    isExpanded,
+    onToggleExpand,
+    setDetailsExpandedId,
+    onLoadDetailsData,
+  });
+
+  const { showQualifyExpanded, showOrderLinesExpanded, showDetailsPanel } = getExpandedStates({
+    request,
+    expandedRequestId,
+    detailsExpandedId,
+    isToQualify,
+    hasOrderLines,
+    hasSupplierRefs,
+  });
+
   return (
     <Fragment>
       <Table.Row>
-        <Table.Cell style={{ background: `color-mix(in srgb, ${getAgeColor(age)} 30%, transparent)` }}>
-          <Text weight="medium" size="3">
-            {request.itemLabel || stockItem?.name || "-"}
-          </Text>
-        </Table.Cell>
-        <Table.Cell>
-          <StatusBadges request={request} age={age} />
-        </Table.Cell>
-        <Table.Cell>{renderUrgencyBadge(request.urgency)}</Table.Cell>
-        <Table.Cell>
-          {stockRef ? (
-            <StockRefLink reference={stockRef} tab="stock" color="green" variant="soft" />
-          ) : hasLink ? (
-            <Badge color="amber" variant="outline">
-              À définir
-            </Badge>
-          ) : (
-            <Text color="gray" size="2">-</Text>
-          )}
-        </Table.Cell>
-        <Table.Cell>
-          <Text weight="medium">{request.quantity || "-"}</Text>
-        </Table.Cell>
-        <Table.Cell style={{ background: `color-mix(in srgb, ${getAgeColor(age)} 30%, transparent)` }}>
-          <Text weight="medium">{age}j</Text>
-        </Table.Cell>
-        <Table.Cell>
-          <Flex gap="2" align="center">
-            <Button
-              size="1"
-              variant={detailsExpandedId === request.id || expandedRequestId === request.id ? "solid" : "soft"}
-              color={detailsExpandedId === request.id || expandedRequestId === request.id ? "blue" : "gray"}
-              loading={detailsLoading}
-              onClick={async () => {
-                // Toujours ouvrir/fermer le panel
-                const isCurrentlyExpanded = detailsExpandedId === request.id || expandedRequestId === request.id;
-                
-                if (hasMissing) {
-                  // Cas 1: données manquantes - utiliser l'expansion de recherche
-                  onToggleExpand(request.id);
-                } else if (request.stockItemId) {
-                  // Cas 2: données complètes - ouvrir le panel de détails
-                  const shouldOpen = !isCurrentlyExpanded;
-                  
-                  // Charger les données avant d'ouvrir
-                  if (shouldOpen) {
-                    await onLoadDetailsData(request.id);
-                  }
-                  
-                  // Puis ouvrir/fermer le panel
-                  setDetailsExpandedId(shouldOpen ? request.id : null);
-                }
-              }}
-            >
-              Détails
-            </Button>
-            <DeletePurchaseRequestButton
-              requestId={request.id}
-              isConfirming={deleteConfirmId === request.id}
-              onClick={handleDeleteButtonClick}
-              disabled={deleteLoading}
-              size="1"
-            />
-          </Flex>
-        </Table.Cell>
+        <MainRowCells
+          request={request}
+          age={age}
+          stockItem={stockItem}
+          stockRef={stockRef}
+          hasLink={hasLink}
+          getAgeColor={getAgeColor}
+        />
+        <ActionsCell
+          requestId={request.id}
+          isExpanded={isExpanded}
+          detailsLoading={detailsLoading}
+          onDetailsClick={handleDetailsClick}
+          deleteConfirmId={deleteConfirmId}
+          deleteLoading={deleteLoading}
+          handleDeleteButtonClick={handleDeleteButtonClick}
+        />
       </Table.Row>
-      {expandedRequestId === request.id && (
+      {showQualifyExpanded && (
         <Table.Row>
           <Table.Cell colSpan={colSpan}>{renderExpandedContent?.(request)}</Table.Cell>
         </Table.Row>
       )}
-      {detailsExpandedId === request.id && request.stockItemId && (
+      {showOrderLinesExpanded && (
+        <OrderLinesExpandedSection groupedOrders={groupedOrders} colSpan={colSpan} />
+      )}
+      {showDetailsPanel && (
         <ExpandableDetailsRow colSpan={colSpan} withCard={false}>
           <PurchaseRequestDetailsPanel
             request={request}
             stockItem={stockItem}
-            supplierRefs={getSupplierRefsForItem(request.stockItemId)}
+            supplierRefs={supplierRefsForItem}
             standardSpecs={getStandardSpecsForItem(request.stockItemId)}
             suppliers={suppliers}
             onAddSupplierRef={onAddSupplierRef}
@@ -148,7 +137,6 @@ PurchaseRequestRow.propTypes = {
   age: PropTypes.number.isRequired,
   stockItem: PropTypes.object,
   stockRef: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  hasMissing: PropTypes.bool.isRequired,
   hasLink: PropTypes.bool.isRequired,
   colSpan: PropTypes.number.isRequired,
   renderExpandedContent: PropTypes.func,

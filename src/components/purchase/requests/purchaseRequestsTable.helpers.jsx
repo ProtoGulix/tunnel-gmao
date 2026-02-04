@@ -1,5 +1,3 @@
-import { Package } from "lucide-react";
-import { Button } from "@radix-ui/themes";
 import { COLOR_USAGE } from "@/config/colorPalette";
 
 // Couleurs d'âge basées sur la palette achats/urgence
@@ -18,7 +16,12 @@ export const getAgeColor = (days) => {
 const getCompletenessScore = (request) => {
   let score = 0;
   const hasLink = !!request.stockItemId;
-  const hasRef = !!request.stockItemRef;
+  const hasRef = !!(
+    request.stockItemRef ||
+    request.stock_item_ref ||
+    request.stockItemCode ||
+    request.stock_item_code
+  );
   const hasSupplier = (request.stockItemSupplierRefsCount ?? 0) > 0;
   if (hasLink) score += 100;
   if (hasRef) score += 100;

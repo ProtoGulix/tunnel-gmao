@@ -77,15 +77,18 @@ export const useStockItemsManagement = (onError) => {
 
   const loadSupplierRefs = useCallback(async (stockItemId) => {
     try {
-      const data = await stockSuppliers.fetchStockItemSuppliers(stockItemId);
+      const normalizedId = normalizeId(stockItemId);
+      if (!normalizedId) return [];
+
+      const data = await stockSuppliers.fetchStockItemSuppliers(normalizedId);
       setStockItemSuppliers(data);
       setSupplierRefsByItem((prev) => ({
         ...prev,
-        [stockItemId]: data,
+        [normalizedId]: data,
       }));
       setSupplierRefsCounts((prev) => ({
         ...prev,
-        [stockItemId]: data.length,
+        [normalizedId]: data.length,
       }));
       return data;
     } catch (error) {
@@ -96,18 +99,21 @@ export const useStockItemsManagement = (onError) => {
 
   const loadStandardSpecs = useCallback(async (stockItemId) => {
     try {
-      const specs = await stockSpecs.fetchStockSpecsForItem(stockItemId);
+      const normalizedId = normalizeId(stockItemId);
+      if (!normalizedId) return [];
+
+      const specs = await stockSpecs.fetchStockSpecsForItem(normalizedId);
       setStandardSpecsByItem((prev) => ({
         ...prev,
-        [stockItemId]: specs || [],
+        [normalizedId]: specs || [],
       }));
       setSpecsCounts((prev) => ({
         ...prev,
-        [stockItemId]: (specs || []).length,
+        [normalizedId]: (specs || []).length,
       }));
       setSpecsHasDefault((prev) => ({
         ...prev,
-        [stockItemId]: (specs || []).some((s) => s.is_default),
+        [normalizedId]: (specs || []).some((s) => s.is_default),
       }));
       return specs;
     } catch (error) {

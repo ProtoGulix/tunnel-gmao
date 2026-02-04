@@ -91,22 +91,23 @@ export default function PurchaseRequestsTable({
     const age = getAgeDays(request.createdAt);
     const stockItem = getStockItemDetails(request.stockItemId);
 
-    const stockRef = request.stockItemRef;
+    const stockRef =
+      request.stockItemRef ||
+      request.stock_item_ref ||
+      request.stockItemCode ||
+      request.stock_item_code ||
+      stockItem?.ref ||
+      null;
 
     const hasLink = !!request.stockItemId;
-    const hasQty = Number(request.quantity) > 0;
-    const hasRef = !!stockRef;
-    const hasSupplier = (request.stockItemSupplierRefsCount ?? 0) > 0;
-    const hasMissing = !(hasLink && hasQty && hasRef && hasSupplier);
 
     return (
       <PurchaseRequestRow
         key={request.id}
-        request={{ ...request, renderExpandedContent }}
+        request={request}
         age={age}
         stockItem={stockItem}
         stockRef={stockRef}
-        hasMissing={hasMissing}
         hasLink={hasLink}
         colSpan={colSpan}
         renderExpandedContent={renderExpandedContent}

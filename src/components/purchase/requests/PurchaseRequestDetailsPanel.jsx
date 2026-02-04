@@ -1,38 +1,53 @@
 /**
  * Panneau de détails centralisé pour les Demandes d'Achat
- * 
- * Compose l'affichage et la gestion de:
- * - Article lié
- * - Références fournisseurs (via SupplierRefsInlinePanel)
- * - Spécifications standard (via SpecificationsSection)
- * 
- * Cette convention garantit une cohérence visuelle et fonctionnelle
- * dans tous les contextes de gestion des DA.
- * 
- * Usage:
- * <PurchaseRequestDetailsPanel
- *   request={request}
- *   stockItem={item}
- *   supplierRefs={refs}
- *   standardSpecs={specs}
- *   suppliers={suppliers}
- *   onAddSupplierRef={...}
- *   onDeleteSupplierRef={...}
- *   onUpdateSupplierRef={...}
- *   onAddStandardSpec={...}
- *   onCreateSupplier={...}
- *   loading={false}
- * />
+ * Affiche: intervention liée, article, références fournisseurs, spécifications
  */
 
 import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Flex, Box, Text, Card, Badge } from '@radix-ui/themes';
-import { Package } from 'lucide-react';
+import { Flex, Text, Card, Badge } from '@radix-ui/themes';
+import { Package, ExternalLink, Wrench } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import SupplierRefsInlinePanel from '@/components/purchase/suppliers/SupplierRefsInlinePanel';
 import StandardSpecsPanel from '@/components/stock/StandardSpecsPanel';
 import StockRefLink from '@/components/common/StockRefLink';
+
+/** État initial du formulaire référence fournisseur */
+const INITIAL_SUPPLIER_REF_FORM = {
+  supplier_id: '', supplier_ref: '', unit_price: '', delivery_time_days: '', is_preferred: false,
+};
+
+/** Construit le payload pour ajout de référence fournisseur */
+const buildSupplierRefPayload = (formData) => ({
+  supplier_id: (formData.supplier_id || '').trim(),
+  supplier_ref: (formData.supplier_ref || '').trim(),
+  unit_price: formData.unit_price ? parseFloat(formData.unit_price) : null,
+  delivery_time_days: formData.delivery_time_days ? parseInt(formData.delivery_time_days) : null,
+});
+
+/** Extrait les infos d'intervention depuis la request */
+const getInterventionInfo = (request) =>
+  request.intervention || (request.interventionId ? { id: request.interventionId, code: request.interventionId } : null);
+
+/** Badge lien vers l'intervention liée */
+function InterventionBadge({ request }) {
+  const info = getInterventionInfo(request);
+  if (!info) return null;
+  return (
+    <Flex align="center" gap="2" p="2" style={{ background: 'var(--blue-2)', borderRadius: 'var(--radius-2)' }}>
+      <Wrench size={16} color="var(--blue-9)" />
+      <Text size="2" weight="medium" color="gray">Intervention :</Text>
+      <Link to={`/intervention/${info.id}`} style={{ textDecoration: 'none' }}>
+        <Badge color="blue" variant="soft" size="2" style={{ cursor: 'pointer' }}>
+          <Flex align="center" gap="1">{info.code || info.id}<ExternalLink size={12} /></Flex>
+        </Badge>
+      </Link>
+    </Flex>
+  );
+}
+
+InterventionBadge.propTypes = { request: PropTypes.object.isRequired };
 
 /**
  * Panneau de détails pour affichage centralisé de toutes les infos DA
@@ -41,75 +56,25 @@ export default function PurchaseRequestDetailsPanel({
   request,
   stockItem,
   supplierRefs = [],
-  standardSpecs = [],
   suppliers = [],
   onAddSupplierRef,
   onDeleteSupplierRef,
   onUpdateSupplierRef,
-  onAddStandardSpec,
-  onDeleteStandardSpec,
-  onUpdateStandardSpec,
   loading = false,
-  onCreateSupplier,
   allManufacturers = [],
 }) {
-  // État du formulaire pour les références fournisseurs (adapter à SupplierRefsInlinePanel)
-  const [supplierRefFormData, setSupplierRefFormData] = useState({
-    supplier_id: '',
-    supplier_ref: '',
-    unit_price: '',
-    delivery_time_days: '',
-    is_preferred: false,
-  });
+  const [supplierRefFormData, setSupplierRefFormData] = useState(INITIAL_SUPPLIER_REF_FORM);
 
-  // Wrapper callback pour adapter l'interface des références
   const handleAddSupplierRef = useCallback(() => {
-    const stockItemId = stockItem?.id;
-    if (!stockItemId) return;
-    
-    const trimmedSupplierId = (supplierRefFormData.supplier_id || '').trim();
-    const trimmedSupplierRef = (supplierRefFormData.supplier_ref || '').trim();
-
-    if (!trimmedSupplierId || !trimmedSupplierRef) {
+    if (!stockItem?.id) return;
+    const payload = buildSupplierRefPayload(supplierRefFormData);
+    if (!payload.supplier_id || !payload.supplier_ref) {
       console.warn('Fournisseur ou référence manquants');
       return;
     }
-
-    onAddSupplierRef(stockItemId, {
-      supplier_id: trimmedSupplierId,
-      supplier_ref: trimmedSupplierRef,
-      unit_price: supplierRefFormData.unit_price ? parseFloat(supplierRefFormData.unit_price) : null,
-      delivery_time_days: supplierRefFormData.delivery_time_days ? parseInt(supplierRefFormData.delivery_time_days) : null,
-    });
-
-    setSupplierRefFormData({
-      supplier_id: '',
-      supplier_ref: '',
-      unit_price: '',
-      delivery_time_days: '',
-      is_preferred: false,
-    });
+    onAddSupplierRef(stockItem.id, payload);
+    setSupplierRefFormData(INITIAL_SUPPLIER_REF_FORM);
   }, [stockItem?.id, supplierRefFormData, onAddSupplierRef]);
-
-  // Wrappers pour spécifications (adapter aux callbacks fournis par parent)
-  const handleAddSpec = useCallback(async (specData) => {
-    try {
-      await onAddStandardSpec(request.id, specData);
-      // Recharger les specs depuis le parent
-    } catch (error) {
-      console.error('Erreur ajout spec:', error);
-      throw error;
-    }
-  }, [request.id, onAddStandardSpec]);
-
-  const handleUpdateSpec = useCallback(async (specId, specData) => {
-    try {
-      await onUpdateStandardSpec(specId, specData);
-    } catch (error) {
-      console.error('Erreur mise à jour spec:', error);
-      throw error;
-    }
-  }, [onUpdateStandardSpec]);
 
   // Vérification des props obligatoires
   if (!request || !stockItem) {
@@ -124,6 +89,9 @@ export default function PurchaseRequestDetailsPanel({
 
   return (
     <Flex direction="column" gap="3">
+      {/* Section Intervention liée */}
+      <InterventionBadge request={request} />
+
       {/* Section Article */}
       <Flex align="center" justify="between" wrap="wrap" gap="3" p="2">
         <Flex align="center" gap="2">
@@ -169,22 +137,16 @@ PurchaseRequestDetailsPanel.propTypes = {
   request: PropTypes.object.isRequired,
   stockItem: PropTypes.object.isRequired,
   supplierRefs: PropTypes.array,
-  standardSpecs: PropTypes.array,
   suppliers: PropTypes.array,
   onAddSupplierRef: PropTypes.func,
   onDeleteSupplierRef: PropTypes.func,
   onUpdateSupplierRef: PropTypes.func,
-  onAddStandardSpec: PropTypes.func,
-  onDeleteStandardSpec: PropTypes.func,
-  onUpdateStandardSpec: PropTypes.func,
   loading: PropTypes.bool,
-  onCreateSupplier: PropTypes.func,
   allManufacturers: PropTypes.array,
 };
 
 PurchaseRequestDetailsPanel.defaultProps = {
   supplierRefs: [],
-  standardSpecs: [],
   suppliers: [],
   loading: false,
   allManufacturers: [],

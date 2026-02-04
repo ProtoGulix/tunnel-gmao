@@ -11,6 +11,15 @@
 export const mapPurchaseRequestToDomain = (raw: any) => {
   if (!raw) return null;
 
+  const orderLines =
+    raw.order_lines ||
+    raw.orderLines ||
+    raw.supplier_order_lines ||
+    raw.supplierOrderLines ||
+    raw.supplier_order_line_ids ||
+    raw.supplierOrderLineIds ||
+    [];
+
   return {
     id: raw.id?.toString() || '',
     itemLabel: raw.item_label || '',
@@ -22,7 +31,11 @@ export const mapPurchaseRequestToDomain = (raw: any) => {
     reason: raw.reason || null,
     notes: raw.notes || null,
     workshop: raw.workshop || null,
-    interventionId: raw.intervention_id || null,
+    interventionId: raw.intervention_id?.id || raw.intervention_id || null,
+    intervention: raw.intervention_id && typeof raw.intervention_id === 'object' ? {
+      id: raw.intervention_id.id,
+      code: raw.intervention_id.code || raw.intervention_id.id,
+    } : null,
     quantityRequested: raw.quantity_requested ? Number(raw.quantity_requested) : null,
     quantityApproved: raw.quantity_approved ? Number(raw.quantity_approved) : null,
     urgent: raw.urgent ?? false,
@@ -35,6 +48,7 @@ export const mapPurchaseRequestToDomain = (raw: any) => {
     status: raw.status || null,
     derived_status: raw.derived_status || null,
     stockItemSupplierRefsCount: raw.stock_item_supplier_refs_count ?? 0,
+    orderLines,
   };
 };
 
