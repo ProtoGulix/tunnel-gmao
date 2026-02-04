@@ -54,7 +54,7 @@ export default function PurchaseRequestRow({
           </Text>
         </Table.Cell>
         <Table.Cell>
-          <StatusBadges request={request} hasMissing={hasMissing} age={age} />
+          <StatusBadges request={request} age={age} />
         </Table.Cell>
         <Table.Cell>{renderUrgencyBadge(request.urgency)}</Table.Cell>
         <Table.Cell>

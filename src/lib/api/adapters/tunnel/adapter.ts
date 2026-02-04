@@ -20,6 +20,12 @@ import { interventionStatusRefsAdapter } from './interventionStatusRefs/adapter'
 import { actionSubcategoriesAdapter } from './actionSubcategories/adapter';
 import { complexityFactorsAdapter } from './complexityFactors/adapter';
 import { statsAdapter } from './stats/adapter';
+import { purchaseRequestsAdapter } from './purchaseRequests/adapter';
+import { supplierOrdersAdapter } from './supplierOrders/adapter';
+import { supplierOrderLinesAdapter } from './supplierOrderLines/adapter';
+import { stockAdapter } from './stock/adapter';
+import { suppliersAdapter } from './suppliers/adapter';
+import { stockSuppliersAdapter } from './stockSuppliers/adapter';
 import { clearAllCache } from '@/lib/api/client';
 
 // ============================================================================
@@ -40,38 +46,6 @@ const preventive = {
   acceptPreventiveSuggestion: undefined,
   rejectPreventiveSuggestion: undefined,
   reviewPreventiveSuggestion: undefined,
-};
-
-const stock = {
-  fetchStockItems: undefined,
-  createStockItem: undefined,
-  updateStockItem: undefined,
-  deleteStockItem: undefined,
-  fetchStockItemStandardSpecs: undefined,
-  createStockItemStandardSpec: undefined,
-  updateStockItemStandardSpec: undefined,
-  deleteStockItemStandardSpec: undefined,
-  fetchStockFamilies: undefined,
-  fetchStockSubFamilies: undefined,
-  createPurchaseRequest: undefined,
-  fetchPurchaseRequests: undefined,
-};
-
-const suppliers = {
-  fetchSuppliers: undefined,
-  fetchSupplier: undefined,
-  createSupplier: undefined,
-  updateSupplier: undefined,
-  deleteSupplier: undefined,
-  purgeSupplierOrder: undefined,
-  dispatchPurchaseRequests: undefined,
-};
-
-const stockSuppliers = {
-  fetchStockItemSuppliers: undefined,
-  createStockItemSupplier: undefined,
-  updateStockItemSupplier: undefined,
-  deleteStockItemSupplier: undefined,
 };
 
 const stockSpecs = {
@@ -103,11 +77,15 @@ export const adapter = {
   complexityFactors: complexityFactorsAdapter,
   anomalyConfig,
   equipements: equipementsAdapter,
+  machines: equipementsAdapter, // Alias pour compatibilité
   preventive,
-  stock,
+  stock: stockAdapter,
   stockSpecs,
   manufacturerItems,
-  suppliers,
-  stockSuppliers,
+  suppliers: suppliersAdapter,
+  stockSuppliers: stockSuppliersAdapter,
   stats: statsAdapter,
+  purchaseRequests: purchaseRequestsAdapter,
+  supplierOrders: supplierOrdersAdapter,
+  supplierOrderLines: supplierOrderLinesAdapter,
 };

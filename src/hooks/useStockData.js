@@ -1,22 +1,9 @@
 import { useMemo } from "react";
 
-export function useStockStats(stockItems) {
-  return useMemo(() => {
-    const lowStock = stockItems.filter(
-      (item) => item.current_stock <= item.min_stock
-    ).length;
-    const totalValue = stockItems.reduce(
-      (sum, item) => sum + (item.current_stock || 0),
-      0
-    );
-    return {
-      total: stockItems.length,
-      lowStock,
-      totalValue,
-    };
-  }, [stockItems]);
-}
-
+/**
+ * Hook pour calculer les statistiques des demandes d'achat
+ * Utilisé dans la page Procurement pour afficher les compteurs
+ */
 export function useRequestStats(requests) {
   return useMemo(() => {
     const urgent = requests.filter(
@@ -32,24 +19,5 @@ export function useRequestStats(requests) {
       noRef,
       pending,
     };
-  }, [requests]);
-}
-
-export function useCategories(items) {
-  return useMemo(() => {
-    const cats = new Set(items.map((item) => item.category).filter(Boolean));
-    return ["all", ...Array.from(cats)];
-  }, [items]);
-}
-
-export function useAvailableStatuses(requests) {
-  return useMemo(() => {
-    const statusMap = new Map();
-    requests.forEach((req) => {
-      if (req.status) {
-        statusMap.set(req.status.id, req.status);
-      }
-    });
-    return Array.from(statusMap.values());
   }, [requests]);
 }

@@ -14,13 +14,9 @@ export const extractOrderInfo = (order) => {
   }
 
   const status = typeof order === 'object' ? order.status || 'UNKNOWN' : '?';
-  const supplier =
-    typeof order === 'object' && order.supplier_id
-      ? typeof order.supplier_id === 'object'
-        ? order.supplier_id.name || '?'
-        : '?'
-      : '?';
-  const orderNumber = typeof order === 'object' ? order.order_number || '—' : '—';
+  const supplierObj = typeof order === 'object' ? order.supplier : null;
+  const supplier = supplierObj && typeof supplierObj === 'object' ? supplierObj.name || '?' : '?';
+  const orderNumber = typeof order === 'object' ? order.orderNumber || '—' : '—';
   const orderId = typeof order === 'object' ? order.id : order;
 
   return { status, supplier, orderNumber, orderId };

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { suppliers as suppliersApi } from '@/lib/api/facade';
+import { suppliers as suppliersApi, supplierOrders } from '@/lib/api/facade';
 import { useOptimisticData } from './useOptimisticData';
 
 /**
@@ -18,7 +18,7 @@ export const usePurchasingManagement = (onError) => {
 
   // Hook optimiste pour les commandes fournisseurs
   const ordersOptimistic = useOptimisticData(
-    () => suppliersApi.fetchSupplierOrders(),
+    () => supplierOrders.fetchSupplierOrders(),
     onError
   );
 
@@ -26,17 +26,14 @@ export const usePurchasingManagement = (onError) => {
    * Met à jour une ligne de commande localement (optimiste)
    */
   const updateOrderLine = useCallback((orderId, lineId, lineUpdates) => {
-    ordersOptimistic.setData(prev => 
+    ordersOptimistic.setData(prev =>
       prev.map(order => {
         if (order.id !== orderId) return order;
-        
-        const lines = order.lines || order.orderLines || [];
+
+        const lines = order.lines || [];
         return {
           ...order,
-          lines: lines.map(line => 
-            line.id === lineId ? { ...line, ...lineUpdates } : line
-          ),
-          orderLines: lines.map(line => 
+          lines: lines.map(line =>
             line.id === lineId ? { ...line, ...lineUpdates } : line
           ),
         };

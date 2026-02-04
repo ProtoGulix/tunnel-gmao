@@ -11,17 +11,16 @@ import { ShoppingCart, Trash2, AlertTriangle, X, Check, Package } from "lucide-r
 import PropTypes from "prop-types";
 import { useState } from "react";
 import StockRefLink from "@/components/common/StockRefLink";
-import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
 /** Configuration des badges de statut */
 const STATUS_BADGE_CONFIG = {
-  pooling: { color: 'purple', label: 'Mutualisation' },
-  sent: { color: 'blue', label: 'Devis envoyé' },
-  ordered: { color: 'green', label: 'Commandée' },
-  received: { color: 'green', label: 'Reçue' },
-  cancelled: { color: 'red', label: 'Annulée' },
-  open: { color: 'blue', label: 'En attente' },
-  in_progress: { color: 'blue', label: 'En attente' },
+  TO_QUALIFY: { color: 'amber', label: 'À qualifier' },
+  OPEN: { color: 'blue', label: 'En attente' },
+  QUOTED: { color: 'blue', label: 'Devis reçu' },
+  ORDERED: { color: 'green', label: 'Commandée' },
+  PARTIAL: { color: 'green', label: 'Partielle' },
+  RECEIVED: { color: 'green', label: 'Reçue' },
+  REJECTED: { color: 'red', label: 'Refusée' },
   default: { color: 'gray', label: 'Ouverte' }
 };
 
@@ -71,12 +70,11 @@ function PurchaseRequestItem({ pr, onDelete }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Dériver le statut depuis supplier_order
-  const derivedStatus = pr.derived_status || derivePurchaseRequestStatus(pr);
-  const statusId = typeof derivedStatus === "string" ? derivedStatus : derivedStatus?.id;
+  // derived_status vient du backend avec structure {code, label, color}
+  const statusCode = pr.derived_status?.code;
 
   const basketNumber = getSelectedBasketInfo(pr);
-  const statusBadge = getStatusBadgeProps(statusId);
+  const statusBadge = getStatusBadgeProps(statusCode);
 
   const handleDeleteClick = () => {
     setShowConfirm(true);

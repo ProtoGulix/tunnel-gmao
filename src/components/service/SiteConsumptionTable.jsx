@@ -137,9 +137,9 @@ export default function SiteConsumptionTable({ siteConsumption }) {
           <Info size={18} />
         </Callout.Icon>
         <Callout.Text>
-          <Box as="p" size="2">
+          <Text as="span" size="2">
             {EXPLANATION_TEXT}
-          </Box>
+          </Text>
         </Callout.Text>
       </Callout.Root>
     </Box>

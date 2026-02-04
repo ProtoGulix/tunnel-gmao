@@ -11,12 +11,11 @@ import { MoreHorizontal, Mail, FolderOpen, Send, PackageCheck, Archive, XCircle,
 import ToggleDetailsButton from '@/components/common/ToggleDetailsButton';
 import {
   getOrderNumber,
-  getCreatedAt,
   getSupplierObj,
   getLineCount,
-  getAgeInDays,
+  getOrderAgeDays,
   getAgeColor,
-  isBlockingOrder,
+  getOrderIsBlocking,
 } from '../supplierOrdersConfig';
 import { getSupplierOrderStatus } from '@/config/purchasingConfig';
 import { LineCountBadge, AgeBadge, UrgencyBadge, BlockingBadge } from './BadgeRenderers';
@@ -49,8 +48,8 @@ export default function OrderRow({
   isLocked = false,
 }) {
   const lineCount = getLineCount(order);
-  const ageDays = getAgeInDays(getCreatedAt(order));
-  const isBlocking = isBlockingOrder(order.status, ageDays);
+  const ageDays = getOrderAgeDays(order);
+  const isBlocking = getOrderIsBlocking(order);
   const ageColor = getAgeColor(order);
   const urgencyLevel = order.urgencyLevel || 'low';
   const statusConfig = getSupplierOrderStatus(order.status);
@@ -171,18 +170,23 @@ OrderRow.propTypes = {
   order: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     orderNumber: PropTypes.string,
-    order_number: PropTypes.string,
     status: PropTypes.string.isRequired,
     createdAt: PropTypes.string,
-    created_at: PropTypes.string,
     totalAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    total_amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     currency: PropTypes.string,
     lineCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    line_count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     urgencyLevel: PropTypes.oneOf(['low', 'normal', 'high']),
-    supplier: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
-    supplier_id: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
+    supplier: PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      name: PropTypes.string,
+      code: PropTypes.string,
+      contact_name: PropTypes.string,
+      email: PropTypes.string,
+      phone: PropTypes.string,
+    }),
+    ageDays: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    ageColor: PropTypes.string,
+    isBlocking: PropTypes.bool,
   }).isRequired,
   loading: PropTypes.bool,
   isExpanded: PropTypes.bool,

@@ -8,14 +8,7 @@
  */
 
 // ===== CONSTANTES TEMPORELLES =====
-/** Nombre de millisecondes dans un jour */
-export const DAY_IN_MS = 1000 * 60 * 60 * 24;
-
-/** Nombre de jours avant que panier OPEN soit considéré comme stale */
-export const STALE_OPEN_DAYS = 5;
-
-/** Nombre de jours avant que panier SENT soit considéré comme stale */
-export const STALE_SENT_DAYS = 3;
+// Les décisions (âge, couleur, blocage) sont fournies par le backend.
 
 // ===== MAPPING STATUTS =====
 /** Mapping statut commande → label UI (SUPPLIER_ORDER_LIFECYCLE.md) */
@@ -41,19 +34,22 @@ export const STATUS_MAPPING = {
  * @param {string|Date} date - Date ISO ou objet Date
  * @returns {number|null} Nombre de jours écoulés, ou null si date invalide
  */
-export const getAgeInDays = (date) => {
-  if (!date) return null;
-  const diff = Date.now() - new Date(date).getTime();
-  return Math.max(0, Math.floor(diff / DAY_IN_MS));
-};
+/**
+ * Accesseurs DTO-friendly pour le format normalisé (camelCase)
+ */
+export const getOrderNumber = (order) => order?.orderNumber ?? null;
+export const getSupplierObj = (order) => order?.supplier ?? null;
+export const getLineCount = (order) => Number(order?.lineCount ?? 0);
 
 /**
- * Accesseurs DTO-friendly supportant snake_case et camelCase
+ * Décisions backend (âge, couleur, blocage)
  */
-export const getOrderNumber = (order) => order?.orderNumber ?? order?.order_number;
-export const getCreatedAt = (order) => order?.createdAt ?? order?.created_at;
-export const getSupplierObj = (order) => order?.supplier ?? order?.supplier_id;
-export const getLineCount = (order) => Number(order?.lineCount ?? order?.line_count ?? 0);
+export const getOrderAgeDays = (order) => {
+  const backendAge = order?.ageDays;
+  if (backendAge === undefined || backendAge === null) return null;
+  const normalized = Number(backendAge);
+  return Number.isFinite(normalized) ? normalized : null;
+};
 
 /**
  * Détermine la couleur d'affichage selon l'âge du panier
@@ -64,27 +60,5 @@ export const getLineCount = (order) => Number(order?.lineCount ?? order?.line_co
  * @param {Object} order - Commande
  * @returns {string} Couleur Radix UI (gray, orange, red)
  */
-export const getAgeColor = (order) => {
-  const ageDays = getAgeInDays(getCreatedAt(order));
-  if (ageDays == null) return 'gray';
-  // Simplified, status-agnostic signal:
-  // >14j = red, >7j = orange, else gray
-  if (ageDays > 14) return 'red';
-  if (ageDays > 7) return 'orange';
-  return 'gray';
-};
-
-/**
- * Vérifie si une commande est bloquée (urgente)
- *
- * @param {string} status - Statut de la commande
- * @param {number|null} ageDays - Âge en jours
- * @returns {boolean} true si commande est bloquée
- */
-export const isBlockingOrder = (status, ageDays) => {
-  if (ageDays == null) return false;
-  return (
-    (status === 'OPEN' && ageDays > STALE_OPEN_DAYS) ||
-    (status === 'SENT' && ageDays > STALE_SENT_DAYS)
-  );
-};
+export const getAgeColor = (order) => order?.ageColor ?? 'gray';
+export const getOrderIsBlocking = (order) => Boolean(order?.isBlocking);

@@ -1,7 +1,6 @@
 import { Package } from "lucide-react";
 import { Button } from "@radix-ui/themes";
 import { COLOR_USAGE } from "@/config/colorPalette";
-import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
 // Couleurs d'âge basées sur la palette achats/urgence
 export const AGE_COLORS = {
@@ -28,12 +27,11 @@ const getCompletenessScore = (request) => {
 };
 
 const getStatusPriority = (request) => {
-  const derivedStatus = request.derived_status || derivePurchaseRequestStatus(request);
-  const statusId = typeof derivedStatus === "string" ? derivedStatus : derivedStatus?.id;
-  if (statusId === "received") return 4;
-  if (statusId === "ordered") return 3;
-  if (statusId === "sent") return 2;
-  if (statusId === "pooling") return 1;
+  const statusCode = request.derived_status?.code;
+  if (statusCode === "RECEIVED") return 4;
+  if (statusCode === "ORDERED") return 3;
+  if (statusCode === "QUOTED") return 2;
+  if (statusCode === "OPEN") return 1;
   return 0;
 };
 

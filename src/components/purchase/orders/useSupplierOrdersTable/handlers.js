@@ -41,11 +41,11 @@ export function createHandlers({
     }
   };
 
-  const handleExportCSV = (order) => createHandleExportCSV(getOrderLines, showError)(order);
+  const handleExportCSV = (order) => createHandleExportCSV(showError)(order);
 
-  const handleSendEmail = (order) => createHandleSendEmail(getOrderLines, showError)(order);
+  const handleSendEmail = (order) => createHandleSendEmail(showError)(order);
 
-  const handleCopyHTMLEmail = (order) => createHandleCopyHTMLEmail(getOrderLines, showError)(order);
+  const handleCopyHTMLEmail = (order) => createHandleCopyHTMLEmail(showError)(order);
 
   const wrappedHandleStatusChange = async (orderId, newStatus) => {
     await handleStatusChange(

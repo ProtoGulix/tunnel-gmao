@@ -3,7 +3,7 @@
  * @module components/purchase/orders/supplierOrdersTableHelpers
  */
 
-import { getAgeInDays, getCreatedAt } from './supplierOrdersConfig';
+import { getOrderAgeDays } from './supplierOrdersConfig';
 
 /**
  * Trie les commandes : non-commandées d'abord, puis par âge décroissant
@@ -16,8 +16,8 @@ export const sortOrdersByStatusAndAge = (orders) => {
     const bCompleted = ['RECEIVED', 'CLOSED', 'CANCELLED'].includes(b.status);
     if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
 
-    const ageA = getAgeInDays(getCreatedAt(a)) || 0;
-    const ageB = getAgeInDays(getCreatedAt(b)) || 0;
+    const ageA = getOrderAgeDays(a) || 0;
+    const ageB = getOrderAgeDays(b) || 0;
     return ageB - ageA;
   });
 };
@@ -40,8 +40,8 @@ const STATUS_RANK = { OPEN: 1, SENT: 2, ACK: 3, RECEIVED: 4, CLOSED: 5, CANCELLE
 const sortByAge = (orders, sortDir) => {
   const sorted = [...orders];
   sorted.sort((a, b) => {
-    const ageA = getAgeInDays(getCreatedAt(a)) || 0;
-    const ageB = getAgeInDays(getCreatedAt(b)) || 0;
+    const ageA = getOrderAgeDays(a) || 0;
+    const ageB = getOrderAgeDays(b) || 0;
     return sortDir === 'asc' ? ageA - ageB : ageB - ageA;
   });
   return sorted;

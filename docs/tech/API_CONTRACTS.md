@@ -187,18 +187,43 @@ Domain shape:
 
 ### Suppliers & Orders
 
+#### Suppliers (Directus - legacy)
 - `fetchSuppliers()` → `Supplier[]`
 - `createSupplier(supplier)` / `updateSupplier(id, updates)` / `deleteSupplier(id)`
-- `fetchSupplierOrders(status?)` → `SupplierOrder[]`
+- `dispatchPurchaseRequests()` → `DispatchResult` *(stored procedure - not migrated)*
+
+#### Purchase Requests (Tunnel-backend)
+- `fetchPurchaseRequests(params?)` → `PurchaseRequest[]`
+- `fetchPurchaseRequest(id)` → `PurchaseRequest`
+- `fetchPurchaseRequestsByIntervention(interventionId)` → `PurchaseRequest[]`
+- `createPurchaseRequest(payload)` → `PurchaseRequest`
+- `updatePurchaseRequest(id, payload)` → `PurchaseRequest`
+- `deletePurchaseRequest(id)` → `void`
+
+#### Supplier Orders (Tunnel-backend)
+- `fetchSupplierOrders(params?)` → `SupplierOrder[]`
 - `fetchSupplierOrder(id)` → `SupplierOrder`
-- `fetchSupplierOrderLines(supplierOrderId)` → `SupplierOrderLine[]`
-- `dispatchPurchaseRequests()` → `DispatchResult`
+- `fetchSupplierOrderByNumber(orderNumber)` → `SupplierOrder`
+- `createSupplierOrder(payload)` → `SupplierOrder`
+- `updateSupplierOrder(id, payload)` → `SupplierOrder`
+- `deleteSupplierOrder(id)` → `void`
+
+#### Supplier Order Lines (Tunnel-backend)
+- `fetchSupplierOrderLines(params?)` → `SupplierOrderLine[]`
+- `fetchSupplierOrderLine(id)` → `SupplierOrderLine`
+- `fetchSupplierOrderLinesByOrder(supplierOrderId)` → `SupplierOrderLine[]`
+- `createSupplierOrderLine(payload)` → `SupplierOrderLine`
+- `updateSupplierOrderLine(id, payload)` → `SupplierOrderLine`
+- `deleteSupplierOrderLine(id)` → `void`
+- `linkPurchaseRequest(lineId, purchaseRequestId, quantity)` → `object`
+- `unlinkPurchaseRequest(lineId, purchaseRequestId)` → `void`
 
 Domain shapes:
 
 - `Supplier`: `{ id: string, name: string, contactName?: string, email?: string, phone?: string, isActive?: boolean, itemCount?: number }`
-- `SupplierOrder`: `{ id: string, orderNumber?: string, supplier: { id: string, name?: string, email?: string, contactName?: string }, status: 'open' | 'confirmed' | 'received' | 'cancelled', totalAmount?: number, createdAt?: string, orderedAt?: string, receivedAt?: string }`
-- `SupplierOrderLine`: `{ id: string, supplierOrderId: string, stockItem: StockItem & { standardSpecs?: StockItemStandardSpec[] }, supplierRefSnapshot?: string, quantity: number, unitPrice?: number, totalPrice?: number, createdAt?: string, purchaseRequests?: Array<{ id: string, requestedBy?: string, itemLabel?: string, intervention?: { id: string, code?: string } , quantity: number }> }`
+- `PurchaseRequest`: `{ id: string, itemLabel: string, quantity: number, stockItemId?: string, urgency: 'low' | 'normal' | 'high', status: 'open' | 'in_progress' | 'received' | 'cancelled', requestedBy?: string, requestedDate?: string, supplierOrderId?: string, actionId?: string, notes?: string, intervention?: { id: string, code?: string, title?: string }, action?: { id: string, description?: string } }`
+- `SupplierOrder`: `{ id: string, orderNumber?: string, supplierId: string, status: 'open' | 'confirmed' | 'received' | 'cancelled', totalAmount?: number, createdAt?: string, orderedAt?: string, receivedAt?: string, notes?: string, lines?: SupplierOrderLine[] }`
+- `SupplierOrderLine`: `{ id: string, supplierOrderId: string, stockItemId?: string, itemLabel?: string, quantity: number, unitPrice?: number, totalPrice?: number, urgency?: 'low' | 'normal' | 'high', isSelected?: boolean, supplierRefSnapshot?: string, createdAt?: string, purchaseRequests?: Array<{ id: string, quantity: number, itemLabel?: string, actionId?: string, interventionCode?: string }> }`
 - `DispatchResult`: `{ dispatched: string[], toQualify: string[], errors: Array<{ id: string, error: string }> }`
 
 ## Validation & Errors
@@ -776,4 +801,165 @@ describe('createIntervention', () => {
 - [ ] Write unit tests for normalizers
 - [ ] Write integration tests for CRUD flows
 - [ ] Verify no backend identifiers in returned DTOs
+
+---
+
+## Tunnel-Backend Endpoints (Implementation)
+
+The tunnel-backend adapter implements the following API endpoints. These are accessed through the hybrid adapter which routes specific namespaces to tunnel-backend while keeping legacy domains on Directus.
+
+**Base URL:** `http://192.168.1.161:3000/api/tunnel`
+
+### Purchase Requests
+
+#### Endpoints
+- `GET /purchase_requests/` - List all purchase requests with optional filters
+  - Query params: `skip`, `limit`, `status`, `intervention_id`, `urgency`
+- `GET /purchase_requests/:id` - Get single purchase request
+- `GET /purchase_requests/intervention/:id` - Get all requests for an intervention
+- `POST /purchase_requests/` - Create new purchase request
+- `PUT /purchase_requests/:id` - Update purchase request
+- `DELETE /purchase_requests/:id` - Delete purchase request
+
+#### Backend Format (snake_case)
+```typescript
+{
+  id: string;
+  item_label: string;
+  quantity: number;
+  stock_item_id?: string;
+  urgency: string; // 'low' | 'normal' | 'high'
+  status: string; // 'open' | 'in_progress' | 'received' | 'cancelled'
+  requested_by?: string;
+  requested_date?: string;
+  supplier_order_id?: string;
+  action_id?: string;
+  notes?: string;
+  // Joined fields
+  intervention?: { id: string; code?: string; title?: string };
+  action?: { id: string; description?: string };
+}
+```
+
+#### Implementation
+- **Adapter:** `src/lib/api/adapters/tunnel/purchaseRequests/adapter.ts`
+- **Datasource:** `src/lib/api/adapters/tunnel/purchaseRequests/datasource.ts`
+- **Mapper:** `src/lib/api/adapters/tunnel/purchaseRequests/mapper.ts`
+
+### Supplier Orders
+
+#### Endpoints
+- `GET /supplier_orders/` - List all supplier orders with optional filters
+  - Query params: `skip`, `limit`, `status`, `supplier_id`
+- `GET /supplier_orders/:id` - Get single order with nested lines
+- `GET /supplier_orders/number/:orderNumber` - Get order by order number
+- `POST /supplier_orders/` - Create new supplier order
+- `PUT /supplier_orders/:id` - Update supplier order
+- `DELETE /supplier_orders/:id` - Delete supplier order
+
+#### Backend Format (snake_case)
+```typescript
+{
+  id: string;
+  order_number?: string;
+  supplier_id: string;
+  status: string; // 'open' | 'confirmed' | 'received' | 'cancelled'
+  total_amount?: number;
+  created_at?: string;
+  ordered_at?: string;
+  received_at?: string;
+  notes?: string;
+  // Nested relation
+  lines?: SupplierOrderLine[];
+}
+```
+
+#### Implementation
+- **Adapter:** `src/lib/api/adapters/tunnel/supplierOrders/adapter.ts`
+- **Datasource:** `src/lib/api/adapters/tunnel/supplierOrders/datasource.ts`
+- **Mapper:** `src/lib/api/adapters/tunnel/supplierOrders/mapper.ts`
+
+### Supplier Order Lines
+
+#### Endpoints
+- `GET /supplier_order_lines/` - List all lines with optional filters
+  - Query params: `skip`, `limit`, `supplier_order_id`, `stock_item_id`, `is_selected`
+- `GET /supplier_order_lines/:id` - Get single line
+- `GET /supplier_order_lines/order/:supplierOrderId` - Get all lines for an order
+- `POST /supplier_order_lines/` - Create new line
+- `PUT /supplier_order_lines/:id` - Update line
+- `DELETE /supplier_order_lines/:id` - Delete line
+- `POST /supplier_order_lines/:lineId/purchase_requests` - Link purchase request to line
+  - Body: `{ purchase_request_id: string, quantity: number }`
+- `DELETE /supplier_order_lines/:lineId/purchase_requests/:prId` - Unlink purchase request
+
+#### Backend Format (snake_case)
+```typescript
+{
+  id: string;
+  supplier_order_id: string;
+  stock_item_id?: string;
+  item_label?: string;
+  quantity: number;
+  unit_price?: number;
+  total_price?: number;
+  urgency?: string; // 'low' | 'normal' | 'high'
+  is_selected?: boolean;
+  supplier_ref_snapshot?: string;
+  created_at?: string;
+  // Nested relations
+  purchase_requests?: Array<{
+    id: string;
+    quantity: number;
+    item_label?: string;
+    action_id?: string;
+    intervention_code?: string;
+  }>;
+}
+```
+
+#### Implementation
+- **Adapter:** `src/lib/api/adapters/tunnel/supplierOrderLines/adapter.ts`
+- **Datasource:** `src/lib/api/adapters/tunnel/supplierOrderLines/datasource.ts`
+- **Mapper:** `src/lib/api/adapters/tunnel/supplierOrderLines/mapper.ts`
+
+### Routing Configuration
+
+The hybrid adapter routes these namespaces to tunnel-backend:
+
+```javascript
+// src/lib/api/adapters/hybrid.js
+export const adapter = {
+  // ... Directus namespaces
+  stock: directusAdapter.stock,
+  suppliers: directusAdapter.suppliers,
+
+  // Tunnel-backend namespaces
+  purchaseRequests: tunnelBackendAdapter.purchaseRequests,
+  supplierOrders: tunnelBackendAdapter.supplierOrders,
+  supplierOrderLines: tunnelBackendAdapter.supplierOrderLines,
+};
+```
+
+### Usage in Components
+
+Components access these APIs through the facade:
+
+```javascript
+import { purchaseRequests, supplierOrders, supplierOrderLines } from '@/lib/api/facade';
+
+// Fetch purchase requests
+const requests = await purchaseRequests.fetchPurchaseRequests();
+
+// Update supplier order line
+await supplierOrderLines.updateSupplierOrderLine(lineId, {
+  isSelected: true, // camelCase in frontend
+  quantity: 5
+});
+
+// Link purchase request to order line
+await supplierOrderLines.linkPurchaseRequest(lineId, requestId, 2);
+```
+
+The mappers handle conversion between camelCase (frontend domain) and snake_case (backend format).
 - [ ] Run grep checks to confirm no backend leakage outside adapters

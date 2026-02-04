@@ -1,50 +1,66 @@
 // Status configuration for purchase requests
-// Utilise les statuts réels de la base de données
+// Utilise les codes derived_status du backend (v1.2.1)
 export const PURCHASE_REQUEST_STATUS = {
+  TO_QUALIFY: {
+    id: 'TO_QUALIFY',
+    label: 'À qualifier',
+    color: 'amber',
+    description: 'Pas de référence stock normalisée',
+    icon: 'AlertTriangle',
+  },
   OPEN: {
-    id: 'open',
-    label: 'Ouverte',
-    color: 'gray',
-    description: 'Demande ouverte, prête à dispatcher',
+    id: 'OPEN',
+    label: 'En attente',
+    color: 'blue',
+    description: 'En attente de dispatch (aucune ligne de commande)',
     icon: 'Circle',
   },
-  IN_PROGRESS: {
-    id: 'in_progress',
-    label: 'En attente de consultation',
+  QUOTED: {
+    id: 'QUOTED',
+    label: 'Devis reçu',
     color: 'blue',
-    description: 'Panier ouvert, en attente de consultation fournisseur',
-    icon: 'Clock',
+    description: 'Au moins un devis reçu',
+    icon: 'FileText',
   },
   ORDERED: {
-    id: 'ordered',
+    id: 'ORDERED',
     label: 'Commandée',
-    color: 'amber',
-    description: 'Affectée à un panier fournisseur',
+    color: 'green',
+    description: 'Au moins une ligne sélectionnée pour commande',
     icon: 'ShoppingCart',
   },
+  PARTIAL: {
+    id: 'PARTIAL',
+    label: 'Partielle',
+    color: 'green',
+    description: 'Livraison partielle',
+    icon: 'PackageMinus',
+  },
   RECEIVED: {
-    id: 'received',
+    id: 'RECEIVED',
     label: 'Reçue',
     color: 'green',
-    description: 'Marchandise reçue',
+    description: 'Livraison complète',
     icon: 'PackageCheck',
   },
-  CANCELLED: {
-    id: 'cancelled',
-    label: 'Annulée',
+  REJECTED: {
+    id: 'REJECTED',
+    label: 'Refusée',
     color: 'red',
     description: 'Demande annulée',
     icon: 'XCircle',
   },
 };
 
-// Allowed status transitions
+// Allowed status transitions (derived_status is calculated automatically, no manual transitions)
 export const PURCHASE_REQUEST_TRANSITIONS = {
-  open: ['in_progress', 'ordered', 'cancelled'],
-  in_progress: ['ordered', 'cancelled'],
-  ordered: ['received', 'cancelled'],
-  received: [],
-  cancelled: [],
+  TO_QUALIFY: ['OPEN', 'REJECTED'],
+  OPEN: ['QUOTED', 'ORDERED', 'REJECTED'],
+  QUOTED: ['ORDERED', 'REJECTED'],
+  ORDERED: ['PARTIAL', 'RECEIVED', 'REJECTED'],
+  PARTIAL: ['RECEIVED', 'REJECTED'],
+  RECEIVED: [],
+  REJECTED: [],
 };
 
 // Supplier order status configuration

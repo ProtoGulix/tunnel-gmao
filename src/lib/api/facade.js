@@ -334,6 +334,59 @@ export const { stockSpecs } = API;
 export const { manufacturerItems } = API;
 
 /**
+ * **Purchase Requests**
+ *
+ * Purchase request management for procurement workflow.
+ *
+ * Functions:
+ * - `fetchPurchaseRequests(params)` → `PurchaseRequest[]`
+ * - `fetchPurchaseRequest(id)` → `PurchaseRequest`
+ * - `fetchPurchaseRequestsByIntervention(interventionId)` → `PurchaseRequest[]`
+ * - `createPurchaseRequest(payload)` → `PurchaseRequest`
+ * - `updatePurchaseRequest(id, payload)` → `PurchaseRequest`
+ * - `deletePurchaseRequest(id)` → `void`
+ *
+ * @type {Object}
+ */
+export const { purchaseRequests } = API;
+
+/**
+ * **Supplier Orders**
+ *
+ * Supplier order (basket) management for procurement workflow.
+ *
+ * Functions:
+ * - `fetchSupplierOrders(params)` → `SupplierOrder[]`
+ * - `fetchSupplierOrder(id)` → `SupplierOrder`
+ * - `fetchSupplierOrderByNumber(orderNumber)` → `SupplierOrder`
+ * - `createSupplierOrder(payload)` → `SupplierOrder`
+ * - `updateSupplierOrder(id, payload)` → `SupplierOrder`
+ * - `deleteSupplierOrder(id)` → `void`
+ *
+ * @type {Object}
+ */
+export const { supplierOrders } = API;
+
+/**
+ * **Supplier Order Lines**
+ *
+ * Line items within supplier orders for procurement workflow.
+ *
+ * Functions:
+ * - `fetchSupplierOrderLines(params)` → `SupplierOrderLine[]`
+ * - `fetchSupplierOrderLine(id)` → `SupplierOrderLine`
+ * - `fetchSupplierOrderLinesByOrder(supplierOrderId)` → `SupplierOrderLine[]`
+ * - `createSupplierOrderLine(payload)` → `SupplierOrderLine`
+ * - `updateSupplierOrderLine(id, payload)` → `SupplierOrderLine`
+ * - `deleteSupplierOrderLine(id)` → `void`
+ * - `linkPurchaseRequest(lineId, purchaseRequestId, quantity)` → `void`
+ * - `unlinkPurchaseRequest(lineId, purchaseRequestId)` → `void`
+ *
+ * @type {Object}
+ */
+export const { supplierOrderLines } = API;
+
+/**
  * **Low-Level HTTP Client**
  *
  * Raw axios instance and cache utilities. Only use if a function from

@@ -1,12 +1,37 @@
 import PropTypes from "prop-types";
 import { Badge, Flex } from "@radix-ui/themes";
-import { AlertTriangle, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { COLOR_USAGE } from "@/config/colorPalette";
-import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
-export const StatusBadges = ({ request, hasMissing, age }) => {
-  const derivedStatus = request.derived_status || derivePurchaseRequestStatus(request);
-  const statusId = typeof derivedStatus === "string" ? derivedStatus : derivedStatus?.id;
+/**
+ * Convertit une couleur hex en nom de couleur Radix UI
+ * @param {string} hexColor - Couleur hex du backend (ex: "#f59e0b")
+ * @returns {string} Nom de couleur Radix UI
+ */
+const hexToRadixColor = (hexColor) => {
+  if (!hexColor) return "gray";
+  
+  const colorMap = {
+    "#f59e0b": "amber",  // TO_QUALIFY
+    "#3b82f6": "blue",   // OPEN, QUOTED
+    "#10b981": "green",  // ORDERED, PARTIAL, RECEIVED
+    "#ef4444": "red",    // REJECTED
+    "#f97316": "orange", // À relancer
+  };
+  
+  return colorMap[hexColor.toLowerCase()] || "gray";
+};
+
+export const StatusBadges = ({ request, age }) => {
+  // derived_status vient du backend avec structure {code, label, color}
+  const derivedStatus = request.derived_status;
+  
+  if (!derivedStatus) {
+    return <Badge variant="soft">Sans statut</Badge>;
+  }
+
+  const { code, label, color } = derivedStatus;
+  const radixColor = hexToRadixColor(color);
 
   // Récupérer le numéro du panier sélectionné
   const getSelectedBasketInfo = () => {
@@ -26,18 +51,8 @@ export const StatusBadges = ({ request, hasMissing, age }) => {
 
   const basketNumber = getSelectedBasketInfo();
 
-  if (hasMissing) {
-    return (
-      <Badge color="amber" variant="soft">
-        <Flex align="center" gap="1">
-          <AlertTriangle size={12} />
-          À qualifier
-        </Flex>
-      </Badge>
-    );
-  }
-
-  if (statusId === "in_progress" && age > 2) {
+  // Cas spécial: OPEN avec age > 2 jours = À relancer
+  if (code === "OPEN" && age > 2) {
     return (
       <Badge color="orange" variant="soft">
         <Flex align="center" gap="1">
@@ -48,92 +63,30 @@ export const StatusBadges = ({ request, hasMissing, age }) => {
     );
   }
 
-  if (statusId === "pooling") {
-    return (
-      <Flex gap="1" wrap="wrap">
-        <Badge color="purple" variant="soft">
-          Mutualisation
-        </Badge>
-        {basketNumber && (
-          <Badge color="gray" variant="outline">
-            Panier {basketNumber}
-          </Badge>
-        )}
-      </Flex>
-    );
-  }
-
-  if (statusId === "sent") {
-    return (
-      <Flex gap="1" wrap="wrap">
-        <Badge color="blue" variant="soft">
-          Devis envoyé
-        </Badge>
-        {basketNumber && (
-          <Badge color="gray" variant="outline">
-            Panier {basketNumber}
-          </Badge>
-        )}
-      </Flex>
-    );
-  }
-
-  if (statusId === "ordered") {
-    return (
-      <Flex gap="1" wrap="wrap">
-        <Badge color="green" variant="soft">
-          Commandée
-        </Badge>
-        {basketNumber && (
-          <Badge color="gray" variant="outline">
-            Panier {basketNumber}
-          </Badge>
-        )}
-      </Flex>
-    );
-  }
-
-  if (statusId === "received") {
-    return (
-      <Flex gap="1" wrap="wrap">
-        <Badge color="green" variant="solid">
-          Reçue
-        </Badge>
-        {basketNumber && (
-          <Badge color="gray" variant="outline">
-            Panier {basketNumber}
-          </Badge>
-        )}
-      </Flex>
-    );
-  }
-
-  if (statusId === "cancelled") {
-    return (
-      <Badge color="red" variant="soft">
-        Annulée
-      </Badge>
-    );
-  }
-
-  if (statusId === "in_progress") {
-    return (
-      <Badge color="blue" variant="soft">
-        En attente
-      </Badge>
-    );
-  }
-
-  return (
-    <Badge variant="soft">
-      Ouverte
+  // Affichage standard: utiliser label et couleur du backend
+  const badges = (
+    <Badge color={radixColor} variant="soft">
+      {label}
     </Badge>
   );
+
+  // Ajouter le numéro de panier si disponible (pour QUOTED, ORDERED, PARTIAL, RECEIVED)
+  if (basketNumber && ["QUOTED", "ORDERED", "PARTIAL", "RECEIVED"].includes(code)) {
+    return (
+      <Flex gap="1" wrap="wrap">
+        {badges}
+        <Badge color="gray" variant="outline">
+          Panier {basketNumber}
+        </Badge>
+      </Flex>
+    );
+  }
+
+  return badges;
 };
 
 StatusBadges.propTypes = {
   request: PropTypes.object.isRequired,
-  hasMissing: PropTypes.bool.isRequired,
   age: PropTypes.number.isRequired,
 };
 

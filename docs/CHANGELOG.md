@@ -1,3 +1,29 @@
+## 2.1.7 - 2026-02-04
+
+Stabilité: STABLE
+
+### Corrections d'erreurs d'hydration
+
+#### Ce qui a changé
+
+- **Erreurs d'hydration corrigées**: Résolution des erreurs causées par des balises HTML imbriquées incorrectement dans les composants de la page Service Status
+- **FragmentationCausesList corrigé**: Remplacement de `<Text as="p">` par `<Text as="span">` à l'intérieur du composant `Callout.Text`
+- **SiteConsumptionTable corrigé**: Remplacement de `<Box as="p">` par `<Text as="span">` à l'intérieur du composant `Callout.Text`
+
+#### Amélioration technique
+
+- Élimination des erreurs de console liées aux balises `<p>` imbriquées dans `<p>`
+- Élimination des erreurs de console liées aux balises `<div>` imbriquées dans `<p>`
+- Conformité HTML améliorée et rendu côté serveur plus stable
+
+#### Impact utilisateur
+
+- Aucun changement visuel dans l'interface
+- Page Service Status plus stable et sans erreurs de console
+- Amélioration de la qualité du code
+
+---
+
 ## 2.1.6 - 2026-02-01
 
 Stabilité: STABLE

@@ -59,11 +59,15 @@ LineDetails.propTypes = {
       PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         status: PropTypes.string,
-        order_number: PropTypes.string,
-        supplier_id: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.object
-        ])
+        orderNumber: PropTypes.string,
+        supplier: PropTypes.shape({
+          id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          name: PropTypes.string,
+          code: PropTypes.string,
+          contact_name: PropTypes.string,
+          email: PropTypes.string,
+          phone: PropTypes.string,
+        })
       })
     ]).isRequired,
   }).isRequired,

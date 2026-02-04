@@ -167,7 +167,7 @@ export default function FragmentationCausesList({ fragmentation }) {
           <Info size={18} />
         </Callout.Icon>
         <Callout.Text>
-          <Text as="p" size="2">
+          <Text as="span" size="2">
             {EXPLANATION_TEXT}
           </Text>
         </Callout.Text>

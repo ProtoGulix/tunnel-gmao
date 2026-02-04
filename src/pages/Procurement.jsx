@@ -28,12 +28,10 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LoadingState from "@/components/common/LoadingState";
 import { useRequestStats } from "@/hooks/useStockData";
-import FilterSelect from "@/components/common/FilterSelect";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
 import StockItemSearch from "@/components/stock/StockItemSearch";
 import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
 import TableHeader from "@/components/common/TableHeader";
-import { PURCHASE_REQUEST_STATUS } from "@/config/purchasingConfig";
 import EmptyState from "@/components/common/EmptyState";
 import StatusCallout from "@/components/common/StatusCallout";
 
@@ -44,18 +42,16 @@ import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
-import useTwinLinesValidation from "@/hooks/useTwinLinesValidation";
-import { manufacturerItems, stock as stockAPI, suppliers as suppliersApi } from "@/lib/api/facade";
+import { manufacturerItems, stock as stockAPI, supplierOrderLines } from "@/lib/api/facade";
 import {
   canSelectItem,
   canDeselectItem,
   canModifyItem,
+  canTransitionBasket,
   getInitialItemSelection,
   normalizeBasketStatus,
 } from "@/lib/purchasing/basketItemRules";
-import TwinLinesValidationAlert from "@/components/purchase/orders/TwinLinesValidationAlert";
 import { recalculateAllOrderTotals } from "@/lib/purchasing/lineCalculationUtils";
-import { derivePurchaseRequestStatus } from "@/lib/purchasing/purchaseRequestStatusUtils";
 
 const PROCUREMENT_TABS = {
   REQUESTS: "requests",
@@ -84,10 +80,6 @@ export default function Procurement() {
   }, []);
 
   const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('reqSearch', legacySearch);
-  const [urgencyFilter, setUrgencyFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [supplierOrderStatusFilter, setSupplierOrderStatusFilter] = useState("all");
-  // Compatibilité : on lit aussi l'ancien paramètre ?search= pour pré-remplir
   const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', legacySearch);
 
   // Si une URL fournit encore ?search=, on réplique vers les nouvelles clés pour que la navigation/Back fonctionne
@@ -96,6 +88,7 @@ export default function Procurement() {
     if (!supplierOrderSearchTerm) setSupplierOrderSearchTerm(legacySearch);
     if (!requestSearchTerm) setRequestSearchTerm(legacySearch);
   }, [legacySearch, requestSearchTerm, setRequestSearchTerm, supplierOrderSearchTerm, setSupplierOrderSearchTerm]);
+
   const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
 
   const [expandedRequestId, setExpandedRequestId] = useState(null);
@@ -147,8 +140,8 @@ export default function Procurement() {
 
     return [...purchases.requests]
       .filter(req => {
-        const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
-        return derivedStatus !== 'received';
+        const statusCode = req.derived_status?.code;
+        return statusCode !== 'RECEIVED';
       })
       .sort((a, b) => {
         const aMissing = hasMissingInfo(a) ? 1 : 0;
@@ -164,8 +157,8 @@ export default function Procurement() {
   const receivedRequests = useMemo(() => {
     return [...purchases.requests]
       .filter(req => {
-        const derivedStatus = req.derived_status || derivePurchaseRequestStatus(req);
-        return derivedStatus === 'received';
+        const statusCode = req.derived_status?.code;
+        return statusCode === 'RECEIVED';
       })
       .sort((a, b) => {
         const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
@@ -269,7 +262,9 @@ export default function Procurement() {
     }
     
     if (supplierOrderSupplierFilter !== "all") {
-      orders = orders.filter((order) => (order.supplier_id?.name || "") === supplierOrderSupplierFilter);
+      // Use helper that handles both supplier (new) and supplier_id (legacy)
+      const getSupplier = (order) => order?.supplier ?? order?.supplier_id;
+      orders = orders.filter((order) => (getSupplier(order)?.name || "") === supplierOrderSupplierFilter);
     }
     
     return orders;
@@ -295,9 +290,11 @@ export default function Procurement() {
         relevantOrders = [];
     }
     
+    // Use helper or inline logic to get supplier from both formats
+    const getSupplier = (order) => order?.supplier ?? order?.supplier_id;
     const names = new Set(
       relevantOrders
-        .map((o) => o.supplier_id?.name)
+        .map((o) => getSupplier(o)?.name)
         .filter((n) => typeof n === "string" && n.trim().length > 0)
     );
     return [
@@ -310,9 +307,9 @@ export default function Procurement() {
 
   const readyCount = useMemo(() => {
     return purchases.requests.filter((r) => {
-      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
-      // Statut 'open' = à dispatcher (selon SUPPLIER_ORDER_LIFECYCLE.md)
-      if (derivedStatus !== "open" || !r.stockItemId) return false;
+      const statusCode = r.derived_status?.code;
+      // Statut 'OPEN' = à dispatcher (selon derived_status backend)
+      if (statusCode !== "OPEN" || !r.stockItemId) return false;
       
       return (r.stockItemSupplierRefsCount ?? 0) > 0;
     }).length;
@@ -320,21 +317,17 @@ export default function Procurement() {
 
   const toQualifyCount = useMemo(
     () => purchases.requests.filter((r) => {
-      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
-      // Statut 'open' = à dispatcher
-      if (derivedStatus !== "open") return false;
-      if (!r.stockItemId) return false;
-      
-      return (r.stockItemSupplierRefsCount ?? 0) === 0;
+      const statusCode = r.derived_status?.code;
+      return statusCode === "TO_QUALIFY";
     }).length,
     [purchases.requests]
   );
 
   const unlinkedCount = useMemo(
     () => purchases.requests.filter((r) => {
-      const derivedStatus = r.derived_status || derivePurchaseRequestStatus(r);
-      // Statut 'open' = à dispatcher
-      return derivedStatus === "open" && !r.stockItemId;
+      const statusCode = r.derived_status?.code;
+      // Statut 'OPEN' mais sans stock_item_id (non qualifiées incluses)
+      return statusCode === "OPEN" && !r.stockItemId;
     }).length,
     [purchases.requests]
   );
@@ -656,7 +649,7 @@ export default function Procurement() {
     const basket = purchasing.supplierOrders.find(b => b.id === basketId);
     const lines = updatedLines.length > 0
       ? updatedLines
-      : basket?.lines || basket?.orderLines || [];
+      : basket?.lines || [];
     const item = lines.find((l) => l.id === itemId);
     if (!basket || !item) return;
 
@@ -701,12 +694,11 @@ export default function Procurement() {
     }));
 
     purchasing.updateOrderLine(basketId, itemId, {
-      is_selected: targetSelected,
       isSelected: targetSelected,
     });
 
     try {
-      await suppliersApi.updateSupplierOrderLine(itemId, { isSelected: targetSelected });
+      await supplierOrderLines.updateSupplierOrderLine(itemId, { isSelected: targetSelected });
     } catch (err) {
       setDispatchResult({
         type: 'error',
@@ -715,7 +707,7 @@ export default function Procurement() {
       });
       setTimeout(() => setDispatchResult(null), 5000);
     }
-  }, [itemSelectionByBasket, purchasing.supplierOrders, purchasing, suppliersApi]);
+  }, [itemSelectionByBasket, purchasing]);
 
   /**
    * Valide les lignes jumelles d'un panier
@@ -1221,8 +1213,6 @@ export default function Procurement() {
                         color="gray"
                         onClick={() => {
                           setRequestSearchTerm("");
-                          setUrgencyFilter("all");
-                          setStatusFilter("all");
                         }}
                       >
                         Réinitialiser les filtres
