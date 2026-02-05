@@ -120,16 +120,17 @@ export function useInterventionCreate({ user, navigate }) {
 
       // Payload - structure DTO conforme API_CONTRACTS.md
       const initials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '');
+      const nowIso = new Date().toISOString();
       const payload = {
         title: formData.title,
-        type: formData.type_inter,
+        type_inter: formData.type_inter,
         priority: formData.priority,
-        machine: { id: formData.machine_id },
-        status: 'open',
-        createdAt: new Date(formData.createdAt).toISOString(),
-        reportedDate: new Date().toISOString(),
-        reportedBy: formData.reportedBy_id ? { id: formData.reportedBy_id } : undefined,
-        techInitials: initials ? initials.toUpperCase() : undefined,
+        machine_id: formData.machine_id,
+        status_actual: 'ouvert',
+        created_at: new Date(formData.createdAt).toISOString(),
+        reported_date: nowIso.slice(0, 10),
+        reported_by: formData.reportedBy_id || undefined,
+        tech_initials: initials ? initials.toUpperCase() : undefined,
       };
 
       await createNewIntervention(payload);

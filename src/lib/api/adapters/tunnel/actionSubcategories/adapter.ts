@@ -17,4 +17,32 @@ export const actionSubcategoriesAdapter = {
       return raw.map(mapper.mapSubcategoryToDomain).filter(Boolean);
     }, 'TunnelActionSubcategories.fetchSubcategories');
   },
+
+  async fetchActionSubcategories() {
+    return apiCall(async () => {
+      const [rawSubcategories, rawCategories] = await Promise.all([
+        datasource.fetchSubcategoriesRaw(),
+        datasource.fetchCategoriesRaw(),
+      ]);
+
+      const categories = rawCategories.map(mapper.mapCategoryToDomain).filter(Boolean);
+      const categoryMap = new Map(
+        categories.map((c: any) => [String(c.id), c])
+      );
+
+      const augmented = rawSubcategories.map((item: any) => ({
+        ...item,
+        category_id: categoryMap.get(String(item.category_id)) || item.category_id,
+      }));
+
+      return augmented.map(mapper.mapSubcategoryToDomain).filter(Boolean);
+    }, 'TunnelActionSubcategories.fetchActionSubcategories');
+  },
+
+  async fetchActionCategories() {
+    return apiCall(async () => {
+      const raw = await datasource.fetchCategoriesRaw();
+      return raw.map(mapper.mapCategoryToDomain).filter(Boolean);
+    }, 'TunnelActionSubcategories.fetchActionCategories');
+  },
 };

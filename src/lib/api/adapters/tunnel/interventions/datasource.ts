@@ -38,3 +38,13 @@ export const fetchInterventionsRaw = async (filters: any = {}) => {
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };
+
+export const createInterventionRaw = async (payload: any) => {
+  const response = await tunnelApi.post('/interventions', payload);
+  return response.data?.data || response.data || {};
+};
+
+export const updateInterventionRaw = async (id: string, payload: any) => {
+  const response = await tunnelApi.put(`/interventions/${id}`, payload);
+  return response.data?.data || response.data || {};
+};

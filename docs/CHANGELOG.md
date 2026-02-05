@@ -1,3 +1,21 @@
+## 2.1.9 - 2026-02-05
+
+Stabilité: STABLE
+
+### Améliorations générales
+
+#### Ce qui a changé
+
+- **Création d’interventions**: L’application utilise la nouvelle API sans blocage
+- **Listes d’actions**: Les catégories et sous-catégories se chargent correctement
+
+#### Impact utilisateur
+
+- Création d’intervention plus fiable
+- Chargement plus fluide des listes
+
+---
+
 ## 2.1.8 - 2026-02-04
 
 Stabilité: STABLE

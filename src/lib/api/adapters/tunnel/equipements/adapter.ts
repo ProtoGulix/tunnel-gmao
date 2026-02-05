@@ -11,6 +11,29 @@ import * as datasource from './datasource';
 import * as mapper from './mapper';
 
 export const equipementsAdapter = {
+  async fetchMachines() {
+    return apiCall(async () => {
+      const raw = await datasource.fetchEquipementsRaw();
+      const mapped = raw.map(mapper.mapEquipementToDomain).filter(Boolean);
+      return mapped;
+    }, 'TunnelEquipements.fetchMachines');
+  },
+
+  async fetchMachine(id: string) {
+    return apiCall(async () => {
+      const raw = await datasource.fetchEquipementRaw(id);
+      return mapper.mapEquipementDetailToDomain(raw);
+    }, `TunnelEquipements.fetchMachine:${id}`);
+  },
+
+  async fetchMachinesWithInterventions() {
+    return apiCall(async () => {
+      const raw = await datasource.fetchEquipementsRaw();
+      const mapped = raw.map(mapper.mapEquipementToDomain).filter(Boolean);
+      return mapped;
+    }, 'TunnelEquipements.fetchMachinesWithInterventions');
+  },
+
   async fetchEquipements() {
     return apiCall(async () => {
       const raw = await datasource.fetchEquipementsRaw();

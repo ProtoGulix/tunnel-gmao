@@ -62,7 +62,7 @@ export const adapter = {
   // Directus namespaces (legacy)
   auth: directusAdapter.auth,
   interventionStatusRefs: directusAdapter.interventionStatusRefs,
-  actionSubcategories: directusAdapter.actionSubcategories,
+  actionSubcategories: tunnelBackendAdapter.actionSubcategories,
   anomalyConfig: directusAdapter.anomalyConfig,
   preventive: directusAdapter.preventive,
   stockSpecs: directusAdapter.stockSpecs,

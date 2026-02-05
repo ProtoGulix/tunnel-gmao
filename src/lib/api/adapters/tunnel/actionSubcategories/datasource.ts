@@ -15,3 +15,9 @@ export const fetchSubcategoriesRaw = async () => {
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };
+
+export const fetchCategoriesRaw = async () => {
+  const response = await tunnelApi.get('/action_categories/');
+  const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+  return list || [];
+};

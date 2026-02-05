@@ -33,8 +33,28 @@ export const interventionsAdapter = {
     }, `TunnelInterventions.fetchIntervention:${id}`);
   },
 
-  createIntervention: undefined,
-  updateIntervention: undefined,
+  async createIntervention(payload: any) {
+    return apiCall(async () => {
+      const backendPayload = mapper.mapInterventionPayloadToBackend(payload);
+      const raw = await datasource.createInterventionRaw(backendPayload);
+      return mapper.mapInterventionToDomain(raw);
+    }, 'TunnelInterventions.createIntervention');
+  },
+
+  async updateIntervention(id: string, updates: any) {
+    return apiCall(async () => {
+      const backendPayload = mapper.mapInterventionPayloadToBackend(updates);
+      const raw = await datasource.updateInterventionRaw(id, backendPayload);
+      return mapper.mapInterventionToDomain(raw);
+    }, `TunnelInterventions.updateIntervention:${id}`);
+  },
+
+  async updateStatus(interventionId: string, status: string) {
+    return apiCall(async () => {
+      const raw = await datasource.updateInterventionRaw(interventionId, { status_actual: status });
+      return mapper.mapInterventionToDomain(raw);
+    }, `TunnelInterventions.updateStatus:${interventionId}`);
+  },
   addAction: undefined,
   addPart: undefined,
 };
