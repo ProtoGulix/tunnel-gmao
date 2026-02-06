@@ -27,7 +27,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated, purchaseRequests: externalPurchaseRequests }) {
+export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -51,27 +51,14 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     setLocalAction(action);
   }, [action]);
 
-  // Use purchase requests from API (passed as prop) instead of embedded data
-  // Filter by matching purchase request IDs from the embedded action data
+  // Use purchase requests directly from action (already complete objects from API)
   useEffect(() => {
-    if (externalPurchaseRequests && Array.isArray(externalPurchaseRequests)) {
-      // Get purchase request IDs from embedded action data (junction table)
-      const embeddedPrIds = new Set();
-      if (localAction?.purchaseRequests && Array.isArray(localAction.purchaseRequests)) {
-        localAction.purchaseRequests.forEach(pr => {
-          if (pr?.id) embeddedPrIds.add(String(pr.id));
-        });
-      }
-      
-      // Filter API purchase requests by matching IDs
-      const filtered = externalPurchaseRequests.filter(pr => 
-        embeddedPrIds.has(String(pr.id))
-      );
-      setPurchaseRequests(filtered);
+    if (localAction?.purchaseRequests && Array.isArray(localAction.purchaseRequests)) {
+      setPurchaseRequests(localAction.purchaseRequests);
     } else {
       setPurchaseRequests([]);
     }
-  }, [externalPurchaseRequests, localAction?.purchaseRequests]);
+  }, [localAction?.purchaseRequests]);
 
   // Compute initial state fresh from current localAction
   const buildInitialEditState = () => {
@@ -345,5 +332,4 @@ ActionItemCard.propTypes = {
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
   onPurchaseRequestCreated: PropTypes.func,
-  purchaseRequests: PropTypes.array,
 };

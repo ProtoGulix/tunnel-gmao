@@ -7,7 +7,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // 3. UI Libraries (Radix)
-import { Tabs, Flex, Text, Badge } from '@radix-ui/themes';
+import { Tabs, Flex, Text, Badge, Box } from '@radix-ui/themes';
 
 // 4. Icons
 import { Wrench } from 'lucide-react';
@@ -178,7 +178,6 @@ export default function InterventionDetail() {
     initialLoadRef.current = true;
 
     refetchIntervention();
-    purchases.loadRequests(); // Charger les purchase requests dès l'ouverture (pour le badge)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -208,6 +207,9 @@ export default function InterventionDetail() {
     if (activeTab === 'summary' && !summaryDataLoaded) {
       const loadSummaryData = async () => {
         try {
+          // Charger les purchase requests pour cet onglet
+          await purchases.loadRequests();
+
           // Charger supplier refs et standard specs pour les stock items des purchase requests
           const uniqueStockItemIds = new Set();
           purchases.requests.forEach(pr => {
@@ -392,10 +394,8 @@ export default function InterventionDetail() {
     return `${base}.pdf`;
   }, [interv?.code, id]);
 
-  // Compter les purchase requests de cette intervention (déjà filtrées par l'API)
-  const purchaseRequestsCount = useMemo(() => {
-    return purchases.requests.length;
-  }, [purchases.requests]);
+  // Le count des purchase requests vient directement des stats de l'intervention (API)
+  // Plus besoin de charger les requests juste pour afficher le badge
 
   // État initial du formulaire d'action avec catégorie par défaut
   const actionFormInitialState = useMemo(() => {
@@ -507,12 +507,12 @@ export default function InterventionDetail() {
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // RENDER - États de chargement et erreurs
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  if (loading) return <LoadingState message="Chargement de l'intervention..." />;
-
-  if (error || !interv) {
+  
+  // Erreur sans données
+  if (error && !interv) {
     return (
       <ErrorState 
-        error={error || "Intervention non trouvée"} 
+        error={error} 
         onRetry={refetchIntervention}
         backLink="/interventions"
         backLabel="Retour aux interventions"
@@ -527,14 +527,14 @@ export default function InterventionDetail() {
     <PageContainer style={{ paddingBottom: "4rem" }}>
       <PageHeader
         icon={Wrench}
-        title={`${interv.machine?.name || "Machine"} • ${interv.code || `INT-${id}`}`}
-        subtitle={interv.title || "Intervention"}
-        stats={[
+        title={interv ? `${interv.machine?.name || "Machine"} • ${interv.code || `INT-${id}`}` : "Chargement..."}
+        subtitle={interv?.title || "Intervention"}
+        stats={interv ? [
           // ⚠️ Stats from API ONLY (via mapper) - never calculated on frontend
           { label: "Actions", value: interv.stats?.action_count || 0 },
           { label: "Temps", value: `${interv.stats?.total_time || 0}h` }
-        ]}
-        actions={[
+        ] : []}
+        actions={interv ? [
           {
             label: (
               <DropdownButton
@@ -565,7 +565,7 @@ export default function InterventionDetail() {
               />
             )
           }
-        ]}
+        ] : []}
       />
 
       {/* Error Display - Positioned after header as per UX standards */}
@@ -577,16 +577,24 @@ export default function InterventionDetail() {
         />
       )}
 
+      {/* Chargement initial */}
+      {loading && !interv && (
+        <Box mt="4">
+          <LoadingState message="Chargement de l'intervention..." />
+        </Box>
+      )}
+
       {/* TABS */}
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab} style={{ marginTop: '2rem' }}>
-        <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
-          {TABS_CONFIG.map((tab) => {
-            const Icon = tab.icon;
-            const badgeValue = tab.badge ? tab.badge({ 
-              ...interv, 
-              timeline: timeline,
-              purchaseRequestsCount: purchaseRequestsCount
-            }) : null;
+      {interv && (
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab} style={{ marginTop: '2rem' }}>
+          <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
+            {TABS_CONFIG.map((tab) => {
+              const Icon = tab.icon;
+              const badgeValue = tab.badge ? tab.badge({ 
+                ...interv, 
+                timeline: timeline,
+                purchaseRequestsCount: interv.stats?.purchase_count || 0
+              }) : null;
 
             return (
               <Tabs.Trigger key={tab.id} value={tab.id}>
@@ -623,8 +631,7 @@ export default function InterventionDetail() {
               interv,
               searchActions,
               timelineByDay,
-              loading,
-              purchaseRequests: purchases.requests
+              loading
             }}
             handlers={{
               onSearchChange: setSearchActions,
@@ -690,7 +697,8 @@ export default function InterventionDetail() {
             }}
           />
         </Tabs.Content>
-      </Tabs.Root>
+        </Tabs.Root>
+      )}
     </PageContainer>
   );
 }

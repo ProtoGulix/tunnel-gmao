@@ -77,11 +77,13 @@ export const mapInterventionToDomain = (raw: any) => {
           action_count: raw.stats.action_count || 0,
           total_time: raw.stats.total_time || 0,
           avg_complexity: raw.stats.avg_complexity || null,
+          purchase_count: raw.stats.purchase_count || 0,
         }
       : {
           action_count: 0,
           total_time: 0,
           avg_complexity: null,
+          purchase_count: 0,
         },
     machine: raw.equipements
       ? {

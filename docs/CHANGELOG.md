@@ -1,3 +1,24 @@
+## 2.1.11 - 2026-02-06
+
+Stabilité: STABLE
+
+### Optimisations de performance
+
+#### Ce qui a changé
+
+- **Chargement optimisé**: Les demandes d'achat ne se chargent que lorsque nécessaire (onglet Résumé)
+- **Compteurs efficaces**: Le nombre de demandes s'affiche sans charger toutes les données
+- **En-tête toujours visible**: L'en-tête de la page reste affiché même pendant le chargement
+- **Données complètes**: Les demandes d'achat liées aux actions incluent maintenant tous les détails
+
+#### Impact utilisateur
+
+- Pages plus rapides à l'ouverture
+- Meilleure réactivité de l'interface
+- Navigation plus fluide entre les onglets
+
+---
+
 ## 2.1.10 - 2026-02-06
 
 Stabilité: STABLE

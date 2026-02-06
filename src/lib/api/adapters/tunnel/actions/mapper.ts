@@ -11,6 +11,7 @@
 export const mapActionToDomain = (raw: any) => {
   if (!raw) return null;
 
+  // Purchase requests peuvent être des objets complets ou juste des IDs
   const rawPurchaseRequests =
     raw.purchase_requests ||
     raw.purchase_request_ids ||
@@ -19,9 +20,32 @@ export const mapActionToDomain = (raw: any) => {
   const purchaseRequests = Array.isArray(rawPurchaseRequests)
     ? rawPurchaseRequests.map((pr: any) => {
         if (!pr) return null;
+        // Si c'est juste un ID (string/number), retourner {id}
         if (typeof pr === 'string' || typeof pr === 'number') {
           return { id: String(pr) };
         }
+        // Si c'est un objet complet, le retourner tel quel (déjà au format domain)
+        // L'API tunnel renvoie des objets PurchaseRequestOut complets
+        if (pr.item_label || pr.itemLabel) {
+          // Objet complet depuis l'API
+          return {
+            id: String(pr.id),
+            itemLabel: pr.item_label || pr.itemLabel,
+            quantity: pr.quantity,
+            unit: pr.unit,
+            stockItemId: pr.stock_item_id || pr.stockItemId,
+            interventionId: pr.intervention_id || pr.interventionId,
+            urgency: pr.urgency,
+            requestedBy: pr.requested_by || pr.requestedBy,
+            requesterName: pr.requester_name || pr.requesterName,
+            reason: pr.reason,
+            notes: pr.notes,
+            derivedStatus: pr.derived_status || pr.derivedStatus,
+            createdAt: pr.created_at || pr.createdAt,
+            updatedAt: pr.updated_at || pr.updatedAt,
+          };
+        }
+        // Sinon juste un objet avec id
         return { id: String(pr.id || pr.purchase_request_id || pr.purchaseRequestId || '') };
       }).filter((pr: any) => pr && pr.id)
     : [];

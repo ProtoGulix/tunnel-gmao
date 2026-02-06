@@ -83,7 +83,6 @@ export default function ActionsTab({ model, handlers, metadata, onPurchaseReques
                 item={item} 
                 interventionId={model.interv?.id} 
                 onPurchaseRequestCreated={onPurchaseRequestCreated}
-                purchaseRequests={model.purchaseRequests}
               />
             )}
             getStatusColor={(dayGroup) => {
@@ -113,8 +112,7 @@ ActionsTab.propTypes = {
     interv: PropTypes.object.isRequired,
     searchActions: PropTypes.string.isRequired,
     timelineByDay: PropTypes.array.isRequired,
-    loading: PropTypes.bool,
-    purchaseRequests: PropTypes.array
+    loading: PropTypes.bool
   }).isRequired,
   handlers: PropTypes.shape({
     onSearchChange: PropTypes.func.isRequired,
