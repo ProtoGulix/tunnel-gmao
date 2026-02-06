@@ -59,3 +59,12 @@ export const updateSupplierRaw = async (id: string, payload: Record<string, unkn
 export const deleteSupplierRaw = async (id: string) => {
   await tunnelApi.delete(`/suppliers/${id}`);
 };
+
+/**
+ * Dispatch purchase requests to supplier orders
+ * Calls POST /purchase_requests/dispatch
+ */
+export const dispatchPurchaseRequestsRaw = async () => {
+  const response = await tunnelApi.post('/purchase_requests/dispatch');
+  return response.data?.data || response.data || {};
+};

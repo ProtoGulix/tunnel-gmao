@@ -327,7 +327,58 @@ Quand vous créez une demande, deux cas de figure :
   - Référence fournisseur : "SKF-6204-2RS" chez ACME à 12€
   - Référence fabricant : "6204-2RS-C3"
 
+#### Les statuts d'une demande d'achat
+
+Le statut d'une demande est **calculé automatiquement** en fonction de son avancement. Il n'est pas modifiable manuellement.
+
+| Statut | Code | Couleur | Signification |
+|--------|------|---------|---------------|
+| **À qualifier** | `TO_QUALIFY` | 🟠 Orange | La demande n'a pas de référence article normalisée (`stock_item_id` = null) |
+| **Sans fournisseur** | `NO_SUPPLIER_REF` | 🟠 Orange foncé | L'article est qualifié mais aucun fournisseur n'est lié |
+| **À dispatcher** | `PENDING_DISPATCH` | 🟣 Violet | Prête à être dispatchée (article + fournisseur ok, mais pas encore dans un panier) |
+| **Mutualisation** | `OPEN` | ⚫ Gris | Présente dans un panier fournisseur, en attente de devis |
+| **Devis reçu** | `QUOTED` | 🟠 Orange clair | Au moins un devis a été reçu pour cette demande |
+| **Commandé** | `ORDERED` | 🔵 Bleu | La ligne a été sélectionnée et commandée |
+| **Partiellement reçu** | `PARTIAL` | 🟣 Violet clair | Une partie de la quantité a été réceptionnée |
+| **Reçu** | `RECEIVED` | 🟢 Vert | Quantité totale réceptionnée |
+| **Refusé** | `REJECTED` | 🔴 Rouge | La demande a été refusée |
+
 #### Le cycle de vie d'une demande
+
+```
+┌─────────────┐     ┌──────────────────┐     ┌───────────────────┐
+│ TO_QUALIFY  │────▶│ NO_SUPPLIER_REF  │────▶│ PENDING_DISPATCH  │
+│ (À qualifier)│     │ (Sans fournisseur)│     │ (À dispatcher)    │
+└─────────────┘     └──────────────────┘     └─────────┬─────────┘
+      │                                                 │
+      │ Si article déjà qualifié avec fournisseur       │ Dispatch
+      └────────────────────────────────────────────────▶│
+                                                        ▼
+                                                ┌───────────────┐
+                                                │     OPEN      │
+                                                │(Mutualisation)│
+                                                └───────┬───────┘
+                                                        │ Devis reçu
+                                                        ▼
+                                                ┌───────────────┐
+                                                │    QUOTED     │
+                                                │ (Devis reçu)  │
+                                                └───────┬───────┘
+                                                        │ Sélection
+                                                        ▼
+                                                ┌───────────────┐
+                                                │    ORDERED    │
+                                                │  (Commandé)   │
+                                                └───────┬───────┘
+                                                        │ Réception
+                                                        ▼
+                                        ┌───────────────────────────┐
+                                        │  PARTIAL    │  RECEIVED   │
+                                        │(Partiel)    │   (Reçu)    │
+                                        └───────────────────────────┘
+```
+
+**Étapes détaillées :**
 
 1. **Création** : Le technicien crée la demande
    - Quel article ? (référence normalisée si elle existe)
@@ -335,17 +386,14 @@ Quand vous créez une demande, deux cas de figure :
    - Est-ce urgent ?
    - Liée à une action ? (optionnel)
 
-2. **Qualification** : Statut = `À qualifier` (si pièce inconnue)
+2. **Qualification** : Statut = `TO_QUALIFY` (si pièce inconnue)
    - Le responsable achats crée la référence interne
    - Il lie les références fournisseur
    - Il note la référence fabricant
+   - → Passe à `NO_SUPPLIER_REF` puis `PENDING_DISPATCH`
 
-3. **En attente** : Statut = `En attente`
-   - La demande est dans la file d'attente
-   - Le responsable achats va la dispatcher
-
-4. **Dispatch dans les paniers fournisseur**
-   - Les demandes qualifiées sont regroupées par fournisseur
+3. **Dispatch** : Statut = `PENDING_DISPATCH` → `OPEN`
+   - La demande est dispatchée dans un panier fournisseur
    - Chaque panier accumule des demandes pour un même fournisseur
    - Le panier a son propre cycle de vie (voir ci-dessous)
 
@@ -428,14 +476,15 @@ Ou **Refus** : Statut = `Refusé`
 
 #### Ce qu'il faut savoir
 
+- **Le statut est calculé automatiquement** : Il dépend de l'état de la demande (article qualifié ? fournisseur lié ? dispatchée ? commandée ? reçue ?)
 - Une demande peut concerner :
-  - **Un article existant** du catalogue (qualifiée automatiquement)
-  - **Un article nouveau** qui doit être qualifié et normalisé
+  - **Un article existant** du catalogue → statut `PENDING_DISPATCH` directement
+  - **Un article nouveau** → statut `TO_QUALIFY`, doit être qualifié et normalisé
 - Une demande peut être :
   - **Liée à une action** : Traçabilité complète (quelle pièce pour quelle intervention)
   - **Spontanée** : Consommables, fournitures, anticipation
-- Le **dispatch en paniers fournisseur** permet de regrouper intelligemment les commandes
-- Le **cycle de vie des paniers** (Ouvert → ASK → Commandé → Reçu) optimise le flux d'achats
+- Le **dispatch** (`PENDING_DISPATCH` → `OPEN`) regroupe les demandes dans des paniers fournisseur
+- Le **cycle de vie des paniers** (`OPEN` → `QUOTED` → `ORDERED` → `RECEIVED`) optimise le flux d'achats
 - Les **états critiques** (taille, âge, urgence) déclenchent automatiquement la demande de prix
 - Un panier en statut ASK est **verrouillé** : impossible d'ajouter de nouvelles demandes
 - On peut marquer une demande comme urgente

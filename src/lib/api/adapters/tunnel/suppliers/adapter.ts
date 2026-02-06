@@ -12,6 +12,7 @@ import {
   createSupplierRaw,
   updateSupplierRaw,
   deleteSupplierRaw,
+  dispatchPurchaseRequestsRaw,
 } from './datasource';
 import { mapSupplierToFrontend, mapSupplierToBackend } from './mapper';
 import { supplierOrderLinesAdapter } from '../supplierOrderLines/adapter';
@@ -66,7 +67,20 @@ export const suppliersAdapter = {
     return supplierOrderLinesAdapter.fetchSupplierOrderLinesByOrder(orderId);
   },
 
+  /**
+   * Dispatch purchase requests with PENDING_DISPATCH status to supplier orders
+   * POST /purchase_requests/dispatch
+   * Returns: { dispatched_count, created_orders, errors }
+   */
+  dispatchPurchaseRequests: async () => {
+    const result = await dispatchPurchaseRequestsRaw();
+    return {
+      dispatched: result.dispatched_count || 0,
+      createdOrders: result.created_orders || [],
+      errors: result.errors || [],
+    };
+  },
+
   // Stubs for methods not yet implemented
   purgeSupplierOrder: undefined,
-  dispatchPurchaseRequests: undefined,
 };

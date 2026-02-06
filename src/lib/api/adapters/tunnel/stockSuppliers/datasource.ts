@@ -50,6 +50,8 @@ export const fetchStockItemSuppliersForSupplierRaw = async (supplierId: string) 
  * Create a new stock item supplier reference
  */
 export const createStockItemSupplierRaw = async (payload: Record<string, unknown>) => {
+  console.log('createStockItemSupplierRaw - payload avant envoi:', payload);
+  console.log('createStockItemSupplierRaw - JSON.stringify:', JSON.stringify(payload));
   const response = await tunnelApi.post('/stock_item_suppliers/', payload);
   return response.data?.data || response.data || {};
 };

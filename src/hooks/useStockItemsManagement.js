@@ -152,10 +152,13 @@ export const useStockItemsManagement = (onError) => {
           throw err;
         }
 
-        await stockSuppliers.createStockItemSupplier({
+        const payload = {
           stock_item_id: stockItemId,
           ...refData,
-        });
+        };
+        console.log("Payload envoyé à l'API:", payload);
+
+        await stockSuppliers.createStockItemSupplier(payload);
         await loadSupplierRefs(stockItemId);
       } catch (error) {
         console.error('Erreur ajout référence:', error);

@@ -345,6 +345,7 @@ export const { manufacturerItems } = API;
  * - `createPurchaseRequest(payload)` → `PurchaseRequest`
  * - `updatePurchaseRequest(id, payload)` → `PurchaseRequest`
  * - `deletePurchaseRequest(id)` → `void`
+ * - `fetchPurchaseRequestStats(params)` → `PurchaseRequestStats`
  *
  * @type {Object}
  */

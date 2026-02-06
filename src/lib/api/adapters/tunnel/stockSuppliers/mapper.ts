@@ -36,13 +36,13 @@ export const mapStockItemSupplierToFrontend = (ref: any) => {
  */
 export const mapStockItemSupplierToBackend = (ref: any) => {
   return {
-    stock_item_id: ref.stockItemId,
-    supplier_id: ref.supplierId,
-    supplier_ref: ref.supplierRef,
-    unit_price: ref.unitPrice,
-    lead_time_days: ref.leadTimeDays,
-    min_order_quantity: ref.minOrderQuantity,
-    is_preferred: ref.isPreferred,
-    manufacturer_item_id: ref.manufacturerItemId,
+    stock_item_id: ref.stock_item_id,
+    supplier_id: ref.supplier_id,
+    supplier_ref: ref.supplier_ref,
+    unit_price: ref.unit_price,
+    lead_time_days: ref.lead_time_days,
+    min_order_quantity: ref.min_order_quantity,
+    is_preferred: ref.is_preferred,
+    manufacturer_item_id: ref.manufacturer_item_id,
   };
 };

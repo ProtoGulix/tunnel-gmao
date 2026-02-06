@@ -65,9 +65,18 @@ export default function PurchaseRequestDetailsPanel({
 }) {
   const [supplierRefFormData, setSupplierRefFormData] = useState(INITIAL_SUPPLIER_REF_FORM);
 
-  const handleAddSupplierRef = useCallback(() => {
+  const handleAddSupplierRef = useCallback((stockItemIdOrPayload, payloadIfProvided) => {
     if (!stockItem?.id) return;
-    const payload = buildSupplierRefPayload(supplierRefFormData);
+    
+    // Si appelé avec (stockItemId, payload) depuis SupplierRefsInlinePanel
+    let payload;
+    if (payloadIfProvided) {
+      payload = payloadIfProvided;
+    } else {
+      // Si appelé sans paramètres depuis le formulaire local
+      payload = buildSupplierRefPayload(supplierRefFormData);
+    }
+    
     if (!payload.supplier_id || !payload.supplier_ref) {
       console.warn('Fournisseur ou référence manquants');
       return;

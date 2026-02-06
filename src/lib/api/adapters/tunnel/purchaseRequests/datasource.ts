@@ -60,3 +60,15 @@ export const updatePurchaseRequestRaw = async (id: string, payload: Record<strin
 export const deletePurchaseRequestRaw = async (id: string) => {
   await tunnelApi.delete(`/purchase_requests/${id}`);
 };
+
+/**
+ * Fetch purchase requests statistics
+ */
+export const fetchPurchaseRequestStatsRaw = async (params?: {
+  start_date?: string;
+  end_date?: string;
+  group_by?: string;
+}) => {
+  const response = await tunnelApi.get('/purchase_requests/stats', { params });
+  return response.data?.data || response.data || {};
+};

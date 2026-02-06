@@ -1,3 +1,26 @@
+## 2.1.12 - 2026-02-06
+
+Stabilité: STABLE
+
+### Intégration API et dispatch automatique
+
+#### Ce qui a changé
+
+- **Dispatch automatique**: Nouvelle fonctionnalité de dispatch automatique des demandes d'achat prêtes (statut PENDING_DISPATCH) vers les paniers fournisseurs via l'API
+- **Statistiques optimisées**: Les compteurs des onglets utilisent maintenant les statistiques de l'API au lieu de calculs locaux
+- **Endpoint API**: Intégration du nouvel endpoint `/purchase_requests/dispatch` et `/purchase_requests/stats`
+- **Fix mapper**: Correction du mapper de références fournisseurs pour accepter le format snake_case conforme à l'API
+- **Statuts conformes**: Utilisation des statuts dérivés de l'API (TO_QUALIFY, NO_SUPPLIER_REF, PENDING_DISPATCH, OPEN, etc.)
+
+#### Impact utilisateur
+
+- Bouton de dispatch visible automatiquement quand des demandes sont prêtes
+- Compteurs de badges plus précis et performants
+- Création de références fournisseurs fonctionnelle
+- Workflow d'approvisionnement plus fluide
+
+---
+
 ## 2.1.11 - 2026-02-06
 
 Stabilité: STABLE

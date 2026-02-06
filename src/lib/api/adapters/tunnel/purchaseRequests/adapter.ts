@@ -67,4 +67,19 @@ export const purchaseRequestsAdapter = {
       await datasource.deletePurchaseRequestRaw(id);
     }, `TunnelPurchaseRequests.deletePurchaseRequest:${id}`);
   },
+
+  async fetchPurchaseRequestStats(params?: {
+    startDate?: string;
+    endDate?: string;
+    groupBy?: string;
+  }) {
+    return apiCall(async () => {
+      const backendParams = params ? {
+        start_date: params.startDate,
+        end_date: params.endDate,
+        group_by: params.groupBy,
+      } : undefined;
+      return await datasource.fetchPurchaseRequestStatsRaw(backendParams);
+    }, 'TunnelPurchaseRequests.fetchPurchaseRequestStats');
+  },
 };

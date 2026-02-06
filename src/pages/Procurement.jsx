@@ -306,31 +306,35 @@ export default function Procurement() {
 
 
   const readyCount = useMemo(() => {
+    // Utilise les stats de l'API si disponibles, sinon calcul local en fallback
+    if (purchases.stats?.by_status?.PENDING_DISPATCH !== undefined) {
+      return purchases.stats.by_status.PENDING_DISPATCH;
+    }
     return purchases.requests.filter((r) => {
       const statusCode = r.derived_status?.code;
-      // Statut 'OPEN' = à dispatcher (selon derived_status backend)
-      if (statusCode !== "OPEN" || !r.stockItemId) return false;
-      
-      return (r.stockItemSupplierRefsCount ?? 0) > 0;
+      return statusCode === "PENDING_DISPATCH";
     }).length;
-  }, [purchases.requests]);
+  }, [purchases.requests, purchases.stats]);
 
-  const toQualifyCount = useMemo(
-    () => purchases.requests.filter((r) => {
+  const toQualifyCount = useMemo(() => {
+    if (purchases.stats?.by_status?.TO_QUALIFY !== undefined) {
+      return purchases.stats.by_status.TO_QUALIFY;
+    }
+    return purchases.requests.filter((r) => {
       const statusCode = r.derived_status?.code;
       return statusCode === "TO_QUALIFY";
-    }).length,
-    [purchases.requests]
-  );
+    }).length;
+  }, [purchases.requests, purchases.stats]);
 
-  const unlinkedCount = useMemo(
-    () => purchases.requests.filter((r) => {
+  const unlinkedCount = useMemo(() => {
+    if (purchases.stats?.by_status?.NO_SUPPLIER_REF !== undefined) {
+      return purchases.stats.by_status.NO_SUPPLIER_REF;
+    }
+    return purchases.requests.filter((r) => {
       const statusCode = r.derived_status?.code;
-      // Statut 'OPEN' mais sans stock_item_id (non qualifiées incluses)
-      return statusCode === "OPEN" && !r.stockItemId;
-    }).length,
-    [purchases.requests]
-  );
+      return statusCode === "NO_SUPPLIER_REF";
+    }).length;
+  }, [purchases.requests, purchases.stats]);
 
   const totalOrdersCount = useMemo(
     () => ordersByState.pooling.length + ordersByState.sent.length + ordersByState.ordered.length,
@@ -369,6 +373,8 @@ export default function Procurement() {
   const onAddSupplierRefForRequests = useCallback(async (stockItemId, refData) => {
     try {
       setFormLoading(true);
+      console.log('onAddSupplierRefForRequests called with:', { stockItemId, refData });
+      
       const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
       const makePreferred = existingRefs.length === 0;
       let manufacturer_item_id = null;
@@ -406,9 +412,20 @@ export default function Procurement() {
       setTimeout(() => setDispatchResult(null), 3000);
     } catch (err) {
       console.error('Erreur ajout référence:', err);
+      const errorDetail = err.response?.data?.detail || err.message;
+      const errors = err.response?.data?.errors;
+      let errorMessage = 'Erreur lors de l\'ajout de la référence';
+      
+      if (errors && Array.isArray(errors)) {
+        const missingFields = errors.map(e => e.loc?.[1] || 'champ inconnu').join(', ');
+        errorMessage = `Champs manquants ou invalides: ${missingFields}`;
+      } else if (errorDetail) {
+        errorMessage = errorDetail;
+      }
+      
       setDispatchResult({
         type: 'error',
-        message: 'Erreur lors de l\'ajout de la référence',
+        message: errorMessage,
       });
     } finally {
       setFormLoading(false);
@@ -847,16 +864,11 @@ export default function Procurement() {
   }, [itemSelectionByBasket, purchasing.supplierOrders, refreshOrders, validateBasketTwinLines]);
 
   const handleDispatchClick = () => {
-    const dispatchableCount = filteredRequests.filter(r => {
-      const statusId = typeof r.status === 'string' ? r.status : r.status?.id;
-      return statusId === "open" && r.stockItemId;
-    }).length;
-
-    if (dispatchableCount === 0) {
+    if (readyCount === 0) {
       setDispatchResult({
         type: 'warning',
         message: 'Aucune demande dispatchable',
-        details: 'Les demandes ouvertes doivent avoir une pièce liée'
+        details: 'Les demandes doivent avoir le statut PENDING_DISPATCH'
       });
       setTimeout(() => setDispatchResult(null), 6000);
       return;
@@ -874,8 +886,8 @@ export default function Procurement() {
       setDispatchResult({
         type: results.errors.length > 0 ? 'warning' : 'success',
         message: 'Dispatch terminé',
-        dispatched: results.dispatched.length,
-        toQualify: results.toQualify.length,
+        dispatched: results.dispatched,
+        createdOrders: results.createdOrders?.length || 0,
         errors: results.errors.length,
         errorDetails: results.errors
       });
@@ -888,7 +900,7 @@ export default function Procurement() {
       setDispatchResult({
         type: 'error',
         message: 'Erreur lors du dispatch',
-        details: error.response?.data?.errors?.[0]?.message || error.message
+        details: error.response?.data?.detail || error.message
       });
     }
   };
@@ -903,6 +915,7 @@ export default function Procurement() {
     Promise.all([
       stock.loadStockItems(true),
       purchases.loadRequests(true),
+      purchases.fetchStats(),
       purchasing.loadAll(true)
     ]);
   }, [purchases, purchasing, stock]);
@@ -1026,9 +1039,9 @@ export default function Procurement() {
             <Flex direction="column" gap="1">
               {dispatchResult.dispatched !== undefined && (
                 <Flex direction="column" gap="1" mt="2">
-                  <Text size="2">✅ {dispatchResult.dispatched} DA dispatchée{dispatchResult.dispatched > 1 ? 's' : ''}</Text>
-                  {dispatchResult.toQualify > 0 && (
-                    <Text size="2">⚠️ {dispatchResult.toQualify} DA à qualifier (pas de fournisseur préféré)</Text>
+                  <Text size="2">✅ {dispatchResult.dispatched} demande{dispatchResult.dispatched > 1 ? 's' : ''} dispatchée{dispatchResult.dispatched > 1 ? 's' : ''}</Text>
+                  {dispatchResult.createdOrders > 0 && (
+                    <Text size="2">📦 {dispatchResult.createdOrders} panier{dispatchResult.createdOrders > 1 ? 's' : ''} créé{dispatchResult.createdOrders > 1 ? 's' : ''} ou mis à jour</Text>
                   )}
                   {dispatchResult.errors > 0 && (
                     <Text size="2" color="red">❌ {dispatchResult.errors} erreur{dispatchResult.errors > 1 ? 's' : ''}</Text>

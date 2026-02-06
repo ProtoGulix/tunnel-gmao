@@ -134,7 +134,17 @@ export default function SupplierRefsInlinePanel({
       return;
     }
     try {
-      await onAdd(stockItem.id);
+      const payload = {
+        supplier_id: formData.supplier_id,
+        supplier_ref: formData.supplier_ref.trim(),
+        unit_price: formData.unit_price || null,
+        delivery_time_days: formData.delivery_time_days || null,
+        is_preferred: formData.is_preferred || false,
+        manufacturer_name: formData.manufacturer_name?.trim() || '',
+        manufacturer_ref: formData.manufacturer_ref?.trim() || '',
+        manufacturer_designation: formData.manufacturer_designation?.trim() || '',
+      };
+      await onAdd(stockItem.id, payload);
       setIsAdding(false);
       resetForm();
     } catch (err) {
