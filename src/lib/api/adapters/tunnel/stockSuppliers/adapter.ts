@@ -44,6 +44,26 @@ export const stockSuppliersAdapter = {
   },
 
   /**
+   * Fetch supplier references for multiple stock items
+   */
+  fetchStockItemSuppliersBulk: async (stockItemIds: string[]) => {
+    const ids = Array.isArray(stockItemIds) ? stockItemIds.filter(Boolean) : [];
+    if (ids.length === 0) return {};
+
+    const results = await Promise.all(
+      ids.map(async (id) => ({
+        id,
+        refs: await stockSuppliersAdapter.fetchStockItemSuppliersForItem(String(id)),
+      }))
+    );
+
+    return results.reduce<Record<string, any[]>>((acc, entry) => {
+      acc[entry.id] = entry.refs || [];
+      return acc;
+    }, {});
+  },
+
+  /**
    * Create a new stock item supplier reference
    */
   createStockItemSupplier: async (ref: any) => {

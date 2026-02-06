@@ -11,6 +11,21 @@
 export const mapActionToDomain = (raw: any) => {
   if (!raw) return null;
 
+  const rawPurchaseRequests =
+    raw.purchase_requests ||
+    raw.purchase_request_ids ||
+    [];
+
+  const purchaseRequests = Array.isArray(rawPurchaseRequests)
+    ? rawPurchaseRequests.map((pr: any) => {
+        if (!pr) return null;
+        if (typeof pr === 'string' || typeof pr === 'number') {
+          return { id: String(pr) };
+        }
+        return { id: String(pr.id || pr.purchase_request_id || pr.purchaseRequestId || '') };
+      }).filter((pr: any) => pr && pr.id)
+    : [];
+
   return {
     id: raw.id?.toString() || '',
     description: raw.description || '',
@@ -26,6 +41,7 @@ export const mapActionToDomain = (raw: any) => {
         }
       : undefined,
     intervention: raw.intervention_id ? { id: String(raw.intervention_id) } : undefined,
+    purchaseRequests,
   };
 };
 

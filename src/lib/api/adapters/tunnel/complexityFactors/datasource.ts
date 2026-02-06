@@ -16,7 +16,7 @@ import { tunnelApi } from '../client';
  * @returns Raw backend response (array of complexity factors)
  */
 export const fetchComplexityFactorsRaw = async () => {
-  const response = await tunnelApi.get('/complexity_factors/');
+  const response = await tunnelApi.get('/complexity_factors');
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
   return list || [];
 };

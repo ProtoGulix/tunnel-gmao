@@ -1,3 +1,21 @@
+## 2.1.10 - 2026-02-06
+
+Stabilité: STABLE
+
+### Améliorations générales
+
+#### Ce qui a changé
+
+- **Demandes d’achat par action**: Les demandes liées sont à nouveau visibles dans la vue des actions
+- **Données plus cohérentes**: Les listes utilisées dans les formulaires se chargent sans interruption
+
+#### Impact utilisateur
+
+- Vue action plus complète
+- Expérience plus fluide
+
+---
+
 ## 2.1.9 - 2026-02-05
 
 Stabilité: STABLE
