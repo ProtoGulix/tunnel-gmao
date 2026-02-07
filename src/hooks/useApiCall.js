@@ -17,13 +17,16 @@ export const useApiCall = (apiFunction, options = {}) => {
   const [error, setError] = useState(null);
   const { showError } = useError();
   const abortControllerRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   // Extraire les options pour stabiliser les dépendances
   const { disableGlobalError, throwError } = options;
 
   // Cleanup: annuler les requêtes en cours lors du démontage
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       const controller = abortControllerRef.current;
       if (controller) {
         controller.abort();
@@ -40,10 +43,12 @@ export const useApiCall = (apiFunction, options = {}) => {
       const currentSignal = localController.signal;
       abortControllerRef.current = localController;
 
-      if (!silent) {
+      if (!silent && isMountedRef.current) {
         setLoading(true);
       }
-      setError(null);
+      if (isMountedRef.current) {
+        setError(null);
+      }
 
       try {
         // Normaliser args en tableau
@@ -51,7 +56,7 @@ export const useApiCall = (apiFunction, options = {}) => {
         const result = await apiFunction(...argsArray);
 
         // Ne pas mettre à jour le state si la requête a été annulée OU si result est null (annulation dans apiCall)
-        if (!currentSignal.aborted && result !== null) {
+        if (!currentSignal.aborted && result !== null && isMountedRef.current) {
           setData(result);
         }
 
@@ -63,7 +68,7 @@ export const useApiCall = (apiFunction, options = {}) => {
         }
 
         // Vérifier si la requête a été annulée avant de mettre à jour le state
-        if (!currentSignal.aborted) {
+        if (!currentSignal.aborted && isMountedRef.current) {
           setError(err);
 
           // Afficher l'erreur globalement sauf si disabled
@@ -79,7 +84,7 @@ export const useApiCall = (apiFunction, options = {}) => {
 
         return null;
       } finally {
-        if (!silent && !currentSignal.aborted) {
+        if (!silent && isMountedRef.current) {
           setLoading(false);
         }
       }

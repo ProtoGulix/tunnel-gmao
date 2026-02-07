@@ -1,3 +1,22 @@
+## 2.1.14 - 2026-02-07
+
+Stabilité: STABLE
+
+### Interventions: chargement et stabilité
+
+#### Ce qui a changé
+
+- **Ouverture du détail plus fiable**: l’écran d’intervention s’affiche sans attente inutile
+- **Moins d’appels en arrière-plan**: réduction des rafraîchissements non nécessaires
+- **Stabilité renforcée**: meilleure tenue lors des ouvertures/retours rapides
+
+#### Impact utilisateur
+
+- Détail d’intervention affiché immédiatement
+- Réduction des requêtes inutiles vers le backend
+
+---
+
 ## 2.1.13 - 2026-02-07
 
 Stabilité: STABLE

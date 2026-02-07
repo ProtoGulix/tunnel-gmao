@@ -133,7 +133,6 @@ export default function InterventionDetail() {
   const { user } = useAuth();
   const [operationError, setOperationError] = useState('');
   const pdfUrlRef = useRef(null);
-  const initialLoadRef = useRef(false);
 
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // STATE MANAGEMENT
@@ -158,13 +157,15 @@ export default function InterventionDetail() {
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // DATA FETCHING
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  const fetchIntervention = useCallback(() => interventions.fetchIntervention(id), [id]);
+
   const {
     data: interv,
     loading,
     error,
     execute: refetchIntervention,
     executeSilent: backgroundRefetchIntervention
-  } = useApiCall(() => interventions.fetchIntervention(id));
+  } = useApiCall(fetchIntervention);
 
   // Status logs are now included in the intervention endpoint (interv.statusLogs)
   const statusLog = useMemo(() => interv?.statusLogs || [], [interv?.statusLogs]);
@@ -173,13 +174,17 @@ export default function InterventionDetail() {
   // INITIALIZATION - Protection React StrictMode
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Protection contre le double appel en React StrictMode (dev)
-    if (initialLoadRef.current) return;
-    initialLoadRef.current = true;
+    let isActive = true;
+    refetchIntervention()
+      .catch(() => {
+        if (!isActive) return;
+      });
 
-    refetchIntervention();
+    return () => {
+      isActive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, refetchIntervention]);
 
   // Lazy loading : Charger les données du formulaire d'action uniquement à l'ouverture
   useEffect(() => {
