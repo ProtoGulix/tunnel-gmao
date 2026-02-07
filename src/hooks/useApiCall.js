@@ -24,8 +24,9 @@ export const useApiCall = (apiFunction, options = {}) => {
   // Cleanup: annuler les requêtes en cours lors du démontage
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      const controller = abortControllerRef.current;
+      if (controller) {
+        controller.abort();
       }
     };
   }, []);
@@ -37,6 +38,7 @@ export const useApiCall = (apiFunction, options = {}) => {
       // Créer un AbortController LOCAL pour CETTE requête uniquement
       const localController = new AbortController();
       const currentSignal = localController.signal;
+      abortControllerRef.current = localController;
 
       if (!silent) {
         setLoading(true);
@@ -103,7 +105,8 @@ export const useApiCall = (apiFunction, options = {}) => {
  * @example
  * const { mutate, loading } = useApiMutation(createIntervention, {
  *   onSuccess: () => refetch(),
- *   successMessage: 'Intervention créée avec succès'
+ *   successMessage: 'Intervention créée avec succès',
+ *   notify: showNotification,
  * });
  */
 export const useApiMutation = (mutationFunction, options = {}) => {
@@ -112,10 +115,57 @@ export const useApiMutation = (mutationFunction, options = {}) => {
   const { showError } = useError();
 
   // Extraire les callbacks pour stabiliser les dépendances
-  const onSuccess = options.onSuccess;
-  const onError = options.onError;
-  const disableGlobalError = options.disableGlobalError;
-  const throwError = options.throwError;
+  const {
+    onSuccess,
+    onError,
+    disableGlobalError,
+    throwError,
+    notify,
+    successMessage,
+    errorMessage,
+    successDetails,
+    errorDetails,
+    successType = 'success',
+    errorType = 'error',
+  } = options;
+
+  const resolveMessage = useCallback((value, ...params) => {
+    if (typeof value === 'function') {
+      return value(...params);
+    }
+    return value;
+  }, []);
+
+  const notifyMessage = useCallback(
+    (type, message, details) => {
+      if (!notify || !message) return;
+
+      const payload = details ? { details } : {};
+
+      if (typeof notify === 'function') {
+        notify(message, type, payload);
+        return;
+      }
+
+      if (notify.showNotification) {
+        notify.showNotification(message, type, payload);
+        return;
+      }
+
+      const handlers = {
+        success: notify.showSuccess,
+        warning: notify.showWarning,
+        info: notify.showInfo,
+        error: notify.showError,
+      };
+
+      const handler = handlers[type];
+      if (handler) {
+        handler(message, payload);
+      }
+    },
+    [notify]
+  );
 
   const mutate = useCallback(
     async (...args) => {
@@ -127,8 +177,12 @@ export const useApiMutation = (mutationFunction, options = {}) => {
 
         // Callback de succès
         if (onSuccess) {
-          onSuccess(result);
+          onSuccess(result, ...args);
         }
+
+        const resolvedSuccessMessage = resolveMessage(successMessage, result, ...args);
+        const resolvedSuccessDetails = resolveMessage(successDetails, result, ...args);
+        notifyMessage(successType, resolvedSuccessMessage, resolvedSuccessDetails);
 
         return result;
       } catch (err) {
@@ -141,8 +195,12 @@ export const useApiMutation = (mutationFunction, options = {}) => {
 
         // Callback d'erreur
         if (onError) {
-          onError(err);
+          onError(err, ...args);
         }
+
+        const resolvedErrorMessage = resolveMessage(errorMessage, err, ...args);
+        const resolvedErrorDetails = resolveMessage(errorDetails, err, ...args);
+        notifyMessage(errorType, resolvedErrorMessage, resolvedErrorDetails);
 
         if (throwError) {
           throw err;
@@ -153,7 +211,22 @@ export const useApiMutation = (mutationFunction, options = {}) => {
         setLoading(false);
       }
     },
-    [mutationFunction, showError, onSuccess, onError, disableGlobalError, throwError]
+    [
+      mutationFunction,
+      showError,
+      onSuccess,
+      onError,
+      disableGlobalError,
+      throwError,
+      resolveMessage,
+      notifyMessage,
+      successMessage,
+      successDetails,
+      successType,
+      errorMessage,
+      errorDetails,
+      errorType,
+    ]
   );
 
   return { mutate, loading, error };

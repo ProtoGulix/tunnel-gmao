@@ -85,6 +85,7 @@ export const mapSupplierOrderPayloadToBackend = (payload: any): Record<string, u
   // Optional fields
   if (payload.status !== undefined) backend.status = payload.status.toUpperCase();
   if (payload.orderedAt !== undefined) backend.ordered_at = payload.orderedAt;
+  if (payload.receivedAt !== undefined) backend.received_at = payload.receivedAt;
   if (payload.expectedDeliveryDate !== undefined) backend.expected_delivery_date = payload.expectedDeliveryDate;
   if (payload.notes !== undefined) backend.notes = payload.notes;
   if (payload.currency !== undefined) backend.currency = payload.currency;

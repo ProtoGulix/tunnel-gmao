@@ -1,3 +1,24 @@
+## 2.1.13 - 2026-02-07
+
+Stabilité: STABLE
+
+### Approvisionnement: améliorations et correctifs
+
+#### Ce qui a changé
+
+- **Bandeau de dispatch clarifié**: présentation plus nette des résultats et des actions
+- **Onglets fournisseurs simplifiés**: affichage plus homogène et lisible
+- **Demandes d'achat harmonisées**: comportement unifié entre demandes actives et archivées
+- **Outil de recalcul retiré**: l’option n’est plus proposée car elle n’était pas utile au quotidien
+- **Changement de statut fiabilisé**: moins d’erreurs lors des transitions
+
+#### Impact utilisateur
+
+- Interface plus claire
+- Actions plus fiables sur les paniers
+
+---
+
 ## 2.1.12 - 2026-02-06
 
 Stabilité: STABLE

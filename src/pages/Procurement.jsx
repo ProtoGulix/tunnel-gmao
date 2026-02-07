@@ -7,19 +7,14 @@ import {
   Card,
   Button,
   Badge,
-  AlertDialog,
 } from "@radix-ui/themes";
 import {
   ShoppingCart,
   TruckIcon,
-  Zap,
-  PackagePlus,
   Send,
   PackageCheck,
   Archive,
   Users,
-  AlertTriangle,
-  Settings,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -27,10 +22,10 @@ import { usePageHeaderProps } from "@/hooks/usePageConfig";
 import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LoadingState from "@/components/common/LoadingState";
-import { useRequestStats } from "@/hooks/useStockData";
 import PurchaseRequestsTable from "@/components/purchase/requests/PurchaseRequestsTable";
 import StockItemSearch from "@/components/stock/StockItemSearch";
 import SupplierOrdersTable from "@/components/purchase/orders/SupplierOrdersTable";
+import DispatchBanner from "@/components/purchase/DispatchBanner";
 import TableHeader from "@/components/common/TableHeader";
 import EmptyState from "@/components/common/EmptyState";
 import StatusCallout from "@/components/common/StatusCallout";
@@ -42,16 +37,12 @@ import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
 import { useDeletePurchaseRequest } from "@/hooks/useDeletePurchaseRequest";
-import { manufacturerItems, stock as stockAPI, supplierOrderLines } from "@/lib/api/facade";
+import { useNotification } from "@/hooks/useNotification";
+import { useApiMutation } from "@/hooks/useApiCall";
+import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
 import {
-  canSelectItem,
-  canDeselectItem,
-  canModifyItem,
-  canTransitionBasket,
-  getInitialItemSelection,
   normalizeBasketStatus,
 } from "@/lib/purchasing/basketItemRules";
-import { recalculateAllOrderTotals } from "@/lib/purchasing/lineCalculationUtils";
 
 const PROCUREMENT_TABS = {
   REQUESTS: "requests",
@@ -69,8 +60,7 @@ export default function Procurement() {
   const purchasing = usePurchasingManagement(setError);
 
   const [activeTab, setActiveTab] = useTabNavigation(PROCUREMENT_TABS.REQUESTS, 'tab');
-  const [dispatchResult, setDispatchResult] = useState(null);
-  const [showDispatchConfirm, setShowDispatchConfirm] = useState(false);
+  const { notification: dispatchResult, showNotification, showSuccess, showError, showWarning } = useNotification(3000);
 
   // Clés distinctes pour éviter que les recherches se masquent entre elles
   const legacySearch = useMemo(() => {
@@ -80,34 +70,23 @@ export default function Procurement() {
   }, []);
 
   const [requestSearchTerm, setRequestSearchTerm] = useSearchParam('reqSearch', legacySearch);
-  const [supplierOrderSearchTerm, setSupplierOrderSearchTerm] = useSearchParam('search', legacySearch);
 
-  // Si une URL fournit encore ?search=, on réplique vers les nouvelles clés pour que la navigation/Back fonctionne
+  // Si une URL fournit encore ?search=, on réplique vers la nouvelle clé pour que la navigation/Back fonctionne
   useEffect(() => {
     if (!legacySearch) return;
-    if (!supplierOrderSearchTerm) setSupplierOrderSearchTerm(legacySearch);
     if (!requestSearchTerm) setRequestSearchTerm(legacySearch);
-  }, [legacySearch, requestSearchTerm, setRequestSearchTerm, supplierOrderSearchTerm, setSupplierOrderSearchTerm]);
+  }, [legacySearch, requestSearchTerm, setRequestSearchTerm]);
 
-  const [supplierOrderSupplierFilter, setSupplierOrderSupplierFilter] = useState("all");
-
-  const [expandedRequestId, setExpandedRequestId] = useState(null);
-  const [formLoading, setFormLoading] = useState(false);
-  const [itemSelectionByBasket, setItemSelectionByBasket] = useState({});
-  const [twinValidationsByLine, setTwinValidationsByLine] = useState({});
-  const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
-  const [isRecalculating, setIsRecalculating] = useState(false);
   const [allManufacturers, setAllManufacturers] = useState([]);
   const [stockFamilies, setStockFamilies] = useState([]);
 
-  // ========== CALLBACKS ==========
-  const handleTwinValidationUpdate = useCallback((lineId, validation) => {
-    setTwinValidationsByLine(prev => ({
-      ...prev,
-      [lineId]: validation,
-    }));
-  }, []);
+  // Wrapper legacy pour les composants enfants qui utilisent encore setDispatchResult
+  const setDispatchResultLegacy = useCallback((result) => {
+    if (!result) return;
+    showNotification(result.message, result.type, result);
+  }, [showNotification]);
 
+  // ========== CALLBACKS ==========
   const refreshManufacturers = useCallback(async () => {
     try {
       const items = await manufacturerItems.fetchManufacturerItems();
@@ -126,45 +105,23 @@ export default function Procurement() {
   }, []);
 
   // ========== COMPUTED VALUES ==========
-  const requestStats = useRequestStats(purchases.requests);
+  const requestStats = {
+    total: purchases.stats?.totals?.total_requests ?? 0,
+    urgent: purchases.stats?.totals?.urgent_count ?? 0,
+  };
 
   const filteredRequests = useMemo(() => {
-    const hasMissingInfo = (req) => {
-      const hasLink = !!req.stockItemId;
-      const hasQty = Number(req.quantity) > 0;
-      const supplierRefs = stock.supplierRefsByItem?.[req.stockItemId] || [];
-      const hasSupplierInfo = supplierRefs.some(ref => ref.isPreferred);
-      const hasRef = !!req.itemLabel;
-      return !(hasLink && hasQty && hasSupplierInfo && hasRef);
-    };
-
-    return [...purchases.requests]
-      .filter(req => {
-        const statusCode = req.derived_status?.code;
-        return statusCode !== 'RECEIVED';
-      })
-      .sort((a, b) => {
-        const aMissing = hasMissingInfo(a) ? 1 : 0;
-        const bMissing = hasMissingInfo(b) ? 1 : 0;
-        if (aMissing !== bMissing) return bMissing - aMissing;
-
-        const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
-        const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
-        return ageB - ageA;
-      });
-  }, [purchases.requests, stock.supplierRefsByItem]);
+    return purchases.requests.filter(req => {
+      const statusCode = req.derived_status?.code;
+      return statusCode !== 'RECEIVED';
+    });
+  }, [purchases.requests]);
 
   const receivedRequests = useMemo(() => {
-    return [...purchases.requests]
-      .filter(req => {
-        const statusCode = req.derived_status?.code;
-        return statusCode === 'RECEIVED';
-      })
-      .sort((a, b) => {
-        const ageA = new Date().getTime() - new Date(a.createdAt).getTime();
-        const ageB = new Date().getTime() - new Date(b.createdAt).getTime();
-        return ageB - ageA;
-      });
+    return purchases.requests.filter(req => {
+      const statusCode = req.derived_status?.code;
+      return statusCode === 'RECEIVED';
+    });
   }, [purchases.requests]);
 
   // Séparer les paniers par état métier
@@ -193,169 +150,106 @@ export default function Procurement() {
     return { pooling, sent, ordered, closed };
   }, [purchasing.supplierOrders]);
 
-  // Calcul de l'urgence globale et de l'âge max pour les paniers en mutualisation
-  const enrichedPoolingOrders = useMemo(() => {
-    return ordersByState.pooling.map(order => {
-      const lines = order.lines || [];
-      let maxUrgency = 'low';
-      let maxAge = 0;
-      let hasUrgent = false;
-      let hasNormalOver7Days = false;
-      
-      lines.forEach(line => {
-        const urgency = line.urgency || 'normal';
-        const lineAge = line.createdAt ? Math.floor((Date.now() - new Date(line.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
-        
-        // Calculer l'urgence max
-        if (urgency === 'high') {
-          maxUrgency = 'high';
-          hasUrgent = true;
-        } else if (urgency === 'normal' && maxUrgency === 'low') {
-          maxUrgency = 'normal';
-        }
-        
-        // Calculer l'âge max
-        if (lineAge > maxAge) {
-          maxAge = lineAge;
-        }
-        
-        // Détecter rupture de mutualisation
-        if (urgency === 'high') {
-          hasUrgent = true;
-        }
-        if (urgency === 'normal' && lineAge > 7) {
-          hasNormalOver7Days = true;
-        }
-      });
-      
-      const poolingBroken = hasUrgent || hasNormalOver7Days;
-      
-      return {
-        ...order,
-        globalUrgency: maxUrgency,
-        maxLineAge: maxAge,
-        poolingBroken,
-        hasUrgentLines: hasUrgent,
-      };
-    });
-  }, [ordersByState.pooling]);
+  const supplierTabs = useMemo(() => ([
+    {
+      value: PROCUREMENT_TABS.POOLING,
+      icon: Users,
+      label: "Mutualisation",
+      title: "Paniers en mutualisation",
+      subtitle: {
+        singular: "panier en mutualisation",
+        plural: "paniers en mutualisation",
+      },
+      emptyTitle: "Aucun panier en mutualisation",
+      emptyDescription: "Les paniers en attente volontaire apparaîtront ici",
+      emptyIcon: Users,
+      badgeColor: "purple",
+      orders: ordersByState.pooling,
+      showPoolingColumns: true,
+    },
+    {
+      value: PROCUREMENT_TABS.SENT,
+      icon: Send,
+      label: "En chiffrage",
+      title: "Paniers en chiffrage",
+      subtitle: {
+        singular: "panier en chiffrage",
+        plural: "paniers en chiffrage",
+      },
+      emptyTitle: "Aucun panier en chiffrage",
+      emptyDescription: "Les paniers envoyés aux fournisseurs pour devis apparaîtront ici",
+      emptyIcon: TruckIcon,
+      badgeColor: "blue",
+      orders: ordersByState.sent,
+    },
+    {
+      value: PROCUREMENT_TABS.ORDERED,
+      icon: PackageCheck,
+      label: "Commandés",
+      title: "Paniers commandés",
+      subtitle: {
+        singular: "panier commandé",
+        plural: "paniers commandés",
+      },
+      emptyTitle: "Aucun panier commandé",
+      emptyDescription: "Les paniers validés et commandés apparaîtront ici",
+      emptyIcon: TruckIcon,
+      badgeColor: "green",
+      orders: ordersByState.ordered,
+    },
+    {
+      value: PROCUREMENT_TABS.CLOSED,
+      icon: Archive,
+      label: "Clôturés",
+      title: "Paniers clôturés",
+      subtitle: {
+        singular: "panier clôturé",
+        plural: "paniers clôturés",
+      },
+      emptyTitle: "Aucun panier clôturé",
+      emptyDescription: "Les paniers archivés apparaîtront ici",
+      emptyIcon: TruckIcon,
+      badgeColor: "gray",
+      badgeVariant: "soft",
+      orders: ordersByState.closed,
+    },
+  ]), [ordersByState]);
 
-  // Filtrage dynamique selon l'onglet actif
-  const filteredSupplierOrders = useMemo(() => {
-    let orders = [];
-    
-    switch (activeTab) {
-      case PROCUREMENT_TABS.POOLING:
-        orders = enrichedPoolingOrders;
-        break;
-      case PROCUREMENT_TABS.SENT:
-        orders = ordersByState.sent;
-        break;
-      case PROCUREMENT_TABS.ORDERED:
-        orders = ordersByState.ordered;
-        break;
-      case PROCUREMENT_TABS.CLOSED:
-        orders = ordersByState.closed;
-        break;
-      default:
-        return [];
-    }
-    
-    if (supplierOrderSupplierFilter !== "all") {
-      // Use helper that handles both supplier (new) and supplier_id (legacy)
-      const getSupplier = (order) => order?.supplier ?? order?.supplier_id;
-      orders = orders.filter((order) => (getSupplier(order)?.name || "") === supplierOrderSupplierFilter);
-    }
-    
-    return orders;
-  }, [activeTab, ordersByState, supplierOrderSupplierFilter]);
+  const activeSupplierTab = useMemo(() => {
+    return supplierTabs.find((tab) => tab.value === activeTab) || null;
+  }, [activeTab, supplierTabs]);
 
-  const supplierOrderSupplierOptions = useMemo(() => {
-    // Options de fournisseurs basées sur l'onglet actif
-    let relevantOrders = [];
-    switch (activeTab) {
-      case PROCUREMENT_TABS.POOLING:
-        relevantOrders = enrichedPoolingOrders;
-        break;
-      case PROCUREMENT_TABS.SENT:
-        relevantOrders = ordersByState.sent;
-        break;
-      case PROCUREMENT_TABS.ORDERED:
-        relevantOrders = ordersByState.ordered;
-        break;
-      case PROCUREMENT_TABS.CLOSED:
-        relevantOrders = ordersByState.closed;
-        break;
-      default:
-        relevantOrders = [];
-    }
-    
-    // Use helper or inline logic to get supplier from both formats
-    const getSupplier = (order) => order?.supplier ?? order?.supplier_id;
-    const names = new Set(
-      relevantOrders
-        .map((o) => getSupplier(o)?.name)
-        .filter((n) => typeof n === "string" && n.trim().length > 0)
-    );
-    return [
-      { value: "all", label: "Tous" },
-      ...Array.from(names).sort((a, b) => a.localeCompare(b)).map((n) => ({ value: n, label: n })),
+  const activeSupplierOrders = activeSupplierTab?.orders || [];
+
+
+
+  const statusCounts = (purchases.stats?.by_status || []).reduce((acc, item) => {
+    acc[item.status] = item.count ?? 0;
+    return acc;
+  }, {});
+
+  const readyCount = statusCounts.PENDING_DISPATCH ?? 0;
+  const toQualifyCount = statusCounts.TO_QUALIFY ?? 0;
+  const unlinkedCount = statusCounts.NO_SUPPLIER_REF ?? 0;
+
+  const totalOrdersCount = useMemo(() => {
+    const activeOrders = [
+      ...ordersByState.pooling,
+      ...ordersByState.sent,
+      ...ordersByState.ordered,
     ];
-  }, [activeTab, ordersByState]);
-
-
-
-  const readyCount = useMemo(() => {
-    // Utilise les stats de l'API si disponibles, sinon calcul local en fallback
-    if (purchases.stats?.by_status?.PENDING_DISPATCH !== undefined) {
-      return purchases.stats.by_status.PENDING_DISPATCH;
-    }
-    return purchases.requests.filter((r) => {
-      const statusCode = r.derived_status?.code;
-      return statusCode === "PENDING_DISPATCH";
-    }).length;
-  }, [purchases.requests, purchases.stats]);
-
-  const toQualifyCount = useMemo(() => {
-    if (purchases.stats?.by_status?.TO_QUALIFY !== undefined) {
-      return purchases.stats.by_status.TO_QUALIFY;
-    }
-    return purchases.requests.filter((r) => {
-      const statusCode = r.derived_status?.code;
-      return statusCode === "TO_QUALIFY";
-    }).length;
-  }, [purchases.requests, purchases.stats]);
-
-  const unlinkedCount = useMemo(() => {
-    if (purchases.stats?.by_status?.NO_SUPPLIER_REF !== undefined) {
-      return purchases.stats.by_status.NO_SUPPLIER_REF;
-    }
-    return purchases.requests.filter((r) => {
-      const statusCode = r.derived_status?.code;
-      return statusCode === "NO_SUPPLIER_REF";
-    }).length;
-  }, [purchases.requests, purchases.stats]);
-
-  const totalOrdersCount = useMemo(
-    () => ordersByState.pooling.length + ordersByState.sent.length + ordersByState.ordered.length,
-    [ordersByState.pooling.length, ordersByState.sent.length, ordersByState.ordered.length]
-  );
-
-  const poolingBrokenCount = useMemo(
-    () => enrichedPoolingOrders.filter(o => o.poolingBroken).length,
-    [enrichedPoolingOrders]
-  );
+    return activeOrders.reduce((sum, order) => sum + (order.line_count ?? 0), 0);
+  }, [ordersByState]);
 
   // ========== CALLBACKS ==========
   const refreshRequests = async () => {
     await purchases.loadRequests(false);
+    await purchases.fetchStats();
   };
 
-  const refreshOrders = async () => {
+  const refreshOrders = useCallback(async () => {
     await purchasing.loadSupplierOrders(false);
-    // Réinitialiser l'état de sélection après rafraîchissement
-    initializeItemSelection();
-  };
+  }, [purchasing]);
 
   const refreshStock = async () => {
     await stock.loadStockItems(false);
@@ -363,18 +257,11 @@ export default function Procurement() {
 
   useDeletePurchaseRequest(async () => {
     await refreshRequests();
-    setDispatchResult({
-      type: 'success',
-      message: 'Demande d\'achat supprimée'
-    });
-    setTimeout(() => setDispatchResult(null), 3000);
+    showSuccess('Demande d\'achat supprimée');
   });
 
-  const onAddSupplierRefForRequests = useCallback(async (stockItemId, refData) => {
-    try {
-      setFormLoading(true);
-      console.log('onAddSupplierRefForRequests called with:', { stockItemId, refData });
-      
+  const { mutate: addSupplierRef, loading: addingSupplierRef } = useApiMutation(
+    async ({ stockItemId, refData }) => {
       const existingRefs = stock.supplierRefsByItem?.[stockItemId] || [];
       const makePreferred = existingRefs.length === 0;
       let manufacturer_item_id = null;
@@ -401,508 +288,248 @@ export default function Procurement() {
           ...(manufacturer_item_id ? { manufacturer_item_id } : {}),
         }
       );
-      await Promise.all([
-        stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
-      ]);
-      setDispatchResult({
-        type: 'success',
-        message: 'Référence fournisseur ajoutée',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (err) {
-      console.error('Erreur ajout référence:', err);
-      const errorDetail = err.response?.data?.detail || err.message;
-      const errors = err.response?.data?.errors;
-      let errorMessage = 'Erreur lors de l\'ajout de la référence';
-      
-      if (errors && Array.isArray(errors)) {
-        const missingFields = errors.map(e => e.loc?.[1] || 'champ inconnu').join(', ');
-        errorMessage = `Champs manquants ou invalides: ${missingFields}`;
-      } else if (errorDetail) {
-        errorMessage = errorDetail;
-      }
-      
-      setDispatchResult({
-        type: 'error',
-        message: errorMessage,
-      });
-    } finally {
-      setFormLoading(false);
-    }
-  }, [stock, setDispatchResult]);
+      return { stockItemId };
+    },
+    {
+      onSuccess: async ({ stockItemId }) => {
+        await Promise.all([
+          stock.loadSupplierRefs(stockItemId),
+          stock.loadStockItems(false),
+        ]);
+      },
+      successMessage: 'Référence fournisseur ajoutée',
+      errorMessage: (err) => {
+        const errorDetail = err.response?.data?.detail || err.message;
+        const errors = err.response?.data?.errors;
+        let errorMessage = 'Erreur lors de l\'ajout de la référence';
 
-  const onAddStandardSpecForRequests = useCallback(async (stockItemId, specsData) => {
-    try {
-      setFormLoading(true);
-      await stockAPI.createStockItemStandardSpec({
+        if (errors && Array.isArray(errors)) {
+          const missingFields = errors.map(e => e.loc?.[1] || 'champ inconnu').join(', ');
+          errorMessage = `Champs manquants ou invalides: ${missingFields}`;
+        } else if (errorDetail) {
+          errorMessage = errorDetail;
+        }
+
+        return errorMessage;
+      },
+      notify: showNotification,
+      disableGlobalError: true,
+    }
+  );
+
+  const { mutate: addStandardSpec } = useApiMutation(
+    ({ stockItemId, specsData }) => 
+      stockAPI.createStockItemStandardSpec({
         stock_item_id: stockItemId,
         title: specsData.title,
         spec_text: specsData.spec_text,
         is_default: specsData.is_default ?? false,
-      });
-      await Promise.all([
-        stock.loadStockItems(false),
-        purchases.loadRequests(false),
-      ]);
-      setDispatchResult({
-        type: 'success',
-        message: 'Spécification ajoutée',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (err) {
-      console.error('Erreur ajout spécification:', err);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de l\'ajout de la spécification',
-      });
-    } finally {
-      setFormLoading(false);
+      }),
+    {
+      onSuccess: async () => {
+        await Promise.all([
+          stock.loadStockItems(false),
+          purchases.loadRequests(false),
+        ]);
+      },
+      successMessage: 'Spécification ajoutée',
+      errorMessage: 'Erreur lors de l\'ajout de la spécification',
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [stock, purchases, setDispatchResult]);
+  );
 
-  const onUpdateStandardSpecForRequests = useCallback(async (specId, specsData) => {
-    try {
-      setFormLoading(true);
-      await stock.updateStockItemStandardSpec(specId, {
+  const { mutate: updateStandardSpec } = useApiMutation(
+    ({ specId, specsData }) =>
+      stock.updateStockItemStandardSpec(specId, {
         title: specsData.title,
         spec_text: specsData.spec_text,
         is_default: specsData.is_default ?? false,
-      });
-      await Promise.all([
-        stock.loadStockItems(false),
-        purchases.loadRequests(false),
-      ]);
-      setDispatchResult({
-        type: 'success',
-        message: 'Spécification mise à jour',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (err) {
-      console.error('Erreur mise à jour spécification:', err);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la mise à jour de la spécification',
-      });
-    } finally {
-      setFormLoading(false);
+      }),
+    {
+      onSuccess: async () => {
+        await Promise.all([
+          stock.loadStockItems(false),
+          purchases.loadRequests(false),
+        ]);
+      },
+      successMessage: 'Spécification mise à jour',
+      errorMessage: 'Erreur lors de la mise à jour de la spécification',
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [stock, purchases, setDispatchResult]);
+  );
 
-  const onDeleteStandardSpecForRequests = useCallback(async (specId) => {
-    try {
-      setFormLoading(true);
-      await stock.deleteStockItemStandardSpec(specId);
-      await Promise.all([
-        stock.loadStockItems(false),
-        purchases.loadRequests(false),
-      ]);
-      setDispatchResult({
-        type: 'success',
-        message: 'Spécification supprimée',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (err) {
-      console.error('Erreur suppression spécification:', err);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la suppression de la spécification',
-      });
-    } finally {
-      setFormLoading(false);
+  const { mutate: deleteStandardSpec } = useApiMutation(
+    (specId) => stock.deleteStockItemStandardSpec(specId),
+    {
+      onSuccess: async () => {
+        await Promise.all([
+          stock.loadStockItems(false),
+          purchases.loadRequests(false),
+        ]);
+      },
+      successMessage: 'Spécification supprimée',
+      errorMessage: 'Erreur lors de la suppression de la spécification',
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [stock, purchases, setDispatchResult]);
+  );
 
-  const handleDeleteSupplierRef = useCallback(async (refId, stockItemId) => {
-    try {
+  const { mutate: deleteSupplierRef } = useApiMutation(
+    async ({ refId, stockItemId }) => {
       await stock.deleteSupplierRef(refId);
-      await Promise.all([
-        stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
-      ]);
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Référence supprimée',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (error) {
-      console.error("Erreur suppression référence:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la suppression',
-      });
+      return { stockItemId };
+    },
+    {
+      onSuccess: async ({ stockItemId }) => {
+        await Promise.all([
+          stock.loadSupplierRefs(stockItemId),
+          stock.loadStockItems(false),
+        ]);
+      },
+      successMessage: 'Référence supprimée',
+      errorMessage: 'Erreur lors de la suppression',
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [stock, setDispatchResult]);
+  );
 
-  const handleUpdateSupplierRef = useCallback(async (refId, updates, stockItemId) => {
-    try {
+  const { mutate: updateSupplierRef } = useApiMutation(
+    async ({ refId, updates, stockItemId }) => {
       await stock.updateSupplierRef(refId, updates);
-      await Promise.all([
-        stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
-        purchases.loadRequests(false),
-      ]);
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Référence mise à jour',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (error) {
-      console.error("Erreur mise à jour référence:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la mise à jour',
-      });
+      return { stockItemId };
+    },
+    {
+      onSuccess: async ({ stockItemId }) => {
+        await Promise.all([
+          stock.loadSupplierRefs(stockItemId),
+          stock.loadStockItems(false),
+          purchases.loadRequests(false),
+        ]);
+      },
+      successMessage: 'Référence mise à jour',
+      errorMessage: 'Erreur lors de la mise à jour',
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [stock, purchases, setDispatchResult]);
+  );
 
-  const toggleExpand = (requestId) => {
-    setExpandedRequestId(prev => prev === requestId ? null : requestId);
-  };
-
-  const [detailsLoadingStates, setDetailsLoadingStates] = useState({});
-
-  const handleLoadDetailsForRequest = useCallback(async (requestId) => {
-    const req = purchases.requests.find((r) => r.id === requestId);
-    const stockItemId = req?.stockItemId;
-    if (!stockItemId) return;
-
-    if (stock.supplierRefsByItem?.[stockItemId] && stock.standardSpecsByItem?.[stockItemId]) {
-      return;
-    }
-
-    setDetailsLoadingStates(prev => ({ ...prev, [requestId]: true }));
-
-    try {
-      const loadPromises = [];
-      if (!stock.supplierRefsByItem?.[stockItemId]) {
-        loadPromises.push(stock.loadSupplierRefs?.(stockItemId));
-      }
-      if (!stock.standardSpecsByItem?.[stockItemId]) {
-        loadPromises.push(stock.loadStandardSpecs?.(stockItemId));
-      }
-      await Promise.all(loadPromises);
-    } finally {
-      setDetailsLoadingStates(prev => ({ ...prev, [requestId]: false }));
-    }
-  }, [purchases.requests, stock]);
-
-  const handleLinkExisting = async (requestId, stockItem) => {
-    try {
-      setFormLoading(true);
+  const { mutate: linkExisting, loading: linkingExisting } = useApiMutation(
+    async ({ requestId, stockItem }) => {
       await purchases.linkExistingItem(requestId, stockItem);
-      await refreshRequests();
-      setExpandedRequestId(null);
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Pièce liée avec succès',
-        details: `"${stockItem.name}" a été liée à la demande`
-      });
-      setTimeout(() => setDispatchResult(null), 4000);
-    } catch (error) {
-      console.error("Erreur liaison:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la liaison',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-    } finally {
-      setFormLoading(false);
+      return { stockItem };
+    },
+    {
+      onSuccess: async () => {
+        await refreshRequests();
+      },
+      successMessage: 'Pièce liée avec succès',
+      successDetails: ({ stockItem }) => `"${stockItem.name}" a été liée à la demande`,
+      errorMessage: 'Erreur lors de la liaison',
+      errorDetails: (error) => error.response?.data?.errors?.[0]?.message || error.message,
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  };
+  );
 
-  const handleCreateNew = async (requestId, itemData) => {
-    try {
-      setFormLoading(true);
+  const { mutate: createNew, loading: creatingNew } = useApiMutation(
+    async ({ requestId, itemData }) => {
       const newStockItem = await stock.addStockItem({
         ...itemData,
         quantity: 0,
       });
-
       await purchases.linkExistingItem(requestId, newStockItem);
-
-      await Promise.all([refreshStock(), refreshRequests()]);
-      setExpandedRequestId(null);
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Pièce créée et liée avec succès',
-        details: `"${newStockItem.name}" (${newStockItem.ref}) a été créée et liée à la demande`
-      });
-      setTimeout(() => setDispatchResult(null), 5000);
-    } catch (error) {
-      console.error("Erreur création:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la création',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  // ========== GESTION SÉLECTION ITEMS PANIER ==========
-  const initializeItemSelection = useCallback(() => {
-    const newSelection = {};
-    purchasing.supplierOrders.forEach(basket => {
-      newSelection[basket.id] = getInitialItemSelection(basket);
-    });
-    setItemSelectionByBasket(newSelection);
-  }, [purchasing.supplierOrders]);
-
-  useEffect(() => {
-    if (purchasing.supplierOrders.length > 0) {
-      initializeItemSelection();
-    }
-  }, [purchasing.supplierOrders, initializeItemSelection]);
-
-  const handleToggleItemSelection = useCallback(async (basketId, itemId, nextSelected, updatedLines = []) => {
-    const basket = purchasing.supplierOrders.find(b => b.id === basketId);
-    const lines = updatedLines.length > 0
-      ? updatedLines
-      : basket?.lines || [];
-    const item = lines.find((l) => l.id === itemId);
-    if (!basket || !item) return;
-
-    const currentSelection = itemSelectionByBasket[basketId] || {};
-    const isCurrentlySelected = currentSelection[itemId] !== false;
-    const targetSelected = typeof nextSelected === 'boolean' ? nextSelected : !isCurrentlySelected;
-
-    // Vérifier si on peut sélectionner/désélectionner
-    if (!targetSelected && isCurrentlySelected) {
-      // On veut désélectionner
-      const result = canDeselectItem(basket, item, purchasing.supplierOrders);
-      if (!result.canDeselect) {
-        setDispatchResult({
-          type: 'warning',
-          message: 'Désélection impossible',
-          details: result.reason
-        });
-        setTimeout(() => setDispatchResult(null), 5000);
-        return;
-      }
-    } else if (targetSelected && !isCurrentlySelected) {
-      // On veut sélectionner
-      const result = canSelectItem(basket, item);
-      if (!result.canSelect) {
-        setDispatchResult({
-          type: 'warning',
-          message: 'Sélection impossible',
-          details: result.reason
-        });
-        setTimeout(() => setDispatchResult(null), 5000);
-        return;
-      }
-    }
-
-    // Mettre à jour la sélection
-    setItemSelectionByBasket(prev => ({
-      ...prev,
-      [basketId]: {
-        ...prev[basketId],
-        [itemId]: targetSelected,
+      return { newStockItem };
+    },
+    {
+      onSuccess: async () => {
+        await Promise.all([refreshStock(), refreshRequests()]);
       },
-    }));
-
-    purchasing.updateOrderLine(basketId, itemId, {
-      isSelected: targetSelected,
-    });
-
-    try {
-      await supplierOrderLines.updateSupplierOrderLine(itemId, { isSelected: targetSelected });
-    } catch (err) {
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la mise à jour de la sélection',
-        details: err?.message,
-      });
-      setTimeout(() => setDispatchResult(null), 5000);
+      successMessage: 'Pièce créée et liée avec succès',
+      successDetails: ({ newStockItem }) => `"${newStockItem.name}" (${newStockItem.ref}) a été créée et liée à la demande`,
+      errorMessage: 'Erreur lors de la création',
+      errorDetails: (error) => error.response?.data?.errors?.[0]?.message || error.message,
+      notify: showNotification,
+      disableGlobalError: true,
     }
-  }, [itemSelectionByBasket, purchasing]);
+  );
 
-  /**
-   * Valide les lignes jumelles d'un panier
-   * Retourne les erreurs trouvées
-   */
-  const validateBasketTwinLines = useCallback((basket) => {
-    const errors = [];
-    const warnings = [];
-    const lines = basket.lines || [];
-    
-    // Pour chaque ligne, vérifier s'il y a des problèmes de validation de jumelles
-    lines.forEach(line => {
-      const validation = twinValidationsByLine[line.id];
-      if (!validation) return;
-      
-      // Si la ligne a des jumelles et des erreurs de validation
-      if (validation.hasTwins && validation.validationErrors.length > 0) {
-        errors.push({
-          lineId: line.id,
-          stockItem: line.stock_item_id?.name || 'Article inconnu',
-          errors: validation.validationErrors
-        });
-      }
-      
-      // Collecter aussi les warnings
-      if (validation.hasTwins && validation.validationWarnings.length > 0) {
-        warnings.push({
-          lineId: line.id,
-          stockItem: line.stock_item_id?.name || 'Article inconnu',
-          warnings: validation.validationWarnings
-        });
-      }
-    });
-    
-    return { errors, warnings };
-  }, [twinValidationsByLine]);
+  // Calculer le loading combiné pour les opérations CRUD sur les demandes d'achat
+  const formLoading = addingSupplierRef || linkingExisting || creatingNew;
 
-  const handleBasketStatusChange = useCallback(async (basketId, newStatus) => {
-    const basket = purchasing.supplierOrders.find(b => b.id === basketId);
-    if (!basket) return;
+  const renderExpandedContent = useCallback((request) => (
+    <StockItemSearch
+      requestId={request.id}
+      initialItemLabel={request.itemLabel}
+      onLinkExisting={(requestId, stockItem) => linkExisting({ requestId, stockItem })}
+      onCreateNew={(requestId, itemData) => createNew({ requestId, itemData })}
+      loading={formLoading}
+      stockFamilies={stockFamilies}
+    />
+  ), [createNew, formLoading, linkExisting, stockFamilies]);
 
-    const currentSelection = itemSelectionByBasket[basketId] || {};
-    
-    // Valider les lignes jumelles si on passe de ASK (SENT) vers ORDERED
-    const currentStatus = normalizeBasketStatus(basket.status || '');
-    if (currentStatus === 'SENT' && newStatus === 'ORDERED') {
-      const twinValidation = validateBasketTwinLines(basket);
-      
-      if (twinValidation.errors.length > 0) {
-        const errorDetails = twinValidation.errors.map(e => 
-          `${e.stockItem}: ${e.errors.join(', ')}`
-        ).join('\n');
-        
-        setDispatchResult({
-          type: 'error',
-          message: 'Validation des jumelles échouée',
-          details: `${twinValidation.errors.length} ligne(s) avec erreurs :\n${errorDetails}`
-        });
-        setTimeout(() => setDispatchResult(null), 8000);
-        return;
-      }
-      
-      // Afficher un avertissement si des warnings existent
-      if (twinValidation.warnings.length > 0) {
-        const warningDetails = twinValidation.warnings.map(w => 
-          `${w.stockItem}: ${w.warnings.join(', ')}`
-        ).join('\n');
-        
-        setDispatchResult({
-          type: 'warning',
-          message: 'Avertissements sur les jumelles',
-          details: `${twinValidation.warnings.length} ligne(s) avec avertissements :\n${warningDetails}`
-        });
-        setTimeout(() => setDispatchResult(null), 6000);
-      }
-    }
-    
-    // Vérifier si la transition est possible
-    const transitionResult = canTransitionBasket(
-      basket,
-      newStatus,
-      currentSelection,
-      purchasing.supplierOrders
-    );
-
-    if (!transitionResult.canTransition) {
-      setDispatchResult({
-        type: 'error',
-        message: 'Transition impossible',
-        details: transitionResult.reason
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-      return;
-    }
-
-    try {
-      setFormLoading(true);
-      
-      // Si des items doivent être supprimés (transition POOLING -> SENT)
-      if (transitionResult.itemsToRemove.length > 0) {
-        // Supprimer chaque item désélectionné du panier
-        for (const item of transitionResult.itemsToRemove) {
-          try {
-            // TODO: Appeler l'API de suppression d'item et retour à "à dispatcher"
-            // await suppliers.deleteSupplierOrderLine(item.id);
-            // await purchases.setPurchaseRequestStatus(item.purchaseRequestUid, 'open');
-            console.log(`Supprimer item ${item.id} et retourner DA ${item.purchaseRequestUid} à dispatcher`);
-          } catch (err) {
-            console.error(`Erreur suppression item ${item.id}:`, err);
-          }
-        }
-      }
-
-      // Effectuer la transition de statut du panier
-      // TODO: Appeler l'API pour changer le statut
-      // await suppliers.updateSupplierOrder(basketId, { status: newStatus });
-      console.log(`Transition panier ${basketId} vers ${newStatus}`);
-
-      await refreshOrders();
-      
-      setDispatchResult({
-        type: 'success',
-        message: 'Statut du panier mis à jour',
-      });
-      setTimeout(() => setDispatchResult(null), 3000);
-    } catch (error) {
-      console.error('Erreur transition panier:', error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors de la transition',
-        details: error.response?.data?.errors?.[0]?.message || error.message
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-    } finally {
-      setFormLoading(false);
-    }
-  }, [itemSelectionByBasket, purchasing.supplierOrders, refreshOrders, validateBasketTwinLines]);
-
-  const handleDispatchClick = () => {
-    if (readyCount === 0) {
-      setDispatchResult({
-        type: 'warning',
-        message: 'Aucune demande dispatchable',
-        details: 'Les demandes doivent avoir le statut PENDING_DISPATCH'
-      });
-      setTimeout(() => setDispatchResult(null), 6000);
-      return;
-    }
-    setShowDispatchConfirm(true);
-  };
+  const purchaseTableProps = useMemo(() => ({
+    stockItems: stock.stockItems,
+    supplierRefs: stock.supplierRefsByItem || {},
+    standardSpecs: stock.standardSpecsByItem || {},
+    onRefresh: refreshRequests,
+    suppliers: purchasing.suppliers,
+    loading: formLoading,
+    setDispatchResult: setDispatchResultLegacy,
+    onAddSupplierRef: (stockItemId, refData) => addSupplierRef({ stockItemId, refData }),
+    onAddStandardSpec: (stockItemId, specsData) => addStandardSpec({ stockItemId, specsData }),
+    onDeleteSupplierRef: (refId, stockItemId) => deleteSupplierRef({ refId, stockItemId }),
+    onUpdateSupplierRef: (refId, updates, stockItemId) => updateSupplierRef({ refId, updates, stockItemId }),
+    onDeleteStandardSpec: (specId) => deleteStandardSpec(specId),
+    onUpdateStandardSpec: (specId, specsData) => updateStandardSpec({ specId, specsData }),
+    onCreateSupplier: purchasing.createSupplier,
+    allManufacturers,
+    renderExpandedContent,
+  }), [
+    addStandardSpec,
+    addSupplierRef,
+    allManufacturers,
+    deleteStandardSpec,
+    deleteSupplierRef,
+    formLoading,
+    purchasing.createSupplier,
+    refreshRequests,
+    renderExpandedContent,
+    setDispatchResultLegacy,
+    stock.standardSpecsByItem,
+    stock.stockItems,
+    stock.supplierRefsByItem,
+    updateStandardSpec,
+    updateSupplierRef,
+  ]);
 
   const handleDispatchConfirm = async () => {
-    setShowDispatchConfirm(false);
-    setDispatchResult(null);
-    
     try {
       const results = await purchasing.dispatch();
 
-      setDispatchResult({
-        type: results.errors.length > 0 ? 'warning' : 'success',
-        message: 'Dispatch terminé',
+      showNotification('Dispatch terminé', results.errors.length > 0 ? 'warning' : 'success', {
         dispatched: results.dispatched,
-        createdOrders: results.createdOrders?.length || 0,
+        createdOrders: results.createdOrders || 0,
         errors: results.errors.length,
-        errorDetails: results.errors
+        errorDetails: results.errors,
+        duration: 8000,
       });
 
       await Promise.all([refreshRequests(), refreshOrders()]);
-      
-      setTimeout(() => setDispatchResult(null), 8000);
     } catch (error) {
       console.error("Erreur dispatch:", error);
-      setDispatchResult({
-        type: 'error',
-        message: 'Erreur lors du dispatch',
-        details: error.response?.data?.detail || error.message
+      showError('Erreur lors du dispatch', {
+        details: error.response?.data?.detail || error.message,
       });
     }
+  };
+
+  const handleDispatchNotAvailable = () => {
+    showWarning('Aucune demande dispatchable', {
+      details: 'Les demandes doivent avoir le statut PENDING_DISPATCH',
+      duration: 6000,
+    });
   };
 
   // ========== EFFECTS ==========
@@ -921,38 +548,12 @@ export default function Procurement() {
   }, [purchases, purchasing, stock]);
 
   // ========== RECALCUL DES TOTAUX ==========
-  const handleRecalculateAllTotals = useCallback(async () => {
-    setIsRecalculating(true);
-    try {
-      const results = await recalculateAllOrderTotals(purchasing.supplierOrders);
-      if (results.failed === 0) {
-        setError(null);
-        // Rafraîchir après succès
-        await Promise.all([
-          stock.loadStockItems(true),
-          purchases.loadRequests(true),
-          purchasing.loadAll(true)
-        ]);
-        // Afficher un succès
-        console.log(`✅ Recalcul réussi: ${results.success} commande(s) traitée(s)`);
-      } else {
-        setError(new Error(
-          `Recalcul partiellement réussi: ${results.success} succès, ${results.failed} erreur(s)`
-        ));
-      }
-    } catch (err) {
-      setError(err);
-      console.error('Erreur lors du recalcul:', err);
-    } finally {
-      setIsRecalculating(false);
-      setShowRecalculateDialog(false);
-    }
-  }, [purchasing.supplierOrders, stock, purchases, purchasing]);
 
   useAutoRefresh(async () => {
     await Promise.all([
       stock.loadStockItems(false),
       purchases.loadRequests(false),
+      purchases.fetchStats(),
       purchasing.loadAll(false)
     ]);
   }, 30, true);
@@ -965,14 +566,12 @@ export default function Procurement() {
     subtitle:
       activeTab === "requests"
         ? `${filteredRequests.length} demande${filteredRequests.length > 1 ? "s" : ""}`
-        : activeTab === PROCUREMENT_TABS.POOLING
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} en mutualisation`
-        : activeTab === PROCUREMENT_TABS.SENT
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} en chiffrage`
-        : activeTab === PROCUREMENT_TABS.ORDERED
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} commandé${filteredSupplierOrders.length > 1 ? "s" : ""}`
-        : activeTab === PROCUREMENT_TABS.CLOSED
-        ? `${filteredSupplierOrders.length} panier${filteredSupplierOrders.length > 1 ? "s" : ""} clôturé${filteredSupplierOrders.length > 1 ? "s" : ""}`
+        : activeSupplierTab
+        ? `${activeSupplierOrders.length} ${
+            activeSupplierOrders.length > 1
+              ? activeSupplierTab.subtitle.plural
+              : activeSupplierTab.subtitle.singular
+          }`
         : "",
     urgentBadge:
       requestStats.urgent > 0
@@ -984,18 +583,11 @@ export default function Procurement() {
       { label: "À qualifier", value: toQualifyCount },
       { label: "Paniers actifs", value: totalOrdersCount },
     ] : [],
-    actions: [
-      {
-        label: "Outils",
-        icon: Settings,
-        onClick: () => setShowRecalculateDialog(true),
-        variant: "soft",
-        color: "gray",
-      },
-    ],
+    actions: [],
     onRefresh: () => Promise.all([
       stock.loadStockItems(true),
       purchases.loadRequests(true),
+      purchases.fetchStats(),
       purchasing.loadAll(true)
     ]),
   });
@@ -1021,6 +613,7 @@ export default function Procurement() {
             onRetry={() => Promise.all([
               stock.loadStockItems(true),
               purchases.loadRequests(true),
+              purchases.fetchStats(),
               purchasing.loadAll(true)
             ])}
             title="Erreur de chargement des approvisionnements"
@@ -1034,96 +627,23 @@ export default function Procurement() {
     <Box>
       <PageHeader {...headerProps} />
       <PageContainer>
-        {dispatchResult && (
-          <StatusCallout type={dispatchResult.type} title={dispatchResult.message}>
-            <Flex direction="column" gap="1">
-              {dispatchResult.dispatched !== undefined && (
-                <Flex direction="column" gap="1" mt="2">
-                  <Text size="2">✅ {dispatchResult.dispatched} demande{dispatchResult.dispatched > 1 ? 's' : ''} dispatchée{dispatchResult.dispatched > 1 ? 's' : ''}</Text>
-                  {dispatchResult.createdOrders > 0 && (
-                    <Text size="2">📦 {dispatchResult.createdOrders} panier{dispatchResult.createdOrders > 1 ? 's' : ''} créé{dispatchResult.createdOrders > 1 ? 's' : ''} ou mis à jour</Text>
-                  )}
-                  {dispatchResult.errors > 0 && (
-                    <Text size="2" color="red">❌ {dispatchResult.errors} erreur{dispatchResult.errors > 1 ? 's' : ''}</Text>
-                  )}
-                </Flex>
-              )}
-              {dispatchResult.details && (
-                <Text size="2" mt="1">{dispatchResult.details}</Text>
-              )}
-            </Flex>
-          </StatusCallout>
-        )}
-
-        {showDispatchConfirm && (
-          <StatusCallout type="info" dialog title="Confirmer le dispatch">
-            <Flex direction="column" gap="3">
-              <Text size="2" color="gray" style={{ display: 'block', marginTop: '4px' }}>
-                {readyCount} demande{readyCount > 1 ? 's' : ''} d&#39;achat {readyCount > 1 ? 'vont être dispatchées' : 'va être dispatchée'} vers les paniers fournisseurs.
-              </Text>
-              <Flex gap="2">
-                <Button 
-                  size="2" 
-                  color="blue" 
-                  onClick={handleDispatchConfirm}
-                  disabled={purchasing.dispatching}
-                  aria-label="Confirmer le dispatch des demandes d'achat"
-                >
-                  <Zap size={14} />
-                  Confirmer
-                </Button>
-                <Button 
-                  size="2" 
-                  variant="soft" 
-                  color="gray" 
-                  onClick={() => setShowDispatchConfirm(false)}
-                  disabled={purchasing.dispatching}
-                  aria-label="Annuler le dispatch"
-                >
-                  Annuler
-                </Button>
-              </Flex>
-            </Flex>
-          </StatusCallout>
-        )}
-
-        {readyCount > 0 && !showDispatchConfirm && (
-          <Card mb="3" style={{ background: "var(--blue-2)" }}>
-            <Flex align="center" justify="between" gap="3">
-              <Flex align="center" gap="3">
-                <Zap size={24} color="var(--blue-9)" />
-                <Box>
-                  <Text weight="bold" size="3">
-                    {readyCount} demande{readyCount > 1 ? "s" : ""} ouverte{readyCount > 1 ? "s" : ""} prête{readyCount > 1 ? "s" : ""} pour dispatch
-                  </Text>
-                  <Text size="2" color="gray" style={{ display: "block" }}>
-                    Ces demandes ont une pièce liée et peuvent être dispatchées automatiquement
-                  </Text>
-                </Box>
-              </Flex>
-              <Button
-                size="3"
-                color="blue"
-                onClick={handleDispatchClick}
-                disabled={purchasing.dispatching}
-                aria-label="Dispatcher les demandes d'achat prêtes vers les paniers fournisseurs"
-              >
-                <Zap size={16} />
-                {purchasing.dispatching ? "Dispatch en cours..." : "Dispatcher maintenant"}
-              </Button>
-            </Flex>
-          </Card>
-        )}
+        <DispatchBanner
+          readyCount={readyCount}
+          dispatching={purchasing.dispatching}
+          dispatchResult={dispatchResult}
+          onDispatch={handleDispatchConfirm}
+          onNotDispatchable={handleDispatchNotAvailable}
+        />
 
         {unlinkedCount > 0 && (
           <StatusCallout type="warning">
-            ⚠️ {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} non liée{unlinkedCount > 1 ? "s" : ""} à une pièce
+            {unlinkedCount} demande{unlinkedCount > 1 ? "s" : ""} non liée{unlinkedCount > 1 ? "s" : ""} à une pièce
           </StatusCallout>
         )}
 
         {toQualifyCount > 0 && (
           <StatusCallout type="warning">
-            ⚠️ {toQualifyCount} demande{toQualifyCount > 1 ? "s" : ""} sans fournisseur préféré
+            {toQualifyCount} demande{toQualifyCount > 1 ? "s" : ""} sans fournisseur préféré
           </StatusCallout>
         )}
 
@@ -1146,58 +666,19 @@ export default function Procurement() {
               </Flex>
             </Tabs.Trigger>
 
-            <Tabs.Trigger value={PROCUREMENT_TABS.POOLING}>
-              <Flex align="center" gap="2">
-                <Users size={14} />
-                <Text>Mutualisation</Text>
-                {ordersByState.pooling.length > 0 && (
-                  <Badge color="purple" variant="solid" size="1">
-                    {ordersByState.pooling.length}
-                  </Badge>
-                )}
-                {poolingBrokenCount > 0 && (
-                  <Badge color="red" variant="solid" size="1">
-                    {poolingBrokenCount}
-                  </Badge>
-                )}
-              </Flex>
-            </Tabs.Trigger>
-
-            <Tabs.Trigger value={PROCUREMENT_TABS.SENT}>
-              <Flex align="center" gap="2">
-                <Send size={14} />
-                <Text>En chiffrage</Text>
-                {ordersByState.sent.length > 0 && (
-                  <Badge color="blue" variant="solid" size="1">
-                    {ordersByState.sent.length}
-                  </Badge>
-                )}
-              </Flex>
-            </Tabs.Trigger>
-
-            <Tabs.Trigger value={PROCUREMENT_TABS.ORDERED}>
-              <Flex align="center" gap="2">
-                <PackageCheck size={14} />
-                <Text>Commandés</Text>
-                {ordersByState.ordered.length > 0 && (
-                  <Badge color="green" variant="solid" size="1">
-                    {ordersByState.ordered.length}
-                  </Badge>
-                )}
-              </Flex>
-            </Tabs.Trigger>
-
-            <Tabs.Trigger value={PROCUREMENT_TABS.CLOSED}>
-              <Flex align="center" gap="2">
-                <Archive size={14} />
-                <Text>Clôturés</Text>
-                {ordersByState.closed.length > 0 && (
-                  <Badge color="gray" variant="soft" size="1">
-                    {ordersByState.closed.length}
-                  </Badge>
-                )}
-              </Flex>
-            </Tabs.Trigger>
+            {supplierTabs.map((tab) => (
+              <Tabs.Trigger key={tab.value} value={tab.value}>
+                <Flex align="center" gap="2">
+                  <tab.icon size={14} />
+                  <Text>{tab.label}</Text>
+                  {tab.orders.length > 0 && (
+                    <Badge color={tab.badgeColor} variant={tab.badgeVariant || "solid"} size="1">
+                      {tab.orders.length}
+                    </Badge>
+                  )}
+                </Flex>
+              </Tabs.Trigger>
+            ))}
           </Tabs.List>
 
           <Box pt="4">
@@ -1240,35 +721,7 @@ export default function Procurement() {
                     <PurchaseRequestsTable
                       key={`${filteredRequests.length}-${stock.stockItems.length}`}
                       requests={filteredRequests}
-                      expandedRequestId={expandedRequestId}
-                      onToggleExpand={toggleExpand}
-                      stockItems={stock.stockItems}
-                      supplierRefs={stock.supplierRefsByItem || {}}
-                      standardSpecs={stock.standardSpecsByItem || {}}
-                      onRefresh={refreshRequests}
-                      suppliers={purchasing.suppliers}
-                      loading={formLoading}
-                      setDispatchResult={setDispatchResult}
-                      onAddSupplierRef={onAddSupplierRefForRequests}
-                      onAddStandardSpec={onAddStandardSpecForRequests}
-                      onDeleteSupplierRef={handleDeleteSupplierRef}
-                      onUpdateSupplierRef={handleUpdateSupplierRef}
-                      onDeleteStandardSpec={onDeleteStandardSpecForRequests}
-                      onUpdateStandardSpec={onUpdateStandardSpecForRequests}
-                      onCreateSupplier={purchasing.createSupplier}
-                      allManufacturers={allManufacturers}
-                      onLoadDetailsData={handleLoadDetailsForRequest}
-                      detailsLoadingStates={detailsLoadingStates}
-                      renderExpandedContent={(request) => (
-                        <StockItemSearch
-                          requestId={request.id}
-                          initialItemLabel={request.itemLabel}
-                          onLinkExisting={handleLinkExisting}
-                          onCreateNew={handleCreateNew}
-                          loading={formLoading}
-                          stockFamilies={stockFamilies}
-                        />
-                      )}
+                      {...purchaseTableProps}
                     />
 
                     {receivedRequests.length > 0 && (
@@ -1280,35 +733,7 @@ export default function Procurement() {
                           <PurchaseRequestsTable
                             key={`received-${receivedRequests.length}`}
                             requests={receivedRequests}
-                            expandedRequestId={expandedRequestId}
-                            onToggleExpand={toggleExpand}
-                            stockItems={stock.stockItems}
-                            supplierRefs={stock.supplierRefsByItem || {}}
-                            standardSpecs={stock.standardSpecsByItem || {}}
-                            onRefresh={refreshRequests}
-                            suppliers={purchasing.suppliers}
-                            loading={formLoading}
-                            setDispatchResult={setDispatchResult}
-                            onAddSupplierRef={onAddSupplierRefForRequests}
-                            onAddStandardSpec={onAddStandardSpecForRequests}
-                            onDeleteSupplierRef={handleDeleteSupplierRef}
-                            onUpdateSupplierRef={handleUpdateSupplierRef}
-                            onDeleteStandardSpec={onDeleteStandardSpecForRequests}
-                            onUpdateStandardSpec={onUpdateStandardSpecForRequests}
-                            onCreateSupplier={purchasing.createSupplier}
-                            allManufacturers={allManufacturers}
-                            onLoadDetailsData={handleLoadDetailsForRequest}
-                            detailsLoadingStates={detailsLoadingStates}
-                            renderExpandedContent={(request) => (
-                              <StockItemSearch
-                                requestId={request.id}
-                                initialItemLabel={request.itemLabel}
-                                onLinkExisting={handleLinkExisting}
-                                onCreateNew={handleCreateNew}
-                                loading={formLoading}
-                                stockFamilies={stockFamilies}
-                              />
-                            )}
+                            {...purchaseTableProps}
                           />
                         </Flex>
                       </Card>
@@ -1318,206 +743,43 @@ export default function Procurement() {
               </Flex>
             </Tabs.Content>
 
-            {/* ===== TAB: MUTUALISATION ===== */}
-            <Tabs.Content value={PROCUREMENT_TABS.POOLING}>
-              <Flex direction="column" gap="3">
-                {poolingBrokenCount > 0 && (
-                  <StatusCallout type="warning">
-                    <Flex align="center" gap="2">
-                      <AlertTriangle size={16} />
-                      <Text size="2">
-                        {poolingBrokenCount} panier{poolingBrokenCount > 1 ? 's' : ''} en rupture de mutualisation (ligne urgente ou ligne normale &gt; 7 jours)
-                      </Text>
-                    </Flex>
-                  </StatusCallout>
-                )}
-                
-                <TableHeader
-                  icon={Users}
-                  title="Paniers en mutualisation"
-                  count={filteredSupplierOrders.length}
-                  onRefresh={refreshOrders}
-                  showRefreshButton={false}
-                  showSearchInput={false}
-                />
-
-                {filteredSupplierOrders.length === 0 ? (
-                  <EmptyState
-                    icon={<Users size={64} />}
-                    title="Aucun panier en mutualisation"
-                    description="Les paniers en attente volontaire apparaîtront ici"
-                    actions={[
-                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
-                        Rafraîchir
-                      </Button>,
-                    ]}
-                  />
-                ) : (
-                  <SupplierOrdersTable
-                    orders={filteredSupplierOrders}
+            {supplierTabs.map((tab) => (
+              <Tabs.Content key={tab.value} value={tab.value}>
+                <Flex direction="column" gap="3">
+                  <TableHeader
+                    icon={tab.icon}
+                    title={tab.title}
+                    count={tab.orders.length}
                     onRefresh={refreshOrders}
-                    onOrderLineUpdate={purchasing.updateOrderLine}
-                    showPoolingColumns
-                    itemSelectionByBasket={itemSelectionByBasket}
-                    onToggleItemSelection={handleToggleItemSelection}
-                    onBasketStatusChange={handleBasketStatusChange}
-                    canModifyItem={canModifyItem}
-                    twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={handleTwinValidationUpdate}
+                    showRefreshButton={false}
+                    showSearchInput={false}
                   />
-                )}
-              </Flex>
-            </Tabs.Content>
 
-            <Tabs.Content value={PROCUREMENT_TABS.SENT}>
-              <Flex direction="column" gap="3">
-                <TableHeader
-                  icon={Send}
-                  title="Paniers en chiffrage"
-                  count={filteredSupplierOrders.length}
-                  onRefresh={refreshOrders}
-                  showRefreshButton={false}
-                  showSearchInput={false}
-                />
-
-                {filteredSupplierOrders.length === 0 ? (
-                  <EmptyState
-                    icon={<TruckIcon size={64} />}
-                    title="Aucun panier en chiffrage"
-                    description="Les paniers envoyés aux fournisseurs pour devis apparaîtront ici"
-                    actions={[
-                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
-                        Rafraîchir
-                      </Button>,
-                    ]}
-                  />
-                ) : (
-                  <SupplierOrdersTable
-                    orders={filteredSupplierOrders}
-                    onRefresh={refreshOrders}
-                    onOrderLineUpdate={purchasing.updateOrderLine}
-                    itemSelectionByBasket={itemSelectionByBasket}
-                    onToggleItemSelection={handleToggleItemSelection}
-                    onBasketStatusChange={handleBasketStatusChange}
-                    canModifyItem={canModifyItem}
-                    twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={handleTwinValidationUpdate}
-                  />
-                )}
-              </Flex>
-            </Tabs.Content>
-
-            <Tabs.Content value={PROCUREMENT_TABS.ORDERED}>
-              <Flex direction="column" gap="3">
-                <TableHeader
-                  icon={PackageCheck}
-                  title="Paniers commandés"
-                  count={filteredSupplierOrders.length}
-                  onRefresh={refreshOrders}
-                  showRefreshButton={false}
-                  showSearchInput={false}
-                />
-
-                {filteredSupplierOrders.length === 0 ? (
-                  <EmptyState
-                    icon={<TruckIcon size={64} />}
-                    title="Aucun panier commandé"
-                    description="Les paniers validés et commandés apparaîtront ici"
-                    actions={[
-                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
-                        Rafraîchir
-                      </Button>,
-                    ]}
-                  />
-                ) : (
-                  <SupplierOrdersTable
-                    orders={filteredSupplierOrders}
-                    onRefresh={refreshOrders}
-                    onOrderLineUpdate={purchasing.updateOrderLine}
-                    itemSelectionByBasket={itemSelectionByBasket}
-                    onToggleItemSelection={handleToggleItemSelection}
-                    onBasketStatusChange={handleBasketStatusChange}
-                    canModifyItem={canModifyItem}
-                    twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={handleTwinValidationUpdate}
-                  />
-                )}
-              </Flex>
-            </Tabs.Content>
-
-            <Tabs.Content value={PROCUREMENT_TABS.CLOSED}>
-              <Flex direction="column" gap="3">
-                <TableHeader
-                  icon={Archive}
-                  title="Paniers clôturés"
-                  count={filteredSupplierOrders.length}
-                  onRefresh={refreshOrders}
-                  showRefreshButton={false}
-                  showSearchInput={false}
-                />
-
-                {filteredSupplierOrders.length === 0 ? (
-                  <EmptyState
-                    icon={<TruckIcon size={64} />}
-                    title="Aucun panier clôturé"
-                    description="Les paniers archivés apparaîtront ici"
-                    actions={[
-                      <Button key="refresh-orders" size="2" onClick={refreshOrders}>
-                        Rafraîchir
-                      </Button>,
-                    ]}
-                  />
-                ) : (
-                  <SupplierOrdersTable
-                    orders={filteredSupplierOrders}
-                    onRefresh={refreshOrders}
-                    onOrderLineUpdate={purchasing.updateOrderLine}
-                    itemSelectionByBasket={itemSelectionByBasket}
-                    onToggleItemSelection={handleToggleItemSelection}
-                    onBasketStatusChange={handleBasketStatusChange}
-                    canModifyItem={canModifyItem}
-                    twinValidationsByLine={twinValidationsByLine}
-                    onTwinValidationUpdate={handleTwinValidationUpdate}
-                  />
-                )}
-              </Flex>
-            </Tabs.Content>
+                  {tab.orders.length === 0 ? (
+                    <EmptyState
+                      icon={<tab.emptyIcon size={64} />}
+                      title={tab.emptyTitle}
+                      description={tab.emptyDescription}
+                      actions={[
+                        <Button key={`refresh-orders-${tab.value}`} size="2" onClick={refreshOrders}>
+                          Rafraîchir
+                        </Button>,
+                      ]}
+                    />
+                  ) : (
+                    <SupplierOrdersTable
+                      orders={tab.orders}
+                      onRefresh={refreshOrders}
+                      onOrderLineUpdate={purchasing.updateOrderLine}
+                      {...(tab.showPoolingColumns ? { showPoolingColumns: true } : {})}
+                    />
+                  )}
+                </Flex>
+              </Tabs.Content>
+            ))}
           </Box>
         </Tabs.Root>
 
-        {/* Dialog Recalcul des totaux */}
-        <AlertDialog.Root open={showRecalculateDialog} onOpenChange={setShowRecalculateDialog}>
-          <AlertDialog.Content maxWidth="450px">
-            <AlertDialog.Title>Recalculer tous les totaux</AlertDialog.Title>
-            <AlertDialog.Description size="2">
-              Cette action va recalculer les totaux des lignes pour <strong>toutes les commandes</strong>.
-              <br />
-              Utile pour corriger les incohérences de calcul.
-              <br />
-              <br />
-              <Text size="1" color="gray">
-                ⏱️ Cette opération peut prendre quelques secondes selon le nombre de commandes.
-              </Text>
-            </AlertDialog.Description>
-
-            <Flex gap="3" mt="4" justify="end">
-              <AlertDialog.Cancel asChild>
-                <Button variant="soft" color="gray">
-                  Annuler
-                </Button>
-              </AlertDialog.Cancel>
-              <AlertDialog.Action asChild>
-                <Button
-                  onClick={handleRecalculateAllTotals}
-                  disabled={isRecalculating}
-                  loading={isRecalculating}
-                >
-                  {isRecalculating ? "Recalcul en cours..." : "Recalculer"}
-                </Button>
-              </AlertDialog.Action>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Root>
       </PageContainer>
     </Box>
   );

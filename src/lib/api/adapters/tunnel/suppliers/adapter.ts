@@ -76,7 +76,7 @@ export const suppliersAdapter = {
     const result = await dispatchPurchaseRequestsRaw();
     return {
       dispatched: result.dispatched_count || 0,
-      createdOrders: result.created_orders || [],
+      createdOrders: result.created_orders || 0,
       errors: result.errors || [],
     };
   },

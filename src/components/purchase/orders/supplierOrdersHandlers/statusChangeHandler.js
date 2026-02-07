@@ -3,7 +3,7 @@
  * @module components/purchase/orders/supplierOrdersHandlers/statusChangeHandler
  */
 
-import { suppliers, stock } from '@/lib/api/facade';
+import { suppliers, stock, supplierOrders } from '@/lib/api/facade';
 import { STATUS_MAPPING } from '../supplierOrdersConfig';
 import {
   hasAnySelectedLine,
@@ -86,10 +86,10 @@ export const handleStatusChange = async (
 
     // Mise à jour du panier
     const updateData = { status: newStatus };
-    if (newStatus === 'SENT') updateData.ordered_at = new Date().toISOString();
-    else if (newStatus === 'CLOSED') updateData.received_at = new Date().toISOString();
+    if (newStatus === 'SENT') updateData.orderedAt = new Date().toISOString();
+    else if (newStatus === 'CLOSED') updateData.receivedAt = new Date().toISOString();
 
-    await suppliers.updateSupplierOrder(orderId, updateData);
+    await supplierOrders.updateSupplierOrder(orderId, updateData);
 
     // Si la commande passe en CLOSED, traiter la réception
     if (newStatus === 'CLOSED') {
