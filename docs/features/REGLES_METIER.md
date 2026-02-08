@@ -110,6 +110,7 @@ En plus du score numérique (1-10), le technicien peut annoter l'action avec des
 - Cela permet d'analyser les causes de complexité et de prendre des actions correctives
 
 **Exemple** :
+
 - Score de complexité : 8/10
 - Facteur de complexité : PCE (Problème de pièce)
 - Interprétation : L'action était complexe principalement à cause d'un problème de disponibilité de pièce
@@ -160,11 +161,11 @@ Quand on utilise des pièces du stock pendant une intervention, on l'enregistre 
 
 ### 📋 Tableau récapitulatif
 
-| Concept          | À quoi ça sert ?                | Qu'est-ce qu'on y met ?             |
-| ---------------- | ------------------------------- | ----------------------------------- |
-| **Intervention** | Le dossier de travail principal | Machine, Type, Dates, Statut                   |
-| **Action**       | Prouver le travail fait         | Description, Temps, Complexité, Facteurs, Qui  |
-| **Pièce**        | Tracer les consommations        | Article utilisé, Quantité                      |
+| Concept          | À quoi ça sert ?                | Qu'est-ce qu'on y met ?                       |
+| ---------------- | ------------------------------- | --------------------------------------------- |
+| **Intervention** | Le dossier de travail principal | Machine, Type, Dates, Statut                  |
+| **Action**       | Prouver le travail fait         | Description, Temps, Complexité, Facteurs, Qui |
+| **Pièce**        | Tracer les consommations        | Article utilisé, Quantité                     |
 
 ### 🎯 Les règles d'or (à ne jamais oublier)
 
@@ -331,17 +332,17 @@ Quand vous créez une demande, deux cas de figure :
 
 Le statut d'une demande est **calculé automatiquement** en fonction de son avancement. Il n'est pas modifiable manuellement.
 
-| Statut | Code | Couleur | Signification |
-|--------|------|---------|---------------|
-| **À qualifier** | `TO_QUALIFY` | 🟠 Orange | La demande n'a pas de référence article normalisée (`stock_item_id` = null) |
-| **Sans fournisseur** | `NO_SUPPLIER_REF` | 🟠 Orange foncé | L'article est qualifié mais aucun fournisseur n'est lié |
-| **À dispatcher** | `PENDING_DISPATCH` | 🟣 Violet | Prête à être dispatchée (article + fournisseur ok, mais pas encore dans un panier) |
-| **Mutualisation** | `OPEN` | ⚫ Gris | Présente dans un panier fournisseur, en attente de devis |
-| **Devis reçu** | `QUOTED` | 🟠 Orange clair | Au moins un devis a été reçu pour cette demande |
-| **Commandé** | `ORDERED` | 🔵 Bleu | La ligne a été sélectionnée et commandée |
-| **Partiellement reçu** | `PARTIAL` | 🟣 Violet clair | Une partie de la quantité a été réceptionnée |
-| **Reçu** | `RECEIVED` | 🟢 Vert | Quantité totale réceptionnée |
-| **Refusé** | `REJECTED` | 🔴 Rouge | La demande a été refusée |
+| Statut                 | Code               | Couleur         | Signification                                                                      |
+| ---------------------- | ------------------ | --------------- | ---------------------------------------------------------------------------------- |
+| **À qualifier**        | `TO_QUALIFY`       | 🟠 Orange       | La demande n'a pas de référence article normalisée (`stock_item_id` = null)        |
+| **Sans fournisseur**   | `NO_SUPPLIER_REF`  | 🟠 Orange foncé | L'article est qualifié mais aucun fournisseur n'est lié                            |
+| **À dispatcher**       | `PENDING_DISPATCH` | 🟣 Violet       | Prête à être dispatchée (article + fournisseur ok, mais pas encore dans un panier) |
+| **Mutualisation**      | `OPEN`             | ⚫ Gris         | Présente dans un panier fournisseur, en attente de devis                           |
+| **Devis reçu**         | `QUOTED`           | 🟠 Orange clair | Au moins un devis a été reçu pour cette demande                                    |
+| **Commandé**           | `ORDERED`          | 🔵 Bleu         | La ligne a été sélectionnée et commandée                                           |
+| **Partiellement reçu** | `PARTIAL`          | 🟣 Violet clair | Une partie de la quantité a été réceptionnée                                       |
+| **Reçu**               | `RECEIVED`         | 🟢 Vert         | Quantité totale réceptionnée                                                       |
+| **Refusé**             | `REJECTED`         | 🔴 Rouge        | La demande a été refusée                                                           |
 
 #### Le cycle de vie d'une demande
 
@@ -767,24 +768,210 @@ Le système peut détecter automatiquement des situations anormales :
 
 ---
 
+## 📈 La Charge Technique (Pilotage)
+
+### À quoi sert la charge technique ?
+
+La charge technique répond à une question centrale :
+
+> **Où passe le temps du service maintenance, et quelle part de ce temps est récupérable pour faire autre chose ?**
+
+Ce temps récupéré peut être utilisé pour : la fabrication, l'amélioration des machines, ou le développement de nouvelles installations.
+
+**Ce que ce n'est PAS** :
+
+- ❌ Un outil de planning
+- ❌ Un outil d'évaluation des personnes
+- ❌ Un indicateur de performance individuelle
+
+**Ce que c'est** : Un outil pour prendre des décisions techniques — standardiser, modifier, accepter ou augmenter la capacité.
+
+---
+
+### Principe fondamental
+
+> ⚠️ **Les actions sont la seule source de vérité.**
+
+Tout le temps analysé provient des actions saisies dans les interventions. Sans actions, pas d'analyse possible.
+
+L'analyse est toujours faite :
+
+- **Par classe d'équipement** (jamais par machine isolée)
+- **Sur une période donnée**
+- **Jamais par technicien individuel**
+
+---
+
+### Les 3 axes de lecture d'une action
+
+Chaque action est analysée selon trois angles complémentaires :
+
+#### 1️⃣ L'intention du travail — "Pourquoi a-t-on travaillé ?"
+
+Déduite automatiquement de la **catégorie d'action** :
+
+| Catégorie | Signification                                            |
+| --------- | -------------------------------------------------------- |
+| **DEP**   | Dépannage (réparation suite à panne)                     |
+| **FAB**   | Fabrication ou modification                              |
+| **SUP**   | Support structurant (stock, documentation, organisation) |
+| **PREV**  | Préventif (entretien planifié)                           |
+| **BAT**   | Bâtiment et infrastructure                               |
+
+#### 2️⃣ La cause du temps passé — "Pourquoi cela a-t-il pris du temps ?"
+
+Déduite du **facteur de complexité** choisi par le technicien :
+
+| Facteur | Ce qui a fait perdre du temps                                    |
+| ------- | ---------------------------------------------------------------- |
+| **PCE** | Problème de pièce (standard manquant, délai, mauvaise référence) |
+| **ACC** | Problème d'accès ou de conception machine                        |
+| **DOC** | Documentation inexistante ou insuffisante                        |
+| **OUT** | Outillage inadapté ou architecture hétérogène                    |
+| **ENV** | Environnement (air, eau, poussière, température...)              |
+
+#### 3️⃣ La portée du problème — "Est-ce isolé ou systémique ?"
+
+La portée est évaluée par :
+
+- La **répétition des actions** sur une même classe d'équipement
+- Une action qui revient plusieurs fois = problème systémique (même si c'est sur des machines différentes)
+
+---
+
+### Les différentes charges calculées
+
+#### Charge technique totale
+
+**Définition** : Tout le temps passé par le service maintenance.
+
+```
+Charge totale = somme du temps de toutes les actions
+```
+
+#### Charge de dépannage
+
+**Définition** : Temps passé à réparer ou remettre en service.
+
+```
+Charge dépannage = somme du temps des actions de type DEP
+```
+
+#### Charge constructive (brute)
+
+**Définition** : Temps passé à construire, améliorer ou structurer.
+
+```
+Charge constructive = somme du temps des actions FAB + SUP + PREV + BAT
+```
+
+⚠️ Cette charge est dite "brute" : elle n'est utile que si elle permet de réduire le dépannage à terme.
+
+---
+
+### Le concept clé : Dépannage évitable vs Dépannage subi
+
+#### Qu'est-ce qu'un dépannage évitable ?
+
+Un dépannage est considéré comme **évitable** s'il remplit au moins une de ces conditions :
+
+1. **Il est associé à un facteur de complexité** : PCE, ACC ou DOC
+2. **La même action se répète au moins 3 fois** sur une même classe d'équipement pendant la période
+
+> 💡 Un dépannage évitable indique un **problème de conception, de standard ou de capitalisation**.
+
+#### Charge de dépannage évitable
+
+```
+Charge dépannage évitable = somme du temps des actions DEP considérées comme évitables
+```
+
+#### Charge de dépannage subi
+
+**Définition** : Part incompressible du dépannage — le "bruit normal" d'exploitation.
+
+```
+Charge dépannage subi = Charge dépannage totale − Charge dépannage évitable
+```
+
+C'est ce qu'il faut accepter ou absorber en augmentant la capacité de l'équipe.
+
+---
+
+### L'indicateur central : Taux de dépannage évitable
+
+```
+Taux de dépannage évitable = Charge dépannage évitable ÷ Charge dépannage totale
+```
+
+#### Comment lire cet indicateur ?
+
+| Taux          | Interprétation           | Action recommandée                                         |
+| ------------- | ------------------------ | ---------------------------------------------------------- |
+| **< 20 %**    | Peu de levier            | Le dépannage est majoritairement subi, difficile à réduire |
+| **20 à 40 %** | Standardisation rentable | Investir dans les standards et l'amélioration est payant   |
+| **> 40 %**    | Défaut système           | La conception ou l'organisation est à revoir en profondeur |
+
+> 🎯 **Cet indicateur est le cœur de la prise de décision.**
+
+---
+
+### Répartition des causes (pour agir)
+
+Quand le dépannage évitable est élevé, regarder quel facteur de complexité domine :
+
+| Facteur dominant | Action à mener                                      |
+| ---------------- | --------------------------------------------------- |
+| **PCE**          | Créer ou renforcer des standards de pièces          |
+| **ACC**          | Modifier la conception ou améliorer l'accessibilité |
+| **DOC**          | Capitaliser : documentation, méthodes, fiches       |
+| **OUT**          | Homogénéiser l'architecture et les outils           |
+| **ENV**          | Agir sur les systèmes primaires (air, eau, etc.)    |
+
+---
+
+### Ce que permet la charge technique
+
+La charge technique aide à :
+
+- ✅ **Identifier où le temps est perdu**
+- ✅ **Distinguer dépannage subi et dépannage évitable**
+- ✅ **Décider où investir** (standard, retrofit, organisation)
+- ✅ **Mesurer si les actions constructives réduisent réellement le dépannage**
+- ✅ **Libérer du temps** pour la fabrication, l'amélioration ou le développement
+
+---
+
+### En résumé
+
+> La charge technique transforme le **temps passé** en **décisions d'ingénierie**.
+>
+> Elle permet de sortir d'un **mode survie** (dépannage permanent) pour aller vers un **mode développement** (amélioration continue).
+
+---
+
 ## 🎓 Glossaire des termes métier
 
-| Terme                    | Définition simple                                              |
-| ------------------------ | -------------------------------------------------------------- |
-| **Intervention**         | Le dossier qui regroupe tout le travail fait sur une machine   |
-| **Action**                | La description d'un travail réellement effectué avec son temps                      |
-| **Machine**               | Un équipement sur lequel on fait de la maintenance                                  |
-| **Stock**                 | L'ensemble des pièces disponibles dans le magasin                                   |
-| **Article**               | Une pièce précise dans le stock (ex: vis M8 × 20)                                   |
-| **Famille**               | Un grand type de pièces (ex: VIS, ROULEMENTS)                                       |
-| **Sous-famille**          | Un sous-type dans une famille (ex: VIS-CHC)                                         |
-| **Demande d'achat**       | Une requête pour commander une pièce                                                |
-| **Commande fournisseur**  | Le bon de commande envoyé au fournisseur                                            |
-| **Statut**                | L'état actuel d'une intervention/commande/demande                                   |
-| **Score de complexité**   | Note de 1 à 10 donnée par le technicien sur la complexité du travail                |
-| **Facteur de complexité** | Annotation qualitative expliquant la cause de la complexité (PCE, ACC, DOC, etc.)   |
-| **Curatif**               | Maintenance effectuée suite à un besoin identifié ou une panne                      |
-| **Traçabilité**           | Capacité à retrouver l'historique de ce qui s'est passé                             |
+| Terme                     | Définition simple                                                                 |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| **Intervention**          | Le dossier qui regroupe tout le travail fait sur une machine                      |
+| **Action**                | La description d'un travail réellement effectué avec son temps                    |
+| **Machine**               | Un équipement sur lequel on fait de la maintenance                                |
+| **Classe d'équipement**   | Regroupement de machines similaires (ex: toutes les scies, tous les convoyeurs)   |
+| **Stock**                 | L'ensemble des pièces disponibles dans le magasin                                 |
+| **Article**               | Une pièce précise dans le stock (ex: vis M8 × 20)                                 |
+| **Famille**               | Un grand type de pièces (ex: VIS, ROULEMENTS)                                     |
+| **Sous-famille**          | Un sous-type dans une famille (ex: VIS-CHC)                                       |
+| **Demande d'achat**       | Une requête pour commander une pièce                                              |
+| **Commande fournisseur**  | Le bon de commande envoyé au fournisseur                                          |
+| **Statut**                | L'état actuel d'une intervention/commande/demande                                 |
+| **Score de complexité**   | Note de 1 à 10 donnée par le technicien sur la complexité du travail              |
+| **Facteur de complexité** | Annotation qualitative expliquant la cause de la complexité (PCE, ACC, DOC, etc.) |
+| **Curatif**               | Maintenance effectuée suite à un besoin identifié ou une panne                    |
+| **Traçabilité**           | Capacité à retrouver l'historique de ce qui s'est passé                           |
+| **Charge technique**      | Analyse du temps passé par le service maintenance pour identifier des leviers     |
+| **Dépannage évitable**    | Temps de réparation qui aurait pu être économisé (standard, conception, doc)      |
+| **Dépannage subi**        | Temps de réparation incompressible, "bruit normal" d'exploitation                 |
 
 ---
 
@@ -818,16 +1005,19 @@ Cette section détaille les formats de données et contraintes techniques du sys
 ### Format des interventions
 
 **Code d'intervention** :
+
 - Format : `NOM-MACHINE-TYPE-DATE-INITIALES`
 - Exemple : `CONV01-CUR-20250201-MT`
 - Généré automatiquement et non modifiable
 - Format immuable : ce format ne changera jamais pour garantir la compatibilité historique
 
 **Types d'intervention** :
+
 - Actuellement implémenté : `CUR` (Curatif)
 - Types prévus mais non implémentés : `PREV` (Préventif), `INST` (Installation)
 
 **Statuts disponibles** :
+
 - `Ouvert` : Intervention créée
 - `En cours` : Travail démarré
 - `Fermé` : Travail terminé
@@ -836,6 +1026,7 @@ Cette section détaille les formats de données et contraintes techniques du sys
 ### Format des actions
 
 **Champs obligatoires** :
+
 - `intervention_id` (uuid) : Intervention parente
 - `description` (string) : Description du travail effectué
 - `time_spent` (float) : Temps en quarts d'heure (0.25, 0.5, 0.75, 1.0, 1.25...)
@@ -844,10 +1035,12 @@ Cette section détaille les formats de données et contraintes techniques du sys
 - `tech` (uuid) : Identifiant du technicien
 
 **Champs optionnels** :
+
 - `complexity_score` (int) : Score de 1 à 10
 - `complexity_anotation` (string) : Code du facteur de complexité (ex: "PCE", "ACC")
 
 **Format de payload pour création** :
+
 ```json
 {
   "intervention_id": "uuid",
@@ -868,6 +1061,7 @@ Le système utilise des sous-catégories d'actions pour classifier le travail ef
 ### Facteurs de complexité
 
 **Codes disponibles** (exemples) :
+
 - `AUT` : Autre
 - `PCE` : Problème de pièce
 - `ACC` : Problème d'accès
@@ -880,33 +1074,39 @@ Un seul facteur peut être enregistré par action dans le champ `complexity_anot
 ### Machines
 
 **Champs principaux exposés** :
+
 - `code` : Code unique de la machine
 - `name` : Nom descriptif
 - `location` : Localisation
 
 **Champs en base non mappés actuellement** :
+
 - Type de machine
 - Fabricant
 - Numéro de série
 - Date de mise en service
 
 **Relations** :
+
 - Une machine peut avoir une machine parente (hiérarchie)
 - Une machine peut avoir des machines enfants
 
 ### Demandes d'achat et traçabilité
 
 **Liaison avec les actions** :
+
 - Les demandes d'achat sont **liées aux actions** (pas directement aux interventions)
 - Chaque demande d'achat référence l'action qui a nécessité la pièce
 - Les interventions affichent une **vue composite** de toutes les pièces via leurs actions
 
 **Traçabilité complète** :
+
 ```
 Demande d'achat → Action → Intervention → Machine
 ```
 
 Cette structure permet de savoir :
+
 - Quelle pièce a été utilisée
 - Pour quelle action spécifique
 - Dans quelle intervention
@@ -915,6 +1115,7 @@ Cette structure permet de savoir :
 - À quelle date
 
 **Cas particuliers** :
+
 - Les demandes d'achat **spontanées** (consommables, anticipation) ne sont pas liées à une action
 - Ces demandes n'ont pas de traçabilité intervention/machine
 
