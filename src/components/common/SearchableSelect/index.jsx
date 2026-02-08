@@ -40,7 +40,8 @@ export default function SearchableSelect(props) {
     placeholder = 'Tapez pour rechercher...',
     onSearchChange,
     allowSpecialRequest = true,
-    allowCreateNew = false
+    allowCreateNew = false,
+    showEmptyState = true
   } = props;
 
   const {
@@ -83,6 +84,7 @@ export default function SearchableSelect(props) {
         onSelectItem={handleSelectItem}
         allowSpecialRequest={allowSpecialRequest}
         allowCreateNew={allowCreateNew}
+        showEmptyState={showEmptyState}
       />
     </Box>
   );
@@ -105,4 +107,5 @@ SearchableSelect.propTypes = {
   onSearchChange: PropTypes.func,
   allowSpecialRequest: PropTypes.bool,
   allowCreateNew: PropTypes.bool,
+  showEmptyState: PropTypes.bool
 };

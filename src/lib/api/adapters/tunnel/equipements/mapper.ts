@@ -20,6 +20,13 @@ export const mapEquipementToDomain = (raw: any) => {
       reason: raw.health?.reason || 'Aucun point bloquant',
     },
     parentId: raw.parent_id || null,
+    equipmentClass: raw.equipement_class
+      ? {
+          id: raw.equipement_class.id,
+          code: raw.equipement_class.code,
+          label: raw.equipement_class.label,
+        }
+      : null,
   };
 };
 
@@ -36,6 +43,13 @@ export const mapEquipementDetailToDomain = (raw: any) => {
       rulesTriggered: raw.health?.rules_triggered || [],
     },
     parentId: raw.parent_id || null,
+    equipmentClass: raw.equipement_class
+      ? {
+          id: raw.equipement_class.id,
+          code: raw.equipement_class.code,
+          label: raw.equipement_class.label,
+        }
+      : null,
     childrenIds: Array.isArray(raw.children_ids) ? raw.children_ids : [],
   };
 };

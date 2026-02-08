@@ -17,8 +17,6 @@ const adapter = getApiAdapter();
  * @returns {Object} { equipements, equipementMap, getParentInfo, getChildrenInfo, loading, error }
  */
 export function useEquipements() {
-  const initialLoadRef = useRef(false);
-
   const {
     data: rawEquipements,
     loading,
@@ -33,8 +31,6 @@ export function useEquipements() {
 
   // Charger une seule fois au montage
   useEffect(() => {
-    if (initialLoadRef.current) return;
-    initialLoadRef.current = true;
     execute();
   }, [execute]);
 

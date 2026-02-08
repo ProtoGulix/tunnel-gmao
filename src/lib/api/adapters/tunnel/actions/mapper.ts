@@ -55,6 +55,8 @@ export const mapActionToDomain = (raw: any) => {
     description: raw.description || '',
     timeSpent: Number(raw.time_spent ?? raw.timeSpent ?? 0),
     complexityScore: raw.complexity_score ?? raw.complexityScore,
+    // complexity_factor is now a direct code string (v1.4.0 breaking change)
+    complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     createdAt: raw.created_at || raw.updated_at || new Date().toISOString(),
     technician: raw.tech ? { id: String(raw.tech), firstName: '', lastName: '' } : undefined,
     subcategory: raw.subcategory
@@ -81,7 +83,7 @@ export const mapActionToDomain = (raw: any) => {
  * - action_subcategory (int)
  * - tech (uuid)
  * - complexity_score (int, 1-10)
- * - complexity_anotation (string, code from complexity_factor table)
+ * - complexity_factor (string, code from complexity_factor table)
  *
  * @param payload - Domain InterventionAction payload
  * @returns Backend-compatible payload
@@ -112,9 +114,9 @@ export const mapActionPayloadToBackend = (payload: any): Record<string, unknown>
     backend.created_at = dateStr;
   }
 
-  // complexity_anotation: single code string (e.g., "AUT", "PCE")
+  // complexity_factor: single code string (e.g., "AUT", "PCE") - v1.4.0 breaking change
   if (payload.complexityFactors !== undefined && Array.isArray(payload.complexityFactors)) {
-    backend.complexity_anotation = payload.complexityFactors[0] || null;
+    backend.complexity_factor = payload.complexityFactors[0] || null;
   }
 
   // Subcategory: extract id if object, or pass directly if number/string

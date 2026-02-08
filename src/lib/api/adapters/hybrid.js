@@ -82,4 +82,5 @@ export const adapter = {
   stock: hybridStockAdapter,
   suppliers: tunnelBackendAdapter.suppliers,
   stockSuppliers: tunnelBackendAdapter.stockSuppliers,
+  equipementClasses: tunnelBackendAdapter.equipementClasses,
 };

@@ -53,6 +53,13 @@ export function useSearchableSelect({
 
   const handleSearchChange = (e) => {
     const newSearch = e.target.value;
+    if (selectedItem) {
+      const currentDisplay = getDisplayText(selectedItem);
+      if (newSearch !== currentDisplay) {
+        setSelectedItem(null);
+        onChange(null);
+      }
+    }
     setSearch(newSearch);
     if (onSearchChange) onSearchChange(newSearch);
     if (!newSearch.trim()) {

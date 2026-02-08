@@ -1,3 +1,26 @@
+## 2.2.0 - 2026-02-08
+
+Stabilité: STABLE
+
+### Mise à jour de compatibilité serveur
+
+#### Ce qui a changé
+
+- **Adaptation au nouveau serveur**: L'application communique maintenant avec la version 1.4.0 du serveur backend
+- **Facteurs de complexité**: Les informations de complexité des actions sont correctement envoyées et reçues
+- **Classes d'équipements**: L'affichage des catégories d'équipements fonctionne avec la nouvelle API
+
+#### Impact utilisateur
+
+- Aucun changement visible dans l'interface
+- L'application fonctionne normalement avec le serveur mis à jour
+
+#### Prérequis
+
+- **Serveur backend v1.4.0 minimum requis** — contactez votre administrateur si vous rencontrez des erreurs
+
+---
+
 ## 2.1.14 - 2026-02-07
 
 Stabilité: STABLE

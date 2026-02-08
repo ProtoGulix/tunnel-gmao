@@ -1,17 +1,20 @@
 /**
- * @fileoverview Page liste des équipements
+ * @fileoverview Page liste des équipements avec onglet Classes
  * @module EquipementsList
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Flex, Table, Text, Button, Container } from '@radix-ui/themes';
-import { Search, Eye } from 'lucide-react';
+import { Box, Flex, Text, Button, Container, Tabs, Badge } from '@radix-ui/themes';
+import { Search, Eye, Layers } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import EquipementHealthBadge from '@/components/common/EquipementHealthBadge';
+import DataTable from '@/components/common/DataTable';
+import EquipementClassesTab from '@/components/equipements/EquipementClassesTab';
 import { useEquipements } from '@/hooks/useEquipements';
 import { useApiCall } from '@/hooks/useApiCall';
+import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { getApiAdapter } from '@/lib/api/adapters/provider';
 
 const adapter = getApiAdapter();
@@ -19,50 +22,34 @@ const adapter = getApiAdapter();
 /**
  * Page liste des équipements
  * Affiche tous les équipements avec santé, cause et hiérarchie
- *
- * @component
- * @returns {JSX.Element} Page équipements
- *
- * @example
- * <EquipementsList />
+ * + onglet Classes d'équipement (CRUD)
  */
 export default function EquipementsList() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useTabNavigation('equipements', 'tab');
   const [searchText, setSearchText] = useState('');
 
-  // Charger cache des équipements
   const {
-    equipements: rawEquipements,
     getParentInfo,
     loading: cacheLoading,
     error: cacheError,
   } = useEquipements();
 
-  // S'assurer que c'est un array
-  const equipementList = Array.isArray(rawEquipements) ? rawEquipements : [];
-
-  // Charger la liste complète (depuis le cache)
   const fetchEquipementsFn = useCallback(
     () => adapter.equipements.fetchEquipements(),
     []
   );
-  
-  const { data: rawList, loading, error, execute } = useApiCall(
-    fetchEquipementsFn
+  const { data: rawList, loading, error, execute } = useApiCall(fetchEquipementsFn);
+
+  useEffect(() => { execute(); }, [execute]);
+
+  const list = useMemo(
+    () => (Array.isArray(rawList) ? rawList : []),
+    [rawList]
   );
 
-  // Exécuter l'appel au montage
-  useEffect(() => {
-    execute();
-  }, [execute]);
-
-  // S'assurer que list est toujours un array
-  const list = Array.isArray(rawList) ? rawList : [];
-
-  // Filtrer par recherche
   const filteredEquipements = useMemo(() => {
     if (!searchText.trim()) return list;
-
     const query = searchText.toLowerCase();
     return list.filter(
       (eq) =>
@@ -70,6 +57,82 @@ export default function EquipementsList() {
         (eq.name && eq.name.toLowerCase().includes(query))
     );
   }, [list, searchText]);
+
+  const headerStats = useMemo(() => {
+    const counts = list.reduce(
+      (acc, eq) => {
+        const level = eq?.health?.level || 'unknown';
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+      },
+      { ok: 0, maintenance: 0, warning: 0, critical: 0, unknown: 0 }
+    );
+    return [
+      { label: 'Total', value: list.length },
+      { label: 'Critique', value: counts.critical },
+      { label: 'Alerte', value: counts.warning },
+      { label: 'Maintenance', value: counts.maintenance },
+      { label: 'OK', value: counts.ok },
+    ];
+  }, [list]);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: 'health',
+        header: 'Santé',
+        width: 120,
+        render: (eq) => <EquipementHealthBadge level={eq.health.level} />,
+      },
+      {
+        key: 'equipement',
+        header: 'Équipement',
+        render: (eq) => (
+          <Flex direction="column">
+            <Text weight="medium" size="2">{eq.code || '—'} – {eq.name}</Text>
+          </Flex>
+        ),
+      },
+      {
+        key: 'class',
+        header: 'Classe',
+        render: (eq) =>
+          eq.equipmentClass ? (
+            <Badge variant="soft" size="1">{eq.equipmentClass.code}</Badge>
+          ) : (
+            <Text size="2" color="gray">—</Text>
+          ),
+      },
+      {
+        key: 'cause',
+        header: 'Cause',
+        render: (eq) => <Text size="2" color="gray">{eq.health.reason}</Text>,
+      },
+      {
+        key: 'parent',
+        header: 'Équipement mère',
+        render: (eq) => {
+          const p = getParentInfo(eq.parentId);
+          return p ? (
+            <Text size="2">{p.code || '—'} – {p.name}</Text>
+          ) : (
+            <Text size="2" color="gray">—</Text>
+          );
+        },
+      },
+      {
+        key: 'action',
+        header: 'Action',
+        align: 'end',
+        render: (eq) => (
+          <Button size="1" variant="ghost" onClick={() => navigate(`/equipements/${eq.id}`)}>
+            <Eye size={16} /> Voir
+          </Button>
+        ),
+      },
+    ],
+    [getParentInfo, navigate]
+  );
 
   if (error || cacheError) {
     return (
@@ -82,105 +145,62 @@ export default function EquipementsList() {
 
   return (
     <Container>
-      <PageHeader title="Équipements" description="Liste de tous les équipements" />
+      <PageHeader
+        title="Équipements"
+        description="Liste de tous les équipements"
+        stats={headerStats}
+        onRefresh={execute}
+      />
 
-      {/* Recherche */}
-      <Box mb="4">
-        <Flex align="center" gap="2" mb="3" asChild>
-          <label>
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Rechercher par code ou nom..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid var(--gray-7)',
-                borderRadius: '4px',
-                flex: 1,
-                fontSize: '14px',
+      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+        <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
+          <Tabs.Trigger value="equipements">
+            <Flex align="center" gap="2">
+              <Search size={14} />
+              <Text>Équipements</Text>
+              <Badge color="gray" variant="soft" size="1">{list.length}</Badge>
+            </Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="classes">
+            <Flex align="center" gap="2">
+              <Layers size={14} />
+              <Text>Classes</Text>
+            </Flex>
+          </Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="equipements">
+          <Box overflowX="auto" pt="4">
+            <DataTable
+              headerProps={{
+                icon: Search,
+                title: 'Recherche',
+                count: filteredEquipements.length,
+                searchValue: searchText,
+                onSearchChange: setSearchText,
+                searchPlaceholder: 'Rechercher par code ou nom...',
+                showSearchInput: true,
+                showResetButton: true,
+                showRefreshButton: false,
+              }}
+              columns={columns}
+              data={filteredEquipements}
+              loading={loading || cacheLoading}
+              emptyState={{
+                icon: Search,
+                title: 'Aucun équipement trouvé',
+                description: searchText.trim()
+                  ? 'Aucun équipement ne correspond à votre recherche.'
+                  : 'Aucun équipement disponible.',
               }}
             />
-          </label>
-        </Flex>
-        <Text size="1" color="gray">
-          {filteredEquipements.length} équipement{filteredEquipements.length !== 1 ? 's' : ''} trouvé
-          {filteredEquipements.length !== 1 ? 's' : ''}
-        </Text>
-      </Box>
+          </Box>
+        </Tabs.Content>
 
-      {/* Tableau */}
-      <Box overflowX="auto">
-        <Table.Root>
-          <Table.Header>
-            <Table.Row>
-              <Table.ColumnHeaderCell>Santé</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Équipement</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Cause</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Équipement mère</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell align="right">Action</Table.ColumnHeaderCell>
-            </Table.Row>
-          </Table.Header>
-
-          <Table.Body>
-            {filteredEquipements.map((eq) => {
-              const parentInfo = getParentInfo(eq.parentId);
-
-              return (
-                <Table.Row key={eq.id}>
-                  <Table.Cell>
-                    <EquipementHealthBadge level={eq.health.level} />
-                  </Table.Cell>
-
-                  <Table.Cell>
-                    <Flex direction="column">
-                      <Text weight="medium" size="2">
-                        {eq.code || '—'} – {eq.name}
-                      </Text>
-                    </Flex>
-                  </Table.Cell>
-
-                  <Table.Cell>
-                    <Text size="2" color="gray">
-                      {eq.health.reason}
-                    </Text>
-                  </Table.Cell>
-
-                  <Table.Cell>
-                    {parentInfo ? (
-                      <Text size="2">
-                        {parentInfo.code || '—'} – {parentInfo.name}
-                      </Text>
-                    ) : (
-                      <Text size="2" color="gray">
-                        —
-                      </Text>
-                    )}
-                  </Table.Cell>
-
-                  <Table.Cell align="right">
-                    <Button
-                      size="1"
-                      variant="ghost"
-                      onClick={() => navigate(`/equipements/${eq.id}`)}
-                    >
-                      <Eye size={16} />
-                      Voir
-                    </Button>
-                  </Table.Cell>
-                </Table.Row>
-              );
-            })}
-          </Table.Body>
-        </Table.Root>
-
-        {filteredEquipements.length === 0 && !loading && (
-          <Flex align="center" justify="center" py="6">
-            <Text color="gray">Aucun équipement trouvé</Text>
-          </Flex>
-        )}
-      </Box>
+        <Tabs.Content value="classes">
+          <EquipementClassesTab />
+        </Tabs.Content>
+      </Tabs.Root>
     </Container>
   );
 }

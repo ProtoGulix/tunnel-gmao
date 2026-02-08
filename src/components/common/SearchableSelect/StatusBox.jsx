@@ -14,7 +14,8 @@ export default function StatusBox({
   getDisplayText,
   onSelectItem,
   allowSpecialRequest = true,
-  allowCreateNew = false
+  allowCreateNew = false,
+  showEmptyState = true
 }) {
   // Ne rien afficher si un item est sélectionné
   if (selectedItem) {
@@ -23,6 +24,10 @@ export default function StatusBox({
 
   const hasResults = suggestions.length > 0;
   const hasSearch = search.trim().length > 0;
+
+  if (!hasSearch && !showEmptyState) {
+    return null;
+  }
 
   // Détermine le style de la bordure selon l'état
   const getBorderStyle = () => {
@@ -79,5 +84,6 @@ StatusBox.propTypes = {
   getDisplayText: PropTypes.func.isRequired,
   onSelectItem: PropTypes.func.isRequired,
   allowSpecialRequest: PropTypes.bool,
-  allowCreateNew: PropTypes.bool
+  allowCreateNew: PropTypes.bool,
+  showEmptyState: PropTypes.bool
 };

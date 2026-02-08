@@ -34,3 +34,17 @@ export const fetchEquipementHealthRaw = async (id: string) => {
   const response = await tunnelApi.get(`/equipements/${id}/health`);
   return response.data?.data || response.data || {};
 };
+
+export const createEquipementRaw = async (data: any) => {
+  const response = await tunnelApi.post('/equipements/', data);
+  return response.data?.data || response.data || {};
+};
+
+export const updateEquipementRaw = async (id: string, data: any) => {
+  const response = await tunnelApi.put(`/equipements/${id}`, data);
+  return response.data?.data || response.data || {};
+};
+
+export const deleteEquipementRaw = async (id: string) => {
+  await tunnelApi.delete(`/equipements/${id}`);
+};

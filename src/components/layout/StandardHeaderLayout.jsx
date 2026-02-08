@@ -9,8 +9,8 @@
  */
 
 import PropTypes from "prop-types";
-import { Flex, Heading, Text, Button, Badge, IconButton } from "@radix-ui/themes";
-import { RefreshCw, Plus } from "lucide-react";
+import { Flex, Heading, Text, Button, Badge, IconButton, Box } from "@radix-ui/themes";
+import { RefreshCw, Plus, ArrowLeft } from "lucide-react";
 
 /**
  * Layout standard horizontal pour en-tête de page
@@ -47,49 +47,65 @@ export default function StandardHeaderLayout(props) {
   const {
     title,
     subtitle,
+    description,
     Icon,
     stats,
     urgentBadge,
     actions,
     onRefresh,
     onAdd,
+    onBack,
+    backLabel,
     addLabel = "Ajouter",
     timeSelectionControl,
+    children,
   } = props;
 
   return (
-    <Flex
-      justify="between"
-      align="center"
-      wrap="wrap"
-      gap="3"
-      style={{
-        minHeight: "60px",
-      }}
-    >
-      {/* Section gauche : Icône + Titre */}
-      <Flex align="center" gap="3" style={{ flex: "1 1 auto" }}>
-        {Icon && (
-          <Icon
-            size={32}
-            strokeWidth={1.5}
-            style={{
-              flexShrink: 0,
-            }}
-            aria-hidden="true"
-          />
-        )}
-        <Flex direction="column" gap="1">
-          <Heading size="6" weight="bold">
-            {title}
-          </Heading>
-          {subtitle && (
-            <Text size="2" color="gray">
-              {subtitle}
-            </Text>
+    <Flex direction="column" gap="3">
+      <Flex
+        justify="between"
+        align="center"
+        wrap="wrap"
+        gap="3"
+        style={{
+          minHeight: "60px",
+        }}
+      >
+        {/* Section gauche : Back + Icône + Titre */}
+        <Flex align="center" gap="3" style={{ flex: "1 1 auto" }}>
+          {onBack && (
+            <Button variant="ghost" size="2" onClick={onBack} style={{ flexShrink: 0 }}>
+              <ArrowLeft size={16} />
+              {backLabel || "Retour"}
+            </Button>
           )}
+          {Icon && (
+            <Icon
+              size={32}
+              strokeWidth={1.5}
+              style={{
+                flexShrink: 0,
+              }}
+              aria-hidden="true"
+            />
+          )}
+          <Flex direction="column" gap="1">
+            <Heading size="6" weight="bold">
+              {title}
+            </Heading>
+            {subtitle && (
+              <Text size="2" color="gray">
+                {subtitle}
+              </Text>
+            )}
+            {description && (
+              <Text size="2" color="gray">
+                {description}
+              </Text>
+            )}
+          </Flex>
         </Flex>
-      </Flex>
 
       {/* Stats */}
       {stats && stats.length > 0 && (
@@ -99,15 +115,15 @@ export default function StandardHeaderLayout(props) {
               key={idx}
               direction="column"
               gap="1"
-              align={stat.color ? "start" : "end"}
-              style={{
-                textAlign: stat.color ? "left" : "right",
-              }}
+              align="end"
+              style={{ textAlign: "right" }}
             >
               <Text size="1" color="gray" weight="medium">
                 {stat.label}
               </Text>
-              {stat.color ? (
+              {stat.render ? (
+                stat.render
+              ) : stat.color ? (
                 <Badge color={stat.color} size="2">
                   {stat.value}
                 </Badge>
@@ -178,6 +194,10 @@ export default function StandardHeaderLayout(props) {
         {/* Sélection temporelle */}
         {timeSelectionControl}
       </Flex>
+      </Flex>
+
+      {/* Contenu additionnel (health details, etc.) */}
+      {children}
     </Flex>
   );
 }
@@ -209,6 +229,10 @@ StandardHeaderLayout.propTypes = {
   ),
   onRefresh: PropTypes.func,
   onAdd: PropTypes.func,
+  onBack: PropTypes.func,
+  backLabel: PropTypes.string,
   addLabel: PropTypes.string,
+  description: PropTypes.string,
   timeSelectionControl: PropTypes.element,
+  children: PropTypes.node,
 };

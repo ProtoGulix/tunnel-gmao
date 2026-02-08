@@ -118,6 +118,7 @@ export default function PageHeader(props) {
   const standardProps = {
     title: props.title,
     subtitle: props.subtitle,
+    description: props.description,
     Icon: icon,
     stats: props.stats,
     actions: props.actions,
@@ -125,7 +126,10 @@ export default function PageHeader(props) {
     addLabel: props.addLabel || "+ Ajouter",
     urgentBadge: props.urgentBadge,
     onRefresh: props.onRefresh,
+    onBack: props.onBack,
+    backLabel: props.backLabel,
     timeSelectionControl,
+    children: props.children,
   };
 
   return (
@@ -175,7 +179,11 @@ PageHeader.propTypes = {
   ),
   onRefresh: PropTypes.func,
   onAdd: PropTypes.func,
+  onBack: PropTypes.func,
+  backLabel: PropTypes.string,
   addLabel: PropTypes.string,
+  description: PropTypes.string,
+  children: PropTypes.node,
   timeSelection: PropTypes.shape({
     enabled: PropTypes.bool,
     mode: PropTypes.oneOf(["select", "popover"]),

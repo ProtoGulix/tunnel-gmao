@@ -56,6 +56,26 @@ export const equipementsAdapter = {
     }, `TunnelEquipements.fetchEquipementStats:${id}`);
   },
 
+  async createEquipement(data: { name: string; code?: string; parent_id?: string | null; equipment_class_id?: string | null }) {
+    return apiCall(async () => {
+      const raw = await datasource.createEquipementRaw(data);
+      return mapper.mapEquipementDetailToDomain(raw);
+    }, 'TunnelEquipements.createEquipement');
+  },
+
+  async updateEquipement(id: string, data: { name?: string; code?: string; parent_id?: string | null; equipment_class_id?: string | null }) {
+    return apiCall(async () => {
+      const raw = await datasource.updateEquipementRaw(id, data);
+      return mapper.mapEquipementDetailToDomain(raw);
+    }, `TunnelEquipements.updateEquipement:${id}`);
+  },
+
+  async deleteEquipement(id: string) {
+    return apiCall(async () => {
+      await datasource.deleteEquipementRaw(id);
+    }, `TunnelEquipements.deleteEquipement:${id}`);
+  },
+
   async fetchEquipementHealth(id: string) {
     return apiCall(async () => {
       const raw = await datasource.fetchEquipementHealthRaw(id);

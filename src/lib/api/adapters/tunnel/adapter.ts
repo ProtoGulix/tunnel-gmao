@@ -26,6 +26,7 @@ import { supplierOrderLinesAdapter } from './supplierOrderLines/adapter';
 import { stockAdapter } from './stock/adapter';
 import { suppliersAdapter } from './suppliers/adapter';
 import { stockSuppliersAdapter } from './stockSuppliers/adapter';
+import { equipementClassesAdapter } from './equipementClasses/adapter';
 import { clearAllCache } from '@/lib/api/client';
 
 // ============================================================================
@@ -88,4 +89,5 @@ export const adapter = {
   purchaseRequests: purchaseRequestsAdapter,
   supplierOrders: supplierOrdersAdapter,
   supplierOrderLines: supplierOrderLinesAdapter,
+  equipementClasses: equipementClassesAdapter,
 };
