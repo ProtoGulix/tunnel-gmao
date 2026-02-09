@@ -1,3 +1,21 @@
+## 2.3.1 - 2026-02-09
+
+Stabilité: STABLE
+
+### Charge technique : amélioration de l'affichage
+
+#### Ce qui a changé
+
+- **Détail par classe simplifié**: Présentation plus légère des informations lors du dépliage
+- **Style harmonisé**: Meilleure cohérence visuelle avec le reste de l'application
+
+#### Impact utilisateur
+
+- Interface plus sobre et lisible
+- Même information, présentation plus claire
+
+---
+
 ## 2.3.0 - 2026-02-09
 
 Stabilité: STABLE
@@ -10,6 +28,9 @@ Stabilité: STABLE
 - **Indicateur de dépannage évitable**: Identifiez la part du temps de dépannage qui pourrait être évitée (standardisation, conception, méthodes)
 - **Répartition par cause**: Tableau détaillé par facteur de complexité avec label et catégorie depuis l'API
 - **Analyse par classe d'équipement**: Comparez les charges entre types de machines
+  - **Détail expandable** : cliquez une ligne pour voir la ventilation du temps évitable
+  - **Causes principales** : top 3 des facteurs de complexité par classe
+  - **Recommandation d'action** : conseil concret fourni par le serveur
 - **Guide de lecture dynamique**: Objectifs, seuils et recommandations fournis directement par le serveur
 
 #### Impact utilisateur
@@ -20,7 +41,7 @@ Stabilité: STABLE
 
 #### Prérequis
 
-- **Serveur backend v1.5.0 minimum requis** — nouvel endpoint `/stats/charge-technique`
+- **Serveur backend v1.5.1 minimum requis** — nouvel endpoint `/stats/charge-technique` enrichi
 
 ---
 

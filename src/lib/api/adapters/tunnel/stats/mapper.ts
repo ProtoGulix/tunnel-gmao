@@ -110,17 +110,38 @@ export const mapTechnicalWorkloadToDomain = (raw: any) => {
         actionCount: toNumber(cause.action_count),
         percent: toNumber(cause.percent),
       })),
-      byEquipementClass: byEquipementClass.map((ec: any) => ({
-        equipementClassId: ec.equipement_class_id || null,
-        equipementClassCode: String(ec.equipement_class_code || ''),
-        equipementClassLabel: String(ec.equipement_class_label || ''),
-        chargeTotale: toNumber(ec.charge_totale),
-        chargeDepannage: toNumber(ec.charge_depannage),
-        chargeConstructive: toNumber(ec.charge_constructive),
-        chargeDepannageEvitable: toNumber(ec.charge_depannage_evitable),
-        tauxDepannageEvitable: toNumber(ec.taux_depannage_evitable),
-        status: ec.status || { color: 'gray', text: '' },
-      })),
+      byEquipementClass: byEquipementClass.map((ec: any) => {
+        const evitableBreakdown = ec.evitable_breakdown || {};
+        const topCauses = Array.isArray(ec.top_causes) ? ec.top_causes : [];
+
+        return {
+          equipementClassId: ec.equipement_class_id || null,
+          equipementClassCode: String(ec.equipement_class_code || ''),
+          equipementClassLabel: String(ec.equipement_class_label || ''),
+          chargeTotale: toNumber(ec.charge_totale),
+          chargeDepannage: toNumber(ec.charge_depannage),
+          chargeConstructive: toNumber(ec.charge_constructive),
+          chargeDepannageEvitable: toNumber(ec.charge_depannage_evitable),
+          tauxDepannageEvitable: toNumber(ec.taux_depannage_evitable),
+          status: ec.status || { color: 'gray', text: '' },
+          // Nouvelles données enrichies
+          evitableBreakdown: {
+            hoursWithFactor: toNumber(evitableBreakdown.hours_with_factor),
+            hoursSystemic: toNumber(evitableBreakdown.hours_systemic),
+            hoursBoth: toNumber(evitableBreakdown.hours_both),
+            totalEvitable: toNumber(evitableBreakdown.total_evitable),
+          },
+          explanation: ec.explanation || null,
+          topCauses: topCauses.map((cause: any) => ({
+            code: String(cause.code || ''),
+            label: cause.label || null,
+            category: cause.category || null,
+            hours: toNumber(cause.hours),
+            percent: toNumber(cause.percent),
+          })),
+          recommendedAction: ec.recommended_action || null,
+        };
+      }),
     };
   });
 

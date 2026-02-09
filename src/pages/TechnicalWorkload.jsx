@@ -126,7 +126,10 @@ export default function TechnicalWorkload() {
       />
 
       {/* Analyse par classe d'équipement */}
-      <EquipementClassTable data={byEquipementClass} />
+      <EquipementClassTable 
+        data={byEquipementClass} 
+        categorieColors={guide?.actionsParCategorie}
+      />
 
       {/* Guide de lecture */}
       <DecisionGuide guide={guide} />
