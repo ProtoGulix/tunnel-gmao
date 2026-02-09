@@ -1,3 +1,34 @@
+## 2.4.0 - 2026-02-09
+
+Stabilité: STABLE
+
+### Nouvelle page : Anomalies de saisie
+
+#### Ce qui a changé
+
+- **Contrôle qualité des actions**: Nouvelle page dédiée à l'analyse des anomalies dans la saisie des actions de maintenance
+- **6 types d'anomalies détectées**:
+  - Actions répétitives (même catégorie/machine répétée trop souvent)
+  - Actions fragmentées (trop de micro-actions courtes)
+  - Durées anormales (temps incohérent avec la catégorie)
+  - Classifications douteuses (mots-clés incohérents)
+  - Actions consécutives (même technicien avec saisies très rapprochées)
+  - Charge faible valeur (temps cumulé élevé sur des tâches à faible valeur)
+- **Vue synthétique**: Cartes récapitulatives par niveau de sévérité
+- **Suppression de l'ancienne page Actions**: Remplacée par cette nouvelle analyse plus pertinente
+
+#### Impact utilisateur
+
+- Nouvelle entrée "Anomalies saisie" dans le menu
+- Identifiez rapidement les problèmes de qualité de données
+- Toutes les règles et seuils proviennent du serveur
+
+#### Prérequis
+
+- **Serveur backend v1.6.0 minimum requis** — nouvel endpoint `/stats/anomalies-saisie`
+
+---
+
 ## 2.3.1 - 2026-02-09
 
 Stabilité: STABLE

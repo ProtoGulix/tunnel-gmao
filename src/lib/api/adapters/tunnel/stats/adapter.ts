@@ -29,4 +29,11 @@ export const statsAdapter = {
       return mapper.mapTechnicalWorkloadToDomain(raw);
     }, 'TunnelStats.fetchTechnicalWorkload');
   },
+
+  async fetchAnomaliesSaisie(params: DateRangeParams = {}) {
+    return apiCall(async () => {
+      const raw = await datasource.fetchAnomaliesSaisieRaw(params.startDate, params.endDate);
+      return mapper.mapAnomaliesSaisieToDomain(raw);
+    }, 'TunnelStats.fetchAnomaliesSaisie');
+  },
 };

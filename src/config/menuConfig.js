@@ -7,9 +7,9 @@ import {
   Settings,
   Package,
   FileText,
-  LayoutList,
   Activity,
   TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
 
 /**
@@ -114,21 +114,6 @@ export const PAGES_CONFIG = [
     showInMenu: false, // Ne pas afficher dans le menu
   },
   {
-    id: 'actions',
-    path: '/actions',
-    label: 'Actions techniques',
-    icon: LayoutList,
-    pageTitle: 'Actions techniques',
-    pageSubtitle: 'Suivi des actions techniques et analyse de charge',
-    timeFilter: {
-      enabled: true,
-      mode: 'popover',
-      component: 'daterange',
-      triggerLabel: "Période d'analyse",
-    },
-    requiresAuth: true,
-  },
-  {
     id: 'equipements',
     path: '/equipements',
     label: 'Équipements',
@@ -190,6 +175,21 @@ export const PAGES_CONFIG = [
     icon: TrendingUp,
     pageTitle: 'Charge technique',
     pageSubtitle: 'Analyse du temps de maintenance',
+    requiresAuth: true,
+  },
+  {
+    id: 'anomalies-saisie',
+    path: '/anomalies-saisie',
+    label: 'Anomalies de saisie',
+    icon: AlertTriangle,
+    pageTitle: 'Anomalies de saisie',
+    pageSubtitle: 'Contrôle qualité des actions',
+    timeFilter: {
+      enabled: true,
+      mode: 'popover',
+      component: 'daterange',
+      triggerLabel: "Période d'analyse",
+    },
     requiresAuth: true,
   },
 ];

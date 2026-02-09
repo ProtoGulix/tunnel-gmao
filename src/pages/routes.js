@@ -14,12 +14,12 @@ import MachineList from './MachineList';
 import MachineDetail from './MachineDetail';
 import EquipementsList from './EquipementsList';
 import EquipementDetail from './EquipementDetail';
-import ActionsPage from './ActionsPage';
 import Parts from './Parts';
 import Procurement from './Procurement';
 import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
 import ServiceStatus from './ServiceStatus';
 import TechnicalWorkload from './TechnicalWorkload';
+import AnomaliesSaisie from './AnomaliesSaisie';
 import TechnicianHome from './TechnicianHome';
 
 /**
@@ -35,7 +35,6 @@ export const ROUTE_COMPONENTS = {
   interventions: InterventionsList,
   'interventions-new': InterventionCreate,
   'intervention-detail': InterventionDetail,
-  actions: ActionsPage,
   machines: MachineList,
   'machine-detail': MachineDetail,
   equipements: EquipementsList,
@@ -45,6 +44,7 @@ export const ROUTE_COMPONENTS = {
   procurement: Procurement,
   'service-status': ServiceStatus,
   'technical-workload': TechnicalWorkload,
+  'anomalies-saisie': AnomaliesSaisie,
 };
 
 /**

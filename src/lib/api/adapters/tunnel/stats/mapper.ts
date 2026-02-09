@@ -211,3 +211,148 @@ export const mapServiceStatusToDomain = (raw: any) => {
     },
   };
 };
+
+/**
+ * Mappe les données d'anomalies de saisie du backend vers le domaine
+ * 
+ * Format API AnomaliesSaisieResponse:
+ * - params: { start_date, end_date }
+ * - summary: { total_anomalies, by_type, by_severity }
+ * - anomalies: { too_repetitive, too_fragmented, too_long_for_category, bad_classification, back_to_back, low_value_high_load }
+ * - config: { thresholds, simple_categories }
+ */
+export const mapAnomaliesSaisieToDomain = (raw: any) => {
+  if (!raw) return null;
+
+  const params = raw.params || {};
+  const summary = raw.summary || {};
+  const anomalies = raw.anomalies || {};
+  const config = raw.config || {};
+
+  // Mapper le résumé
+  const mappedSummary = {
+    totalAnomalies: toNumber(summary.total_anomalies),
+    byType: {
+      tooRepetitive: toNumber(summary.by_type?.too_repetitive),
+      tooFragmented: toNumber(summary.by_type?.too_fragmented),
+      tooLongForCategory: toNumber(summary.by_type?.too_long_for_category),
+      badClassification: toNumber(summary.by_type?.bad_classification),
+      backToBack: toNumber(summary.by_type?.back_to_back),
+      lowValueHighLoad: toNumber(summary.by_type?.low_value_high_load),
+    },
+    bySeverity: {
+      high: toNumber(summary.by_severity?.high),
+      medium: toNumber(summary.by_severity?.medium),
+    },
+  };
+
+  // Mapper chaque type d'anomalie
+  const mapTooRepetitive = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      category: item.category || '',
+      categoryName: item.categoryName || '',
+      machine: item.machine || '',
+      machineId: item.machineId || '',
+      month: item.month || '',
+      count: toNumber(item.count),
+      interventionCount: toNumber(item.interventionCount),
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  const mapTooFragmented = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      category: item.category || '',
+      categoryName: item.categoryName || '',
+      count: toNumber(item.count),
+      totalTime: toNumber(item.totalTime),
+      avgTime: toNumber(item.avgTime),
+      interventionCount: toNumber(item.interventionCount),
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  const mapTooLongForCategory = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      actionId: item.actionId || '',
+      category: item.category || '',
+      categoryName: item.categoryName || '',
+      time: toNumber(item.time),
+      intervention: item.intervention || '',
+      interventionId: item.interventionId || '',
+      interventionTitle: item.interventionTitle || '',
+      machine: item.machine || '',
+      tech: item.tech || '',
+      date: item.date || '',
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  const mapBadClassification = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      actionId: item.actionId || '',
+      category: item.category || '',
+      categoryName: item.categoryName || '',
+      foundKeywords: Array.isArray(item.foundKeywords) ? item.foundKeywords : [],
+      description: item.description || '',
+      intervention: item.intervention || '',
+      interventionId: item.interventionId || '',
+      interventionTitle: item.interventionTitle || '',
+      machine: item.machine || '',
+      tech: item.tech || '',
+      date: item.date || '',
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  const mapBackToBack = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      tech: item.tech || '',
+      techId: item.techId || '',
+      intervention: item.intervention || '',
+      interventionId: item.interventionId || '',
+      interventionTitle: item.interventionTitle || '',
+      machine: item.machine || '',
+      daysDiff: toNumber(item.daysDiff),
+      date1: item.date1 || '',
+      date2: item.date2 || '',
+      category1: item.category1 || '',
+      category2: item.category2 || '',
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  const mapLowValueHighLoad = (items: any[]) =>
+    (items || []).map((item: any) => ({
+      category: item.category || '',
+      categoryName: item.categoryName || '',
+      totalTime: toNumber(item.totalTime),
+      count: toNumber(item.count),
+      avgTime: toNumber(item.avgTime),
+      interventionCount: toNumber(item.interventionCount),
+      machineCount: toNumber(item.machineCount),
+      techCount: toNumber(item.techCount),
+      severity: item.severity || 'medium',
+      message: item.message || '',
+    }));
+
+  return {
+    params: {
+      startDate: params.start_date || null,
+      endDate: params.end_date || null,
+    },
+    summary: mappedSummary,
+    anomalies: {
+      tooRepetitive: mapTooRepetitive(anomalies.too_repetitive),
+      tooFragmented: mapTooFragmented(anomalies.too_fragmented),
+      tooLongForCategory: mapTooLongForCategory(anomalies.too_long_for_category),
+      badClassification: mapBadClassification(anomalies.bad_classification),
+      backToBack: mapBackToBack(anomalies.back_to_back),
+      lowValueHighLoad: mapLowValueHighLoad(anomalies.low_value_high_load),
+    },
+    config: {
+      thresholds: config.thresholds || {},
+      simpleCategories: Array.isArray(config.simple_categories) ? config.simple_categories : [],
+    },
+  };
+};

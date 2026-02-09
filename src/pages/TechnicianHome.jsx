@@ -105,10 +105,6 @@ export default function TechnicianHome() {
     navigate('/machines');
   }, [navigate]);
 
-  const handleActions = useCallback(() => {
-    navigate('/actions');
-  }, [navigate]);
-
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // RENDER STATES
   // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -198,15 +194,6 @@ export default function TechnicianHome() {
               iconColor={'var(--gray-9)'}
             />
 
-            {/* CARTE : ACTIONS */}
-            <ActionCard
-              title="Actions"
-              Icon={FileText}
-              onClick={handleActions}
-              borderColor={'var(--gray-6)'}
-              backgroundColor={'var(--gray-1)'}
-              iconColor={'var(--gray-9)'}
-            />
           </Grid>
         </Flex>
       </Container>
