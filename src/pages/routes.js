@@ -19,6 +19,7 @@ import Parts from './Parts';
 import Procurement from './Procurement';
 import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
 import ServiceStatus from './ServiceStatus';
+import TechnicalWorkload from './TechnicalWorkload';
 import TechnicianHome from './TechnicianHome';
 
 /**
@@ -43,6 +44,7 @@ export const ROUTE_COMPONENTS = {
   parts: Parts,
   procurement: Procurement,
   'service-status': ServiceStatus,
+  'technical-workload': TechnicalWorkload,
 };
 
 /**

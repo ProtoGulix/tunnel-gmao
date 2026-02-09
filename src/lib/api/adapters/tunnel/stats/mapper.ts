@@ -41,6 +41,102 @@ const mapSiteConsumption = (siteConsumption: unknown) => {
   }));
 };
 
+/**
+ * Mappe les données de charge technique du backend vers le domaine
+ * 
+ * Format API ChargeTechniqueResponse:
+ * - params: { start_date, end_date, period_type }
+ * - guide: { objectif, seuils_taux_evitable, actions_par_categorie }
+ * - periods: [{ period, charges, taux_depannage_evitable, cause_breakdown, by_equipement_class }]
+ */
+export const mapTechnicalWorkloadToDomain = (raw: any) => {
+  if (!raw) return null;
+
+  const params = raw.params || {};
+  const rawGuide = raw.guide || {};
+  const periods = Array.isArray(raw.periods) ? raw.periods : [];
+
+  // Mapper le guide
+  const guide = {
+    objectif: rawGuide.objectif || '',
+    seuilsTauxEvitable: Array.isArray(rawGuide.seuils_taux_evitable)
+      ? rawGuide.seuils_taux_evitable.map((s: any) => ({
+          min: s.min ?? 0,
+          max: s.max ?? null,
+          color: s.color || 'gray',
+          label: s.label || '',
+          action: s.action || '',
+        }))
+      : [],
+    actionsParCategorie: Array.isArray(rawGuide.actions_par_categorie)
+      ? rawGuide.actions_par_categorie.map((a: any) => ({
+          category: a.category || '',
+          color: a.color || '#6b7280',
+          action: a.action || '',
+        }))
+      : [],
+  };
+
+  // Mapper chaque période
+  const mappedPeriods = periods.map((p: any) => {
+    const period = p.period || {};
+    const charges = p.charges || {};
+    const tauxEvitable = p.taux_depannage_evitable || {};
+    const causeBreakdown = Array.isArray(p.cause_breakdown) ? p.cause_breakdown : [];
+    const byEquipementClass = Array.isArray(p.by_equipement_class) ? p.by_equipement_class : [];
+
+    return {
+      period: {
+        startDate: period.start_date || null,
+        endDate: period.end_date || null,
+        days: toNumber(period.days),
+      },
+      charges: {
+        chargeTotale: toNumber(charges.charge_totale),
+        chargeDepannage: toNumber(charges.charge_depannage),
+        chargeConstructive: toNumber(charges.charge_constructive),
+        chargeDepannageEvitable: toNumber(charges.charge_depannage_evitable),
+        chargeDepannageSubi: toNumber(charges.charge_depannage_subi),
+      },
+      tauxDepannageEvitable: {
+        taux: toNumber(tauxEvitable.taux),
+        status: tauxEvitable.status || { color: 'gray', text: '' },
+      },
+      causeBreakdown: causeBreakdown.map((cause: any) => ({
+        code: String(cause.code || ''),
+        label: cause.label || null,
+        category: cause.category || null,
+        hours: toNumber(cause.hours),
+        actionCount: toNumber(cause.action_count),
+        percent: toNumber(cause.percent),
+      })),
+      byEquipementClass: byEquipementClass.map((ec: any) => ({
+        equipementClassId: ec.equipement_class_id || null,
+        equipementClassCode: String(ec.equipement_class_code || ''),
+        equipementClassLabel: String(ec.equipement_class_label || ''),
+        chargeTotale: toNumber(ec.charge_totale),
+        chargeDepannage: toNumber(ec.charge_depannage),
+        chargeConstructive: toNumber(ec.charge_constructive),
+        chargeDepannageEvitable: toNumber(ec.charge_depannage_evitable),
+        tauxDepannageEvitable: toNumber(ec.taux_depannage_evitable),
+        status: ec.status || { color: 'gray', text: '' },
+      })),
+    };
+  });
+
+  return {
+    params: {
+      startDate: params.start_date || null,
+      endDate: params.end_date || null,
+      periodType: params.period_type || 'custom',
+    },
+    guide,
+    periods: mappedPeriods,
+    // Raccourcis pour accès direct à la première période (cas custom)
+    current: mappedPeriods[0] || null,
+  };
+};
+
 export const mapServiceStatusToDomain = (raw: any) => {
   if (!raw) return null;
 

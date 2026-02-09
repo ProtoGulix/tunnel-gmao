@@ -10,11 +10,23 @@ import { apiCall } from '@/lib/api/errors';
 import * as datasource from './datasource';
 import * as mapper from './mapper';
 
+interface DateRangeParams {
+  startDate?: string;
+  endDate?: string;
+}
+
 export const statsAdapter = {
-  async fetchServiceStatus(params: any = {}) {
+  async fetchServiceStatus(params: DateRangeParams = {}) {
     return apiCall(async () => {
       const raw = await datasource.fetchServiceStatusRaw(params.startDate, params.endDate);
       return mapper.mapServiceStatusToDomain(raw);
     }, 'TunnelStats.fetchServiceStatus');
+  },
+
+  async fetchTechnicalWorkload(params: DateRangeParams = {}) {
+    return apiCall(async () => {
+      const raw = await datasource.fetchTechnicalWorkloadRaw(params.startDate, params.endDate);
+      return mapper.mapTechnicalWorkloadToDomain(raw);
+    }, 'TunnelStats.fetchTechnicalWorkload');
   },
 };

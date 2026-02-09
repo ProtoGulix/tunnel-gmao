@@ -9,6 +9,7 @@ import {
   FileText,
   LayoutList,
   Activity,
+  TrendingUp,
 } from 'lucide-react';
 
 /**
@@ -180,6 +181,15 @@ export const PAGES_CONFIG = [
     icon: Activity,
     pageTitle: 'État du service',
     pageSubtitle: 'Charge, fragmentation, capacité réelle',
+    requiresAuth: true,
+  },
+  {
+    id: 'technical-workload',
+    path: '/charge-technique',
+    label: 'Charge technique',
+    icon: TrendingUp,
+    pageTitle: 'Charge technique',
+    pageSubtitle: 'Analyse du temps de maintenance',
     requiresAuth: true,
   },
 ];

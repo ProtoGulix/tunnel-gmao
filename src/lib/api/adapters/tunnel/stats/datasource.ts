@@ -41,3 +41,16 @@ export const fetchServiceStatusRaw = async (startDate?: string | Date, endDate?:
   const response = await tunnelApi.get('/stats/service-status/', { params });
   return response.data || {};
 };
+
+export const fetchTechnicalWorkloadRaw = async (startDate?: string | Date, endDate?: string | Date) => {
+  const params: any = {};
+
+  const formattedStartDate = formatDate(startDate);
+  const formattedEndDate = formatDate(endDate);
+
+  if (formattedStartDate) params.start_date = formattedStartDate;
+  if (formattedEndDate) params.end_date = formattedEndDate;
+
+  const response = await tunnelApi.get('/stats/charge-technique/', { params });
+  return response.data || {};
+};

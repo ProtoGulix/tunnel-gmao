@@ -1,3 +1,29 @@
+## 2.3.0 - 2026-02-09
+
+Stabilité: STABLE
+
+### Nouvelle page : Charge technique
+
+#### Ce qui a changé
+
+- **Nouvelle page d'analyse**: Visualisez la répartition du temps de maintenance entre dépannage et travail constructif
+- **Indicateur de dépannage évitable**: Identifiez la part du temps de dépannage qui pourrait être évitée (standardisation, conception, méthodes)
+- **Répartition par cause**: Tableau détaillé par facteur de complexité avec label et catégorie depuis l'API
+- **Analyse par classe d'équipement**: Comparez les charges entre types de machines
+- **Guide de lecture dynamique**: Objectifs, seuils et recommandations fournis directement par le serveur
+
+#### Impact utilisateur
+
+- Nouvelle entrée "Charge technique" dans le menu
+- Aide à la décision : où investir pour réduire le temps de dépannage
+- Interface entièrement pilotée par les données serveur (pas de constantes codées en dur)
+
+#### Prérequis
+
+- **Serveur backend v1.5.0 minimum requis** — nouvel endpoint `/stats/charge-technique`
+
+---
+
 ## 2.2.0 - 2026-02-08
 
 Stabilité: STABLE
