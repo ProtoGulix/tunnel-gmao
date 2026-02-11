@@ -67,17 +67,16 @@ const mapPriorityToConfigKey = (priorityValue) => {
 
 /**
  * Maps domain DTO status to config key for UI display.
- * @param {string} dtoStatus - Domain status ('open' | 'in_progress' | 'closed' | 'cancelled')
+ * @param {string|object} dtoStatus - Domain status string or object with id property
  * @returns {string} Config key ('ouvert' | 'attente_pieces' | 'ferme' | 'cancelled')
  */
 const mapDtoStatusToConfigKey = (dtoStatus) => {
-  const mapping = {
-    'open': 'ouvert',
-    'in_progress': 'attente_pieces', // Default display
-    'closed': 'ferme',
-    'cancelled': 'cancelled'
-  };
-  return mapping[dtoStatus] || 'ouvert';
+  // Extract id if status is an object
+  const statusId = dtoStatus?.id || dtoStatus;
+  
+  // statusId should already be in French format from backend
+  // Just return it, or fallback to 'ouvert'
+  return statusId || 'ouvert';
 };
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -380,13 +379,17 @@ export default function InterventionDetail() {
       });
     }
     if (statusLog) {
+      console.log('Status logs:', statusLog); // Debug
       statusLog.forEach(log => {
+        console.log('Processing log:', log); // Debug
         items.push({ 
           type: 'status', 
           date: log.date, 
           data: {
             ...log,
-            date: typeof log.date === 'string' ? log.date : new Date(log.date).toISOString()
+            from: log.status_from_detail,
+            to: log.status_to_detail,
+            technician: log.technician || log.tech,
           }
         });
       });
@@ -543,9 +546,9 @@ export default function InterventionDetail() {
           {
             label: (
               <DropdownButton
-                label={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.label || 'En cours'}
-                color={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.activeBg || 'var(--blue-6)'}
-                textColor={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.textActive || 'white'}
+                label={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.label || STATE_COLORS.ouvert?.label || 'En cours'}
+                color={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.activeBg || STATE_COLORS.ouvert?.activeBg || 'var(--blue-6)'}
+                textColor={STATE_COLORS[mapDtoStatusToConfigKey(interv.status)]?.textActive || STATE_COLORS.ouvert?.textActive || 'white'}
                 items={[
                   { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
                   { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },

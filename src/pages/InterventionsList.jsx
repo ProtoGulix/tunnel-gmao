@@ -37,25 +37,6 @@ import { interventions } from '@/lib/api/facade';
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-// STATUS MAPPING (DTO → Config)
-// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
-/**
- * Maps domain DTO status to config key for display.
- * @param {string} dtoStatus - Domain status ('open' | 'in_progress' | 'closed' | 'cancelled')
- * @returns {string} Config key ('ouvert' | 'attente_pieces' | 'ferme' | 'cancelled')
- */
-const mapDtoStatusToConfigKey = (dtoStatus) => {
-  const mapping = {
-    'open': 'ouvert',
-    'in_progress': 'attente_pieces', // Default to pieces for display
-    'closed': 'ferme',
-    'cancelled': 'cancelled'
-  };
-  return mapping[dtoStatus] || 'ouvert';
-};
-
-// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
@@ -106,9 +87,9 @@ export default function InterventionsList() {
   // État pour la recherche
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Récupération des interventions (exclure les fiches imprimées/archivées par défaut)
+  // Récupération des interventions (toutes, y compris fermées)
   const fetchInterventionsWithFilters = useCallback(() => {
-    return interventions.fetchInterventions({ printed: false });
+    return interventions.fetchInterventions();
   }, []);
 
   const {
@@ -154,15 +135,13 @@ export default function InterventionsList() {
     const archivé = [];
 
     filteredInterventions.forEach(i => {
-      const { status, type: rawType, priority, printedFiche } = i; // DTO normalized status: 'open' | 'in_progress' | 'closed' | 'cancelled'
+      const { status, type: rawType, priority, printedFiche } = i;
       const type = rawType?.toUpperCase();
+      const statusId = status?.id || status; // Support both object {id: '...'} and string
       
-      // BLOC 4 : Archivé (closed ou cancelled) - Masquer les fiches imprimées (déjà traitées)
-      if (status === 'closed' || status === 'cancelled') {
-        // Ne charger que les fiches non imprimées pour éviter le bruit
-        if (!printedFiche) {
-          archivé.push(i);
-        }
+      // BLOC 4 : Archivé (fermées ou annulées)
+      if (statusId === 'ferme' || statusId === 'closed' || statusId === 'cancelled' || statusId === 'annule') {
+        archivé.push(i);
         return;
       }
 
@@ -172,13 +151,13 @@ export default function InterventionsList() {
         return;
       }
 
-      // BLOC 2 : Bloqué (in_progress means waiting for parts/supplier)
-      if (status === 'in_progress') {
+      // BLOC 2 : Bloqué (attente pièces ou production)
+      if (statusId === 'attente_pieces' || statusId === 'attente_prod' || statusId === 'in_progress') {
         bloque.push(i);
         return;
       }
 
-      // BLOC 1 : À faire maintenant (open interventions)
+      // BLOC 1 : À faire maintenant (ouvertes et autres statuts ouverts)
       actionnable.push(i);
     });
 
@@ -439,7 +418,8 @@ export default function InterventionsList() {
 
   // Fonction de rendu des cellules pour BLOC 3 & 4 : Projets et Archivé
   const renderStandardCell = useCallback((interv, column) => {
-    const statusConfig = STATUS_CONFIG[mapDtoStatusToConfigKey(interv.status)] || STATUS_CONFIG.ouvert;
+    const statusId = interv.status?.id || interv.status;
+    const statusConfig = STATUS_CONFIG[statusId] || STATUS_CONFIG.ouvert;
     const age = calculateAge(interv.reportedDate);
     const machineCode = interv.machine?.code || 'SUPP';
     const machineSite = interv.machine?.site || '—';

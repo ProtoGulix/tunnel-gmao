@@ -14,13 +14,12 @@ import { STATE_COLORS } from "@/config/interventionTypes";
 
 /** Map domain status (open|in_progress|closed|cancelled) to config key */
 const mapDtoStatusToConfigKey = (dtoStatus) => {
-  const mapping = {
-    open: "ouvert",
-    in_progress: "attente_pieces",
-    closed: "ferme",
-    cancelled: "cancelled",
-  };
-  return mapping[dtoStatus] || "ouvert";
+  // Extract id if status is an object
+  const statusId = dtoStatus?.id || dtoStatus;
+  
+  // statusId should already be in French format from backend
+  // Just return it, or fallback to 'ouvert'
+  return statusId || "ouvert";
 };
 
 /**
@@ -102,19 +101,26 @@ function renderStatusBadge(statusInput) {
 function renderStatusTransition(fromInput, toInput) {
   const getCfg = (input) => {
     if (!input) return undefined;
+    
+    // Si c'est un objet avec un id
     if (typeof input === 'object') {
-      if (input.id && STATE_COLORS[input.id]) return STATE_COLORS[input.id];
-      if (input.value) {
-        const key = mapDtoStatusToConfigKey(input.value);
-        return STATE_COLORS[key];
+      const statusId = input.id;
+      if (statusId && STATE_COLORS[statusId]) {
+        return STATE_COLORS[statusId];
       }
       return undefined;
     }
-    // string
-    if (STATE_COLORS[input]) return STATE_COLORS[input];
-    const key = mapDtoStatusToConfigKey(input);
-    return STATE_COLORS[key];
+    
+    // Si c'est une string directe
+    if (typeof input === 'string') {
+      if (STATE_COLORS[input]) {
+        return STATE_COLORS[input];
+      }
+    }
+    
+    return undefined;
   };
+  
   const fromCfg = getCfg(fromInput);
   const toCfg = getCfg(toInput);
 
@@ -157,7 +163,10 @@ function getActionSegment(item) {
 }
 
 function getStatusSegment(item) {
+  console.log('getStatusSegment - item.data:', item.data); // Debug
+  console.log('getStatusSegment - from:', item.data?.from, 'to:', item.data?.to); // Debug
   const trans = renderStatusTransition(item.data?.from, item.data?.to);
+  console.log('getStatusSegment - trans:', trans); // Debug
   if (trans) return trans;
   const toBadge = renderStatusBadge(item.data?.to);
   if (toBadge) return toBadge;
@@ -174,12 +183,22 @@ function buildLineParts(item) {
   const parts = [];
   parts.push(<Text key="date" size="2" color="gray">{formatDateFR(item.date)}</Text>);
   parts.push(<Text key="sep1" size="2">·</Text>);
-  parts.push(<Text key="type" size="2">{isAction ? 'Action' : 'Changement statut'}</Text>);
 
   const segment = getSegment(item, isAction);
-  if (segment) {
-    parts.push(<Text key="sep2" size="2">·</Text>);
-    parts.push(<span key="segment">{segment}</span>);
+  
+  if (isAction) {
+    parts.push(<Text key="type" size="2">Action</Text>);
+    if (segment) {
+      parts.push(<Text key="sep2" size="2">·</Text>);
+      parts.push(<span key="segment">{segment}</span>);
+    }
+  } else {
+    // Pour les changements de statut, afficher directement la transition sans le texte "Changement statut"
+    if (segment) {
+      parts.push(<span key="segment">{segment}</span>);
+    } else {
+      parts.push(<Text key="type" size="2">Changement statut</Text>);
+    }
   }
 
   const user = buildUserLabel(item.data?.technician);

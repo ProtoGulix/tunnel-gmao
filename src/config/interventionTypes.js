@@ -66,6 +66,14 @@ export const STATE_COLORS = {
     textActive: 'white',
     textInactive: 'var(--gray-10)',
   },
+  cancelled: {
+    label: 'Annulée',
+    activeBg: 'var(--gray-9)',
+    hoverBg: 'var(--gray-7)',
+    inactiveBg: 'var(--gray-3)',
+    textActive: 'white',
+    textInactive: 'var(--gray-10)',
+  },
 };
 
 /**
