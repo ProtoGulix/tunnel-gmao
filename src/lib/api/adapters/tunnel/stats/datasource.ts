@@ -67,3 +67,18 @@ export const fetchAnomaliesSaisieRaw = async (startDate?: string | Date, endDate
   const response = await tunnelApi.get('/stats/anomalies-saisie/', { params });
   return response.data || {};
 };
+
+export const fetchQualiteDonneesRaw = async (filters?: {
+  severite?: 'high' | 'medium';
+  entite?: 'intervention_action' | 'intervention' | 'stock_item' | 'purchase_request';
+  code?: string;
+}) => {
+  const params: any = {};
+
+  if (filters?.severite) params.severite = filters.severite;
+  if (filters?.entite) params.entite = filters.entite;
+  if (filters?.code) params.code = filters.code;
+
+  const response = await tunnelApi.get('/stats/qualite-donnees/', { params });
+  return response.data || {};
+};

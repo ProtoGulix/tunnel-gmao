@@ -69,6 +69,11 @@ function App() {
             return null;
           }
           
+          // Bloquer les pages désactivées (BETA)
+          if (page.disabled === true) {
+            return null;
+          }
+          
           const Component = getRouteComponent(page.id);
           
           // Skip pages with missing components (log only in development)

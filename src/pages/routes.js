@@ -20,6 +20,7 @@ import PreventiveSuggestionsPage from './PreventiveSuggestionsPage';
 import ServiceStatus from './ServiceStatus';
 import TechnicalWorkload from './TechnicalWorkload';
 import AnomaliesSaisie from './AnomaliesSaisie';
+import QualiteDonnees from './QualiteDonnees';
 import TechnicianHome from './TechnicianHome';
 
 /**
@@ -45,6 +46,7 @@ export const ROUTE_COMPONENTS = {
   'service-status': ServiceStatus,
   'technical-workload': TechnicalWorkload,
   'anomalies-saisie': AnomaliesSaisie,
+  'qualite-donnees': QualiteDonnees,
 };
 
 /**

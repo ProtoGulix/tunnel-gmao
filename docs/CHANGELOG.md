@@ -1,3 +1,42 @@
+## 2.5.0 - 2026-02-11
+
+Stabilité: STABLE
+
+### Nouvelle page : Qualité des données
+
+#### Ce qui a changé
+
+- **Contrôle de la qualité de vos données**: Nouvelle page qui vérifie automatiquement si vos données sont complètes et cohérentes
+- **13 vérifications sur vos données principales**:
+  - **Actions d'intervention** (7 vérifications): détecte les actions sans temps saisi, sans technicien, avec description vide, sur intervention déjà fermée, etc.
+  - **Interventions** (3 vérifications): interventions fermées sans aucune action, sans type défini, ou en cours mais inactives
+  - **Articles de stock** (2 vérifications): articles sans seuil minimum ou sans fournisseur
+  - **Demandes d'achat** (1 vérification): demandes non liées à un article de stock
+- **Filtres pratiques**: Affichez uniquement les problèmes critiques ou ceux d'une catégorie spécifique
+- **Vue d'ensemble**: Nombre total de problèmes et répartition par niveau d'urgence
+- **Corrections facilitées**: Chaque problème affiche combien d'éléments sont concernés avec des exemples pour les retrouver
+
+#### Modifications importantes
+
+- **Pages temporairement masquées**: Deux pages ne sont plus accessibles jusqu'à nouvelle version du serveur
+  - "Charge technique" - en attente de mise à jour serveur
+  - "Anomalies de saisie" - en attente de mise à jour serveur
+  - Ces pages reviendront dans une prochaine version
+
+#### Impact utilisateur
+
+- Nouvelle entrée "Qualité des données" dans le menu (icône base de données)
+- Vérifiez facilement si vos données sont complètes
+- Corrigez les problèmes grâce aux exemples fournis
+- Deux anciennes pages sont temporairement indisponibles
+
+#### Mise à jour nécessaire
+
+- Cette version nécessite une mise à jour du serveur (version 1.7.0)
+- Contactez votre administrateur si vous ne voyez pas la nouvelle page
+
+---
+
 ## 2.4.0 - 2026-02-09
 
 Stabilité: STABLE

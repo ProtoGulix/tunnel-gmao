@@ -10,6 +10,7 @@ import {
   Activity,
   TrendingUp,
   AlertTriangle,
+  Database,
 } from 'lucide-react';
 
 /**
@@ -176,6 +177,7 @@ export const PAGES_CONFIG = [
     pageTitle: 'Charge technique',
     pageSubtitle: 'Analyse du temps de maintenance',
     requiresAuth: true,
+    disabled: true, // BETA: endpoint /stats/charge-technique en cours de refactoring
   },
   {
     id: 'anomalies-saisie',
@@ -190,6 +192,16 @@ export const PAGES_CONFIG = [
       component: 'daterange',
       triggerLabel: "Période d'analyse",
     },
+    requiresAuth: true,
+    disabled: true, // BETA: endpoint /stats/anomalies-saisie en cours de refactoring
+  },
+  {
+    id: 'qualite-donnees',
+    path: '/qualite-donnees',
+    label: 'Qualité des données',
+    icon: Database,
+    pageTitle: 'Qualité des données',
+    pageSubtitle: 'Contrôle de complétude et cohérence',
     requiresAuth: true,
   },
 ];
@@ -209,6 +221,9 @@ export function getMenuItems(isAuthenticated) {
   return PAGES_CONFIG.filter((item) => {
     // Ne pas afficher les items masqués du menu
     if (item.showInMenu === false) return false;
+    
+    // Ne pas afficher les items désactivés
+    if (item.disabled === true) return false;
 
     if (isAuthenticated) {
       // Mode connecté : tout sauf publicOnly
