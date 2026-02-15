@@ -48,3 +48,26 @@ export const updateInterventionRaw = async (id: string, payload: any) => {
   const response = await tunnelApi.put(`/interventions/${id}`, payload);
   return response.data?.data || response.data || {};
 };
+
+/**
+ * Download intervention PDF
+ * GET /exports/interventions/{id}/pdf
+ * @returns Response with blob data and filename in Content-Disposition header
+ */
+export const downloadInterventionPDFRaw = async (id: string) => {
+  return await tunnelApi.get(`/exports/interventions/${id}/pdf`, {
+    responseType: 'blob',
+  });
+};
+
+/**
+ * Get QR code URL for intervention
+ * GET /exports/interventions/{id}/qrcode
+ * @returns URL string for QR code image
+ */
+export const getInterventionQRCodeUrl = (id: string) => {
+  const baseUrl = tunnelApi.defaults.baseURL || '';
+  const token = localStorage.getItem('auth_access_token');
+  const url = `${baseUrl}/exports/interventions/${id}/qrcode`;
+  return token ? `${url}?token=${encodeURIComponent(token)}` : url;
+};

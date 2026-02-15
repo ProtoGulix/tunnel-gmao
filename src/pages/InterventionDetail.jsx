@@ -280,40 +280,27 @@ export default function InterventionDetail() {
   const loadPdf = useCallback(async () => {
     try {
       setPdfLoading(true);
-      const EXPORT_API_URL = import.meta.env.VITE_EXPORT_API_URL || "http://localhost:8001";
-      const token = localStorage.getItem("auth_access_token") || localStorage.getItem("legacy_api_token");
       
-      if (!token) {
-        setOperationError('Session expirée. Veuillez vous reconnecter.');
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch(`${EXPORT_API_URL}/api/items/${id}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const errorMsg = response.status === 401 
-          ? 'Session expirée. Veuillez vous reconnecter.'
-          : response.status === 404
-          ? "Intervention non trouvée pour l'export."
-          : `Erreur ${response.status}: ${response.statusText}`;
-        setOperationError(errorMsg);
-        if (response.status === 401) navigate('/login');
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Use the new adapter method instead of direct fetch
+      const blobUrl = await interventions.fetchInterventionPDFBlob(id);
+      
+      // Cleanup old URL if exists
       if (pdfUrlRef.current) {
         try { window.URL.revokeObjectURL(pdfUrlRef.current); } catch { /* ignore revoke errors */ }
       }
-      pdfUrlRef.current = url;
-      setPdfUrl(url);
-    } catch {
-      setOperationError('Impossible de charger la fiche PDF.');
+      
+      pdfUrlRef.current = blobUrl;
+      setPdfUrl(blobUrl);
+    } catch (error) {
+      // Handle authentication errors
+      if (error.name === 'AuthenticationError') {
+        setOperationError('Session expirée. Veuillez vous reconnecter.');
+        navigate('/login');
+      } else if (error.name === 'NotFoundError') {
+        setOperationError("Intervention non trouvée pour l'export.");
+      } else {
+        setOperationError('Impossible de charger la fiche PDF.');
+      }
     } finally {
       setPdfLoading(false);
     }

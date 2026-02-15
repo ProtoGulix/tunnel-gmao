@@ -1,3 +1,28 @@
+## 2.6.0 - 2026-02-15
+
+Stabilité: STABLE
+
+### Amélioration des fiches PDF d'intervention
+
+#### Ce qui a changé
+
+- **Chargement plus rapide**: Les fiches d'intervention en preview s'affichent plus rapidement
+- **Messages d'erreur améliorés**: Si une fiche ne peut pas être chargée, vous recevez un message clair indiquant le problème
+- **Configuration simplifiée**: Un seul serveur gère maintenant toutes les fonctionnalités (interventions et exports)
+
+#### Impact utilisateur
+
+- Aucun changement visible dans votre utilisation quotidienne
+- Les exports PDF fonctionnent exactement comme avant
+- Connexion plus fiable lors de l'affichage des fiches
+
+#### Mise à jour nécessaire
+
+- Cette version nécessite une mise à jour du serveur (version 1.8.0)
+- Contactez votre administrateur si les fiches PDF ne s'affichent plus correctement
+
+---
+
 ## 2.5.0 - 2026-02-11
 
 Stabilité: STABLE

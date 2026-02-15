@@ -1,5 +1,4 @@
 import { getApiAdapter } from './adapters/provider';
-import { exportAdapter } from './adapters/export.adapter';
 
 /**
  * Stable API Facade
@@ -108,6 +107,9 @@ export const { auth } = API;
  * - `updateIntervention(id, updates)` → `Intervention`
  * - `addAction(action)` → `InterventionAction`
  * - `addPart(part)` → `InterventionPart`
+ * - `downloadInterventionPDF(id)` → `{ success: boolean, filename?: string }` (downloads PDF)
+ * - `fetchInterventionPDFBlob(id)` → `string` (returns blob URL for preview)
+ * - `getQRCodeUrl(id)` → `{ url: string }` (QR code image URL)
  *
  * @type {Object}
  *
@@ -119,6 +121,12 @@ export const { auth } = API;
  * const machineInterventions = await interventions.fetchInterventions('machine-123');
  * // Détail d'une intervention
  * const detail = await interventions.fetchIntervention('int-123');
+ * // Export PDF (téléchargement)
+ * await interventions.downloadInterventionPDF('int-123');
+ * // PDF pour preview (iframe/object)
+ * const blobUrl = await interventions.fetchInterventionPDFBlob('int-123');
+ * // QR code
+ * const { url } = interventions.getQRCodeUrl('int-123');
  */
 export const { interventions } = API;
 
@@ -442,25 +450,6 @@ export const { client } = API;
  */
 export const { errors } = API;
 
-// ==============================
-// EXPORT SERVICE
-// ==============================
-
-/**
- * **Export Service**
- *
- * Independent service for exporting data (CSV, PDF, Excel).
- * Not affected by backend provider changes.
- *
- * Functions:
- * - `exportToCSV(data, filename)` → `void`
- * - `exportToPDF(data, options)` → `void`
- * - `exportToExcel(data, filename)` → `void`
- *
- * @type {Object}
- *
- * @example
- * import { exportService } from 'src/lib/api/facade';
- * await exportService.exportToCSV(machines, 'machines.csv');
- */
-export const exportService = exportAdapter;
+// Export functions are now integrated into domain-specific adapters:
+// - Intervention PDF exports: see interventions.downloadInterventionPDF()
+// - Intervention QR codes: see interventions.getQRCodeUrl()
