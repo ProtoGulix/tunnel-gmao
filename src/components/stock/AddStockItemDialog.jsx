@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -8,9 +8,13 @@ import {
   TextField,
   Text,
   Select,
+  Card,
+  Badge,
 } from "@radix-ui/themes";
-import { Plus } from "lucide-react";
+import { Plus, FileCode } from "lucide-react";
 import { useStockSubFamilies } from "@/hooks/useStockFamilies";
+import { useTemplate } from "@/hooks/useTemplate";
+import { generatePattern, validateRequiredFields } from "@/lib/utils/templatePatternGenerator";
 import { generateStockReference } from "@/lib/utils/stockReferenceGenerator";
 
 export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] }) {
@@ -25,7 +29,36 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("0");
 
+  // Template-based characteristics
+  const [characteristics, setCharacteristics] = useState({});
+
   const { subFamilies } = useStockSubFamilies(familyCode);
+
+  // Get selected subfamily with template info
+  const selectedSubFamily = useMemo(() => 
+    subFamilies.find(sf => sf.code === subFamilyCode),
+    [subFamilies, subFamilyCode]
+  );
+
+  // Load template if subfamily has one
+  const { template, fields, enums, loading: templateLoading } = useTemplate(
+    selectedSubFamily?.part_template_id
+  );
+
+  // Reset characteristics when template changes
+  useEffect(() => {
+    if (template) {
+      setCharacteristics({});
+    }
+  }, [template?.id]);
+
+  // Generate dimension preview from template
+  const generatedDimension = useMemo(() => {
+    if (template && template.pattern) {
+      return generatePattern(template.pattern, characteristics);
+    }
+    return dimension;
+  }, [template, characteristics, dimension]);
 
   const resetForm = () => {
     setName("");
@@ -36,35 +69,79 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
     setUnit("pcs");
     setLocation("");
     setQuantity("0");
+    setCharacteristics({});
   };
 
   const handleSubmit = async () => {
-    if (!name.trim() || !familyCode || !subFamilyCode || !dimension.trim()) {
+    // Validation commune
+    if (!name.trim() || !familyCode || !subFamilyCode) {
       return;
     }
 
-    const itemData = {
-      name: name.trim(),
-      family_code: familyCode,
-      sub_family_code: subFamilyCode,
-      spec: spec.trim() || null,
-      dimension: dimension.trim(),
-      unit,
-      location: location.trim() || null,
-      quantity: parseInt(quantity) || 0,
-    };
+    // Si template : validation des champs requis + utilisation dimension générée
+    if (template) {
+      const validation = validateRequiredFields(fields, characteristics);
+      if (!validation.valid) {
+        alert(`Champs requis manquants : ${validation.missing.join(', ')}`);
+        return;
+      }
 
-    await onAdd(itemData);
+      const itemData = {
+        name: name.trim(),
+        family_code: familyCode,
+        sub_family_code: subFamilyCode,
+        spec: spec.trim() || null,
+        dimension: generatedDimension,
+        unit,
+        location: location.trim() || null,
+        quantity: parseInt(quantity) || 0,
+        // Template-based creation
+        part_template_id: template.id,
+        part_template_version: template.version,
+        characteristics: characteristics,
+      };
+
+      await onAdd(itemData);
+    } else {
+      // Legacy mode : validation manuelle dimension
+      if (!dimension.trim()) {
+        return;
+      }
+
+      const itemData = {
+        name: name.trim(),
+        family_code: familyCode,
+        sub_family_code: subFamilyCode,
+        spec: spec.trim() || null,
+        dimension: dimension.trim(),
+        unit,
+        location: location.trim() || null,
+        quantity: parseInt(quantity) || 0,
+      };
+
+      await onAdd(itemData);
+    }
+
     resetForm();
     setOpen(false);
+  };
+
+  const handleCharacteristicChange = (fieldKey, value) => {
+    setCharacteristics(prev => ({
+      ...prev,
+      [fieldKey]: value
+    }));
   };
 
   const generatedRef = generateStockReference({
     family_code: familyCode,
     sub_family_code: subFamilyCode,
     spec: spec,
-    dimension: dimension,
+    dimension: generatedDimension,
   });
+
+  const hasTemplate = !!template;
+  const validation = hasTemplate ? validateRequiredFields(fields, characteristics) : { valid: true };
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -75,7 +152,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
         </Button>
       </Dialog.Trigger>
 
-      <Dialog.Content style={{ maxWidth: 550 }}>
+      <Dialog.Content style={{ maxWidth: 650 }}>
         <Dialog.Title>Ajouter un article au stock</Dialog.Title>
         <Dialog.Description size="2" mb="4">
           Créer un nouvel article dans le stock avec sa famille et sous-famille.
@@ -104,6 +181,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
                 onValueChange={(value) => {
                   setFamilyCode(value);
                   setSubFamilyCode("");
+                  setCharacteristics({});
                 }} 
                 size="2"
               >
@@ -124,7 +202,10 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
               </Text>
               <Select.Root 
                 value={subFamilyCode} 
-                onValueChange={setSubFamilyCode}
+                onValueChange={(v) => {
+                  setSubFamilyCode(v);
+                  setCharacteristics({});
+                }}
                 disabled={!familyCode}
                 size="2"
               >
@@ -132,7 +213,14 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
                 <Select.Content>
                   {subFamilies.map((subFamily) => (
                     <Select.Item key={subFamily.code} value={subFamily.code}>
-                      {subFamily.label}
+                      <Flex align="center" gap="2">
+                        {subFamily.label}
+                        {subFamily.part_template_id && (
+                          <Badge size="1" color="blue" variant="soft">
+                            <FileCode size={10} />
+                          </Badge>
+                        )}
+                      </Flex>
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -140,31 +228,100 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
             </Box>
           </Flex>
 
-          <Flex gap="2">
-            <Box style={{ flex: 1 }}>
-              <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                Spécification
-              </Text>
-              <TextField.Root
-                placeholder="Ex: M8"
-                value={spec}
-                onChange={(e) => setSpec(e.target.value)}
-                size="2"
-              />
-            </Box>
+          {/* Template-based form */}
+          {hasTemplate && !templateLoading && (
+            <Card style={{ background: "var(--blue-2)", border: "1px solid var(--blue-6)" }}>
+              <Flex direction="column" gap="3">
+                <Flex align="center" gap="2">
+                  <FileCode size={16} />
+                  <Text size="2" weight="bold">Template : {template.label}</Text>
+                  <Badge size="1" color="blue">v{template.version}</Badge>
+                </Flex>
+                
+                <Text size="1" color="gray">
+                  Pattern : <Text weight="bold" style={{ fontFamily: 'monospace' }}>{template.pattern}</Text>
+                </Text>
 
-            <Box style={{ flex: 1 }}>
-              <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
-                Dimension *
-              </Text>
-              <TextField.Root
-                placeholder="Ex: 20x50"
-                value={dimension}
-                onChange={(e) => setDimension(e.target.value)}
-                size="2"
-              />
-            </Box>
-          </Flex>
+                {fields.map((field) => (
+                  <Box key={field.field_key}>
+                    <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
+                      {field.label} {field.required && <Text color="red">*</Text>}
+                      {field.unit && <Text size="1"> ({field.unit})</Text>}
+                    </Text>
+                    
+                    {field.type === 'enum' ? (
+                      <Select.Root
+                        value={characteristics[field.field_key] || ''}
+                        onValueChange={(v) => handleCharacteristicChange(field.field_key, v)}
+                        size="2"
+                      >
+                        <Select.Trigger placeholder={`Choisir ${field.label.toLowerCase()}`} />
+                        <Select.Content>
+                          {(enums[field.field_key] || []).map((ev) => (
+                            <Select.Item key={ev.value} value={ev.value}>
+                              {ev.label}
+                            </Select.Item>
+                          ))}
+                        </Select.Content>
+                      </Select.Root>
+                    ) : field.type === 'number' ? (
+                      <TextField.Root
+                        type="number"
+                        placeholder={`Ex: ${field.field_key === 'DIAM' ? '8' : '30'}`}
+                        value={characteristics[field.field_key] || ''}
+                        onChange={(e) => handleCharacteristicChange(field.field_key, e.target.value)}
+                        size="2"
+                      />
+                    ) : (
+                      <TextField.Root
+                        placeholder={`Ex: ${field.label.toLowerCase()}`}
+                        value={characteristics[field.field_key] || ''}
+                        onChange={(e) => handleCharacteristicChange(field.field_key, e.target.value)}
+                        size="2"
+                      />
+                    )}
+                  </Box>
+                ))}
+
+                {!validation.valid && (
+                  <Text size="1" color="red">
+                    Champs requis manquants : {validation.missing.join(', ')}
+                  </Text>
+                )}
+              </Flex>
+            </Card>
+          )}
+
+          {/* Legacy form (no template) */}
+          {!hasTemplate && subFamilyCode && (
+            <>
+              <Flex gap="2">
+                <Box style={{ flex: 1 }}>
+                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
+                    Spécification
+                  </Text>
+                  <TextField.Root
+                    placeholder="Ex: M8"
+                    value={spec}
+                    onChange={(e) => setSpec(e.target.value)}
+                    size="2"
+                  />
+                </Box>
+
+                <Box style={{ flex: 1 }}>
+                  <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
+                    Dimension *
+                  </Text>
+                  <TextField.Root
+                    placeholder="Ex: 20x50"
+                    value={dimension}
+                    onChange={(e) => setDimension(e.target.value)}
+                    size="2"
+                  />
+                </Box>
+              </Flex>
+            </>
+          )}
 
           <Flex gap="2">
             <Box style={{ flex: 1 }}>
@@ -211,6 +368,12 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
 
           <Box p="2" style={{ background: "var(--gray-3)", borderRadius: "var(--radius-2)" }}>
             <Text size="1" color="gray" weight="medium">
+              Dimension générée :
+            </Text>
+            <Text size="2" weight="bold" style={{ display: "block", marginTop: "4px" }}>
+              {generatedDimension || '(incomplet)'}
+            </Text>
+            <Text size="1" color="gray" weight="medium" style={{ marginTop: "8px", display: "block" }}>
               Référence auto-générée :
             </Text>
             <Text size="2" weight="bold" style={{ display: "block", marginTop: "4px" }}>
@@ -227,7 +390,14 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
           </Dialog.Close>
           <Button
             onClick={handleSubmit}
-            disabled={!name.trim() || !familyCode || !subFamilyCode || !dimension.trim() || loading}
+            disabled={
+              !name.trim() || 
+              !familyCode || 
+              !subFamilyCode || 
+              (hasTemplate && !validation.valid) ||
+              (!hasTemplate && !dimension.trim()) ||
+              loading
+            }
           >
             <Plus size={16} />
             {loading ? "Création..." : "Créer l'article"}

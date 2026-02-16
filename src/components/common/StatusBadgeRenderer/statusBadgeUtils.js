@@ -21,24 +21,24 @@ export function formatFullDateTime(dateString) {
 }
 
 /**
- * Obtient le label du statut
+ * Obtient le label du statut depuis le backend
  */
-export function getStatusLabel(statusConfig, fallbackData) {
-  return statusConfig?.label || fallbackData?.to?.value || 'Nouveau statut';
+export function getStatusLabel(statusConfig, itemData) {
+  return itemData?.to?.label || statusConfig?.label || 'Statut inconnu';
 }
 
 /**
  * Obtient la couleur de fond pour le variant timeline
  */
 export function getTimelineBackground(statusConfig) {
-  return `${statusConfig?.activeBg || 'var(--blue-6)'}15`;
+  return statusConfig?.activeBg ? `${statusConfig.activeBg}15` : 'var(--gray-3)';
 }
 
 /**
  * Obtient la couleur de l'icône pour le variant timeline
  */
 export function getTimelineIconColor(statusConfig) {
-  return statusConfig?.activeBg || 'var(--blue-9)';
+  return statusConfig?.activeBg || 'var(--gray-9)';
 }
 
 /**
@@ -46,7 +46,7 @@ export function getTimelineIconColor(statusConfig) {
  */
 export function getTimelineBadgeStyle(statusConfig) {
   return {
-    backgroundColor: statusConfig?.activeBg || 'var(--blue-9)',
+    backgroundColor: statusConfig?.activeBg || 'var(--gray-9)',
     color: 'white',
   };
 }

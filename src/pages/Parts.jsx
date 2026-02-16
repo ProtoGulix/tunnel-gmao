@@ -12,6 +12,8 @@ import {
   Building2,
   Factory,
   Boxes,
+  FileCode,
+  Plus,
 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import PageContainer from "@/components/layout/PageContainer";
@@ -26,6 +28,8 @@ import ManufacturersTable from "@/components/purchase/manufacturers/Manufacturer
 import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
 import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
 import StockFamiliesTable from "@/components/stock/StockFamiliesTable";
+import PartTemplatesTable from "@/components/stock/PartTemplatesTable";
+import PartTemplateForm from "@/components/stock/PartTemplateForm";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks
@@ -33,14 +37,16 @@ import { useStockItemsManagement } from "@/hooks/useStockItemsManagement";
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useSearchParam } from "@/hooks/useSearchParam";
+import { useTemplates } from "@/hooks/useTemplate";
 import { DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
-import { manufacturerItems, stock as stockAPI } from "@/lib/api/facade";
+import { manufacturerItems, stock as stockAPI, partTemplates } from "@/lib/api/facade";
 
 const PARTS_TABS = {
   ITEMS: "items",
   SUPPLIERS: "suppliers",
   MANUFACTURERS: "manufacturers",
   FAMILIES: "families",
+  TEMPLATES: "templates",
 };
 
 export default function Parts() {
@@ -82,6 +88,12 @@ export default function Parts() {
   useEffect(() => {
     stockAPI.fetchStockFamilies().then(families => setStockFamilies(families || []));
   }, []);
+
+  // Load templates
+  const { templates, loading: templatesLoading, refresh: refreshTemplates } = useTemplates();
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [templateFormMode, setTemplateFormMode] = useState('create');
+  const [templateFormData, setTemplateFormData] = useState(null);
 
   // ========== COMPUTED VALUES ==========
   const supplierRefsCounts = useMemo(() => {
@@ -299,6 +311,80 @@ export default function Parts() {
     }
   }, [stock, setDispatchResult]);
 
+  // ========== TEMPLATE CALLBACKS ==========
+  const handleCreateTemplate = () => {
+    setTemplateFormMode('create');
+    setTemplateFormData(null);
+    setShowTemplateForm(true);
+  };
+
+  const handleEditTemplate = (template) => {
+    setTemplateFormMode('edit');
+    setTemplateFormData(template);
+    setShowTemplateForm(true);
+  };
+
+  const handleCancelTemplate = () => {
+    setShowTemplateForm(false);
+    setTemplateFormData(null);
+  };
+
+  const handleDeleteTemplate = async (template) => {
+    if (!confirm(`Supprimer le template "${template.label}" (v${template.version}) ?`)) {
+      return;
+    }
+
+    try {
+      await partTemplates.deleteTemplate(template.id, template.version);
+      await refreshTemplates();
+      
+      setDispatchResult({
+        type: 'success',
+        message: 'Template supprimé',
+        details: `"${template.label}" v${template.version} a été supprimé`
+      });
+      setTimeout(() => setDispatchResult(null), 4000);
+    } catch (error) {
+      console.error('Erreur suppression template:', error);
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la suppression',
+        details: error.response?.data?.errors?.[0]?.message || error.message
+      });
+      setTimeout(() => setDispatchResult(null), 6000);
+    }
+  };
+
+  const handleTemplateSubmit = async (formData) => {
+    try {
+      if (templateFormMode === 'create') {
+        await partTemplates.createTemplate(formData);
+      } else {
+        // Edit = nouvelle version
+        await partTemplates.createTemplateVersion(templateFormData.id, formData);
+      }
+      
+      await refreshTemplates();
+      setShowTemplateForm(false);
+      setTemplateFormData(null);
+      
+      setDispatchResult({
+        type: 'success',
+        message: templateFormMode === 'create' ? 'Template créé' : 'Nouvelle version créée',
+        details: `"${formData.label}" est maintenant disponible`
+      });
+      setTimeout(() => setDispatchResult(null), 4000);
+    } catch (error) {
+      console.error('Erreur sauvegarde template:', error);
+      setDispatchResult({
+        type: 'error',
+        message: 'Erreur lors de la sauvegarde',
+        details: error.response?.data?.errors?.[0]?.message || error.message
+      });
+      setTimeout(() => setDispatchResult(null), 6000);
+    }
+  };
+
   // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
   
@@ -429,6 +515,16 @@ export default function Parts() {
                 <Text>Familles</Text>
               </Flex>
             </Tabs.Trigger>
+
+            <Tabs.Trigger value="templates">
+              <Flex align="center" gap="2">
+                <FileCode size={14} />
+                <Text>Templates</Text>
+                <Badge color="gray" variant="soft" size="1">
+                  {templates.length}
+                </Badge>
+              </Flex>
+            </Tabs.Trigger>
           </Tabs.List>
 
           <Box pt="4">
@@ -509,6 +605,41 @@ export default function Parts() {
               <StockFamiliesTable onFamiliesUpdated={() => {
                 stock.loadStockItems(false);
               }} />
+            </Tabs.Content>
+
+            {/* ===== TAB: TEMPLATES ===== */}
+            <Tabs.Content value="templates">
+              <Flex direction="column" gap="3">
+                {showTemplateForm ? (
+                  <PartTemplateForm
+                    onSubmit={handleTemplateSubmit}
+                    onCancel={handleCancelTemplate}
+                    initialData={templateFormData}
+                    mode={templateFormMode}
+                  />
+                ) : (
+                  <>
+                    <TableHeader
+                      icon={FileCode}
+                      title="Templates de pièces"
+                      count={templates.length}
+                      showRefreshButton={false}
+                      actions={
+                        <Button onClick={handleCreateTemplate}>
+                          <Plus size={16} />
+                          Nouveau template
+                        </Button>
+                      }
+                    />
+                    <PartTemplatesTable
+                      templates={templates}
+                      loading={templatesLoading}
+                      onEdit={handleEditTemplate}
+                      onDelete={handleDeleteTemplate}
+                    />
+                  </>
+                )}
+              </Flex>
             </Tabs.Content>
           </Box>
         </Tabs.Root>

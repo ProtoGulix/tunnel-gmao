@@ -13,10 +13,11 @@ import { STATE_COLORS } from "@/config/interventionTypes";
  * - Complexité réduite par extraction
  */
 export default function TimelineItemRenderer({ item, interventionId, onPurchaseRequestCreated }) {
-  const statusConfig = STATE_COLORS[item.data.to?.id];
-
   // Early return pour changement de statut
   if (item.type === "status") {
+    // Le backend renvoie déjà les clés françaises dans to.id (ouvert, ferme, etc.)
+    const statusConfig = STATE_COLORS[item.data?.to?.id];
+    
     return (
       <StatusBadgeRenderer
         item={item}

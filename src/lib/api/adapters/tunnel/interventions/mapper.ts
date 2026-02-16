@@ -11,21 +11,6 @@
 import { mapActionToDomain } from '../actions/mapper';
 
 /**
- * Maps French status code to normalized DTO status
- * Inverse of mapDtoStatusToConfigKey in interventionUtils.jsx
- */
-const mapConfigKeyToDto = (configKey: string): string => {
-  const mapping: Record<string, string> = {
-    ouvert: 'open',
-    attente_pieces: 'in_progress',
-    attente_prod: 'in_progress',
-    ferme: 'closed',
-    cancelled: 'cancelled',
-  };
-  return mapping[configKey] || 'open';
-};
-
-/**
  * Maps status log from backend to domain model
  * Format compatible with existing frontend timeline code
  */
@@ -37,16 +22,16 @@ export const mapStatusLogToDomain = (raw: any) => {
     interventionId: raw.intervention_id?.toString() || '',
     from: raw.status_from_detail
       ? {
-          id: raw.status_from_detail.code || '',
-          value: mapConfigKeyToDto(raw.status_from_detail.code || ''),
+          id: raw.status_from_detail.id || '',
+          value: raw.status_from_detail.value || '',
           label: raw.status_from_detail.label || null,
           color: raw.status_from_detail.color || null,
         }
       : null,
     to: raw.status_to_detail
       ? {
-          id: raw.status_to_detail.code || '',
-          value: mapConfigKeyToDto(raw.status_to_detail.code || ''),
+          id: raw.status_to_detail.id || '',
+          value: raw.status_to_detail.value || '',
           label: raw.status_to_detail.label || null,
           color: raw.status_to_detail.color || null,
         }

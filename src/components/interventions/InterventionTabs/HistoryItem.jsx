@@ -163,10 +163,7 @@ function getActionSegment(item) {
 }
 
 function getStatusSegment(item) {
-  console.log('getStatusSegment - item.data:', item.data); // Debug
-  console.log('getStatusSegment - from:', item.data?.from, 'to:', item.data?.to); // Debug
   const trans = renderStatusTransition(item.data?.from, item.data?.to);
-  console.log('getStatusSegment - trans:', trans); // Debug
   if (trans) return trans;
   const toBadge = renderStatusBadge(item.data?.to);
   if (toBadge) return toBadge;

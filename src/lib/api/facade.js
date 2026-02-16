@@ -342,6 +342,29 @@ export const { stockSpecs } = API;
 export const { manufacturerItems } = API;
 
 /**
+ * **Part Templates**
+ *
+ * Template management for structured part creation with dynamic fields.
+ *
+ * Functions:
+ * - `fetchTemplates()` → `PartTemplate[]` (latest versions only)
+ * - `fetchTemplate(id, version?)` → `PartTemplate` (with fields)
+ * - `fetchTemplateVersions(code)` → `PartTemplate[]` (all versions)
+ * - `createTemplate(payload)` → `PartTemplate` (v1)
+ * - `createTemplateVersion(id, payload)` → `PartTemplate` (new version)
+ * - `deleteTemplate(id, version?)` → `void`
+ *
+ * @type {Object}
+ *
+ * @example
+ * import { partTemplates } from 'src/lib/api/facade';
+ * const templates = await partTemplates.fetchTemplates();
+ * const template = await partTemplates.fetchTemplate(1, 2); // version 2
+ * const newTemplate = await partTemplates.createTemplate({ code: 'BOLT', label: 'Boulons', ... });
+ */
+export const { partTemplates } = API;
+
+/**
  * **Purchase Requests**
  *
  * Purchase request management for procurement workflow.

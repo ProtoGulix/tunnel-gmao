@@ -27,6 +27,7 @@ import { stockAdapter } from './stock/adapter';
 import { suppliersAdapter } from './suppliers/adapter';
 import { stockSuppliersAdapter } from './stockSuppliers/adapter';
 import { equipementClassesAdapter } from './equipementClasses/adapter';
+import { partTemplatesAdapter } from './partTemplates/adapter';
 import { clearAllCache } from '@/lib/api/client';
 
 // ============================================================================
@@ -83,6 +84,7 @@ export const adapter = {
   stock: stockAdapter,
   stockSpecs,
   manufacturerItems,
+  partTemplates: partTemplatesAdapter,
   suppliers: suppliersAdapter,
   stockSuppliers: stockSuppliersAdapter,
   stats: statsAdapter,

@@ -58,7 +58,15 @@ export const mapActionToDomain = (raw: any) => {
     // complexity_factor is now a direct code string (v1.4.0 breaking change)
     complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     createdAt: raw.created_at || raw.updated_at || new Date().toISOString(),
-    technician: raw.tech ? { id: String(raw.tech), firstName: '', lastName: '' } : undefined,
+    technician: raw.tech 
+      ? (typeof raw.tech === 'object' 
+          ? {
+              id: String(raw.tech.id),
+              firstName: raw.tech.first_name || '',
+              lastName: raw.tech.last_name || '',
+            }
+          : { id: String(raw.tech), firstName: '', lastName: '' })
+      : undefined,
     subcategory: raw.subcategory
       ? {
           id: String(raw.subcategory.id),

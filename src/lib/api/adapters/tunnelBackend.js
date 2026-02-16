@@ -313,6 +313,49 @@ const manufacturerItems = {
   getOrCreateManufacturerItem: notImplemented('ManufacturerItems.getOrCreateManufacturerItem'),
 };
 
+const partTemplates = {
+  async fetchTemplates() {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get('/part-templates');
+      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return list;
+    }, 'PartTemplates.fetchTemplates');
+  },
+  async fetchTemplate(id, version = null) {
+    return errors.apiCall(async () => {
+      const params = version ? { version } : {};
+      const response = await tunnelApi.get(`/part-templates/${id}`, { params });
+      const data = response.data?.data || response.data || {};
+      return data;
+    }, 'PartTemplates.fetchTemplate');
+  },
+  async fetchTemplateVersions(code) {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.get(`/part-templates/code/${code}`);
+      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      return list;
+    }, 'PartTemplates.fetchTemplateVersions');
+  },
+  async createTemplate(payload) {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.post('/part-templates', payload);
+      return response.data?.data || response.data;
+    }, 'PartTemplates.createTemplate');
+  },
+  async createTemplateVersion(id, payload) {
+    return errors.apiCall(async () => {
+      const response = await tunnelApi.post(`/part-templates/${id}/versions`, payload);
+      return response.data?.data || response.data;
+    }, 'PartTemplates.createTemplateVersion');
+  },
+  async deleteTemplate(id, version = null) {
+    return errors.apiCall(async () => {
+      const params = version ? { version } : {};
+      await tunnelApi.delete(`/part-templates/${id}`, { params });
+    }, 'PartTemplates.deleteTemplate');
+  },
+};
+
 export const adapter = {
   name: 'tunnel-backend',
   client: { api: tunnelApi, BASE_URL: TUNNEL_BACKEND_URL, clearAllCache },
@@ -329,6 +372,7 @@ export const adapter = {
   stock,
   stockSpecs,
   manufacturerItems,
+  partTemplates,
   suppliers,
   stockSuppliers,
   stats,

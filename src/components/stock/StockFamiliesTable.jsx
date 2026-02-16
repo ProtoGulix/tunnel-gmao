@@ -18,6 +18,7 @@ import { useError } from '@/contexts/ErrorContext';
 import { Box, Flex, Text, Card, TextField, Button } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
 import { stock } from "@/lib/api/facade";
+import { useTemplates } from "@/hooks/useTemplate";
 import StatusCallout from "@/components/common/StatusCallout";
 import FamilyRow from "./FamilyRow";
 
@@ -80,11 +81,6 @@ const filterFamilies = (families, searchQuery) => {
   );
 };
 
-/**
- * Tableau de gestion des familles et sous-familles
- *
- * @component
- */
 export default function StockFamiliesTable({ onFamiliesUpdated }) {
   const { showError } = useError();
   const [families, setFamilies] = useState([]);
@@ -95,6 +91,9 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   const [formData, setFormData] = useState(INITIAL_FAMILY_STATE);
   const [formError, setFormError] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+
+  // Load templates for subfamily linking
+  const { templates } = useTemplates();
 
   const loadFamilies = useCallback(async () => {
     try {
@@ -208,6 +207,32 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
     }
   };
 
+  const handleUpdateSubfamilyTemplate = async (subfamily, templateId) => {
+    try {
+      setLoading(true);
+      // API call to update subfamily template linkage
+      // Note: Cette API devra être implémentée côté backend
+      await stock.updateStockSubFamily(subfamily.id, {
+        part_template_id: templateId ? parseInt(templateId) : null,
+      });
+
+      // Reload subfamilies
+      const subs = await stock.fetchStockSubFamilies(subfamily.family_code);
+      setSubfamiliesByFamily({
+        ...subfamiliesByFamily,
+        [subfamily.family_code]: subs
+      });
+      
+      if (onFamiliesUpdated) onFamiliesUpdated();
+    } catch (e) {
+      console.error("Erreur mise à jour template sous-famille:", e);
+      setError(e?.message || "Erreur lors de la mise à jour");
+      showError(e instanceof Error ? e : new Error("Erreur lors de la mise à jour"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadFamilies();
   }, [loadFamilies]);
@@ -289,9 +314,11 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
                 key={family.code}
                 family={family}
                 subfamilies={subfamiliesByFamily[family.code] || []}
+                templates={templates}
                 onDelete={handleDeleteFamily}
                 onAddSubfamily={handleAddSubfamily}
                 onDeleteSubfamily={handleDeleteSubfamily}
+                onUpdateSubfamilyTemplate={handleUpdateSubfamilyTemplate}
                 loading={loading}
               />
             ))}

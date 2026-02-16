@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 import { Activity } from "lucide-react";
 import { 
-  formatShortTime, 
   getTimelineBackground, 
   getTimelineIconColor, 
   getTimelineBadgeStyle 
@@ -32,9 +31,6 @@ export default function TimelineVariant({ item, statusConfig }) {
         >
           {statusConfig?.label || "Changement d'état"}
         </Badge>
-        <Text size="1" color="gray">
-          {formatShortTime(item.date)}
-        </Text>
       </Flex>
     </Box>
   );

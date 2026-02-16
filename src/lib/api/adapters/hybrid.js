@@ -78,6 +78,7 @@ export const adapter = {
   purchaseRequests: tunnelBackendAdapter.purchaseRequests,
   supplierOrders: tunnelBackendAdapter.supplierOrders,
   supplierOrderLines: tunnelBackendAdapter.supplierOrderLines,
+  partTemplates: tunnelBackendAdapter.partTemplates,
   // Migrated from Directus (2026-02-03)
   stock: hybridStockAdapter,
   suppliers: tunnelBackendAdapter.suppliers,

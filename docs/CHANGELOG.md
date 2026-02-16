@@ -1,3 +1,75 @@
+## 2.7.0 - 2026-02-16
+
+Stabilité: STABLE
+
+### Nouvelle fonctionnalité : Caractérisation normalisée des pièces
+
+#### Ce qui arrive
+
+- **Templates de pièces**: Créez des modèles pour structurer vos références de pièces selon des caractéristiques techniques
+- **Génération automatique de références**: Les références internes sont générées automatiquement à partir des caractéristiques que vous saisissez
+- **Normalisation des références**: Toutes les pièces d'un même type suivent le même format de référence (exemple : M8x40-INOX, M10x50-ACIER)
+
+#### Comment ça fonctionne
+
+1. **Créez un template** (exemple : "VIS")
+   - Définissez un pattern : `M{DIAM}x{LONG}-{MAT}`
+   - Ajoutez les champs : DIAM (nombre), LONG (nombre), MAT (liste de valeurs)
+
+2. **Associez-le à une sous-famille de pièces**
+   - Le template s'applique à toutes les nouvelles pièces de cette sous-famille
+
+3. **Créez vos pièces**
+   - Renseignez les caractéristiques (diamètre: 8, longueur: 40, matériau: INOX)
+   - La référence est générée automatiquement : "M8x40-INOX"
+
+#### Avantages
+
+- **Cohérence**: Toutes les références suivent le même format
+- **Recherche facilitée**: Trouvez rapidement une pièce par ses caractéristiques
+- **Gainé de temps**: Plus besoin d'inventer manuellement des codes de référence
+- **Évolutivité**: Faites évoluer vos templates sans impacter les pièces existantes (versionnement)
+
+#### Où trouver cette fonctionnalité
+
+- **Onglet "Templates"** dans la page Pièces
+- Créez, modifiez ou supprimez vos templates
+- Visualisez les champs et le pattern de génération
+
+#### Note importante
+
+- Les templates sont versionnés : modifier un template crée une nouvelle version
+- Les pièces existantes conservent la version de template utilisée lors de leur création
+- Cette fonctionnalité nécessite la mise à jour du serveur (version 1.4.0 minimum)
+
+---
+
+## 2.6.1 - 2026-02-15
+
+Stabilité: STABLE
+
+### Corrections d'affichage sur la frise temporelle
+
+#### Ce qui a été corrigé
+
+- **Labels de statut visibles**: Les noms des statuts (Ouvert, Fermé, Attente pièces, etc.) s'affichent correctement dans la frise temporelle
+- **Couleurs restaurées**: Les changements de statut sont à nouveau colorés selon leur type
+- **Affichage simplifié**: Les heures ont été retirées pour une lecture plus claire
+- **Identification des techniciens**: Le nom complet du technicien apparaît maintenant sur chaque action
+
+#### Impact utilisateur
+
+- Meilleure lisibilité de l'historique des interventions
+- Identification immédiate de qui a réalisé chaque action
+- Vue chronologique plus épurée et professionnelle
+
+#### Mise à jour nécessaire
+
+- Cette version nécessite la version 1.10.0 du serveur
+- Contactez votre administrateur si les noms de techniciens n'apparaissent pas
+
+---
+
 ## 2.6.0 - 2026-02-15
 
 Stabilité: STABLE

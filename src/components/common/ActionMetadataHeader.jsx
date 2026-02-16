@@ -74,13 +74,6 @@ export default function ActionMetadataHeader({
           </Text>
         </Flex>
       )}
-
-      {/* Horaire */}
-      {createdAt && (
-        <Text size="2" color="gray">
-          {new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-        </Text>
-      )}
     </Flex>
   );
 }

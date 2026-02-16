@@ -366,9 +366,7 @@ export default function InterventionDetail() {
       });
     }
     if (statusLog) {
-      console.log('Status logs:', statusLog); // Debug
       statusLog.forEach(log => {
-        console.log('Processing log:', log); // Debug
         items.push({ 
           type: 'status', 
           date: log.date, 

@@ -65,13 +65,12 @@ const validateSubfamilyData = (formData, subfamilies = []) => {
   return { valid: true };
 };
 
-// ===== COMPOSANT =====
 /**
  * Affiche et gère une famille avec ses sous-familles
  *
  * @component
  */
-export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamily, onDeleteSubfamily, loading }) {
+export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamily, onDeleteSubfamily, onUpdateSubfamilyTemplate, templates, loading }) {
   const [expanded, setExpanded] = useState(false);
   const [subfamilyFormData, setSubfamilyFormData] = useState(INITIAL_SUBFAMILY_STATE);
   const [subfamilyError, setSubfamilyError] = useState(null);
@@ -138,13 +137,14 @@ export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamil
                   <Table.Row>
                     <Table.ColumnHeaderCell style={{ width: 160 }}>Code</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>Libellé</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell style={{ width: 300 }}>Template</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell style={{ width: 80 }} align="right">Actions</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
                   {subfamilies.length === 0 && (
                     <Table.Row>
-                      <Table.Cell colSpan={3}>
+                      <Table.Cell colSpan={4}>
                         <Text size="2" color="gray">Aucune sous-famille</Text>
                       </Table.Cell>
                     </Table.Row>
@@ -153,7 +153,9 @@ export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamil
                     <SubfamilyRow
                       key={sub.id}
                       subfamily={sub}
+                      templates={templates}
                       onDelete={onDeleteSubfamily}
+                      onUpdateTemplate={onUpdateSubfamilyTemplate}
                     />
                   ))}
                 </Table.Body>
@@ -231,13 +233,16 @@ FamilyRow.propTypes = {
     label: PropTypes.string,
   }).isRequired,
   subfamilies: PropTypes.array,
+  templates: PropTypes.array,
   onDelete: PropTypes.func.isRequired,
   onAddSubfamily: PropTypes.func.isRequired,
   onDeleteSubfamily: PropTypes.func.isRequired,
+  onUpdateSubfamilyTemplate: PropTypes.func,
   loading: PropTypes.bool,
 };
 
 FamilyRow.defaultProps = {
   subfamilies: [],
+  templates: [],
   loading: false,
 };
