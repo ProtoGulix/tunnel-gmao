@@ -36,15 +36,24 @@ const hybridStockAdapter = {
 
   // Stock families/specs from directus (not yet in tunnel-backend)
   fetchStockFamilies: directusAdapter.stock.fetchStockFamilies,
+  createStockFamily: directusAdapter.stock.createStockFamily,
+  updateStockFamily: directusAdapter.stock.updateStockFamily,
+  deleteStockFamily: directusAdapter.stock.deleteStockFamily,
   fetchStockSubFamilies: directusAdapter.stock.fetchStockSubFamilies,
+  createStockSubFamily: directusAdapter.stock.createStockSubFamily,
+  updateStockSubFamily: directusAdapter.stock.updateStockSubFamily,
+  deleteStockSubFamily: directusAdapter.stock.deleteStockSubFamily,
   fetchStockItemStandardSpecs: directusAdapter.stock.fetchStockItemStandardSpecs,
   createStockItemStandardSpec: directusAdapter.stock.createStockItemStandardSpec,
   updateStockItemStandardSpec: directusAdapter.stock.updateStockItemStandardSpec,
   deleteStockItemStandardSpec: directusAdapter.stock.deleteStockItemStandardSpec,
 
   // Purchase requests from directus (legacy)
-  createPurchaseRequest: directusAdapter.stock.createPurchaseRequest,
   fetchPurchaseRequests: directusAdapter.stock.fetchPurchaseRequests,
+  fetchPurchaseRequestsByIntervention: directusAdapter.stock.fetchPurchaseRequestsByIntervention,
+  createPurchaseRequest: directusAdapter.stock.createPurchaseRequest,
+  updatePurchaseRequest: directusAdapter.stock.updatePurchaseRequest,
+  deletePurchaseRequest: directusAdapter.stock.deletePurchaseRequest,
 };
 
 /**

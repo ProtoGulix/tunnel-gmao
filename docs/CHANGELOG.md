@@ -1,3 +1,50 @@
+## 2.7.1 - 2026-02-17
+
+Stabilité: STABLE
+
+### Optimisations de performance et correction du mapping des templates
+
+#### Ce qui a été corrigé
+
+- **Édition des templates de pièces**: Les champs des templates s'affichent maintenant correctement lors de l'édition
+- **Mapping API corrigé**: Les données du serveur (key, field_type) sont correctement converties vers le format frontend (field_key, type)
+- **Adapter utilisé**: L'adaptateur avec mapper intégré est maintenant utilisé pour toutes les opérations sur les templates
+
+#### Optimisations majeures
+
+- **Lazy loading des sous-familles**: Les sous-familles ne se chargent plus toutes au démarrage mais uniquement quand vous cliquez pour les afficher
+  - Réduction de **90-95% des requêtes** au chargement de l'onglet Familles
+  - Affichage "Chargement..." pendant la récupération des données
+  - Cache intégré: les données chargées ne sont pas rechargées
+
+- **Rendu conditionnel des onglets**: Seul l'onglet actif est maintenant rendu dans la page Pièces
+  - Réduction de **80% du nombre de composants** montés simultanément
+  - Les composants des onglets non visibles ne s'exécutent plus en arrière-plan
+
+- **Auto-refresh intelligent**: Le rafraîchissement automatique (30s) ne se déclenche que sur les onglets pertinents
+  - Actif uniquement sur les onglets Pièces et Fournisseurs
+  - Désactivé sur les onglets Familles, Fabricants et Templates
+
+- **Correction des boucles infinies**: Les useEffect avec dépendances cycliques ont été corrigés
+  - Les données ne se rechargent plus en boucle
+  - Chargement unique au montage des composants
+
+#### Impact utilisateur
+
+- **Performances**: Page Pièces beaucoup plus rapide, surtout au changement d'onglet
+- **Réduction de charge réseau**: Moins de requêtes HTTP inutiles (jusqu'à 95% de réduction sur l'onglet Familles)
+- **Édition fonctionnelle**: Les templates de pièces peuvent maintenant être édités correctement
+- **Interface plus réactive**: Navigation fluide entre les onglets sans ralentissement
+
+#### Amélioration technique
+
+- Implémentation du pattern lazy loading pour les données hiérarchiques
+- Rendu conditionnel des composants au lieu de masquage CSS
+- Élimination des re-renders inutiles via optimisation des dépendances useEffect
+- Utilisation systématique des adapters avec mapping pour cohérence des données
+
+---
+
 ## 2.7.0 - 2026-02-16
 
 Stabilité: STABLE

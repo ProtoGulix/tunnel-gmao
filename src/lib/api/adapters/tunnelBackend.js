@@ -13,6 +13,7 @@ import * as errors from '@/lib/api/errors';
 import { statsAdapter as stats } from './stats/adapter.ts';
 import { actionsAdapter as actions } from './actions/adapter.ts';
 import { complexityFactorsAdapter } from './complexityFactors/adapter.ts';
+import { partTemplatesAdapter } from './tunnel/partTemplates/adapter.ts';
 
 // Instance axios dédiée pour tunnel-backend
 const TUNNEL_BACKEND_URL = import.meta.env.VITE_TUNNEL_BACKEND_URL || 'http://localhost:8000';
@@ -313,47 +314,35 @@ const manufacturerItems = {
   getOrCreateManufacturerItem: notImplemented('ManufacturerItems.getOrCreateManufacturerItem'),
 };
 
+// Delegate to part templates adapter (handles mapping between backend and frontend models)
 const partTemplates = {
-  async fetchTemplates() {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get('/part-templates');
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list;
-    }, 'PartTemplates.fetchTemplates');
-  },
-  async fetchTemplate(id, version = null) {
-    return errors.apiCall(async () => {
-      const params = version ? { version } : {};
-      const response = await tunnelApi.get(`/part-templates/${id}`, { params });
-      const data = response.data?.data || response.data || {};
-      return data;
-    }, 'PartTemplates.fetchTemplate');
-  },
-  async fetchTemplateVersions(code) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.get(`/part-templates/code/${code}`);
-      const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      return list;
-    }, 'PartTemplates.fetchTemplateVersions');
-  },
-  async createTemplate(payload) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.post('/part-templates', payload);
-      return response.data?.data || response.data;
-    }, 'PartTemplates.createTemplate');
-  },
-  async createTemplateVersion(id, payload) {
-    return errors.apiCall(async () => {
-      const response = await tunnelApi.post(`/part-templates/${id}/versions`, payload);
-      return response.data?.data || response.data;
-    }, 'PartTemplates.createTemplateVersion');
-  },
-  async deleteTemplate(id, version = null) {
-    return errors.apiCall(async () => {
-      const params = version ? { version } : {};
-      await tunnelApi.delete(`/part-templates/${id}`, { params });
-    }, 'PartTemplates.deleteTemplate');
-  },
+  fetchTemplates: () =>
+    errors.apiCall(() => partTemplatesAdapter.fetchTemplates(), 'PartTemplates.fetchTemplates'),
+  fetchTemplate: (id, version) =>
+    errors.apiCall(
+      () => partTemplatesAdapter.fetchTemplate(id, version),
+      'PartTemplates.fetchTemplate'
+    ),
+  fetchTemplateVersions: (code) =>
+    errors.apiCall(
+      () => partTemplatesAdapter.fetchTemplateVersions(code),
+      'PartTemplates.fetchTemplateVersions'
+    ),
+  createTemplate: (payload) =>
+    errors.apiCall(
+      () => partTemplatesAdapter.createTemplate(payload),
+      'PartTemplates.createTemplate'
+    ),
+  createTemplateVersion: (id, payload) =>
+    errors.apiCall(
+      () => partTemplatesAdapter.createTemplateVersion(id, payload),
+      'PartTemplates.createTemplateVersion'
+    ),
+  deleteTemplate: (id, version) =>
+    errors.apiCall(
+      () => partTemplatesAdapter.deleteTemplate(id, version),
+      'PartTemplates.deleteTemplate'
+    ),
 };
 
 export const adapter = {

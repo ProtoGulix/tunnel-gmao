@@ -70,14 +70,22 @@ const validateSubfamilyData = (formData, subfamilies = []) => {
  *
  * @component
  */
-export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamily, onDeleteSubfamily, onUpdateSubfamilyTemplate, templates, loading }) {
+export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamily, onDeleteSubfamily, onUpdateSubfamilyTemplate, onLoadSubfamilies, templates, loading }) {
   const [expanded, setExpanded] = useState(false);
   const [subfamilyFormData, setSubfamilyFormData] = useState(INITIAL_SUBFAMILY_STATE);
   const [subfamilyError, setSubfamilyError] = useState(null);
   const [subfamilyLoading, setSubfamilyLoading] = useState(false);
 
+  const handleToggleExpand = () => {
+    if (!expanded && onLoadSubfamilies) {
+      // Load subfamilies when expanding if not already loaded
+      onLoadSubfamilies(family.code);
+    }
+    setExpanded(!expanded);
+  };
+
   const handleAddSubfamily = async () => {
-    const validation = validateSubfamilyData(subfamilyFormData, subfamilies);
+    const validation = validateSubfamilyData(subfamilyFormData, subfamilies || []);
     if (!validation.valid) {
       setSubfamilyError(validation.error);
       return;
@@ -104,7 +112,7 @@ export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamil
       <Flex direction="column" gap="3">
         {/* En-tête de la famille */}
         <Flex justify="between" align="center" wrap="wrap" gap="2">
-          <Flex gap="3" align="center" onClick={() => setExpanded(!expanded)} style={{ cursor: "pointer", flex: 1, minWidth: 240 }}>
+          <Flex gap="3" align="center" onClick={handleToggleExpand} style={{ cursor: "pointer", flex: 1, minWidth: 240 }}>
             <ChevronDown size={16} style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s" }} />
             <Box>
               <Flex align="center" gap="2">
@@ -132,34 +140,38 @@ export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamil
             {/* Liste des sous-familles */}
             <Box>
               <Text size="2" weight="bold" mb="2" style={{ display: "block" }}>Sous-familles</Text>
-              <Table.Root variant="surface">
-                <Table.Header>
-                  <Table.Row>
-                    <Table.ColumnHeaderCell style={{ width: 160 }}>Code</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Libellé</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell style={{ width: 300 }}>Template</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell style={{ width: 80 }} align="right">Actions</Table.ColumnHeaderCell>
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {subfamilies.length === 0 && (
+              {subfamilies === undefined ? (
+                <Text size="2" color="gray">Chargement...</Text>
+              ) : (
+                <Table.Root variant="surface">
+                  <Table.Header>
                     <Table.Row>
-                      <Table.Cell colSpan={4}>
-                        <Text size="2" color="gray">Aucune sous-famille</Text>
-                      </Table.Cell>
+                      <Table.ColumnHeaderCell style={{ width: 160 }}>Code</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>Libellé</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell style={{ width: 300 }}>Template</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell style={{ width: 80 }} align="right">Actions</Table.ColumnHeaderCell>
                     </Table.Row>
-                  )}
-                  {subfamilies.map(sub => (
-                    <SubfamilyRow
-                      key={sub.id}
-                      subfamily={sub}
-                      templates={templates}
-                      onDelete={onDeleteSubfamily}
-                      onUpdateTemplate={onUpdateSubfamilyTemplate}
-                    />
-                  ))}
-                </Table.Body>
-              </Table.Root>
+                  </Table.Header>
+                  <Table.Body>
+                    {subfamilies.length === 0 && (
+                      <Table.Row>
+                        <Table.Cell colSpan={4}>
+                          <Text size="2" color="gray">Aucune sous-famille</Text>
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
+                    {subfamilies.map(sub => (
+                      <SubfamilyRow
+                        key={sub.id}
+                        subfamily={sub}
+                        templates={templates}
+                        onDelete={onDeleteSubfamily}
+                        onUpdateTemplate={onUpdateSubfamilyTemplate}
+                      />
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              )}
             </Box>
 
             {/* Formulaire d'ajout de sous-famille */}
@@ -238,11 +250,12 @@ FamilyRow.propTypes = {
   onAddSubfamily: PropTypes.func.isRequired,
   onDeleteSubfamily: PropTypes.func.isRequired,
   onUpdateSubfamilyTemplate: PropTypes.func,
+  onLoadSubfamilies: PropTypes.func,
   loading: PropTypes.bool,
 };
 
 FamilyRow.defaultProps = {
-  subfamilies: [],
+  subfamilies: undefined,
   templates: [],
   loading: false,
 };

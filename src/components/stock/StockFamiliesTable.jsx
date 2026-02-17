@@ -101,19 +101,42 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
       setError(null);
       const data = await stock.fetchStockFamilies();
       setFamilies(data || []);
-
-      const subfamiliesMap = {};
-      for (const family of (data || [])) {
-        const subs = await stock.fetchStockSubFamilies(family.code);
-        subfamiliesMap[family.code] = subs || [];
-      }
-      setSubfamiliesByFamily(subfamiliesMap);
+      // Don't load subfamilies here - they will be loaded on demand when expanding families
+      setSubfamiliesByFamily({});
     } catch (e) {
       console.error("Erreur chargement familles:", e);
       setError(e?.message || "Erreur de chargement");
       showError(e instanceof Error ? e : new Error("Erreur de chargement"));
     } finally {
       setLoading(false);
+    }
+  }, [showError]);
+
+  const loadSubfamiliesForFamily = useCallback(async (familyCode) => {
+    try {
+      // Check if already loaded using functional state update
+      setSubfamiliesByFamily(prev => {
+        // If already loaded, return unchanged state
+        if (prev[familyCode]) return prev;
+
+        // Otherwise, mark as loading and trigger the fetch
+        stock.fetchStockSubFamilies(familyCode)
+          .then(subs => {
+            setSubfamiliesByFamily(current => ({
+              ...current,
+              [familyCode]: subs || []
+            }));
+          })
+          .catch(e => {
+            console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
+            showError(e instanceof Error ? e : new Error("Erreur de chargement des sous-familles"));
+          });
+
+        // Return current state (the fetch will update it later)
+        return prev;
+      });
+    } catch (e) {
+      console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
     }
   }, [showError]);
 
@@ -235,7 +258,9 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
 
   useEffect(() => {
     loadFamilies();
-  }, [loadFamilies]);
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredFamilies = filterFamilies(families, search);
 
@@ -313,12 +338,13 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
               <FamilyRow
                 key={family.code}
                 family={family}
-                subfamilies={subfamiliesByFamily[family.code] || []}
+                subfamilies={subfamiliesByFamily[family.code]}
                 templates={templates}
                 onDelete={handleDeleteFamily}
                 onAddSubfamily={handleAddSubfamily}
                 onDeleteSubfamily={handleDeleteSubfamily}
                 onUpdateSubfamilyTemplate={handleUpdateSubfamilyTemplate}
+                onLoadSubfamilies={loadSubfamiliesForFamily}
                 loading={loading}
               />
             ))}

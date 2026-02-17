@@ -254,7 +254,7 @@ export const { preventive } = API;
 /**
  * **Stock Management**
  *
- * Core stock operations: items, specs, purchasing.
+ * Core stock operations: items, families, subfamilies, specs, purchasing.
  *
  * Functions:
  * - `fetchStockItems()` → `StockItem[]`
@@ -266,9 +266,18 @@ export const { preventive } = API;
  * - `updateStockItemStandardSpec(id, updates)` → `StockItemStandardSpec`
  * - `deleteStockItemStandardSpec(id)` → `void`
  * - `fetchStockFamilies()` → `StockFamily[]`
+ * - `createStockFamily(familyData)` → `StockFamily`
+ * - `updateStockFamily(code, updates)` → `StockFamily`
+ * - `deleteStockFamily(code)` → `void`
  * - `fetchStockSubFamilies(familyCode)` → `StockSubFamily[]`
- * - `createPurchaseRequest(payload)` → `PurchaseRequest`
+ * - `createStockSubFamily(subfamilyData)` → `StockSubFamily`
+ * - `updateStockSubFamily(id, updates)` → `StockSubFamily`
+ * - `deleteStockSubFamily(id)` → `void`
  * - `fetchPurchaseRequests()` → `PurchaseRequest[]`
+ * - `fetchPurchaseRequestsByIntervention(interventionId)` → `PurchaseRequest[]`
+ * - `createPurchaseRequest(payload)` → `PurchaseRequest`
+ * - `updatePurchaseRequest(id, updates)` → `PurchaseRequest`
+ * - `deletePurchaseRequest(id)` → `void`
  *
  * @type {Object}
  *
@@ -277,6 +286,7 @@ export const { preventive } = API;
  * const items = await stock.fetchStockItems();
  * const specs = await stock.fetchStockItemStandardSpecs('item-id');
  * const pr = await stock.createPurchaseRequest({ ...payload });
+ * const family = await stock.createStockFamily({ code: 'F001', label: 'Family 1' });
  */
 export const { stock } = API;
 

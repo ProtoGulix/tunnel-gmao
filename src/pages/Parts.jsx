@@ -78,15 +78,18 @@ export default function Parts() {
       console.error('Erreur rechargement fabricants:', error);
     }
   }, []);
-  
+
   useEffect(() => {
     refreshManufacturers();
-  }, [refreshManufacturers]);
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load stock families
   const [stockFamilies, setStockFamilies] = useState([]);
   useEffect(() => {
     stockAPI.fetchStockFamilies().then(families => setStockFamilies(families || []));
+    // Only run once on mount
   }, []);
 
   // Load templates
@@ -387,7 +390,7 @@ export default function Parts() {
 
   // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
-  
+
   useEffect(() => {
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
@@ -396,14 +399,21 @@ export default function Parts() {
       stock.loadStockItems(true),
       purchasing.loadSuppliers(true)
     ]);
-  }, [purchasing, stock]);
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh only for items and suppliers tabs
+  const shouldAutoRefresh = activeTab === PARTS_TABS.ITEMS || activeTab === PARTS_TABS.SUPPLIERS;
 
   useAutoRefresh(async () => {
+    if (!shouldAutoRefresh) return;
+
     await Promise.all([
       stock.loadStockItems(false),
       purchasing.loadSuppliers(false)
     ]);
-  }, 30, true);
+  }, 30, shouldAutoRefresh);
 
   const isLoading = stock.loading || purchasing.loading;
   const componentError = error;
@@ -529,7 +539,7 @@ export default function Parts() {
 
           <Box pt="4">
             {/* ===== TAB: PIÈCES ===== */}
-            <Tabs.Content value="items">
+            {activeTab === PARTS_TABS.ITEMS && (
               <Flex direction="column" gap="3">
                 <TableHeader
                   icon={Package}
@@ -583,32 +593,32 @@ export default function Parts() {
                   />
                 )}
               </Flex>
-            </Tabs.Content>
+            )}
 
             {/* ===== TAB: FOURNISSEURS ===== */}
-            <Tabs.Content value="suppliers">
+            {activeTab === PARTS_TABS.SUPPLIERS && (
               <Flex direction="column" gap="3">
                 <SuppliersTable
                   suppliers={filteredSuppliers}
                   onRefresh={refreshSuppliers}
                 />
               </Flex>
-            </Tabs.Content>
+            )}
 
             {/* ===== TAB: FABRICANTS ===== */}
-            <Tabs.Content value="manufacturers">
+            {activeTab === PARTS_TABS.MANUFACTURERS && (
               <ManufacturersTable onManufacturerAdded={refreshManufacturers} />
-            </Tabs.Content>
+            )}
 
             {/* ===== TAB: FAMILLES ===== */}
-            <Tabs.Content value="families">
+            {activeTab === PARTS_TABS.FAMILIES && (
               <StockFamiliesTable onFamiliesUpdated={() => {
                 stock.loadStockItems(false);
               }} />
-            </Tabs.Content>
+            )}
 
             {/* ===== TAB: TEMPLATES ===== */}
-            <Tabs.Content value="templates">
+            {activeTab === PARTS_TABS.TEMPLATES && (
               <Flex direction="column" gap="3">
                 {showTemplateForm ? (
                   <PartTemplateForm
@@ -640,7 +650,7 @@ export default function Parts() {
                   </>
                 )}
               </Flex>
-            </Tabs.Content>
+            )}
           </Box>
         </Tabs.Root>
       </PageContainer>
