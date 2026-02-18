@@ -143,8 +143,8 @@ export default function EditStockItemDialog({ item, onSave, loading, stockFamili
             >
               <Select.Trigger placeholder="Sélectionner une famille" />
               <Select.Content>
-                {stockFamilies.map((fam) => (
-                  <Select.Item key={fam.code} value={fam.code}>
+                {stockFamilies.map((fam, index) => (
+                  <Select.Item key={`${fam.code}-${index}`} value={fam.code}>
                     {fam.label}
                   </Select.Item>
                 ))}
@@ -168,7 +168,7 @@ export default function EditStockItemDialog({ item, onSave, loading, stockFamili
                 <Select.Trigger placeholder="Sélectionner une sous-famille" />
                 <Select.Content>
                   {subFamilies.map((sub) => (
-                    <Select.Item key={sub.code} value={sub.code}>
+                    <Select.Item key={sub.id} value={sub.code}>
                       {sub.label}
                     </Select.Item>
                   ))}

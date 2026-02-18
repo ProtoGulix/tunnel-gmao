@@ -25,7 +25,7 @@ import AddTemplateFieldForm from "./AddTemplateFieldForm";
 // ===== CONSTANTS =====
 
 /** Valeurs par défaut du formulaire principal */
-const DEFAULT_FORM_DATA = { code: '', pattern: '', fields: [] };
+const DEFAULT_FORM_DATA = { code: '', label: '', pattern: '', fields: [] };
 
 /** Valeurs par défaut d'un champ de template */
 const DEFAULT_FIELD_DATA = { field_key: '', label: '', type: 'text', unit: '', required: false, order: 0 };
@@ -80,6 +80,7 @@ export default function PartTemplateForm({
     if (initialData && mode === 'edit') {
       setFormData({
         code: initialData.code || '',
+        label: initialData.label || initialData.code || '',
         pattern: initialData.pattern || '',
         fields: initialData.fields || [],
       });
@@ -118,8 +119,8 @@ export default function PartTemplateForm({
   };
 
   const handleSubmit = async () => {
-    const { code, pattern } = formData;
-    if (!code.trim() || !pattern.trim()) return;
+    const { code, label, pattern } = formData;
+    if (!code.trim() || !label.trim() || !pattern.trim()) return;
 
     await onSubmit(formData);
   };
@@ -135,14 +136,14 @@ export default function PartTemplateForm({
         <Flex align="center" gap="2">
           {mode === 'create' ? <FileCode size={20} color="var(--blue-9)" /> : <Edit2 size={20} color="var(--blue-9)" />}
           <Text size="3" weight="bold">
-            {mode === 'create' ? 'Créer un template' : 'Éditer template (nouvelle version)'}
+            {mode === 'create' ? 'Créer un template' : `Nouvelle version : ${formData.code}`}
           </Text>
         </Flex>
 
         <Text size="2" color="gray">
           {mode === 'create' 
             ? 'Définir la structure d\'un type de pièce avec des champs dynamiques.' 
-            : 'Créer une nouvelle version du template. Les pièces existantes conservent leur version.'
+            : `Créer la version ${(initialData?.version || 0) + 1}. Les pièces existantes conserveront la version ${initialData?.version || 1}.`
           }
         </Text>
 

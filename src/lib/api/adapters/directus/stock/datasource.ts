@@ -262,7 +262,7 @@ export const fetchStockSubFamiliesFromBackend = async (familyCode: string) => {
       params: {
         filter: { family_code: { _eq: familyCode } },
         limit: -1,
-        fields: ['id','family_code','code','label'].join(','),
+        fields: ['id','family_code','code','label','part_template_id','part_template.*'].join(','),
         sort: 'label',
         _t: Date.now(),
       },

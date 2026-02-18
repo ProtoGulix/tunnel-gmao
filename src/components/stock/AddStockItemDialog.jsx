@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
-  Dialog,
   Flex,
   Box,
   Button,
@@ -11,14 +10,13 @@ import {
   Card,
   Badge,
 } from "@radix-ui/themes";
-import { Plus, FileCode } from "lucide-react";
+import { Plus, FileCode, X } from "lucide-react";
 import { useStockSubFamilies } from "@/hooks/useStockFamilies";
 import { useTemplate } from "@/hooks/useTemplate";
 import { generatePattern, validateRequiredFields } from "@/lib/utils/templatePatternGenerator";
 import { generateStockReference } from "@/lib/utils/stockReferenceGenerator";
 
-export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] }) {
-  const [open, setOpen] = useState(false);
+export default function AddStockItemForm({ onAdd, onCancel, loading, stockFamilies = [] }) {
   
   const [name, setName] = useState("");
   const [familyCode, setFamilyCode] = useState("");
@@ -28,6 +26,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
   const [unit, setUnit] = useState("pcs");
   const [location, setLocation] = useState("");
   const [quantity, setQuantity] = useState("0");
+  const [validationError, setValidationError] = useState(null);
 
   // Template-based characteristics
   const [characteristics, setCharacteristics] = useState({});
@@ -50,7 +49,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
     if (template) {
       setCharacteristics({});
     }
-  }, [template?.id]);
+  }, [template]);
 
   // Generate dimension preview from template
   const generatedDimension = useMemo(() => {
@@ -73,31 +72,31 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
   };
 
   const handleSubmit = async () => {
+    setValidationError(null);
+    
     // Validation commune
     if (!name.trim() || !familyCode || !subFamilyCode) {
       return;
     }
 
-    // Si template : validation des champs requis + utilisation dimension générée
+    // Si template : validation des champs requis + dimension générée par le backend
     if (template) {
       const validation = validateRequiredFields(fields, characteristics);
       if (!validation.valid) {
-        alert(`Champs requis manquants : ${validation.missing.join(', ')}`);
+        setValidationError(`Champs requis manquants : ${validation.missing.join(', ')}`);
         return;
       }
 
       const itemData = {
         name: name.trim(),
-        family_code: familyCode,
-        sub_family_code: subFamilyCode,
+        familyCode: familyCode,
+        subFamilyCode: subFamilyCode,
         spec: spec.trim() || null,
-        dimension: generatedDimension,
+        // dimension: INTERDIT en mode template (généré par le backend via le pattern)
         unit,
         location: location.trim() || null,
         quantity: parseInt(quantity) || 0,
-        // Template-based creation
-        part_template_id: template.id,
-        part_template_version: template.version,
+        // Caractéristiques du template
         characteristics: characteristics,
       };
 
@@ -110,8 +109,8 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
 
       const itemData = {
         name: name.trim(),
-        family_code: familyCode,
-        sub_family_code: subFamilyCode,
+        familyCode: familyCode,
+        subFamilyCode: subFamilyCode,
         spec: spec.trim() || null,
         dimension: dimension.trim(),
         unit,
@@ -123,7 +122,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
     }
 
     resetForm();
-    setOpen(false);
+    onCancel?.();
   };
 
   const handleCharacteristicChange = (fieldKey, value) => {
@@ -144,21 +143,37 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
   const validation = hasTemplate ? validateRequiredFields(fields, characteristics) : { valid: true };
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger>
-        <Button>
-          <Plus size={16} />
-          Nouvel article
-        </Button>
-      </Dialog.Trigger>
+    <Card style={{ background: "var(--blue-2)", border: "1px solid var(--blue-6)" }}>
+      <Flex direction="column" gap="3">
+        {/* En-tête */}
+        <Flex align="center" justify="between">
+          <Flex align="center" gap="2">
+            <Plus size={20} />
+            <Text size="3" weight="bold">Ajouter un article au stock</Text>
+          </Flex>
+          <Button
+            size="1"
+            variant="ghost"
+            color="gray"
+            onClick={onCancel}
+          >
+            <X size={16} />
+          </Button>
+        </Flex>
 
-      <Dialog.Content style={{ maxWidth: 650 }}>
-        <Dialog.Title>Ajouter un article au stock</Dialog.Title>
-        <Dialog.Description size="2" mb="4">
+        <Text size="2" color="gray">
           Créer un nouvel article dans le stock avec sa famille et sous-famille.
-        </Dialog.Description>
+        </Text>
 
-        <Flex direction="column" gap="3">
+        {/* Erreur de validation */}
+        {validationError && (
+          <Box p="2" style={{ background: "var(--red-3)", border: "1px solid var(--red-7)", borderRadius: "var(--radius-2)" }}>
+            <Text size="2" color="red" weight="medium">
+              {validationError}
+            </Text>
+          </Box>
+        )}
+
           <Box>
             <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
               Nom de l&apos;article *
@@ -187,8 +202,8 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
               >
                 <Select.Trigger placeholder="Sélectionner..." />
                 <Select.Content>
-                  {stockFamilies.map((family) => (
-                    <Select.Item key={family.code} value={family.code}>
+                  {stockFamilies.map((family, index) => (
+                    <Select.Item key={`${family.code}-${index}`} value={family.code}>
                       {family.label}
                     </Select.Item>
                   ))}
@@ -212,7 +227,7 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
                 <Select.Trigger placeholder="Sélectionner..." />
                 <Select.Content>
                   {subFamilies.map((subFamily) => (
-                    <Select.Item key={subFamily.code} value={subFamily.code}>
+                    <Select.Item key={subFamily.id} value={subFamily.code}>
                       <Flex align="center" gap="2">
                         {subFamily.label}
                         {subFamily.part_template_id && (
@@ -242,8 +257,8 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
                   Pattern : <Text weight="bold" style={{ fontFamily: 'monospace' }}>{template.pattern}</Text>
                 </Text>
 
-                {fields.map((field) => (
-                  <Box key={field.field_key}>
+                {fields.map((field, fieldIndex) => (
+                  <Box key={`${field.field_key}-${fieldIndex}`}>
                     <Text size="2" color="gray" mb="1" style={{ display: "block" }}>
                       {field.label} {field.required && <Text color="red">*</Text>}
                       {field.unit && <Text size="1"> ({field.unit})</Text>}
@@ -257,8 +272,8 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
                       >
                         <Select.Trigger placeholder={`Choisir ${field.label.toLowerCase()}`} />
                         <Select.Content>
-                          {(enums[field.field_key] || []).map((ev) => (
-                            <Select.Item key={ev.value} value={ev.value}>
+                          {(enums[field.field_key] || []).map((ev, evIndex) => (
+                            <Select.Item key={`${ev.value}-${evIndex}`} value={ev.value}>
                               {ev.label}
                             </Select.Item>
                           ))}
@@ -368,27 +383,31 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
 
           <Box p="2" style={{ background: "var(--gray-3)", borderRadius: "var(--radius-2)" }}>
             <Text size="1" color="gray" weight="medium">
-              Dimension générée :
+              {hasTemplate ? 'Dimension (prévisualisée, générée par le serveur) :' : 'Dimension :'}
             </Text>
             <Text size="2" weight="bold" style={{ display: "block", marginTop: "4px" }}>
               {generatedDimension || '(incomplet)'}
             </Text>
             <Text size="1" color="gray" weight="medium" style={{ marginTop: "8px", display: "block" }}>
-              Référence auto-générée :
+              Référence (prévisualisée, générée par le serveur) :
             </Text>
             <Text size="2" weight="bold" style={{ display: "block", marginTop: "4px" }}>
               {generatedRef}
             </Text>
           </Box>
-        </Flex>
 
-        <Flex gap="3" mt="4" justify="end">
-          <Dialog.Close>
-            <Button variant="soft" color="gray">
-              Annuler
-            </Button>
-          </Dialog.Close>
+        {/* Boutons */}
+        <Flex gap="2" justify="end">
+          <Button 
+            variant="soft" 
+            color="gray"
+            size="2"
+            onClick={onCancel}
+          >
+            Annuler
+          </Button>
           <Button
+            size="2"
             onClick={handleSubmit}
             disabled={
               !name.trim() || 
@@ -400,16 +419,17 @@ export default function AddStockItemDialog({ onAdd, loading, stockFamilies = [] 
             }
           >
             <Plus size={16} />
-            {loading ? "Création..." : "Créer l'article"}
+            {loading ? "Création..." : "Enregistrer"}
           </Button>
         </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
+      </Flex>
+    </Card>
   );
 }
 
-AddStockItemDialog.propTypes = {
+AddStockItemForm.propTypes = {
   onAdd: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
   loading: PropTypes.bool,
   stockFamilies: PropTypes.array,
 };

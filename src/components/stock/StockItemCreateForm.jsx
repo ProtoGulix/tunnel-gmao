@@ -95,8 +95,8 @@ export function CreateTabContent({
           >
             <Select.Trigger placeholder="Sélectionner..." />
             <Select.Content>
-              {stockFamilies.map((family) => (
-                <Select.Item key={family.code} value={family.code}>
+              {stockFamilies.map((family, index) => (
+                <Select.Item key={`${family.code}-${index}`} value={family.code}>
                   {family.label}
                 </Select.Item>
               ))}
@@ -117,7 +117,7 @@ export function CreateTabContent({
             <Select.Trigger placeholder="Sélectionner..." />
             <Select.Content>
               {subFamilies.map((subFamily) => (
-                <Select.Item key={subFamily.code} value={subFamily.code}>
+                <Select.Item key={subFamily.id} value={subFamily.code}>
                   {subFamily.label}
                 </Select.Item>
               ))}

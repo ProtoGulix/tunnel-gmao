@@ -26,10 +26,11 @@ import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
 import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
 import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
-import AddStockItemDialog from "@/components/stock/AddStockItemDialog";
+import AddStockItemForm from "@/components/stock/AddStockItemDialog";
 import StockFamiliesTable from "@/components/stock/StockFamiliesTable";
 import PartTemplatesTable from "@/components/stock/PartTemplatesTable";
 import PartTemplateForm from "@/components/stock/PartTemplateForm";
+import TemplateVersionDetailsDialog from "@/components/stock/TemplateVersionDetailsDialog";
 import StatusCallout from "@/components/common/StatusCallout";
 
 // Custom hooks
@@ -62,6 +63,7 @@ export default function Parts() {
   const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
   const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
   const [compactRows, setCompactRows] = useState(false);
+  const [isCreatingStockItem, setIsCreatingStockItem] = useState(false);
   
   const [supplierRefFormData, setSupplierRefFormData] = useState(DEFAULT_SUPPLIER_REF_FORM);
 
@@ -97,6 +99,8 @@ export default function Parts() {
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [templateFormMode, setTemplateFormMode] = useState('create');
   const [templateFormData, setTemplateFormData] = useState(null);
+  const [selectedVersion, setSelectedVersion] = useState(null);
+  const [showVersionDetails, setShowVersionDetails] = useState(false);
 
   // ========== COMPUTED VALUES ==========
   const supplierRefsCounts = useMemo(() => {
@@ -148,6 +152,7 @@ export default function Parts() {
     try {
       const newItem = await stock.addStockItem(itemData);
       await refreshStock();
+      setIsCreatingStockItem(false);
       
       setDispatchResult({
         type: 'success',
@@ -157,10 +162,11 @@ export default function Parts() {
       setTimeout(() => setDispatchResult(null), 4000);
     } catch (error) {
       console.error("Erreur ajout pièce:", error);
+      console.error("Response data:", error.response?.data);
       setDispatchResult({
         type: 'error',
         message: 'Erreur lors de l\'ajout',
-        details: error.response?.data?.errors?.[0]?.message || error.message
+        details: error.response?.data?.detail || error.response?.data?.message || error.message
       });
       setTimeout(() => setDispatchResult(null), 6000);
     }
@@ -388,6 +394,16 @@ export default function Parts() {
     }
   };
 
+  const handleViewVersion = (version) => {
+    setSelectedVersion(version);
+    setShowVersionDetails(true);
+  };
+
+  const handleCloseVersionDetails = () => {
+    setShowVersionDetails(false);
+    setSelectedVersion(null);
+  };
+
   // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
 
@@ -549,8 +565,26 @@ export default function Parts() {
                   onSearchChange={setStockSearchTerm}
                   searchPlaceholder="Recherche (nom, ref, famille...)"
                   showRefreshButton={false}
-                  actions={<AddStockItemDialog onAdd={handleAddStockItem} loading={isLoading} stockFamilies={stockFamilies} />}
+                  actions={
+                    <Button onClick={() => setIsCreatingStockItem(true)} disabled={isCreatingStockItem}>
+                      <Plus size={16} />
+                      Nouvel article
+                    </Button>
+                  }
                 />
+                
+                {/* Formulaire de création */}
+                {isCreatingStockItem && (
+                  <Box mb="4">
+                    <AddStockItemForm
+                      onAdd={handleAddStockItem}
+                      onCancel={() => setIsCreatingStockItem(false)}
+                      loading={stock.isLoading}
+                      stockFamilies={stockFamilies}
+                    />
+                  </Box>
+                )}
+                
                 {filteredStockItems.length === 0 ? (
                   <EmptyState
                     icon={<Package size={64} />}
@@ -646,9 +680,17 @@ export default function Parts() {
                       loading={templatesLoading}
                       onEdit={handleEditTemplate}
                       onDelete={handleDeleteTemplate}
+                      onViewVersion={handleViewVersion}
                     />
                   </>
                 )}
+                
+                {/* Dialogue de détails de version */}
+                <TemplateVersionDetailsDialog
+                  version={selectedVersion}
+                  open={showVersionDetails}
+                  onClose={handleCloseVersionDetails}
+                />
               </Flex>
             )}
           </Box>

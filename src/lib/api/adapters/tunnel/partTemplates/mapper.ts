@@ -14,11 +14,12 @@ export const mapPartTemplateToFrontend = (raw: any) => {
   return {
     id: raw.id,
     code: raw.code,
+    label: raw.label || raw.code,
     pattern: raw.pattern || '',
     version: raw.version || 1,
     fields: Array.isArray(raw.fields) ? raw.fields.map(mapTemplateFieldToFrontend) : [],
-    createdAt: raw.created_at,
-    updatedAt: raw.updated_at,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
   };
 };
 
@@ -33,7 +34,7 @@ export const mapTemplateFieldToFrontend = (raw: any) => {
     type: raw.field_type || raw.type || 'text',
     unit: raw.unit || null,
     required: raw.required ?? false,
-    order: raw.order || 0,
+    order: raw.sort_order ?? raw.order ?? 0,
     enum_values: Array.isArray(raw.enum_values) ? raw.enum_values : [],
   };
 };
@@ -45,6 +46,18 @@ export const mapTemplateFieldToFrontend = (raw: any) => {
 export const mapPartTemplateToBackend = (frontend: any) => {
   return {
     code: frontend.code,
+    label: frontend.label || frontend.code,
+    pattern: frontend.pattern || '',
+    fields: Array.isArray(frontend.fields) ? frontend.fields.map(mapTemplateFieldToBackend) : [],
+  };
+};
+
+/**
+ * Map frontend template to backend payload for creating a new version
+ * API only expects: pattern, fields (code and label are immutable)
+ */
+export const mapPartTemplateVersionToBackend = (frontend: any) => {
+  return {
     pattern: frontend.pattern || '',
     fields: Array.isArray(frontend.fields) ? frontend.fields.map(mapTemplateFieldToBackend) : [],
   };

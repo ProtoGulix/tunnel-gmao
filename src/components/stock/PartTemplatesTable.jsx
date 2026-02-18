@@ -6,26 +6,30 @@ import {
   Text,
   Badge,
   IconButton,
+  Tooltip,
 } from "@radix-ui/themes";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Layers } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState";
 import LoadingState from "@/components/common/LoadingState";
 import { FileCode } from "lucide-react";
+import TemplateVersionsDialog from "./TemplateVersionsDialog";
 
 /**
  * Table d'affichage des templates de pièces
  * 
  * @param {Object} props
- * @param {Array} props.templates - Liste des templates
+ * @param {Array} props.templates - Liste des templates (dernières versions uniquement)
  * @param {boolean} props.loading - État de chargement
- * @param {Function} props.onEdit - Callback édition
+ * @param {Function} props.onEdit - Callback édition (crée nouvelle version)
  * @param {Function} props.onDelete - Callback suppression
+ * @param {Function} props.onViewVersion - Callback visualisation d'une version spécifique
  */
 export default function PartTemplatesTable({ 
   templates = [], 
   loading = false,
   onEdit,
   onDelete,
+  onViewVersion,
 }) {
   if (loading) {
     return <LoadingState message="Chargement des templates..." />;
@@ -65,9 +69,21 @@ export default function PartTemplatesTable({
               </Table.Cell>
               
               <Table.Cell>
-                <Badge color="gray" variant="soft">
-                  v{template.version}
-                </Badge>
+                <Flex align="center" gap="2">
+                  <Tooltip content="Version actuelle (dernière créée)">
+                    <Badge color="blue" variant="soft">
+                      v{template.version}
+                    </Badge>
+                  </Tooltip>
+                  {template.hasMultipleVersions && (
+                    <Tooltip content="Ce template a plusieurs versions">
+                      <Badge color="gray" variant="surface" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Layers size={12} />
+                        historique
+                      </Badge>
+                    </Tooltip>
+                  )}
+                </Flex>
               </Table.Cell>
               
               <Table.Cell>
@@ -84,25 +100,35 @@ export default function PartTemplatesTable({
               
               <Table.Cell>
                 <Flex gap="2">
-                  <IconButton
-                    size="1"
-                    variant="ghost"
-                    color="gray"
-                    onClick={() => onEdit?.(template)}
-                    title="Éditer (nouvelle version)"
-                  >
-                    <Edit2 size={14} />
-                  </IconButton>
+                  {template.hasMultipleVersions && (
+                    <TemplateVersionsDialog
+                      templateCode={template.code}
+                      currentVersion={template.version}
+                      onViewVersion={onViewVersion}
+                    />
+                  )}
                   
-                  <IconButton
-                    size="1"
-                    variant="ghost"
-                    color="red"
-                    onClick={() => onDelete?.(template)}
-                    title="Supprimer"
-                  >
-                    <Trash2 size={14} />
-                  </IconButton>
+                  <Tooltip content="Créer une nouvelle version de ce template">
+                    <IconButton
+                      size="1"
+                      variant="ghost"
+                      color="gray"
+                      onClick={() => onEdit?.(template)}
+                    >
+                      <Edit2 size={14} />
+                    </IconButton>
+                  </Tooltip>
+                  
+                  <Tooltip content="Supprimer cette version du template">
+                    <IconButton
+                      size="1"
+                      variant="ghost"
+                      color="red"
+                      onClick={() => onDelete?.(template)}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </Tooltip>
                 </Flex>
               </Table.Cell>
             </Table.Row>
@@ -118,4 +144,5 @@ PartTemplatesTable.propTypes = {
   loading: PropTypes.bool,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  onViewVersion: PropTypes.func,
 };

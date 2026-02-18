@@ -110,6 +110,8 @@ export const mapStockSubFamilyToDomain = (item: Record<string, unknown>) => {
     familyCode: item.family_code ?? undefined,
     code: item.code ?? undefined,
     label: item.label ?? undefined,
+    part_template_id: item.part_template_id ?? undefined,
+    part_template: item.part_template ?? undefined,
   };
 };
 

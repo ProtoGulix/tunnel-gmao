@@ -17,6 +17,7 @@ import {
 import {
   mapPartTemplateToFrontend,
   mapPartTemplateToBackend,
+  mapPartTemplateVersionToBackend,
 } from './mapper';
 
 export const partTemplatesAdapter = {
@@ -57,7 +58,7 @@ export const partTemplatesAdapter = {
    * Create a new version of an existing template
    */
   createTemplateVersion: async (id: number, payload: any) => {
-    const backendPayload = mapPartTemplateToBackend(payload);
+    const backendPayload = mapPartTemplateVersionToBackend(payload);
     const raw = await createPartTemplateVersionRaw(id, backendPayload);
     return mapPartTemplateToFrontend(raw);
   },

@@ -4,7 +4,9 @@
       "Bash(npx eslint:*)",
       "Bash(npx vite:*)",
       "WebFetch(domain:)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)"
     ]
   }
 }

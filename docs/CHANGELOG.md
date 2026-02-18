@@ -1,3 +1,56 @@
+## 2.7.2 - 2026-02-19
+
+Stabilité: STABLE
+
+### Corrections importantes et améliorations de l'affichage des templates
+
+#### Ce qui a été corrigé
+
+- **Affichage des sous-familles**: Chaque famille affiche maintenant uniquement ses propres sous-familles (correction du bug où toutes les sous-familles apparaissaient partout)
+- **Modification des templates**: Quand vous modifiez le template d'une sous-famille, seule cette famille se met à jour (et non toutes les familles)
+- **Chargement optimisé**: Les informations se chargent maintenant plus rapidement et de manière plus fiable
+
+#### Nouvelles fonctionnalités - Visualisation des templates
+
+Quand vous consultez vos familles de pièces, vous pouvez maintenant voir tous les détails des templates :
+
+- **Informations du template affichées directement**:
+  - Nom du template avec sa version (exemple : "Roulement standard v1")
+  - Modèle de référence (exemple : `{DIAM_INT}x{DIAM_EXT}x{LARG}` → génère "25x52x15")
+- **Nouveau bouton "Schéma"**: Cliquez pour voir tous les champs du template
+  - **Nom technique** du champ (ex: `DIAM_INT`)
+  - **Description** en clair (ex: "Diamètre intérieur")
+  - **Type** de donnée (nombre, texte, liste de choix)
+  - **Unité** si applicable (ex: "mm")
+  - **Champs obligatoires** clairement indiqués
+  - **Valeurs possibles** pour les listes de choix (ex: "Inox A2, Acier zingué")
+
+#### Exemple d'utilisation
+
+Vous consultez la famille "Roulements" :
+
+1. Cliquez sur la famille pour voir ses sous-familles
+2. Vous voyez "Roulement à billes" lié au template "Roulement standard v1"
+3. Cliquez sur "Schéma (3)" pour voir les 3 champs :
+   - **DIAM_INT** : Diamètre intérieur (nombre en mm) - obligatoire
+   - **DIAM_EXT** : Diamètre extérieur (nombre en mm) - obligatoire
+   - **LARG** : Largeur (nombre en mm) - obligatoire
+
+#### Améliorations techniques
+
+- **Chargement intelligent**: Les sous-familles ne se chargent que quand vous ouvrez une famille
+- **Moins d'attente**: Toutes les informations (template + schéma) se chargent en une seule fois
+- **Plus fiable**: Les données sont maintenant chargées depuis le nouveau système (plus stable et plus rapide)
+
+#### Impact utilisateur
+
+- ✅ **Plus claire**: Vous voyez exactement quels champs sont nécessaires pour créer une pièce
+- ✅ **Plus rapide**: Les informations se chargent instantanément
+- ✅ **Plus fiable**: Fini le bug où toutes les sous-familles s'affichaient partout
+- ✅ **Meilleure compréhension**: Le schéma des templates est maintenant visible et compréhensible
+
+---
+
 ## 2.7.1 - 2026-02-17
 
 Stabilité: STABLE

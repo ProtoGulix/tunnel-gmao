@@ -63,6 +63,17 @@ export default function TemplateGeneralInfoForm({
 
         <Box>
           <Text size="2" weight="bold" mb="1" style={{ display: "block" }}>
+            Label *
+          </Text>
+          <TextField.Root
+            placeholder="Ex: Boulons, Rondelles"
+            value={formData.label || ''}
+            onChange={(e) => updateFormData({ label: e.target.value })}
+          />
+        </Box>
+
+        <Box>
+          <Text size="2" weight="bold" mb="1" style={{ display: "block" }}>
             Pattern * (ex: M{"{DIAM}"}x{"{LONG}"}-{"{MAT}"})
           </Text>
           <TextField.Root
@@ -84,6 +95,7 @@ export default function TemplateGeneralInfoForm({
 TemplateGeneralInfoForm.propTypes = {
   formData: PropTypes.shape({
     code: PropTypes.string.isRequired,
+    label: PropTypes.string,
     pattern: PropTypes.string.isRequired,
     fields: PropTypes.array,
   }).isRequired,

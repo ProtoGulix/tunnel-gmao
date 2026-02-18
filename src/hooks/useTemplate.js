@@ -90,7 +90,15 @@ export function useTemplates() {
       setLoading(true);
       setError(null);
       const data = await partTemplates.fetchTemplates();
-      setTemplates(data || []);
+
+      // Enrichir chaque template avec un flag hasMultipleVersions
+      // Si version > 1, alors il y a forcément plusieurs versions
+      const enrichedData = (data || []).map((template) => ({
+        ...template,
+        hasMultipleVersions: template.version > 1,
+      }));
+
+      setTemplates(enrichedData);
     } catch (err) {
       console.error('Erreur chargement templates:', err);
       setError(err);

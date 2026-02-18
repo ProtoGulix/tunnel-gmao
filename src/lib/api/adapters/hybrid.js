@@ -34,15 +34,20 @@ const hybridStockAdapter = {
   updateStockItem: tunnelBackendAdapter.stock.updateStockItem,
   deleteStockItem: tunnelBackendAdapter.stock.deleteStockItem,
 
-  // Stock families/specs from directus (not yet in tunnel-backend)
-  fetchStockFamilies: directusAdapter.stock.fetchStockFamilies,
-  createStockFamily: directusAdapter.stock.createStockFamily,
-  updateStockFamily: directusAdapter.stock.updateStockFamily,
-  deleteStockFamily: directusAdapter.stock.deleteStockFamily,
-  fetchStockSubFamilies: directusAdapter.stock.fetchStockSubFamilies,
-  createStockSubFamily: directusAdapter.stock.createStockSubFamily,
-  updateStockSubFamily: directusAdapter.stock.updateStockSubFamily,
-  deleteStockSubFamily: directusAdapter.stock.deleteStockSubFamily,
+  // Stock families - READ ONLY from tunnel-backend (v2.1.0)
+  // Families are extracted from subfamilies, no direct CRUD
+  fetchStockFamilies: tunnelBackendAdapter.stock.fetchStockFamilies,
+  fetchStockFamily: tunnelBackendAdapter.stock.fetchStockFamily, // NEW: GET /stock-families/{code}
+  createStockFamily: directusAdapter.stock.createStockFamily, // Keep on Directus
+  updateStockFamily: directusAdapter.stock.updateStockFamily, // Keep on Directus
+  deleteStockFamily: directusAdapter.stock.deleteStockFamily, // Keep on Directus
+
+  // Stock subfamilies - migrated to tunnel-backend (v2.1.0)
+  fetchStockSubFamilies: tunnelBackendAdapter.stock.fetchStockSubFamilies,
+  createStockSubFamily: tunnelBackendAdapter.stock.createStockSubFamily,
+  updateStockSubFamily: tunnelBackendAdapter.stock.updateStockSubFamily,
+  deleteStockSubFamily: directusAdapter.stock.deleteStockSubFamily, // Fallback to Directus (needs ID-based deletion)
+
   fetchStockItemStandardSpecs: directusAdapter.stock.fetchStockItemStandardSpecs,
   createStockItemStandardSpec: directusAdapter.stock.createStockItemStandardSpec,
   updateStockItemStandardSpec: directusAdapter.stock.updateStockItemStandardSpec,

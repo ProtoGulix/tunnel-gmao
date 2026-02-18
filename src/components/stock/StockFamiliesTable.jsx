@@ -12,7 +12,7 @@
  * @requires @/lib/api/facade
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import PropTypes from 'prop-types';
 import { useError } from '@/contexts/ErrorContext';
 import { Box, Flex, Text, Card, TextField, Button } from "@radix-ui/themes";
@@ -91,6 +91,9 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   const [formData, setFormData] = useState(INITIAL_FAMILY_STATE);
   const [formError, setFormError] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
+  
+  // Track which families are currently loading to prevent duplicate requests
+  const loadingSubfamiliesRef = useRef(new Set());
 
   // Load templates for subfamily linking
   const { templates } = useTemplates();
@@ -113,31 +116,41 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   }, [showError]);
 
   const loadSubfamiliesForFamily = useCallback(async (familyCode) => {
-    try {
-      // Check if already loaded using functional state update
-      setSubfamiliesByFamily(prev => {
-        // If already loaded, return unchanged state
-        if (prev[familyCode]) return prev;
-
-        // Otherwise, mark as loading and trigger the fetch
-        stock.fetchStockSubFamilies(familyCode)
-          .then(subs => {
-            setSubfamiliesByFamily(current => ({
-              ...current,
-              [familyCode]: subs || []
-            }));
-          })
-          .catch(e => {
-            console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
-            showError(e instanceof Error ? e : new Error("Erreur de chargement des sous-familles"));
-          });
-
-        // Return current state (the fetch will update it later)
-        return prev;
-      });
-    } catch (e) {
-      console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
+    // Skip if currently loading (check ref to avoid race conditions)
+    if (loadingSubfamiliesRef.current.has(familyCode)) {
+      return;
     }
+
+    // Skip if already loaded (check state)
+    setSubfamiliesByFamily(prev => {
+      if (prev[familyCode] !== undefined) {
+        // Already loaded, don't fetch
+        return prev;
+      }
+      
+      // Not loaded yet, mark as loading and trigger fetch
+      loadingSubfamiliesRef.current.add(familyCode);
+      
+      // Use stock.fetchStockFamily which calls GET /stock-families/{code}
+      // This endpoint returns the family with sub_families array included
+      stock.fetchStockFamily(familyCode)
+        .then(family => {
+          setSubfamiliesByFamily(current => ({
+            ...current,
+            [familyCode]: family.subFamilies || []
+          }));
+        })
+        .catch(e => {
+          console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
+          showError(e instanceof Error ? e : new Error("Erreur de chargement des sous-familles"));
+        })
+        .finally(() => {
+          loadingSubfamiliesRef.current.delete(familyCode);
+        });
+      
+      // Return unchanged state (fetch will update later)
+      return prev;
+    });
   }, [showError]);
 
   const handleAddFamily = async () => {
@@ -233,17 +246,24 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   const handleUpdateSubfamilyTemplate = async (subfamily, templateId) => {
     try {
       setLoading(true);
-      // API call to update subfamily template linkage
-      // Note: Cette API devra être implémentée côté backend
-      await stock.updateStockSubFamily(subfamily.id, {
-        part_template_id: templateId ? parseInt(templateId) : null,
+      
+      // Parse l'ID seulement si c'est un nombre pur, sinon garde le string (UUID)
+      let parsedId = null;
+      if (templateId) {
+        // Si c'est un nombre pur (pas de tirets ou lettres), on parse
+        parsedId = /^\d+$/.test(templateId) ? parseInt(templateId, 10) : templateId;
+      }
+      
+      // API v1.4.0: PATCH /stock-sub-families/{family_code}/{sub_family_code}
+      await stock.updateStockSubFamily(subfamily.familyCode, subfamily.code, {
+        part_template_id: parsedId,
       });
 
-      // Reload subfamilies
-      const subs = await stock.fetchStockSubFamilies(subfamily.family_code);
+      // Reload subfamilies using GET /stock-families/{code}
+      const family = await stock.fetchStockFamily(subfamily.familyCode);
       setSubfamiliesByFamily({
         ...subfamiliesByFamily,
-        [subfamily.family_code]: subs
+        [subfamily.familyCode]: family.subFamilies || []
       });
       
       if (onFamiliesUpdated) onFamiliesUpdated();
@@ -334,9 +354,9 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
           </Box>
         ) : (
           <Box>
-            {filteredFamilies.map(family => (
+            {filteredFamilies.map((family, index) => (
               <FamilyRow
-                key={family.code}
+                key={`${family.code}-${index}`}
                 family={family}
                 subfamilies={subfamiliesByFamily[family.code]}
                 templates={templates}
