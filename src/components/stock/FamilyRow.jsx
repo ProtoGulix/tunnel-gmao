@@ -15,6 +15,7 @@ import PropTypes from 'prop-types';
 import { Box, Flex, Text, Card, TextField, Button, Table, Badge } from "@radix-ui/themes";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
 import StatusCallout from "@/components/common/StatusCallout";
+import LoadingState from "@/components/common/LoadingState";
 import SubfamilyRow from "./SubfamilyRow";
 
 // ===== CONSTANTES =====
@@ -141,7 +142,7 @@ export default function FamilyRow({ family, subfamilies, onDelete, onAddSubfamil
             <Box>
               <Text size="2" weight="bold" mb="2" style={{ display: "block" }}>Sous-familles</Text>
               {subfamilies === undefined ? (
-                <Text size="2" color="gray">Chargement...</Text>
+                <LoadingState message="Chargement des sous-familles..." fullscreen={false} size="2" />
               ) : (
                 <Table.Root variant="surface">
                   <Table.Header>

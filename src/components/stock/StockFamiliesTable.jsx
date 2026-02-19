@@ -18,8 +18,8 @@ import { useError } from '@/contexts/ErrorContext';
 import { Box, Flex, Text, Card, TextField, Button } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
 import { stock } from "@/lib/api/facade";
-import { useTemplates } from "@/hooks/useTemplate";
 import StatusCallout from "@/components/common/StatusCallout";
+import LoadingState from "@/components/common/LoadingState";
 import FamilyRow from "./FamilyRow";
 
 // ===== CONSTANTES =====
@@ -81,7 +81,7 @@ const filterFamilies = (families, searchQuery) => {
   );
 };
 
-export default function StockFamiliesTable({ onFamiliesUpdated }) {
+export default function StockFamiliesTable({ onFamiliesUpdated, templates }) {
   const { showError } = useError();
   const [families, setFamilies] = useState([]);
   const [subfamiliesByFamily, setSubfamiliesByFamily] = useState({});
@@ -94,9 +94,8 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   
   // Track which families are currently loading to prevent duplicate requests
   const loadingSubfamiliesRef = useRef(new Set());
-
-  // Load templates for subfamily linking
-  const { templates } = useTemplates();
+  // Track which families have already been loaded
+  const loadedFamiliesRef = useRef(new Set());
 
   const loadFamilies = useCallback(async () => {
     try {
@@ -106,6 +105,8 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
       setFamilies(data || []);
       // Don't load subfamilies here - they will be loaded on demand when expanding families
       setSubfamiliesByFamily({});
+      // Reset loaded tracking
+      loadedFamiliesRef.current.clear();
     } catch (e) {
       console.error("Erreur chargement familles:", e);
       setError(e?.message || "Erreur de chargement");
@@ -116,41 +117,30 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   }, [showError]);
 
   const loadSubfamiliesForFamily = useCallback(async (familyCode) => {
-    // Skip if currently loading (check ref to avoid race conditions)
-    if (loadingSubfamiliesRef.current.has(familyCode)) {
+    // Skip if already loaded or currently loading (synchronous check)
+    if (loadedFamiliesRef.current.has(familyCode) || loadingSubfamiliesRef.current.has(familyCode)) {
       return;
     }
 
-    // Skip if already loaded (check state)
-    setSubfamiliesByFamily(prev => {
-      if (prev[familyCode] !== undefined) {
-        // Already loaded, don't fetch
-        return prev;
-      }
-      
-      // Not loaded yet, mark as loading and trigger fetch
-      loadingSubfamiliesRef.current.add(familyCode);
-      
+    // Mark as loading synchronously before any async operation
+    loadingSubfamiliesRef.current.add(familyCode);
+    
+    try {
       // Use stock.fetchStockFamily which calls GET /stock-families/{code}
       // This endpoint returns the family with sub_families array included
-      stock.fetchStockFamily(familyCode)
-        .then(family => {
-          setSubfamiliesByFamily(current => ({
-            ...current,
-            [familyCode]: family.subFamilies || []
-          }));
-        })
-        .catch(e => {
-          console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
-          showError(e instanceof Error ? e : new Error("Erreur de chargement des sous-familles"));
-        })
-        .finally(() => {
-          loadingSubfamiliesRef.current.delete(familyCode);
-        });
-      
-      // Return unchanged state (fetch will update later)
-      return prev;
-    });
+      const family = await stock.fetchStockFamily(familyCode);
+      setSubfamiliesByFamily(current => ({
+        ...current,
+        [familyCode]: family.subFamilies || []
+      }));
+      // Mark as loaded
+      loadedFamiliesRef.current.add(familyCode);
+    } catch (e) {
+      console.error(`Erreur chargement sous-familles ${familyCode}:`, e);
+      showError(e instanceof Error ? e : new Error("Erreur de chargement des sous-familles"));
+    } finally {
+      loadingSubfamiliesRef.current.delete(familyCode);
+    }
   }, [showError]);
 
   const handleAddFamily = async () => {
@@ -285,7 +275,7 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
   const filteredFamilies = filterFamilies(families, search);
 
   if (loading && families.length === 0) {
-    return <Text>Chargement des familles...</Text>;
+    return <LoadingState message="Chargement des familles..." fullscreen={false} size="2" />;
   }
 
   return (
@@ -377,4 +367,9 @@ export default function StockFamiliesTable({ onFamiliesUpdated }) {
 
 StockFamiliesTable.propTypes = {
   onFamiliesUpdated: PropTypes.func,
+  templates: PropTypes.array,
+};
+
+StockFamiliesTable.defaultProps = {
+  templates: [],
 };

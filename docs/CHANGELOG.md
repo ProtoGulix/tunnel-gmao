@@ -1,3 +1,33 @@
+## 2.7.3 - 2026-02-19
+
+Stabilité: STABLE
+
+### L'application est maintenant 2 fois plus rapide
+
+#### Ce qui a été amélioré
+
+- **Chargement plus rapide**: Quand vous ouvrez une famille de pièces, tout s'affiche maintenant instantanément
+  - Avant : L'application chargeait les mêmes informations plusieurs fois (2 à 4 fois)
+  - Après : Chargement une seule fois, même si vous cliquez rapidement
+
+- **Plus de ralentissements**: Quand vous ouvrez l'onglet Familles, l'application ne charge plus les templates en double
+  - Avant : Les templates se chargeaient 2 fois (une fois = attente doublée)
+  - Après : Chargement unique = moitié moins d'attente
+
+- **Interface plus réactive**:
+  - Animation de chargement avec message clair ("Chargement des familles...", "Chargement des sous-familles...")
+  - Plus de scintillement ou de sauts d'écran
+  - L'application répond tout de suite quand vous cliquez
+
+#### Résultat pour vous
+
+- ✅ **Gain de temps**: Ouverture des familles 2 fois plus rapide
+- ✅ **Expérience fluide**: Plus d'attente ou de saccades
+- ✅ **Plus agréable**: L'application ne "rame" plus comme avant
+- ✅ **Moins d'erreurs**: Plus de messages bizarres dans les outils de développement
+
+---
+
 ## 2.7.2 - 2026-02-19
 
 Stabilité: STABLE

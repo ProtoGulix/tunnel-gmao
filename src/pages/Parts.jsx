@@ -140,13 +140,17 @@ export default function Parts() {
   );
 
   // ========== CALLBACKS ==========
-  const refreshStock = async () => {
+  const refreshStock = useCallback(async () => {
     await stock.loadStockItems(false);
-  };
+  }, [stock]);
 
-  const refreshSuppliers = async () => {
+  const refreshSuppliers = useCallback(async () => {
     await purchasing.loadSuppliers(false);
-  };
+  }, [purchasing]);
+
+  const handleFamiliesUpdated = useCallback(() => {
+    stock.loadStockItems(false);
+  }, [stock]);
 
   const handleAddStockItem = async (itemData) => {
     try {
@@ -646,9 +650,10 @@ export default function Parts() {
 
             {/* ===== TAB: FAMILLES ===== */}
             {activeTab === PARTS_TABS.FAMILIES && (
-              <StockFamiliesTable onFamiliesUpdated={() => {
-                stock.loadStockItems(false);
-              }} />
+              <StockFamiliesTable 
+                onFamiliesUpdated={handleFamiliesUpdated}
+                templates={templates}
+              />
             )}
 
             {/* ===== TAB: TEMPLATES ===== */}

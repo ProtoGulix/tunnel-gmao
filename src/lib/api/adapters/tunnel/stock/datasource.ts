@@ -95,7 +95,7 @@ export const updateStockSubFamilyRaw = async (
  * Returns list of families with subfamily count
  */
 export const fetchStockFamiliesRaw = async () => {
-  const response = await tunnelApi.get('/stock-families');
+  const response = await tunnelApi.get('/stock-families/');
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 

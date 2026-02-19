@@ -13,7 +13,7 @@ import { tunnelApi } from '../client';
  * Liste des templates (dernière version)
  */
 export const fetchPartTemplatesRaw = async (): Promise<any[]> => {
-  const response = await tunnelApi.get('/part-templates');
+  const response = await tunnelApi.get('/part-templates/');
   const data = response.data;
   return Array.isArray(data) ? data : data?.data || [];
 };
