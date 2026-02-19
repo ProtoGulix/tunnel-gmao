@@ -1,3 +1,24 @@
+## 2.7.4 - 2026-02-19
+
+Stabilité: STABLE
+
+### Module Achats de nouveau opérationnel
+
+#### Ce qui a été corrigé
+
+- **Connexion au serveur**: L'application communique maintenant correctement avec le serveur pour tout ce qui concerne les achats
+  - Les demandes d'achat s'affichent de nouveau
+  - Les commandes fournisseurs sont accessibles
+  - Les statistiques d'achats se chargent correctement
+
+#### Résultat pour vous
+
+- ✅ **Achats fonctionnels**: Le module Achats/Approvisionnement fonctionne à nouveau normalement
+- ✅ **Plus de messages d'erreur**: Les erreurs 404 (page introuvable) dans les achats ont disparu
+- ✅ **Données visibles**: Vous pouvez consulter vos demandes d'achat et commandes fournisseurs
+
+---
+
 ## 2.7.3 - 2026-02-19
 
 Stabilité: STABLE

@@ -69,7 +69,7 @@ export const suppliersAdapter = {
 
   /**
    * Dispatch purchase requests with PENDING_DISPATCH status to supplier orders
-   * POST /purchase_requests/dispatch
+   * POST /purchase-requests/dispatch
    * Returns: { dispatched_count, created_orders, errors }
    */
   dispatchPurchaseRequests: async () => {

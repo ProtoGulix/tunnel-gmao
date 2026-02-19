@@ -18,7 +18,7 @@ export const fetchSupplierOrderLinesRaw = async (params?: {
   stock_item_id?: string;
   is_selected?: boolean;
 }) => {
-  const response = await tunnelApi.get('/supplier_order_lines/', { params });
+  const response = await tunnelApi.get('/supplier-order-lines/', { params });
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 
@@ -26,7 +26,7 @@ export const fetchSupplierOrderLinesRaw = async (params?: {
  * Fetch a single supplier order line by ID
  */
 export const fetchSupplierOrderLineRaw = async (id: string) => {
-  const response = await tunnelApi.get(`/supplier_order_lines/${id}`);
+  const response = await tunnelApi.get(`/supplier-order-lines/${id}`);
   return response.data?.data || response.data || {};
 };
 
@@ -34,7 +34,7 @@ export const fetchSupplierOrderLineRaw = async (id: string) => {
  * Fetch all lines for a supplier order
  */
 export const fetchSupplierOrderLinesByOrderRaw = async (supplierOrderId: string) => {
-  const response = await tunnelApi.get(`/supplier_order_lines/order/${supplierOrderId}`);
+  const response = await tunnelApi.get(`/supplier-order-lines/order/${supplierOrderId}`);
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 
@@ -42,7 +42,7 @@ export const fetchSupplierOrderLinesByOrderRaw = async (supplierOrderId: string)
  * Create a new supplier order line
  */
 export const createSupplierOrderLineRaw = async (payload: Record<string, unknown>) => {
-  const response = await tunnelApi.post('/supplier_order_lines/', payload);
+  const response = await tunnelApi.post('/supplier-order-lines/', payload);
   return response.data?.data || response.data || {};
 };
 
@@ -50,7 +50,7 @@ export const createSupplierOrderLineRaw = async (payload: Record<string, unknown
  * Update an existing supplier order line
  */
 export const updateSupplierOrderLineRaw = async (id: string, payload: Record<string, unknown>) => {
-  const response = await tunnelApi.put(`/supplier_order_lines/${id}`, payload);
+  const response = await tunnelApi.put(`/supplier-order-lines/${id}`, payload);
   return response.data?.data || response.data || {};
 };
 
@@ -58,7 +58,7 @@ export const updateSupplierOrderLineRaw = async (id: string, payload: Record<str
  * Delete a supplier order line
  */
 export const deleteSupplierOrderLineRaw = async (id: string) => {
-  await tunnelApi.delete(`/supplier_order_lines/${id}`);
+  await tunnelApi.delete(`/supplier-order-lines/${id}`);
 };
 
 /**
@@ -68,7 +68,7 @@ export const linkPurchaseRequestRaw = async (lineId: string, payload: {
   purchase_request_id: string;
   quantity: number;
 }) => {
-  const response = await tunnelApi.post(`/supplier_order_lines/${lineId}/purchase_requests`, payload);
+  const response = await tunnelApi.post(`/supplier-order-lines/${lineId}/purchase-requests`, payload);
   return response.data?.data || response.data || {};
 };
 
@@ -76,5 +76,5 @@ export const linkPurchaseRequestRaw = async (lineId: string, payload: {
  * Unlink a purchase request from a line
  */
 export const unlinkPurchaseRequestRaw = async (lineId: string, purchaseRequestId: string) => {
-  await tunnelApi.delete(`/supplier_order_lines/${lineId}/purchase_requests/${purchaseRequestId}`);
+  await tunnelApi.delete(`/supplier-order-lines/${lineId}/purchase-requests/${purchaseRequestId}`);
 };

@@ -5,18 +5,20 @@
  * Allows progressive migration by routing specific domains to the new backend
  * while keeping everything else on the existing directus backend.
  *
- * Current split (as of 2026-02-03):
+ * Current split (as of 2026-02-19):
  *
  * **Tunnel-backend (Python API):**
  * - stats, machines, equipements
  * - interventions, actions, complexityFactors
- * - purchaseRequests, supplierOrders, supplierOrderLines
- * - stock, suppliers, stockSuppliers (migrated 2026-02-03)
+ * - supplierOrderLines, partTemplates
+ * - stock (items, families, subfamilies), suppliers, stockSuppliers (migrated 2026-02-03)
+ * - equipementClasses
  *
- * **Directus (legacy):**
+ * **Directus (legacy still in use):**
  * - auth, interventionStatusRefs, actionSubcategories
  * - anomalyConfig, preventive
  * - stockSpecs, manufacturerItems
+ * - purchaseRequests, supplierOrders (Temporarily using Directus until tunnel-backend endpoints are implemented)
  *
  * @module lib/api/adapters/hybrid
  */

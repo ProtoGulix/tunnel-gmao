@@ -62,9 +62,9 @@ export const deleteSupplierRaw = async (id: string) => {
 
 /**
  * Dispatch purchase requests to supplier orders
- * Calls POST /purchase_requests/dispatch
+ * Calls POST /purchase-requests/dispatch
  */
 export const dispatchPurchaseRequestsRaw = async () => {
-  const response = await tunnelApi.post('/purchase_requests/dispatch');
+  const response = await tunnelApi.post('/purchase-requests/dispatch');
   return response.data?.data || response.data || {};
 };

@@ -18,7 +18,7 @@ export const fetchPurchaseRequestsRaw = async (params?: {
   intervention_id?: string;
   urgency?: string;
 }) => {
-  const response = await tunnelApi.get('/purchase_requests/', { params });
+  const response = await tunnelApi.get('/purchase-requests/', { params });
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 
@@ -26,7 +26,7 @@ export const fetchPurchaseRequestsRaw = async (params?: {
  * Fetch a single purchase request by ID
  */
 export const fetchPurchaseRequestRaw = async (id: string) => {
-  const response = await tunnelApi.get(`/purchase_requests/${id}`);
+  const response = await tunnelApi.get(`/purchase-requests/${id}`);
   return response.data?.data || response.data || {};
 };
 
@@ -34,7 +34,7 @@ export const fetchPurchaseRequestRaw = async (id: string) => {
  * Fetch purchase requests for a specific intervention
  */
 export const fetchPurchaseRequestsByInterventionRaw = async (interventionId: string) => {
-  const response = await tunnelApi.get(`/purchase_requests/intervention/${interventionId}`);
+  const response = await tunnelApi.get(`/purchase-requests/intervention/${interventionId}`);
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 
@@ -42,7 +42,7 @@ export const fetchPurchaseRequestsByInterventionRaw = async (interventionId: str
  * Create a new purchase request
  */
 export const createPurchaseRequestRaw = async (payload: Record<string, unknown>) => {
-  const response = await tunnelApi.post('/purchase_requests/', payload);
+  const response = await tunnelApi.post('/purchase-requests/', payload);
   return response.data?.data || response.data || {};
 };
 
@@ -50,7 +50,7 @@ export const createPurchaseRequestRaw = async (payload: Record<string, unknown>)
  * Update an existing purchase request
  */
 export const updatePurchaseRequestRaw = async (id: string, payload: Record<string, unknown>) => {
-  const response = await tunnelApi.put(`/purchase_requests/${id}`, payload);
+  const response = await tunnelApi.put(`/purchase-requests/${id}`, payload);
   return response.data?.data || response.data || {};
 };
 
@@ -58,7 +58,7 @@ export const updatePurchaseRequestRaw = async (id: string, payload: Record<strin
  * Delete a purchase request
  */
 export const deletePurchaseRequestRaw = async (id: string) => {
-  await tunnelApi.delete(`/purchase_requests/${id}`);
+  await tunnelApi.delete(`/purchase-requests/${id}`);
 };
 
 /**
@@ -69,6 +69,6 @@ export const fetchPurchaseRequestStatsRaw = async (params?: {
   end_date?: string;
   group_by?: string;
 }) => {
-  const response = await tunnelApi.get('/purchase_requests/stats', { params });
+  const response = await tunnelApi.get('/purchase-requests/stats', { params });
   return response.data?.data || response.data || {};
 };
