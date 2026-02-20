@@ -2,8 +2,8 @@
 
 > **Document Maître** : Toutes les conventions de développement du projet
 >
-> **Dernière mise à jour**: 2 janvier 2026  
-> **Version**: 2.1.0
+> **Dernière mise à jour**: 20 février 2026  
+> **Version**: 2.2.0
 
 ---
 
@@ -1415,6 +1415,352 @@ export default function DetailPage() {
   );
 }
 ```
+
+### 8.2 Standard : Page Multi-Onglets avec Domaines Métier (Parts.jsx)
+
+**Référence** : `src/pages/Parts.jsx` - Page de gestion du référentiel de pièces
+
+Cette section définit le standard d'organisation pour les pages complexes gérant plusieurs domaines métier via des onglets. Elle s'applique aux pages comme **Parts** (Pièces/Fournisseurs/Fabricants/Familles/Templates), **Machines**, ou toute page regroupant plusieurs entités liées.
+
+#### 8.2.1 Structure Globale
+
+```javascript
+// Constantes d'onglets - Toujours en UPPER_CASE
+const PARTS_TABS = {
+  ITEMS: 'items',
+  SUPPLIERS: 'suppliers',
+  MANUFACTURERS: 'manufacturers',
+  FAMILIES: 'families',
+  TEMPLATES: 'templates',
+};
+
+export default function Parts() {
+  // ========== STATE ==========
+  // 1. États globaux (erreurs, hooks métier)
+  const [error, setError] = useState(null);
+  const stock = useStockItemsManagement(setError);
+  const purchasing = usePurchasingManagement(setError);
+
+  // 2. Navigation et UI
+  const [activeTab, setActiveTab] = useTabNavigation(PARTS_TABS.ITEMS, 'tab');
+  const [compactRows, setCompactRows] = useState(false);
+
+  // 3. Recherche avec debounce + URL sync
+  const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebouncedSearch('search', 600);
+
+  // 4. Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+
+  // 5. Formulaires (états locaux par domaine)
+  const [isCreatingStockItem, setIsCreatingStockItem] = useState(false);
+  const [supplierRefFormData, setSupplierRefFormData] = useState(DEFAULT_FORM);
+
+  // ========== COMPUTED VALUES ==========
+  const displayedItems = stock.stockItems; // Pas de filtrage client (fait par API)
+  const totalItems = stock.pagination?.total ?? stock.stockItems.length;
+
+  // ========== CALLBACKS ==========
+  const loadDataWithPagination = useCallback(
+    async (isInitial = false) => {
+      const params = {
+        skip: (currentPage - 1) * itemsPerPage,
+        limit: itemsPerPage,
+        ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+      };
+      await stock.loadStockItems(isInitial, params);
+    },
+    [stock, currentPage, itemsPerPage, debouncedSearchTerm]
+  );
+
+  // ========== EFFECTS ==========
+  useEffect(() => {
+    loadDataWithPagination(true);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
+
+  // Auto-refresh (30s) - Seulement sur onglets actifs
+  useAutoRefresh(
+    async () => {
+      if (activeTab === PARTS_TABS.ITEMS || activeTab === PARTS_TABS.SUPPLIERS) {
+        await Promise.all([loadDataWithPagination(false), purchasing.loadSuppliers(false)]);
+      }
+    },
+    30,
+    shouldAutoRefresh
+  );
+
+  return (
+    <Box>
+      <PageHeader {...headerProps} />
+      <PageContainer>
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+          <Tabs.List>{/* Tabs avec icônes + badges */}</Tabs.List>
+
+          <Box pt="4">
+            {/* Contenu conditionnel par onglet */}
+            {activeTab === PARTS_TABS.ITEMS && <ItemsTab />}
+            {activeTab === PARTS_TABS.SUPPLIERS && <SuppliersTab />}
+          </Box>
+        </Tabs.Root>
+      </PageContainer>
+    </Box>
+  );
+}
+```
+
+#### 8.2.2 Organisation des Onglets
+
+**Règle** : Chaque onglet représente un **domaine métier** distinct avec sa propre logique.
+
+```javascript
+// ✅ BON : Onglets par domaine métier
+const PARTS_TABS = {
+  ITEMS: 'items', // Pièces du stock
+  SUPPLIERS: 'suppliers', // Fournisseurs
+  MANUFACTURERS: 'manufacturers', // Fabricants
+  FAMILIES: 'families', // Familles de pièces
+  TEMPLATES: 'templates', // Templates de nomenclature
+};
+
+// ❌ MAUVAIS : Onglets par UI ou trop granulaires
+const BAD_TABS = {
+  LIST: 'list', // Trop vague
+  FORM: 'form', // Découpage UI, pas métier
+  EDIT_MODE: 'edit', // État, pas domaine
+};
+```
+
+**Structure type d'un onglet** :
+
+```javascript
+{
+  activeTab === PARTS_TABS.ITEMS && (
+    <Flex direction="column" gap="3">
+      {/* 1. Header avec recherche + actions */}
+      <TableHeader
+        icon={Package}
+        title="Pièces"
+        count={totalItems}
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Recherche (nom, ref, famille...)"
+        actions={
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus size={16} />
+            Nouvel article
+          </Button>
+        }
+      />
+
+      {/* 2. Formulaire inline (si création/édition) */}
+      {isCreating && (
+        <Box mb="4">
+          <AddItemForm onAdd={handleAdd} onCancel={() => setIsCreating(false)} />
+        </Box>
+      )}
+
+      {/* 3. EmptyState ou Contenu */}
+      {items.length === 0 ? (
+        <EmptyState icon={<Package />} title="Aucune pièce" />
+      ) : (
+        <>
+          <ItemsTable items={items} onEdit={handleEdit} />
+
+          {/* 4. Pagination (si activée) */}
+          {pagination && <Pagination {...paginationProps} />}
+        </>
+      )}
+    </Flex>
+  );
+}
+```
+
+#### 8.2.3 Recherche et Filtrage
+
+**Règle** : Utiliser la recherche côté serveur avec debounce + synchronisation URL.
+
+```javascript
+// ✅ BON : Hook unifié avec debounce + URL sync
+const { searchTerm, debouncedSearchTerm, setSearchTerm } = useDebouncedSearch('search', 600);
+
+// Recherche réactive - attend 600ms après dernière frappe
+useEffect(() => {
+  const params = {
+    skip: (currentPage - 1) * itemsPerPage,
+    limit: itemsPerPage,
+    ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
+  };
+  loadData(params);
+}, [currentPage, itemsPerPage, debouncedSearchTerm]);
+
+// ❌ MAUVAIS : Filtrage client sur gros volumes
+const filtered = items.filter(
+  (item) => item.name.includes(searchTerm) // Lent si 1000+ items
+);
+```
+
+**Fonctionnalités** :
+
+- ✅ Affichage immédiat dans le champ (pas de lag)
+- ✅ Debounce 600ms avant appel API
+- ✅ URL mise à jour : `?search=roulement`
+- ✅ Back/Forward du navigateur fonctionne
+- ✅ Liens partageables avec recherche
+
+#### 8.2.4 Pagination
+
+**Règle** : Pagination côté serveur pour les listes volumineuses (>100 items).
+
+```javascript
+// État pagination
+const [currentPage, setCurrentPage] = useState(1);
+const [itemsPerPage, setItemsPerPage] = useState(50);
+
+// Calcul skip/limit
+const params = {
+  skip: (currentPage - 1) * itemsPerPage,
+  limit: itemsPerPage,
+};
+
+// Reset page si recherche change
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearchTerm]);
+
+// Composant Pagination
+<Pagination
+  currentPage={currentPage}
+  totalItems={pagination.total}
+  itemsPerPage={itemsPerPage}
+  onPageChange={setCurrentPage}
+  onItemsPerPageChange={(newSize) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset à page 1
+  }}
+  pageSizeOptions={[25, 50, 100, 200]}
+/>;
+```
+
+#### 8.2.5 Communication Inter-Onglets
+
+**Règle** : Les onglets partagent des données via les hooks métier, pas via props drilling.
+
+```javascript
+// ✅ BON : Hooks métier centralisés
+const stock = useStockItemsManagement(setError);      // Gère items + refs fournisseurs
+const purchasing = usePurchasingManagement(setError); // Gère fournisseurs + commandes
+
+// Rechargement coordonné entre onglets
+const handleAddSupplierRef = async (data) => {
+  await stock.addSupplierRef(data);
+
+  // Recharger les données impactées
+  await Promise.all([
+    stock.loadSupplierRefs(stockItemId),  // Onglet Items
+    loadStockWithPagination(false),        // Liste Items (badge count)
+  ]);
+};
+
+// ❌ MAUVAIS : Props drilling entre tabs
+<Tabs.Content value="items">
+  <ItemsTab onItemChange={handleItemChange} suppliers={suppliers} />
+</Tabs.Content>
+<Tabs.Content value="suppliers">
+  <SuppliersTab items={items} onSupplierChange={handleSupplierChange} />
+</Tabs.Content>
+```
+
+#### 8.2.6 Auto-Refresh
+
+**Règle** : Auto-refresh seulement sur les onglets qui en ont besoin.
+
+```javascript
+// Déterminer si auto-refresh nécessaire
+const shouldAutoRefresh = activeTab === PARTS_TABS.ITEMS || activeTab === PARTS_TABS.SUPPLIERS;
+
+// Auto-refresh toutes les 30s (uniquement si onglet actif)
+useAutoRefresh(
+  async () => {
+    if (!shouldAutoRefresh) return;
+
+    await Promise.all([loadStockWithPagination(false), purchasing.loadSuppliers(false)]);
+  },
+  30,
+  shouldAutoRefresh
+);
+```
+
+#### 8.2.7 Gestion des Formulaires
+
+**Règle** : Formulaires inline dans l'onglet, pas de modales sauf cas complexes.
+
+```javascript
+// État formulaire
+const [isCreating, setIsCreating] = useState(false);
+const [formData, setFormData] = useState(DEFAULT_FORM);
+
+// Affichage conditionnel
+{
+  isCreating && (
+    <Box mb="4">
+      <AddItemForm
+        onSubmit={async (data) => {
+          await handleAdd(data);
+          setIsCreating(false);
+          setCurrentPage(1); // Reset pagination
+        }}
+        onCancel={() => setIsCreating(false)}
+        loading={isLoading}
+      />
+    </Box>
+  );
+}
+
+// ❌ MAUVAIS : Modal pour formulaire simple
+<Dialog open={isCreating}>
+  <AddItemForm /> {/* Surcharge l'UI */}
+</Dialog>;
+```
+
+#### 8.2.8 Feedback Utilisateur
+
+**Règle** : StatusCallout en haut de page pour les actions (succès/erreur).
+
+```javascript
+const [dispatchResult, setDispatchResult] = useState(null);
+
+// Après action
+setDispatchResult({
+  type: 'success',
+  message: 'Pièce ajoutée avec succès',
+  details: `"${item.name}" a été ajoutée au référentiel`,
+});
+setTimeout(() => setDispatchResult(null), 4000);
+
+// Affichage
+{
+  dispatchResult && (
+    <StatusCallout type={dispatchResult.type} title={dispatchResult.message}>
+      {dispatchResult.details && <Text>{dispatchResult.details}</Text>}
+    </StatusCallout>
+  );
+}
+```
+
+#### 8.2.9 Checklist d'Implémentation
+
+Avant de valider une page multi-onglets :
+
+- [ ] Constantes `TABS` définies en UPPER_CASE
+- [ ] Hook `useTabNavigation` avec paramètre URL
+- [ ] Recherche avec `useDebouncedSearch` (600ms)
+- [ ] Pagination côté serveur si >100 items
+- [ ] Auto-refresh seulement sur onglets pertinents
+- [ ] Formulaires inline (pas de modales)
+- [ ] `StatusCallout` pour feedback actions
+- [ ] EmptyState sur listes vides
+- [ ] Badges de comptage sur onglets
+- [ ] Communication via hooks métier
 
 ---
 
