@@ -1,3 +1,77 @@
+# Changelog — Tunnel GMAO
+
+Toutes les modifications notables du projet sont documentées dans ce fichier.
+
+---
+
+## 3.0.0 - 2026-02-20
+
+Stabilité: **STABLE** ✅
+
+### 🏗️ Refonte complète de l'architecture — Fondations solides pour l'avenir
+
+#### **Version majeure : Restructuration technique interne**
+
+Cette version marque une **étape importante** dans l'évolution de Tunnel GMAO. Le code de l'application a été entièrement réorganisé pour garantir que vos futures mises à jour arrivent plus vite, sans bugs, et avec moins de risques.
+
+#### **Ce qui a changé pour vous**
+
+**RIEN** : L'application fonctionne exactement comme avant du point de vue utilisateur.
+
+- ✅ **Interface identique** : Tous vos écrans et fonctionnalités habituels sont là
+- ✅ **Connexion améliorée** : Authentification plus sécurisée (cookies de session)
+- ✅ **Aucune régression** : Pas de perte de fonctionnalité, même vitesse
+- ✅ **Stabilité** : L'ancien code est conservé en sécurité si besoin
+
+#### **Pourquoi cette refonte ?**
+
+Imaginez une maison où les fils électriques, la plomberie et la charpente sont mélangés de partout. L'application V2 commençait à ressembler à ça : difficile d'ajouter de nouvelles fonctionnalités sans risquer de tout casser.
+
+**La V3 c'est :**
+
+- 🏗️ Une structure claire : chaque chose à sa place
+- 🔒 Plus de sécurité : meilleures pratiques appliquées
+- 🚀 Évolutions futures facilitées : nouveaux modules plus rapides à développer
+- 🧪 Moins de bugs : code plus facile à tester et à vérifier
+
+#### **Ce que ça change concrètement**
+
+**À court terme** :
+
+- Vous ne verrez rien de différent (c'est normal !)
+- La connexion est plus sécurisée en arrière-plan
+- Les futures corrections de bugs seront plus rapides à déployer
+
+**À moyen terme** (prochaines versions) :
+
+- Nouvelles fonctionnalités plus rapidement
+- Interface plus fluide et réactive
+- Moins de bugs lors des mises à jour
+- Meilleure performance générale
+
+#### **Aspects techniques pour les curieux**
+
+- Nouvelle organisation du code (architecture V3)
+- Authentification par cookie sécurisé (HttpOnly)
+- Ancien code V2 conservé dans `/src/_v2/` pour référence
+- Client HTTP modernisé avec gestion d'erreurs centralisée
+- Documentation technique enrichie (ARCHITECTURE.md, CONVENTIONS.md)
+
+#### **Validation de la version**
+
+- ✅ Compilation réussie sans erreur
+- ✅ Connexion testée et validée
+- ✅ Toutes les fonctionnalités V2 préservées
+- ✅ Documentation à jour
+
+#### **Prochaines étapes**
+
+Dans les versions 3.1, 3.2, etc., nous allons progressivement migrer chaque module (interventions, stock, achats...) vers cette nouvelle architecture. Vous verrez alors les bénéfices concrets : plus de fluidité, plus de fonctionnalités, moins de bugs.
+
+**Transition en douceur** : Chaque module sera migré uniquement quand il sera prêt et testé. Pas de précipitation.
+
+---
+
 ## 2.8.0 - 2026-02-20
 
 Stabilité: STABLE

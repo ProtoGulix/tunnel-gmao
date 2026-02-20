@@ -1,6 +1,14 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { auth } from "@/lib/api/facade";
-import { loadAnomalyConfig } from "@/config/anomalyConfig";
+/**
+ * Contexte d'authentification — Tunnel GMAO V3
+ * 
+ * Gère l'état d'authentification global de l'application.
+ * Utilise l'API backend pour login/logout et récupération de l'utilisateur.
+ * 
+ * @module auth/AuthContext
+ */
+
+import { createContext, useState, useEffect } from 'react';
+import * as authApi from '@/api/auth';
 
 export const AuthContext = createContext(null);
 
@@ -10,17 +18,16 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const loadUser = async () => {
-      if (auth.isAuthenticated()) {
+      if (authApi.isAuthenticated()) {
         try {
-          const userData = await auth.getCurrentUser();
+          const userData = await authApi.getCurrentUser();
           setUser(userData);
-          // Load anomaly config after successful authentication
-          loadAnomalyConfig().catch(console.error);
         } catch (error) {
-          console.error("Erreur lors du chargement de l'utilisateur:", error);
-          // Clear generic tokens; client will handle redirects on 401
-          localStorage.removeItem("auth_access_token");
-          localStorage.removeItem("auth_refresh_token");
+          console.error('Erreur lors du chargement de l\'utilisateur:', error);
+          // Nettoyer les tokens en cas d'erreur
+          localStorage.removeItem('auth_access_token');
+          localStorage.removeItem('auth_refresh_token');
+          localStorage.removeItem('auth_user');
         }
       }
       setLoading(false);
@@ -31,24 +38,43 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      await auth.login(email, password);
-      const userData = await auth.getCurrentUser();
+      // Login : le backend configure automatiquement un cookie session_token
+      const response = await authApi.login(email, password);
+      
+      // Optionnel : stocker le token en fallback pour mobile ou cookies désactivés
+      if (response.access_token) {
+        localStorage.setItem('auth_access_token', response.access_token);
+      }
+      if (response.refresh_token) {
+        localStorage.setItem('auth_refresh_token', response.refresh_token);
+      }
+      
+      // Récupérer les infos utilisateur (le cookie est maintenant actif)
+      const userData = await authApi.getCurrentUser();
       setUser(userData);
-      // Load anomaly config after successful login
-      loadAnomalyConfig().catch(console.error);
+      
+      // Stocker en cache pour éviter un appel au démarrage
+      localStorage.setItem('auth_user', JSON.stringify(userData));
+      
       return userData;
     } catch (error) {
-      console.error("Erreur de connexion:", error);
+      console.error('Erreur de connexion:', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await auth.logout();
-      setUser(null);
+      await authApi.logout();
     } catch (error) {
-      console.error("Erreur de déconnexion:", error);
+      console.error('Erreur de déconnexion:', error);
+    } finally {
+      // Nettoyer le state et localStorage
+      // Note : le cookie session_token est géré côté serveur
+      setUser(null);
+      localStorage.removeItem('auth_access_token');
+      localStorage.removeItem('auth_refresh_token');
+      localStorage.removeItem('auth_user');
     }
   };
 
@@ -61,13 +87,4 @@ export function AuthProvider({ children }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-// Hook personnalisé - doit être exporté séparément
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }

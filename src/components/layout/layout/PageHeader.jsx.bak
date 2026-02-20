@@ -1,0 +1,192 @@
+import { Flex, Box, Heading, Text, Badge, IconButton, Button, Select } from "@radix-ui/themes";
+import { ClipboardList, CalendarDays } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import HeaderDateRangeFilter from "./HeaderDateRangeFilter";
+
+const DEFAULT_TIME_SELECTION_OPTIONS = [
+  { value: "7days", label: "7 derniers jours" },
+  { value: "30days", label: "30 derniers jours" },
+  { value: "90days", label: "3 derniers mois" },
+  { value: "6months", label: "6 derniers mois" },
+  { value: "1year", label: "1 an" },
+  { value: "all", label: "Toutes les données" },
+];
+/**
+ * En-tête de page unifié et réutilisable
+ * Style professionnel avec bande pleine largeur
+ * @param {React.ComponentType} icon - Composant d'icône Lucide React (ex: ClipboardList)
+ * @param {Object} timeSelection - Configuration optionnelle pour la sélection temporelle (value, onChange, options)
+ */
+export default function PageHeader({
+  title,
+  subtitle,
+  icon: Icon = ClipboardList,
+  stats = null,
+  urgentBadge = null,
+  actions = [],
+  onRefresh = null,
+  onAdd = null,
+  addLabel = "+ Ajouter",
+  timeSelection = null
+}) {
+  const hasTimeSelection = !!timeSelection?.enabled;
+  const selectionOptions = useMemo(() => {
+    if (Array.isArray(timeSelection?.options) && timeSelection.options.length > 0) {
+      return timeSelection.options;
+    }
+    return DEFAULT_TIME_SELECTION_OPTIONS;
+  }, [timeSelection?.options]);
+
+  const defaultSelectValue =
+    timeSelection?.value ||
+    timeSelection?.defaultValue ||
+    selectionOptions[0]?.value ||
+    "all";
+
+  const [selectValue, setSelectValue] = useState(defaultSelectValue);
+
+  useEffect(() => {
+    setSelectValue(
+      timeSelection?.value ||
+        timeSelection?.defaultValue ||
+        selectionOptions[0]?.value ||
+        "all"
+    );
+  }, [timeSelection?.value, timeSelection?.defaultValue, selectionOptions]);
+
+  const handleSelectChange = (value) => {
+    setSelectValue(value);
+    timeSelection?.onChange?.(value);
+  };
+
+  const renderTimeSelectionControl = () => {
+    if (!hasTimeSelection) {
+      return null;
+    }
+
+    if (timeSelection?.mode === "popover" && timeSelection?.component === "daterange") {
+      return (
+        <HeaderDateRangeFilter
+          onFilterChange={timeSelection.onFilterChange}
+          totalActions={timeSelection.totalActions}
+          filteredActions={timeSelection.filteredActions}
+          triggerLabel={timeSelection.triggerLabel}
+        />
+      );
+    }
+
+    return (
+      <Flex align="center" gap="1" style={{ minWidth: "220px" }}>
+        <CalendarDays size={18} />
+        <Select.Root value={selectValue} onValueChange={handleSelectChange} size="2">
+          <Select.Trigger
+            style={{
+              minWidth: "150px",
+              borderRadius: "999px",
+            }}
+            aria-label="Période"
+          />
+          <Select.Content>
+            {selectionOptions.map((option) => (
+              <Select.Item key={option.value} value={option.value}>
+                {option.label}
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+      </Flex>
+    );
+  };
+
+  return (
+    <Box 
+      style={{
+        background: 'linear-gradient(135deg, var(--gray-1) 0%, var(--gray-2) 100%)',
+        borderBottom: '1px solid var(--gray-6)',
+        width: '100vw',
+        marginLeft: 'calc(-50vw + 50%)',
+        padding: '24px 0',
+        marginBottom: '24px'
+      }}
+    >
+      <Box style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
+        <Flex justify="between" align="center" wrap="wrap" gap="4">
+          {/* Titre et sous-titre */}
+          <Box style={{ flex: 1, minWidth: '200px' }}>
+            <Flex align="center" gap="3" mb="2">
+              {Icon && <Icon size={32} />}
+              <Heading size="7" style={{ margin: 0 }}>
+                {title}
+              </Heading>
+              {urgentBadge && (
+                <Badge color="red" size="2" radius="full">
+                  🚨 {urgentBadge.count} {urgentBadge.label}
+                </Badge>
+              )}
+            </Flex>
+            {subtitle && (
+              <Text color="gray" size="3">
+                {subtitle}
+              </Text>
+            )}
+          </Box>
+
+          {/* Stats et actions */}
+          <Flex direction="column" gap="3" align="end">
+            {/* Stats display et actions */}
+            <Flex gap="3" align="center" wrap="wrap">
+              {stats && Array.isArray(stats) && stats.length > 0 && (
+                <Flex gap="3" align="center">
+                  {stats.map((stat, idx) => (
+                    <Box key={idx} style={{ textAlign: 'center' }}>
+                      <Text size="2" color="gray" style={{ display: 'block', marginBottom: '4px' }}>
+                        {stat.label}
+                      </Text>
+                      <Heading size="5">
+                        {stat.value}
+                      </Heading>
+                    </Box>
+                  ))}
+                </Flex>
+              )}
+
+              {/* Actions buttons */
+              {onRefresh && (
+                <IconButton 
+                  variant="soft" 
+                  onClick={onRefresh} 
+                  size="2"
+                  title="Actualiser"
+                >
+                  🔄
+                </IconButton>
+              )}
+
+              {Array.isArray(actions) && actions.map((action, idx) => (
+                <Button
+                  key={idx}
+                  size="2"
+                  variant={action.variant || "soft"}
+                  color={action.color || "gray"}
+                  onClick={action.onClick}
+                >
+                  {action.icon && <span style={{ marginRight: '4px' }}>{action.icon}</span>}
+                  {action.label}
+                </Button>
+              ))}
+
+              {onAdd && (
+                <Button size="2" onClick={onAdd}>
+                  {addLabel}
+                </Button>
+              )}
+            </Flex>
+
+            {/* Sélection temporelle */}
+            {renderTimeSelectionControl()}
+          </Flex>
+        </Flex>
+      </Box>
+    </Box>
+  );
+}

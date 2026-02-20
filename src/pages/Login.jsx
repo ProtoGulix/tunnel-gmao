@@ -19,11 +19,11 @@ import {
 } from "@radix-ui/themes";
 
 // 4. Custom Components
-import ServerStatus from "@/components/ServerStatus";
-import BrandLogo from "@/components/common/BrandLogo";
+import ServerStatus from "@/components/ui/ServerStatus";
+import BrandLogo from "@/components/ui/BrandLogo";
 
 // 5. Custom Hooks
-import { useAuth } from "@/auth/AuthContext";
+import { useAuth } from "@/auth/useAuth";
 
 // ===== MAIN COMPONENT =====
 /**

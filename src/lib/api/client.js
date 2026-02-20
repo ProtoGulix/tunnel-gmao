@@ -1,181 +1,65 @@
 /**
- * HTTP Client Configuration & Infrastructure
+ * Client HTTP — Tunnel GMAO V3
  *
- * Provides a preconfigured axios instance with:
- * - Request/response interceptors for authentication and error handling
- * - Cache management for API responses
- * - Centralized token and error handling
+ * Client HTTP pur basé sur axios avec :
+ * - Authentification JWT automatique
+ * - Gestion centralisée des erreurs (401, 403, 404, 500)
+ * - Pas de transformation de données
+ * - Pas de logique métier
  *
  * @module lib/api/client
  *
- * Usage:
+ * Usage :
  * ```javascript
- * import { api, BASE_URL, getCacheKey, getFromCache } from './client';
- * const response = await api.get('/items/machines');
+ * import { api } from '@/lib/api/client';
+ * const response = await api.get('/interventions');
+ * const data = response.data;
  * ```
  */
 
-// ==============================
-// EXTERNAL DEPENDENCIES
-// ==============================
 import axios from 'axios';
 
 // ==============================
 // CONFIGURATION
 // ==============================
-const BASE_URL = import.meta.env.VITE_DATA_API_URL || 'http://localhost:8055';
-const BLOCK_API = import.meta.env.VITE_BLOCK_API === 'true';
-const BLOCK_API_ENDPOINTS = (import.meta.env.VITE_BLOCK_API_ENDPOINTS || '/items/machine')
-  .split(',')
-  .map((endpoint) => endpoint.trim())
-  .filter(Boolean);
 
 /**
- * Preconfigured axios instance for API calls.
+ * URL de base de l'API backend Python (FastAPI)
+ */
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/**
+ * Instance axios préconfigurée pour l'API Tunnel GMAO
  *
- * Features:
- * - Auto-adds Authorization header from localStorage
- * - Handles 401 (unauthorized) with automatic redirect to /login
- * - Handles 403 (forbidden) with logging
- * - Content-Type always application/json
- *
- * @type {import('axios').AxiosInstance}
+ * Fonctionnalités :
+ * - Envoie automatiquement les cookies (session_token)
+ * - Fallback sur Authorization header si token dans localStorage
+ * - Gère les erreurs 401 avec redirection vers /login
+ * - Gère les erreurs 403, 404, 500 avec logging
+ * - Content-Type: application/json par défaut
  */
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 secondes
+  withCredentials: true, // Active l'envoi automatique des cookies
 });
-
-// ==============================
-// CACHE MANAGEMENT
-// ==============================
-
-/**
- * In-memory cache for API responses.
- * Currently configured with 0ms TTL (real-time mode: no caching).
- *
- * @private
- * @type {Map<string, any>}
- */
-const cache = new Map();
-
-/**
- * Timestamps for cache entries (used for TTL enforcement).
- *
- * @private
- * @type {Map<string, number>}
- */
-const cacheTimestamps = new Map();
-
-/**
- * Cache time-to-live in milliseconds.
- * 0 = disabled (real-time mode, always fetch fresh data)
- *
- * @private
- * @type {number}
- */
-const CACHE_DURATION = 0;
-
-// ==============================
-// CACHE PUBLIC API
-// ==============================
-
-/**
- * Generate a cache key from endpoint and parameters.
- *
- * @param {string} endpoint - API endpoint (e.g., '/items/machines')
- * @param {Object} [params] - Query parameters object
- * @returns {string} Cache key for use with getFromCache/setCache
- *
- * @example
- * const key = getCacheKey('/items/machines', { zone_id: 5 });
- */
-export const getCacheKey = (endpoint, params) => {
-  return `${endpoint}:${JSON.stringify(params || {})}`;
-};
-
-/**
- * Retrieve cached data if available and not expired.
- *
- * @param {string} key - Cache key (generated via getCacheKey)
- * @returns {any|null} Cached data or null if not found/expired
- */
-export const getFromCache = (key) => {
-  if (!cache.has(key)) return null;
-
-  const timestamp = cacheTimestamps.get(key);
-  if (Date.now() - timestamp > CACHE_DURATION) {
-    cache.delete(key);
-    cacheTimestamps.delete(key);
-    return null;
-  }
-
-  return cache.get(key);
-};
-
-/**
- * Store data in cache with current timestamp.
- *
- * @param {string} key - Cache key (generated via getCacheKey)
- * @param {any} data - Data to cache
- */
-export const setCache = (key, data) => {
-  cache.set(key, data);
-  cacheTimestamps.set(key, Date.now());
-};
-
-/**
- * Invalidate all cache entries matching a pattern.
- *
- * @param {string} pattern - Pattern to match in cache keys (substring match)
- *
- * @example
- * invalidateCache('machines'); // clears all keys containing 'machines'
- */
-export const invalidateCache = (pattern) => {
-  const keys = Array.from(cache.keys());
-  keys.forEach((key) => {
-    if (key.includes(pattern)) {
-      cache.delete(key);
-      cacheTimestamps.delete(key);
-    }
-  });
-};
-
-/**
- * Clear all cached entries.
- */
-export const clearAllCache = () => {
-  cache.clear();
-  cacheTimestamps.clear();
-};
 
 // ==============================
 // REQUEST INTERCEPTOR
 // ==============================
 
 /**
- * Adds Authorization header from localStorage before each request.
- *
- * Token sources (in order of preference):
- * 1. auth_access_token (current standard)
- * 2. legacy_api_token (legacy, for backwards compatibility)
+ * Ajoute le token JWT dans le header Authorization en fallback
+ * (Le cookie session_token est automatiquement envoyé par le navigateur)
  */
 api.interceptors.request.use(
   (config) => {
-    if (BLOCK_API) {
-      const url = config.url || '';
-      const blocked = BLOCK_API_ENDPOINTS.some((endpoint) => url.includes(endpoint));
-      if (blocked) {
-        return Promise.reject(new axios.Cancel(`API blocked (${url})`));
-      }
-    }
-
-    // Prefer current standard token; fallback to legacy generic token
-    const token =
-      localStorage.getItem('auth_access_token') || localStorage.getItem('legacy_api_token');
+    // Fallback : si un token est stocké localement, l'envoyer en header
+    // (Utile pour mobile ou si les cookies sont désactivés)
+    const token = localStorage.getItem('auth_access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -189,52 +73,64 @@ api.interceptors.request.use(
 // ==============================
 // RESPONSE INTERCEPTOR
 // ==============================
-// Prefer generic token; fallback to legacy token name
+
 /**
-      localStorage.getItem('auth_access_token') || localStorage.getItem('legacy_api_token');
- * - 401 (Unauthorized): clears tokens and redirects to /login
- * - 403 (Forbidden): logs the incident for debugging
- * - Others: passes error to caller for handling
+ * Gère les erreurs HTTP de manière centralisée
  *
- * Token cleanup includes both current and legacy token names for migration support.
+ * - 401 (Non autorisé) : efface les tokens et redirige vers /login
+ * - 403 (Interdit) : log l'erreur pour debugging
+ * - 404 (Non trouvé) : log l'erreur
+ * - 500 (Erreur serveur) : log l'erreur
+ * - Autres : propage l'erreur à l'appelant
  */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized
-    if (error.response?.status === 401) {
-      // Save current location for redirect after login
+    const status = error.response?.status;
+
+    // 401 Unauthorized - Session expirée ou token invalide
+    if (status === 401) {
+      // Sauvegarder la page actuelle pour redirection après login
       const currentPath = window.location.pathname + window.location.search;
       if (currentPath !== '/login') {
         localStorage.setItem('redirect_after_login', currentPath);
       }
 
-      // Clear all token variants (current + legacy)
+      // Nettoyer les tokens
       localStorage.removeItem('auth_access_token');
       localStorage.removeItem('auth_refresh_token');
-      localStorage.removeItem('legacy_api_token');
-      localStorage.removeItem('legacy_api_refresh_token');
-      localStorage.removeItem('login_timestamp');
+      localStorage.removeItem('auth_user');
 
-      // Redirect to login
+      // Rediriger vers login
       window.location.href = '/login';
     }
 
-    // Log 403 Forbidden for debugging
-    if (error.response?.status === 403) {
-      console.error('API Error: 403 Forbidden (Permission Denied)', {
+    // 403 Forbidden - Permissions insuffisantes
+    if (status === 403) {
+      console.error('[API] 403 Forbidden - Accès refusé', {
         url: error.config?.url,
         method: error.config?.method,
-        data: error.response?.data,
+        message: error.response?.data?.message,
+      });
+    }
+
+    // 404 Not Found
+    if (status === 404) {
+      console.warn('[API] 404 Not Found', {
+        url: error.config?.url,
+        method: error.config?.method,
+      });
+    }
+
+    // 500 Internal Server Error
+    if (status === 500) {
+      console.error('[API] 500 Internal Server Error', {
+        url: error.config?.url,
+        method: error.config?.method,
+        message: error.response?.data?.message,
       });
     }
 
     return Promise.reject(error);
   }
 );
-
-// ==============================
-// EXPORTS
-// ==============================
-
-export { BASE_URL };

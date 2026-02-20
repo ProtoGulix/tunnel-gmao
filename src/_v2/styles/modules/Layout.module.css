@@ -1,0 +1,42 @@
+/**
+ * Styles du composant Layout principal
+ * Utilise CSS variables Radix UI pour couleurs
+ * Utilise constantes layoutConfig.js pour dimensions responsive
+ */
+
+.container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.main {
+  flex: 1;
+  background: var(--gray-1);
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  transition: margin-left 0.3s ease, margin-top 0.3s ease;
+}
+
+/* Desktop: sidebar visible à gauche (220px = SIDEBAR_WIDTH) */
+@media (min-width: 769px) {
+  .main {
+    margin-left: 220px;
+  }
+}
+
+/* Mobile: sidebar cachée, header en haut (56px = MOBILE_HEADER_HEIGHT) */
+@media (max-width: 768px) {
+  .main {
+    margin-top: 56px;
+    min-height: calc(100vh - 56px);
+    margin-left: 0;
+  }
+
+  /* Permettre scroll vertical sur mobile */
+  .main {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
