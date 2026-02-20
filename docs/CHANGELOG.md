@@ -1,3 +1,46 @@
+## 2.8.0 - 2026-02-20
+
+Stabilité: STABLE
+
+### Recherche et navigation ultra-rapides dans le stock
+
+#### Ce qui a été amélioré
+
+- **Recherche intelligente**: Quand vous tapez dans la barre de recherche, l'application attend que vous finissiez avant de chercher
+  - Avant : L'application lançait 6+ recherches quand vous tapiez "ROULEMENT"
+  - Après : 1 seule recherche après avoir fini de taper (gain de temps et moins de charge serveur)
+
+- **Gestion des gros stocks**: Vous pouvez maintenant gérer plus de 100 références de pièces facilement
+  - **Pagination ajoutée** : Naviguez entre les pages (25, 50, 100 ou 200 articles par page)
+  - **Compteur précis** : "Affichage de 1-50 sur 156 pièces"
+  - **Navigation rapide** : Passez d'une page à l'autre en un clic
+
+- **Recherche dans l'URL** : Votre recherche apparaît maintenant dans l'adresse de la page
+  - Exemple : `?search=roulement` s'affiche dans la barre d'adresse
+  - Gardez vos recherches en favoris ou partagez des liens de recherche
+  - Les boutons Précédent/Suivant du navigateur fonctionnent avec la recherche
+
+- **Recherche partout** : La recherche côté serveur fonctionne maintenant dans tous les formulaires
+  - Demandes d'achat : trouvez rapidement la pièce que vous cherchez
+  - Détail machine : recherche optimisée parmi tous les articles
+  - Plus d'informations complètes affichées pour chaque résultat
+
+#### Ce qui a été corrigé
+
+- **Erreur technique résolue** : Correction de l'erreur "items.filter is not a function" qui bloquait certains formulaires
+- **Affichage fluide** : Les lettres ne disparaissent plus quand vous tapez dans la recherche
+- **Résultats complets** : Toutes les informations des pièces s'affichent correctement (désignation, quantité, unité, etc.)
+
+#### Résultat pour vous
+
+- ✅ **Recherche ultra-rapide** : Réponse immédiate, moins d'appels au serveur
+- ✅ **Stocks volumineux** : Gérez facilement des centaines de références
+- ✅ **Navigation moderne** : Pagination claire et intuitive
+- ✅ **Meilleure expérience** : Plus fluide, plus réactif, plus agréable à utiliser
+- ✅ **Partage facile** : Partagez des liens de recherche avec vos collègues
+
+---
+
 ## 2.7.4 - 2026-02-19
 
 Stabilité: STABLE

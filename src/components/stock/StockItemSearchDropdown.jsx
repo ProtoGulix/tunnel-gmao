@@ -13,6 +13,7 @@ import { Search, Package, AlertCircle } from 'lucide-react';
 import { stock } from '@/lib/api/facade';
 import { normalizeText } from '@/lib/utils/textUtils';
 import { useError } from '@/contexts/ErrorContext';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // ===== COMPONENT =====
 /**
@@ -40,18 +41,29 @@ export default function StockItemSearchDropdown({
 }) {
   // ----- State -----
   const [allStockItems, setAllStockItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const { showError } = useError();
+  
+  // Debounce search to reduce API calls
+  const debouncedValue = useDebounce(value, 600);
 
-  // ----- Load Stock Items -----
+  // ----- Load Stock Items with server-side search -----
   useEffect(() => {
+    // Only search if term has at least 2 characters
+    if (debouncedValue.length < 2) {
+      setAllStockItems([]);
+      return;
+    }
+    
     const loadItems = async () => {
       try {
         setLoading(true);
-        const items = await stock.fetchStockItems();
+        const response = await stock.fetchStockItems({ search: debouncedValue });
+        // Handle paginated response: { items: [...], pagination: {...} }
+        const items = Array.isArray(response) ? response : (response.items || []);
         setAllStockItems(items);
       } catch (error) {
         showError(error);
@@ -60,7 +72,7 @@ export default function StockItemSearchDropdown({
       }
     };
     loadItems();
-  }, [showError]);
+  }, [debouncedValue, showError]);
 
   // ----- Update dropdown position -----
   useEffect(() => {
@@ -74,18 +86,8 @@ export default function StockItemSearchDropdown({
     }
   }, [showSuggestions]);
 
-  // ----- Suggestions filtrées -----
-  // TODO: Si dataset très large, considérer useMemo + debounce pour optimiser
-  const suggestions = value.length >= 2
-    ? allStockItems
-        .filter(item => {
-          const term = normalizeText(value.toLowerCase());
-          const name = normalizeText((item.name || '').toLowerCase());
-          const ref = normalizeText((item.ref || '').toLowerCase());
-          return name.includes(term) || ref.includes(term);
-        })
-        .slice(0, maxSuggestions)
-    : [];
+  // ----- Suggestions (already filtered by server) -----
+  const suggestions = value.length >= 2 ? allStockItems.slice(0, maxSuggestions) : [];
 
   // ----- Handlers -----
   // TODO: Ajouter handleKeyDown pour navigation clavier

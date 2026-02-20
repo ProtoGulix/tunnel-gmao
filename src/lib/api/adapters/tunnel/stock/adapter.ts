@@ -24,11 +24,21 @@ import { mapStockItemToFrontend, mapStockItemToBackend, mapStockSubFamilyToFront
 
 export const stockAdapter = {
   /**
-   * Fetch all stock items
+   * Fetch all stock items with pagination
+   * Returns { items: [...], pagination: {...} }
    */
   fetchStockItems: async (params?: any) => {
-    const raw = await fetchStockItemsRaw(params);
-    return Array.isArray(raw) ? raw.map(mapStockItemToFrontend) : [];
+    const response = await fetchStockItemsRaw(params);
+    
+    // Handle both old format (array) and new format (paginated)
+    if (Array.isArray(response)) {
+      return { items: response.map(mapStockItemToFrontend), pagination: null };
+    }
+    
+    return {
+      items: (response.items || []).map(mapStockItemToFrontend),
+      pagination: response.pagination || null
+    };
   },
 
   /**

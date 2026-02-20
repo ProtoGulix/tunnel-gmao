@@ -470,7 +470,17 @@ export interface MachinesNamespace {
  * Stock namespace
  */
 export interface StockNamespace {
-  fetchStockItems(): Promise<StockItem[]>;
+  fetchStockItems(params?: any): Promise<{ 
+    items: StockItem[]; 
+    pagination: {
+      total: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+      offset: number;
+      count: number;
+    } | null;
+  }>;
   createStockItem(item: Partial<StockItem>): Promise<StockItem>;
   updateStockItem(id: string, updates: Partial<StockItem>): Promise<StockItem>;
   deleteStockItem(id: string): Promise<void | true>;

@@ -10,6 +10,7 @@ import { tunnelApi } from '@/lib/api/adapters/tunnel/client';
 
 /**
  * Fetch all stock items with optional filters
+ * Returns paginated response with metadata
  */
 export const fetchStockItemsRaw = async (params?: {
   skip?: number;
@@ -19,7 +20,8 @@ export const fetchStockItemsRaw = async (params?: {
   search?: string;
 }) => {
   const response = await tunnelApi.get('/stock-items/', { params });
-  return Array.isArray(response.data) ? response.data : response.data?.data || [];
+  // API v2.x returns { items: [...], pagination: {...} }
+  return response.data;
 };
 
 /**

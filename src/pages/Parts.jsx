@@ -22,8 +22,10 @@ import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LoadingState from "@/components/common/LoadingState";
 import TableHeader from "@/components/common/TableHeader";
+import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import StockItemsTable from "@/components/stock/StockItemsTable";
 import EmptyState from "@/components/common/EmptyState";
+import Pagination from "@/components/common/Pagination";
 import ManufacturersTable from "@/components/purchase/manufacturers/ManufacturersTable";
 import SuppliersTable from "@/components/purchase/suppliers/SuppliersTable";
 import AddStockItemForm from "@/components/stock/AddStockItemDialog";
@@ -37,7 +39,6 @@ import StatusCallout from "@/components/common/StatusCallout";
 import { useStockItemsManagement } from "@/hooks/useStockItemsManagement";
 import { usePurchasingManagement } from "@/hooks/usePurchasingManagement";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
-import { useSearchParam } from "@/hooks/useSearchParam";
 import { useTemplates } from "@/hooks/useTemplate";
 import { DEFAULT_SUPPLIER_REF_FORM } from "@/config/stockManagementConfig";
 import { manufacturerItems, stock as stockAPI, partTemplates } from "@/lib/api/facade";
@@ -58,12 +59,16 @@ export default function Parts() {
 
   const [activeTab, setActiveTab] = useTabNavigation(PARTS_TABS.ITEMS, 'tab');
   const [dispatchResult, setDispatchResult] = useState(null);
-  const [formLoading, setFormLoading] = useState(false);
-  
-  const [stockSearchTerm, setStockSearchTerm] = useSearchParam('search', '');
-  const [supplierSearchTerm, setSupplierSearchTerm] = useSearchParam('search', '');
   const [compactRows, setCompactRows] = useState(false);
   const [isCreatingStockItem, setIsCreatingStockItem] = useState(false);
+  
+  // Search with debounce and URL sync
+  const { searchTerm: stockSearchTerm, debouncedSearchTerm, setSearchTerm: setStockSearchTerm } = useDebouncedSearch('search', 600);
+  const supplierSearchTerm = ''; // Local filter for suppliers tab (currently unused - no search field)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   
   const [supplierRefFormData, setSupplierRefFormData] = useState(DEFAULT_SUPPLIER_REF_FORM);
 
@@ -111,14 +116,8 @@ export default function Parts() {
     return counts;
   }, [stock.stockItems]);
   
-  const filteredStockItems = useMemo(() => {
-    return stock.stockItems.filter(item => (
-      !stockSearchTerm ||
-      item.name?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-      item.ref?.toLowerCase().includes(stockSearchTerm.toLowerCase()) ||
-      item.family_code?.toLowerCase().includes(stockSearchTerm.toLowerCase())
-    ));
-  }, [stock.stockItems, stockSearchTerm]);
+  // No client-side filtering/pagination - handled by API
+  const displayedStockItems = stock.stockItems;
 
   const filteredSuppliers = useMemo(() => {
     if (!supplierSearchTerm.trim()) return purchasing.suppliers;
@@ -132,31 +131,42 @@ export default function Parts() {
 
   const partsStats = useMemo(
     () => ({
-      total: stock.stockItems.length,
+      total: stock.pagination?.total ?? stock.stockItems.length,
       suppliers: purchasing.suppliers.length,
       manufacturers: allManufacturers.length,
     }),
-    [stock.stockItems.length, purchasing.suppliers.length, allManufacturers.length]
+    [stock.pagination, stock.stockItems.length, purchasing.suppliers.length, allManufacturers.length]
   );
 
   // ========== CALLBACKS ==========
+  const loadStockWithPagination = useCallback(async (isInitial = false) => {
+    const skip = (currentPage - 1) * itemsPerPage;
+    const params = {
+      skip,
+      limit: itemsPerPage,
+      ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {})
+    };
+    await stock.loadStockItems(isInitial, params);
+  }, [stock, currentPage, itemsPerPage, debouncedSearchTerm]);
+
   const refreshStock = useCallback(async () => {
-    await stock.loadStockItems(false);
-  }, [stock]);
+    await loadStockWithPagination(false);
+  }, [loadStockWithPagination]);
 
   const refreshSuppliers = useCallback(async () => {
     await purchasing.loadSuppliers(false);
   }, [purchasing]);
 
   const handleFamiliesUpdated = useCallback(() => {
-    stock.loadStockItems(false);
-  }, [stock]);
+    loadStockWithPagination(false);
+  }, [loadStockWithPagination]);
 
   const handleAddStockItem = async (itemData) => {
     try {
       const newItem = await stock.addStockItem(itemData);
-      await refreshStock();
       setIsCreatingStockItem(false);
+      setCurrentPage(1); // Reset to first page
+      await loadStockWithPagination(false);
       
       setDispatchResult({
         type: 'success',
@@ -184,7 +194,7 @@ export default function Parts() {
       delete apiData.manufacturer_designation;
 
       const updatedItem = await stock.updateItem(itemId, apiData);
-      await refreshStock();
+      await loadStockWithPagination(false);
       
       setDispatchResult({
         type: 'success',
@@ -226,7 +236,6 @@ export default function Parts() {
     }
 
     try {
-      setFormLoading(true);
       let manufacturer_item_id = null;
       
       const manuName = currentFormData.manufacturer_name?.trim() || '';
@@ -256,7 +265,7 @@ export default function Parts() {
 
       await Promise.all([
         stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
+        loadStockWithPagination(false),
       ]);
 
       setSupplierRefFormData(DEFAULT_SUPPLIER_REF_FORM);
@@ -275,17 +284,15 @@ export default function Parts() {
           : 'Erreur lors de l\'ajout de la référence',
         details: error.message,
       });
-    } finally {
-      setFormLoading(false);
     }
-  }, [stock, supplierRefFormData, setDispatchResult]);
+  }, [stock, supplierRefFormData, setDispatchResult, loadStockWithPagination]);
 
   const handleDeleteSupplierRef = useCallback(async (refId, stockItemId) => {
     try {
       await stock.deleteSupplierRef(refId);
       await Promise.all([
         stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
+        loadStockWithPagination(false),
       ]);
       
       setDispatchResult({
@@ -300,14 +307,14 @@ export default function Parts() {
         message: 'Erreur lors de la suppression',
       });
     }
-  }, [stock, setDispatchResult]);
+  }, [stock, setDispatchResult, loadStockWithPagination]);
 
   const handleUpdateSupplierRef = useCallback(async (refId, updates, stockItemId) => {
     try {
       await stock.updateSupplierRef(refId, updates);
       await Promise.all([
         stock.loadSupplierRefs(stockItemId),
-        stock.loadStockItems(false),
+        loadStockWithPagination(false),
       ]);
       
       setDispatchResult({
@@ -322,7 +329,7 @@ export default function Parts() {
         message: 'Erreur lors de la mise à jour',
       });
     }
-  }, [stock, setDispatchResult]);
+  }, [stock, setDispatchResult, loadStockWithPagination]);
 
   // ========== TEMPLATE CALLBACKS ==========
   const handleCreateTemplate = () => {
@@ -410,18 +417,40 @@ export default function Parts() {
 
   // ========== EFFECTS ==========
   const initialLoadRef = useRef(false);
+  const previousSearchTermRef = useRef(debouncedSearchTerm);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
 
     Promise.all([
-      stock.loadStockItems(true),
+      loadStockWithPagination(true),
       purchasing.loadSuppliers(true)
     ]);
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reload when pagination or search changes
+  // When search changes, reset to page 1 first to avoid double loading
+  useEffect(() => {
+    if (!initialLoadRef.current) return;
+    
+    // Detect if search term changed
+    const searchChanged = previousSearchTermRef.current !== debouncedSearchTerm;
+    previousSearchTermRef.current = debouncedSearchTerm;
+    
+    // If search changed and we're not on page 1, just reset page
+    // The page change will trigger another load with the new search term
+    if (searchChanged && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+    
+    // Otherwise, load data with current parameters
+    loadStockWithPagination(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
 
   // Auto-refresh only for items and suppliers tabs
   const shouldAutoRefresh = activeTab === PARTS_TABS.ITEMS || activeTab === PARTS_TABS.SUPPLIERS;
@@ -430,7 +459,7 @@ export default function Parts() {
     if (!shouldAutoRefresh) return;
 
     await Promise.all([
-      stock.loadStockItems(false),
+      loadStockWithPagination(false),
       purchasing.loadSuppliers(false)
     ]);
   }, 30, shouldAutoRefresh);
@@ -439,10 +468,12 @@ export default function Parts() {
   const componentError = error;
 
   // ========== HEADER ==========
+  const totalStockItems = stock.pagination?.total ?? stock.stockItems.length;
+  
   const headerProps = usePageHeaderProps({
     subtitle:
       activeTab === "items"
-        ? `${filteredStockItems.length} pièce${filteredStockItems.length > 1 ? "s" : ""}`
+        ? `${totalStockItems} pièce${totalStockItems > 1 ? "s" : ""}`
         : activeTab === "suppliers"
         ? `${filteredSuppliers.length} fournisseur${filteredSuppliers.length > 1 ? "s" : ""}`
         : `Fabricants`,
@@ -452,7 +483,7 @@ export default function Parts() {
       { label: "Fabricants", value: partsStats.manufacturers },
     ] : [],
     onRefresh: () => Promise.all([
-      stock.loadStockItems(true),
+      loadStockWithPagination(true),
       purchasing.loadSuppliers(true)
     ]),
   });
@@ -476,7 +507,7 @@ export default function Parts() {
           <ErrorDisplay
             error={componentError}
             onRetry={() => Promise.all([
-              stock.loadStockItems(true),
+              loadStockWithPagination(true),
               purchasing.loadSuppliers(true)
             ])}
             title="Erreur de chargement du référentiel"
@@ -517,7 +548,7 @@ export default function Parts() {
                 <Package size={14} />
                 <Text>Pièces</Text>
                 <Badge color="gray" variant="soft" size="1">
-                  {filteredStockItems.length}
+                  {totalStockItems}
                 </Badge>
               </Flex>
             </Tabs.Trigger>
@@ -564,7 +595,7 @@ export default function Parts() {
                 <TableHeader
                   icon={Package}
                   title="Pièces"
-                  count={filteredStockItems.length}
+                  count={totalStockItems}
                   searchValue={stockSearchTerm}
                   onSearchChange={setStockSearchTerm}
                   searchPlaceholder="Recherche (nom, ref, famille...)"
@@ -589,7 +620,7 @@ export default function Parts() {
                   </Box>
                 )}
                 
-                {filteredStockItems.length === 0 ? (
+                {displayedStockItems.length === 0 ? (
                   <EmptyState
                     icon={<Package size={64} />}
                     title="Aucune pièce trouvée"
@@ -608,9 +639,10 @@ export default function Parts() {
                     ]}
                   />
                 ) : (
-                  <StockItemsTable
-                    key={`stock-items-${manufacturersVersion}`}
-                    items={filteredStockItems}
+                  <>
+                    <StockItemsTable
+                      key={`stock-items-${manufacturersVersion}`}
+                      items={displayedStockItems}
                     compactRows={compactRows}
                     specsCounts={stock.specsCounts}
                     specsHasDefault={stock.specsHasDefault}
@@ -629,6 +661,22 @@ export default function Parts() {
                     allManufacturers={allManufacturers}
                     stockFamilies={stockFamilies}
                   />
+                  
+                  {/* Pagination */}
+                  {stock.pagination && (
+                    <Pagination
+                      currentPage={currentPage}
+                      totalItems={stock.pagination.total}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setCurrentPage}
+                      onItemsPerPageChange={(newSize) => {
+                        setItemsPerPage(newSize);
+                        setCurrentPage(1);
+                      }}
+                      pageSizeOptions={[25, 50, 100, 200]}
+                    />
+                  )}
+                  </>
                 )}
               </Flex>
             )}

@@ -13,6 +13,7 @@ const normalizeId = (value) => {
  */
 export const useStockItemsManagement = (onError) => {
   const [stockItems, setStockItems] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [stockItemSuppliers, setStockItemSuppliers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [supplierRefsCounts, setSupplierRefsCounts] = useState({});
@@ -22,12 +23,16 @@ export const useStockItemsManagement = (onError) => {
   const [standardSpecsByItem, setStandardSpecsByItem] = useState({});
 
   const loadStockItems = useCallback(
-    async (isInitial = false) => {
+    async (isInitial = false, params = {}) => {
       try {
         if (isInitial) setLoading(true);
 
-        const data = await stock.fetchStockItems();
+        const response = await stock.fetchStockItems(params);
+        const data = response.items || response; // Support both formats
+        const paginationData = response.pagination || null;
+
         setStockItems(data);
+        setPagination(paginationData);
 
         if (data.length > 0) {
           const zeroCounts = {};
@@ -41,11 +46,11 @@ export const useStockItemsManagement = (onError) => {
           setSpecsHasDefault(zeroDefaults);
         }
 
-        return data;
+        return { items: data, pagination: paginationData };
       } catch (error) {
         console.error('Erreur chargement stock:', error);
         onError?.('Impossible de charger le stock');
-        return [];
+        return { items: [], pagination: null };
       } finally {
         if (isInitial) setLoading(false);
       }
@@ -197,6 +202,7 @@ export const useStockItemsManagement = (onError) => {
   return {
     // State
     stockItems,
+    pagination,
     stockItemSuppliers,
     loading,
     supplierRefsCounts,

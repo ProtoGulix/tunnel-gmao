@@ -4,6 +4,7 @@ import { Box, Card, Flex, Text, Badge, IconButton } from '@radix-ui/themes';
 import { ShoppingCart, Package, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { stock } from '@/lib/api/facade';
 import { DEFAULT_UNIT, resolveUnitForItem } from '@/config/units';
+import { useDebounce } from '@/hooks/useDebounce';
 import SearchableSelect from '@/components/common/SearchableSelect';
 import SelectionSummary from '@/components/common/SelectionSummary';
 import DetailsRow from './DetailsRow';
@@ -19,12 +20,28 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
   const [searchTerm, setSearchTerm] = useState('');
   const [unit, setUnit] = useState(DEFAULT_UNIT);
   const [formError, setFormError] = useState('');
+  
+  // Debounce search term to reduce API calls
+  const debouncedSearchTerm = useDebounce(searchTerm, 600);
 
+  // Load stock items with server-side search
   useEffect(() => {
-    stock.fetchStockItems()
-      .then((items) => setAllStockItems(items))
+    // Only search if term has at least 2 characters
+    if (debouncedSearchTerm.length < 2) {
+      setAllStockItems([]);
+      return;
+    }
+    
+    const params = { search: debouncedSearchTerm };
+    
+    stock.fetchStockItems(params)
+      .then((response) => {
+        // Handle paginated response: { items: [...], pagination: {...} }
+        const items = Array.isArray(response) ? response : (response.items || []);
+        setAllStockItems(items);
+      })
       .catch(console.error);
-  }, []);
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     setUnit(resolveUnitForItem(selectedItem));

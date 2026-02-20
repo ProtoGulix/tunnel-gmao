@@ -167,11 +167,16 @@ export default function MachineDetail() {
 
   // Chargement des articles de stock
   const { 
-    data: stockItems = [] 
+    data: stockItemsResponse 
   } = useApiCall(
-    () => stock.fetchStockItems(),
+    () => stock.fetchStockItems({ limit: 1000 }), // Load many items for machine detail context
     { autoExecute: true }
   );
+  
+  // Extract items array from paginated response
+  const stockItems = Array.isArray(stockItemsResponse) 
+    ? stockItemsResponse 
+    : (stockItemsResponse?.items || []);
 
   // Filtrage des interventions décisionnelles (ouvertes + clôturées < 30j)
   const decisionalInterventions = useMemo(
