@@ -8,6 +8,7 @@ import Layout from '@/components/layout/Layout';
 // Pages
 import Login from '@/pages/auth/Login';
 import HomePage from '@/pages/home/HomePage';
+import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 
 /**
  * Composant de route protégée
@@ -53,6 +54,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <HomePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/service-status"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ServiceStatusPage />
             </Layout>
           </ProtectedRoute>
         }

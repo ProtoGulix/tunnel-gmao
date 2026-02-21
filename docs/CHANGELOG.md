@@ -4,6 +4,41 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.1.0 - 2026-02-21
+
+Stabilité : **STABLE** ✅
+
+### 🎯 Nouvelle fonctionnalité : Service Status
+
+Nouvelle page d'analyse accessible depuis le menu **Pilotage**.
+
+**Indicateurs disponibles** :
+
+- Taux de charge maintenance (capacité utilisée)
+- Analyse de la fragmentation (actions courtes dispersantes)
+- Capacité de pilotage (temps coordination/planification)
+- Répartition du temps : Production / Dépannage / Pilotage / Fragmentation
+- Top causes de fragmentation
+- Consommation par site/atelier
+
+**Interface** :
+
+- Filtre de période personnalisable (défaut : 90 jours)
+- Cartes KPI avec codes couleur (vert/orange/rouge)
+- Alertes automatiques selon seuils
+- Bouton de rafraîchissement
+
+**Bénéfices** :
+
+- Vision instantanée de la santé du service (vs calculs Excel manuels)
+- Identification rapide des problèmes systémiques
+- Aide à la décision basée sur données réelles
+- Communication facilitée avec direction
+
+**Compatibilité** : Backend ≥ 1.5.0 requis
+
+---
+
 ## 3.0.1 - 2026-02-21
 
 Stabilité : **en consolidation**

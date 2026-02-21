@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Flex, Select } from "@radix-ui/themes";
 import { CalendarDays } from "lucide-react";
-import DateRangeFilter from "@/components/common/DateRangeFilter";
+import DateRangeFilter from "@/components/ui/DateRangeFilter";
 
 /** Options par défaut de sélection temporelle */
 const DEFAULT_OPTIONS = [

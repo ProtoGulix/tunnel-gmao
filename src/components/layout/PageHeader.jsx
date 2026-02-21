@@ -17,7 +17,7 @@ import { Box } from "@radix-ui/themes";
 import { ClipboardList } from "lucide-react";
 import StandardHeaderLayout from "./StandardHeaderLayout";
 import HierarchicalHeaderLayout from "./HierarchicalHeaderLayout";
-import useTimeSelection from "@/hooks/useTimeSelection";
+import useTimeSelection from "@/hooks/shared/useTimeSelection";
 
 /**
  * En-tête de page unifié et réutilisable

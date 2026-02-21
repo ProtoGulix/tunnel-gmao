@@ -6,39 +6,24 @@ import {
   Settings,
   Package,
   FileText,
-  Activity,
   TrendingUp,
   AlertTriangle,
   Database,
 } from 'lucide-react';
 
 /**
- * Configuration des pages de l'application
- *
- * Architecture V3 : Auto-discovery des configs de pages
- * - Les pages déclarent leur config dans [PageName].config.js
- * - Ce fichier automatise la collecte via import.meta.glob
- * - Les pages sans config sont ignorées
- *
- * Pages avec config déclarée :
- * - HomePage ✅
- * - Login ✅
- *
- * Pages en attente de migration :
- * - Toutes les autres (interventions, équipements, etc.)
+ * Configuration des pages (V3 : Auto-discovery via *.config.js)
+ * HomePage ✅ | Login ✅ | ServiceStatus ✅
+ * En migration : interventions, équipements, stock, etc.
  */
 
 // Auto-discovery : importer toutes les configs de pages
 const pageConfigModules = import.meta.glob('@/pages/**/*.config.js', { eager: true });
-
-// Extraire les PAGE_CONFIG et filtrer les valides
 const discoveredPages = Object.values(pageConfigModules)
   .map((module) => module.PAGE_CONFIG)
   .filter(Boolean);
 
-// Pages non migrées (temporaire - à supprimer progressivement)
 const LEGACY_PAGES = [
-  // Pages publiques (à migrer)
   {
     id: 'intervention-request',
     path: '/public/intervention-request',
@@ -95,9 +80,9 @@ const LEGACY_PAGES = [
     label: 'Détail intervention',
     icon: FileText,
     pageTitle: "Détail de l'intervention",
-    pageSubtitle: null, // Sera défini dynamiquement
+    pageSubtitle: null,
     requiresAuth: true,
-    showInMenu: false, // Ne pas afficher dans le menu
+    showInMenu: false,
   },
   {
     id: 'equipements',
@@ -146,15 +131,6 @@ const LEGACY_PAGES = [
     requiresAuth: true,
   },
   {
-    id: 'service-status',
-    path: '/service-status',
-    label: 'État du service',
-    icon: Activity,
-    pageTitle: 'État du service',
-    pageSubtitle: 'Charge, fragmentation, capacité réelle',
-    requiresAuth: true,
-  },
-  {
     id: 'technical-workload',
     path: '/charge-technique',
     label: 'Charge technique',
@@ -178,7 +154,7 @@ const LEGACY_PAGES = [
       triggerLabel: "Période d'analyse",
     },
     requiresAuth: true,
-    disabled: true, // BETA: endpoint /stats/anomalies-saisie en cours de refactoring
+    disabled: true,
   },
   {
     id: 'qualite-donnees',
@@ -191,43 +167,22 @@ const LEGACY_PAGES = [
   },
 ];
 
-// Fusion : pages découvertes + pages legacy
 export const PAGES_CONFIG = [...discoveredPages, ...LEGACY_PAGES];
 
-// Rétrocompatibilité : export de MENU_CONFIG
 export const MENU_CONFIG = {
   public: PAGES_CONFIG.filter((p) => p.public || p.publicOnly),
   private: PAGES_CONFIG.filter((p) => p.requiresAuth && !p.publicOnly),
 };
 
-/**
- * Retourne les items du menu selon l'état d'authentification
- * @param {boolean} isAuthenticated - Si l'utilisateur est connecté
- * @returns {Array} Liste des items à afficher
- */
+/** Retourne les items du menu selon l'état d'authentification */
 export function getMenuItems(isAuthenticated) {
   return PAGES_CONFIG.filter((item) => {
-    // Ne pas afficher les items masqués du menu
-    if (item.showInMenu === false) return false;
-
-    // Ne pas afficher les items désactivés
-    if (item.disabled === true) return false;
-
-    if (isAuthenticated) {
-      // Mode connecté : tout sauf publicOnly
-      return !item.publicOnly;
-    } else {
-      // Mode public : uniquement les pages publiques
-      return item.public || item.publicOnly;
-    }
+    if (item.showInMenu === false || item.disabled === true) return false;
+    if (isAuthenticated) return !item.publicOnly;
+    return item.public || item.publicOnly;
   });
 }
-
-/**
- * Retourne les sections groupées pour l'affichage
- * @param {boolean} isAuthenticated - Si l'utilisateur est connecté
- * @returns {Object} Sections avec leurs items
- */
+/** Retourne les sections groupées pour l'affichage */
 export function getMenuSections(isAuthenticated) {
   const menuItems = getMenuItems(isAuthenticated);
 
@@ -243,54 +198,24 @@ export function getMenuSections(isAuthenticated) {
   }
 }
 
-/**
- * Trouve une configuration de page par son chemin
- * @param {string} path - Chemin de la page (peut contenir des paramètres comme :id)
- * @returns {Object|null} Configuration de la page ou null si non trouvée
- */
+/** Trouve une configuration de page par son chemin */
 export function getPageConfig(path) {
-  // Recherche exacte d'abord
   let page = PAGES_CONFIG.find((p) => p.path === path);
-
-  // Si pas trouvé, chercher avec correspondance de pattern (pour les routes dynamiques)
   if (!page) {
     page = PAGES_CONFIG.find((p) => {
       const pattern = p.path.replace(/:[^/]+/g, '[^/]+');
-      const regex = new RegExp(`^${pattern}$`);
-      return regex.test(path);
+      return new RegExp(`^${pattern}$`).test(path);
     });
   }
-
   return page || null;
 }
-
-/**
- * Trouve une configuration de page par son ID
- * @param {string} id - ID de la page
- * @returns {Object|null} Configuration de la page ou null si non trouvée
- */
+/** Trouve une config de page par ID */
 export function getPageConfigById(id) {
   return PAGES_CONFIG.find((p) => p.id === id) || null;
 }
-
-/**
- * Vérifie si l'utilisateur a accès à une page
- * @param {Object} pageConfig - Configuration de la page
- * @param {boolean} isAuthenticated - Si l'utilisateur est connecté
- * @returns {boolean} True si l'utilisateur a accès
- */
+/** Vérifie si l'utilisateur a accès à une page */
 export function canAccessPage(pageConfig, isAuthenticated) {
   if (!pageConfig) return false;
-
-  // Pages publiques accessibles sans authentification
-  if (pageConfig.public || pageConfig.publicOnly) {
-    return true;
-  }
-
-  // Pages privées nécessitent authentification
-  if (pageConfig.requiresAuth) {
-    return isAuthenticated;
-  }
-
-  return true;
+  if (pageConfig.public || pageConfig.publicOnly) return true;
+  return pageConfig.requiresAuth ? isAuthenticated : true;
 }

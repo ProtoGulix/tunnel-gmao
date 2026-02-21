@@ -3,7 +3,7 @@
 > **Document Maître** : Toutes les conventions de développement du projet
 >
 > **Dernière mise à jour**: 21 février 2026
-> **Version**: 3.0.1
+> **Version**: 3.1.0
 
 ---
 
