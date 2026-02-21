@@ -16,7 +16,7 @@
 import { Table, Button, Flex, Text, Box } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { ArrowRight, ChevronDown, ChevronUp } from "@/lib/icons";
-import LoadingState from "@/components/common/LoadingState";
+import LoadingState from "@/components/ui/LoadingState";
 import { useState } from "react";
 
 /**

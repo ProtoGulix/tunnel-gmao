@@ -152,7 +152,7 @@ export default function StandardHeaderLayout(props) {
       {/* Section droite : Actions + Contrôles */}
       <Flex align="center" gap="2" style={{ flexShrink: 0 }}>
         {/* Actions personnalisées */}
-        {actions &&
+        {actions && Array.isArray(actions) &&
           actions.map((action, idx) => {
             if (action.label && typeof action.label !== "string") {
               return <div key={idx}>{action.label}</div>;

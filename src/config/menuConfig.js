@@ -56,15 +56,6 @@ const LEGACY_PAGES = [
     requiresAuth: true,
   },
   {
-    id: 'interventions',
-    path: '/interventions',
-    label: 'Interventions',
-    icon: ClipboardList,
-    pageTitle: 'Gestion des interventions',
-    pageSubtitle: 'Suivi et gestion de toutes les interventions',
-    requiresAuth: true,
-  },
-  {
     id: 'interventions-new',
     path: '/intervention/new',
     label: 'Nouvelle intervention',

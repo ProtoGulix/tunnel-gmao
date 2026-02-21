@@ -4,6 +4,42 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.3.0 - 2026-02-21
+
+Stabilité : **STABLE** ✅
+
+### 📋 Nouvelle fonctionnalité : Liste des Interventions
+
+Nouvelle page de gestion des interventions accessible depuis le menu **Maintenance**.
+
+**Organisation intelligente** :
+
+- 4 blocs visuels : À faire maintenant, Bloqué, Projets/Support, À archiver
+- Segmentation automatique selon le statut et la priorité
+- Tri intelligent : priorité, fiches à imprimer, puis âge
+- Badge d'âge visible uniquement si intervention urgente > 7 jours ou > 30 jours
+
+**Fonctionnalités** :
+
+- Recherche par code machine, code intervention ou mot-clé
+- Affichage du code intervention, titre, machine, priorité, statut
+- Blocs repliables pour meilleure lisibilité
+- Bloc "À archiver" replié par défaut
+- Accès direct au détail d'une intervention
+- Rafraîchissement automatique toutes les 30 secondes
+
+**Bénéfices** :
+
+- Vision claire des interventions par urgence
+- Priorisation facilitée du travail quotidien
+- Identification rapide des interventions bloquées
+- Séparation des projets long-terme du curatif urgent
+- Diminution du temps de recherche
+
+**Compatibilité** : Backend ≥ 1.0.0 requis
+
+---
+
 ## 3.2.0 - 2026-02-21
 
 Stabilité : **STABLE** ✅
