@@ -1,5 +1,4 @@
-import { Box, Container, Flex, Heading, Text, Card, Button } from '@radix-ui/themes';
-import { useNavigate } from 'react-router-dom';
+import { Box, Container, Flex, Heading, Text, Card } from '@radix-ui/themes';
 import { useAuth } from '@/auth/useAuth';
 import BrandLogo from '@/components/ui/BrandLogo';
 
@@ -7,19 +6,13 @@ import BrandLogo from '@/components/ui/BrandLogo';
  * Page d'accueil temporaire — Tunnel GMAO V3
  * 
  * Page minimale affichant l'état de la migration V2 → V3.
- * Permet de tester que l'authentification et le routing fonctionnent.
+ * Le Layout (sidebar + navigation) est géré par routes.jsx.
  * 
  * @component
- * @returns {JSX.Element} Page d'accueil avec infos V3
+ * @returns {JSX.Element} Contenu de la page d'accueil
  */
 export default function HomePage() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user } = useAuth();
 
   return (
     <Box
@@ -28,7 +21,6 @@ export default function HomePage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--gray-2)',
         padding: '2rem',
       }}
     >
@@ -62,19 +54,6 @@ export default function HomePage() {
               )}
             </Flex>
 
-            {/* Actions */}
-            <Flex gap="3">
-              {user ? (
-                <Button size="3" variant="soft" onClick={handleLogout}>
-                  Se déconnecter
-                </Button>
-              ) : (
-                <Button size="3" onClick={() => navigate('/login')}>
-                  Se connecter
-                </Button>
-              )}
-            </Flex>
-
             {/* Info technique */}
             <Card size="2" variant="surface" style={{ width: '100%' }}>
               <Flex direction="column" gap="2">
@@ -84,13 +63,13 @@ export default function HomePage() {
                 <Text size="1" color="gray">
                   • Structure V3 créée
                   <br />
-                  • Code V2 préservé dans src/_v2
+                  • Layout avec sidebar intégré
                   <br />
                   • Authentification JWT active
                   <br />
                   • Router React configuré
                   <br />
-                  • Layout et composants UI disponibles
+                  • Migration V2 préservée dans src/_v2
                 </Text>
               </Flex>
             </Card>

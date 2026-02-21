@@ -4,6 +4,35 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.0.1 - 2026-02-21
+
+Stabilité : **en consolidation**
+
+### Impact fonctionnel
+
+Aucun changement visible pour l'utilisateur.
+
+### Stabilisation / Dette technique
+
+- Restructuration interne par domaine métier → réduit le risque de régression lors de l'ajout de nouvelles fonctionnalités
+- Détection automatique des nouvelles pages → facilite l'extension du menu sans modification manuelle centralisée
+- Documentation standardisée des processus de développement → limite les erreurs et améliore la cohérence entre fonctionnalités
+
+### Composants / Modules concernés
+
+- Pages : Accueil, Authentification
+- Configuration du menu : système de détection automatique
+- Documentation développeur : procédure de création de page standardisée
+- Navigation : structure d'importation modernisée
+
+### Points de vigilance
+
+- Nettoyage manuel requis après migration (fichiers obsolètes à supprimer)
+- Toute nouvelle page nécessite une déclaration de configuration pour apparaître dans le menu
+- Les pages non configurées restent accessibles par URL mais invisibles dans la navigation
+
+---
+
 ## 3.0.0 - 2026-02-20
 
 Stabilité: **STABLE** ✅

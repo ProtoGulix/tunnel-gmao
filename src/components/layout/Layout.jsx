@@ -51,7 +51,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/useAuth";
 import Sidebar from "./Sidebar";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useMediaQuery } from "@/hooks/shared/useMediaQuery";
 import { MOBILE_QUERY } from "@/config/layoutConfig";
 import styles from '@/styles/modules/Layout.module.css';
 

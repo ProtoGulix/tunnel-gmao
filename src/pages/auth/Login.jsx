@@ -31,7 +31,7 @@ import { useAuth } from "@/auth/useAuth";
  * 
  * Fonctionnalités :
  * - Authentification utilisateur (email + mot de passe)
- * - Redirection post-login vers destination prévue ou /interventions
+ * - Redirection post-login vers destination prévue ou /technician
  * - Monitoring statut serveur (offline mode)
  * - Gestion erreurs réseau et authentification
  * - Stockage redirection en localStorage
@@ -40,7 +40,7 @@ import { useAuth } from "@/auth/useAuth";
  * @returns {JSX.Element} Page login avec formulaire et logo
  * 
  * @example
- * // Route publique dans App.jsx
+ * // Route publique dans routes.jsx
  * <Route path="/login" element={<Login />} />
  */
 export default function Login() {
@@ -65,7 +65,7 @@ export default function Login() {
       localStorage.removeItem("redirect_after_login");
       navigate(decodeURIComponent(redirectUrl), { replace: true });
     } else {
-      navigate("/technician", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [navigate]);
 
@@ -85,7 +85,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      handleRedirectAfterLogin(); // Réutilise la même logique
+      handleRedirectAfterLogin();
     } catch (err) {
       console.error("Erreur de connexion:", err);
       

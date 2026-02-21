@@ -20,10 +20,10 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 
 // 3. Components
-import MobileHeader from '@/components/common/MobileHeader';
-import SidebarMenuItem from '@/components/common/SidebarMenuItem';
-import SidebarFooter from '@/components/common/SidebarFooter';
-import BrandLogo from '@/components/common/BrandLogo';
+import MobileHeader from '@/components/layout/MobileHeader';
+import SidebarMenuItem from '@/components/layout/SidebarMenuItem';
+import SidebarFooter from '@/components/layout/SidebarFooter';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 // 4. Config
 import { getMenuSections } from '@/config/menuConfig';
@@ -32,7 +32,7 @@ import COLOR_PALETTE from '@/config/colorPalette';
 import { version as APP_VERSION } from '@/../package.json';
 
 // 5. Hooks
-import { useSidebarState } from './common/useSidebarState';
+import { useSidebarState } from '@/hooks/shared/useSidebarState';
 
 // ===== CONSTANTES =====
 const COLORS = {

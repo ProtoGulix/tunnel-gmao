@@ -1,9 +1,13 @@
+import PropTypes from 'prop-types';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 
+// Layout
+import Layout from '@/components/layout/Layout';
+
 // Pages
-import Login from '@/pages/Login';
-import HomePage from '@/pages/HomePage';
+import Login from '@/pages/auth/Login';
+import HomePage from '@/pages/home/HomePage';
 
 /**
  * Composant de route protégée
@@ -23,6 +27,10 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 /**
  * Configuration des routes — Tunnel GMAO V3
  * 
@@ -35,15 +43,17 @@ function ProtectedRoute({ children }) {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Route publique */}
+      {/* Route publique - sans layout */}
       <Route path="/login" element={<Login />} />
 
-      {/* Routes protégées */}
+      {/* Routes protégées - avec layout */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <HomePage />
+            <Layout>
+              <HomePage />
+            </Layout>
           </ProtectedRoute>
         }
       />
