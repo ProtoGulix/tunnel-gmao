@@ -4,6 +4,40 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.2.0 - 2026-02-21
+
+Stabilité : **STABLE** ✅
+
+### 🔍 Nouvelle fonctionnalité : Qualité des Données
+
+Nouvelle page de contrôle qualité accessible depuis le menu **Production**.
+
+**Détection automatique** :
+
+- 13 règles de contrôle sur 4 entités (actions, interventions, stock, achats)
+- Problèmes de complétude (champs manquants)
+- Problèmes de cohérence (valeurs suspectes, incohérences temporelles)
+- Classification par sévérité : Critique / Moyenne
+
+**Interface** :
+
+- Vue synthétique : Total problèmes, critiques, moyennes
+- Filtres : Sévérité et type d'entité
+- Détail par entité avec contexte (intervention, article, dates)
+- Codes couleur par gravité
+- Message de confirmation si aucun problème
+
+**Bénéfices** :
+
+- Détection précoce des erreurs de saisie
+- Amélioration de la fiabilité des analyses
+- Facilite la correction ciblée
+- Maintien de la qualité des données dans le temps
+
+**Compatibilité** : Backend ≥ 1.5.0 requis
+
+---
+
 ## 3.1.0 - 2026-02-21
 
 Stabilité : **STABLE** ✅

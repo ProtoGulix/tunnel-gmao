@@ -9,6 +9,7 @@ import Layout from '@/components/layout/Layout';
 import Login from '@/pages/auth/Login';
 import HomePage from '@/pages/home/HomePage';
 import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
+import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 
 /**
  * Composant de route protégée
@@ -65,6 +66,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <ServiceStatusPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/quality-data"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <QualityDataPage />
             </Layout>
           </ProtectedRoute>
         }
