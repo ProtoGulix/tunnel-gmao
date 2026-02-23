@@ -1,0 +1,304 @@
+/**
+ * Page de détail d'une intervention
+ *
+ * Affiche le détail complet d'une intervention avec :
+ * - Header dynamique avec dropdowns statut/priorité
+ * - 4 onglets : Actions, Résumé, Fiche et Historique
+ * - Auto-refresh toutes les 30s
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
+import { Wrench, Activity, FileText, History, TrendingUp } from 'lucide-react';
+import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
+import PageContainer from '@/components/layout/PageContainer';
+import PageHeader from '@/components/layout/PageHeader';
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
+import DropdownButton from '@/components/ui/DropdownButton';
+import ActionsTab from '@/components/interventions/tabs/ActionsTab';
+import SummaryTab from '@/components/interventions/tabs/SummaryTab';
+import SheetTab from '@/components/interventions/tabs/SheetTab';
+import HistoryTab from '@/components/interventions/tabs/HistoryTab';
+import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
+
+// Configuration des onglets
+const TABS = [
+  { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
+  { id: 'summary', label: 'Résumé', icon: TrendingUp },
+  { id: 'fiche', label: 'Fiche', icon: FileText },
+  { id: 'history', label: 'Historique', icon: History },
+];
+
+/**
+ * Maps priority value to config key for UI display
+ */
+const mapPriorityToConfigKey = (priorityValue) => {
+  if (!priorityValue) return 'normal';
+  const key = priorityValue.toLowerCase().trim();
+  return key === 'urgent' ? 'urgent'
+    : key === 'important' ? 'important'
+    : key === 'faible' ? 'faible'
+    : 'normal';
+};
+
+/**
+ * Maps domain DTO status to config key for UI display
+ */
+const mapDtoStatusToConfigKey = (dtoStatus) => {
+  const statusId = dtoStatus?.id || dtoStatus;
+  return statusId || 'ouvert';
+};
+
+/* eslint-disable complexity, max-lines */
+export default function InterventionDetailPage() {
+  const { id } = useParams();
+  const [activeTab, setActiveTab] = useState('actions');
+  const [searchActions, setSearchActions] = useState('');
+
+  const {
+    intervention,
+    loading,
+    error,
+    refetch,
+    updateStatus,
+    updateIntervention,
+    statusLog,
+    actions,
+    pdfUrl,
+    pdfLoading,
+    loadPdf,
+    ficheFileName,
+  } = useInterventionDetail(id);
+
+  // Charger le PDF quand l'onglet fiche est ouvert
+  useEffect(() => {
+    if (activeTab === 'fiche' && !pdfUrl && !pdfLoading) {
+      loadPdf();
+    }
+  }, [activeTab, pdfUrl, pdfLoading, loadPdf]);
+
+  // Handlers
+  const handleStatusChange = useCallback(
+    async (newStatus) => {
+      try {
+        await updateStatus(newStatus);
+      } catch (err) {
+        console.error('Erreur changement statut:', err);
+      }
+    },
+    [updateStatus]
+  );
+
+  const handlePriorityChange = useCallback(
+    async (newPriority) => {
+      try {
+        await updateIntervention({ priority: newPriority });
+      } catch (err) {
+        console.error('Erreur changement priorité:', err);
+      }
+    },
+    [updateIntervention]
+  );
+
+  const handleMarkPrinted = useCallback(async () => {
+    try {
+      await updateIntervention({ printedFiche: true });
+    } catch (err) {
+      console.error('Erreur marquage imprimé:', err);
+    }
+  }, [updateIntervention]);
+
+  // Error state
+  if (error && !intervention) {
+    return (
+      <PageContainer>
+        <ErrorState
+          error={error}
+          onRetry={refetch}
+          backLink="/interventions"
+          backLabel="Retour aux interventions"
+        />
+      </PageContainer>
+    );
+  }
+
+  // Loading initial
+  if (loading && !intervention) {
+    return (
+      <PageContainer>
+        <Box mt="4">
+          <LoadingState message="Chargement de l'intervention..." />
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  if (!intervention) {
+    return (
+      <PageContainer>
+        <ErrorState
+          error={{ message: 'Intervention non trouvée' }}
+          backLink="/interventions"
+          backLabel="Retour aux interventions"
+        />
+      </PageContainer>
+    );
+  }
+
+  const stats = intervention.stats || {};
+
+  return (
+    <PageContainer style={{ paddingBottom: '4rem' }}>
+      <PageHeader
+        icon={Wrench}
+        title={`${intervention.machine?.name || 'Machine'} • ${intervention.code || `INT-${id}`}`}
+        subtitle={intervention.title || 'Intervention'}
+        stats={[
+          { label: 'Actions', value: stats.actionCount || 0 },
+          { label: 'Temps', value: `${stats.totalTime || 0}h` },
+        ]}
+        actions={[
+          {
+            label: (
+              <DropdownButton
+                label={
+                  STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.label ||
+                  'En cours'
+                }
+                color={
+                  STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.activeBg ||
+                  'var(--blue-6)'
+                }
+                textColor={
+                  STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.textActive ||
+                  'white'
+                }
+                items={[
+                  {
+                    label: STATE_COLORS.ouvert.label,
+                    color: STATE_COLORS.ouvert.activeBg,
+                    onClick: () => handleStatusChange('ouvert'),
+                  },
+                  {
+                    label: STATE_COLORS.attente_pieces.label,
+                    color: STATE_COLORS.attente_pieces.activeBg,
+                    onClick: () => handleStatusChange('attente_pieces'),
+                  },
+                  {
+                    label: STATE_COLORS.attente_prod.label,
+                    color: STATE_COLORS.attente_prod.activeBg,
+                    onClick: () => handleStatusChange('attente_prod'),
+                  },
+                  {
+                    label: STATE_COLORS.ferme.label,
+                    color: STATE_COLORS.ferme.activeBg,
+                    onClick: () => handleStatusChange('ferme'),
+                  },
+                ]}
+              />
+            ),
+          },
+          {
+            label: (
+              <DropdownButton
+                label={
+                  PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.label ||
+                  'Normal'
+                }
+                color={
+                  PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.activeBg ||
+                  'var(--gray-6)'
+                }
+                textColor={
+                  PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.textActive ||
+                  'white'
+                }
+                items={[
+                  {
+                    label: 'Urgent',
+                    color: PRIORITY_COLORS.urgent.activeBg,
+                    onClick: () => handlePriorityChange('urgent'),
+                  },
+                  {
+                    label: 'Important',
+                    color: PRIORITY_COLORS.important.activeBg,
+                    onClick: () => handlePriorityChange('important'),
+                  },
+                  {
+                    label: 'Normal',
+                    color: PRIORITY_COLORS.normal.activeBg,
+                    onClick: () => handlePriorityChange('normal'),
+                  },
+                  {
+                    label: 'Faible',
+                    color: PRIORITY_COLORS.faible.activeBg,
+                    onClick: () => handlePriorityChange('faible'),
+                  },
+                ]}
+              />
+            ),
+          },
+        ]}
+      />
+
+      {/* TABS */}
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={setActiveTab}
+        style={{ marginTop: '2rem' }}
+      >
+        <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const badgeValue = tab.badgeCount 
+              ? tab.badgeCount(actions, statusLog)
+              : null;
+
+            return (
+              <Tabs.Trigger key={tab.id} value={tab.id}>
+                <Flex align="center" gap="2">
+                  <Icon size={16} />
+                  <Text>{tab.label}</Text>
+                  {badgeValue !== null && badgeValue > 0 && (
+                    <Badge color="blue" variant="soft" size="1">
+                      {badgeValue}
+                    </Badge>
+                  )}
+                </Flex>
+              </Tabs.Trigger>
+            );
+          })}
+        </Tabs.List>
+
+        <Tabs.Content value="actions">
+          <ActionsTab
+            actions={actions}
+            statusLog={statusLog}
+            searchTerm={searchActions}
+            onSearchChange={setSearchActions}
+          />
+        </Tabs.Content>
+
+        <Tabs.Content value="summary">
+          <SummaryTab intervention={intervention} loading={loading} />
+        </Tabs.Content>
+
+        <Tabs.Content value="fiche">
+          <SheetTab
+            pdfUrl={pdfUrl}
+            pdfLoading={pdfLoading}
+            printedFiche={intervention.printedFiche}
+            fileName={ficheFileName}
+            onMarkPrinted={handleMarkPrinted}
+          />
+        </Tabs.Content>
+
+        <Tabs.Content value="history">
+          <HistoryTab actions={actions} statusLog={statusLog} />
+        </Tabs.Content>
+      </Tabs.Root>
+    </PageContainer>
+  );
+}

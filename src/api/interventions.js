@@ -39,6 +39,62 @@ export async function fetchInterventions(filters = {}) {
 }
 
 /**
+ * Récupère une intervention par ID avec actions et statusLogs complets
+ *
+ * @param {string} id - ID de l'intervention
+ * @returns {Promise<Object>} Intervention complète
+ */
+export async function fetchIntervention(id) {
+  const response = await api.get(`/interventions/${id}`);
+  return mapInterventionDetailResponse(response.data);
+}
+
+/**
+ * Met à jour une intervention
+ *
+ * @param {string} id - ID de l'intervention
+ * @param {Object} updates - Champs à mettre à jour
+ * @returns {Promise<Object>} Intervention mise à jour
+ */
+export async function updateIntervention(id, updates) {
+  const payload = {};
+
+  if (updates.priority !== undefined) payload.priority = updates.priority;
+  if (updates.printedFiche !== undefined) payload.printed_fiche = updates.printedFiche;
+  if (updates.title !== undefined) payload.title = updates.title;
+  if (updates.status !== undefined) payload.status_actual = updates.status;
+
+  const response = await api.put(`/interventions/${id}`, payload);
+  return mapInterventionDetailResponse(response.data);
+}
+
+/**
+ * Met à jour le statut d'une intervention
+ *
+ * @param {string} id - ID de l'intervention
+ * @param {string} newStatus - Nouveau statut (ouvert, attente_pieces, attente_prod, ferme, cancelled)
+ * @returns {Promise<Object>} Intervention mise à jour
+ */
+export async function updateInterventionStatus(id, newStatus) {
+  return updateIntervention(id, { status: newStatus });
+}
+
+/**
+ * Récupère le PDF d'une intervention pour preview (blob URL)
+ *
+ * @param {string} id - ID de l'intervention
+ * @returns {Promise<string>} Blob URL pour affichage dans iframe/object
+ */
+export async function fetchInterventionPdf(id) {
+  const response = await api.get(`/interventions/${id}/pdf`, {
+    responseType: 'blob',
+  });
+
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  return window.URL.createObjectURL(blob);
+}
+
+/**
  * Mappe une intervention du backend (snake_case) vers le front (camelCase)
  */
 // eslint-disable-next-line complexity
@@ -73,5 +129,73 @@ function mapInterventionResponse(raw = {}) {
           purchaseCount: raw.stats.purchase_count ?? 0,
         }
       : null,
+  };
+}
+
+/**
+ * Mappe une intervention détaillée avec actions et statusLogs
+ */
+/* eslint-disable complexity */
+function mapInterventionDetailResponse(raw = {}) {
+  const base = mapInterventionResponse(raw);
+
+  return {
+    ...base,
+    action: Array.isArray(raw.actions)
+      ? raw.actions.map((a) => ({
+          id: a.id?.toString() || '',
+          description: a.description || '',
+          timeSpent: a.time_spent ?? 0,
+          complexityScore: a.complexity_score ?? null,
+          createdAt: a.created_at,
+          date: a.date,
+          subcategory: a.subcategory
+            ? {
+                id: a.subcategory.id?.toString() || '',
+                label: a.subcategory.label || '',
+                code: a.subcategory.code || '',
+                category: a.subcategory.category
+                  ? {
+                      id: a.subcategory.category.id?.toString() || '',
+                      label: a.subcategory.category.label || '',
+                      code: a.subcategory.category.code || '',
+                    }
+                  : null,
+              }
+            : null,
+          technician: a.technician
+            ? {
+                id: a.technician.id?.toString() || '',
+                firstName: a.technician.first_name || '',
+                lastName: a.technician.last_name || '',
+              }
+            : null,
+        }))
+      : [],
+    statusLogs: Array.isArray(raw.status_logs)
+      ? raw.status_logs.map((log) => ({
+          id: log.id?.toString() || '',
+          date: log.date,
+          status_from_detail: log.status_from_detail
+            ? {
+                id: log.status_from_detail.id || '',
+                label: log.status_from_detail.label || '',
+              }
+            : null,
+          status_to_detail: log.status_to_detail
+            ? {
+                id: log.status_to_detail.id || '',
+                label: log.status_to_detail.label || '',
+              }
+            : null,
+          technician: log.technician
+            ? {
+                id: log.technician.id?.toString() || '',
+                firstName: log.technician.first_name || '',
+                lastName: log.technician.last_name || '',
+              }
+            : null,
+        }))
+      : [],
   };
 }

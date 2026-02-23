@@ -11,6 +11,7 @@ import HomePage from '@/pages/home/HomePage';
 import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
+import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
 
 /**
  * Composant de route protégée
@@ -89,6 +90,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <InterventionsListPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/intervention/:id"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <InterventionDetailPage />
             </Layout>
           </ProtectedRoute>
         }
