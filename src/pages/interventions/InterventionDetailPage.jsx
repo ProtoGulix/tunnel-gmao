@@ -64,6 +64,7 @@ export default function InterventionDetailPage() {
     refetch,
     updateStatus,
     updateIntervention,
+    addAction,
     statusLog,
     actions,
     pdfUrl,
@@ -283,6 +284,7 @@ export default function InterventionDetailPage() {
             statusLog={statusLog}
             searchTerm={searchActions}
             onSearchChange={setSearchActions}
+            onAddAction={addAction}
             interventionId={id}
             onPurchaseRequestCreated={handlePurchaseRequestCreated}
           />

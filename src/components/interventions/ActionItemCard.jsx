@@ -9,7 +9,7 @@ import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
 import ActionButtons from "@/components/ui/ActionButtons";
 import PurchaseRequestList from "@/components/ui/PurchaseRequestList";
 import * as actionsApi from "@/api/actions";
-import * as actionSubcategoriesApi from "@/api/actionSubcategories";
+import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import * as stockApi from "@/api/stock";
 import { api } from "@/lib/api/client";
@@ -22,7 +22,11 @@ const getSubcategory = (action) => action?.subcategory ?? null;
 const getTechnician = (action) => action?.technician ?? null;
 const getCreatedAt = (action) => action?.createdAt ?? action?.created_at ?? null;
 const getDescription = (action) => action?.description ?? "";
-const getComplexityFactors = (action) => action?.complexityFactors ?? [];
+const getComplexityFactors = (action) => {
+  const factors = action?.complexityFactors ?? [];
+  // Extraire les codes si ce sont des objets {code: "PCE"}
+  return Array.isArray(factors) ? factors.map((f) => (typeof f === 'string' ? f : f?.code)).filter(Boolean) : [];
+};
 
 const getComplexityColor = (score) => {
   const complexityScore = parseInt(score);
@@ -81,11 +85,11 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     setShowEditForm((prev) => !prev);
     if (!editDataLoaded) {
       try {
-        const [subcatsData, factorsData] = await Promise.all([
-          actionSubcategoriesApi.fetchActionSubcategories(),
+        const [categoriesData, factorsData] = await Promise.all([
+          actionCategoriesApi.fetchActionCategories(),
           complexityFactorsApi.fetchComplexityFactors(),
         ]);
-        setSubcategories(subcatsData || []);
+        setSubcategories(categoriesData || []);
         setComplexityFactors(factorsData || []);
         setEditDataLoaded(true);
       } catch {

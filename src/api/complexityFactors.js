@@ -11,8 +11,8 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Array>} Array of complexity factors
  */
 export async function fetchComplexityFactors() {
-  const response = await api.get('/items/complexity_factor');
-  return response.data?.data || [];
+  const response = await api.get('/complexity-factors');
+  return response.data || [];
 }
 
 /**
@@ -21,11 +21,6 @@ export async function fetchComplexityFactors() {
  * @returns {Promise<Object>} Complexity factor
  */
 export async function fetchComplexityFactor(code) {
-  const response = await api.get('/items/complexity_factor', {
-    params: {
-      filter: { code: { _eq: code } },
-      limit: 1,
-    },
-  });
-  return response.data?.data?.[0] || null;
+  const response = await api.get(`/complexity-factors/${code}`);
+  return response.data || null;
 }

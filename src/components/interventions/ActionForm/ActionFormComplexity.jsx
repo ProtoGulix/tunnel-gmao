@@ -31,16 +31,16 @@ function ActionFormComplexity({
           </Flex>
           <Flex gap="2" wrap="wrap">
             {availableFactors.map((factor) => {
-              const factorId = String(factor.id);
-              const isSelected = complexityFactors.includes(factorId);
+              const factorCode = factor.code || factor.id;  // Utiliser code en priorité
+              const isSelected = complexityFactors.includes(factorCode);
               return (
                 <Button
-                  key={factorId}
+                  key={factorCode}
                   type="button"
                   size="2"
                   variant={isSelected ? 'solid' : 'soft'}
                   color={isSelected ? 'orange' : 'gray'}
-                  onClick={() => handleComplexityFactorToggle(factorId)}
+                  onClick={() => handleComplexityFactorToggle(factorCode)}
                 >
                   {factor.label}
                 </Button>

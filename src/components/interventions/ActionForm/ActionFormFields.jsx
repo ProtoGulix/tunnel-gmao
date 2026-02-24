@@ -7,7 +7,7 @@
 import PropTypes from 'prop-types';
 import { Box, Flex, Text, TextField, Select, Badge } from '@radix-ui/themes';
 import { Clock, Activity, Tag } from 'lucide-react';
-import { getCategoryId, getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
+import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
 function ActionFormFields({ formState, handlers, metadata }) {
   const { time, date, category } = formState;
@@ -63,26 +63,79 @@ function ActionFormFields({ formState, handlers, metadata }) {
             style={{ backgroundColor: 'white', width: '100%' }}
           />
           <Select.Content>
-            {subcategories.map(cat => (
-              <Select.Item
-                key={`cat-${getCategoryId(cat)}`}
-                value={String(getCategoryId(cat))}
-              >
-                <Flex align="center" gap="2">
-                  <Badge
-                    variant="soft"
-                    size="1"
-                    style={{
-                      backgroundColor: getCategoryColor(cat) || '#6b7280',
-                      color: 'white'
-                    }}
+            {subcategories &&
+              subcategories.map((group, groupIndex) => {
+                // Vérifier si c'est une catégorie avec sous-catégories imbriquées
+                if (group.subcategories && Array.isArray(group.subcategories) && group.subcategories.length > 0) {
+                  return (
+                    <div
+                      key={`category-${groupIndex}-${group.id || 'unknown'}`}
+                      style={{
+                        borderTop: groupIndex > 0 ? '1px solid var(--gray-4)' : 'none',
+                      }}
+                    >
+                      {/* Titre de catégorie (non sélectionnable) */}
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: 'var(--gray-3)',
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          color: 'var(--gray-11)',
+                          pointerEvents: 'none',
+                          borderLeft: `4px solid ${group.color || '#6b7280'}`,
+                        }}
+                      >
+                        {group.name}
+                      </div>
+
+                      {/* Sous-catégories */}
+                      {group.subcategories.map((subcat, subcatIndex) => (
+                        <Select.Item
+                          key={`subcat-${groupIndex}-${subcatIndex}-${subcat.id || 'unknown'}`}
+                          value={String(subcat.id)}
+                        >
+                          <Flex align="center" gap="2" pl="2">
+                            <Badge
+                              variant="soft"
+                              size="1"
+                              style={{
+                                backgroundColor: group.color || '#6b7280',
+                                color: 'white',
+                              }}
+                            >
+                              {subcat.code}
+                            </Badge>
+                            <Text size="2">{subcat.name}</Text>
+                          </Flex>
+                        </Select.Item>
+                      ))}
+                    </div>
+                  );
+                }
+
+                // Fallback: afficher directement les sous-catégories si pas imbriquées
+                return (
+                  <Select.Item
+                    key={`direct-subcat-${groupIndex}-${group.id || 'unknown'}`}
+                    value={String(group.id)}
                   >
-                    {getCategoryCode(cat)}
-                  </Badge>
-                  <Text size="2">{getCategoryName(cat)}</Text>
-                </Flex>
-              </Select.Item>
-            ))}
+                    <Flex align="center" gap="2">
+                      <Badge
+                        variant="soft"
+                        size="1"
+                        style={{
+                          backgroundColor: getCategoryColor(group) || '#6b7280',
+                          color: 'white',
+                        }}
+                      >
+                        {getCategoryCode(group)}
+                      </Badge>
+                      <Text size="2">{getCategoryName(group)}</Text>
+                    </Flex>
+                  </Select.Item>
+                );
+              })}
           </Select.Content>
         </Select.Root>
       </Box>

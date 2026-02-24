@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+/* eslint-disable complexity, max-lines */
 /**
  * Onglet Actions - Timeline des actions d'intervention
  *
@@ -7,11 +7,14 @@
  */
 
 import { Box, Flex, TextField, Button } from '@radix-ui/themes';
-import { Activity, Search, Plus } from 'lucide-react';
+import { Activity, Search, Plus, X } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Timeline } from '@/components/ui/GenericTabComponents';
 import TimelineItemRenderer from '@/components/interventions/TimelineItemRenderer';
+import ActionForm from '@/components/interventions/ActionForm';
+import * as actionCategoriesApi from '@/api/actionCategories';
+import * as complexityFactorsApi from '@/api/complexityFactors';
 
 /**
  * Groupe les éléments de timeline par jour
@@ -81,6 +84,13 @@ export default function ActionsTab({
   interventionId,
   onPurchaseRequestCreated,
 }) {
+  // State pour le formulaire de nouvelle action
+  const [showNewActionForm, setShowNewActionForm] = useState(false);
+  const [subcategories, setSubcategories] = useState([]);
+  const [complexityFactors, setComplexityFactors] = useState([]);
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   // Fusionner et grouper actions + statusLog
   const timelineByDay = useMemo(() => {
     return groupTimelineByDay(actions, statusLog || []);
@@ -125,6 +135,41 @@ export default function ActionsTab({
       .filter((dayGroup) => dayGroup.items.length > 0);
   }, [timelineByDay, searchTerm]);
 
+  // Handler pour ouvrir le formulaire et charger les métadonnées
+  const handleOpenNewActionForm = useCallback(async () => {
+    setShowNewActionForm(true);
+    if (!metadataLoaded) {
+      try {
+        const [categoriesData, factorsData] = await Promise.all([
+          actionCategoriesApi.fetchActionCategories(),
+          complexityFactorsApi.fetchComplexityFactors(),
+        ]);
+        setSubcategories(categoriesData || []);
+        setComplexityFactors(factorsData || []);
+        setMetadataLoaded(true);
+      } catch (error) {
+        console.error('Erreur chargement métadonnées:', error);
+        setMetadataLoaded(true);
+      }
+    }
+  }, [metadataLoaded]);
+
+  // Handler pour soumettre la nouvelle action
+  const handleSubmitNewAction = useCallback(async (formData) => {
+    if (!onAddAction) return;
+
+    try {
+      setSubmitting(true);
+      await onAddAction(formData);
+      setShowNewActionForm(false);
+    } catch (error) {
+      console.error('Erreur création action:', error);
+      throw error;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [onAddAction]);
+
   return (
     <Box pt="4">
       <Flex direction="column" gap="3">
@@ -145,14 +190,36 @@ export default function ActionsTab({
           {onAddAction && (
             <Button
               size="2"
-              onClick={onAddAction}
-              style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
+              onClick={showNewActionForm ? () => setShowNewActionForm(false) : handleOpenNewActionForm}
+              disabled={submitting}
+              style={{ 
+                backgroundColor: showNewActionForm ? 'var(--gray-9)' : 'var(--blue-9)', 
+                color: 'white' 
+              }}
             >
-              <Plus size={16} />
-              Action
+              {showNewActionForm ? <X size={16} /> : <Plus size={16} />}
+              {showNewActionForm ? 'Annuler' : 'Action'}
             </Button>
           )}
         </Flex>
+
+        {/* Formulaire nouvelle action */}
+        {showNewActionForm && (
+          <ActionForm
+            initialState={{
+              time: '',
+              date: new Date().toISOString().split('T')[0],
+              category: '',
+              description: '',
+              complexity: '5',
+              complexityFactors: [],
+            }}
+            metadata={{ subcategories, complexityFactors }}
+            onCancel={() => setShowNewActionForm(false)}
+            onSubmit={handleSubmitNewAction}
+            style={{ marginBottom: '1rem' }}
+          />
+        )}
 
         {/* Timeline ou état vide */}
         {filteredTimelineByDay.length === 0 ? (

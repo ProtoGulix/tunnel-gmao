@@ -11,8 +11,8 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Array>} Array of action subcategories
  */
 export async function fetchActionSubcategories() {
-  const response = await api.get('/items/action_subcategory');
-  return response.data?.data || [];
+  const response = await api.get('/action-subcategories');
+  return response.data || [];
 }
 
 /**
@@ -21,6 +21,6 @@ export async function fetchActionSubcategories() {
  * @returns {Promise<Object>} Action subcategory
  */
 export async function fetchActionSubcategory(id) {
-  const response = await api.get(`/items/action_subcategory/${id}`);
-  return response.data?.data || null;
+  const response = await api.get(`/action-subcategories/${id}`);
+  return response.data || null;
 }

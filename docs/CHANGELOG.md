@@ -4,6 +4,33 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.5.1 - 2026-02-24
+
+Stabilité : **STABLE** ✅
+
+### 🔧 Corrections et Améliorations
+
+**Formulaire d'ajout d'actions amélioré** :
+
+- Les catégories d'actions sont maintenant **regroupées visuellement** pour faciliter la sélection
+- Chaque catégorie affiche sa couleur distinctive dans le menu déroulant
+- Navigation plus intuitive parmi les sous-catégories
+
+**Résolution des problèmes d'enregistrement** :
+
+- Correction des erreurs empêchant la création de nouvelles actions
+- Les informations du technicien sont maintenant correctement enregistrées
+- Les facteurs de complexité s'affichent et se sauvegardent sans erreur
+- Temps d'intervention calculé avec précision (quarts d'heure)
+
+**Optimisations techniques** :
+
+- Communication améliorée avec le serveur (nouveaux points d'accès API)
+- Affichage cohérent des facteurs de complexité dans tout l'interface
+- Correction des avertissements d'affichage internes
+
+---
+
 ## 3.5.0 - 2026-02-24
 
 Stabilité : **STABLE** ✅

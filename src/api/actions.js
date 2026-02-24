@@ -12,32 +12,37 @@ import { api } from '@/lib/api/client';
  *
  * @param {Object} actionData - Données de l'action
  * @param {string} actionData.interventionId - ID de l'intervention
+ * @param {string} actionData.technicianId - ID/UUID du technicien (requis)
  * @param {string} actionData.description - Description de l'action
- * @param {number} actionData.timeSpent - Temps passé (heures)
- * @param {number} actionData.complexityScore - Score de complexité (facultatif)
- * @param {string} actionData.date - Date de l'action (ISO)
- * @param {string} actionData.subcategoryId - ID de la sous-catégorie (facultatif)
- * @param {string} actionData.technicianId - ID du technicien (facultatif)
+ * @param {number} actionData.timeSpent - Temps passé (quarts d'heure: 0.25, 0.5, 0.75, 1.0...)
+ * @param {number} actionData.complexityScore - Score de complexité 1-10
+ * @param {string} [actionData.complexityFactor] - Code du facteur de complexité (requis si score > 5)
+ * @param {string} [actionData.date] - Date de l'action (ISO format, défaut: now)
+ * @param {number} actionData.subcategoryId - ID de la sous-catégorie
  * @returns {Promise<Object>} Action créée
  */
 export async function createAction(actionData) {
   const payload = {
     intervention_id: actionData.interventionId,
+    tech: actionData.technicianId, // UUID ou ID du technicien
     description: actionData.description,
-    time_spent: actionData.timeSpent ?? 0,
-    date: actionData.date || new Date().toISOString().split('T')[0],
+    time_spent: Number(actionData.timeSpent) || 0.5, // Quarts d'heure minimum 0.25
+    action_subcategory: Number(actionData.subcategoryId),
+    complexity_score: Number(actionData.complexityScore) || 5,
   };
 
-  if (actionData.complexityScore !== undefined && actionData.complexityScore !== null) {
-    payload.complexity_score = actionData.complexityScore;
+  // Ajouter la date si fournie
+  if (actionData.date) {
+    payload.created_at = actionData.date;
   }
 
-  if (actionData.subcategoryId) {
-    payload.subcategory_id = actionData.subcategoryId;
-  }
-
-  if (actionData.technicianId) {
-    payload.technician_id = actionData.technicianId;
+  // Ajouter le facteur de complexité si fourni et score > 5
+  if (Number(actionData.complexityScore) > 5 && actionData.complexityFactor) {
+    // complexityFactor peut être un string (code) ou un objet {code: "PCE"}
+    payload.complexity_factor =
+      typeof actionData.complexityFactor === 'string'
+        ? actionData.complexityFactor
+        : actionData.complexityFactor?.code;
   }
 
   const response = await api.post('/intervention-actions', payload);
@@ -90,8 +95,9 @@ export async function updateAction(id, updates) {
     payload.intervention_id = updates.intervention.id;
   }
 
-  if (Array.isArray(updates.complexityFactors)) {
-    payload.complexity_factors = updates.complexityFactors;
+  // Envoyer le premier facteur de complexité (singulier) ou null
+  if (Array.isArray(updates.complexityFactors) && updates.complexityFactors.length > 0) {
+    payload.complexity_factor = updates.complexityFactors[0];
   }
 
   const response = await api.patch(`/intervention-actions/${id}`, payload);
@@ -124,5 +130,7 @@ function mapActionResponse(raw = {}) {
           lastName: raw.technician.last_name || '',
         }
       : null,
+    complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
+    purchaseRequests: raw.purchase_requests || [],
   };
 }

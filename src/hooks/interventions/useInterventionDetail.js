@@ -14,6 +14,7 @@ import {
   fetchInterventionPdf,
 } from '@/api/interventions';
 import { createAction } from '@/api/actions';
+import { useAuth } from '@/auth/useAuth';
 
 /**
  * Hook pour gérer le détail d'une intervention
@@ -22,6 +23,7 @@ import { createAction } from '@/api/actions';
  * @returns {Object} État et méthodes
  */
 export function useInterventionDetail(id) {
+  const { user } = useAuth();
   const [intervention, setIntervention] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -111,12 +113,26 @@ export function useInterventionDetail(id) {
   );
 
   const addAction = useCallback(
-    async (actionData) => {
+    async (formData) => {
       try {
-        await createAction({
+        // Transformer les données du formulaire vers le format API
+        const actionPayload = {
           interventionId: id,
-          ...actionData,
-        });
+          technicianId: user?.id, // ID du technicien courant
+          description: formData.description || '',
+          timeSpent: Number(formData.time) || 0.5, // Quarts d'heure
+          subcategoryId: Number(formData.category), // ID sous-catégorie
+          complexityScore: Number(formData.complexity) || 5,
+          date: formData.date || new Date().toISOString().split('T')[0],
+        };
+
+        // Ajouter le facteur de complexité si score > 5 et facteurs fournis
+        if (Number(formData.complexity) > 5 && formData.complexityFactors?.length > 0) {
+          // Envoyer le premier facteur (singulier) - le backend expect complexity_factor
+          actionPayload.complexityFactor = formData.complexityFactors[0];
+        }
+
+        await createAction(actionPayload);
         // Refetch pour avoir les données à jour
         await fetchData(true);
       } catch (err) {
@@ -124,7 +140,7 @@ export function useInterventionDetail(id) {
         throw err;
       }
     },
-    [id, fetchData]
+    [id, user?.id, fetchData]
   );
 
   // Chargement du PDF
