@@ -4,6 +4,69 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.6.0 - 2026-02-24
+
+Stabilité : **STABLE** ✅
+
+### 🏭 Nouveau : Page Gestion des Équipements
+
+Accès complet au parc équipements avec état de santé en temps réel.
+
+**Liste des équipements** :
+
+- Vue d'ensemble de tous les équipements avec indicateurs de santé (OK, Maintenance, Alerte, Critique)
+- Recherche rapide par code ou nom
+- Affichage de la classe d'équipement et de la hiérarchie parent/enfants
+- Statistiques dans l'en-tête : total, nombre critique, alertes, maintenance
+
+**Gestion des classes d'équipement** :
+
+- CRUD complet des classes (SCIE, PONT, EXTRUDEUSE, etc.)
+- Code unique et description pour chaque classe
+- Dialog de création/modification intégrée
+
+**Performance optimisée** :
+
+- Cache interne des équipements pour navigation rapide
+- Onglets synchronisés avec l'URL
+- Design V2 entièrement conservé
+
+### 🗂️ Restructuration du Menu
+
+Le menu est maintenant mieux organisé par sections métier :
+
+**Navigation** :
+
+- Accueil
+
+**Maintenance** :
+
+- Interventions
+- Équipements
+- Préventif
+
+**Stock** :
+
+- Pièces
+- Approvisionnements
+
+**Production** :
+
+- Charge technique
+- Anomalies de saisie
+- Qualité des données
+
+Chaque section affiche ses pages dans l'ordre configuré, pour une navigation plus intuitive.
+
+### 🔧 Architecture V3 Consolidée
+
+- Système d'**auto-discovery** pour les pages : créer une page = créer son `.config.js`
+- **Hooks partagés** pour les fonctionnalités communes (navigation onglets, notifications)
+- Migration progressive des pages de la V2 → V3 (Équipements complètement migrée)
+- API layer optimisée avec endpoints FastAPI
+
+---
+
 ## 3.5.1 - 2026-02-24
 
 Stabilité : **STABLE** ✅

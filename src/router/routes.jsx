@@ -13,6 +13,7 @@ import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
 import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
 import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
+import EquipementsPage from '@/pages/equipements/EquipementsPage';
 
 /**
  * Composant de route protégée
@@ -112,6 +113,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <InterventionDetailPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipements"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <EquipementsPage />
             </Layout>
           </ProtectedRoute>
         }

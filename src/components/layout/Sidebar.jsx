@@ -26,7 +26,7 @@ import SidebarFooter from '@/components/layout/SidebarFooter';
 import BrandLogo from '@/components/layout/BrandLogo';
 
 // 4. Config
-import { getMenuSections } from '@/config/menuConfig';
+import { getMenuSections, SECTION_LABELS } from '@/config/menuConfig';
 import { MOBILE_BREAKPOINT, SIDEBAR_WIDTH, MOBILE_HEADER_HEIGHT } from '@/config/layoutConfig';
 import COLOR_PALETTE from '@/config/colorPalette';
 import { version as APP_VERSION } from '@/../package.json';
@@ -207,10 +207,33 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
         {renderDesktopHeader(isMobile, COLORS)}
 
         <nav style={{ flex: 1, padding: '1rem 0', overflowY: 'auto' }}>
-          {menuSections.main && menuSections.main.map((item) => (
-            <SidebarMenuItem key={item.id} item={item} colors={COLORS} />
-          ))}
+          {/* Render main sections (maintenance, stock, production, admin) */}
+          {Object.entries(menuSections).map(([sectionKey, items]) => {
+            if (sectionKey === 'public' || !items || items.length === 0) return null;
+            
+            return (
+              <div key={sectionKey}>
+                {/* Section label */}
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: COLORS.textMuted,
+                  padding: '1rem 1rem 0.5rem 1rem',
+                  letterSpacing: '0.05em'
+                }}>
+                  {SECTION_LABELS[sectionKey] || sectionKey}
+                </div>
+                
+                {/* Section items */}
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.id} item={item} colors={COLORS} />
+                ))}
+              </div>
+            );
+          })}
 
+          {/* Public section */}
           {menuSections.public && menuSections.public.length > 0 && (
             <>
               {renderPublicSeparator(isAuthenticated, COLORS)}

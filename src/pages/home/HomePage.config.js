@@ -12,6 +12,8 @@ export const PAGE_CONFIG = {
   icon: Home,
   pageTitle: 'Accueil',
   pageSubtitle: "Bienvenue dans l'application GMAO",
+  section: 'main',
   requiresAuth: true,
   showInMenu: true,
+  order: 0,
 };

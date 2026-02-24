@@ -15,4 +15,5 @@ export const PAGE_CONFIG = {
   section: 'maintenance',
   requiresAuth: true,
   public: false,
+  order: 10,
 };

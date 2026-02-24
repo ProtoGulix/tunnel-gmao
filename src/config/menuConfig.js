@@ -23,6 +23,14 @@ const discoveredPages = Object.values(pageConfigModules)
   .map((module) => module.PAGE_CONFIG)
   .filter(Boolean);
 
+/**
+ * LEGACY_PAGES - Réference historique (DÉPRÉCIÉ)
+ * Ces pages ne sont plus utilisées pour la génération du menu.
+ * Toutes les pages doivent maintenant avoir un fichier [PageName].config.js
+ * avec export const PAGE_CONFIG.
+ *
+ * À supprimer progressivement quand les pages sont entièrement migrées.
+ */
 const LEGACY_PAGES = [
   {
     id: 'intervention-request',
@@ -32,6 +40,7 @@ const LEGACY_PAGES = [
     pageTitle: "Demande d'intervention",
     pageSubtitle: "Créer une nouvelle demande d'intervention",
     public: true,
+    section: 'public',
     requiresAuth: false,
   },
   {
@@ -42,6 +51,7 @@ const LEGACY_PAGES = [
     pageTitle: "Demande d'achat",
     pageSubtitle: "Créer une nouvelle demande d'achat",
     public: true,
+    section: 'public',
     requiresAuth: false,
   },
 
@@ -53,6 +63,8 @@ const LEGACY_PAGES = [
     icon: Wrench,
     pageTitle: 'Interventions en attente',
     pageSubtitle: 'PC commun atelier',
+    section: 'maintenance',
+    order: 5,
     requiresAuth: true,
   },
   {
@@ -62,6 +74,7 @@ const LEGACY_PAGES = [
     icon: Plus,
     pageTitle: 'Créer une intervention',
     pageSubtitle: 'Ajouter une nouvelle intervention',
+    section: 'maintenance',
     requiresAuth: true,
     showInMenu: false,
   },
@@ -72,16 +85,19 @@ const LEGACY_PAGES = [
     icon: FileText,
     pageTitle: "Détail de l'intervention",
     pageSubtitle: null,
+    section: 'maintenance',
     requiresAuth: true,
     showInMenu: false,
   },
   {
-    id: 'equipements',
+    id: 'equipements-legacy',
     path: '/equipements',
     label: 'Équipements',
     icon: Settings,
     pageTitle: 'Parc équipements',
     pageSubtitle: 'Gestion et suivi de tous les équipements',
+    section: 'maintenance',
+    order: 20,
     requiresAuth: true,
   },
   {
@@ -90,7 +106,8 @@ const LEGACY_PAGES = [
     label: 'Détail équipement',
     icon: Settings,
     pageTitle: "Détail de l'équipement",
-    pageSubtitle: null, // Sera défini dynamiquement
+    pageSubtitle: null,
+    section: 'maintenance',
     requiresAuth: true,
     showInMenu: false,
   },
@@ -101,6 +118,8 @@ const LEGACY_PAGES = [
     icon: ClipboardList,
     pageTitle: 'Gestion du Préventif',
     pageSubtitle: 'Maintenance préventive : préconisations, règles et configuration',
+    section: 'maintenance',
+    order: 40,
     requiresAuth: true,
   },
   {
@@ -110,6 +129,8 @@ const LEGACY_PAGES = [
     icon: Package,
     pageTitle: 'Référentiel des pièces',
     pageSubtitle: 'Pièces, fabricants et fournisseurs',
+    section: 'stock',
+    order: 10,
     requiresAuth: true,
   },
   {
@@ -119,6 +140,8 @@ const LEGACY_PAGES = [
     icon: ShoppingCart,
     pageTitle: 'Approvisionnements',
     pageSubtitle: "Demandes d'achat et paniers fournisseurs",
+    section: 'stock',
+    order: 30,
     requiresAuth: true,
   },
   {
@@ -128,8 +151,10 @@ const LEGACY_PAGES = [
     icon: TrendingUp,
     pageTitle: 'Charge technique',
     pageSubtitle: 'Analyse du temps de maintenance',
+    section: 'production',
+    order: 10,
     requiresAuth: true,
-    disabled: true, // BETA: endpoint /stats/charge-technique en cours de refactoring
+    disabled: true,
   },
   {
     id: 'anomalies-saisie',
@@ -138,6 +163,8 @@ const LEGACY_PAGES = [
     icon: AlertTriangle,
     pageTitle: 'Anomalies de saisie',
     pageSubtitle: 'Contrôle qualité des actions',
+    section: 'production',
+    order: 20,
     timeFilter: {
       enabled: true,
       mode: 'popover',
@@ -154,11 +181,38 @@ const LEGACY_PAGES = [
     icon: Database,
     pageTitle: 'Qualité des données',
     pageSubtitle: 'Contrôle de complétude et cohérence',
+    section: 'production',
+    order: 30,
     requiresAuth: true,
   },
 ];
 
-export const PAGES_CONFIG = [...discoveredPages, ...LEGACY_PAGES];
+/**
+ * Configuration complète des pages - générée uniquement via auto-discovery
+ * Les pages de LEGACY_PAGES ne sont plus utilisées
+ */
+export const PAGES_CONFIG = discoveredPages;
+
+// Section mapping - groupement visuel dans le menu
+const SECTION_LABELS = {
+  main: 'Navigation',
+  maintenance: 'Maintenance',
+  stock: 'Stock',
+  production: 'Production',
+  admin: 'Administration',
+  public: 'Public',
+};
+
+const SECTION_ORDER = {
+  main: 0,
+  maintenance: 1,
+  stock: 2,
+  production: 3,
+  admin: 4,
+  public: 5,
+};
+
+export { SECTION_LABELS, SECTION_ORDER };
 
 export const MENU_CONFIG = {
   public: PAGES_CONFIG.filter((p) => p.public || p.publicOnly),
@@ -173,13 +227,44 @@ export function getMenuItems(isAuthenticated) {
     return item.public || item.publicOnly;
   });
 }
-/** Retourne les sections groupées pour l'affichage */
+
+/** Retourne les sections groupées et triées pour l'affichage */
 export function getMenuSections(isAuthenticated) {
   const menuItems = getMenuItems(isAuthenticated);
 
   if (isAuthenticated) {
+    // Grouper par section
+    const sections = {};
+
+    menuItems
+      .filter((item) => item.requiresAuth && !item.public)
+      .forEach((item) => {
+        const section = item.section || 'maintenance';
+        if (!sections[section]) {
+          sections[section] = [];
+        }
+        sections[section].push(item);
+      });
+
+    // Trier chaque section par order
+    Object.keys(sections).forEach((section) => {
+      sections[section].sort((a, b) => {
+        const orderA = a.order ?? 999;
+        const orderB = b.order ?? 999;
+        return orderA - orderB;
+      });
+    });
+
+    // Retourner groupé avec label et ordre de section
+    const result = {};
+    Object.keys(sections)
+      .sort((a, b) => (SECTION_ORDER[a] ?? 999) - (SECTION_ORDER[b] ?? 999))
+      .forEach((section) => {
+        result[section] = sections[section];
+      });
+
     return {
-      main: menuItems.filter((item) => item.requiresAuth && !item.public),
+      ...result,
       public: menuItems.filter((item) => item.public && !item.publicOnly),
     };
   } else {
