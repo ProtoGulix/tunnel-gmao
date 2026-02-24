@@ -4,6 +4,43 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.5.0 - 2026-02-24
+
+Stabilité : **STABLE** ✅
+
+### 🛒 Nouveau : Page Demande d'Achat
+
+Accès rapide et simplifié pour créer des demandes d'achat de matériel.
+
+**Page publique accessible sans connexion** :
+
+- Créez une demande d'achat directement depuis le menu public
+- Aucune authentification requise (comme la demande d'intervention)
+- Idéal pour les équipes terrain ou les utilisateurs occasionnels
+
+**Formulaire identique à la version précédente** :
+
+- Interface conservée pour ne pas perturber vos habitudes
+- Recherche d'article existant en stock
+- Création de demande spéciale si article non référencé
+- Champs : article, quantité, unité, urgence, demandeur
+
+**Confirmation visuelle immédiate** :
+
+- Résumé de la demande créée affiché pendant 1,5 seconde
+- Badge "Demande spéciale" si hors catalogue
+- Détails : libellé, quantité et unité
+- Formulaire réinitialisé pour une nouvelle demande directement
+
+**Bénéfices** :
+
+- **Accessibilité** : Pas besoin de se connecter pour faire une demande
+- **Rapidité** : Un seul écran, un seul formulaire
+- **Simplicité** : Interface familière, aucune formation nécessaire
+- **Flexibilité** : Référence stock ou demande libre au choix
+
+---
+
 ## 3.4.0 - 2026-02-24
 
 Stabilité : **STABLE** ✅

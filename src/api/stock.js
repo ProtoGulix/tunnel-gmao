@@ -16,11 +16,13 @@ import { api } from '@/lib/api/client';
  * @param {string} payload.requested_by - Requester identifier
  * @param {number} [payload.stock_item_id] - Stock item ID if linked
  * @param {number} [payload.intervention_id] - Intervention ID if linked
+ * @param {string} [payload.reason] - Reason for request
+ * @param {string} [payload.notes] - Additional notes
  * @returns {Promise<Object>} Created purchase request
  */
 export async function createPurchaseRequest(payload) {
-  const response = await api.post('/items/purchase_request', payload);
-  return response.data?.data || null;
+  const response = await api.post('/purchase-requests', payload);
+  return response.data || null;
 }
 
 /**
@@ -29,7 +31,7 @@ export async function createPurchaseRequest(payload) {
  * @returns {Promise<void>}
  */
 export async function deletePurchaseRequest(id) {
-  await api.delete(`/items/purchase_request/${id}`);
+  await api.delete(`/purchase-requests/${id}`);
 }
 
 /**
@@ -38,8 +40,8 @@ export async function deletePurchaseRequest(id) {
  * @returns {Promise<Array>} Array of purchase requests
  */
 export async function fetchPurchaseRequests(params = {}) {
-  const response = await api.get('/items/purchase_request', { params });
-  return response.data?.data || [];
+  const response = await api.get('/purchase-requests/list', { params });
+  return response.data || [];
 }
 
 /**
@@ -49,8 +51,8 @@ export async function fetchPurchaseRequests(params = {}) {
  * @returns {Promise<Object>} Updated purchase request
  */
 export async function updatePurchaseRequest(id, updates) {
-  const response = await api.patch(`/items/purchase_request/${id}`, updates);
-  return response.data?.data || null;
+  const response = await api.patch(`/purchase-requests/${id}`, updates);
+  return response.data || null;
 }
 
 /**
@@ -59,6 +61,7 @@ export async function updatePurchaseRequest(id, updates) {
  * @param {string} [params.search] - Search term
  * @returns {Promise<Array>} Array of stock items
  */
+// eslint-disable-next-line no-unused-vars
 export async function fetchStockItems(params = {}) {
   // TODO: Implement proper stock items endpoint
   // For now, return empty array to allow compilation

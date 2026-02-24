@@ -12,6 +12,7 @@ import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
 import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
+import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
 
 /**
  * Composant de route protégée
@@ -49,6 +50,16 @@ export default function AppRoutes() {
     <Routes>
       {/* Route publique - sans layout */}
       <Route path="/login" element={<Login />} />
+
+      {/* Route publique - avec layout non authentifié */}
+      <Route
+        path="/public/purchase-request"
+        element={
+          <Layout requiresAuth={false}>
+            <PurchaseRequestPage />
+          </Layout>
+        }
+      />
 
       {/* Routes protégées - avec layout */}
       <Route

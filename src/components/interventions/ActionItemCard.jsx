@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
 import { Flex } from "@radix-ui/themes";
 import ActionForm from "@/components/interventions/ActionForm";
-import PurchaseRequestForm from "@/components/interventions/PurchaseRequestForm";
+import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
 import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
 import ActionButtons from "@/components/ui/ActionButtons";
 import PurchaseRequestList from "@/components/ui/PurchaseRequestList";
