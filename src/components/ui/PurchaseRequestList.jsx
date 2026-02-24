@@ -10,7 +10,7 @@ import { Flex, Text, Badge, Button } from "@radix-ui/themes";
 import { ShoppingCart, Trash2, AlertTriangle, X, Check, Package } from "lucide-react";
 import PropTypes from "prop-types";
 import { useState } from "react";
-import StockRefLink from "@/components/common/StockRefLink";
+import StockRefLink from "@/components/ui/StockRefLink";
 
 /** Configuration des badges de statut */
 const STATUS_BADGE_CONFIG = {

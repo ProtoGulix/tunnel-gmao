@@ -24,12 +24,7 @@ export function formatFullDateTime(dateString) {
  * Obtient le label du statut depuis le backend
  */
 export function getStatusLabel(statusConfig, itemData) {
-  return (
-    itemData?.status_to_detail?.label ||
-    itemData?.to?.label ||
-    statusConfig?.label ||
-    'Statut inconnu'
-  );
+  return itemData?.to?.label || statusConfig?.label || 'Statut inconnu';
 }
 
 /**

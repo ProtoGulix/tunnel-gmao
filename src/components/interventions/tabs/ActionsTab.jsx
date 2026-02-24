@@ -10,7 +10,8 @@ import { Box, Flex, TextField, Button } from '@radix-ui/themes';
 import { Activity, Search, Plus } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { useMemo } from 'react';
-import TimelineItem from '@/components/interventions/TimelineItem';
+import { Timeline } from '@/components/ui/GenericTabComponents';
+import TimelineItemRenderer from '@/components/interventions/TimelineItemRenderer';
 
 /**
  * Groupe les éléments de timeline par jour
@@ -68,6 +69,8 @@ function groupTimelineByDay(actions, statusLog) {
  * @param {string} props.searchTerm - Terme de recherche
  * @param {Function} props.onSearchChange - Callback recherche
  * @param {Function} props.onAddAction - Callback ajout action
+ * @param {string|number} props.interventionId - ID de l'intervention
+ * @param {Function} props.onPurchaseRequestCreated - Callback création demande achat
  */
 export default function ActionsTab({
   actions,
@@ -75,6 +78,8 @@ export default function ActionsTab({
   searchTerm,
   onSearchChange,
   onAddAction,
+  interventionId,
+  onPurchaseRequestCreated,
 }) {
   // Fusionner et grouper actions + statusLog
   const timelineByDay = useMemo(() => {
@@ -166,44 +171,16 @@ export default function ActionsTab({
             </div>
           </Box>
         ) : (
-          <Flex direction="column" gap="4">
-            {filteredTimelineByDay.map((dayGroup) => (
-              <Box key={dayGroup.date}>
-                <Flex
-                  align="center"
-                  gap="3"
-                  mb="3"
-                  pb="2"
-                  style={{
-                    borderBottom: '1px solid var(--gray-6)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      color: 'var(--blue-11)',
-                    }}
-                  >
-                    {dayGroup.date}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--gray-11)',
-                    }}
-                  >
-                    {dayGroup.items.length} élément{dayGroup.items.length > 1 ? 's' : ''}
-                  </div>
-                </Flex>
-                <Flex direction="column">
-                  {dayGroup.items.map((item, idx) => (
-                    <TimelineItem key={`${item.type}-${idx}`} item={item} />
-                  ))}
-                </Flex>
-              </Box>
-            ))}
-          </Flex>
+          <Timeline
+            items={filteredTimelineByDay}
+            renderItem={(item) => (
+              <TimelineItemRenderer 
+                item={item} 
+                interventionId={interventionId}
+                onPurchaseRequestCreated={onPurchaseRequestCreated}
+              />
+            )}
+          />
         )}
       </Flex>
     </Box>
@@ -216,9 +193,12 @@ ActionsTab.propTypes = {
   searchTerm: PropTypes.string.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   onAddAction: PropTypes.func,
+  interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onPurchaseRequestCreated: PropTypes.func,
 };
 
 ActionsTab.defaultProps = {
   statusLog: [],
   onAddAction: null,
+  onPurchaseRequestCreated: null,
 };

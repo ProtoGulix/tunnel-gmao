@@ -110,6 +110,11 @@ export default function InterventionDetailPage() {
     }
   }, [updateIntervention]);
 
+  const handlePurchaseRequestCreated = useCallback(() => {
+    // Rafraîchir l'intervention pour mettre à jour la liste des demandes d'achat
+    refetch();
+  }, [refetch]);
+
   // Error state
   if (error && !intervention) {
     return (
@@ -278,6 +283,8 @@ export default function InterventionDetailPage() {
             statusLog={statusLog}
             searchTerm={searchActions}
             onSearchChange={setSearchActions}
+            interventionId={id}
+            onPurchaseRequestCreated={handlePurchaseRequestCreated}
           />
         </Tabs.Content>
 

@@ -86,7 +86,7 @@ export async function updateInterventionStatus(id, newStatus) {
  * @returns {Promise<string>} Blob URL pour affichage dans iframe/object
  */
 export async function fetchInterventionPdf(id) {
-  const response = await api.get(`/interventions/${id}/pdf`, {
+  const response = await api.get(`/exports/interventions/${id}/pdf`, {
     responseType: 'blob',
   });
 

@@ -4,6 +4,7 @@
  * Appels HTTP pour les actions d'intervention.
  */
 
+/* eslint-disable complexity */
 import { api } from '@/lib/api/client';
 
 /**
@@ -41,6 +42,60 @@ export async function createAction(actionData) {
 
   const response = await api.post('/intervention-actions', payload);
   return mapActionResponse(response.data);
+}
+
+/**
+ * Update an existing action
+ *
+ * @param {string|number} id - Action ID
+ * @param {Object} updates - Fields to update
+ * @param {string} [updates.description] - New description
+ * @param {number} [updates.timeSpent] - New time spent
+ * @param {number} [updates.complexityScore] - New complexity score
+ * @param {string} [updates.date] - New date
+ * @param {Object} [updates.subcategory] - New subcategory {id}
+ * @param {Object} [updates.technician] - New technician {id}
+ * @param {Object} [updates.intervention] - Intervention reference {id}
+ * @param {Array} [updates.complexityFactors] - Complexity factors array
+ * @returns {Promise<Object>} Updated action
+ */
+export async function updateAction(id, updates) {
+  const payload = {};
+
+  if (updates.description !== undefined) {
+    payload.description = updates.description;
+  }
+
+  if (updates.timeSpent !== undefined) {
+    payload.time_spent = updates.timeSpent;
+  }
+
+  if (updates.complexityScore !== undefined) {
+    payload.complexity_score = updates.complexityScore;
+  }
+
+  if (updates.date !== undefined) {
+    payload.date = updates.date;
+  }
+
+  if (updates.subcategory?.id) {
+    payload.subcategory_id = updates.subcategory.id;
+  }
+
+  if (updates.technician?.id) {
+    payload.technician_id = updates.technician.id;
+  }
+
+  if (updates.intervention?.id) {
+    payload.intervention_id = updates.intervention.id;
+  }
+
+  if (Array.isArray(updates.complexityFactors)) {
+    payload.complexity_factors = updates.complexityFactors;
+  }
+
+  const response = await api.patch(`/intervention-actions/${id}`, payload);
+  return mapActionResponse(response.data?.data || response.data);
 }
 
 /**

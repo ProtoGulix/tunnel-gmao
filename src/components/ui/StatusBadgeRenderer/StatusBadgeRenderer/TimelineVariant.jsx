@@ -1,11 +1,10 @@
 import PropTypes from "prop-types";
 import { Box, Flex, Text, Badge } from "@radix-ui/themes";
-import { Activity, User } from "lucide-react";
+import { Activity } from "lucide-react";
 import { 
   getTimelineBackground, 
   getTimelineIconColor, 
-  getTimelineBadgeStyle,
-  getTechnicianName 
+  getTimelineBadgeStyle 
 } from './statusBadgeUtils';
 
 /**
@@ -13,8 +12,6 @@ import {
  * Utilisé dans la timeline des actions
  */
 export default function TimelineVariant({ item, statusConfig }) {
-  const technicianName = getTechnicianName(item.data.technician);
-  
   return (
     <Box 
       mb="3"
@@ -25,7 +22,7 @@ export default function TimelineVariant({ item, statusConfig }) {
         transition: 'all 0.2s ease'
       }}
     >
-      <Flex align="center" gap="2" wrap="wrap">
+      <Flex align="center" gap="2">
         <Activity size={16} style={{ color: getTimelineIconColor(statusConfig) }} />
         <Badge 
           variant="solid" 
@@ -34,12 +31,6 @@ export default function TimelineVariant({ item, statusConfig }) {
         >
           {statusConfig?.label || "Changement d'état"}
         </Badge>
-        {technicianName && (
-          <Flex align="center" gap="1" style={{ fontSize: '12px', color: 'var(--gray-11)' }}>
-            <User size={12} />
-            <Text size="1">{technicianName}</Text>
-          </Flex>
-        )}
       </Flex>
     </Box>
   );

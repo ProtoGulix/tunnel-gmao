@@ -4,6 +4,78 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.4.0 - 2026-02-24
+
+Stabilité : **STABLE** ✅
+
+### 📊 Amélioration : Page Détail d'Intervention
+
+Refonte complète de la page de détail d'intervention pour une meilleure productivité.
+
+**Nouvelle organisation en 4 onglets** :
+
+- **Actions** : Timeline visuelle des actions et changements de statut
+- **Résumé** : Vue synthétique des indicateurs (temps, actions, achats)
+- **Fiche PDF** : Visualisation et téléchargement du rapport d'intervention
+- **Historique** : Journal chronologique complet
+
+**Édition rapide dans la timeline** :
+
+- Modifiez une action directement sans quitter la page
+- Créez une demande d'achat depuis une action en un clic
+- Visualisez immédiatement les demandes d'achat liées
+- Supprimez une demande d'achat d'un simple bouton
+
+**Identification visuelle renforcée** :
+
+- Actions complexes (score > 5) encadrées en rouge pour alerte immédiate
+- Couleurs adaptées selon le statut (ouvert, fermé, en attente)
+- Affichage du technicien sur chaque changement de statut
+- Badges visuels : catégorie, temps passé, complexité
+
+**Timeline enrichie** :
+
+- Ligne verticale colorée avec points par jour
+- Regroupement automatique par date
+- Recherche instantanée sur description, catégorie ou technicien
+- Compteur dynamique visible sur l'onglet
+
+**Changement de statut et priorité** :
+
+- Dropdowns dans le header pour modifier rapidement
+- Pas besoin d'ouvrir un formulaire séparé
+- Changements enregistrés instantanément
+
+**Fiche PDF intégrée** :
+
+- Visualisation directe dans la page
+- Téléchargement avec nom automatique (code intervention)
+- Marquage "Fiche imprimée" persistant
+- Chargement uniquement à l'ouverture de l'onglet (performance)
+
+**Statistiques en un coup d'œil** :
+
+- Temps total passé sur l'intervention
+- Nombre d'actions réalisées
+- Nombre de demandes d'achat liées
+- Informations clés : code, type, priorité, signalement
+
+**Rafraîchissement automatique** :
+
+- Mise à jour silencieuse toutes les 30 secondes
+- Travaillez en équipe sans recharger manuellement
+- Visualisez les modifications des autres techniciens en temps réel
+
+**Bénéfices** :
+
+- **Productivité** : Tout se fait sur une seule page, pas de navigation inutile
+- **Rapidité** : Édition inline, pas de formulaires lourds à ouvrir
+- **Clarté** : Identification immédiate des actions critiques
+- **Traçabilité** : Technicien visible sur chaque événement
+- **Collaboration** : Auto-refresh pour travail en équipe fluide
+
+---
+
 ## 3.3.0 - 2026-02-21
 
 Stabilité : **STABLE** ✅
