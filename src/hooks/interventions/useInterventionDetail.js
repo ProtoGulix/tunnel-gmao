@@ -45,7 +45,7 @@ export function useInterventionDetail(id) {
         setError(null);
       } catch (err) {
         console.error('Erreur fetch intervention:', err);
-        setError(err);
+        setError(err.message || "Erreur lors du chargement de l'intervention");
       } finally {
         if (!silent) setLoading(false);
       }

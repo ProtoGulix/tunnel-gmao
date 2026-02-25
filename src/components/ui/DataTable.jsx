@@ -16,6 +16,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Table, Flex, Card, Text, Box } from "@radix-ui/themes";
 import TableHeader from "./TableHeader";
+import Pagination from "./Pagination";
 
 const defaultGetRowKey = (row, index) => row?.id ?? row?.key ?? index;
 
@@ -49,6 +50,7 @@ export default function DataTable({
   isRowExpanded,
   onToggleExpand,
   rowRenderer,
+  pagination,
 }) {
   const colCount = columns.length;
 
@@ -154,6 +156,20 @@ export default function DataTable({
               })}
         </Table.Body>
       </Table.Root>
+
+      {/* Pagination */}
+      {pagination && (
+        <Box mt="4">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalItems={pagination.total}
+            itemsPerPage={pagination.pageSize}
+            onPageChange={pagination.onPageChange}
+            onItemsPerPageChange={pagination.onPageSizeChange}
+            pageSizeOptions={pagination.pageSizeOptions || [20, 50, 100]}
+          />
+        </Box>
+      )}
     </>
   );
 }
@@ -189,4 +205,13 @@ DataTable.propTypes = {
   isRowExpanded: PropTypes.func,
   onToggleExpand: PropTypes.func,
   rowRenderer: PropTypes.func,
+  pagination: PropTypes.shape({
+    currentPage: PropTypes.number.isRequired,
+    total: PropTypes.number.isRequired,
+    pageSize: PropTypes.number.isRequired,
+    totalPages: PropTypes.number,
+    onPageChange: PropTypes.func.isRequired,
+    onPageSizeChange: PropTypes.func,
+    pageSizeOptions: PropTypes.arrayOf(PropTypes.number),
+  }),
 };

@@ -1,5 +1,6 @@
 import { Box, Flex, Button, Text, Select } from "@radix-ui/themes";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import PropTypes from 'prop-types';
 
 /**
  * Composant de pagination réutilisable
@@ -200,3 +201,12 @@ export default function Pagination({
     </Box>
   );
 }
+
+Pagination.propTypes = {
+  currentPage: PropTypes.number,
+  totalItems: PropTypes.number,
+  itemsPerPage: PropTypes.number,
+  onPageChange: PropTypes.func.isRequired,
+  onItemsPerPageChange: PropTypes.func.isRequired,
+  pageSizeOptions: PropTypes.arrayOf(PropTypes.number),
+};

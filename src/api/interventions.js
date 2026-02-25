@@ -99,12 +99,16 @@ export async function fetchInterventionPdf(id) {
  */
 // eslint-disable-next-line complexity
 function mapInterventionResponse(raw = {}) {
+  // Gère à la fois les anciennes strings et les nouveaux objets
+  const typeCode =
+    typeof raw.type_inter === 'string' ? raw.type_inter : raw.type_inter?.code || raw.type || 'CUR';
+
   return {
     id: raw.id?.toString() || '',
     code: raw.code || '',
     title: raw.title || '',
     status: raw.status_actual || raw.status || '',
-    type: raw.type_inter || raw.type || 'CUR',
+    type: typeCode,
     priority: raw.priority || 'normal',
     reportedDate: raw.reported_date,
     printedFiche: raw.printed_fiche ?? false,

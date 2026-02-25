@@ -99,9 +99,13 @@ export function calculateInterventionStats(interventions) {
 
   // Par type
   const byType = INTERVENTION_TYPES.map((type) => {
-    const count = active.filter(
-      (i) => i.type_inter?.toUpperCase() === type.id
-    ).length;
+    const count = active.filter((i) => {
+      // Gérer à la fois les anciennes strings et les nouveaux objets
+      const typeCode = typeof i.type_inter === 'string'
+        ? i.type_inter.toUpperCase()
+        : i.type_inter?.code?.toUpperCase();
+      return typeCode === type.id;
+    }).length;
     return count > 0
       ? {
           id: type.id,
@@ -144,11 +148,13 @@ export function filterInterventions(interventions, filters) {
     }
 
     // Filtre type
-    if (
-      filters.type &&
-      intervention.type_inter?.toUpperCase() !== filters.type
-    ) {
-      return false;
+    if (filters.type) {
+      const typeCode = typeof intervention.type_inter === 'string'
+        ? intervention.type_inter.toUpperCase()
+        : intervention.type_inter?.code?.toUpperCase();
+      if (typeCode !== filters.type) {
+        return false;
+      }
     }
 
     // Filtre statut

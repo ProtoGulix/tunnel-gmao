@@ -30,7 +30,7 @@ export function useInterventionsList(searchTerm = '') {
       setError(null);
     } catch (err) {
       console.error('Erreur fetch interventions:', err);
-      setError(err);
+      setError(err.message || 'Erreur lors du chargement des interventions');
     } finally {
       if (!silent) setLoading(false);
     }

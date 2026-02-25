@@ -25,7 +25,7 @@ export function useEquipementClasses() {
       const data = await equipementClassesApi.fetchEquipementClasses();
       setClasses(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Erreur lors du chargement des classes');
       setClasses([]);
     } finally {
       setLoading(false);

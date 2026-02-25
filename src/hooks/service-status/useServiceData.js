@@ -35,7 +35,7 @@ export function useServiceData(startDate, endDate) {
       const result = await fetchServiceStatus(startDate, endDate);
       setData(result);
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Erreur lors du chargement du statut du service');
       setData(null);
     } finally {
       setLoading(false);

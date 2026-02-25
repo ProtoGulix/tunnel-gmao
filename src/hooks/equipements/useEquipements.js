@@ -5,7 +5,7 @@
  * Gère la liste des équipements avec cache et hiérarchie parent/enfants
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as equipementsApi from '@/api/equipements';
 
 /**
@@ -16,6 +16,7 @@ export function useEquipements() {
   const [equipements, setEquipements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const initialLoadRef = useRef(false);
 
   // Cache pour accès rapide par ID
   const equipementsById = useMemo(() => {
@@ -32,15 +33,19 @@ export function useEquipements() {
       const data = await equipementsApi.fetchEquipements();
       setEquipements(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Erreur lors du chargement des équipements');
       setEquipements([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Chargement initial avec protection React StrictMode
   useEffect(() => {
-    loadEquipements();
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      loadEquipements();
+    }
   }, [loadEquipements]);
 
   // Récupérer les infos d'un équipement parent

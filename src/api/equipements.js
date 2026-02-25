@@ -19,10 +19,13 @@ export async function fetchEquipements() {
 /**
  * Récupère le détail d'un équipement
  * @param {string} id - ID de l'équipement
+ * @param {Object} [params] - Paramètres optionnels
+ * @param {number} [params.interventions_page] - Page des interventions
+ * @param {number} [params.interventions_limit] - Limite par page
  * @returns {Promise<Object>} Détail de l'équipement
  */
-export async function fetchEquipementById(id) {
-  const response = await api.get(`/equipements/${id}`);
+export async function fetchEquipementById(id, params = {}) {
+  const response = await api.get(`/equipements/${id}`, { params });
   return response.data;
 }
 
@@ -80,5 +83,19 @@ export async function fetchEquipementStats(id, params = {}) {
  */
 export async function fetchEquipementHealth(id) {
   const response = await api.get(`/equipements/${id}/health`);
+  return response.data;
+}
+
+/**
+ * Récupère la liste paginée des enfants d'un équipement
+ * @param {string} id - ID de l'équipement parent
+ * @param {Object} [params] - Paramètres optionnels
+ * @param {number} [params.page] - Numéro de page
+ * @param {number} [params.limit] - Limite par page (max 100)
+ * @param {string} [params.search] - Filtre sur code ou name
+ * @returns {Promise<Object>} Liste paginée { total, page, page_size, total_pages, items }
+ */
+export async function fetchEquipementChildren(id, params = {}) {
+  const response = await api.get(`/equipements/${id}/children`, { params });
   return response.data;
 }

@@ -4,6 +4,51 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.7.0 - 2026-02-25
+
+Stabilité : **STABLE** ✅
+
+### 📊 Détail Équipement Amélioré
+
+Accès détaillé à toutes les informations d'un équipement avec navigation simplifiée par onglets.
+
+**Détail complet** :
+
+- Informations générales (code, nom, classe, fabricant, numéro de série, date de mise en service)
+- Santé de l'équipement en temps réel avec raison du statut
+- Parent dans la hiérarchie avec lien de navigation
+
+**Onglets intuitifs** :
+
+- **Informations** : Données et paramètres de l'équipement
+- **Interventions** : Toutes les interventions liées avec pagination
+- **Éléments enfants** : Arborescence avec recherche et pagination
+- **Statistiques** : Graphiques d'activité (nombre d'interventions par état/priorité)
+
+**Navigation améliorée** :
+
+- Chargement rapide des onglets (chargement à la demande)
+- Pagination claire pour les listes longues
+- Recherche dans les éléments enfants
+- Rafraîchissement manuel avec bouton visible
+
+### 🎯 Types d'Interventions Détaillés
+
+Les types d'interventions sont maintenant affichés avec plus de détails :
+
+- Code et label pour chaque type
+- Amélioration de la lisibilité dans les listes
+- Filtrage et statistiques plus précises
+
+### 🔧 Améliorations Techniques
+
+- Gestion des erreurs d'authentification plus claire
+- Affichage des messages d'erreur lisibles (pas d'objets techniques)
+- Support de la pagination jusqu'à 100 éléments par page
+- Réduction de la charge serveur avec onglets paresseux
+
+---
+
 ## 3.6.0 - 2026-02-24
 
 Stabilité : **STABLE** ✅
