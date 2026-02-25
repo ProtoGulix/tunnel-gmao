@@ -3,7 +3,7 @@
  * @module pages/equipements/EquipementsPage.config
  */
 
-import { Wrench } from 'lucide-react';
+import { Factory } from 'lucide-react';
 
 /**
  * Configuration de la page Équipements pour l'auto-discovery du menu
@@ -12,7 +12,7 @@ export const PAGE_CONFIG = {
   id: 'equipements',
   path: '/equipements',
   label: 'Équipements',
-  icon: Wrench,
+  icon: Factory,
   pageTitle: 'Gestion des Équipements',
   pageSubtitle: "Parc d'équipements avec état de santé et classification",
   section: 'maintenance',

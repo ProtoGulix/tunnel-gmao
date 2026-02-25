@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import { Container, Flex, Text, Badge, Tabs } from '@radix-ui/themes';
-import { Search, Layers } from 'lucide-react';
+import { Search, Layers, Factory } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import EquipementsListTab from '@/components/equipements/tabs/EquipementsListTab';
 import EquipementClassesTab from '@/components/equipements/tabs/EquipementClassesTab';
@@ -45,6 +45,7 @@ export default function EquipementsPage() {
         description="Liste de tous les équipements"
         stats={headerStats}
         onRefresh={refresh}
+        icon={Factory}
       />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
