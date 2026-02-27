@@ -18,7 +18,7 @@ import { useEquipements } from '@/hooks/equipements/useEquipements';
  */
 export default function EquipementsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('equipements', 'tab');
-  const { equipements, refresh } = useEquipements();
+  const { equipements, loading, error, getParentInfo, refresh } = useEquipements();
 
   const headerStats = useMemo(() => {
     const counts = equipements.reduce(
@@ -68,7 +68,12 @@ export default function EquipementsPage() {
         </Tabs.List>
 
         <Tabs.Content value="equipements">
-          <EquipementsListTab />
+          <EquipementsListTab
+            equipements={equipements}
+            loading={loading}
+            error={error}
+            getParentInfo={getParentInfo}
+          />
         </Tabs.Content>
 
         <Tabs.Content value="classes">

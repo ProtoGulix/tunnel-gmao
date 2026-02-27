@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Box, Card, Flex, Grid, Text, Tabs, Badge } from '@radix-ui/themes';
+import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
 import { Info, BarChart3, Users, Wrench } from 'lucide-react';
 import PropTypes from 'prop-types';
 import LoadingState from '@/components/ui/LoadingState';
@@ -14,7 +14,8 @@ import ErrorState from '@/components/ui/ErrorState';
 import EquipementInfoBanner from '@/components/equipements/EquipementInfoBanner';
 import EquipementChildrenTab from './EquipementChildrenTab';
 import EquipementInterventionsTab from './EquipementInterventionsTab';
-import { useEquipementDetail } from '@/hooks/equipements/useEquipementDetail';
+import EquipementInfoTab from './EquipementInfoTab';
+import EquipementStatsTab from './EquipementStatsTab';
 
 function buildTabs(childrenCount, interventionsCount) {
   return [
@@ -25,145 +26,8 @@ function buildTabs(childrenCount, interventionsCount) {
   ];
 }
 
-function InfoTab({ equipement }) {
-  if (!equipement) return <Text color="gray">Aucune donnée</Text>;
-
-  return (
-    <Box py="4">
-      <Flex direction="column" gap="4">
-        {/* Informations générales */}
-        <Box>
-          <Text weight="medium" size="2" mb="3">
-            Informations générales
-          </Text>
-          <Flex direction="column" gap="2">
-            {equipement.no_machine && (
-              <Flex justify="between">
-                <Text size="2" color="gray">
-                  N° Machine
-                </Text>
-                <Text size="2" weight="medium">
-                  {equipement.no_machine}
-                </Text>
-              </Flex>
-            )}
-            {equipement.affectation && (
-              <Flex justify="between">
-                <Text size="2" color="gray">
-                  Affectation
-                </Text>
-                <Text size="2" weight="medium">
-                  {equipement.affectation}
-                </Text>
-              </Flex>
-            )}
-            {equipement.fabricant && (
-              <Flex justify="between">
-                <Text size="2" color="gray">
-                  Fabricant
-                </Text>
-                <Text size="2" weight="medium">
-                  {equipement.fabricant}
-                </Text>
-              </Flex>
-            )}
-            {equipement.numero_serie && (
-              <Flex justify="between">
-                <Text size="2" color="gray">
-                  N° Série
-                </Text>
-                <Text size="2" weight="medium">
-                  {equipement.numero_serie}
-                </Text>
-              </Flex>
-            )}
-            {equipement.date_mise_service && (
-              <Flex justify="between">
-                <Text size="2" color="gray">
-                  Mise en service
-                </Text>
-                <Text size="2" weight="medium">
-                  {equipement.date_mise_service}
-                </Text>
-              </Flex>
-            )}
-            <Flex justify="between">
-              <Text size="2" color="gray">
-                Équipement mère
-              </Text>
-              <Text size="2" weight="medium">
-                {equipement.is_mere ? 'Oui' : 'Non'}
-              </Text>
-            </Flex>
-          </Flex>
-        </Box>
-
-        {/* Notes */}
-        {equipement.notes && (
-          <Box>
-            <Text weight="medium" size="2" mb="2">
-              Notes
-            </Text>
-            <Text size="2" color="gray">
-              {equipement.notes}
-            </Text>
-          </Box>
-        )}
-      </Flex>
-    </Box>
-  );
-}
-
-InfoTab.propTypes = {
-  equipement: PropTypes.object,
-};
-
-function StatsTab({ stats, statsLoading }) {
-  if (statsLoading) return <LoadingState message="Chargement des statistiques..." />;
-  if (!stats) return <Box py="4"><Text color="gray">Aucune statistique disponible</Text></Box>;
-  return (
-    <Box py="4">
-      <Grid columns="2" gap="3">
-        <Card style={{ padding: '1.5rem' }}>
-          <Text weight="medium" size="1" color="gray" mb="3">Interventions</Text>
-          <Grid columns="2" gap="2">
-            <Box>
-              <Text size="3" weight="medium" color="orange">{stats.interventions?.open || 0}</Text>
-              <Text size="1" color="gray">Ouvertes</Text>
-            </Box>
-            <Box>
-              <Text size="3" weight="medium" color="green">{stats.interventions?.closed || 0}</Text>
-              <Text size="1" color="gray">Fermées</Text>
-            </Box>
-          </Grid>
-        </Card>
-        {stats.interventions?.by_priority && (
-          <Card style={{ padding: '1.5rem' }}>
-            <Text weight="medium" size="1" color="gray" mb="3">Par priorité</Text>
-            <Flex direction="column" gap="2">
-              {Object.entries(stats.interventions.by_priority).map(([priority, count]) => (
-                <Flex key={priority} justify="between">
-                  <Text size="2" capitalize>{priority}</Text>
-                  <Text weight="medium">{count}</Text>
-                </Flex>
-              ))}
-            </Flex>
-          </Card>
-        )}
-      </Grid>
-    </Box>
-  );
-}
-
-StatsTab.propTypes = {
-  stats: PropTypes.object,
-  statsLoading: PropTypes.bool,
-};
-
-export default function EquipementDetailTab({ id }) {
+export default function EquipementDetailTab({ id, equipement, loading, error, health, stats, statsLoading, interventions, childrenCount, parentId }) {
   const [activeTab, setActiveTab] = useState('info');
-  const { equipement, loading, error, health, stats, statsLoading, interventions, childrenCount, parentId } =
-    useEquipementDetail(id);
 
   if (error) return <ErrorState error={error} />;
   if (loading && !equipement) return <LoadingState message="Chargement de l'équipement..." />;
@@ -195,7 +59,7 @@ export default function EquipementDetailTab({ id }) {
         </Tabs.List>
 
         <Tabs.Content value="info">
-          <InfoTab equipement={equipement} />
+          <EquipementInfoTab equipement={equipement} />
         </Tabs.Content>
 
         <Tabs.Content value="interventions">
@@ -209,7 +73,7 @@ export default function EquipementDetailTab({ id }) {
         </Tabs.Content>
 
         <Tabs.Content value="stats">
-          <StatsTab stats={stats} statsLoading={statsLoading} />
+          <EquipementStatsTab stats={stats} statsLoading={statsLoading} />
         </Tabs.Content>
       </Tabs.Root>
     </Box>
@@ -218,4 +82,13 @@ export default function EquipementDetailTab({ id }) {
 
 EquipementDetailTab.propTypes = {
   id: PropTypes.string.isRequired,
+  equipement: PropTypes.object,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+  health: PropTypes.object,
+  stats: PropTypes.object,
+  statsLoading: PropTypes.bool,
+  interventions: PropTypes.object,
+  childrenCount: PropTypes.number,
+  parentId: PropTypes.string,
 };

@@ -5,7 +5,7 @@
  * le tri et l'auto-refresh.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { fetchInterventions } from '@/api/interventions';
 
 /**
@@ -18,6 +18,8 @@ export function useInterventionsList(searchTerm = '') {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const initialLoadRef = useRef(false);
+  const fetchDataRef = useRef(null);
 
   // Fetch des interventions
   const fetchData = useCallback(async (silent = false) => {
@@ -36,10 +38,16 @@ export function useInterventionsList(searchTerm = '') {
     }
   }, []);
 
+  // Ref stable pour l'auto-refresh
+  fetchDataRef.current = fetchData;
+
   // Chargement initial
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      fetchData();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtrage par recherche
   const filteredData = useMemo(() => {
@@ -139,11 +147,11 @@ export function useInterventionsList(searchTerm = '') {
   // Auto-refresh silencieux toutes les 30s
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchData(true); // silent = true
+      fetchDataRef.current(true); // silent = true
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, []);
 
   return {
     blocks,

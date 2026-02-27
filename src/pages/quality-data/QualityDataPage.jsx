@@ -3,7 +3,7 @@
  * Détection et suivi des problèmes de complétude et cohérence
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Container, Card, Flex, Text, Select } from '@radix-ui/themes';
 import { Database } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
@@ -14,10 +14,10 @@ export default function QualityDataPage() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [entityFilter, setEntityFilter] = useState('all');
 
-  const filters = {
+  const filters = useMemo(() => ({
     severite: severityFilter !== 'all' ? severityFilter : undefined,
     entite: entityFilter !== 'all' ? entityFilter : undefined,
-  };
+  }), [severityFilter, entityFilter]);
 
   return (
     <Container size="4">

@@ -4,6 +4,41 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.8.0 - 2026-02-26
+
+Stabilité : **STABLE** ✅
+
+### ✨ Améliorations de Fiabilité
+
+Renforcement de la stabilité globale de l'application avec des correctifs et optimisations importants.
+
+**Gestion des erreurs améliorée** :
+
+- Messages d'erreur clairs et lisibles (pas de code technique)
+- Affichage approprié des erreurs de connexion et d'authentification
+- Gestion robuste des cas limites dans les hooks de données
+
+**Performance optimisée** :
+
+- Récupération des données plus efficace
+- Réduction des appels API inutiles
+- Chargement progressif des onglets équipement
+
+**Stabilité V2 améliorée** :
+
+- Corrections dans le composant Pagination (V2)
+- Validation des props cohérente avec la v3
+- Préparation pour la migration future vers V3
+
+### 🔧 Correctifs
+
+- Gestion correcte des types d'interventions (ancien format string + nouveau format objet)
+- Filtrage et statistiques d'interventions corrigés
+- Affichage des erreurs réseau approprié
+- Synchronisation des états entre composants
+
+---
+
 ## 3.7.0 - 2026-02-25
 
 Stabilité : **STABLE** ✅

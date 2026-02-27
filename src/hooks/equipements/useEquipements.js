@@ -46,7 +46,7 @@ export function useEquipements() {
       initialLoadRef.current = true;
       loadEquipements();
     }
-  }, [loadEquipements]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Récupérer les infos d'un équipement parent
   const getParentInfo = useCallback(

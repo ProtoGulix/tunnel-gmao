@@ -32,6 +32,7 @@ export function useInterventionDetail(id) {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const pdfUrlRef = useRef(null);
+  const fetchDataRef = useRef(null);
 
   // Fetch intervention
   const fetchData = useCallback(
@@ -53,22 +54,25 @@ export function useInterventionDetail(id) {
     [id]
   );
 
+  // Ref stable pour l'auto-refresh
+  fetchDataRef.current = fetchData;
+
   // Chargement initial avec protection React StrictMode
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
       fetchData();
     }
-  }, [fetchData]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh silencieux toutes les 30 secondes
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchData(true);
+      fetchDataRef.current(true);
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, []);
 
   // Cleanup PDF URL
   useEffect(() => {

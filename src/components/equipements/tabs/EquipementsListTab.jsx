@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Text, Button, Badge } from '@radix-ui/themes';
 import { Search, Eye } from 'lucide-react';
@@ -11,15 +12,13 @@ import DataTable from '@/components/ui/DataTable';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import { useEquipements } from '@/hooks/equipements/useEquipements';
 
 /**
  * Onglet liste des équipements avec recherche et santé
  */
-export default function EquipementsListTab() {
+export default function EquipementsListTab({ equipements, loading, error, getParentInfo }) {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
-  const { equipements, loading, error, getParentInfo } = useEquipements();
 
   const filteredEquipements = useMemo(() => {
     if (!searchText.trim()) return equipements;
@@ -138,3 +137,10 @@ export default function EquipementsListTab() {
     </Box>
   );
 }
+
+EquipementsListTab.propTypes = {
+  equipements: PropTypes.array.isRequired,
+  loading: PropTypes.bool.isRequired,
+  error: PropTypes.string,
+  getParentInfo: PropTypes.func.isRequired,
+};

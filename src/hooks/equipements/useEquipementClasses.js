@@ -5,7 +5,7 @@
  * Gère le CRUD des classes d'équipement (SCIE, EXTRUDEUSE, etc.)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as equipementClassesApi from '@/api/equipementClasses';
 
 /**
@@ -16,6 +16,7 @@ export function useEquipementClasses() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const initialLoadRef = useRef(false);
 
   // Charger la liste des classes
   const loadClasses = useCallback(async () => {
@@ -33,8 +34,11 @@ export function useEquipementClasses() {
   }, []);
 
   useEffect(() => {
-    loadClasses();
-  }, [loadClasses]);
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      loadClasses();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Créer une classe
   const createClass = useCallback(

@@ -44,7 +44,7 @@ export function useServiceData(startDate, endDate) {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     data,

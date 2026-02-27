@@ -78,6 +78,10 @@ export function useEquipementDetail(id) {
     }
   }, [id]);
 
+  // Ref stable pour l'auto-refresh (évite de recréer l'interval à chaque render)
+  const refreshHealthRef = useRef(refreshHealth);
+  refreshHealthRef.current = refreshHealth;
+
   // Chargement initial
   useEffect(() => {
     if (!initialLoadRef.current) {
@@ -85,16 +89,16 @@ export function useEquipementDetail(id) {
       fetchDetail();
       fetchStats();
     }
-  }, [fetchDetail, fetchStats]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-refresh santé toutes les 30 secondes
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshHealth();
+      refreshHealthRef.current();
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [refreshHealth]);
+  }, []);
 
   // Refresh manuel
   const manualRefresh = useCallback(async () => {

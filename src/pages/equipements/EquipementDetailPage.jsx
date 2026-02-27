@@ -15,7 +15,11 @@ import { useEquipementDetail } from '@/hooks/equipements/useEquipementDetail';
 
 export default function EquipementDetailPage() {
   const { id } = useParams();
-  const { equipement, loading, error, health, manualRefresh } = useEquipementDetail(id);
+  const {
+    equipement, loading, error, health,
+    stats, statsLoading, interventions, childrenCount, parentId,
+    manualRefresh,
+  } = useEquipementDetail(id);
 
   if (error && !equipement) {
     return (
@@ -43,7 +47,18 @@ export default function EquipementDetailPage() {
         onRefresh={manualRefresh}
       />
 
-      <EquipementDetailTab id={id} />
+      <EquipementDetailTab
+        id={id}
+        equipement={equipement}
+        loading={loading}
+        error={error}
+        health={health}
+        stats={stats}
+        statsLoading={statsLoading}
+        interventions={interventions}
+        childrenCount={childrenCount}
+        parentId={parentId}
+      />
     </PageContainer>
   );
 }
