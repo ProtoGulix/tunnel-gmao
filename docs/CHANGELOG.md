@@ -4,6 +4,45 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.10.0 - 2026-03-01
+
+Stabilité : **STABLE** ✅
+
+### 📚 Gestion des Modèles de Pièces
+
+Nouveau module permettant de définir et gérer des gabarits réutilisables pour cataloguer les pièces de manière structurée.
+
+**Création de modèles** :
+
+- Définition des caractéristiques techniques désires (dimensions, matériaux, type...)
+- Champs de type nombre, texte libre ou liste de valeurs predefinies
+- Pattern de référence automatique généré depuis les caractéristiques
+- Versionnement : évoluer un modèle sans casser les pièces existantes
+
+**Navigation dans les modèles** :
+
+- Vue liste avec version et nombre de champs au premier coup d'oeil
+- Détail complet des champs et valeurs autorisées en un clic
+- Suppression sécurisée avec confirmation explicite
+
+**Lien avec les familles** :
+
+- Association directe d’un modèle à une sous-famille depuis l’éditeur
+- Sélection visuelle depuis la liste des modèles disponibles (plus d’UUID à copier-coller)
+- Indique clairement si une sous-famille a un modèle ou non
+
+### 🔁 Onglet dédié dans la page Stock
+
+La page Stock possède maintenant un troisième onglet **Modèles** accessible directement, sans naviguer ailleurs.
+
+### 🎯 Cas d’usage
+
+- **Responsable stock** : Crée un modèle « Roulement à billes » avec diamètres int/ext et largeur
+- **Technicien** : Saisit une nouvelle pièce en remplissant des champs guidés, la référence se génère toute seule
+- **Gestionnaire** : Fait évoluer un modèle sans perdre les pièces déjà en stock
+
+---
+
 ## 3.9.0 - 2026-03-01
 
 Stabilité : **STABLE** ✅

@@ -5,11 +5,13 @@
 
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Card, Flex, Text, TextField } from '@radix-ui/themes';
+import { Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { usePartTemplates } from '@/hooks/stock/usePartTemplates';
 
 export default function StockSubFamilyEditor({ subFamily, onSave, onCancel, saving }) {
   const [label, setLabel] = useState('');
   const [templateId, setTemplateId] = useState('');
+  const { templates } = usePartTemplates();
 
   useEffect(() => {
     setLabel(subFamily?.label || '');
@@ -52,13 +54,19 @@ export default function StockSubFamilyEditor({ subFamily, onSave, onCancel, savi
 
             <Box>
               <Text size="2" as="label" weight="bold">
-                Template ID (optionnel)
+                Modele de piece (optionnel)
               </Text>
-              <TextField.Root
-                value={templateId}
-                onChange={(event) => setTemplateId(event.target.value)}
-                placeholder="UUID du template"
-              />
+              <Select.Root value={templateId || 'none'} onValueChange={(v) => setTemplateId(v === 'none' ? '' : v)}>
+                <Select.Trigger variant="soft" />
+                <Select.Content>
+                  <Select.Item value="none">Aucun modele</Select.Item>
+                  {templates.map((tpl) => (
+                    <Select.Item key={tpl.id} value={tpl.id}>
+                      {tpl.label} (v{tpl.version})
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
             </Box>
 
             <Flex justify="end" gap="2">

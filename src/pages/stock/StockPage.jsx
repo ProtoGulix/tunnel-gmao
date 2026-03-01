@@ -4,10 +4,11 @@
  */
 
 import { Container, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Layers, Package } from 'lucide-react';
+import { Layers, Package, Shapes } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import StockItemsTab from '@/components/stock/tabs/StockItemsTab';
 import StockFamiliesTab from '@/components/stock/tabs/StockFamiliesTab';
+import StockTemplatesTab from '@/components/stock/tabs/StockTemplatesTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 export default function StockPage() {
@@ -31,6 +32,12 @@ export default function StockPage() {
               <Text>Familles et sous-familles</Text>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="templates">
+            <Flex align="center" gap="2">
+              <Shapes size={14} />
+              <Text>Modeles</Text>
+            </Flex>
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="items">
@@ -39,6 +46,10 @@ export default function StockPage() {
 
         <Tabs.Content value="families">
           <StockFamiliesTab />
+        </Tabs.Content>
+
+        <Tabs.Content value="templates">
+          <StockTemplatesTab />
         </Tabs.Content>
       </Tabs.Root>
     </Container>
