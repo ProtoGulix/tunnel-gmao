@@ -4,6 +4,50 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.9.0 - 2026-03-01
+
+Stabilité : **STABLE** ✅
+
+### 📦 Module Stock Optimisé
+
+Le module Stock est maintenant plus rapide et plus complet, avec une expérience utilisateur améliorée.
+
+**Gestion des pièces plus efficace** :
+
+- Affichage du fournisseur préféré pour chaque pièce
+- Compteurs dynamiques des pièces avec et sans template
+- Filtres famille/sous-famille avec visibilité des quantités
+- Recherche rapide avec debounce intégré
+
+**Gestion des familles simplifiée** :
+
+- Recherche serveur dans les sous-familles (sans rechargement)
+- Statistiques d'édition visibles (nombre de modèles utilisés)
+- Édition rapide des sous-familles en 1 clic
+- Interface deux colonnes pour navigation optimale
+
+**Performance améliorée** :
+
+- Une seule requête API pour charger toutes les données
+- Compteurs calculés serveur (pas de ralentissement client)
+- Réduction drastique des appels réseau
+- Chargement plus rapide des listes longues
+
+### 🔧 Optimisations Techniques
+
+- Facettes serveur pour les compteurs de famille/sous-famille
+- Modèles de fournisseurs intégrés dans la réponse API
+- Gestion optimale des requêtes en attente
+- Stabilité améliorée en environnement de développement
+
+### 🎯 Cas d'usage
+
+- **Préparateur** : Trouve rapidement le fournisseur principal en consultant le stock
+- **Responsable stock** : Voit les statistiques de modèles utilisés par famille
+- **Gestionnaire** : Édite les modèles de pièces sans quitter la vue d'ensemble
+
+---
+
 ## 3.8.0 - 2026-02-26
 
 Stabilité : **STABLE** ✅

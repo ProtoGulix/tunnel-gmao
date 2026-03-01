@@ -19,9 +19,7 @@ document.title = `TUNNEL v${packageJson.version}`;
 
 // ===== RENDER =====
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <Theme accentColor="blue" grayColor="slate" radius="medium" scaling="95%">
-      <App />
-    </Theme>
-  </React.StrictMode>
+  <Theme accentColor="blue" grayColor="slate" radius="medium" scaling="95%">
+    <App />
+  </Theme>
 );

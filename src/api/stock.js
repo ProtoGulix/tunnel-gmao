@@ -21,7 +21,7 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Object>} Created purchase request
  */
 export async function createPurchaseRequest(payload) {
-  const response = await api.post('/purchase-requests', payload);
+  const response = await api.post('/purchase-requests/', payload);
   return response.data || null;
 }
 
@@ -59,11 +59,62 @@ export async function updatePurchaseRequest(id, updates) {
  * Fetch stock items with optional search/filters
  * @param {Object} params - Query parameters
  * @param {string} [params.search] - Search term
- * @returns {Promise<Array>} Array of stock items
+ * @returns {Promise<Object>} Stock items paginated response
  */
-// eslint-disable-next-line no-unused-vars
 export async function fetchStockItems(params = {}) {
-  // TODO: Implement proper stock items endpoint
-  // For now, return empty array to allow compilation
-  return [];
+  const response = await api.get('/stock-items/', { params });
+  return response.data || { items: [], pagination: {} };
+}
+
+/**
+ * Fetch stock families
+ * @returns {Promise<Array>} Array of families
+ */
+export async function fetchStockFamilies() {
+  const response = await api.get('/stock-families/');
+  return response.data || [];
+}
+
+/**
+ * Fetch stock family detail
+ * @param {string} familyCode - Family code
+ * @param {Object} params - Query parameters
+ * @param {string} [params.search] - Search filter for sub-families
+ * @returns {Promise<Object>} Family detail with sub-families
+ */
+export async function fetchStockFamilyDetail(familyCode, params = {}) {
+  const response = await api.get(`/stock-families/${familyCode}`, { params });
+  return response.data || null;
+}
+
+/**
+ * Fetch stock sub families
+ * @returns {Promise<Array>} Array of sub families
+ */
+export async function fetchStockSubFamilies() {
+  const response = await api.get('/stock-sub-families/');
+  return response.data || [];
+}
+
+/**
+ * Fetch stock sub family detail
+ * @param {string} familyCode - Family code
+ * @param {string} subFamilyCode - Sub family code
+ * @returns {Promise<Object>} Sub family detail
+ */
+export async function fetchStockSubFamily(familyCode, subFamilyCode) {
+  const response = await api.get(`/stock-sub-families/${familyCode}/${subFamilyCode}`);
+  return response.data || null;
+}
+
+/**
+ * Update stock sub family
+ * @param {string} familyCode - Family code
+ * @param {string} subFamilyCode - Sub family code
+ * @param {Object} updates - Updates payload
+ * @returns {Promise<Object>} Updated sub family
+ */
+export async function updateStockSubFamily(familyCode, subFamilyCode, updates) {
+  const response = await api.patch(`/stock-sub-families/${familyCode}/${subFamilyCode}`, updates);
+  return response.data || null;
 }
