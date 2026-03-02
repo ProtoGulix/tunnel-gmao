@@ -43,6 +43,7 @@ Les conventions de code découlent directement des règles métier. Par exemple 
 6. [API & Data Fetching](#6-api--data-fetching)
 7. [Formulaires](#7-formulaires)
 8. [Gestion des Onglets](#8-gestion-des-onglets)
+   - 8.7 [Mise en Page Deux Panneaux](#87-mise-en-page-deux-panneaux-twopanellayout)
 
 ### Qualité & Sécurité
 
@@ -1191,6 +1192,85 @@ const handleAdd = async (data) => {
 - [ ] Auto-refresh seulement sur onglets pertinents
 - [ ] `LoadingState` et `ErrorState` gérés dans chaque Tab
 - [ ] Notifications via `useNotification`
+- [ ] Layout deux panneaux → `TwoPanelLayout` (voir 8.7)
+
+### 8.7 Mise en Page Deux Panneaux (`TwoPanelLayout`)
+
+Lorsqu'un onglet présente une liste à gauche et un détail/formulaire à droite,
+utiliser systématiquement `TwoPanelLayout` depuis `components/ui/`.
+
+**Quand l'utiliser :**
+
+- Sélection dans une liste → affichage du détail
+- Sélection dans une liste → formulaire d'édition/création
+- Nécessite un état vide clair quand rien n'est sélectionné
+
+**Deux variantes disponibles :**
+
+| Variante                 | Panneau gauche       | Panneau droit | Séparateur | Usage typique                 |
+| ------------------------ | -------------------- | ------------- | ---------- | ----------------------------- |
+| `fixed-sidebar` (défaut) | Largeur fixe (320px) | `flex: 1`     | Oui        | Liste compacte + grand détail |
+| `proportional`           | `flex: 1`            | `flex: 2`     | Non        | Deux panneaux équilibrés      |
+
+**Exemple — variante `fixed-sidebar` avec état vide (cas standard) :**
+
+```jsx
+import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
+import EmptyState from '@/components/ui/EmptyState';
+import { Shapes } from 'lucide-react';
+
+// Le Tab calcule ce qu'affiche le panneau droit
+const rightPanel = showCreate
+  ? <MonFormulaire ... />
+  : selected
+  ? <MonDetail ... />
+  : null;
+
+return (
+  <TwoPanelLayout
+    left={<MaListe ... />}
+    right={rightPanel}
+    emptyState={
+      <EmptyState
+        icon={<Shapes size={48} />}
+        title="Rien de sélectionné"
+        description="Sélectionnez un élément dans la liste."
+      />
+    }
+  />
+);
+```
+
+**Exemple — variante `proportional` sans séparateur :**
+
+```jsx
+return (
+  <TwoPanelLayout
+    variant="proportional"
+    separator={false}
+    left={<MaListe ... />}
+    right={selected ? <MonDetail ... /> : null}
+  />
+);
+```
+
+**Props disponibles :**
+
+| Prop         | Type   | Défaut            | Description                                  |
+| ------------ | ------ | ----------------- | -------------------------------------------- |
+| `left`       | node   | —                 | Contenu du panneau gauche (requis)           |
+| `right`      | node   | —                 | Contenu du panneau droit (null → emptyState) |
+| `emptyState` | node   | —                 | Affiché quand `right` est null/undefined     |
+| `separator`  | bool   | `true`            | Affiche le séparateur vertical               |
+| `variant`    | string | `'fixed-sidebar'` | `'fixed-sidebar'` ou `'proportional'`        |
+| `leftWidth`  | number | `320`             | Largeur px du panneau gauche (fixed-sidebar) |
+
+**Règles :**
+
+- La marge haute `mt="4"` est appliquée automatiquement par le composant
+- Le Tab garde la logique de sélection et l'état en interne
+- L'`EmptyState` est toujours accompagné d'une icône Lucide React
+- Ne pas recoder ce layout directement — toujours passer par `TwoPanelLayout`
 
 ---
 
