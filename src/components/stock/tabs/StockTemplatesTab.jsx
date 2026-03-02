@@ -1,12 +1,14 @@
 /**
- * @fileoverview Onglet gestion des modeles de pieces
+ * @fileoverview Onglet gestion des trames de reference de pieces
  * @module components/stock/tabs/StockTemplatesTab
  */
 
 import { useState } from 'react';
-import { Box, Flex, Separator } from '@radix-ui/themes';
+import { Shapes } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
+import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
+import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
 import PartTemplatesList from '@/components/stock/PartTemplatesList';
 import PartTemplateDetail from '@/components/stock/PartTemplateDetail';
 import PartTemplateCreateForm from '@/components/stock/PartTemplateCreateForm';
@@ -19,15 +21,11 @@ export default function StockTemplatesTab() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleCreateNew = () => {
-    setSelected(null);
-    setShowCreate(true);
-  };
+  if (error) return <ErrorState error={error} />;
+  if (loading) return <LoadingState message="Chargement des trames de reference..." />;
 
-  const handleSelect = (tpl) => {
-    setSelected(tpl);
-    setShowCreate(false);
-  };
+  const handleCreateNew = () => { setSelected(null); setShowCreate(true); };
+  const handleSelect = (tpl) => { setSelected(tpl); setShowCreate(false); };
 
   const handleSave = async (payload) => {
     try {
@@ -50,19 +48,15 @@ export default function StockTemplatesTab() {
     }
   };
 
-  if (error) {
-    return <ErrorState error={error} />;
-  }
-
-  if (loading) {
-    return <LoadingState message="Chargement des modeles..." />;
-  }
-
-  const showRight = selected || showCreate;
+  const rightPanel = showCreate
+    ? <PartTemplateCreateForm onSave={handleSave} onCancel={() => setShowCreate(false)} saving={saving} />
+    : selected
+    ? <PartTemplateDetail template={selected} onDelete={handleDelete} deleting={deleting} />
+    : null;
 
   return (
-    <Flex gap="4" direction={{ initial: 'column', md: 'row' }}>
-      <Box style={{ flex: showRight ? 1 : 3 }}>
+    <TwoPanelLayout
+      left={
         <PartTemplatesList
           templates={templates}
           loading={loading}
@@ -70,29 +64,15 @@ export default function StockTemplatesTab() {
           onSelect={handleSelect}
           onCreateNew={handleCreateNew}
         />
-      </Box>
-
-      {showRight && (
-        <>
-          <Separator orientation="vertical" />
-          <Box style={{ flex: 2 }}>
-            {showCreate && (
-              <PartTemplateCreateForm
-                onSave={handleSave}
-                onCancel={() => setShowCreate(false)}
-                saving={saving}
-              />
-            )}
-            {!showCreate && selected && (
-              <PartTemplateDetail
-                template={selected}
-                onDelete={handleDelete}
-                deleting={deleting}
-              />
-            )}
-          </Box>
-        </>
-      )}
-    </Flex>
+      }
+      right={rightPanel}
+      emptyState={
+        <EmptyState
+          icon={<Shapes size={48} />}
+          title="Aucune trame selectionnee"
+          description="Selectionnez une trame de reference dans la liste ou creez-en une nouvelle."
+        />
+      }
+    />
   );
 }

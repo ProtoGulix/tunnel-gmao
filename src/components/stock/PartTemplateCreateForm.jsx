@@ -55,7 +55,7 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
   return (
     <form onSubmit={handleSubmit}>
       <Flex direction="column" gap="3">
-        <Text size="3" weight="bold">Nouveau modele</Text>
+        <Text size="3" weight="bold">Nouvelle trame de reference</Text>
 
         <Flex gap="3" wrap="wrap">
           <Box style={{ flex: 1, minWidth: 150 }}>
@@ -112,7 +112,7 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
             Annuler
           </Button>
           <Button type="submit" color="blue" size="2" disabled={saving}>
-            Creer le modele
+            Creer la trame
           </Button>
         </Flex>
       </Flex>

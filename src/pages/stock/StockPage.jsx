@@ -35,7 +35,7 @@ export default function StockPage() {
           <Tabs.Trigger value="templates">
             <Flex align="center" gap="2">
               <Shapes size={14} />
-              <Text>Modeles</Text>
+              <Text>Trames de reference</Text>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>

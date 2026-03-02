@@ -54,12 +54,12 @@ export default function StockSubFamilyEditor({ subFamily, onSave, onCancel, savi
 
             <Box>
               <Text size="2" as="label" weight="bold">
-                Modele de piece (optionnel)
+                Trame de reference (optionnelle)
               </Text>
               <Select.Root value={templateId || 'none'} onValueChange={(v) => setTemplateId(v === 'none' ? '' : v)}>
                 <Select.Trigger variant="soft" />
                 <Select.Content>
-                  <Select.Item value="none">Aucun modele</Select.Item>
+                  <Select.Item value="none">Aucune trame</Select.Item>
                   {templates.map((tpl) => (
                     <Select.Item key={tpl.id} value={tpl.id}>
                       {tpl.label} (v{tpl.version})

@@ -5,24 +5,24 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Button, Flex, Table, Text } from '@radix-ui/themes';
-import { Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 
 export default function PartTemplatesList({ templates, loading, selectedId, onSelect, onCreateNew }) {
   if (loading) {
-    return <Text size="2" color="gray">Chargement des modeles...</Text>;
+    return <Text size="2" color="gray">Chargement...</Text>;
   }
 
   return (
     <Flex direction="column" gap="3">
       <Flex justify="between" align="center">
-        <Text size="3" weight="bold">Modeles ({templates.length})</Text>
+        <Text size="3" weight="bold">Trames de reference ({templates.length})</Text>
         <Button size="1" variant="soft" onClick={onCreateNew}>
-          <Plus size={12} /> Nouveau
+          <Plus size={12} /> Nouvelle
         </Button>
       </Flex>
 
       {templates.length === 0 && (
-        <Text size="2" color="gray">Aucun modele defini.</Text>
+        <Text size="2" color="gray">Aucune trame de reference definie.</Text>
       )}
 
       <Table.Root variant="surface">
@@ -32,6 +32,7 @@ export default function PartTemplatesList({ templates, loading, selectedId, onSe
             <Table.ColumnHeaderCell>Libelle</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Version</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Champs</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell style={{ width: 24 }} />
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -55,6 +56,11 @@ export default function PartTemplatesList({ templates, loading, selectedId, onSe
               </Table.Cell>
               <Table.Cell>
                 <Text size="2" color="gray">{tpl.fields?.length ?? 0} champ(s)</Text>
+              </Table.Cell>
+              <Table.Cell>
+                {selectedId === tpl.id && (
+                  <ChevronRight size={14} color="var(--blue-9)" />
+                )}
               </Table.Cell>
             </Table.Row>
           ))}

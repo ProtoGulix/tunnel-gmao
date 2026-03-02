@@ -4,6 +4,34 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.11.0 - 2026-03-02
+
+Stabilité : **en consolidation**
+
+### Ergonomie du module Stock
+
+**Affichage restructuré sur les onglets Familles et Trames de référence :**
+
+- La colonne de gauche conserve sa largeur fixe en toutes circonstances — plus de décalage visuel selon la sélection
+- Un message d'orientation s'affiche dans le panneau droit quand rien n'est sélectionné, plutôt qu'un espace vide
+- Une flèche indique visuellement quelle ligne est actuellement ouverte dans le détail
+
+**Renommage Modèles → Trames de référence :**
+
+- La terminologie reflète mieux l'usage : une trame de référence est un gabarit qui structure les caractéristiques d'une pièce, pas un modèle au sens générique
+- Le changement est appliqué sur tous les libellés, boutons et messages de l'interface
+
+### Composants / Modules concernés
+
+- Onglet Trames de référence (Stock)
+- Onglet Familles et sous-familles (Stock)
+
+### Points de vigilance
+
+- Le terme "modèle" a disparu de l'interface Stock — toute référence externe doit utiliser "trame de référence"
+
+---
+
 ## 3.10.0 - 2026-03-01
 
 Stabilité : **STABLE** ✅
