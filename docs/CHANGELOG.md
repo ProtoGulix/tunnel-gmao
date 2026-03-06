@@ -4,6 +4,32 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.13.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Catalogue des pièces stock — refonte visuelle et ergonomique
+
+L'onglet **Pièces référencées** a été entièrement restructuré pour faciliter la lecture et la navigation dans le catalogue.
+
+**Un vrai tableau à colonnes structurées :**
+
+La liste affiche désormais quatre colonnes distinctes : la référence avec son nom dessous, la famille, la quantité en stock et le fournisseur préféré. La ligne sélectionnée se détache clairement avec un fond coloré et un trait sur le bord gauche.
+
+**Un panneau de détail mieux hiérarchisé :**
+
+La quantité en stock et le fournisseur préféré sont mis en avant dans deux vignettes bien visibles en haut du panneau. Les caractéristiques secondaires (spécification, dimension, emplacement) apparaissent en dessous, uniquement si elles sont renseignées.
+
+**Des filtres famille et sous-famille plus lisibles :**
+
+Les listes déroulantes ont été remplacées par des boutons en ligne — la famille active et la sous-famille active s’affichent en bleu plein, les autres en gris. Les filtres occupent toute la largeur de la page, sans être compressés par le champ de recherche. La ligne de sous-famille est toujours visible : elle affiche au minimum le bouton "Toutes", et les sous-familles de la famille active quand une est sélectionnée.
+
+**En-tête simplifié :**
+
+Le bouton "Rafraîchir" a été supprimé. Le bouton **Ajouter** le remplace directement à droite du champ de recherche.
+
+---
+
 ## 3.12.0 - 2026-03-06
 
 Stabilité : **STABLE** ✅

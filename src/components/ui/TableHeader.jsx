@@ -64,6 +64,7 @@ SearchInput.propTypes = {
 function ControlBar(props) {
   const {
     actions,
+    rightActions,
     searchValue,
     onSearchChange,
     searchLabel,
@@ -98,12 +99,14 @@ function ControlBar(props) {
           Rafraîchir
         </Button>
       )}
+      {rightActions}
     </Flex>
   );
 }
 
 ControlBar.propTypes = {
   actions: PropTypes.node,
+  rightActions: PropTypes.node,
   searchValue: PropTypes.string.isRequired,
   onSearchChange: PropTypes.func.isRequired,
   searchLabel: PropTypes.string.isRequired,
@@ -161,6 +164,7 @@ function TableHeader({
   showRefreshButton = true,
   mb = DEFAULTS.MARGIN_BOTTOM,
   actions,
+  rightActions,
   children,
 }) {
   return (
@@ -169,6 +173,7 @@ function TableHeader({
         <TableHeaderTitle Icon={icon} title={title} count={count} />
         <ControlBar
           actions={actions}
+          rightActions={rightActions}
           searchValue={searchValue}
           onSearchChange={onSearchChange}
           searchLabel={searchLabel}
@@ -213,6 +218,7 @@ TableHeader.propTypes = {
   showRefreshButton: PropTypes.bool,
   mb: PropTypes.string,
   actions: PropTypes.node,
+  rightActions: PropTypes.node,
   children: PropTypes.node,
 };
 

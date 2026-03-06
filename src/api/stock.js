@@ -119,6 +119,25 @@ export async function updateStockSubFamily(familyCode, subFamilyCode, updates) {
   return response.data || null;
 }
 
+export async function fetchStockItemDetail(id) {
+  const response = await api.get(`/stock-items/${id}`);
+  return response.data || null;
+}
+
+export async function createStockItem(payload) {
+  const response = await api.post('/stock-items/', payload);
+  return response.data || null;
+}
+
+export async function updateStockItem(id, updates) {
+  const response = await api.put(`/stock-items/${id}`, updates);
+  return response.data || null;
+}
+
+export async function deleteStockItem(id) {
+  await api.delete(`/stock-items/${id}`);
+}
+
 /**
  * Create a stock family
  * @param {Object} payload - Family data

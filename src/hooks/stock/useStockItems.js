@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchStockItems } from '@/api/stock';
+import { fetchStockItems, createStockItem, updateStockItem, deleteStockItem } from '@/api/stock';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -31,7 +31,7 @@ const getPaginationValues = (data, itemsCount) => {
   };
 };
 
-export function useStockItems() {
+export function useStockItems({ initialSearch = '' } = {}) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +39,7 @@ export function useStockItems() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(DEFAULT_TOTAL_PAGES);
-  const [search, setSearchState] = useState('');
+  const [search, setSearchState] = useState(initialSearch);
   const [familyCode, setFamilyCodeState] = useState('');
   const [subFamilyCode, setSubFamilyCodeState] = useState('');
   const [facets, setFacets] = useState({ families: [] });
@@ -123,6 +123,23 @@ export function useStockItems() {
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  const createItem = useCallback(async (payload) => {
+    const created = await createStockItem(payload);
+    setRefreshKey((prev) => prev + 1);
+    return created;
+  }, []);
+
+  const editItem = useCallback(async (id, updates) => {
+    const updated = await updateStockItem(id, updates);
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...updated } : it)));
+    return updated;
+  }, []);
+
+  const removeItem = useCallback(async (id) => {
+    await deleteStockItem(id);
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }, []);
+
   return {
     items,
     loading,
@@ -143,5 +160,8 @@ export function useStockItems() {
     goToPage: setPage,
     changePageSize,
     refresh,
+    createItem,
+    editItem,
+    removeItem,
   };
 }
