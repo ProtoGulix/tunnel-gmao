@@ -3,55 +3,75 @@
  * @module components/stock/StockItemForm
  */
 
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
 import { Edit2, Package, Plus } from 'lucide-react';
 import { UNIT_OPTIONS } from '@/config/units';
+import CharacteristicsFields from '@/components/stock/CharacteristicsFields';
+import FormErrors from '@/components/shared/FormErrors';
+import { buildPayload } from '@/lib/utils/stockItemPayload';
+import { useStockItemForm } from '@/hooks/stock/useStockItemForm';
 
-const DEFAULTS = { ref: '', name: '', family_code: '', sub_family_code: '', spec: '', dimension: '', quantity: 0, unit: 'pcs', location: '' };
-
-const coerceItem = (item) =>
-  Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, item[k] ?? DEFAULTS[k]]));
-
-function fromItem(item) {
-  return item ? coerceItem(item) : { ...DEFAULTS };
+function validateField(field, val) {
+  const filled = val !== undefined && String(val).trim() !== '';
+  if (field.required && !filled) return `Le champ "${field.label}" est obligatoire.`;
+  if (filled && field.field_type === 'number' && isNaN(Number(val))) return `Le champ "${field.label}" doit être une valeur numérique.`;
+  return null;
 }
 
-function validate(form) {
+function validate(form, template) {
   const errs = [];
-  if (!form.ref.trim()) errs.push('La référence est obligatoire.');
   if (!form.name.trim() || form.name.trim().length < 2) errs.push('Le nom doit contenir au moins 2 caractères.');
   if (isNaN(Number(form.quantity)) || Number(form.quantity) < 0) errs.push('La quantité doit être un nombre positif.');
+  if (template) (template.fields || []).forEach((field) => { const err = validateField(field, form.characteristics?.[field.key]); if (err) errs.push(err); });
   return errs;
 }
 
-function ErrorBlock({ errors }) {
-  if (!errors.length) return null;
+function RefDisplay({ isEdit, itemRef, suggestedRef }) {
+  const ref = isEdit ? itemRef : suggestedRef;
   return (
-    <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: '6px', padding: '12px' }}>
-      <Text color="red" weight="bold" size="2">Erreurs</Text>
-      {errors.map((err, idx) => <Text key={idx} color="red" size="1" style={{ display: 'block' }}>• {err}</Text>)}
+    <Box style={{ flex: 1, minWidth: 140 }}>
+      <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>{isEdit ? 'Référence' : 'Référence générée'}</Text>
+      <Box style={{ padding: '0 10px', height: 32, display: 'flex', alignItems: 'center', background: 'var(--gray-2)', border: '1px solid var(--gray-5)', borderRadius: 'var(--radius-2)' }}>
+        <Text size="2" weight="medium" color={ref ? undefined : 'gray'} style={{ fontFamily: 'monospace' }}>{ref || '—'}</Text>
+      </Box>
     </Box>
   );
 }
 
-ErrorBlock.propTypes = { errors: PropTypes.arrayOf(PropTypes.string).isRequired };
+RefDisplay.propTypes = {
+  isEdit: PropTypes.bool,
+  itemRef: PropTypes.string,
+  suggestedRef: PropTypes.string,
+};
+
+function FormActions({ isEdit, saving, onCancel }) {
+  return (
+    <Flex gap="2" justify="end">
+      <Button type="button" variant="soft" color="gray" onClick={onCancel} disabled={saving}>Annuler</Button>
+      <Button type="submit" color="blue" loading={saving}>
+        {isEdit ? <><Edit2 size={14} /> Enregistrer</> : <><Plus size={14} /> Créer</>}
+      </Button>
+    </Flex>
+  );
+}
+
+FormActions.propTypes = {
+  isEdit: PropTypes.bool,
+  saving: PropTypes.bool,
+  onCancel: PropTypes.func.isRequired,
+};
 
 export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
   const isEdit = !!item;
-  const [form, setForm] = useState(() => fromItem(item));
-  const [errors, setErrors] = useState([]);
-
-  const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  const setVal = (field) => (val) => setForm((prev) => ({ ...prev, [field]: val }));
+  const { form, errors, setErrors, families, familiesLoading, subFamilies, template, suggestedRef, set, setVal, setChar, handleFamilyChange, handleSubFamilyChange } = useStockItemForm(item);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate(form);
+    const errs = validate(form, isEdit ? null : template);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
-    await onSubmit({ ...form, quantity: Number(form.quantity) });
+    await onSubmit(buildPayload(form, template, isEdit));
   };
 
   return (
@@ -63,13 +83,10 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
             <Text size="4" weight="bold">{isEdit ? 'Modifier la pièce' : 'Nouvelle pièce'}</Text>
           </Flex>
 
-          <ErrorBlock errors={errors} />
+          <FormErrors errors={errors} />
 
           <Flex gap="3" wrap="wrap">
-            <Box style={{ flex: 1, minWidth: 140 }}>
-              <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Référence *</Text>
-              <TextField.Root value={form.ref} onChange={set('ref')} placeholder="REF-123" />
-            </Box>
+            <RefDisplay isEdit={isEdit} itemRef={item?.ref} suggestedRef={suggestedRef} />
             <Box style={{ flex: 2, minWidth: 200 }}>
               <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Nom *</Text>
               <TextField.Root value={form.name} onChange={set('name')} placeholder="Roulement SKF 6205" />
@@ -79,24 +96,36 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
           <Flex gap="3" wrap="wrap">
             <Box style={{ flex: 1, minWidth: 130 }}>
               <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Famille</Text>
-              <TextField.Root value={form.family_code} onChange={set('family_code')} placeholder="MECA" />
+              <Select.Root value={form.family_code || '__none__'} onValueChange={handleFamilyChange} disabled={isEdit || familiesLoading}>
+                <Select.Trigger variant="soft" style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="__none__">— Aucune —</Select.Item>
+                  {families.map((f) => <Select.Item key={f.family_code} value={f.family_code}>{f.family_code}</Select.Item>)}
+                </Select.Content>
+              </Select.Root>
             </Box>
             <Box style={{ flex: 1, minWidth: 130 }}>
               <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Sous-famille</Text>
-              <TextField.Root value={form.sub_family_code} onChange={set('sub_family_code')} placeholder="ROUL" />
+              <Select.Root value={form.sub_family_code || '__none__'} onValueChange={handleSubFamilyChange} disabled={isEdit || !form.family_code || familiesLoading}>
+                <Select.Trigger variant="soft" style={{ width: '100%' }} />
+                <Select.Content>
+                  <Select.Item value="__none__">— Aucune —</Select.Item>
+                  {subFamilies.map((s) => <Select.Item key={s.code} value={s.code}>{s.code}</Select.Item>)}
+                </Select.Content>
+              </Select.Root>
             </Box>
           </Flex>
 
-          <Flex gap="3" wrap="wrap">
-            <Box style={{ flex: 1, minWidth: 150 }}>
-              <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Spécification</Text>
-              <TextField.Root value={form.spec} onChange={set('spec')} placeholder="SKF 6205-2RS" />
-            </Box>
-            <Box style={{ flex: 1, minWidth: 150 }}>
-              <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Dimension</Text>
-              <TextField.Root value={form.dimension} onChange={set('dimension')} placeholder="25x52x15 mm" />
-            </Box>
-          </Flex>
+          <CharacteristicsFields
+            template={template}
+            characteristics={form.characteristics}
+            onCharChange={setChar}
+            spec={form.spec}
+            dimension={form.dimension}
+            onSpecChange={set('spec')}
+            onDimChange={set('dimension')}
+            readonly={isEdit && !!template}
+          />
 
           <Flex gap="3" wrap="wrap">
             <Box style={{ flex: 1, minWidth: 100 }}>
@@ -118,12 +147,7 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
             </Box>
           </Flex>
 
-          <Flex gap="2" justify="end">
-            <Button type="button" variant="soft" color="gray" onClick={onCancel} disabled={saving}>Annuler</Button>
-            <Button type="submit" color="blue" loading={saving}>
-              {isEdit ? <><Edit2 size={14} /> Enregistrer</> : <><Plus size={14} /> Créer</>}
-            </Button>
-          </Flex>
+          <FormActions isEdit={isEdit} saving={saving} onCancel={onCancel} />
         </Flex>
       </form>
     </Card>

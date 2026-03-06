@@ -4,6 +4,32 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.15.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Formulaire de pièce — saisie guidée, contrôlée et sécurisée
+
+Le formulaire de création et de modification d'une pièce a été entièrement repensé pour guider la saisie de bout en bout.
+
+**Famille et sous-famille depuis le catalogue :**
+
+Les deux champs ne sont plus des zones de texte libres. Ils se présentent sous forme de listes déroulantes alimentées par le serveur, et sont liés l'un à l'autre — changer la famille vide et recharge automatiquement les sous-familles disponibles.
+
+**Champs de caractéristiques adaptés au template :**
+
+Dès qu'une sous-famille est sélectionnée, si elle dispose d'un template, les champs de caractéristiques techniques apparaissent dynamiquement. Chaque champ respecte son type : un champ numérique n'accepte que des nombres, un champ à valeurs fixées se présente sous forme de liste fermée, un champ texte reste libre. Les champs obligatoires sont identifiés. Pour les pièces sans template, la saisie manuelle de la spécification et de la dimension est conservée.
+
+**La référence se construit en temps réel :**
+
+La référence de la pièce est calculée automatiquement à mesure que les champs sont renseignés et s'affiche en lecture seule en haut du formulaire. Elle n'est pas modifiable manuellement — c'est le serveur qui la finalise à l'enregistrement.
+
+**Édition contrôlée :**
+
+En modification, la famille, la sous-famille et les caractéristiques techniques sont verrouillées et s'affichent en lecture seule — seuls le nom, la quantité, l'unité, la spécification et l'emplacement restent modifiables, conformément aux règles du serveur.
+
+---
+
 ## 3.14.0 - 2026-03-06
 
 Stabilité : **STABLE** ✅

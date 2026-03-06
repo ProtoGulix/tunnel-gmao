@@ -817,6 +817,34 @@ Ne pas utiliser `border`, `outline` ou une couleur de fond fixe : `var(--accent-
 - [ ] Sélection → `var(--accent-3)` + `inset 3px 0 0 var(--accent-9)`
 - [ ] Pas de couleur en dur (`#hex`) pour les états de sélection
 
+#### Format de Référence Pièce (MANDATORY)
+
+La référence d'une pièce est **générée par le serveur**. Le front affiche uniquement une prévisualisation informative construite selon les règles suivantes :
+
+**Mode template** (sous-famille avec template associé) :
+
+```
+{FAMILLE}-{SOUS-FAMILLE}-{résultat du pattern template}
+```
+
+Exemple : sous-famille `ELE/CONT`, template pattern `{AMP}-{TCOMM}`, valeurs `AMP=15, TCOMM=24VDC` → `ELE-CONT-15-24VDC`
+
+**Mode legacy** (sous-famille sans template) :
+
+```
+{FAMILLE}-{SOUS-FAMILLE}-{SPEC}-{DIMENSION}
+```
+
+Exemple : famille `DIV`, sous-famille `ROU`, spec `SKF 6205-2RS`, dimension `25x52x15 mm` → `DIV-ROU-SKF 6205-2RS-25x52x15 mm`
+
+**Règles** :
+
+- Le séparateur est toujours `-`
+- Les segments vides sont ignorés (pas de `--`)
+- L'utilisateur peut saisir manuellement une ref ; dans ce cas elle prend le dessus sur l'aperçu
+- La ref affichée en aperçu automatique est en italique/gris ; une ref saisie manuellement est en noir normal
+- La validation ne bloque pas si la ref est vide (le serveur la génèrera)
+
 ---
 
 ## 5. Hooks & State Management
