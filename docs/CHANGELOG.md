@@ -4,6 +4,28 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.14.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Fiche détail d'une pièce — données complètes et affichage intégré
+
+En cliquant sur une pièce dans le catalogue, l'interface charge désormais l'intégralité de sa fiche depuis le serveur et la déploie directement sous la ligne sélectionnée — sans quitter la liste.
+
+**Une fiche riche et hiérarchisée :**
+
+Deux vignettes mettent en avant la **quantité en stock** et le **fournisseur préféré**. En dessous, les informations de classification (famille, sous-famille, template) et les caractéristiques techniques (spécification, dimension, emplacement) s'affichent côte à côte, uniquement si elles sont renseignées.
+
+**Le tableau des fournisseurs :**
+
+Tous les fournisseurs référencés pour cette pièce sont listés dans un tableau : référence fournisseur, référence fabricant avec le nom du fabricant, prix unitaire, quantité minimum de commande et délai de livraison. Le fournisseur préféré est signalé par une étoile.
+
+**Code couleur cohérent sur toutes les références :**
+
+Les badges de référence suivent maintenant une convention stable — bleu pour les références internes au catalogue, indigo pour les références fournisseurs, violet pour les références fabricants — appliquée de façon uniforme dans tout le module stock.
+
+---
+
 ## 3.13.0 - 2026-03-06
 
 Stabilité : **STABLE** ✅

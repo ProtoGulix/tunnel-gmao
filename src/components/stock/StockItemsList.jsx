@@ -50,7 +50,7 @@ const columns = [
   },
 ];
 
-export default function StockItemsList({ items, loading, selectedId, onSelect, pagination }) {
+export default function StockItemsList({ items, loading, selectedId, onSelect, pagination, renderDetail }) {
   return (
     <DataTable
       columns={columns}
@@ -62,6 +62,8 @@ export default function StockItemsList({ items, loading, selectedId, onSelect, p
         background: row.id === selectedId ? 'var(--accent-3)' : undefined,
         boxShadow: row.id === selectedId ? 'inset 3px 0 0 var(--accent-9)' : undefined,
       })}
+      isRowExpanded={(row) => row.id === selectedId}
+      renderExpandedRow={renderDetail ? () => renderDetail() : undefined}
       emptyState={{ icon: Package, title: 'Aucune pièce', description: 'Aucune pièce ne correspond à la recherche.' }}
       pagination={pagination}
     />
@@ -74,5 +76,6 @@ StockItemsList.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
   pagination: PropTypes.object,
+  renderDetail: PropTypes.func,
 };
 

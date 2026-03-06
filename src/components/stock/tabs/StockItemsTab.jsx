@@ -8,14 +8,14 @@ import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Package, Plus } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
-import EmptyState from '@/components/ui/EmptyState';
+import LoadingState from '@/components/ui/LoadingState';
 import TableHeader from '@/components/ui/TableHeader';
-import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
 import StockItemsList from '@/components/stock/StockItemsList';
 import StockItemDetail from '@/components/stock/StockItemDetail';
 import StockItemForm from '@/components/stock/StockItemForm';
 import { useStockItems } from '@/hooks/stock/useStockItems';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
+import { fetchStockItemDetail } from '@/api/stock';
 
 function FamilyFilters({ facets, familyCode, onFamilyChange, subFamilyCode, onSubFamilyChange }) {
   const selectedFamily = useMemo(
@@ -85,9 +85,25 @@ export default function StockItemsTab() {
   const [selected, setSelected] = useState(null);
   const [mode, setMode] = useState(null); // 'create' | 'edit'
   const [saving, setSaving] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const handleSearch = useCallback((v) => { setSearch(v); setUrlSearch(v); }, [setSearch, setUrlSearch]);
-  const handleSelect = (row) => { setSelected(row); setMode(null); };
+  const handleSelect = useCallback(async (row) => {
+    if (row.id === selected?.id && mode !== 'edit') {
+      setSelected(null);
+      setMode(null);
+      return;
+    }
+    setMode(null);
+    setSelected(null);
+    setDetailLoading(true);
+    try {
+      const detail = await fetchStockItemDetail(row.id);
+      setSelected(detail);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [selected, mode]);
   const handleFamilyChange = (v) => { setFamilyCode(v); setSubFamilyCode(''); };
   const handleSubFamilyChange = (v) => setSubFamilyCode(v);
 
@@ -104,8 +120,9 @@ export default function StockItemsTab() {
   const handleEdit = async (data) => {
     try {
       setSaving(true);
-      const updated = await editItem(selected.id, data);
-      setSelected((prev) => ({ ...prev, ...updated }));
+      await editItem(selected.id, data);
+      const detail = await fetchStockItemDetail(selected.id);
+      setSelected(detail);
       setMode(null);
     } finally {
       setSaving(false);
@@ -129,17 +146,16 @@ export default function StockItemsTab() {
     pageSizeOptions: [50, 100, 200],
   } : undefined;
 
-  const rightPanel = mode === 'create' ? (
-    <StockItemForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
-  ) : mode === 'edit' && selected ? (
-    <StockItemForm item={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
-  ) : selected ? (
-    <StockItemDetail
-      item={selected}
-      onEdit={() => setMode('edit')}
-      onDelete={handleDelete}
-    />
-  ) : null;
+  const renderDetail = () => {
+    if (detailLoading) return <LoadingState fullscreen={false} message="Chargement du détail..." />;
+    if (!selected) return null;
+    if (mode === 'edit') return (
+      <StockItemForm item={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
+    );
+    return (
+      <StockItemDetail item={selected} onEdit={() => setMode('edit')} onDelete={handleDelete} />
+    );
+  };
 
   return (
     <Box>
@@ -165,26 +181,18 @@ export default function StockItemsTab() {
           onSubFamilyChange={handleSubFamilyChange}
         />
       </TableHeader>
-      <TwoPanelLayout
-        variant="proportional"
-        separator={false}
-        left={
-          <StockItemsList
-            items={items}
-            loading={loading}
-            selectedId={selected?.id}
-            onSelect={handleSelect}
-            pagination={paginationProps}
-          />
-        }
-        right={rightPanel}
-        emptyState={
-          <EmptyState
-            icon={<Package size={48} />}
-            title="Sélectionnez une pièce"
-            description="Cliquez sur une pièce dans la liste pour afficher ses détails."
-          />
-        }
+      {mode === 'create' && (
+        <Box mb="3">
+          <StockItemForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
+        </Box>
+      )}
+      <StockItemsList
+        items={items}
+        loading={loading}
+        selectedId={selected?.id}
+        onSelect={handleSelect}
+        pagination={paginationProps}
+        renderDetail={renderDetail}
       />
     </Box>
   );
