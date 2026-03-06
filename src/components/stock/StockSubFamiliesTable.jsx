@@ -5,7 +5,7 @@
 
 import PropTypes from 'prop-types';
 import { Button, Text } from '@radix-ui/themes';
-import { Pencil, Layers } from 'lucide-react';
+import { Pencil, Layers, Plus } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 
 const columns = [
@@ -41,7 +41,7 @@ const columns = [
   },
 ];
 
-export default function StockSubFamiliesTable({ subFamilies, loading, onEdit }) {
+export default function StockSubFamiliesTable({ subFamilies, loading, onEdit, onCreate }) {
   const tableColumns = columns.map((col) => {
     if (col.key !== 'action') return col;
     return {
@@ -62,6 +62,11 @@ export default function StockSubFamiliesTable({ subFamilies, loading, onEdit }) 
         count: subFamilies.length,
         showSearchInput: false,
         showRefreshButton: false,
+        actions: (
+          <Button size="2" color="blue" onClick={onCreate}>
+            <Plus size={14} /> Ajouter
+          </Button>
+        ),
       }}
       columns={tableColumns}
       data={subFamilies}
@@ -90,4 +95,5 @@ StockSubFamiliesTable.propTypes = {
   ).isRequired,
   loading: PropTypes.bool.isRequired,
   onEdit: PropTypes.func.isRequired,
+  onCreate: PropTypes.func.isRequired,
 };

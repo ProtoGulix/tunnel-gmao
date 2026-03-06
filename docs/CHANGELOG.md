@@ -4,6 +4,49 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.12.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Gestion des familles et sous-familles
+
+L'onglet **Familles et sous-familles** permet maintenant de créer et modifier des familles et sous-familles directement dans l'interface, sans passer par la base de données.
+
+**Créer une famille :**
+
+- Cliquez sur "Ajouter" dans le tableau des familles
+- Renseignez le code et le libellé, puis enregistrez
+
+**Modifier une famille :**
+
+- Sélectionnez une famille dans le tableau
+- Cliquez sur "Modifier la famille" dans le panneau de droite
+
+**Créer une sous-famille :**
+
+- Depuis le panneau de détail d'une famille, cliquez sur "Ajouter"
+- Choisissez un code, un libellé et une trame de référence si besoin
+
+**Modifier une sous-famille :**
+
+- Cliquez sur "Editer" sur la ligne concernée dans le tableau
+
+### Réduction des appels réseau
+
+La page Stock était trop bavarde : elle interrogeait le serveur plusieurs fois au chargement, même pour des données dont elle n'avait pas besoin. Ce comportement est corrigé — chaque onglet ne charge ses données que lorsqu'il est ouvert.
+
+### Correctif sur les actions d'intervention
+
+La modification d'une action d'intervention échouait avec une erreur serveur. C'est corrigé.
+
+### Composants concernés
+
+- Onglet Familles et sous-familles (Stock)
+- Page Stock — chargement des onglets
+- Détail d'intervention — modification d'action
+
+---
+
 ## 3.11.0 - 2026-03-02
 
 Stabilité : **en consolidation**

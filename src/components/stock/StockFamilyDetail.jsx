@@ -5,27 +5,43 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, TextField } from '@radix-ui/themes';
+import { Box, Button, Flex, Text, TextField } from '@radix-ui/themes';
+import { Edit2 } from 'lucide-react';
 import StockSubFamiliesTable from '@/components/stock/StockSubFamiliesTable';
-import StockSubFamilyEditor from '@/components/stock/StockSubFamilyEditor';
+import StockSubFamilyForm from '@/components/stock/StockSubFamilyForm';
 import { useStockFamilyDetail } from '@/hooks/stock/useStockFamilyDetail';
 
-export default function StockFamilyDetail({ familyCode }) {
-  const { subFamilies, loading, search, setSearch, stats, updateSubFamily } = useStockFamilyDetail(familyCode);
+export default function StockFamilyDetail({ familyCode, onEdit }) {
+  const { subFamilies, loading, search, setSearch, stats, updateSubFamily, createSubFamily } =
+    useStockFamilyDetail(familyCode);
   const [selectedSubFamily, setSelectedSubFamily] = useState(null);
+  const [subFamilyMode, setSubFamilyMode] = useState(null); // 'create' | 'edit'
   const [saving, setSaving] = useState(false);
 
   const handleEditSubFamily = (row) => {
     setSelectedSubFamily(row);
+    setSubFamilyMode('edit');
   };
 
-  const handleSaveSubFamily = async (updates) => {
-    if (!selectedSubFamily) return;
+  const handleCreateSubFamily = () => {
+    setSelectedSubFamily(null);
+    setSubFamilyMode('create');
+  };
 
+  const handleCancel = () => {
+    setSubFamilyMode(null);
+    setSelectedSubFamily(null);
+  };
+
+  const handleSave = async (data) => {
     try {
       setSaving(true);
-      await updateSubFamily(selectedSubFamily.code, updates);
-      setSelectedSubFamily(null);
+      if (subFamilyMode === 'edit') {
+        await updateSubFamily(selectedSubFamily.code, data);
+      } else {
+        await createSubFamily(data);
+      }
+      handleCancel();
     } finally {
       setSaving(false);
     }
@@ -33,35 +49,47 @@ export default function StockFamilyDetail({ familyCode }) {
 
   return (
     <>
-      <Flex direction="column" gap="2" mb="3">
+      <Flex justify="between" align="center" mb="2">
+        <Text size="2" color="gray">
+          {stats.withTemplate} avec modele - {stats.withoutTemplate} sans modele
+        </Text>
+        {onEdit && (
+          <Button size="2" variant="soft" color="gray" onClick={onEdit}>
+            <Edit2 size={14} /> Modifier la famille
+          </Button>
+        )}
+      </Flex>
+
+      <Box mb="3">
         <TextField.Root
           placeholder="Rechercher une sous-famille..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <Text size="1" color="gray">
-          {stats.withTemplate} avec modele - {stats.withoutTemplate} sans modele
-        </Text>
-      </Flex>
+      </Box>
 
       <StockSubFamiliesTable
         subFamilies={subFamilies}
         loading={loading}
         onEdit={handleEditSubFamily}
+        onCreate={handleCreateSubFamily}
       />
 
-      <Box mt="4">
-        <StockSubFamilyEditor
-          subFamily={selectedSubFamily}
-          onSave={handleSaveSubFamily}
-          onCancel={() => setSelectedSubFamily(null)}
-          saving={saving}
-        />
-      </Box>
+      {subFamilyMode && (
+        <Box mt="4">
+          <StockSubFamilyForm
+            subFamily={subFamilyMode === 'edit' ? selectedSubFamily : null}
+            onSubmit={handleSave}
+            onCancel={handleCancel}
+            saving={saving}
+          />
+        </Box>
+      )}
     </>
   );
 }
 
 StockFamilyDetail.propTypes = {
   familyCode: PropTypes.string.isRequired,
+  onEdit: PropTypes.func,
 };

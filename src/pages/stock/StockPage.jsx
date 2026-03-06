@@ -41,15 +41,15 @@ export default function StockPage() {
         </Tabs.List>
 
         <Tabs.Content value="items">
-          <StockItemsTab />
+          {activeTab === 'items' && <StockItemsTab />}
         </Tabs.Content>
 
         <Tabs.Content value="families">
-          <StockFamiliesTab />
+          {activeTab === 'families' && <StockFamiliesTab />}
         </Tabs.Content>
 
         <Tabs.Content value="templates">
-          <StockTemplatesTab />
+          {activeTab === 'templates' && <StockTemplatesTab />}
         </Tabs.Content>
       </Tabs.Root>
     </Container>

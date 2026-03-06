@@ -118,3 +118,40 @@ export async function updateStockSubFamily(familyCode, subFamilyCode, updates) {
   const response = await api.patch(`/stock-sub-families/${familyCode}/${subFamilyCode}`, updates);
   return response.data || null;
 }
+
+/**
+ * Create a stock family
+ * @param {Object} payload - Family data
+ * @param {string} payload.code - Family code
+ * @param {string} [payload.label] - Family label
+ * @returns {Promise<Object>} Created family
+ */
+export async function createStockFamily(payload) {
+  const response = await api.post('/stock-families/', payload);
+  return response.data || null;
+}
+
+/**
+ * Update a stock family
+ * @param {string} familyCode - Family code
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<Object>} Updated family
+ */
+export async function updateStockFamily(familyCode, updates) {
+  const response = await api.patch(`/stock-families/${familyCode}`, updates);
+  return response.data || null;
+}
+
+/**
+ * Create a stock sub-family
+ * @param {string} familyCode - Parent family code
+ * @param {Object} payload - Sub-family data
+ * @param {string} payload.code - Sub-family code
+ * @param {string} payload.label - Sub-family label
+ * @param {string|null} [payload.template_id] - Template ID
+ * @returns {Promise<Object>} Created sub-family
+ */
+export async function createStockSubFamily(familyCode, payload) {
+  const response = await api.post(`/stock-sub-families/${familyCode}/`, payload);
+  return response.data || null;
+}

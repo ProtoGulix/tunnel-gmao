@@ -39,9 +39,9 @@ export function useStockItems() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(DEFAULT_TOTAL_PAGES);
-  const [search, setSearch] = useState('');
-  const [familyCode, setFamilyCode] = useState('');
-  const [subFamilyCode, setSubFamilyCode] = useState('');
+  const [search, setSearchState] = useState('');
+  const [familyCode, setFamilyCodeState] = useState('');
+  const [subFamilyCode, setSubFamilyCodeState] = useState('');
   const [facets, setFacets] = useState({ families: [] });
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -98,11 +98,21 @@ export function useStockItems() {
     };
   }, [page, pageSize, debouncedSearch, familyCode, subFamilyCode, refreshKey]);
 
-  useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    }
-  }, [debouncedSearch, familyCode, subFamilyCode, page]);
+  // Setters qui remettent la page à 1 pour éviter un double-fetch
+  const setSearch = useCallback((value) => {
+    setSearchState(value);
+    setPage(1);
+  }, []);
+
+  const setFamilyCode = useCallback((value) => {
+    setFamilyCodeState(value);
+    setPage(1);
+  }, []);
+
+  const setSubFamilyCode = useCallback((value) => {
+    setSubFamilyCodeState(value);
+    setPage(1);
+  }, []);
 
   const changePageSize = useCallback((size) => {
     setPageSize(size);

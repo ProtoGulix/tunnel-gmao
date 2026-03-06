@@ -26,7 +26,11 @@ import StockPage from '@/pages/stock/StockPage';
  * @returns {JSX.Element}
  */
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
