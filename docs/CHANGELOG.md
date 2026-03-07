@@ -4,6 +4,24 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.18.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Demandes d'achat — nouvelle section dans le module achats
+
+L'onglet "Demandes d'achat" est désormais disponible dans le module achats. Il liste toutes les DA avec des filtres par statut (dynamiques, issus du serveur) et par urgence. Un bouton de dispatch permet d'envoyer en une action toutes les demandes prêtes.
+
+La fiche détail s'ouvre en ligne au clic sur une ligne. Elle s'organise en trois colonnes de même hauteur : informations de la DA, intervention liée (code coloré par priorité, lien direct), pièce catalogue (référence cliquable vers le stock filtré). Un empty state s'affiche si l'une est absente.
+
+### Paniers fournisseurs — visibles depuis la fiche DA
+
+Les paniers dans lesquels figure la demande sont affichés en tableau directement dans la fiche : numéro de panier, fournisseur, statut de la commande, référence fabricant, quantité, prix, délai, réception et état de la ligne.
+
+Correction : le panneau détail ne s'affichait pas au clic — résolu.
+
+---
+
 ## 3.17.0 - 2026-03-07
 
 Stabilité : **STABLE** ✅
