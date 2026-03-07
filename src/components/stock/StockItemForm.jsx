@@ -11,6 +11,7 @@ import CharacteristicsFields from '@/components/stock/CharacteristicsFields';
 import FormErrors from '@/components/shared/FormErrors';
 import { buildPayload } from '@/lib/utils/stockItemPayload';
 import { useStockItemForm } from '@/hooks/stock/useStockItemForm';
+import { handleAPIError } from '@/lib/api/errors';
 
 function validateField(field, val) {
   const filled = val !== undefined && String(val).trim() !== '';
@@ -71,7 +72,12 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
     const errs = validate(form, isEdit ? null : template);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
-    await onSubmit(buildPayload(form, template, isEdit));
+    try {
+      await onSubmit(buildPayload(form, template, isEdit));
+    } catch (err) {
+      const typed = handleAPIError(err, 'StockItemForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (

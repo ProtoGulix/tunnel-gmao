@@ -4,6 +4,24 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.17.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Filtres familles et sous-familles — listes déroulantes dans la barre de recherche
+
+Les filtres familles et sous-familles de la liste des pièces sont maintenant des listes déroulantes compactes, intégrées directement dans la barre d'outils à côté du champ de recherche. Le format affiché est `CODE — Libellé`, sans le compteur.
+
+Lo filtre sous-famille est désactivé automatiquement si aucune famille n'est sélectionnée. Lorsqu'un filtre est actif, il se colore en bleu (famille) ou indigo (sous-famille) pour signaler qu'il modifie l'affichage. Le champ de recherche adopte lui aussi une teinte bleue dès qu'un texte est saisi.
+
+### Retours d'erreur — messages du serveur affichés dans les formulaires
+
+Tous les formulaires affichent désormais les messages d'erreur tels qu'ils sont formulés par le serveur, en français, directement dans le formulaire concerné. Un doublon, un conflit de référence, un champ invalide — chaque cas est maintenant communiqué clairement à l'utilisateur, sans message générique.
+
+Cette amélioration couvre les formulaires de pièces, de familles, de sous-familles, de fournisseurs et de fabricants.
+
+---
+
 ## 3.16.0 - 2026-03-07
 
 Stabilité : **STABLE** ✅

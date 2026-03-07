@@ -5,14 +5,14 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text, TextField } from '@radix-ui/themes';
+import { Button, Flex, Text } from '@radix-ui/themes';
 import { Edit2 } from 'lucide-react';
 import StockSubFamiliesTable from '@/components/stock/StockSubFamiliesTable';
 import StockSubFamilyForm from '@/components/stock/StockSubFamilyForm';
 import { useStockFamilyDetail } from '@/hooks/stock/useStockFamilyDetail';
 
 export default function StockFamilyDetail({ familyCode, onEdit }) {
-  const { subFamilies, loading, search, setSearch, stats, updateSubFamily, createSubFamily } =
+  const { subFamilies, loading, stats, updateSubFamily, createSubFamily } =
     useStockFamilyDetail(familyCode);
   const [selectedSubFamily, setSelectedSubFamily] = useState(null);
   const [subFamilyMode, setSubFamilyMode] = useState(null); // 'create' | 'edit'
@@ -54,19 +54,11 @@ export default function StockFamilyDetail({ familyCode, onEdit }) {
           {stats.withTemplate} avec modele - {stats.withoutTemplate} sans modele
         </Text>
         {onEdit && (
-          <Button size="2" variant="soft" color="gray" onClick={onEdit}>
-            <Edit2 size={14} /> Modifier la famille
+          <Button size="1" variant="soft" color="gray" onClick={onEdit}>
+            <Edit2 size={12} /> Modifier la famille
           </Button>
         )}
       </Flex>
-
-      <Box mb="3">
-        <TextField.Root
-          placeholder="Rechercher une sous-famille..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </Box>
 
       <StockSubFamiliesTable
         subFamilies={subFamilies}
@@ -76,14 +68,12 @@ export default function StockFamilyDetail({ familyCode, onEdit }) {
       />
 
       {subFamilyMode && (
-        <Box mt="4">
-          <StockSubFamilyForm
-            subFamily={subFamilyMode === 'edit' ? selectedSubFamily : null}
-            onSubmit={handleSave}
-            onCancel={handleCancel}
-            saving={saving}
-          />
-        </Box>
+        <StockSubFamilyForm
+          subFamily={subFamilyMode === 'edit' ? selectedSubFamily : null}
+          onSubmit={handleSave}
+          onCancel={handleCancel}
+          saving={saving}
+        />
       )}
     </>
   );

@@ -3,16 +3,44 @@
  * @module components/stock/tabs/StockTemplatesTab
  */
 
-import { useState } from 'react';
-import { Shapes } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
+import { Plus, Shapes } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
-import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
-import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
-import PartTemplatesList from '@/components/stock/PartTemplatesList';
+import TableHeader from '@/components/ui/TableHeader';
+import DataTable from '@/components/ui/DataTable';
 import PartTemplateDetail from '@/components/stock/PartTemplateDetail';
 import PartTemplateCreateForm from '@/components/stock/PartTemplateCreateForm';
 import { usePartTemplates } from '@/hooks/stock/usePartTemplates';
+
+const columns = [
+  {
+    key: 'code',
+    header: 'Code',
+    render: (row) => (
+      <Flex direction="column" gap="1" py="1">
+        <Badge variant="soft" color="blue">{row.code}</Badge>
+        <Text size="1" color="gray">{row.label}</Text>
+      </Flex>
+    ),
+  },
+  {
+    key: 'version',
+    header: 'Version',
+    width: 90,
+    render: (row) => <Badge color="gray" variant="outline" size="1">v{row.version}</Badge>,
+  },
+  {
+    key: 'fields',
+    header: 'Champs',
+    width: 90,
+    align: 'right',
+    render: (row) => (
+      <Text size="2" color="gray">{row.fields?.length ?? 0}</Text>
+    ),
+  },
+];
 
 export default function StockTemplatesTab() {
   const { templates, loading, error, addTemplate, removeTemplate } = usePartTemplates();
@@ -21,11 +49,14 @@ export default function StockTemplatesTab() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  if (error) return <ErrorState error={error} />;
-  if (loading) return <LoadingState message="Chargement des trames de reference..." />;
-
-  const handleCreateNew = () => { setSelected(null); setShowCreate(true); };
-  const handleSelect = (tpl) => { setSelected(tpl); setShowCreate(false); };
+  const handleSelect = useCallback((row) => {
+    if (row.id === selected?.id && !showCreate) {
+      setSelected(null);
+      return;
+    }
+    setShowCreate(false);
+    setSelected(row);
+  }, [selected, showCreate]);
 
   const handleSave = async (payload) => {
     try {
@@ -48,31 +79,58 @@ export default function StockTemplatesTab() {
     }
   };
 
-  const rightPanel = showCreate
-    ? <PartTemplateCreateForm onSave={handleSave} onCancel={() => setShowCreate(false)} saving={saving} />
-    : selected
-    ? <PartTemplateDetail template={selected} onDelete={handleDelete} deleting={deleting} />
-    : null;
+  if (error) return <ErrorState error={error} />;
+  if (loading) return <LoadingState message="Chargement des trames de reference..." />;
+
+  const renderDetail = () => {
+    if (!selected) return null;
+    return (
+      <PartTemplateDetail
+        template={selected}
+        onDelete={handleDelete}
+        deleting={deleting}
+      />
+    );
+  };
 
   return (
-    <TwoPanelLayout
-      left={
-        <PartTemplatesList
-          templates={templates}
-          loading={loading}
-          selectedId={selected?.id}
-          onSelect={handleSelect}
-          onCreateNew={handleCreateNew}
-        />
-      }
-      right={rightPanel}
-      emptyState={
-        <EmptyState
-          icon={<Shapes size={48} />}
-          title="Aucune trame selectionnee"
-          description="Selectionnez une trame de reference dans la liste ou creez-en une nouvelle."
-        />
-      }
-    />
+    <Box>
+      <TableHeader
+        icon={Shapes}
+        title="Trames de reference"
+        count={templates.length}
+        showSearchInput={false}
+        showRefreshButton={false}
+        rightActions={
+          <Button size="2" color="blue" onClick={() => { setSelected(null); setShowCreate(true); }}>
+            <Plus size={14} /> Ajouter
+          </Button>
+        }
+      />
+      {showCreate && (
+        <Box mb="3">
+          <PartTemplateCreateForm
+            onSave={handleSave}
+            onCancel={() => setShowCreate(false)}
+            saving={saving}
+          />
+        </Box>
+      )}
+      <DataTable
+        columns={columns}
+        data={templates}
+        loading={loading}
+        onRowClick={handleSelect}
+        rowStyles={(row) => ({
+          cursor: 'pointer',
+          background: row.id === selected?.id ? 'var(--accent-3)' : undefined,
+          boxShadow: row.id === selected?.id ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+        })}
+        isRowExpanded={(row) => row.id === selected?.id && !showCreate}
+        renderExpandedRow={renderDetail}
+        emptyState={{ icon: Shapes, title: 'Aucune trame', description: 'Aucune trame de reference definie.' }}
+        getRowKey={(row) => row.id}
+      />
+    </Box>
   );
 }

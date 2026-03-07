@@ -8,16 +8,15 @@
  */
 
 import PropTypes from 'prop-types';
-import { Flex, Text, TextField, Button, Box } from '@radix-ui/themes';
-import { RefreshCw, X } from 'lucide-react';
+import { Flex, Text, Button, Box } from '@radix-ui/themes';
+import { RefreshCw } from 'lucide-react';
+import SearchField from '@/components/ui/SearchField';
 
 const DEFAULTS = {
   SEARCH_PLACEHOLDER: 'Recherche...',
   SEARCH_LABEL: 'Recherche',
   MARGIN_BOTTOM: '3',
 };
-
-const hasActiveFilters = (searchValue) => searchValue.trim().length > 0;
 
 function TableHeaderTitle({ Icon, title, count }) {
   return (
@@ -45,10 +44,11 @@ function SearchInput({ value, onChange, label, placeholder }) {
       <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>
         {label}
       </Text>
-      <TextField.Root
-        placeholder={placeholder}
+      <SearchField
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        size="2"
       />
     </Box>
   );
@@ -70,13 +70,11 @@ function ControlBar(props) {
     searchLabel,
     searchPlaceholder,
     showSearchInput,
-    showResetButton,
     showRefreshButton,
     onRefresh,
     loading,
   } = props;
 
-  const hasFilters = hasActiveFilters(searchValue);
   return (
     <Flex align="end" gap="2">
       {actions}
@@ -87,11 +85,6 @@ function ControlBar(props) {
           label={searchLabel}
           placeholder={searchPlaceholder}
         />
-      )}
-      {showResetButton && hasFilters && (
-        <Button variant="soft" color="gray" onClick={() => onSearchChange('')} size="2">
-          Réinitialiser
-        </Button>
       )}
       {showRefreshButton && (
         <Button size="2" onClick={onRefresh} disabled={loading}>
@@ -112,7 +105,6 @@ ControlBar.propTypes = {
   searchLabel: PropTypes.string.isRequired,
   searchPlaceholder: PropTypes.string.isRequired,
   showSearchInput: PropTypes.bool.isRequired,
-  showResetButton: PropTypes.bool.isRequired,
   showRefreshButton: PropTypes.bool.isRequired,
   onRefresh: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
@@ -160,7 +152,6 @@ function TableHeader({
   searchPlaceholder = DEFAULTS.SEARCH_PLACEHOLDER,
   searchLabel = DEFAULTS.SEARCH_LABEL,
   showSearchInput = true,
-  showResetButton = true,
   showRefreshButton = true,
   mb = DEFAULTS.MARGIN_BOTTOM,
   actions,
@@ -179,25 +170,11 @@ function TableHeader({
           searchLabel={searchLabel}
           searchPlaceholder={searchPlaceholder}
           showSearchInput={showSearchInput}
-          showResetButton={showResetButton}
           showRefreshButton={showRefreshButton}
           onRefresh={onRefresh}
           loading={loading}
         />
       </Flex>
-      {hasActiveFilters(searchValue) && (
-        <Flex mt="2" gap="2">
-          <Button
-            size="1"
-            variant="soft"
-            aria-label="Supprimer le filtre de recherche"
-            onClick={() => onSearchChange('')}
-          >
-            Recherche: &quot;{searchValue}&quot;
-            <X size={12} style={{ marginLeft: 4 }} />
-          </Button>
-        </Flex>
-      )}
       {children}
     </Box>
   );
@@ -214,7 +191,6 @@ TableHeader.propTypes = {
   searchPlaceholder: PropTypes.string,
   searchLabel: PropTypes.string,
   showSearchInput: PropTypes.bool,
-  showResetButton: PropTypes.bool,
   showRefreshButton: PropTypes.bool,
   mb: PropTypes.string,
   actions: PropTypes.node,

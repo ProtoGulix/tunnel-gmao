@@ -7,6 +7,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Card, Checkbox, Flex, Text, TextField } from '@radix-ui/themes';
 import { Plus, Edit2 } from 'lucide-react';
+import { handleAPIError } from '@/lib/api/errors';
 
 const empty = { name: '', code: '', contact_name: '', email: '', phone: '', address: '', notes: '', is_active: true };
 
@@ -59,7 +60,12 @@ export default function SupplierForm({ supplier, onSubmit, onCancel, saving }) {
     const errs = validate(form);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
-    await onSubmit(form);
+    try {
+      await onSubmit(form);
+    } catch (err) {
+      const typed = handleAPIError(err, 'SupplierForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (

@@ -6,12 +6,11 @@
 import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Table, Text } from '@radix-ui/themes';
-import { Edit2, Factory, Trash2 } from 'lucide-react';
+import { Edit2, Factory, Plus, Trash2 } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
-import EmptyState from '@/components/ui/EmptyState';
 import LoadingState from '@/components/ui/LoadingState';
-import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
-import ManufacturersTable from '@/components/suppliers/ManufacturersTable';
+import TableHeader from '@/components/ui/TableHeader';
+import DataTable from '@/components/ui/DataTable';
 import ManufacturerForm from '@/components/suppliers/ManufacturerForm';
 import { useManufacturers } from '@/hooks/suppliers/useManufacturers';
 import { useManufacturerDetail } from '@/hooks/suppliers/useManufacturerDetail';
@@ -122,6 +121,24 @@ ManufacturerDetail.propTypes = {
   onDelete: PropTypes.func.isRequired,
 };
 
+const columns = [
+  {
+    key: 'manufacturer_name',
+    header: 'Fabricant',
+    render: (row) => (
+      <Flex align="center" gap="2" py="1">
+        <Factory size={13} color="var(--gray-9)" />
+        <Text size="2" weight="medium">{row.manufacturer_name}</Text>
+      </Flex>
+    ),
+  },
+  {
+    key: 'manufacturer_ref',
+    header: 'Référence catalogue',
+    render: (row) => <Text size="2" color="gray">{row.manufacturer_ref || '—'}</Text>,
+  },
+];
+
 export default function ManufacturersTab() {
   const [urlSearch, setUrlSearch] = useUrlSearch('mq');
   const {
@@ -135,11 +152,19 @@ export default function ManufacturersTab() {
 
   const handleSearch = useCallback((v) => { setSearch(v); setUrlSearch(v); }, [setSearch, setUrlSearch]);
 
+  const handleSelect = useCallback((m) => {
+    if (m.id === selected?.id && mode !== 'edit') {
+      setSelected(null);
+      setMode(null);
+      return;
+    }
+    setMode(null);
+    setSelected(m);
+  }, [selected, mode]);
+
   const { detail, loading: detailLoading } = useManufacturerDetail(selected?.id);
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
-
-  const handleSelect = (m) => { setSelected(m); setMode(null); };
 
   const handleCreate = async (data) => {
     try { setSaving(true); await createManufacturer(data); setMode(null); }
@@ -160,17 +185,21 @@ export default function ManufacturersTab() {
     setSelected(null);
   };
 
-  const rightPanel =
-    mode === 'create' ? (
-      <ManufacturerForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
-    ) : mode === 'edit' && selected ? (
-      <ManufacturerForm
-        manufacturer={selected}
-        onSubmit={handleEdit}
-        onCancel={() => setMode(null)}
-        saving={saving}
-      />
-    ) : selected ? (
+  const paginationProps = total > pageSize ? {
+    currentPage: page,
+    total,
+    pageSize,
+    onPageChange: setPage,
+    onPageSizeChange: setPageSize,
+    pageSizeOptions: [25, 50, 100],
+  } : undefined;
+
+  const renderDetail = () => {
+    if (mode === 'edit' && selected) return (
+      <ManufacturerForm manufacturer={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
+    );
+    if (!selected) return null;
+    return (
       <ManufacturerDetail
         base={selected}
         detail={detail}
@@ -178,39 +207,46 @@ export default function ManufacturersTab() {
         onEdit={() => setMode('edit')}
         onDelete={handleDelete}
       />
-    ) : null;
+    );
+  };
 
   return (
     <Box>
-      <TwoPanelLayout
-        variant="proportional"
-        separator={false}
-        left={
-          <ManufacturersTable
-            manufacturers={manufacturers}
-            total={total}
-            page={page}
-            pageSize={pageSize}
-            loading={loading}
-            search={search}
-            onSearchChange={handleSearch}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            selectedId={selected?.id}
-            onSelect={handleSelect}
-            onCreate={() => { setSelected(null); setMode('create'); }}
-          />
+      <TableHeader
+        icon={Factory}
+        title="Fabricants"
+        count={total}
+        searchValue={search}
+        onSearchChange={handleSearch}
+        loading={loading}
+        showRefreshButton={false}
+        rightActions={
+          <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
+            <Plus size={14} /> Ajouter
+          </Button>
         }
-        right={rightPanel}
-        emptyState={
-          <EmptyState
-            icon={<Factory size={48} />}
-            title="Aucun fabricant selectionne"
-            description="Selectionnez un fabricant dans la liste ou creez-en un nouveau."
-          />
-        }
+      />
+      {mode === 'create' && (
+        <Box mb="3">
+          <ManufacturerForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
+        </Box>
+      )}
+      <DataTable
+        columns={columns}
+        data={manufacturers}
+        loading={loading}
+        onRowClick={handleSelect}
+        getRowKey={(row) => row.id}
+        rowStyles={(row) => ({
+          cursor: 'pointer',
+          background: row.id === selected?.id ? 'var(--accent-3)' : undefined,
+          boxShadow: row.id === selected?.id ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+        })}
+        isRowExpanded={(row) => row.id === selected?.id && mode !== 'create'}
+        renderExpandedRow={renderDetail}
+        emptyState={{ icon: Factory, title: 'Aucun fabricant', description: 'Aucun fabricant trouve.' }}
+        pagination={paginationProps}
       />
     </Box>
   );
 }
-

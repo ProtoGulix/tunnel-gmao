@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Text, TextField } from '@radix-ui/themes';
 import { Layers, Save } from 'lucide-react';
+import { handleAPIError } from '@/lib/api/errors';
 
 export default function StockFamilyForm({ family, onSubmit, onCancel, saving }) {
   const [code, setCode] = useState('');
@@ -35,7 +36,12 @@ export default function StockFamilyForm({ family, onSubmit, onCancel, saving }) 
       return;
     }
     setErrors([]);
-    await onSubmit({ code: code.trim().toUpperCase(), label: label.trim() });
+    try {
+      await onSubmit({ code: code.trim().toUpperCase(), label: label.trim() });
+    } catch (err) {
+      const typed = handleAPIError(err, 'StockFamilyForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (

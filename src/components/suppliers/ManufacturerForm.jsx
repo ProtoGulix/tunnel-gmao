@@ -7,6 +7,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Text, TextField } from '@radix-ui/themes';
 import { Edit2, Factory } from 'lucide-react';
+import { handleAPIError } from '@/lib/api/errors';
 
 function fromManufacturer(m) {
   if (!m) return { name: '', ref: '' };
@@ -57,10 +58,15 @@ export default function ManufacturerForm({ manufacturer, onSubmit, onCancel, sav
     const errs = validate(form);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
-    await onSubmit({
-      manufacturer_name: form.name.trim(),
-      manufacturer_ref: form.ref.trim() || null,
-    });
+    try {
+      await onSubmit({
+        manufacturer_name: form.name.trim(),
+        manufacturer_ref: form.ref.trim() || null,
+      });
+    } catch (err) {
+      const typed = handleAPIError(err, 'ManufacturerForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (

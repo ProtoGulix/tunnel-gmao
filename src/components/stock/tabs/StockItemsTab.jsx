@@ -5,7 +5,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text } from '@radix-ui/themes';
+import { Box, Button, Flex, Select } from '@radix-ui/themes';
 import { Package, Plus } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
@@ -17,6 +17,8 @@ import { useStockItems } from '@/hooks/stock/useStockItems';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
 import { fetchStockItemDetail } from '@/api/stock';
 
+const ALL = '__all__';
+
 function FamilyFilters({ facets, familyCode, onFamilyChange, subFamilyCode, onSubFamilyChange }) {
   const selectedFamily = useMemo(
     () => facets.families.find((f) => f.code === familyCode),
@@ -24,41 +26,44 @@ function FamilyFilters({ facets, familyCode, onFamilyChange, subFamilyCode, onSu
   );
   const subFamilies = selectedFamily?.sub_families ?? [];
   return (
-    <Flex direction="column" gap="2">
-      <Flex gap="1" wrap="wrap" align="center">
-        <Text size="1" color="gray" style={{ marginRight: 4 }}>Famille :</Text>
-        <Button size="1" variant={familyCode ? 'soft' : 'solid'} color="blue" onClick={() => onFamilyChange('')}>
-          Toutes
-        </Button>
-        {facets.families.map((f) => (
-          <Button
-            key={f.code}
-            size="1"
-            variant={familyCode === f.code ? 'solid' : 'soft'}
-            color={familyCode === f.code ? 'blue' : 'gray'}
-            onClick={() => onFamilyChange(f.code)}
-          >
-            {f.code} ({f.count})
-          </Button>
-        ))}
-      </Flex>
-      <Flex gap="1" wrap="wrap" align="center">
-          <Text size="1" color="gray" style={{ marginRight: 4 }}>Sous-famille :</Text>
-          <Button size="1" variant={subFamilyCode ? 'soft' : 'solid'} color="indigo" onClick={() => onSubFamilyChange('')}>
-            Toutes
-          </Button>
-          {subFamilies.map((s) => (
-            <Button
-              key={s.code}
-              size="1"
-              variant={subFamilyCode === s.code ? 'solid' : 'soft'}
-              color={subFamilyCode === s.code ? 'indigo' : 'gray'}
-              onClick={() => onSubFamilyChange(s.code)}
-            >
-              {s.label} ({s.count})
-            </Button>
+    <Flex gap="2" align="center" wrap="wrap">
+      <Select.Root
+        value={familyCode || ALL}
+        onValueChange={(v) => onFamilyChange(v === ALL ? '' : v)}
+        color={familyCode ? 'blue' : undefined}
+      >
+        <Select.Trigger
+          placeholder="Toutes les familles"
+          variant={familyCode ? 'soft' : 'surface'}
+        />
+        <Select.Content>
+          <Select.Item value={ALL}>Toutes les familles</Select.Item>
+          {facets.families.map((f) => (
+            <Select.Item key={f.code} value={f.code}>
+              {f.code}{f.label ? ` — ${f.label}` : ''}
+            </Select.Item>
           ))}
-        </Flex>
+        </Select.Content>
+      </Select.Root>
+      <Select.Root
+        value={subFamilyCode || ALL}
+        onValueChange={(v) => onSubFamilyChange(v === ALL ? '' : v)}
+        disabled={subFamilies.length === 0}
+        color={subFamilyCode ? 'indigo' : undefined}
+      >
+        <Select.Trigger
+          placeholder="Toutes les sous-familles"
+          variant={subFamilyCode ? 'soft' : 'surface'}
+        />
+        <Select.Content>
+          <Select.Item value={ALL}>Toutes les sous-familles</Select.Item>
+          {subFamilies.map((s) => (
+            <Select.Item key={s.code} value={s.code}>
+              {s.code}{s.label ? ` — ${s.label}` : ''}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
     </Flex>
   );
 }
@@ -173,20 +178,21 @@ export default function StockItemsTab() {
         onSearchChange={handleSearch}
         loading={loading}
         showRefreshButton={false}
+        actions={
+          <FamilyFilters
+            facets={facets}
+            familyCode={familyCode}
+            onFamilyChange={handleFamilyChange}
+            subFamilyCode={subFamilyCode}
+            onSubFamilyChange={handleSubFamilyChange}
+          />
+        }
         rightActions={
           <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
             <Plus size={14} /> Ajouter
           </Button>
         }
-      >
-        <FamilyFilters
-          facets={facets}
-          familyCode={familyCode}
-          onFamilyChange={handleFamilyChange}
-          subFamilyCode={subFamilyCode}
-          onSubFamilyChange={handleSubFamilyChange}
-        />
-      </TableHeader>
+      />
       {mode === 'create' && (
         <Box mb="3">
           <StockItemForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />

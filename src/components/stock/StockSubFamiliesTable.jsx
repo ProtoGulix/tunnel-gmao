@@ -63,8 +63,8 @@ export default function StockSubFamiliesTable({ subFamilies, loading, onEdit, on
         showSearchInput: false,
         showRefreshButton: false,
         actions: (
-          <Button size="2" color="blue" onClick={onCreate}>
-            <Plus size={14} /> Ajouter
+          <Button size="1" color="blue" onClick={onCreate}>
+            <Plus size={12} /> Ajouter
           </Button>
         ),
       }}

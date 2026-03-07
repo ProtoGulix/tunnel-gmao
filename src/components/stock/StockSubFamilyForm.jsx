@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
 import { Layers, Save } from 'lucide-react';
 import { usePartTemplates } from '@/hooks/stock/usePartTemplates';
+import { handleAPIError } from '@/lib/api/errors';
 
 export default function StockSubFamilyForm({ subFamily, onSubmit, onCancel, saving }) {
   const [code, setCode] = useState('');
@@ -45,7 +46,12 @@ export default function StockSubFamilyForm({ subFamily, onSubmit, onCancel, savi
       template_id: templateId || null,
     };
     if (!isEdit) payload.code = code.trim().toUpperCase();
-    await onSubmit(payload);
+    try {
+      await onSubmit(payload);
+    } catch (err) {
+      const typed = handleAPIError(err, 'StockSubFamilyForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (

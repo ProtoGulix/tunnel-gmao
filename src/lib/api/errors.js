@@ -119,6 +119,19 @@ export class ValidationError extends APIError {
 }
 
 /**
+ * 409 Conflict: Resource already exists or violates a uniqueness constraint.
+ *
+ * @class ConflictError
+ * @extends {APIError}
+ */
+export class ConflictError extends APIError {
+  constructor(message = 'Resource already exists', details = null) {
+    super(message, 409, details);
+    this.name = 'ConflictError';
+  }
+}
+
+/**
  * Network Error: Cannot reach the server.
  *
  * @class NetworkError
@@ -148,6 +161,7 @@ export const isTypedError = (error) => {
     error instanceof PermissionError ||
     error instanceof NotFoundError ||
     error instanceof ValidationError ||
+    error instanceof ConflictError ||
     error instanceof NetworkError
   );
 };
@@ -156,32 +170,40 @@ export const isTypedError = (error) => {
 // ERROR CONVERSION
 // ==============================
 
+const extractErrorMessage = (data, fallback) =>
+  data?.detail || data?.errors?.[0]?.message || data?.message || fallback;
+
+/** Map error_type envoyé par le backend → classe d'erreur locale */
+const ERROR_TYPE_MAP = {
+  ValidationError: (msg, det) => new ValidationError(msg, det),
+  ConflictError: (msg, det) => new ConflictError(msg, det),
+  NotFoundError: (msg, det) => new NotFoundError(msg, det),
+  UnauthorizedError: (msg, det) => new AuthenticationError(msg, det),
+  ForbiddenError: (msg, det) => new PermissionError(msg, det),
+};
+
+const STATUS_MAP = {
+  401: (msg, det) => new AuthenticationError(msg, det),
+  403: (msg, det) => new PermissionError(msg, det),
+  404: (msg, det) => new NotFoundError(msg, det),
+  400: (msg, det) => new ValidationError(msg, det),
+  422: (msg, det) => new ValidationError(msg, det),
+  409: (msg, det) => new ConflictError(msg, det),
+};
+
 /**
- * Convert HTTP status code to appropriate typed error class.
+ * Convert HTTP status code (+ optional backend error_type) to typed error.
+ *
+ * Prioritise `data.error_type` quand le backend le fournit,
+ * sinon fallback sur le HTTP status.
  *
  * @private
- * @param {number} status - HTTP status code
- * @param {string} message - Error message
- * @param {Object} details - Error details from response
- * @param {string} context - Call context for debugging
- * @returns {APIError} Typed error instance
  */
 const createTypedError = (status, message, details, context) => {
   const enrichedDetails = context ? { ...details, context } : details;
-
-  switch (status) {
-    case 401:
-      return new AuthenticationError(message, enrichedDetails);
-    case 403:
-      return new PermissionError(message, enrichedDetails);
-    case 404:
-      return new NotFoundError(message, enrichedDetails);
-    case 400:
-    case 422:
-      return new ValidationError(message, enrichedDetails);
-    default:
-      return new APIError(message || 'An error occurred', status ?? 0, enrichedDetails);
-  }
+  const factory = ERROR_TYPE_MAP[details?.error_type] || STATUS_MAP[status];
+  if (factory) return factory(message, enrichedDetails);
+  return new APIError(message || 'An error occurred', status ?? 0, enrichedDetails);
 };
 
 /**
@@ -222,18 +244,31 @@ export const handleAPIError = (error, context = '') => {
   }
 
   const { status, data } = error.response;
-  const errorMessage = data?.errors?.[0]?.message || data?.message || error.message;
 
-  // Log detailed error for debugging
-  console.error(`[${context}] API error:`, {
+  // 4xx : erreurs métier attendues → warn seulement
+  // 5xx : erreurs serveur inattendues → error
+  const log = status >= 500 ? console.error : console.warn;
+  log(`[${context}] API error:`, {
     status,
     url: error.config?.url,
     method: error.config?.method,
     data,
   });
 
-  return createTypedError(status, errorMessage, data, context);
+  return createTypedError(status, extractErrorMessage(data, error.message), data, context);
 };
+
+function buildErrorDTO(error) {
+  const e = error || {};
+  const res = e.response || {};
+  return {
+    name: e.name || 'Error',
+    message: e.message || 'An unexpected error occurred.',
+    statusCode: e.statusCode || res.status || 0,
+    details: e.details || res.data || null,
+    timestamp: new Date().toISOString(),
+  };
+}
 
 /**
  * Serialize any error to a DTO suitable for logging or UI display.
@@ -243,14 +278,7 @@ export const handleAPIError = (error, context = '') => {
  */
 export const toErrorDTO = (error) => {
   if (error?.toDTO) return error.toDTO();
-
-  return {
-    name: error?.name || 'Error',
-    message: error?.message || 'An unexpected error occurred.',
-    statusCode: error?.statusCode || error?.response?.status || 0,
-    details: error?.details || error?.response?.data || null,
-    timestamp: new Date().toISOString(),
-  };
+  return buildErrorDTO(error);
 };
 
 // ==============================
@@ -280,6 +308,10 @@ export const getUserFriendlyMessage = (error) => {
 
   if (error instanceof ValidationError) {
     return error.message || 'The provided data is invalid.';
+  }
+
+  if (error instanceof ConflictError) {
+    return error.message || 'Cette ressource existe déjà.';
   }
 
   if (error instanceof NetworkError) {
