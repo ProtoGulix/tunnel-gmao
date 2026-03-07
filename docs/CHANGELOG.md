@@ -4,6 +4,36 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.16.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Fiche fournisseur — ajout, modification, suppression depuis la fiche pièce
+
+La fiche détail d'une pièce permet désormais de gérer directement ses références fournisseurs, sans quitter la page.
+
+**Ajouter un fournisseur :**
+
+Un bouton « Ajouter » ouvre un formulaire inline sous le tableau des fournisseurs. On choisit le fournisseur parmi la liste du référentiel, on saisit sa référence (obligatoire), et on complète si besoin le prix unitaire, la quantité minimum de commande, le délai en jours, et si ce fournisseur doit être marqué comme préféré. L'enregistrement est confirmé visuellement sur le bouton lui-même.
+
+**Modifier une référence existante :**
+
+Chaque ligne du tableau dispose d'un bouton de modification. Un formulaire pré-rempli apparaît sous le tableau avec un fond bleu pour le distinguer du formulaire d'ajout. Les champs modifiables sont la référence, le prix, la quantité minimum, le délai et le statut préféré — le fournisseur lui-même ne peut pas être changé une fois la liaison créée.
+
+**Supprimer et changer le préféré :**
+
+Le bouton rouge de suppression retire la liaison. La suppression est bloquée si le fournisseur est le préféré et qu'il en existe d'autres — il faut d'abord en désigner un autre via l'étoile. L'étoile n'apparaît sur une ligne que si ce fournisseur n'est pas encore le préféré.
+
+**Retours en cas d'erreur :**
+
+Si le serveur refuse une action (doublon, validation incorrecte), un message apparaît directement dans le formulaire concerné, juste au-dessus des boutons. Les erreurs réseau et pannes serveur s'affichent dans un bandeau discret ancré en haut de la page, qui reste visible jusqu'à ce que l'utilisateur le ferme.
+
+**Fin de page :**
+
+Un pied de page apparaît en bas de chaque écran de l'application pour indiquer que l'on est arrivé au bout du contenu.
+
+---
+
 ## 3.15.0 - 2026-03-06
 
 Stabilité : **STABLE** ✅

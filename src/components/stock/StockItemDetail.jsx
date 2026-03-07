@@ -8,6 +8,7 @@ import { Badge, Box, Button, Card, Flex, Grid, Separator, Text } from '@radix-ui
 import { Edit2, Trash2 } from 'lucide-react';
 import { SuppliersSection } from '@/components/stock/StockItemSuppliers';
 
+// Ligne label/valeur générique utilisée pour les champs simples
 function InfoRow({ label, value }) {
   if (!value && value !== 0) return null;
   return (
@@ -25,6 +26,7 @@ InfoRow.propTypes = {
 
 const CARD_STYLE = { padding: '10px 14px', background: 'var(--gray-2)', borderRadius: 'var(--radius-3)' };
 
+// Deux vignettes : quantité en stock + fournisseur préféré (ou le premier si aucun marqué)
 function MetricsGrid({ quantity, unit, suppliers }) {
   const preferred = suppliers.find((s) => s.is_preferred) ?? suppliers[0];
   return (
@@ -53,10 +55,12 @@ MetricsGrid.propTypes = {
   suppliers: PropTypes.array.isRequired,
 };
 
+// Extrait la valeur affichable d'une caractéristique typée (number > enum > text)
 function charValue(c) {
   return c.value_number != null ? String(c.value_number) : (c.value_enum ?? c.value_text ?? '—');
 }
 
+// Colonne gauche : famille, sous-famille et template associé
 function ClassificationBox({ familyCode, subFamilyCode, template }) {
   return (
     <Box>
@@ -74,6 +78,7 @@ ClassificationBox.propTypes = {
   template: PropTypes.shape({ code: PropTypes.string, version: PropTypes.number }),
 };
 
+// Colonne droite : spec, dimension, emplacement + caractéristiques template avec leur label lisible
 function DetailsBox({ spec, dimension, location, characteristics }) {
   return (
     <Box>
@@ -93,6 +98,7 @@ DetailsBox.propTypes = {
   characteristics: PropTypes.arrayOf(PropTypes.shape({ key: PropTypes.string, label: PropTypes.string })),
 };
 
+// Section complète classification + caractéristiques — masquée si aucun champ à afficher
 function ItemCharacteristics({ familyCode, subFamilyCode, spec, dimension, location, template, characteristics }) {
   const hasLeft = familyCode || subFamilyCode || template;
   const hasRight = spec || dimension || location || characteristics?.length;
@@ -118,7 +124,8 @@ ItemCharacteristics.propTypes = {
   characteristics: PropTypes.arrayOf(PropTypes.shape({ key: PropTypes.string, label: PropTypes.string })),
 };
 
-export default function StockItemDetail({ item, onEdit, onDelete }) {
+// Panneau principal : métriques clés, classification, caractéristiques, tableau fournisseurs
+export default function StockItemDetail({ item, onEdit, onDelete, onRefresh }) {
   const suppliers = item.suppliers ?? [];
 
   return (
@@ -139,7 +146,7 @@ export default function StockItemDetail({ item, onEdit, onDelete }) {
           template={item.sub_family_template}
           characteristics={item.characteristics}
         />
-        <SuppliersSection suppliers={suppliers} />
+        <SuppliersSection suppliers={suppliers} stockItemId={item.id} onRefresh={onRefresh} />
       </Flex>
     </Card>
   );
@@ -167,4 +174,5 @@ StockItemDetail.propTypes = {
   }).isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onRefresh: PropTypes.func.isRequired,
 };

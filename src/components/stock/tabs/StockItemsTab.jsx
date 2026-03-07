@@ -134,6 +134,12 @@ export default function StockItemsTab() {
     setSelected(null);
   };
 
+  const handleRefreshDetail = useCallback(async () => {
+    if (!selected) return;
+    const detail = await fetchStockItemDetail(selected.id);
+    setSelected(detail);
+  }, [selected]);
+
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
   const paginationProps = pagination.totalPages > 1 ? {
@@ -153,7 +159,7 @@ export default function StockItemsTab() {
       <StockItemForm item={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
     );
     return (
-      <StockItemDetail item={selected} onEdit={() => setMode('edit')} onDelete={handleDelete} />
+      <StockItemDetail item={selected} onEdit={() => setMode('edit')} onDelete={handleDelete} onRefresh={handleRefreshDetail} />
     );
   };
 

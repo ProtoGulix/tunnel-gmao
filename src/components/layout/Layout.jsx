@@ -49,8 +49,10 @@
 
 import PropTypes from 'prop-types';
 import { useNavigate } from "react-router-dom";
+import { ArrowUpFromLine } from 'lucide-react';
 import { useAuth } from "@/auth/useAuth";
 import Sidebar from "./Sidebar";
+import { SystemErrorBanner } from './SystemErrorBanner';
 import { useMediaQuery } from "@/hooks/shared/useMediaQuery";
 import { MOBILE_QUERY } from "@/config/layoutConfig";
 import styles from '@/styles/modules/Layout.module.css';
@@ -96,7 +98,12 @@ export default function Layout({ children, requiresAuth = true }) {
       />
 
       <main className={styles.main} role="main" aria-label="Contenu principal">
+        <SystemErrorBanner />
         {children}
+        <footer className={styles.footer} aria-label="Pied de page">
+          <ArrowUpFromLine size={16} strokeWidth={1.5} />
+          <em>Vous avez atteint le bout du tunnel… il est maintenant temps de remonter à la surface.</em>
+        </footer>
       </main>
     </div>
   );
