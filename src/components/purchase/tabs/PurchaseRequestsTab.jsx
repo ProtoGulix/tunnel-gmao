@@ -19,14 +19,7 @@ import DispatchBanner from '@/components/purchase/DispatchBanner';
 import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses } from '@/api/purchaseRequests';
-
-const URGENCY_OPTIONS = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'high', label: 'Haute' },
-  { value: 'critical', label: 'Critique' },
-];
-
-const URGENCY_COLOR = { normal: 'gray', high: 'orange', critical: 'red' };
+import { PURCHASE_URGENCY, PURCHASE_URGENCY_LIST } from '@/config/purchaseConfig';
 
 function StatusBadge({ derivedStatus }) {
   if (!derivedStatus) return <Text size="1" color="gray">—</Text>;
@@ -67,8 +60,8 @@ const COLUMNS = [
     header: 'Urgence',
     width: 90,
     accessor: (row) => (
-      <Badge color={URGENCY_COLOR[row.urgency] || 'gray'} variant="soft" size="1">
-        {URGENCY_OPTIONS.find((u) => u.value === row.urgency)?.label || 'Normal'}
+      <Badge color={PURCHASE_URGENCY[row.urgency]?.color || 'gray'} variant="soft" size="1">
+        {PURCHASE_URGENCY[row.urgency]?.label || 'Normal'}
       </Badge>
     ),
   },
@@ -202,7 +195,7 @@ export default function PurchaseRequestsTab() {
         />
         <Select.Content>
           <Select.Item value="__all__">Toutes urgences</Select.Item>
-          {URGENCY_OPTIONS.map((u) => (
+          {PURCHASE_URGENCY_LIST.map((u) => (
             <Select.Item key={u.value} value={u.value}>{u.label}</Select.Item>
           ))}
         </Select.Content>

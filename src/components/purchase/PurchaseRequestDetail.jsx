@@ -8,31 +8,8 @@ import { Badge, Box, Button, Card, Flex, Table, Text, Separator } from '@radix-u
 import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
-
-const INTERVENTION_STATUS_COLORS = {
-  ouvert:          'blue',
-  en_cours:        'blue',
-  attente_pieces:  'red',
-  attente_prod:    'amber',
-  termine:         'green',
-  cloture:         'gray',
-  annule:          'gray',
-};
-
-const ORDER_STATUS_LABELS = {
-  OPEN:      { label: 'Ouvert',   color: 'blue' },
-  SENT:      { label: 'Envoyé',  color: 'orange' },
-  ACK:       { label: 'Accusé',  color: 'indigo' },
-  RECEIVED:  { label: 'Reçu',    color: 'green' },
-  CLOSED:    { label: 'Clôturé', color: 'gray' },
-  CANCELLED: { label: 'Annulé', color: 'red' },
-};
-
-const URGENCY_LABELS = {
-  normal: { label: 'Normal', color: 'gray' },
-  high: { label: 'Haute', color: 'orange' },
-  critical: { label: 'Critique', color: 'red' },
-};
+import { hexBadgeStyle, PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
+import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 
 function DetailRow({ label, children }) {
   return (
@@ -76,9 +53,10 @@ CardHeader.propTypes = {
 };
 
 export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
-  if (!item) return null;
+  const { map: orderStatuses } = useSupplierOrderStatuses();
 
-  const urgency = URGENCY_LABELS[item.urgency] || URGENCY_LABELS.normal;
+  if (!item) return null;
+  const urgency = PURCHASE_URGENCY[item.urgency] || PURCHASE_URGENCY.normal;
   const statusColor = item.derived_status?.color;
   const statusLabel = item.derived_status?.label || item.derived_status?.code || '—';
 
@@ -287,7 +265,8 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
                   </Table.Header>
                   <Table.Body>
                     {item.order_lines.map((line, i) => {
-                      const statusInfo = ORDER_STATUS_LABELS[line.supplier_order_status] || { label: line.supplier_order_status || '—', color: 'gray' };
+                      const statusInfo = orderStatuses[line.supplier_order_status] ?? { label: line.supplier_order_status || '—', color: 'gray' };
+                      const lineBadgeStyle = hexBadgeStyle(statusInfo.color);
                       const price = line.unit_price ?? line.quote_price;
                       const total = line.total_price ?? (price != null ? price * (line.quantity_allocated ?? item.quantity) : null);
                       return (
@@ -309,7 +288,7 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
                             </Flex>
                           </Table.Cell>
                           <Table.Cell>
-                            <Badge variant="soft" size="1" color={statusInfo.color}>
+                            <Badge size="1" {...(lineBadgeStyle ? { style: lineBadgeStyle } : { color: statusInfo.color, variant: 'soft' })}>
                               {statusInfo.label}
                             </Badge>
                           </Table.Cell>

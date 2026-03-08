@@ -9,15 +9,31 @@ import { api } from '@/lib/api/client';
 // ─── Supplier Orders ────────────────────────────────────────────────────────
 
 /**
+ * Fetch supplier order statuses with labels and colors
+ * @returns {Promise<Array<{code, label, color}>>}
+ */
+export async function fetchSupplierOrderStatuses() {
+  const response = await api.get('/supplier-orders/statuses');
+  return Array.isArray(response.data) ? response.data : response.data?.data || [];
+}
+
+/**
  * Fetch supplier orders with optional filters
  * @param {Object} params
  * @param {string} [params.status] - OPEN | SENT | ACK | RECEIVED | CLOSED | CANCELLED
  * @param {string} [params.supplier_id]
- * @returns {Promise<Array>}
+ * @param {number} [params.skip]
+ * @param {number} [params.limit]
+ * @returns {Promise<{items: Array, pagination: Object, facets: Array}>}
  */
 export async function fetchSupplierOrders(params = {}) {
   const response = await api.get('/supplier-orders/', { params });
-  return Array.isArray(response.data) ? response.data : response.data?.data || [];
+  const data = response.data?.data || response.data;
+  return {
+    items: data?.items || [],
+    pagination: data?.pagination || null,
+    facets: data?.facets || [],
+  };
 }
 
 /**
@@ -52,6 +68,16 @@ export async function updateSupplierOrder(id, updates) {
 }
 
 /**
+ * Fetch allowed status transitions from current status
+ * @param {string} id
+ * @returns {Promise<{current_status: string, transitions: Array<{to: string, description: string}>}>}
+ */
+export async function fetchSupplierOrderTransitions(id) {
+  const response = await api.get(`/supplier-orders/${id}/transitions`);
+  return response.data?.data || response.data || { transitions: [] };
+}
+
+/**
  * Delete a supplier order
  * @param {string} id
  * @returns {Promise<void>}
@@ -66,7 +92,11 @@ export async function deleteSupplierOrder(id) {
  * @returns {Promise<Blob>}
  */
 export async function exportSupplierOrderCsv(id) {
-  const response = await api.post(`/supplier-orders/${id}/export/csv`, {}, { responseType: 'blob' });
+  const response = await api.post(
+    `/supplier-orders/${id}/export/csv`,
+    {},
+    { responseType: 'blob' }
+  );
   return response.data;
 }
 
@@ -83,13 +113,13 @@ export async function fetchSupplierOrderLines(supplierOrderId) {
 }
 
 /**
- * Update a supplier order line
+ * Partially update a supplier order line (PATCH)
  * @param {string} id
  * @param {Object} updates
  * @returns {Promise<Object>}
  */
 export async function updateSupplierOrderLine(id, updates) {
-  const response = await api.put(`/supplier-order-lines/${id}`, updates);
+  const response = await api.patch(`/supplier-order-lines/${id}`, updates);
   return response.data?.data || response.data || {};
 }
 

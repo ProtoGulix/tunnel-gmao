@@ -4,6 +4,26 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.19.0 - 2026-03-08
+
+Stabilité : **STABLE** ✅
+
+### Paniers fournisseurs — négociation des lignes
+
+Quand un panier est en cours de négociation (statuts **Devis envoyé** ou **En négociation**), les lignes sont maintenant éditables directement depuis le détail du panier.
+
+**Sélection des lignes :** chaque ligne dispose d'une case à cocher pour l'inclure ou l'exclure de la commande ferme. La ligne sélectionnée se met en évidence. La sélection d'une ligne désélectionne automatiquement les lignes concurrentes chez d'autres fournisseurs (règle d'exclusivité gérée par le serveur).
+
+**Édition du prix et de la quantité :** les champs sont directement modifiables dans le tableau. Le bouton d'enregistrement n'apparaît que si la ligne a été modifiée. Le total est recalculé par le serveur après chaque sauvegarde.
+
+**Délai de livraison :** le champ de date devient éditable en mode négociation, avec un bouton de confirmation qui s'affiche uniquement si la date a changé.
+
+**Consultations multi-fournisseurs :** les lignes issues d'un appel d'offres sans fournisseur préféré affichent un badge **"À sélectionner"**. Un compteur en tête de tableau indique le nombre de consultations non résolues. Le passage en livraison reste bloqué tant que chaque article n'a pas de ligne sélectionnée.
+
+**Transitions de statut :** le menu "Passer à" n'affiche plus que les transitions autorisées depuis le statut actuel. Les erreurs métier (transition invalide, consultations non résolues) sont affichées directement dans le panneau.
+
+---
+
 ## 3.18.0 - 2026-03-07
 
 Stabilité : **STABLE** ✅

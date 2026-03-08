@@ -8,24 +8,16 @@
  */
 
 import { useCallback, useState } from 'react';
-import { Badge, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Building2, Clock, Download, Package, ShoppingBag } from 'lucide-react';
+import PropTypes from 'prop-types';
+import { Badge, Box, Flex, Tabs, Text } from '@radix-ui/themes';
+import { Building2, Clock, Info, Package, ShoppingBag } from 'lucide-react';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
 import SupplierOrderDetail from '@/components/purchase/SupplierOrderDetail';
-import { useSupplierOrders } from '@/hooks/purchase/useSupplierOrders';
+import { useSupplierOrders, useSupplierOrderFacets, useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 import { exportSupplierOrderCsv } from '@/api/supplierOrders';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
-
-const ORDER_STATUSES = [
-  { value: 'OPEN',      label: 'Ouverts',   color: 'var(--blue-9)' },
-  { value: 'SENT',      label: 'Envoyés',   color: 'var(--orange-9)' },
-  { value: 'ACK',       label: 'Accusés',   color: 'var(--indigo-9)' },
-  { value: 'RECEIVED',  label: 'Reçus',     color: 'var(--green-9)' },
-  { value: 'CLOSED',    label: 'Clôturés',  color: 'var(--gray-9)' },
-  { value: 'CANCELLED', label: 'Annulés',   color: 'var(--red-9)' },
-];
 
 const AGE_COLOR_MAP = { gray: 'gray', orange: 'orange', red: 'red' };
 
@@ -81,7 +73,7 @@ const COLUMNS = [
   },
 ];
 
-function OrdersTable({ status }) {
+function OrdersTable({ status, statusInfo }) {
   const { items, loading, error, refresh, removeOrder } = useSupplierOrders({ status });
 
   const [selectedId, setSelectedId] = useState(null);
@@ -117,6 +109,7 @@ function OrdersTable({ status }) {
         orderId={selectedId}
         onDelete={handleDelete}
         onExportCsv={handleExportCsv}
+        onStatusChange={refresh}
       />
     );
   };
@@ -125,6 +118,15 @@ function OrdersTable({ status }) {
 
   return (
     <Box>
+      {statusInfo?.description && (
+        <Flex
+          align="center" gap="2" px="3" py="2" mb="2"
+          style={{ background: 'var(--blue-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-5)' }}
+        >
+          <Info size={14} color="var(--blue-9)" style={{ flexShrink: 0 }} />
+          <Text size="2" color="blue">{statusInfo.description}</Text>
+        </Flex>
+      )}
       <TableHeader
         icon={ShoppingBag}
         title="Paniers fournisseurs"
@@ -149,25 +151,34 @@ function OrdersTable({ status }) {
         }
         isRowExpanded={(row) => row.id === selectedId}
         renderExpandedRow={renderDetail}
-        emptyState={
-          <Flex direction="column" align="center" gap="2" py="6">
-            <ShoppingBag size={32} color="var(--gray-8)" />
-            <Text color="gray" size="2">Aucun panier fournisseur</Text>
-          </Flex>
-        }
+        emptyState={{
+          icon: ShoppingBag,
+          title: statusInfo?.label ? `Aucun panier « ${statusInfo.label} »` : 'Aucun panier fournisseur',
+          description: statusInfo?.description,
+        }}
       />
     </Box>
   );
 }
 
+OrdersTable.propTypes = {
+  status: PropTypes.string.isRequired,
+  statusInfo: PropTypes.shape({
+    label: PropTypes.string,
+    description: PropTypes.string,
+  }),
+};
+
 export default function SupplierOrdersTab() {
   const { activeTab, setActiveTab } = useTabNavigation('OPEN', 'panier_status');
+  const facets = useSupplierOrderFacets();
+  const { list: statusList } = useSupplierOrderStatuses();
 
   return (
     <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
       <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
-        {ORDER_STATUSES.map((s) => (
-          <Tabs.Trigger key={s.value} value={s.value}>
+        {statusList.map((s) => (
+          <Tabs.Trigger key={s.code} value={s.code}>
             <Flex align="center" gap="1">
               <span style={{
                 width: 8, height: 8, borderRadius: '50%',
@@ -175,16 +186,19 @@ export default function SupplierOrdersTab() {
                 display: 'inline-block', flexShrink: 0,
               }} />
               <Text size="2">{s.label}</Text>
+              {facets[s.code] != null && (
+                <Badge color={s.radixColor} variant="soft" size="1">{facets[s.code]}</Badge>
+              )}
             </Flex>
           </Tabs.Trigger>
         ))}
       </Tabs.List>
 
-      {ORDER_STATUSES.map((s) => (
-        <Tabs.Content key={s.value} value={s.value}>
-          {activeTab === s.value && (
+      {statusList.map((s) => (
+        <Tabs.Content key={s.code} value={s.code}>
+          {activeTab === s.code && (
             <Box pt="3">
-              <OrdersTable status={s.value} />
+              <OrdersTable status={s.code} statusInfo={s} />
             </Box>
           )}
         </Tabs.Content>
