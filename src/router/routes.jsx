@@ -16,6 +16,8 @@ import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
 import EquipementsPage from '@/pages/equipements/EquipementsPage';
 import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
 import StockPage from '@/pages/stock/StockPage';
+import SuppliersPage from '@/pages/suppliers/SuppliersPage';
+import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 
 /**
  * Composant de route protégée
@@ -26,7 +28,11 @@ import StockPage from '@/pages/stock/StockPage';
  * @returns {JSX.Element}
  */
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -148,6 +154,28 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <StockPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/suppliers"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SuppliersPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/achats"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <PurchaseRequestsPage />
             </Layout>
           </ProtectedRoute>
         }

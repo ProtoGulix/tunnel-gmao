@@ -36,6 +36,7 @@ Les conventions de code découlent directement des règles métier. Par exemple 
 2. [Imports & Dépendances](#2-imports--dépendances)
 3. [Naming Conventions](#3-naming-conventions)
 4. [Composants React](#4-composants-react)
+   - 4.5 [Codes Couleur des Badges et Sélection](#45-codes-couleur-des-badges-et-sélection)
 
 ### Patterns & Bonnes Pratiques
 
@@ -767,6 +768,82 @@ StockItemRow.propTypes = {
   onEdit: PropTypes.func.isRequired,
 };
 ```
+
+### 4.5 Codes Couleur des Badges et Sélection
+
+#### Badges de Référence
+
+Les références s'affichent toujours via `<Badge variant="soft">`. La couleur indique **le type de référence**, pas un état.
+
+| Type de référence             | Couleur  | Usage                                               |
+| ----------------------------- | -------- | --------------------------------------------------- |
+| Référence interne (catalogue) | `blue`   | `ref` d'une pièce stock, identifiant propre au GMAO |
+| Référence fournisseur         | `indigo` | référence de la pièce chez le fournisseur           |
+| Référence fabricant           | `violet` | référence du fabricant / constructeur               |
+
+```jsx
+// Référence interne
+<Badge variant="soft" color="blue">{item.ref}</Badge>
+
+// Référence fournisseur
+<Badge variant="soft" color="indigo" size="1">{row.supplier_ref}</Badge>
+
+// Référence fabricant
+<Badge variant="soft" color="violet" size="1">{row.manufacturer_ref}</Badge>
+```
+
+#### État Sélectionné (lignes de tableau)
+
+Une ligne sélectionnée dans un `DataTable` ou `Table` utilise **toujours** la combinaison suivante :
+
+```jsx
+style={{
+  background: isSelected ? 'var(--accent-3)' : undefined,
+  boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+}}
+```
+
+- `var(--accent-3)` : fond légèrement coloré — indique la sélection sans masquer le contenu
+- `inset 3px 0 0 var(--accent-9)` : bordure gauche 3 px — repère visuel fort sans perturber le layout
+
+Ne pas utiliser `border`, `outline` ou une couleur de fond fixe : `var(--accent-*)` suit automatiquement le thème de l'application.
+
+#### Checklist Badges et Sélection
+
+- [ ] Référence interne → `color="blue"`
+- [ ] Référence fournisseur → `color="indigo"`
+- [ ] Référence fabricant → `color="violet"`
+- [ ] Toujours `variant="soft"` pour les badges de référence
+- [ ] Sélection → `var(--accent-3)` + `inset 3px 0 0 var(--accent-9)`
+- [ ] Pas de couleur en dur (`#hex`) pour les états de sélection
+
+#### Format de Référence Pièce (MANDATORY)
+
+La référence d'une pièce est **générée par le serveur**. Le front affiche uniquement une prévisualisation informative construite selon les règles suivantes :
+
+**Mode template** (sous-famille avec template associé) :
+
+```
+{FAMILLE}-{SOUS-FAMILLE}-{résultat du pattern template}
+```
+
+Exemple : sous-famille `ELE/CONT`, template pattern `{AMP}-{TCOMM}`, valeurs `AMP=15, TCOMM=24VDC` → `ELE-CONT-15-24VDC`
+
+**Mode legacy** (sous-famille sans template) :
+
+```
+{FAMILLE}-{SOUS-FAMILLE}-{SPEC}-{DIMENSION}
+```
+
+Exemple : famille `DIV`, sous-famille `ROU`, spec `SKF 6205-2RS`, dimension `25x52x15 mm` → `DIV-ROU-SKF 6205-2RS-25x52x15 mm`
+
+**Règles** :
+
+- Le séparateur est toujours `-`
+- Les segments vides sont ignorés (pas de `--`)
+- L'utilisateur peut saisir manuellement une ref ; dans ce cas elle prend le dessus sur l'aperçu
+- La ref affichée en aperçu automatique est en italique/gris ; une ref saisie manuellement est en noir normal
+- La validation ne bloque pas si la ref est vide (le serveur la génèrera)
 
 ---
 

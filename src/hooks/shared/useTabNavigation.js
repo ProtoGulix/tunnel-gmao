@@ -3,7 +3,7 @@
  * @module hooks/shared/useTabNavigation
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 /**
@@ -25,26 +25,12 @@ import { useSearchParams } from 'react-router-dom';
 export function useTabNavigation(defaultTab, paramName = 'tab') {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Initialiser avec le tab depuis l'URL ou le defaultTab
-  const [activeTab, setActiveTabState] = useState(() => {
-    const tabFromUrl = searchParams.get(paramName);
-    return tabFromUrl || defaultTab;
-  });
-
-  // Synchroniser le state avec l'URL au montage et quand l'URL change
-  useEffect(() => {
-    const tabFromUrl = searchParams.get(paramName);
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTabState(tabFromUrl);
-    }
-  }, [searchParams, paramName, activeTab]);
+  // Dériver activeTab directement depuis l'URL — pas de state local redondant
+  const activeTab = searchParams.get(paramName) || defaultTab;
 
   // Fonction pour changer d'onglet et mettre à jour l'URL
   const setActiveTab = useCallback(
     (newTab) => {
-      setActiveTabState(newTab);
-
-      // Mettre à jour l'URL sans recharger la page
       setSearchParams(
         (prev) => {
           const newParams = new URLSearchParams(prev);
@@ -52,7 +38,7 @@ export function useTabNavigation(defaultTab, paramName = 'tab') {
           return newParams;
         },
         { replace: true }
-      ); // replace: true pour ne pas créer d'entrée dans l'historique
+      );
     },
     [setSearchParams, paramName]
   );

@@ -18,6 +18,7 @@
  */
 
 import axios from 'axios';
+import { emitSystemError } from '@/lib/api/systemErrors';
 
 // ==============================
 // CONFIGURATION
@@ -116,6 +117,7 @@ api.interceptors.response.use(
         method: error.config?.method,
         message: error.response?.data?.message,
       });
+      emitSystemError(error);
     }
 
     // 404 Not Found
@@ -126,13 +128,19 @@ api.interceptors.response.use(
       });
     }
 
-    // 500 Internal Server Error
-    if (status === 500) {
-      console.error('[API] 500 Internal Server Error', {
+    // 5xx Server Error
+    if (status >= 500) {
+      console.error(`[API] ${status} Server Error`, {
         url: error.config?.url,
         method: error.config?.method,
         message: error.response?.data?.message,
       });
+      emitSystemError(error);
+    }
+
+    // Erreur réseau (pas de réponse)
+    if (!status) {
+      emitSystemError(error);
     }
 
     return Promise.reject(error);

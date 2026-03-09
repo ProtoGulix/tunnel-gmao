@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchStockFamilyDetail, updateStockSubFamily } from '@/api/stock';
+import { fetchStockFamilyDetail, updateStockSubFamily, createStockSubFamily } from '@/api/stock';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export function useStockFamilyDetail(familyCode) {
@@ -54,6 +54,17 @@ export function useStockFamilyDetail(familyCode) {
     [familyCode]
   );
 
+  const addSubFamily = useCallback(
+    async (data) => {
+      const created = await createStockSubFamily(familyCode, data);
+      setFamily((prev) =>
+        prev ? { ...prev, sub_families: [...(prev.sub_families || []), created] } : null
+      );
+      return created;
+    },
+    [familyCode]
+  );
+
   return {
     family,
     subFamilies: family?.sub_families || [],
@@ -68,5 +79,6 @@ export function useStockFamilyDetail(familyCode) {
     },
     refresh: () => loadFamily({ search: debouncedSearch || undefined }),
     updateSubFamily,
+    createSubFamily: addSubFamily,
   };
 }

@@ -9,42 +9,11 @@
  */
 
 import PropTypes from 'prop-types';
+import { useState, useEffect, useRef } from 'react';
 import { TextField, Button } from '@radix-ui/themes';
+import { Loader2 } from 'lucide-react';
 import { Search } from '@/lib/icons';
 
-/**
- * Champ de recherche avec icône et bouton de réinitialisation
- * 
- * Affiche un champ texte avec:
- * - Icône de recherche à gauche
- * - Bouton de réinitialisation (✕) à droite si du texte est présent
- * 
- * @component
- * @param {Object} props
- * @param {string} [props.value=''] - Valeur du champ
- * @param {Function} props.onChange - Callback appelé lors du changement de valeur
- * @param {string} [props.placeholder='Rechercher...'] - Texte placeholder
- * @param {string} [props.size='3'] - Taille du champ (Radix UI sizes)
- * @param {string} [props.iconSize=18] - Taille de l'icône de recherche
- * @returns {JSX.Element} Champ de recherche
- * 
- * @example
- * const [searchTerm, setSearchTerm] = useState("");
- * 
- * <SearchField
- *   value={searchTerm}
- *   onChange={(e) => setSearchTerm(e.target.value)}
- *   placeholder="Rechercher une machine..."
- * />
- * 
- * @example
- * <SearchField
- *   value={searchTerm}
- *   onChange={(e) => setSearchTerm(e.target.value)}
- *   placeholder="Rechercher par code machine ou intervention"
- *   size="2"
- * />
- */
 export default function SearchField({
   value = '',
   onChange,
@@ -52,9 +21,19 @@ export default function SearchField({
   size = '3',
   iconSize = 18,
 }) {
-  const handleClear = () => {
-    onChange({ target: { value: '' } });
-  };
+  const [isTyping, setIsTyping] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (!value) { setIsTyping(false); return; }
+    setIsTyping(true);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setIsTyping(false), 500);
+    return () => clearTimeout(timerRef.current);
+  }, [value]);
+
+  const handleClear = () => onChange({ target: { value: '' } });
+  const hasValue = value.length > 0;
 
   return (
     <TextField.Root
@@ -62,19 +41,16 @@ export default function SearchField({
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      color={hasValue ? 'blue' : undefined}
     >
       <TextField.Slot>
-        <Search size={iconSize} />
+        {isTyping
+          ? <Loader2 size={iconSize} style={{ animation: 'spin 0.6s linear infinite' }} />
+          : <Search size={iconSize} color={hasValue ? 'var(--blue-9)' : undefined} />}
       </TextField.Slot>
-      {value && (
+      {hasValue && (
         <TextField.Slot>
-          <Button
-            size="1"
-            variant="ghost"
-            color="gray"
-            onClick={handleClear}
-            style={{ cursor: 'pointer' }}
-          >
+          <Button size="1" variant="ghost" color="gray" onClick={handleClear} style={{ cursor: 'pointer' }}>
             ✕
           </Button>
         </TextField.Slot>

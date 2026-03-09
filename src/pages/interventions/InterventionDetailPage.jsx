@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -21,11 +21,13 @@ import ActionsTab from '@/components/interventions/tabs/ActionsTab';
 import SummaryTab from '@/components/interventions/tabs/SummaryTab';
 import SheetTab from '@/components/interventions/tabs/SheetTab';
 import HistoryTab from '@/components/interventions/tabs/HistoryTab';
+import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
 // Configuration des onglets
 const TABS = [
   { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
+  { id: 'achats', label: 'Achats', icon: ShoppingCart },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
   { id: 'fiche', label: 'Fiche', icon: FileText },
   { id: 'history', label: 'Historique', icon: History },
@@ -288,6 +290,10 @@ export default function InterventionDetailPage() {
             interventionId={id}
             onPurchaseRequestCreated={handlePurchaseRequestCreated}
           />
+        </Tabs.Content>
+
+        <Tabs.Content value="achats">
+          <InterventionPurchaseTab interventionId={id} />
         </Tabs.Content>
 
         <Tabs.Content value="summary">

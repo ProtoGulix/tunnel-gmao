@@ -4,8 +4,8 @@
  */
 
 import PropTypes from 'prop-types';
-import { Text } from '@radix-ui/themes';
-import { Layers } from 'lucide-react';
+import { Button, Text } from '@radix-ui/themes';
+import { Layers, Plus } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 
 const columns = [
@@ -22,7 +22,7 @@ const columns = [
   },
 ];
 
-export default function StockFamiliesTable({ families, loading, selectedFamily, onSelectFamily }) {
+export default function StockFamiliesTable({ families, loading, selectedFamily, onSelectFamily, onCreate }) {
   return (
     <DataTable
       headerProps={{
@@ -31,6 +31,11 @@ export default function StockFamiliesTable({ families, loading, selectedFamily, 
         count: families.length,
         showSearchInput: false,
         showRefreshButton: false,
+        actions: (
+          <Button size="2" color="blue" onClick={onCreate}>
+            <Plus size={14} /> Ajouter
+          </Button>
+        ),
       }}
       columns={columns}
       data={families}
@@ -49,6 +54,7 @@ export default function StockFamiliesTable({ families, loading, selectedFamily, 
 }
 
 StockFamiliesTable.propTypes = {
+  onCreate: PropTypes.func.isRequired,
   families: PropTypes.arrayOf(
     PropTypes.shape({
       family_code: PropTypes.string.isRequired,

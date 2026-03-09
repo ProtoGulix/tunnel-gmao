@@ -6,7 +6,8 @@
       "WebFetch(domain:)",
       "Bash(dir:*)",
       "Bash(curl:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(ls c:/Users/Quentin/DEV/web.tunnel-gmao/*.md c:/Users/Quentin/DEV/web.tunnel-gmao/package.json)"
     ]
   }
 }

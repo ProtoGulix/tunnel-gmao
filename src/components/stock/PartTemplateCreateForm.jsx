@@ -6,8 +6,10 @@
 import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes';
+import FormErrors from '@/components/shared/FormErrors';
 import { Plus } from 'lucide-react';
 import PartTemplateFieldRow from '@/components/stock/PartTemplateFieldRow';
+import { handleAPIError } from '@/lib/api/errors';
 
 const EMPTY_FIELD = () => ({ key: '', label: '', field_type: 'number', unit: '', required: true, _enumRaw: '' });
 
@@ -29,6 +31,7 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
   const [label, setLabel] = useState('');
   const [pattern, setPattern] = useState('');
   const [fields, setFields] = useState([EMPTY_FIELD()]);
+  const [errors, setErrors] = useState([]);
 
   const updateField = useCallback((index, updated) => {
     setFields((prev) => prev.map((f, i) => (i === index ? updated : f)));
@@ -43,19 +46,26 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!code.trim() || !label.trim() || !pattern.trim() || fields.length === 0) return;
-
-    await onSave({
-      code: code.trim().toUpperCase(),
-      label: label.trim(),
-      pattern: pattern.trim(),
-      fields: serializeFields(fields),
-    });
+    setErrors([]);
+    try {
+      await onSave({
+        code: code.trim().toUpperCase(),
+        label: label.trim(),
+        pattern: pattern.trim(),
+        fields: serializeFields(fields),
+      });
+    } catch (err) {
+      const typed = handleAPIError(err, 'PartTemplateCreateForm');
+      setErrors([typed.message || 'Une erreur est survenue.']);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <Flex direction="column" gap="3">
         <Text size="3" weight="bold">Nouvelle trame de reference</Text>
+
+        <FormErrors errors={errors} />
 
         <Flex gap="3" wrap="wrap">
           <Box style={{ flex: 1, minWidth: 150 }}>

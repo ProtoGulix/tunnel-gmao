@@ -4,6 +4,225 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.19.1 - 2026-03-09
+
+Stabilité : **STABLE** ✅
+
+### Correctifs — Demandes d'achat
+
+**Onglet Achats dans les interventions :** les demandes d'achat liées à une intervention sont maintenant accessibles directement depuis la fiche intervention, dans un nouvel onglet "Achats". Il est possible de consulter le détail d'une demande en cliquant dessus, ou d'en créer une nouvelle sans quitter la page.
+
+**Demandes d'achat dans les actions :** les demandes créées depuis une action s'affichent de nouveau correctement dans la liste. Le nom de l'article, la quantité, l'urgence et le statut sont visibles sur chaque ligne.
+
+**Numéro de panier sur une demande :** quand une demande est incluse dans un panier fournisseur et qu'une ligne a été sélectionnée, le numéro du panier s'affiche à nouveau sur le bandeau de la demande.
+
+**Fiche détail d'une demande — paniers fournisseurs :** quand une demande n'est dans aucun panier, un message indique clairement qu'elle est en attente de dispatch, au lieu d'afficher une section vide.
+
+---
+
+## 3.19.0 - 2026-03-08
+
+Stabilité : **STABLE** ✅
+
+### Paniers fournisseurs — négociation des lignes
+
+Quand un panier est en cours de négociation (statuts **Devis envoyé** ou **En négociation**), les lignes sont maintenant éditables directement depuis le détail du panier.
+
+**Sélection des lignes :** chaque ligne dispose d'une case à cocher pour l'inclure ou l'exclure de la commande ferme. La ligne sélectionnée se met en évidence. La sélection d'une ligne désélectionne automatiquement les lignes concurrentes chez d'autres fournisseurs (règle d'exclusivité gérée par le serveur).
+
+**Édition du prix et de la quantité :** les champs sont directement modifiables dans le tableau. Le bouton d'enregistrement n'apparaît que si la ligne a été modifiée. Le total est recalculé par le serveur après chaque sauvegarde.
+
+**Délai de livraison :** le champ de date devient éditable en mode négociation, avec un bouton de confirmation qui s'affiche uniquement si la date a changé.
+
+**Consultations multi-fournisseurs :** les lignes issues d'un appel d'offres sans fournisseur préféré affichent un badge **"À sélectionner"**. Un compteur en tête de tableau indique le nombre de consultations non résolues. Le passage en livraison reste bloqué tant que chaque article n'a pas de ligne sélectionnée.
+
+**Transitions de statut :** le menu "Passer à" n'affiche plus que les transitions autorisées depuis le statut actuel. Les erreurs métier (transition invalide, consultations non résolues) sont affichées directement dans le panneau.
+
+---
+
+## 3.18.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Demandes d'achat — nouvelle section dans le module achats
+
+L'onglet "Demandes d'achat" est désormais disponible dans le module achats. Il liste toutes les DA avec des filtres par statut (dynamiques, issus du serveur) et par urgence. Un bouton de dispatch permet d'envoyer en une action toutes les demandes prêtes.
+
+La fiche détail s'ouvre en ligne au clic sur une ligne. Elle s'organise en trois colonnes de même hauteur : informations de la DA, intervention liée (code coloré par priorité, lien direct), pièce catalogue (référence cliquable vers le stock filtré). Un empty state s'affiche si l'une est absente.
+
+### Paniers fournisseurs — visibles depuis la fiche DA
+
+Les paniers dans lesquels figure la demande sont affichés en tableau directement dans la fiche : numéro de panier, fournisseur, statut de la commande, référence fabricant, quantité, prix, délai, réception et état de la ligne.
+
+Correction : le panneau détail ne s'affichait pas au clic — résolu.
+
+---
+
+## 3.17.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Filtres familles et sous-familles — listes déroulantes dans la barre de recherche
+
+Les filtres familles et sous-familles de la liste des pièces sont maintenant des listes déroulantes compactes, intégrées directement dans la barre d'outils à côté du champ de recherche. Le format affiché est `CODE — Libellé`, sans le compteur.
+
+Lo filtre sous-famille est désactivé automatiquement si aucune famille n'est sélectionnée. Lorsqu'un filtre est actif, il se colore en bleu (famille) ou indigo (sous-famille) pour signaler qu'il modifie l'affichage. Le champ de recherche adopte lui aussi une teinte bleue dès qu'un texte est saisi.
+
+### Retours d'erreur — messages du serveur affichés dans les formulaires
+
+Tous les formulaires affichent désormais les messages d'erreur tels qu'ils sont formulés par le serveur, en français, directement dans le formulaire concerné. Un doublon, un conflit de référence, un champ invalide — chaque cas est maintenant communiqué clairement à l'utilisateur, sans message générique.
+
+Cette amélioration couvre les formulaires de pièces, de familles, de sous-familles, de fournisseurs et de fabricants.
+
+---
+
+## 3.16.0 - 2026-03-07
+
+Stabilité : **STABLE** ✅
+
+### Fiche fournisseur — ajout, modification, suppression depuis la fiche pièce
+
+La fiche détail d'une pièce permet désormais de gérer directement ses références fournisseurs, sans quitter la page.
+
+**Ajouter un fournisseur :**
+
+Un bouton « Ajouter » ouvre un formulaire inline sous le tableau des fournisseurs. On choisit le fournisseur parmi la liste du référentiel, on saisit sa référence (obligatoire), et on complète si besoin le prix unitaire, la quantité minimum de commande, le délai en jours, et si ce fournisseur doit être marqué comme préféré. L'enregistrement est confirmé visuellement sur le bouton lui-même.
+
+**Modifier une référence existante :**
+
+Chaque ligne du tableau dispose d'un bouton de modification. Un formulaire pré-rempli apparaît sous le tableau avec un fond bleu pour le distinguer du formulaire d'ajout. Les champs modifiables sont la référence, le prix, la quantité minimum, le délai et le statut préféré — le fournisseur lui-même ne peut pas être changé une fois la liaison créée.
+
+**Supprimer et changer le préféré :**
+
+Le bouton rouge de suppression retire la liaison. La suppression est bloquée si le fournisseur est le préféré et qu'il en existe d'autres — il faut d'abord en désigner un autre via l'étoile. L'étoile n'apparaît sur une ligne que si ce fournisseur n'est pas encore le préféré.
+
+**Retours en cas d'erreur :**
+
+Si le serveur refuse une action (doublon, validation incorrecte), un message apparaît directement dans le formulaire concerné, juste au-dessus des boutons. Les erreurs réseau et pannes serveur s'affichent dans un bandeau discret ancré en haut de la page, qui reste visible jusqu'à ce que l'utilisateur le ferme.
+
+**Fin de page :**
+
+Un pied de page apparaît en bas de chaque écran de l'application pour indiquer que l'on est arrivé au bout du contenu.
+
+---
+
+## 3.15.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Formulaire de pièce — saisie guidée, contrôlée et sécurisée
+
+Le formulaire de création et de modification d'une pièce a été entièrement repensé pour guider la saisie de bout en bout.
+
+**Famille et sous-famille depuis le catalogue :**
+
+Les deux champs ne sont plus des zones de texte libres. Ils se présentent sous forme de listes déroulantes alimentées par le serveur, et sont liés l'un à l'autre — changer la famille vide et recharge automatiquement les sous-familles disponibles.
+
+**Champs de caractéristiques adaptés au template :**
+
+Dès qu'une sous-famille est sélectionnée, si elle dispose d'un template, les champs de caractéristiques techniques apparaissent dynamiquement. Chaque champ respecte son type : un champ numérique n'accepte que des nombres, un champ à valeurs fixées se présente sous forme de liste fermée, un champ texte reste libre. Les champs obligatoires sont identifiés. Pour les pièces sans template, la saisie manuelle de la spécification et de la dimension est conservée.
+
+**La référence se construit en temps réel :**
+
+La référence de la pièce est calculée automatiquement à mesure que les champs sont renseignés et s'affiche en lecture seule en haut du formulaire. Elle n'est pas modifiable manuellement — c'est le serveur qui la finalise à l'enregistrement.
+
+**Édition contrôlée :**
+
+En modification, la famille, la sous-famille et les caractéristiques techniques sont verrouillées et s'affichent en lecture seule — seuls le nom, la quantité, l'unité, la spécification et l'emplacement restent modifiables, conformément aux règles du serveur.
+
+---
+
+## 3.14.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Fiche détail d'une pièce — données complètes et affichage intégré
+
+En cliquant sur une pièce dans le catalogue, l'interface charge désormais l'intégralité de sa fiche depuis le serveur et la déploie directement sous la ligne sélectionnée — sans quitter la liste.
+
+**Une fiche riche et hiérarchisée :**
+
+Deux vignettes mettent en avant la **quantité en stock** et le **fournisseur préféré**. En dessous, les informations de classification (famille, sous-famille, template) et les caractéristiques techniques (spécification, dimension, emplacement) s'affichent côte à côte, uniquement si elles sont renseignées.
+
+**Le tableau des fournisseurs :**
+
+Tous les fournisseurs référencés pour cette pièce sont listés dans un tableau : référence fournisseur, référence fabricant avec le nom du fabricant, prix unitaire, quantité minimum de commande et délai de livraison. Le fournisseur préféré est signalé par une étoile.
+
+**Code couleur cohérent sur toutes les références :**
+
+Les badges de référence suivent maintenant une convention stable — bleu pour les références internes au catalogue, indigo pour les références fournisseurs, violet pour les références fabricants — appliquée de façon uniforme dans tout le module stock.
+
+---
+
+## 3.13.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Catalogue des pièces stock — refonte visuelle et ergonomique
+
+L'onglet **Pièces référencées** a été entièrement restructuré pour faciliter la lecture et la navigation dans le catalogue.
+
+**Un vrai tableau à colonnes structurées :**
+
+La liste affiche désormais quatre colonnes distinctes : la référence avec son nom dessous, la famille, la quantité en stock et le fournisseur préféré. La ligne sélectionnée se détache clairement avec un fond coloré et un trait sur le bord gauche.
+
+**Un panneau de détail mieux hiérarchisé :**
+
+La quantité en stock et le fournisseur préféré sont mis en avant dans deux vignettes bien visibles en haut du panneau. Les caractéristiques secondaires (spécification, dimension, emplacement) apparaissent en dessous, uniquement si elles sont renseignées.
+
+**Des filtres famille et sous-famille plus lisibles :**
+
+Les listes déroulantes ont été remplacées par des boutons en ligne — la famille active et la sous-famille active s’affichent en bleu plein, les autres en gris. Les filtres occupent toute la largeur de la page, sans être compressés par le champ de recherche. La ligne de sous-famille est toujours visible : elle affiche au minimum le bouton "Toutes", et les sous-familles de la famille active quand une est sélectionnée.
+
+**En-tête simplifié :**
+
+Le bouton "Rafraîchir" a été supprimé. Le bouton **Ajouter** le remplace directement à droite du champ de recherche.
+
+---
+
+## 3.12.0 - 2026-03-06
+
+Stabilité : **STABLE** ✅
+
+### Gestion des familles et sous-familles
+
+L'onglet **Familles et sous-familles** permet maintenant de créer et modifier des familles et sous-familles directement dans l'interface, sans passer par la base de données.
+
+**Créer une famille :**
+
+- Cliquez sur "Ajouter" dans le tableau des familles
+- Renseignez le code et le libellé, puis enregistrez
+
+**Modifier une famille :**
+
+- Sélectionnez une famille dans le tableau
+- Cliquez sur "Modifier la famille" dans le panneau de droite
+
+**Créer une sous-famille :**
+
+- Depuis le panneau de détail d'une famille, cliquez sur "Ajouter"
+- Choisissez un code, un libellé et une trame de référence si besoin
+
+**Modifier une sous-famille :**
+
+- Cliquez sur "Editer" sur la ligne concernée dans le tableau
+
+### Réduction des appels réseau
+
+La page Stock était trop bavarde : elle interrogeait le serveur plusieurs fois au chargement, même pour des données dont elle n'avait pas besoin. Ce comportement est corrigé — chaque onglet ne charge ses données que lorsqu'il est ouvert.
+
+### Correctif sur les actions d'intervention
+
+La modification d'une action d'intervention échouait avec une erreur serveur. C'est corrigé.
+
+### Composants concernés
+
+- Onglet Familles et sous-familles (Stock)
+- Page Stock — chargement des onglets
+- Détail d'intervention — modification d'action
+
+---
+
 ## 3.11.0 - 2026-03-02
 
 Stabilité : **en consolidation**
