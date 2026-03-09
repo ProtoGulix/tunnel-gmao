@@ -4,6 +4,26 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.20.0 - 2026-03-09
+
+Stabilité : **STABLE** ✅
+
+### Demandes d'achat — colonne Demandeur et badge d'intervention
+
+**Colonne Demandeur :** le nom du demandeur s'affiche maintenant correctement dans la liste des demandes d'achat.
+
+**Badge d'intervention :** le code intervention est affiché sous forme de badge coloré, dont la couleur correspond au type d'intervention (corrective, préventive, etc.). Le type est déduit automatiquement à partir du code.
+
+### Paniers fournisseurs — envoi d'une demande de prix par email
+
+Un bouton **Demande de prix** est disponible sur chaque panier fournisseur. Il génère automatiquement un email pré-rempli (objet, corps en texte brut) à partir du contenu du panier, et ouvre le client mail de l'utilisateur.
+
+Le corps de l'email est au format texte simple, compatible avec Outlook et tous les clients Microsoft.
+
+Si le fournisseur n'a pas d'adresse email renseignée dans sa fiche, un message d'erreur s'affiche directement dans le panneau, indiquant que l'email n'est pas configuré.
+
+---
+
 ## 3.19.1 - 2026-03-09
 
 Stabilité : **STABLE** ✅

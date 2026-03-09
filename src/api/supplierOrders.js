@@ -87,6 +87,16 @@ export async function deleteSupplierOrder(id) {
 }
 
 /**
+ * Export supplier order as email draft (returns mailto_url + subject + body)
+ * @param {string} id
+ * @returns {Promise<{subject: string, body_text: string, body_html: string, supplier_email: string|null, mailto_url: string|null}>}
+ */
+export async function exportSupplierOrderEmail(id) {
+  const response = await api.post(`/supplier-orders/${id}/export/email`);
+  return response.data?.data || response.data || {};
+}
+
+/**
  * Export supplier order as CSV (returns blob)
  * @param {string} id
  * @returns {Promise<Blob>}

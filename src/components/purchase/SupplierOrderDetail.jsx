@@ -10,6 +10,8 @@
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
 import { Building2, Save } from 'lucide-react';
+import { useState } from 'react';
+import { exportSupplierOrderEmail } from '@/api/supplierOrders';
 import LoadingState from '@/components/ui/LoadingState';
 import StatusCallout from '@/components/ui/StatusCallout';
 import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
@@ -65,6 +67,36 @@ DeliveryDateField.propTypes = {
 };
 
 export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, onStatusChange }) {
+  const [emailError, setEmailError] = useState(null);
+
+  const handleExportEmail = async (id) => {
+    setEmailError(null);
+    try {
+      const result = await exportSupplierOrderEmail(id);
+      if (!result.supplier_email) {
+        setEmailError('Aucun email fournisseur configuré pour cette commande.');
+        return;
+      }
+
+      // Reconstruire le mailto à partir des champs texte brut (seul format fiable pour Outlook).
+      // On n'utilise pas mailto_url fourni par le backend car il peut dépasser la limite de
+      // longueur tolérée par certains clients mail (Outlook coupe à ~2 000 caractères).
+      const subject = encodeURIComponent(result.subject || '');
+      const body = encodeURIComponent(result.body_text || '');
+      const mailtoUrl = `mailto:${result.supplier_email}?subject=${subject}&body=${body}`;
+
+      // <a>.click() est la seule méthode qui déclenche fiablement le client mail
+      // (window.location.href et window.open sont bloqués ou ignorés par certains navigateurs).
+      const a = document.createElement('a');
+      a.href = mailtoUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('[SupplierOrderDetail] Erreur export email:', err);
+      setEmailError('Erreur lors de la génération de l\'email.');
+    }
+  };
   const { map: statuses } = useSupplierOrderStatuses();
   const {
     detail, transitions, loading, statusUpdating, statusError,
@@ -84,6 +116,7 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
       <Flex direction="column" gap="3">
 
         {statusError && <StatusCallout type="error">{statusError}</StatusCallout>}
+        {emailError && <StatusCallout type="error">{emailError}</StatusCallout>}
 
         <SupplierOrderHeader
           detail={detail}
@@ -93,6 +126,7 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
           statusUpdating={statusUpdating}
           onStatusChange={handleStatusChange}
           onExportCsv={onExportCsv}
+          onExportEmail={handleExportEmail}
           onDelete={onDelete}
         />
 
@@ -161,4 +195,5 @@ SupplierOrderDetail.propTypes = {
   onDelete: PropTypes.func,
   onExportCsv: PropTypes.func,
   onStatusChange: PropTypes.func,
+  onExportEmail: PropTypes.func,
 };

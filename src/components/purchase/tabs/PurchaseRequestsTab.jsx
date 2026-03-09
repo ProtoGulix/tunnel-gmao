@@ -20,6 +20,20 @@ import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestF
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses } from '@/api/purchaseRequests';
 import { PURCHASE_URGENCY, PURCHASE_URGENCY_LIST } from '@/config/purchaseConfig';
+import { INTERVENTION_TYPES } from '@/config/interventionTypes';
+
+const INTERVENTION_TYPE_MAP = Object.fromEntries(INTERVENTION_TYPES.map((t) => [t.id, t]));
+
+function InterventionBadge({ code }) {
+  if (!code) return <Text size="1" color="gray">—</Text>;
+  const typeId = String(code).slice(0, 3).toUpperCase();
+  const type = INTERVENTION_TYPE_MAP[typeId];
+  return (
+    <Badge color={type?.color || 'gray'} variant="soft" size="1">
+      {code}
+    </Badge>
+  );
+}
 
 function StatusBadge({ derivedStatus }) {
   if (!derivedStatus) return <Text size="1" color="gray">—</Text>;
@@ -73,14 +87,16 @@ const COLUMNS = [
   {
     header: 'Demandeur',
     width: 130,
-    accessor: (row) => <Text size="1" color="gray">{row.requester_name || '—'}</Text>,
+    accessor: (row) => (
+      <Text size="1" color="gray">
+        {row.requested_by || row.requester_name || '—'}
+      </Text>
+    ),
   },
   {
     header: 'Intervention',
     width: 160,
-    accessor: (row) => row.intervention_code
-      ? <Text size="1" color="gray">{row.intervention_code}</Text>
-      : <Text size="1" color="gray">—</Text>,
+    accessor: (row) => <InterventionBadge code={row.intervention_code} />,
   },
 ];
 

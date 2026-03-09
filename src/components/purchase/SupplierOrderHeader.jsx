@@ -6,12 +6,12 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
-import { ChevronDown, Clock, Download, ShoppingCart, Trash2 } from 'lucide-react';
+import { ChevronDown, Clock, Download, Mail, ShoppingCart, Trash2 } from 'lucide-react';
 import { hexBadgeStyle } from '@/config/purchaseConfig';
 
 const AGE_COLOR = { gray: 'gray', orange: 'orange', red: 'red' };
 
-export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onDelete }) {
+export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onExportEmail, onDelete }) {
   const badgeStyle = hexBadgeStyle(statusInfo.color);
 
   return (
@@ -60,6 +60,11 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         )}
+        {onExportEmail && (
+          <Button size="1" variant="soft" color="indigo" onClick={() => onExportEmail(detail.id)}>
+            <Mail size={12} /> Demande de prix
+          </Button>
+        )}
         {onExportCsv && (
           <Button size="1" variant="soft" onClick={() => onExportCsv(detail.id)}>
             <Download size={12} /> CSV
@@ -83,5 +88,6 @@ SupplierOrderHeader.propTypes = {
   statusUpdating: PropTypes.bool,
   onStatusChange: PropTypes.func.isRequired,
   onExportCsv: PropTypes.func,
+  onExportEmail: PropTypes.func,
   onDelete: PropTypes.func,
 };
