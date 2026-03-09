@@ -1,4 +1,11 @@
-import { api, BASE_URL } from '@/lib/api/client';
+import { BASE_URL } from '@/lib/api/client';
+
+const HEALTH_PATH = '/health';
+const HEALTH_TIMEOUT_MS = 5000;
+
+function getHealthUrl() {
+  return `${String(BASE_URL).replace(/\/$/, '')}${HEALTH_PATH}`;
+}
 
 /**
  * Vérifie l'état du serveur backend
@@ -8,29 +15,32 @@ import { api, BASE_URL } from '@/lib/api/client';
 export async function checkServerStatus() {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 secondes timeout
+    const timeoutId = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
     const startedAt = performance.now();
 
-    const response = await api.get('/server/ping', {
+    // no-cors permet un test de joignabilite sans exiger les en-tetes CORS.
+    // Le resultat est opaque: on valide la connectivite reseau, pas le code HTTP.
+    await fetch(getHealthUrl(), {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      credentials: 'omit',
       signal: controller.signal,
-      timeout: 5000,
     });
 
     clearTimeout(timeoutId);
 
-    const latencyHeader = response.headers['x-response-time'];
-    const measuredLatency = Math.max(0, performance.now() - startedAt);
-    const latencyMs = latencyHeader ? Number(latencyHeader) || measuredLatency : measuredLatency;
+    const latencyMs = Math.max(0, performance.now() - startedAt);
 
     return {
-      online: response.status === 200,
+      online: true,
       message: 'Serveur accessible',
       latencyMs,
       lastChecked: new Date().toISOString(),
       health: 'ok',
     };
   } catch (error) {
-    if (error.code === 'ECONNABORTED' || error.name === 'AbortError') {
+    if (error?.name === 'AbortError') {
       return {
         online: false,
         message: 'Timeout - Serveur ne répond pas',
@@ -38,17 +48,6 @@ export async function checkServerStatus() {
         latencyMs: null,
         lastChecked: new Date().toISOString(),
         health: 'degraded',
-      };
-    }
-
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      return {
-        online: false,
-        message: 'Serveur inaccessible - Vérifiez votre connexion',
-        error: 'NETWORK_ERROR',
-        latencyMs: null,
-        lastChecked: new Date().toISOString(),
-        health: 'down',
       };
     }
 

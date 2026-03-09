@@ -25,8 +25,12 @@ import axios from 'axios';
 
 /**
  * URL de base de l'API backend Python (FastAPI)
+ * Priorise la variable V3, conserve un fallback legacy pour compatibilite.
  */
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const BASE_URL =
+  import.meta.env.VITE_TUNNEL_BACKEND_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8000';
 
 /**
  * Instance axios préconfigurée pour l'API Tunnel GMAO

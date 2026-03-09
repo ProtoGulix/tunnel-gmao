@@ -9,6 +9,10 @@
 
 import { api } from '@/lib/api/client';
 
+function extractAuthData(response) {
+  return response?.data?.data || response?.data;
+}
+
 /**
  * Connexion utilisateur
  *
@@ -18,12 +22,12 @@ import { api } from '@/lib/api/client';
  * @throws {Error} Si les identifiants sont incorrects
  */
 export async function login(email, password) {
+  const normalizedEmail = String(email || '').trim();
   const response = await api.post('/auth/login', {
-    email,
+    email: normalizedEmail,
     password,
-    mode: 'session',
   });
-  return response.data.data; // Le backend retourne { data: { access_token, refresh_token, expires } }
+  return extractAuthData(response);
 }
 
 /**

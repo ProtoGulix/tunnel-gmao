@@ -11,27 +11,9 @@ import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Callout, Flex, IconButton, Text } from '@radix-ui/themes';
 import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import { api } from '@/lib/api/client';
+import { checkServerStatus } from '@/lib/serverStatus';
 
 const POLL_INTERVAL = 30000; // 30 secondes
-
-/**
- * Vérifie si le serveur backend est accessible
- */
-async function checkServerStatus() {
-  try {
-    const response = await api.get('/health', { timeout: 5000 });
-    return {
-      online: response.status === 200,
-      message: 'Serveur connecté',
-    };
-  } catch (error) {
-    return {
-      online: false,
-      message: 'Serveur déconnecté',
-    };
-  }
-}
 
 export default function ServerStatus({ showDetails = false }) {
   const [status, setStatus] = useState(null);

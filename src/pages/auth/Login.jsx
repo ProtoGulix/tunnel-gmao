@@ -90,7 +90,15 @@ export default function Login() {
       console.error("Erreur de connexion:", err);
       
       if (err.code === 'ERR_NETWORK') {
-        setError("Impossible de joindre le serveur. Vérifiez votre connexion.");
+        setError("Connexion impossible au backend (réseau/CORS). Vérifiez la config CORS du serveur.");
+      } else if (err.response?.status === 400) {
+        setError("Requête invalide côté serveur (400). Vérifiez format email/mot de passe.");
+      } else if (err.response?.status === 422) {
+        const detail = err.response?.data?.detail;
+        const backendMessage = Array.isArray(detail)
+          ? detail.map((item) => item?.msg).filter(Boolean).join(' | ')
+          : '';
+        setError(backendMessage || "Validation échouée (422): email invalide ou mot de passe non conforme.");
       } else if (err.response?.status === 401) {
         setError("Email ou mot de passe incorrect");
       } else {
