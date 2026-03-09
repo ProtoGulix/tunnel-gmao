@@ -4,6 +4,22 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.19.1 - 2026-03-09
+
+Stabilité : **STABLE** ✅
+
+### Correctifs — Demandes d'achat
+
+**Onglet Achats dans les interventions :** les demandes d'achat liées à une intervention sont maintenant accessibles directement depuis la fiche intervention, dans un nouvel onglet "Achats". Il est possible de consulter le détail d'une demande en cliquant dessus, ou d'en créer une nouvelle sans quitter la page.
+
+**Demandes d'achat dans les actions :** les demandes créées depuis une action s'affichent de nouveau correctement dans la liste. Le nom de l'article, la quantité, l'urgence et le statut sont visibles sur chaque ligne.
+
+**Numéro de panier sur une demande :** quand une demande est incluse dans un panier fournisseur et qu'une ligne a été sélectionnée, le numéro du panier s'affiche à nouveau sur le bandeau de la demande.
+
+**Fiche détail d'une demande — paniers fournisseurs :** quand une demande n'est dans aucun panier, un message indique clairement qu'elle est en attente de dispatch, au lieu d'afficher une section vide.
+
+---
+
 ## 3.19.0 - 2026-03-08
 
 Stabilité : **STABLE** ✅

@@ -12,7 +12,6 @@ import * as actionsApi from "@/api/actions";
 import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import * as stockApi from "@/api/stock";
-import { api } from "@/lib/api/client";
 import { useAuth } from "@/auth/useAuth";
 
 // DTO-friendly accessors with legacy fallback
@@ -122,15 +121,11 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
 
   const handleSubmitPurchaseRequest = useCallback(async (requestData) => {
     try {
-      // Get action ID (always present)
-      const actionId = localAction?.id || action?.id;
-
-      if (!interventionId || !actionId) {
-        throw new Error(`Impossible de créer la demande: ${actionId ? 'intervention' : 'action'} absente`);
+      if (!interventionId) {
+        throw new Error('Impossible de créer la demande : intervention absente');
       }
 
-      // Create purchase request with intervention context
-      const purchaseRequest = {
+      const created = await stockApi.createPurchaseRequest({
         item_label: requestData.item_label,
         quantity: requestData.quantity,
         unit: requestData.unit,
@@ -138,82 +133,28 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         requested_by: requestData.requested_by,
         stock_item_id: requestData.stock_item_id || null,
         intervention_id: interventionId,
-      };
+      });
 
-      // Call API to create purchase request
-      const created = await stockApi.createPurchaseRequest(purchaseRequest);
-
-      // Link purchase request to action via nested PATCH on intervention
       if (created?.id) {
-        await api.patch(`/items/intervention/${interventionId}`, {
-          action: {
-            create: [],
-            update: [{
-              purchase_request_ids: {
-                create: [{
-                  intervention_action_id: actionId,
-                  purchase_request_id: { id: created.id }
-                }],
-                update: [],
-                delete: []
-              },
-              id: actionId
-            }],
-            delete: []
-          }
-        });
-
-        // Optimistic update: add to local state immediately
         setPurchaseRequests(prev => [...prev, created]);
-
-        // Notify parent if callback provided
         onPurchaseRequestCreated?.(created);
       }
 
-      // Close the form on success
       setShowPurchaseForm(false);
     } catch (error) {
       console.error('Error creating purchase request:', error);
     }
-  }, [localAction, action, interventionId, onPurchaseRequestCreated]);
+  }, [interventionId, onPurchaseRequestCreated]);
 
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
-      const actionId = localAction?.id || action?.id;
-
-      if (!interventionId || !actionId) {
-        throw new Error('Impossible de supprimer la demande: intervention ou action absente');
-      }
-
-      // Find and delete the M2M junction record directly
-      // First, fetch the junction record to get its ID
-      const junctionResponse = await api.get('/items/intervention_action_purchase_request', {
-        params: {
-          filter: {
-            intervention_action_id: { _eq: actionId },
-            purchase_request_id: { _eq: purchaseRequestId }
-          },
-          fields: 'id'
-        }
-      });
-
-      const junctionRecords = junctionResponse.data?.data || [];
-      
-      // Delete each junction record found
-      for (const record of junctionRecords) {
-        await api.delete(`/items/intervention_action_purchase_request/${record.id}`);
-      }
-
-      // Delete the purchase request itself
       await stockApi.deletePurchaseRequest(purchaseRequestId);
-
-      // Update local state to remove the deleted request
       setPurchaseRequests(prev => prev.filter(pr => pr.id !== purchaseRequestId));
     } catch (error) {
       console.error('Error deleting purchase request:', error);
-      throw error; // Re-throw to let the dialog handle the error state
+      throw error;
     }
-  }, [localAction, action, interventionId]);
+  }, []);
 
   // Couleur de bordure selon la complexité
   const borderColor = complexityScore > 5 ? 'var(--red-7)' : 'var(--gray-6)';

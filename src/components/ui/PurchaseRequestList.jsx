@@ -30,18 +30,9 @@ const STATUS_BADGE_CONFIG = {
  * @returns {string|null} Numéro du panier ou null si non trouvé
  */
 const getSelectedBasketInfo = (pr) => {
-  const orderLineRelations = pr.supplier_order_line_ids || pr.supplierOrderLineIds || [];
-  const selectedLine = orderLineRelations.find(relation => {
-    const lineData = relation.supplier_order_line_id || relation.supplierOrderLineId;
-    return lineData && (lineData.is_selected === true || lineData.isSelected === true);
-  });
-  
-  if (selectedLine) {
-    const lineData = selectedLine.supplier_order_line_id || selectedLine.supplierOrderLineId;
-    const supplierOrder = lineData?.supplier_order_id || lineData?.supplierOrderId;
-    return supplierOrder?.order_number || supplierOrder?.orderNumber || null;
-  }
-  return null;
+  const orderLines = pr.order_lines || [];
+  const selected = orderLines.find(line => line.is_selected === true);
+  return selected?.supplier_order_number || null;
 };
 
 /**
@@ -70,15 +61,19 @@ function PurchaseRequestItem({ pr, onDelete }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Support snake_case (API) et camelCase (legacy)
+  const itemLabel = pr.item_label || pr.itemLabel || '—';
+  const quantity = pr.quantity;
+  const unit = pr.unit || 'pcs';
+  const urgency = pr.urgency || 'normal';
+
   // derived_status vient du backend avec structure {code, label, color}
   const statusCode = pr.derived_status?.code;
 
   const basketNumber = getSelectedBasketInfo(pr);
   const statusBadge = getStatusBadgeProps(statusCode);
 
-  const handleDeleteClick = () => {
-    setShowConfirm(true);
-  };
+  const handleDeleteClick = () => setShowConfirm(true);
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
@@ -91,14 +86,12 @@ function PurchaseRequestItem({ pr, onDelete }) {
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowConfirm(false);
-  };
+  const handleCancelDelete = () => setShowConfirm(false);
 
-  const isToQualify = !pr.stockItemId || pr.itemLabel === "À qualifier";
+  const isToQualify = !pr.stock_item_id && !pr.stockItemId;
 
   // Récupérer la référence stock
-  const stockRef = pr.stockItemRef || pr.stock_item_ref || pr.stockItemCode;
+  const stockRef = pr.stock_item?.ref || pr.stockItemRef || pr.stock_item_ref || pr.stockItemCode;
 
   return (
     <Flex 
@@ -134,7 +127,7 @@ function PurchaseRequestItem({ pr, onDelete }) {
           whiteSpace: 'nowrap'
         }}
       >
-        {pr.itemLabel}
+        {itemLabel}
       </Text>
 
       {isToQualify && (
@@ -148,14 +141,14 @@ function PurchaseRequestItem({ pr, onDelete }) {
 
       <Flex gap="1" align="center" style={{ flexShrink: 0 }}>
         <Badge color="blue" variant="soft" size="1">
-          {pr.quantity} {pr.unit}
+          {quantity} {unit}
         </Badge>
-        <Badge 
-          color={pr.urgency === 'urgent' ? 'red' : pr.urgency === 'high' ? 'orange' : 'gray'} 
-          variant="soft" 
+        <Badge
+          color={urgency === 'urgent' ? 'red' : urgency === 'high' ? 'orange' : 'gray'}
+          variant="soft"
           size="1"
         >
-          {pr.urgency}
+          {urgency}
         </Badge>
         <Badge 
           color={statusBadge.color} 
