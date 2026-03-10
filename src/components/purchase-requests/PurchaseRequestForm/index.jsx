@@ -11,14 +11,14 @@ import DetailsRow from './DetailsRow';
 import FormActions from './FormActions';
 
 // eslint-disable-next-line complexity
-function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', compact = false }) {
+function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', compact = false, initialData = null }) {
   const [selectedItem, setSelectedItem] = useState(null);
-  const [quantity, setQuantity] = useState('1');
-  const [urgency, setUrgency] = useState('normal');
-  const [requestedBy, setRequestedBy] = useState('');
+  const [quantity, setQuantity] = useState(initialData ? String(initialData.quantity ?? '1') : '1');
+  const [urgency, setUrgency] = useState(initialData?.urgency || 'normal');
+  const [requestedBy, setRequestedBy] = useState(initialData?.requester_name || initialData?.requested_by || '');
   const [allStockItems, setAllStockItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [unit, setUnit] = useState(DEFAULT_UNIT);
+  const [searchTerm, setSearchTerm] = useState(initialData?.item_label || '');
+  const [unit, setUnit] = useState(initialData?.unit || DEFAULT_UNIT);
   const [formError, setFormError] = useState('');
   
   // Debounce search term to reduce API calls
@@ -66,20 +66,22 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
       unit,
       urgency,
       requested_by: finalName,
-      stock_item_id: selectedItem?.isSpecialRequest ? null : (selectedItem?.id || null)
+      stock_item_id: selectedItem?.isSpecialRequest ? null : (selectedItem?.id || initialData?.stock_item_id || null)
     };
 
     await onSubmit(data);
 
-    setSelectedItem(null);
-    setQuantity('1');
-    setUrgency('normal');
-    setRequestedBy('');
-    setSearchTerm('');
-    setUnit(DEFAULT_UNIT);
+    if (!initialData) {
+      setSelectedItem(null);
+      setQuantity('1');
+      setUrgency('normal');
+      setRequestedBy('');
+      setSearchTerm('');
+      setUnit(DEFAULT_UNIT);
+    }
   };
 
-  const submitDisabled = loading || !searchTerm.trim() || parseInt(quantity, 10) < 1 || !requestedBy.trim();
+  const submitDisabled = loading || !searchTerm.trim() || parseInt(quantity, 10) < 1 || (!initialData && !requestedBy.trim());
 
   return (
     <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', overflow: 'visible' }}>
@@ -176,7 +178,8 @@ PurchaseRequestForm.propTypes = {
   loading: PropTypes.bool,
   onCancel: PropTypes.func,
   submitLabel: PropTypes.string,
-  compact: PropTypes.bool
+  compact: PropTypes.bool,
+  initialData: PropTypes.object,
 };
 
 PurchaseRequestForm.defaultProps = {

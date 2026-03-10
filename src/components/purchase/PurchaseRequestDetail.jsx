@@ -139,6 +139,17 @@ function InterventionCard({ intervention }) {
 
 InterventionCard.propTypes = { intervention: PropTypes.object };
 
+function NoStockItemEmpty() {
+  return (
+    <Flex direction="column" align="center" justify="center" gap="2" py="4">
+      <Package size={22} color="var(--amber-7)" />
+      <Text size="1" color="gray" align="center">
+        Cette demande n&apos;est pas liée à une pièce du catalogue.
+      </Text>
+    </Flex>
+  );
+}
+
 function StockItemCard({ stockItem, unit }) {
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
@@ -170,10 +181,7 @@ function StockItemCard({ stockItem, unit }) {
           )}
         </Flex>
       ) : (
-        <Flex direction="column" align="center" justify="center" gap="1" py="4">
-          <Package size={22} color="var(--gray-5)" />
-          <Text size="1" color="gray">Aucune pièce catalogue</Text>
-        </Flex>
+        <NoStockItemEmpty />
       )}
     </Card>
   );
@@ -333,6 +341,42 @@ OrderLinesSection.propTypes = {
   orderStatuses: PropTypes.object.isRequired,
 };
 
+function DetailHeader({ item, onEdit, onDelete }) {
+  const isLocked = !item.is_editable;
+  const isToQualify = !item.stock_item;
+
+  return (
+    <Flex align="center" justify="between" gap="2">
+      <Flex align="center" gap="2">
+        <ShoppingCart size={16} color="var(--blue-9)" />
+        <Text size="3" weight="bold">{item.item_label}</Text>
+        {item.urgent && <Badge color="red" variant="solid" size="1"><AlertTriangle size={10} /> Urgent</Badge>}
+      </Flex>
+      <Flex gap="2">
+        {onEdit && (
+          <Button
+            size="1"
+            variant="soft"
+            color={isToQualify ? 'amber' : undefined}
+            onClick={onEdit}
+            disabled={isLocked}
+            title={isLocked ? 'Non modifiable : DA dans un panier fournisseur actif' : undefined}
+          >
+            {isToQualify ? <><Package size={12} /> Qualifier</> : <><Edit2 size={12} /> Modifier</>}
+          </Button>
+        )}
+        {onDelete && <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /> Supprimer</Button>}
+      </Flex>
+    </Flex>
+  );
+}
+
+DetailHeader.propTypes = {
+  item: PropTypes.object.isRequired,
+  onEdit: PropTypes.func,
+  onDelete: PropTypes.func,
+};
+
 export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
   const { map: orderStatuses } = useSupplierOrderStatuses();
 
@@ -341,34 +385,18 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
   const statusColor = item.derived_status?.color;
   const statusLabel = item.derived_status?.label || item.derived_status?.code || '—';
 
+
   return (
     <Box p="4">
       <Flex direction="column" gap="3">
-
-        {/* Header */}
-        <Flex align="center" justify="between" gap="2">
-          <Flex align="center" gap="2">
-            <ShoppingCart size={16} color="var(--blue-9)" />
-            <Text size="3" weight="bold">{item.item_label}</Text>
-            {item.urgent && <Badge color="red" variant="solid" size="1"><AlertTriangle size={10} /> Urgent</Badge>}
-          </Flex>
-          <Flex gap="2">
-            {onEdit && <Button size="1" variant="soft" onClick={onEdit}><Edit2 size={12} /> Modifier</Button>}
-            {onDelete && <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /> Supprimer</Button>}
-          </Flex>
-        </Flex>
-
+        <DetailHeader item={item} onEdit={onEdit} onDelete={onDelete} />
         <Separator size="4" />
-
-        {/* Grille 3 colonnes */}
         <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
           <DaInfoCard item={item} urgency={urgency} statusColor={statusColor} statusLabel={statusLabel} />
           <InterventionCard intervention={item.intervention} />
           <StockItemCard stockItem={item.stock_item} unit={item.unit} />
         </Box>
-
         <Separator size="4" />
-
         <OrderLinesSection
           orderLines={item.order_lines || []}
           itemQuantity={item.quantity}
