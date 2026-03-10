@@ -146,7 +146,7 @@ export default function StockItemDetail({ item, onEdit, onDelete, onRefresh }) {
           template={item.sub_family_template}
           characteristics={item.characteristics}
         />
-        <SuppliersSection suppliers={suppliers} stockItemId={item.id} onRefresh={onRefresh} />
+        <SuppliersSection suppliers={suppliers} stockItemId={item.id} stockItemLabel={`${item.ref} — ${item.name}`} onRefresh={onRefresh} />
       </Flex>
     </Card>
   );

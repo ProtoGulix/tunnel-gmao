@@ -20,7 +20,7 @@ import {
  * @param {string} [options.initialUrgency]
  * @param {string} [options.initialSearch]
  */
-export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', initialSearch = '' } = {}) {
+export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', initialSearch = '', excludeStatuses = '' } = {}) {
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,11 +36,15 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
 
   const buildParams = useCallback(() => {
     const params = {};
-    if (status) params.status = status;
+    if (status) {
+      params.status = status;
+    } else if (excludeStatuses) {
+      params.exclude_statuses = excludeStatuses;
+    }
     if (urgency) params.urgency = urgency;
     if (search) params.search = search;
     return params;
-  }, [status, urgency, search]);
+  }, [status, urgency, search, excludeStatuses]);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -49,7 +53,7 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
       const data = await fetchPurchaseRequests(buildParams());
       setItems(data);
     } catch (err) {
-      setError(err);
+      setError(err?.response?.data?.detail || err?.message || 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }

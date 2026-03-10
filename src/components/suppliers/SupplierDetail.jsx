@@ -11,7 +11,7 @@ import { Edit2, ExternalLink, Link2, Plus, Star, Trash2 } from 'lucide-react';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import SupplierInfo from '@/components/suppliers/SupplierInfo';
-import SupplierItemLinkForm from '@/components/suppliers/SupplierItemLinkForm';
+import SupplierItemForm from '@/components/suppliers/SupplierItemForm';
 import { useSupplierDetail } from '@/hooks/suppliers/useSupplierDetail';
 
 function LinkRow({ link, onEdit, onDelete, onSetPreferred }) {
@@ -152,9 +152,10 @@ export default function SupplierDetail({ supplierId, onEdit }) {
 
         {linkMode && (
           <Box mb="4">
-            <SupplierItemLinkForm
+            <SupplierItemForm
               link={linkMode === 'edit' ? selectedLink : null}
               supplierId={supplierId}
+              supplierName={supplier.name}
               onSubmit={handleSaveLink}
               onCancel={handleCancelLink}
               saving={saving}

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { normalizeText } from '@/lib/utils/textUtils';
 
 /**
- * Hook pour gérer la logique de recherche et sélection
+ * Hook pour gérer la logique de recherche et sélection.
+ * @param {number} [debounceMs=0] - Si > 0, debounce `onSearchChange` pendant la frappe.
+ *                                   N'affecte pas les callbacks de sélection/clear.
  */
 export function useSearchableSelect({
   items,
@@ -12,7 +14,9 @@ export function useSearchableSelect({
   maxSuggestions,
   onChange,
   onSearchChange,
+  debounceMs = 0,
 }) {
+  const debounceRef = useRef(null);
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -61,10 +65,17 @@ export function useSearchableSelect({
       }
     }
     setSearch(newSearch);
-    if (onSearchChange) onSearchChange(newSearch);
     if (!newSearch.trim()) {
       setSelectedItem(null);
       onChange(null);
+    }
+    if (onSearchChange) {
+      if (debounceMs > 0) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => onSearchChange(newSearch), debounceMs);
+      } else {
+        onSearchChange(newSearch);
+      }
     }
   };
 

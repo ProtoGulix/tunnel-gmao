@@ -63,12 +63,13 @@ FormActions.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-export default function StockItemForm({ item, onSubmit, onCancel, saving, embedded = false }) {
+export default function StockItemForm({ item, onSubmit, onCancel, saving, embedded = false, noActions = false, registerSubmit }) {
   const isEdit = !!item;
   const { form, errors, setErrors, families, familiesLoading, subFamilies, template, suggestedRef, set, setVal, setChar, handleFamilyChange, handleSubFamilyChange } = useStockItemForm(item);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (noActions) return; // soumission pilotée par ItemForm via registerSubmit
     const errs = validate(form, isEdit ? null : template);
     if (errs.length) { setErrors(errs); return; }
     setErrors([]);
@@ -79,6 +80,22 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving, embedd
       setErrors([typed.message || 'Une erreur est survenue.']);
     }
   };
+
+  // Enregistrement du handler pour ItemForm (appelé à chaque render — closure toujours à jour)
+  if (registerSubmit) {
+    registerSubmit(async () => {
+      const errs = validate(form, isEdit ? null : template);
+      if (errs.length) { setErrors(errs); return null; } // erreurs affichées via FormErrors
+      setErrors([]);
+      try {
+        return await onSubmit(buildPayload(form, template, isEdit));
+      } catch (err) {
+        const typed = handleAPIError(err, 'StockItemForm');
+        setErrors([typed.message || 'Une erreur est survenue.']);
+        return null;
+      }
+    });
+  }
 
   const content = (
     <form onSubmit={handleSubmit}>
@@ -154,7 +171,7 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving, embedd
             </Box>
           </Flex>
 
-          <FormActions isEdit={isEdit} saving={saving} onCancel={onCancel} />
+          {!noActions && <FormActions isEdit={isEdit} saving={saving} onCancel={onCancel} />}
         </Flex>
       </form>
     );
@@ -169,4 +186,6 @@ StockItemForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
   saving: PropTypes.bool,
   embedded: PropTypes.bool,
+  noActions: PropTypes.bool,
+  registerSubmit: PropTypes.func,
 };

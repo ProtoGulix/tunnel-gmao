@@ -8,13 +8,13 @@ import { useState, useCallback } from 'react';
 import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
 import { Star, Trash2, Plus, Pencil } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
-import { deleteSupplierItemLink, setPreferredSupplierItemLink } from '@/api/suppliers';
-import { AddSupplierForm } from './AddSupplierForm';
-import { EditSupplierForm } from './EditSupplierForm';
+import { deleteSupplierItemLink, setPreferredSupplierItemLink, createSupplierItemLink, updateSupplierItemLink } from '@/api/suppliers';
+import SupplierItemForm from '@/components/suppliers/SupplierItemForm';
 
-export function SuppliersSection({ suppliers, stockItemId, onRefresh }) {
+export function SuppliersSection({ suppliers, stockItemId, stockItemLabel, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
 
   const handleSetPreferred = useCallback(async (row) => {
@@ -46,6 +46,30 @@ export function SuppliersSection({ suppliers, stockItemId, onRefresh }) {
     setEditingRow(null);
     onRefresh();
   }, [onRefresh]);
+
+  const handleCreate = useCallback(async (payload) => {
+    setSaving(true);
+    try {
+      await createSupplierItemLink(payload);
+      handleFormSuccess();
+    } catch (err) {
+      setActionError(err?.response?.data?.detail || err?.message || 'Erreur lors de la création.');
+    } finally {
+      setSaving(false);
+    }
+  }, [handleFormSuccess]);
+
+  const handleEdit = useCallback(async (payload) => {
+    setSaving(true);
+    try {
+      await updateSupplierItemLink(editingRow.id, payload);
+      handleEditSuccess();
+    } catch (err) {
+      setActionError(err?.response?.data?.detail || err?.message || 'Erreur lors de la modification.');
+    } finally {
+      setSaving(false);
+    }
+  }, [editingRow, handleEditSuccess]);
 
   const columns = [
     {
@@ -132,17 +156,22 @@ export function SuppliersSection({ suppliers, stockItemId, onRefresh }) {
           ? <Text size="2" color="gray">Aucun fournisseur référencé.</Text>
           : <DataTable columns={columns} data={suppliers} size="1" variant="ghost" getRowKey={(r) => r.id} />}
         {showForm && (
-          <AddSupplierForm
+          <SupplierItemForm
             stockItemId={stockItemId}
-            onSuccess={handleFormSuccess}
+            stockItemLabel={stockItemLabel}
+            onSubmit={handleCreate}
             onCancel={() => setShowForm(false)}
+            saving={saving}
           />
         )}
         {editingRow && (
-          <EditSupplierForm
+          <SupplierItemForm
             link={editingRow}
-            onSuccess={handleEditSuccess}
+            stockItemId={stockItemId}
+            stockItemLabel={stockItemLabel}
+            onSubmit={handleEdit}
             onCancel={() => setEditingRow(null)}
+            saving={saving}
           />
         )}
       </Box>
@@ -153,6 +182,7 @@ export function SuppliersSection({ suppliers, stockItemId, onRefresh }) {
 SuppliersSection.propTypes = {
   suppliers: PropTypes.array.isRequired,
   stockItemId: PropTypes.string.isRequired,
+  stockItemLabel: PropTypes.string,
   onRefresh: PropTypes.func.isRequired,
 };
 

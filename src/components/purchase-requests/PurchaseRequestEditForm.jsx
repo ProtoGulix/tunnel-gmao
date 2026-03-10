@@ -463,7 +463,7 @@ export default function PurchaseRequestEditForm({ item, onSubmit, loading = fals
             onUnlink={() => setLinkedStockItem(null)}
           />
           {linkedStockItem?.id && (
-            <SuppliersSection suppliers={supplierRefs} stockItemId={String(linkedStockItem.id)} onRefresh={loadSupplierRefs} />
+            <SuppliersSection suppliers={supplierRefs} stockItemId={String(linkedStockItem.id)} stockItemLabel={linkedStockItem.ref ? `${linkedStockItem.ref} — ${linkedStockItem.name || ''}` : linkedStockItem.name} onRefresh={loadSupplierRefs} />
           )}
         </Flex>
       </Box>

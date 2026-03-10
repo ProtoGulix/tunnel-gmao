@@ -41,7 +41,8 @@ export default function SearchableSelect(props) {
     onSearchChange,
     allowSpecialRequest = true,
     allowCreateNew = false,
-    showEmptyState = true
+    showEmptyState = true,
+    debounceMs = 0,
   } = props;
 
   const {
@@ -57,7 +58,8 @@ export default function SearchableSelect(props) {
     getSearchableFields,
     maxSuggestions,
     onChange,
-    onSearchChange
+    onSearchChange,
+    debounceMs,
   });
 
   return (
@@ -107,5 +109,6 @@ SearchableSelect.propTypes = {
   onSearchChange: PropTypes.func,
   allowSpecialRequest: PropTypes.bool,
   allowCreateNew: PropTypes.bool,
-  showEmptyState: PropTypes.bool
+  showEmptyState: PropTypes.bool,
+  debounceMs: PropTypes.number,
 };
