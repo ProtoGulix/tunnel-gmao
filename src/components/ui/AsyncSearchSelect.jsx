@@ -70,9 +70,11 @@ StateBox.propTypes = { children: PropTypes.node };
  * @param {string}   [props.placeholder]   - Défaut : "Rechercher…"
  * @param {number}   [props.debounceMs]    - Délai avant déclenchement du fetch. Défaut : 350.
  * @param {number}   [props.minChars]      - Nb de caractères minimum. Défaut : 2.
- * @param {Function} [props.onCreateClick] - (currentSearch: string) => void.
- *                                           Si fourni, affiche un bouton dans l'empty state.
- * @param {string}   [props.createLabel]   - Libellé du bouton de création. Défaut : "Créer".
+ * @param {Function} [props.onCreateClick]  - (currentSearch: string) => void.
+ *                                            Si fourni, affiche un bouton dans l'empty state.
+ * @param {string}   [props.createLabel]    - Libellé du bouton de création. Défaut : "Créer".
+ * @param {Function} [props.onSearchChange] - (value: string) => void. Appelé à chaque frappe
+ *                                            et remis à zéro (chaîne vide) lors d'une sélection.
  */
 export default function AsyncSearchSelect({
   fetchFn,
@@ -83,6 +85,7 @@ export default function AsyncSearchSelect({
   minChars = 2,
   onCreateClick,
   createLabel = 'Créer',
+  onSearchChange,
 }) {
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
@@ -111,6 +114,7 @@ export default function AsyncSearchSelect({
 
   const handleSelect = (item) => {
     setSearch('');
+    onSearchChange?.('');
     setResults([]);
     onSelect(item);
   };
@@ -131,7 +135,7 @@ export default function AsyncSearchSelect({
       <Box style={{ position: 'relative' }}>
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); onSearchChange?.(e.target.value); }}
           placeholder={placeholder}
           style={{
             width: '100%', padding: '8px 12px 8px 36px',
@@ -143,11 +147,13 @@ export default function AsyncSearchSelect({
           autoComplete="off"
         />
         {busy
-          ? <Loader2 size={14} style={{
+          ? <span style={{
               position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
               color: 'var(--blue-9)', pointerEvents: 'none',
-              animation: 'spin 0.6s linear infinite',
-            }} />
+              display: 'flex', alignItems: 'center',
+            }}>
+              <Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />
+            </span>
           : <Search size={14} style={{
               position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
               color: search.length > 0 ? 'var(--blue-9)' : 'var(--gray-9)',
@@ -236,4 +242,5 @@ AsyncSearchSelect.propTypes = {
   minChars: PropTypes.number,
   onCreateClick: PropTypes.func,
   createLabel: PropTypes.string,
+  onSearchChange: PropTypes.func,
 };

@@ -60,6 +60,7 @@ export default function ItemForm({
   // Options
   disableSearch = false,
   disableCreate = false,
+  onSearchChange,
 }) {
   const [selected, setSelected] = useState(initialItem);
   const [pending, setPending] = useState(null);
@@ -165,6 +166,7 @@ export default function ItemForm({
           minChars={minChars}
           onCreateClick={hasCreateTab ? () => handleTabChange('create') : undefined}
           createLabel={createLabel}
+          onSearchChange={onSearchChange}
         />
       )
       : null;
@@ -243,4 +245,5 @@ ItemForm.propTypes = {
   createLabel: PropTypes.string,
   disableSearch: PropTypes.bool,
   disableCreate: PropTypes.bool,
+  onSearchChange: PropTypes.func,
 };

@@ -1,61 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Card, Flex, Text, Badge, IconButton } from '@radix-ui/themes';
-import { ShoppingCart, Package, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Badge, Box, Card, Flex, IconButton, Text } from '@radix-ui/themes';
+import { Package, ShoppingCart, X } from 'lucide-react';
 import * as stockApi from '@/api/stock';
 import { DEFAULT_UNIT, resolveUnitForItem } from '@/config/units';
-import { useDebounce } from '@/hooks/useDebounce';
-import SearchableSelect from '@/components/ui/SearchableSelect';
-import SelectionSummary from '@/components/ui/SelectionSummary';
+import ItemForm from '@/components/ui/ItemForm';
 import DetailsRow from './DetailsRow';
 import FormActions from './FormActions';
 
-// eslint-disable-next-line complexity
 function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', compact = false, initialData = null }) {
   const [selectedItem, setSelectedItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [quantity, setQuantity] = useState(initialData ? String(initialData.quantity ?? '1') : '1');
   const [urgency, setUrgency] = useState(initialData?.urgency || 'normal');
   const [requestedBy, setRequestedBy] = useState(initialData?.requester_name || initialData?.requested_by || '');
-  const [allStockItems, setAllStockItems] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(initialData?.item_label || '');
   const [unit, setUnit] = useState(initialData?.unit || DEFAULT_UNIT);
   const [formError, setFormError] = useState('');
-  
-  // Debounce search term to reduce API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 600);
+  const [formKey, setFormKey] = useState(0);
 
-  // Load stock items with server-side search
-  useEffect(() => {
-    // Only search if term has at least 2 characters
-    if (debouncedSearchTerm.length < 2) {
-      setAllStockItems([]);
-      return;
-    }
-    
-    const params = { search: debouncedSearchTerm };
-    
-    // TODO: Implement stockApi.fetchStockItems
-    stockApi.fetchStockItems(params)
-      .then((response) => {
-        // Handle paginated response: { items: [...], pagination: {...} }
-        const items = Array.isArray(response) ? response : (response.items || []);
-        setAllStockItems(items);
-      })
-      .catch(console.error);
-  }, [debouncedSearchTerm]);
-
-  useEffect(() => {
-    setUnit(resolveUnitForItem(selectedItem));
-  }, [selectedItem]);
+  const isSpecialRequest = !selectedItem && searchTerm.trim().length > 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
 
-    const finalName = requestedBy.trim() || 'Système';
-    const finalLabel = selectedItem ? selectedItem.name : searchTerm;
+    const finalLabel = selectedItem ? selectedItem.name : searchTerm.trim();
 
-    if (!finalLabel.trim()) {
+    if (!finalLabel) {
       setFormError("Entrez un nom d'article");
       return;
     }
@@ -65,85 +36,117 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
       quantity: parseInt(quantity, 10),
       unit,
       urgency,
-      requested_by: finalName,
-      stock_item_id: selectedItem?.isSpecialRequest ? null : (selectedItem?.id || initialData?.stock_item_id || null)
+      requested_by: requestedBy.trim() || 'Système',
+      stock_item_id: selectedItem?.id ?? initialData?.stock_item_id ?? null,
     };
 
     await onSubmit(data);
 
     if (!initialData) {
       setSelectedItem(null);
+      setSearchTerm('');
       setQuantity('1');
       setUrgency('normal');
       setRequestedBy('');
-      setSearchTerm('');
       setUnit(DEFAULT_UNIT);
+      setFormKey((k) => k + 1);
     }
   };
 
-  const submitDisabled = loading || !searchTerm.trim() || parseInt(quantity, 10) < 1 || (!initialData && !requestedBy.trim());
+  const submitDisabled = loading
+    || (!selectedItem && !searchTerm.trim())
+    || parseInt(quantity, 10) < 1
+    || (!initialData && !requestedBy.trim());
 
   return (
     <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', overflow: 'visible' }}>
-      <Flex direction='column' gap={compact ? '2' : '3'}>
-        <Flex align='center' gap='2'>
-          <ShoppingCart size={20} color='var(--blue-9)' />
-          <Text size='3' weight='bold' color='blue'>
+      <Flex direction="column" gap={compact ? '2' : '3'}>
+        <Flex align="center" gap="2">
+          <ShoppingCart size={20} color="var(--blue-9)" />
+          <Text size="3" weight="bold" color="blue">
             Nouvelle demande d&apos;achat
           </Text>
         </Flex>
 
         {!compact && (
-          <Text size='2' color='gray'>Remplissez les informations ci-dessous</Text>
+          <Text size="2" color="gray">Remplissez les informations ci-dessous</Text>
         )}
 
         {formError && (
           <Box
-            aria-live='polite'
-            id='purchase-form-error'
+            aria-live="polite"
             style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 12 }}
           >
-            <Text color='red' weight='medium'>{formError}</Text>
+            <Text color="red" weight="medium">{formError}</Text>
           </Box>
         )}
 
         <form onSubmit={handleSubmit}>
-          <Flex direction='column' gap={compact ? '2' : '3'}>
+          <Flex direction="column" gap={compact ? '2' : '3'}>
             <Box style={{ position: 'relative', zIndex: 5 }}>
-              <SearchableSelect
-                items={allStockItems}
+              <ItemForm
+                key={formKey}
                 label="Article"
-                onChange={(item) => setSelectedItem(item)}
-                value={selectedItem?.id}
-                getDisplayText={(item) => item?.name || item?.ref || ''}
-                getSearchableFields={(item) => [item?.name, item?.ref]}
-                maxSuggestions={8}
-                onSearchChange={(value) => setSearchTerm(value)}
-                renderItem={(item) => (
-                  <Flex align='center' justify='between' gap='2'>
-                    <Flex align='center' gap='2'>
-                      <Badge color='blue' variant='soft' size='1'>{item.ref}</Badge>
-                      <Text size='2' weight='bold'>{item.name}</Text>
+                fetchFn={(q) =>
+                  stockApi.fetchStockItems({ search: q }).then((r) =>
+                    Array.isArray(r) ? r : (r.items || [])
+                  )
+                }
+                renderSearchItem={(item) => (
+                  <Flex align="center" justify="between" gap="2">
+                    <Flex align="center" gap="2">
+                      <Badge color="blue" variant="soft" size="1">{item.ref}</Badge>
+                      <Text size="2" weight="bold">{item.name}</Text>
                     </Flex>
-                    <Flex align='center' gap='1'>
-                      <Package size={12} color='var(--gray-11)' />
-                      <Text size='1' color='gray'>{item.quantity || 0} {item.unit || 'pcs'}</Text>
+                    <Flex align="center" gap="1">
+                      <Package size={12} color="var(--gray-11)" />
+                      <Text size="1" color="gray">{item.quantity || 0} {item.unit || 'pcs'}</Text>
                     </Flex>
                   </Flex>
                 )}
+                renderSelected={(item, onClear) => (
+                  <Flex
+                    align="center"
+                    gap="2"
+                    style={{
+                      padding: '6px 10px',
+                      background: 'var(--blue-3)',
+                      borderRadius: 'var(--radius-2)',
+                      border: '1px solid var(--blue-6)',
+                    }}
+                  >
+                    <Badge color="blue" variant="soft" size="1">{item.ref}</Badge>
+                    <Text size="2" weight="bold" style={{ flex: 1 }}>{item.name}</Text>
+                    <Text size="1" color="gray">{item.quantity || 0} {item.unit || 'pcs'}</Text>
+                    <IconButton size="1" variant="ghost" color="gray" type="button" onClick={onClear}>
+                      <X size={12} />
+                    </IconButton>
+                  </Flex>
+                )}
+                confirmLabel="Utiliser cet article"
+                onChange={(item) => {
+                  setSelectedItem(item);
+                  setUnit(resolveUnitForItem(item));
+                }}
+                onSearchChange={setSearchTerm}
+                disableCreate
               />
-              
-              {selectedItem && (
-                <SelectionSummary
-                  variant={selectedItem.isSpecialRequest ? 'special' : 'stock'}
-                  badgeText={selectedItem.isSpecialRequest ? 'Demande spéciale' : (selectedItem.ref || '')}
-                  mainText={selectedItem.name}
-                  rightText={selectedItem.isSpecialRequest ? undefined : `${selectedItem.quantity || 0} ${selectedItem.unit || 'pcs'}`}
-                  onClear={() => {
-                    setSearchTerm(selectedItem.name);
-                    setSelectedItem(null);
+
+              {isSpecialRequest && (
+                <Flex
+                  align="center"
+                  gap="2"
+                  mt="2"
+                  style={{
+                    padding: '6px 10px',
+                    background: 'var(--amber-3)',
+                    borderRadius: 'var(--radius-2)',
+                    border: '1px solid var(--amber-6)',
                   }}
-                />
+                >
+                  <Badge color="amber" variant="soft" size="1">Demande spéciale</Badge>
+                  <Text size="2" color="amber" weight="medium">{searchTerm}</Text>
+                </Flex>
               )}
             </Box>
 
@@ -186,7 +189,8 @@ PurchaseRequestForm.defaultProps = {
   loading: false,
   onCancel: undefined,
   submitLabel: 'Créer',
-  compact: false
+  compact: false,
 };
 
 export default PurchaseRequestForm;
+
