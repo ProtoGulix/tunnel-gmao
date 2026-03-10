@@ -4,6 +4,34 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.21.0 - 2026-03-10
+
+Stabilité : **STABLE** ✅
+
+### Composant générique ItemForm
+
+Un nouveau composant `ItemForm` centralise la mécanique de recherche, sélection et création d'un élément dans un formulaire. Il remplace les implémentations ad hoc précédentes et garantit une expérience homogène dans toute l'application.
+
+**Onglets Rechercher / Créer :** l'interface propose deux onglets. La recherche est deboncée et affiche des états visuels centrés (icône + texte bold) : inactif, trop court, chargement, aucun résultat. L'onglet de création est optionnel et peut être désactivé.
+
+**Étape de confirmation :** après avoir sélectionné ou créé un élément, une étape intermédiaire affiche une prévisualisation avec deux boutons (Utiliser / Annuler). Le flux est identique qu'on vienne de la recherche ou de la création.
+
+**Validation unifiée (registerSubmit) :** le formulaire de création enregistre une fonction asynchrone via `registerSubmit`. `ItemForm` appelle cette fonction au clic sur le bouton, affiche le spinner et les erreurs réseau dans un Callout, sans que le formulaire enfant ait à gérer ses propres boutons.
+
+### ManufacturerForm — refactorisation
+
+Le formulaire de sélection/création de fabricant est désormais un wrapper fin sur `ItemForm`. Il ne conserve que la logique métier (champs nom + référence, appel API) ; toute la mécanique de recherche, confirmation et validation est déléguée.
+
+### Demandes d'achat — nouveau formulaire de sélection d'article
+
+Le `PurchaseRequestForm` utilise maintenant `ItemForm` pour la sélection de l'article (onglet création désactivé). La recherche est serveur (debounce via `AsyncSearchSelect`). Quand l'utilisateur tape un texte sans sélectionner de référence en stock, un bandeau **Demande spéciale** en amber s'affiche automatiquement sous le champ — aucun bouton supplémentaire requis. La soumission envoie `stock_item_id: null` et `item_label` égal au texte saisi.
+
+### AsyncSearchSelect — états vides redessinés
+
+Les cinq états de la zone de résultats (inactif, saisie trop courte, chargement, résultats, aucun résultat) affichent maintenant une icône centrée (22 px) avec un texte en bold, dans une zone de hauteur fixe (144 px). L'icône de chargement (Loader2) est correctement alignée avec la loupe grâce à un conteneur de positionnement séparé de l'animation.
+
+---
+
 ## 3.20.0 - 2026-03-09
 
 Stabilité : **STABLE** ✅

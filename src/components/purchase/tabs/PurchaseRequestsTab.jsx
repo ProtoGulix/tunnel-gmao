@@ -39,7 +39,7 @@ export default function PurchaseRequestsTab() {
     createItem, removeItem,
     dispatching, dispatchResult, setDispatchResult, dispatch,
     readyToDispatch,
-  } = usePurchaseRequests();
+  } = usePurchaseRequests({ excludeStatuses: 'RECEIVED,REJECTED' });
 
   const [selected, setSelected] = useState(null);
   const [expandedRowId, setExpandedRowId] = useState(null);
