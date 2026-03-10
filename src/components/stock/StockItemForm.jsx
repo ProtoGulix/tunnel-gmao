@@ -63,7 +63,7 @@ FormActions.propTypes = {
   onCancel: PropTypes.func.isRequired,
 };
 
-export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
+export default function StockItemForm({ item, onSubmit, onCancel, saving, embedded = false }) {
   const isEdit = !!item;
   const { form, errors, setErrors, families, familiesLoading, subFamilies, template, suggestedRef, set, setVal, setChar, handleFamilyChange, handleSubFamilyChange } = useStockItemForm(item);
 
@@ -80,16 +80,17 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
     }
   };
 
-  return (
-    <Card>
-      <form onSubmit={handleSubmit}>
-        <Flex direction="column" gap="3">
+  const content = (
+    <form onSubmit={handleSubmit}>
+      <Flex direction="column" gap="3">
+        {!embedded && (
           <Flex align="center" gap="2">
             {isEdit ? <Edit2 size={18} /> : <Package size={18} />}
             <Text size="4" weight="bold">{isEdit ? 'Modifier la pièce' : 'Nouvelle pièce'}</Text>
           </Flex>
+        )}
 
-          <FormErrors errors={errors} />
+        <FormErrors errors={errors} />
 
           <Flex gap="3" wrap="wrap">
             <RefDisplay isEdit={isEdit} itemRef={item?.ref} suggestedRef={suggestedRef} />
@@ -156,8 +157,10 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving }) {
           <FormActions isEdit={isEdit} saving={saving} onCancel={onCancel} />
         </Flex>
       </form>
-    </Card>
-  );
+    );
+
+  if (embedded) return content;
+  return <Card>{content}</Card>;
 }
 
 StockItemForm.propTypes = {
@@ -165,4 +168,5 @@ StockItemForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   saving: PropTypes.bool,
+  embedded: PropTypes.bool,
 };

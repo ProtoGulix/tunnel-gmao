@@ -8,8 +8,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
-import { Plus, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Box, Button, Flex, Text } from '@radix-ui/themes';
+import { Plus, ShoppingCart } from 'lucide-react';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import LoadingState from '@/components/ui/LoadingState';
@@ -17,91 +17,12 @@ import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import DispatchBanner from '@/components/purchase/DispatchBanner';
 import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
+import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
-import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses } from '@/api/purchaseRequests';
-import { PURCHASE_URGENCY, PURCHASE_URGENCY_LIST } from '@/config/purchaseConfig';
-import { INTERVENTION_TYPES } from '@/config/interventionTypes';
-
-const INTERVENTION_TYPE_MAP = Object.fromEntries(INTERVENTION_TYPES.map((t) => [t.id, t]));
-
-function InterventionBadge({ code }) {
-  if (!code) return <Text size="1" color="gray">—</Text>;
-  const typeId = String(code).slice(0, 3).toUpperCase();
-  const type = INTERVENTION_TYPE_MAP[typeId];
-  return (
-    <Badge color={type?.color || 'gray'} variant="soft" size="1">
-      {code}
-    </Badge>
-  );
-}
-
-function StatusBadge({ derivedStatus }) {
-  if (!derivedStatus) return <Text size="1" color="gray">—</Text>;
-  const { label, color } = derivedStatus;
-  return (
-    <Badge
-      size="1"
-      style={color ? { background: color + '22', color, border: `1px solid ${color}44` } : {}}
-    >
-      {label}
-    </Badge>
-  );
-}
-
-const COLUMNS = [
-  {
-    header: 'Article',
-    accessor: (row) => (
-      <Flex direction="column" gap="1">
-        <Flex align="center" gap="2">
-          {row.urgent && <AlertTriangle size={12} color="var(--red-9)" />}
-          <Text size="2" weight="medium">{row.item_label}</Text>
-        </Flex>
-        {row.stock_item_ref && (
-          <Badge color="blue" variant="soft" size="1" style={{ width: 'fit-content' }}>
-            {row.stock_item_ref}
-          </Badge>
-        )}
-      </Flex>
-    ),
-  },
-  {
-    header: 'Qté',
-    width: 80,
-    accessor: (row) => <Text size="2">{row.quantity} {row.unit || 'pcs'}</Text>,
-  },
-  {
-    header: 'Urgence',
-    width: 90,
-    accessor: (row) => (
-      <Badge color={PURCHASE_URGENCY[row.urgency]?.color || 'gray'} variant="soft" size="1">
-        {PURCHASE_URGENCY[row.urgency]?.label || 'Normal'}
-      </Badge>
-    ),
-  },
-  {
-    header: 'Statut',
-    width: 160,
-    accessor: (row) => <StatusBadge derivedStatus={row.derived_status} />,
-  },
-  {
-    header: 'Demandeur',
-    width: 130,
-    accessor: (row) => (
-      <Text size="1" color="gray">
-        {row.requested_by || row.requester_name || '—'}
-      </Text>
-    ),
-  },
-  {
-    header: 'Intervention',
-    width: 160,
-    accessor: (row) => <InterventionBadge code={row.intervention_code} />,
-  },
-];
+import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses, updatePurchaseRequest } from '@/api/purchaseRequests';
+import { COLUMNS, PrFilters } from './PurchaseRequestsTabParts';
 
 export default function PurchaseRequestsTab() {
-  // Statuts dynamiques pour le Select filtre
   const [statuses, setStatuses] = useState([]);
   useEffect(() => {
     fetchPurchaseRequestStatuses()
@@ -157,6 +78,20 @@ export default function PurchaseRequestsTab() {
     }
   };
 
+  const handleUpdate = async (data) => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await updatePurchaseRequest(selected.id, data);
+      const detail = await fetchPurchaseRequestDetail(selected.id);
+      setSelected(detail);
+      setMode(null);
+      refresh();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!selected) return;
     await removeItem(selected.id);
@@ -168,6 +103,16 @@ export default function PurchaseRequestsTab() {
   const renderDetail = () => {
     if (detailLoading) return <LoadingState fullscreen={false} message="Chargement..." />;
     if (!selected) return null;
+    if (mode === 'edit') {
+      return (
+        <PurchaseRequestEditForm
+          item={selected}
+          onSubmit={handleUpdate}
+          loading={saving}
+          onCancel={() => setMode(null)}
+        />
+      );
+    }
     return (
       <PurchaseRequestDetail
         item={selected}
@@ -178,46 +123,6 @@ export default function PurchaseRequestsTab() {
   };
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
-
-  const filters = (
-    <Flex gap="2" align="center">
-      <Select.Root
-        value={status || '__all__'}
-        onValueChange={(v) => setStatus(v === '__all__' ? '' : v)}
-      >
-        <Select.Trigger
-          placeholder="Tous les statuts"
-          variant={status ? 'soft' : 'surface'}
-          color={status ? 'blue' : undefined}
-        />
-        <Select.Content>
-          <Select.Item value="__all__">Tous les statuts</Select.Item>
-          {statuses.map((s) => (
-            <Select.Item key={s.code} value={s.code}>
-              {s.label}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-
-      <Select.Root
-        value={urgency || '__all__'}
-        onValueChange={(v) => setUrgency(v === '__all__' ? '' : v)}
-      >
-        <Select.Trigger
-          placeholder="Toutes urgences"
-          variant={urgency ? 'soft' : 'surface'}
-          color={urgency ? 'orange' : undefined}
-        />
-        <Select.Content>
-          <Select.Item value="__all__">Toutes urgences</Select.Item>
-          {PURCHASE_URGENCY_LIST.map((u) => (
-            <Select.Item key={u.value} value={u.value}>{u.label}</Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-    </Flex>
-  );
 
   return (
     <Box>
@@ -237,7 +142,15 @@ export default function PurchaseRequestsTab() {
         onSearchChange={setSearch}
         loading={loading}
         showRefreshButton={false}
-        actions={filters}
+        actions={
+          <PrFilters
+            status={status}
+            setStatus={setStatus}
+            statuses={statuses}
+            urgency={urgency}
+            setUrgency={setUrgency}
+          />
+        }
         rightActions={
           <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
             <Plus size={14} /> Nouvelle demande

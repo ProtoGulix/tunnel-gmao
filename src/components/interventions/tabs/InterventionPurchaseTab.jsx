@@ -8,15 +8,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
-import { AlertTriangle, Plus, ShoppingCart } from 'lucide-react';
+import { Badge, Box, Flex, Text } from '@radix-ui/themes';
+import { AlertTriangle, ShoppingCart } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import TableHeader from '@/components/ui/TableHeader';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
-import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
-import { fetchPurchaseRequestsByIntervention, fetchPurchaseRequestDetail, createPurchaseRequest, deletePurchaseRequest } from '@/api/purchaseRequests';
+import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
+import { fetchPurchaseRequestsByIntervention, fetchPurchaseRequestDetail, updatePurchaseRequest, deletePurchaseRequest } from '@/api/purchaseRequests';
 import { PURCHASE_URGENCY, hexBadgeStyle } from '@/config/purchaseConfig';
 
 function StatusBadge({ derivedStatus }) {
@@ -114,10 +114,13 @@ export default function InterventionPurchaseTab({ interventionId }) {
     }
   }, [expandedRowId]);
 
-  const handleCreate = async (data) => {
+  const handleUpdate = async (data) => {
+    if (!selected) return;
     setSaving(true);
     try {
-      await createPurchaseRequest({ ...data, intervention_id: interventionId });
+      await updatePurchaseRequest(selected.id, data);
+      const detail = await fetchPurchaseRequestDetail(selected.id);
+      setSelected(detail);
       setMode(null);
       load();
     } finally {
@@ -136,7 +139,24 @@ export default function InterventionPurchaseTab({ interventionId }) {
   const renderDetail = () => {
     if (detailLoading) return <LoadingState fullscreen={false} message="Chargement..." />;
     if (!selected) return null;
-    return <PurchaseRequestDetail item={selected} onDelete={handleDelete} />;
+    if (mode === 'edit') {
+      return (
+        <PurchaseRequestForm
+          initialData={selected}
+          onSubmit={handleUpdate}
+          loading={saving}
+          onCancel={() => setMode(null)}
+          submitLabel="Enregistrer"
+        />
+      );
+    }
+    return (
+      <PurchaseRequestDetail
+        item={selected}
+        onEdit={() => setMode('edit')}
+        onDelete={handleDelete}
+      />
+    );
   };
 
   if (error) return <ErrorState error={error} onRetry={load} />;
@@ -152,24 +172,7 @@ export default function InterventionPurchaseTab({ interventionId }) {
         loading={loading}
         showSearchInput={false}
         showRefreshButton={false}
-        rightActions={
-          <Button size="2" color="blue" onClick={() => { setSelected(null); setExpandedRowId(null); setMode('create'); }}>
-            <Plus size={14} /> Nouvelle DA
-          </Button>
-        }
       />
-
-      {mode === 'create' && (
-        <Box mb="3">
-          <PurchaseRequestForm
-            interventionId={interventionId}
-            onSubmit={handleCreate}
-            loading={saving}
-            onCancel={() => setMode(null)}
-            submitLabel="Créer"
-          />
-        </Box>
-      )}
 
       <DataTable
         columns={COLUMNS}

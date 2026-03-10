@@ -36,6 +36,11 @@ export async function fetchSupplierItemLinks(supplierId) {
   return response.data || [];
 }
 
+export async function fetchStockItemSupplierLinks(stockItemId) {
+  const response = await api.get(`/stock-item-suppliers/stock-item/${stockItemId}`);
+  return response.data || [];
+}
+
 export async function createSupplierItemLink(payload) {
   const response = await api.post('/stock-item-suppliers', payload);
   return response.data || null;
