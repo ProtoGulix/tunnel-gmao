@@ -12,6 +12,7 @@ import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
 import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
+import InterventionCreatePage from '@/pages/interventions/InterventionCreatePage';
 import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
 import EquipementsPage from '@/pages/equipements/EquipementsPage';
 import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
@@ -110,6 +111,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <InterventionsListPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/intervention/new"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <InterventionCreatePage />
             </Layout>
           </ProtectedRoute>
         }

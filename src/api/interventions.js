@@ -50,6 +50,34 @@ export async function fetchIntervention(id) {
 }
 
 /**
+ * Crée une nouvelle intervention
+ *
+ * @param {Object} data - Données de la nouvelle intervention
+ * @param {string} data.title - Titre de l'intervention
+ * @param {string} data.type - Code type (CUR, PRE, REA, ...)
+ * @param {string} data.priority - Priorité (urgent, important, normal, faible)
+ * @param {string} data.equipementId - ID de l'équipement
+ * @param {string} [data.reportedDate] - Date de signalement (ISO)
+ * @returns {Promise<Object>} Intervention créée
+ */
+export async function createIntervention(data) {
+  const payload = {
+    machine_id: data.equipementId,
+    type_inter: data.type,
+    tech_initials: data.techInitials,
+    title: data.title,
+    priority: data.priority,
+    status_actual: 'ouvert',
+    reported_date: data.reportedDate
+      ? new Date(data.reportedDate).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  };
+  if (data.reportedBy) payload.reported_by = data.reportedBy;
+  const response = await api.post('/interventions', payload);
+  return mapInterventionResponse(response.data);
+}
+
+/**
  * Met à jour une intervention
  *
  * @param {string} id - ID de l'intervention
