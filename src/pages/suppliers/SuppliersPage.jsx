@@ -7,7 +7,7 @@ import { Container, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Factory, Truck } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import SuppliersTab from '@/components/suppliers/tabs/SuppliersTab';
-import ManufacturersTab from '@/components/suppliers/tabs/ManufacturersTab';
+import ManufacturersTab from '@/components/manufacturers/ManufacturersTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 export default function SuppliersPage() {

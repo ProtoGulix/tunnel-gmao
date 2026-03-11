@@ -4,8 +4,10 @@
  */
 
 import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Card, Flex, Grid, Separator, Text } from '@radix-ui/themes';
 import { Edit2, Trash2 } from 'lucide-react';
+import { fetchStockItemSupplierLinks } from '@/api/suppliers';
 import { SuppliersSection } from '@/components/stock/StockItemSuppliers';
 
 // Ligne label/valeur générique utilisée pour les champs simples
@@ -126,7 +128,20 @@ ItemCharacteristics.propTypes = {
 
 // Panneau principal : métriques clés, classification, caractéristiques, tableau fournisseurs
 export default function StockItemDetail({ item, onEdit, onDelete, onRefresh }) {
-  const suppliers = item.suppliers ?? [];
+  const [supplierRefs, setSupplierRefs] = useState(item.suppliers ?? []);
+
+  const loadSupplierRefs = useCallback(() => {
+    fetchStockItemSupplierLinks(item.id)
+      .then(setSupplierRefs)
+      .catch(() => {});
+  }, [item.id]);
+
+  useEffect(() => { loadSupplierRefs(); }, [loadSupplierRefs]);
+
+  const handleRefresh = useCallback(() => {
+    loadSupplierRefs();
+    onRefresh?.();
+  }, [loadSupplierRefs, onRefresh]);
 
   return (
     <Card>
@@ -136,7 +151,7 @@ export default function StockItemDetail({ item, onEdit, onDelete, onRefresh }) {
           <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /> Supprimer</Button>
         </Flex>
 
-        <MetricsGrid quantity={item.quantity} unit={item.unit} suppliers={suppliers} />
+        <MetricsGrid quantity={item.quantity} unit={item.unit} suppliers={supplierRefs} />
         <ItemCharacteristics
           familyCode={item.family_code}
           subFamilyCode={item.sub_family_code}
@@ -146,7 +161,7 @@ export default function StockItemDetail({ item, onEdit, onDelete, onRefresh }) {
           template={item.sub_family_template}
           characteristics={item.characteristics}
         />
-        <SuppliersSection suppliers={suppliers} stockItemId={item.id} stockItemLabel={`${item.ref} — ${item.name}`} onRefresh={onRefresh} />
+        <SuppliersSection suppliers={supplierRefs} stockItemId={item.id} stockItemLabel={`${item.ref} — ${item.name}`} onRefresh={handleRefresh} />
       </Flex>
     </Card>
   );

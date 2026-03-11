@@ -1,11 +1,11 @@
 /**
- * @fileoverview Formulaire de creation d'un template de piece
+ * @fileoverview Formulaire creation/edition (nouvelle version) d'un template de piece
  * @module components/stock/PartTemplateCreateForm
  */
 
 import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Flex, ScrollArea, Text, TextField } from '@radix-ui/themes';
 import FormErrors from '@/components/shared/FormErrors';
 import { Plus } from 'lucide-react';
 import PartTemplateFieldRow from '@/components/stock/PartTemplateFieldRow';
@@ -26,11 +26,23 @@ const serializeFields = (fields) =>
     enum_values: rest.field_type === 'enum' ? parseEnumRaw(_enumRaw) : undefined,
   }));
 
-export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
-  const [code, setCode] = useState('');
-  const [label, setLabel] = useState('');
-  const [pattern, setPattern] = useState('');
-  const [fields, setFields] = useState([EMPTY_FIELD()]);
+function fromTemplateFields(fields = []) {
+  return fields.map((f) => ({
+    key: f.key,
+    label: f.label,
+    field_type: f.field_type,
+    unit: f.unit || '',
+    required: f.required ?? true,
+    _enumRaw: f.enum_values?.map((v) => `${v.value}=${v.label}`).join('\n') || '',
+  }));
+}
+
+export default function PartTemplateCreateForm({ template, onSave, onCancel, saving }) {
+  const isEdit = !!template;
+  const [code, setCode] = useState(template?.code || '');
+  const [label, setLabel] = useState(template?.label || '');
+  const [pattern, setPattern] = useState(template?.pattern || '');
+  const [fields, setFields] = useState(() => isEdit ? fromTemplateFields(template.fields) : [EMPTY_FIELD()]);
   const [errors, setErrors] = useState([]);
 
   const updateField = useCallback((index, updated) => {
@@ -63,7 +75,16 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
   return (
     <form onSubmit={handleSubmit}>
       <Flex direction="column" gap="3">
-        <Text size="3" weight="bold">Nouvelle trame de reference</Text>
+        <Flex align="center" gap="2">
+          <Text size="3" weight="bold">
+            {isEdit ? 'Modifier la trame' : 'Nouvelle trame de reference'}
+          </Text>
+          {isEdit && (
+            <Badge color="gray" variant="outline" size="1">
+              v{template.version} &rarr; v{template.version + 1}
+            </Badge>
+          )}
+        </Flex>
 
         <FormErrors errors={errors} />
 
@@ -74,6 +95,7 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="VIS_STANDARD"
+              disabled={isEdit}
             />
           </Box>
           <Box style={{ flex: 2, minWidth: 200 }}>
@@ -122,7 +144,7 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
             Annuler
           </Button>
           <Button type="submit" color="blue" size="2" disabled={saving}>
-            Creer la trame
+            {isEdit ? `Publier v${template.version + 1}` : 'Creer la trame'}
           </Button>
         </Flex>
       </Flex>
@@ -131,6 +153,14 @@ export default function PartTemplateCreateForm({ onSave, onCancel, saving }) {
 }
 
 PartTemplateCreateForm.propTypes = {
+  template: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    code: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    version: PropTypes.number.isRequired,
+    pattern: PropTypes.string,
+    fields: PropTypes.array,
+  }),
   onSave: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   saving: PropTypes.bool,

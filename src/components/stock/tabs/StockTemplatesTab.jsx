@@ -43,20 +43,22 @@ const columns = [
 ];
 
 export default function StockTemplatesTab() {
-  const { templates, loading, error, addTemplate, removeTemplate } = usePartTemplates();
+  const { templates, loading, error, addTemplate, addVersion, removeTemplate } = usePartTemplates();
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const handleSelect = useCallback((row) => {
-    if (row.id === selected?.id && !showCreate) {
+    if (row.id === selected?.id && !showCreate && !showEdit) {
       setSelected(null);
       return;
     }
     setShowCreate(false);
+    setShowEdit(false);
     setSelected(row);
-  }, [selected, showCreate]);
+  }, [selected, showCreate, showEdit]);
 
   const handleSave = async (payload) => {
     try {
@@ -64,6 +66,18 @@ export default function StockTemplatesTab() {
       const created = await addTemplate(payload);
       setShowCreate(false);
       setSelected(created);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = async (payload) => {
+    try {
+      setSaving(true);
+      const { pattern, fields } = payload;
+      const updated = await addVersion(selected.id, { pattern, fields });
+      setShowEdit(false);
+      setSelected((prev) => ({ ...prev, ...updated }));
     } finally {
       setSaving(false);
     }
@@ -84,9 +98,18 @@ export default function StockTemplatesTab() {
 
   const renderDetail = () => {
     if (!selected) return null;
+    if (showEdit) return (
+      <PartTemplateCreateForm
+        template={selected}
+        onSave={handleEdit}
+        onCancel={() => setShowEdit(false)}
+        saving={saving}
+      />
+    );
     return (
       <PartTemplateDetail
         template={selected}
+        onEdit={() => setShowEdit(true)}
         onDelete={handleDelete}
         deleting={deleting}
       />
@@ -121,6 +144,7 @@ export default function StockTemplatesTab() {
         data={templates}
         loading={loading}
         onRowClick={handleSelect}
+        getRowKey={(row) => row.id}
         rowStyles={(row) => ({
           cursor: 'pointer',
           background: row.id === selected?.id ? 'var(--accent-3)' : undefined,
@@ -129,7 +153,6 @@ export default function StockTemplatesTab() {
         isRowExpanded={(row) => row.id === selected?.id && !showCreate}
         renderExpandedRow={renderDetail}
         emptyState={{ icon: Shapes, title: 'Aucune trame', description: 'Aucune trame de reference definie.' }}
-        getRowKey={(row) => row.id}
       />
     </Box>
   );

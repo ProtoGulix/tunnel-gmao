@@ -25,7 +25,7 @@ import {
 import { Building2, Edit2, Link, Package, Plus, X } from 'lucide-react';
 import * as stockApi from '@/api/stock';
 import { fetchSuppliers } from '@/api/suppliers';
-import ManufacturerForm from '@/components/manufacturers/ManufacturerForm';
+import ManufacturerForm from '@/components/manufacturers/ManufacturerCreateForm';
 import StockItemForm from '@/components/stock/StockItemForm';
 import ItemForm from '@/components/ui/ItemForm';
 import StatusCallout from '@/components/ui/StatusCallout';

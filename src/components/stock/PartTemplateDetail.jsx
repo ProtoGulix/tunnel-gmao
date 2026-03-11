@@ -6,12 +6,12 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Code, Flex, Table, Text } from '@radix-ui/themes';
-import { Trash2 } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 
 const FIELD_TYPE_LABEL = { text: 'Texte', number: 'Nombre', enum: 'Liste' };
 const FIELD_TYPE_COLOR = { text: 'gray', number: 'blue', enum: 'orange' };
 
-export default function PartTemplateDetail({ template, onDelete, deleting }) {
+export default function PartTemplateDetail({ template, onEdit, onDelete, deleting }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!template) return null;
@@ -37,9 +37,14 @@ export default function PartTemplateDetail({ template, onDelete, deleting }) {
               </Button>
             </>
           ) : (
-            <Button size="1" color="red" variant="soft" onClick={() => setConfirmDelete(true)}>
-              <Trash2 size={12} /> Supprimer
-            </Button>
+            <>
+              <Button size="1" variant="soft" color="gray" onClick={onEdit}>
+                <Edit2 size={12} /> Modifier
+              </Button>
+              <Button size="1" color="red" variant="soft" onClick={() => setConfirmDelete(true)}>
+                <Trash2 size={12} /> Supprimer
+              </Button>
+            </>
           )}
         </Flex>
       </Flex>
@@ -103,6 +108,7 @@ PartTemplateDetail.propTypes = {
     pattern: PropTypes.string.isRequired,
     fields: PropTypes.array,
   }),
+  onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   deleting: PropTypes.bool,
 };
