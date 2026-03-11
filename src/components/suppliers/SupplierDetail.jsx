@@ -34,6 +34,12 @@ function LinkRow({ link, onEdit, onDelete, onSetPreferred }) {
           <Flex align="center" gap="1">
             <Link2 size={12} style={{ color: 'var(--gray-10)', flexShrink: 0 }} />
             <Badge variant="soft" color="indigo">{link.supplier_ref}</Badge>
+            {link.product_url && /^https?:\/\//i.test(link.product_url) && (
+              <a href={link.product_url} target="_blank" rel="noopener noreferrer" title="Fiche produit fournisseur"
+                style={{ display: 'flex', alignItems: 'center', color: 'var(--blue-9)' }}>
+                <ExternalLink size={11} />
+              </a>
+            )}
           </Flex>
           {link.manufacturer_item && (
             <Text size="1" color="gray">
@@ -70,6 +76,7 @@ LinkRow.propTypes = {
     unit_price: PropTypes.number,
     delivery_time_days: PropTypes.number,
     is_preferred: PropTypes.bool,
+    product_url: PropTypes.string,
     manufacturer_item: PropTypes.shape({
       manufacturer_name: PropTypes.string.isRequired,
       manufacturer_ref: PropTypes.string,

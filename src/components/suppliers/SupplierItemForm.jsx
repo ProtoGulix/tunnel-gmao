@@ -54,6 +54,7 @@ function initForm(link) {
       deliveryDays: '',
       isPreferred: false,
       manufacturerId: null,
+      productUrl: '',
     };
   }
   return {
@@ -63,6 +64,7 @@ function initForm(link) {
     deliveryDays: link.delivery_time_days != null ? String(link.delivery_time_days) : '',
     isPreferred: link.is_preferred || false,
     manufacturerId: link.manufacturer_item?.id || null,
+    productUrl: link.product_url || '',
   };
 }
 
@@ -179,6 +181,15 @@ function RefFields({ form, setForm }) {
         />
         <Text size="2">Fournisseur préféré pour cette pièce</Text>
       </Flex>
+      <Box>
+        <Text size="1" color="gray" style={{ display: 'block', marginBottom: 4 }}>URL fiche produit</Text>
+        <TextField.Root
+          value={form.productUrl}
+          onChange={set('productUrl')}
+          placeholder="https://…"
+          type="url"
+        />
+      </Box>
     </Flex>
   );
 }
@@ -236,6 +247,7 @@ export default function SupplierItemForm({
       delivery_time_days: form.deliveryDays !== '' ? parseInt(form.deliveryDays, 10) : null,
       is_preferred: form.isPreferred,
       manufacturer_item_id: form.manufacturerId || null,
+      product_url: form.productUrl.trim() || null,
     };
 
     if (!isEdit) {
