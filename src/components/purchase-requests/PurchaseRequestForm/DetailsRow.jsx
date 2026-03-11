@@ -67,9 +67,9 @@ function DetailsRow({
           <Select.Root value={urgency} onValueChange={onUrgencyChange}>
             <Select.Trigger aria-label='Urgence' style={{ height: inputHeight }} />
             <Select.Content>
-              <Select.Item value='low'>Faible</Select.Item>
               <Select.Item value='normal'>Normal</Select.Item>
-              <Select.Item value='urgent'>Urgent</Select.Item>
+              <Select.Item value='high'>Élevée</Select.Item>
+              <Select.Item value='critical'>Critique</Select.Item>
             </Select.Content>
           </Select.Root>
         </Box>

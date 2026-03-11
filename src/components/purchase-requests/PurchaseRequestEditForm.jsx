@@ -73,7 +73,6 @@ SectionHeader.propTypes = { icon: PropTypes.elementType.isRequired, title: PropT
 // ─── DA fields ───────────────────────────────────────────────────────────────
 
 const URGENCY_OPTIONS = [
-  { value: 'low', label: 'Faible' },
   { value: 'normal', label: 'Normal' },
   { value: 'high', label: 'Élevée' },
   { value: 'critical', label: 'Critique' },
