@@ -50,6 +50,35 @@ export async function fetchIntervention(id) {
 }
 
 /**
+ * Crée une nouvelle intervention
+ *
+ * @param {Object} data - Données de la nouvelle intervention
+ * @param {string} data.title - Titre de l'intervention
+ * @param {string} data.type - Code type (CUR, PRE, REA, ...)
+ * @param {string} data.priority - Priorité (urgent, important, normal, faible)
+ * @param {string} data.equipementId - ID de l'équipement
+ * @param {string} [data.reportedDate] - Date de signalement (ISO)
+ * @returns {Promise<Object>} Intervention créée
+ */
+export async function createIntervention(data) {
+  const payload = {
+    machine_id: data.equipementId,
+    type_inter: data.type,
+    tech_initials: data.techInitials,
+    title: data.title,
+    priority: data.priority,
+    status_actual: 'ouvert',
+    reported_date: data.reportedDate
+      ? new Date(data.reportedDate).toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  };
+  if (data.reportedBy) payload.reported_by = data.reportedBy;
+  if (data.requestId) payload.request_id = data.requestId;
+  const response = await api.post('/interventions', payload);
+  return mapInterventionResponse(response.data);
+}
+
+/**
  * Met à jour une intervention
  *
  * @param {string} id - ID de l'intervention
@@ -77,6 +106,17 @@ export async function updateIntervention(id, updates) {
  */
 export async function updateInterventionStatus(id, newStatus) {
   return updateIntervention(id, { status: newStatus });
+}
+
+/**
+ * Supprime une intervention.
+ * Le backend rejette (400) si elle possède des actions ou des demandes d'achat.
+ *
+ * @param {string} id - ID de l'intervention
+ * @returns {Promise<void>}
+ */
+export async function deleteIntervention(id) {
+  await api.delete(`/interventions/${id}`);
 }
 
 /**
@@ -201,5 +241,18 @@ function mapInterventionDetailResponse(raw = {}) {
             : null,
         }))
       : [],
+    request: raw.request
+      ? {
+          id: raw.request.id,
+          code: raw.request.code,
+          demandeurNom: raw.request.demandeur_nom,
+          demandeurService: raw.request.demandeur_service || null,
+          description: raw.request.description,
+          statut: raw.request.statut,
+          statutLabel: raw.request.statut_label,
+          statutColor: raw.request.statut_color,
+          createdAt: raw.request.created_at,
+        }
+      : null,
   };
 }

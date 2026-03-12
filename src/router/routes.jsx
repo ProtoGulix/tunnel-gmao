@@ -12,12 +12,14 @@ import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
 import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
+import InterventionCreatePage from '@/pages/interventions/InterventionCreatePage';
 import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
 import EquipementsPage from '@/pages/equipements/EquipementsPage';
 import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
 import StockPage from '@/pages/stock/StockPage';
 import SuppliersPage from '@/pages/suppliers/SuppliersPage';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
+import InterventionRequestsPage from '@/pages/intervention-requests/InterventionRequestsPage';
 
 /**
  * Composant de route protégée
@@ -116,6 +118,17 @@ export default function AppRoutes() {
       />
 
       <Route
+        path="/intervention/new"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <InterventionCreatePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/intervention/:id"
         element={
           <ProtectedRoute>
@@ -176,6 +189,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <PurchaseRequestsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/intervention-requests"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <InterventionRequestsPage />
             </Layout>
           </ProtectedRoute>
         }

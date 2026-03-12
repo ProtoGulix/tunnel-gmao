@@ -10,6 +10,7 @@ import { Box, Flex, TextField, Button } from '@radix-ui/themes';
 import { Activity, Search, Plus, X } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { useMemo, useState, useCallback } from 'react';
+import EmptyState from '@/components/ui/EmptyState';
 import { Timeline } from '@/components/ui/GenericTabComponents';
 import TimelineItemRenderer from '@/components/interventions/TimelineItemRenderer';
 import ActionForm from '@/components/interventions/ActionForm';
@@ -223,20 +224,12 @@ export default function ActionsTab({
 
         {/* Timeline ou état vide */}
         {filteredTimelineByDay.length === 0 ? (
-          <Box
-            p="8"
-            style={{
-              textAlign: 'center',
-              color: 'var(--gray-11)',
-            }}
-          >
-            <Activity size={48} style={{ margin: '0 auto 1rem' }} />
-            <div>
-              {searchTerm
-                ? 'Aucun élément trouvé'
-                : 'Aucune action pour cette intervention'}
-            </div>
-          </Box>
+          <EmptyState
+            compact
+            icon={<Activity size={16} />}
+            title={searchTerm ? 'Aucun élément trouvé' : 'Aucune action pour cette intervention'}
+            description={searchTerm ? 'Aucun élément ne correspond à votre recherche.' : undefined}
+          />
         ) : (
           <Timeline
             items={filteredTimelineByDay}

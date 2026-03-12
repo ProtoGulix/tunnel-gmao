@@ -9,10 +9,12 @@ import { api } from '@/lib/api/client';
 
 /**
  * Liste tous les équipements avec état de santé
+ * @param {Object} [params]
+ * @param {string} [params.search] - Recherche sur code, name, affectation
  * @returns {Promise<Array>} Liste des équipements
  */
-export async function fetchEquipements() {
-  const response = await api.get('/equipements');
+export async function fetchEquipements(params = {}) {
+  const response = await api.get('/equipements', { params });
   return response.data;
 }
 

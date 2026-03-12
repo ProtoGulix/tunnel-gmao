@@ -4,6 +4,59 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.22.0 - 2026-03-12
+
+Stabilité : **STABLE** ✅
+
+### Demandes d'intervention — nouveau module complet
+
+Création d'un module complet de gestion des demandes d'intervention, avec cycle de vie à cinq statuts (`nouvelle → en_attente → acceptée → rejetée → clôturée`).
+
+**API** : nouveau module `intervention-requests.js` avec les opérations CRUD, la gestion des transitions de statut et le filtrage serveur par `statut` / `exclude_statuses`.
+
+**Composants** :
+- `InterventionRequestsTab` — tableau paginé filtrable par statut avec compteurs.
+- `InterventionRequestDetail` — fiche détail : équipement, demandeur, service, description, historique des transitions.
+- `InterventionRequestForm` — formulaire de création de demande lié à un équipement.
+- `InterventionRequestSelector` — sélecteur de demandes ouvertes (statuts `nouvelle` et `en_attente` uniquement) utilisé lors de la création d'une intervention.
+- `InterventionRequestCard` — bandeau horizontal compact affiché sur la fiche intervention, indiquant la demande liée avec statut coloré.
+- `StatutTabs` — navigation par statut avec comptage par catégorie.
+
+**Hooks** : `useInterventionRequests` (liste paginée) et `useInterventionRequestDetail` (détail + transitions).
+
+**Page et routes** : `InterventionRequestsPage` accessible depuis le menu principal ; route `/intervention-requests/:id` pour le détail d'une demande.
+
+### Création d'intervention — flux en deux étapes
+
+La page de création adopte un layout deux colonnes avec un flux guidé :
+
+- **Étape 1 (gauche)** — sélectionner une demande existante ou en créer une nouvelle directement dans le sélecteur. Un overlay bloque le passage à l'étape 2 tant qu'aucune demande n'est choisie.
+- **Étape 2 (droite)** — renseigner les champs de l'intervention. Le titre, l'équipement et le signalant sont pré-remplis automatiquement depuis la demande sélectionnée et grisés pour éviter la désynchronisation.
+
+Le formulaire est extrait dans un composant dédié `InterventionCreateForm`.
+
+### Suppression d'intervention
+
+Un bouton de suppression est disponible sur la fiche intervention, conditionné à l'absence d'actions et de demandes d'achat associées (`isDeletable`). Une boîte de dialogue de confirmation (`AlertDialog`) est affichée avant l'opération.
+
+### Demande liée sur la fiche intervention
+
+La demande d'intervention associée (`request` object) est affichée directement sur la fiche intervention sous forme de bandeau horizontal avant les onglets. En l'absence de demande liée, un état vide compact est affiché avec l'icône `Link2Off`.
+
+### EmptyState — variante compact
+
+Nouvelle prop `compact` sur le composant `EmptyState` : affichage horizontal dans un bandeau avec bordure gauche (`4px solid`), fond atténué (`var(--gray-1)`) et typographie réduite (`size-2`/`size-1`). Utilisé dans `ActionsTab` et `InterventionRequestCard`.
+
+### Gestion des fournisseurs — nettoyage et URL produit
+
+Suppression des composants obsolètes : `AddSupplierForm`, `EditSupplierForm`, `ManufacturersTable`, `SuppliersTable`, `SupplierItemLinkForm`, `PartTemplatesList`, `StockFamiliesTable`. Les fonctionnalités correspondantes sont intégrées dans les composants actifs. Ajout du champ **URL produit** dans la fiche fournisseur (`SupplierDetail`).
+
+### Demandes d'achat — urgence normalisée
+
+Les options d'urgence dans `PurchaseRequestForm` et `PurchaseRequestEditForm` sont standardisées pour correspondre exactement au référentiel backend.
+
+---
+
 ## 3.21.0 - 2026-03-10
 
 Stabilité : **STABLE** ✅

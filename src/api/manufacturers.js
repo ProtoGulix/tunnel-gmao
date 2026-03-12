@@ -6,7 +6,7 @@
 import { api } from '@/lib/api/client';
 
 export async function fetchManufacturers(params = {}) {
-  const response = await api.get('/manufacturer-items', { params });
+  const response = await api.get('/manufacturer-items/', { params });
   // Retourne { items, pagination } — format paginé
   return response.data || { items: [], pagination: null };
 }
@@ -17,7 +17,7 @@ export async function fetchManufacturerDetail(id) {
 }
 
 export async function createManufacturer(payload) {
-  const response = await api.post('/manufacturer-items', payload);
+  const response = await api.post('/manufacturer-items/', payload);
   return response.data || null;
 }
 

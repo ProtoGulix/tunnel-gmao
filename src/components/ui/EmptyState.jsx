@@ -152,7 +152,31 @@ ActionsBar.propTypes = {
  *   description="Le fichier demandé n'existe pas ou a été supprimé."
  * />
  */
-export default function EmptyState({ icon, title, description, actions = [] }) {
+export default function EmptyState({ icon, title, description, actions = [], compact = false }) {
+  if (compact) {
+    return (
+      <Box style={{
+        borderRadius: 'var(--radius-2)',
+        border: '1px solid var(--gray-4)',
+        borderLeft: '4px solid var(--gray-6)',
+        background: 'var(--gray-1)',
+      }}>
+        <Flex align="center" gap="2" py="2" px="3">
+          {icon && (
+            <Box style={{ opacity: 0.4, flexShrink: 0 }}>
+              {isValidElement(icon) ? icon : typeof icon === 'string' ? <Text>{icon}</Text> : null}
+            </Box>
+          )}
+          <Flex direction="column" gap="0">
+            <Text size="2" weight="medium" color="gray">{title}</Text>
+            {description && <Text size="1" color="gray">{description}</Text>}
+          </Flex>
+          <ActionsBar actions={actions} />
+        </Flex>
+      </Box>
+    );
+  }
+
   return (
     <Card size="3">
       <Flex direction="column" align="center" justify="center" p="8" gap="3">
@@ -168,5 +192,7 @@ EmptyState.propTypes = {
   icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
+  actions: PropTypes.arrayOf(PropTypes.element),
+  compact: PropTypes.bool,
   actions: PropTypes.arrayOf(PropTypes.element),
 };

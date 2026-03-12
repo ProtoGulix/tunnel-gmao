@@ -4,7 +4,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
 import { Edit2, Package, Plus } from 'lucide-react';
 import { UNIT_OPTIONS } from '@/config/units';
 import CharacteristicsFields from '@/components/stock/CharacteristicsFields';
@@ -123,8 +123,15 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving, embedd
               <Select.Root value={form.family_code || '__none__'} onValueChange={handleFamilyChange} disabled={isEdit || familiesLoading}>
                 <Select.Trigger variant="soft" style={{ width: '100%' }} />
                 <Select.Content>
-                  <Select.Item value="__none__">— Aucune —</Select.Item>
-                  {families.map((f) => <Select.Item key={f.family_code} value={f.family_code}>{f.family_code}</Select.Item>)}
+                  <Select.Item value="__none__">Aucune</Select.Item>
+                  {families.map((f) => (
+                    <Select.Item key={f.family_code} value={f.family_code}>
+                      <Flex align="center" gap="2">
+                        <Badge variant="soft" color="gray" size="1" style={{ fontFamily: 'monospace' }}>{f.family_code}</Badge>
+                        {f.label && <Text size="2">{f.label}</Text>}
+                      </Flex>
+                    </Select.Item>
+                  ))}
                 </Select.Content>
               </Select.Root>
             </Box>
@@ -133,8 +140,15 @@ export default function StockItemForm({ item, onSubmit, onCancel, saving, embedd
               <Select.Root value={form.sub_family_code || '__none__'} onValueChange={handleSubFamilyChange} disabled={isEdit || !form.family_code || familiesLoading}>
                 <Select.Trigger variant="soft" style={{ width: '100%' }} />
                 <Select.Content>
-                  <Select.Item value="__none__">— Aucune —</Select.Item>
-                  {subFamilies.map((s) => <Select.Item key={s.code} value={s.code}>{s.code}</Select.Item>)}
+                  <Select.Item value="__none__">Aucune</Select.Item>
+                  {subFamilies.map((s) => (
+                    <Select.Item key={s.code} value={s.code}>
+                      <Flex align="center" gap="2">
+                        <Badge variant="soft" color="gray" size="1" style={{ fontFamily: 'monospace' }}>{s.code}</Badge>
+                        {s.label && <Text size="2">{s.label}</Text>}
+                      </Flex>
+                    </Select.Item>
+                  ))}
                 </Select.Content>
               </Select.Root>
             </Box>

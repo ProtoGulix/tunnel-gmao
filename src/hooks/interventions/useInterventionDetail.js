@@ -11,6 +11,7 @@ import {
   fetchIntervention,
   updateIntervention as apiUpdateIntervention,
   updateInterventionStatus,
+  deleteIntervention as apiDeleteIntervention,
   fetchInterventionPdf,
 } from '@/api/interventions';
 import { createAction } from '@/api/actions';
@@ -147,6 +148,10 @@ export function useInterventionDetail(id) {
     [id, user?.id, fetchData]
   );
 
+  const deleteIntervention = useCallback(async () => {
+    await apiDeleteIntervention(id);
+  }, [id]);
+
   // Chargement du PDF
   const loadPdf = useCallback(async () => {
     try {
@@ -194,6 +199,7 @@ export function useInterventionDetail(id) {
     updateIntervention,
     updateStatus,
     addAction,
+    deleteIntervention,
 
     // Computed
     statusLog,

@@ -6,7 +6,7 @@
 import PropTypes from 'prop-types';
 import { useState, useCallback } from 'react';
 import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
-import { Star, Trash2, Plus, Pencil } from 'lucide-react';
+import { Star, Trash2, Plus, Pencil, ExternalLink } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import { deleteSupplierItemLink, setPreferredSupplierItemLink, createSupplierItemLink, updateSupplierItemLink } from '@/api/suppliers';
 import SupplierItemForm from '@/components/suppliers/SupplierItemForm';
@@ -85,7 +85,17 @@ export function SuppliersSection({ suppliers, stockItemId, stockItemLabel, onRef
     {
       key: 'ref',
       header: 'Réf. fourn.',
-      render: (row) => <Badge variant="soft" color="indigo" size="1">{row.supplier_ref}</Badge>,
+      render: (row) => (
+        <Flex align="center" gap="1">
+          <Badge variant="soft" color="indigo" size="1">{row.supplier_ref}</Badge>
+          {row.product_url && /^https?:\/\//i.test(row.product_url) && (
+            <a href={row.product_url} target="_blank" rel="noopener noreferrer" title="Fiche produit fournisseur"
+              style={{ display: 'flex', alignItems: 'center', color: 'var(--blue-9)' }}>
+              <ExternalLink size={11} />
+            </a>
+          )}
+        </Flex>
+      ),
     },
     {
       key: 'manufacturer',
