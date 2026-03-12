@@ -73,6 +73,7 @@ export async function createIntervention(data) {
       : new Date().toISOString().slice(0, 10),
   };
   if (data.reportedBy) payload.reported_by = data.reportedBy;
+  if (data.requestId) payload.request_id = data.requestId;
   const response = await api.post('/interventions', payload);
   return mapInterventionResponse(response.data);
 }
