@@ -5,8 +5,6 @@ import { ClipboardList, Plus } from 'lucide-react';
 import { createInterventionRequest, fetchInterventionRequest, fetchInterventionRequests } from '@/api/intervention-requests';
 import InterventionRequestForm from '@/components/intervention-requests/InterventionRequestForm';
 
-const TERMINAL = new Set(['rejetee', 'cloturee']);
-
 function RequestRow({ req, isSelected, onToggle }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -54,7 +52,7 @@ RequestRow.propTypes = {
   onToggle: PropTypes.func.isRequired,
 };
 
-export default function OpenInterventionRequestsList({ selectedId, onSelect }) {
+export default function InterventionRequestSelector({ selectedId, onSelect }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -64,10 +62,10 @@ export default function OpenInterventionRequestsList({ selectedId, onSelect }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchInterventionRequests({ limit: 100 })
+    fetchInterventionRequests({ limit: 100, excludeStatuses: 'rejetee,cloturee,acceptee' })
       .then((res) => {
         if (cancelled) return;
-        setItems((res.items ?? []).filter((r) => !TERMINAL.has(r.statut)));
+        setItems(res.items ?? []);
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -136,7 +134,7 @@ export default function OpenInterventionRequestsList({ selectedId, onSelect }) {
   );
 }
 
-OpenInterventionRequestsList.propTypes = {
+InterventionRequestSelector.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
 };

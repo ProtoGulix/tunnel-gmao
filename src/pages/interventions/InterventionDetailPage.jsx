@@ -8,9 +8,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2 } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -22,6 +22,7 @@ import SummaryTab from '@/components/interventions/tabs/SummaryTab';
 import SheetTab from '@/components/interventions/tabs/SheetTab';
 import HistoryTab from '@/components/interventions/tabs/HistoryTab';
 import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
+import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
 // Configuration des onglets
@@ -56,6 +57,7 @@ const mapDtoStatusToConfigKey = (dtoStatus) => {
 /* eslint-disable complexity, max-lines */
 export default function InterventionDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('actions');
   const [searchActions, setSearchActions] = useState('');
 
@@ -67,6 +69,7 @@ export default function InterventionDetailPage() {
     updateStatus,
     updateIntervention,
     addAction,
+    deleteIntervention,
     statusLog,
     actions,
     pdfUrl,
@@ -118,6 +121,11 @@ export default function InterventionDetailPage() {
     refetch();
   }, [refetch]);
 
+  const handleDelete = useCallback(async () => {
+    await deleteIntervention();
+    navigate('/interventions');
+  }, [deleteIntervention, navigate]);
+
   // Error state
   if (error && !intervention) {
     return (
@@ -156,6 +164,7 @@ export default function InterventionDetailPage() {
   }
 
   const stats = intervention.stats || {};
+  const isDeletable = !stats.actionCount && !stats.purchaseCount;
 
   return (
     <PageContainer style={{ paddingBottom: '4rem' }}>
@@ -168,6 +177,32 @@ export default function InterventionDetailPage() {
           { label: 'Temps', value: `${stats.totalTime || 0}h` },
         ]}
         actions={[
+          ...(isDeletable ? [{
+            label: (
+              <AlertDialog.Root>
+                <AlertDialog.Trigger>
+                  <Button color="red" variant="soft" size="2">
+                    <Trash2 size={14} />
+                    Supprimer
+                  </Button>
+                </AlertDialog.Trigger>
+                <AlertDialog.Content maxWidth="420px">
+                  <AlertDialog.Title>Supprimer l&apos;intervention</AlertDialog.Title>
+                  <AlertDialog.Description>
+                    Confirmer la suppression de <strong>{intervention.code}</strong> ? Cette action est irréversible.
+                  </AlertDialog.Description>
+                  <Flex gap="3" mt="4" justify="end">
+                    <AlertDialog.Cancel>
+                      <Button variant="soft" color="gray">Annuler</Button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action>
+                      <Button color="red" onClick={handleDelete}>Supprimer</Button>
+                    </AlertDialog.Action>
+                  </Flex>
+                </AlertDialog.Content>
+              </AlertDialog.Root>
+            ),
+          }] : []),
           {
             label: (
               <DropdownButton
@@ -250,6 +285,11 @@ export default function InterventionDetailPage() {
           },
         ]}
       />
+
+      {/* Demande liée */}
+      <Box mt="4">
+        <InterventionRequestCard request={intervention.request ?? null} />
+      </Box>
 
       {/* TABS */}
       <Tabs.Root

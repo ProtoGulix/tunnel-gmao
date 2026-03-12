@@ -109,6 +109,17 @@ export async function updateInterventionStatus(id, newStatus) {
 }
 
 /**
+ * Supprime une intervention.
+ * Le backend rejette (400) si elle possède des actions ou des demandes d'achat.
+ *
+ * @param {string} id - ID de l'intervention
+ * @returns {Promise<void>}
+ */
+export async function deleteIntervention(id) {
+  await api.delete(`/interventions/${id}`);
+}
+
+/**
  * Récupère le PDF d'une intervention pour preview (blob URL)
  *
  * @param {string} id - ID de l'intervention
@@ -230,5 +241,18 @@ function mapInterventionDetailResponse(raw = {}) {
             : null,
         }))
       : [],
+    request: raw.request
+      ? {
+          id: raw.request.id,
+          code: raw.request.code,
+          demandeurNom: raw.request.demandeur_nom,
+          demandeurService: raw.request.demandeur_service || null,
+          description: raw.request.description,
+          statut: raw.request.statut,
+          statutLabel: raw.request.statut_label,
+          statutColor: raw.request.statut_color,
+          createdAt: raw.request.created_at,
+        }
+      : null,
   };
 }

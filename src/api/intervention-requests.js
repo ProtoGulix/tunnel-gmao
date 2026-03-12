@@ -34,6 +34,7 @@ export async function fetchInterventionRequests(params = {}) {
   };
 
   if (params.statut) queryParams.statut = params.statut;
+  if (params.excludeStatuses) queryParams.exclude_statuses = params.excludeStatuses;
   if (params.machineId) queryParams.machine_id = params.machineId;
   if (params.search?.trim()) queryParams.search = params.search.trim();
 
