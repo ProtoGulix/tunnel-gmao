@@ -13,7 +13,12 @@ export function useEquipements() {
   const [equipements, setEquipements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({ total: 0, page: 1, page_size: 50, total_pages: 1 });
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    page_size: 50,
+    total_pages: 1,
+  });
   const [facets, setFacets] = useState([]);
 
   // Contrôles de navigation
@@ -51,8 +56,14 @@ export function useEquipements() {
   }, [page, pageSize, debouncedSearch, classFilter, load]);
 
   // Remonter en page 1 quand search ou classFilter change
-  const handleSearchChange = useCallback((v) => { setSearch(v); setPage(1); }, []);
-  const handleClassFilterChange = useCallback((v) => { setClassFilter(v); setPage(1); }, []);
+  const handleSearchChange = useCallback((v) => {
+    setSearch(v);
+    setPage(1);
+  }, []);
+  const handleClassFilterChange = useCallback((v) => {
+    setClassFilter(v);
+    setPage(1);
+  }, []);
 
   // Cache courant pour getParentInfo (parents dans la page courante)
   const equipementsById = useMemo(() => {
@@ -62,29 +73,41 @@ export function useEquipements() {
   }, [equipements]);
 
   const getParentInfo = useCallback(
-    (parentId) => (parentId ? equipementsById.get(parentId) ?? null : null),
+    (parentId) => (parentId ? (equipementsById.get(parentId) ?? null) : null),
     [equipementsById]
   );
 
   // CRUD
-  const createEquipement = useCallback(async (data) => {
-    const created = await equipementsApi.createEquipement(data);
-    load(page, pageSize, debouncedSearch, classFilter);
-    return created;
-  }, [load, page, pageSize, debouncedSearch, classFilter]);
+  const createEquipement = useCallback(
+    async (data) => {
+      const created = await equipementsApi.createEquipement(data);
+      load(page, pageSize, debouncedSearch, classFilter);
+      return created;
+    },
+    [load, page, pageSize, debouncedSearch, classFilter]
+  );
 
-  const updateEquipement = useCallback(async (id, updates) => {
-    const updated = await equipementsApi.updateEquipement(id, updates);
-    load(page, pageSize, debouncedSearch, classFilter);
-    return updated;
-  }, [load, page, pageSize, debouncedSearch, classFilter]);
+  const updateEquipement = useCallback(
+    async (id, updates) => {
+      const updated = await equipementsApi.updateEquipement(id, updates);
+      load(page, pageSize, debouncedSearch, classFilter);
+      return updated;
+    },
+    [load, page, pageSize, debouncedSearch, classFilter]
+  );
 
-  const deleteEquipement = useCallback(async (id) => {
-    await equipementsApi.deleteEquipement(id);
-    load(page, pageSize, debouncedSearch, classFilter);
-  }, [load, page, pageSize, debouncedSearch, classFilter]);
+  const deleteEquipement = useCallback(
+    async (id) => {
+      await equipementsApi.deleteEquipement(id);
+      load(page, pageSize, debouncedSearch, classFilter);
+    },
+    [load, page, pageSize, debouncedSearch, classFilter]
+  );
 
-  const refresh = useCallback(() => load(page, pageSize, debouncedSearch, classFilter), [load, page, pageSize, debouncedSearch, classFilter]);
+  const refresh = useCallback(
+    () => load(page, pageSize, debouncedSearch, classFilter),
+    [load, page, pageSize, debouncedSearch, classFilter]
+  );
 
   return {
     equipements,
