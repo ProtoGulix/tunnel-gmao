@@ -1,34 +1,31 @@
 /**
- * @fileoverview Onglet liste des équipements
+ * @fileoverview Onglet liste des équipements avec recherche serveur, filtre par classe et pagination
  * @module components/equipements/tabs/EquipementsListTab
  */
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Box, Flex, Text, Button, Badge } from '@radix-ui/themes';
-import { Search, Eye } from 'lucide-react';
+import { Box, Flex, Text, Button, Badge, Select } from '@radix-ui/themes';
+import { Search, Eye, Layers } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
-/**
- * Onglet liste des équipements avec recherche et santé
- */
-export default function EquipementsListTab({ equipements, loading, error, getParentInfo }) {
+export default function EquipementsListTab({
+  equipements, loading, error, getParentInfo,
+  search, onSearchChange,
+  classFilter, onClassFilterChange, facets,
+  pagination, page, onPageChange, pageSize, onPageSizeChange,
+}) {
   const navigate = useNavigate();
-  const [searchText, setSearchText] = useState('');
 
-  const filteredEquipements = useMemo(() => {
-    if (!searchText.trim()) return equipements;
-    const query = searchText.toLowerCase();
-    return equipements.filter(
-      (eq) =>
-        (eq.code && eq.code.toLowerCase().includes(query)) ||
-        (eq.name && eq.name.toLowerCase().includes(query))
-    );
-  }, [equipements, searchText]);
+  const classOptions = useMemo(
+    () => facets.filter((f) => f.code !== null),
+    [facets]
+  );
 
   const columns = useMemo(
     () => [
@@ -43,9 +40,7 @@ export default function EquipementsListTab({ equipements, loading, error, getPar
         header: 'Équipement',
         render: (eq) => (
           <Flex direction="column">
-            <Text weight="medium" size="2">
-              {eq.code || '—'} – {eq.name}
-            </Text>
+            <Text weight="medium" size="2">{eq.code || '—'} – {eq.name}</Text>
           </Flex>
         ),
       },
@@ -54,23 +49,15 @@ export default function EquipementsListTab({ equipements, loading, error, getPar
         header: 'Classe',
         render: (eq) =>
           eq.equipement_class ? (
-            <Badge variant="soft" size="1">
-              {eq.equipement_class.code}
-            </Badge>
+            <Badge variant="soft" size="1">{eq.equipement_class.code}</Badge>
           ) : (
-            <Text size="2" color="gray">
-              —
-            </Text>
+            <Text size="2" color="gray">—</Text>
           ),
       },
       {
         key: 'cause',
         header: 'Cause',
-        render: (eq) => (
-          <Text size="2" color="gray">
-            {eq.health?.reason || '—'}
-          </Text>
-        ),
+        render: (eq) => <Text size="2" color="gray">{eq.health?.reason || '—'}</Text>,
       },
       {
         key: 'parent',
@@ -78,13 +65,9 @@ export default function EquipementsListTab({ equipements, loading, error, getPar
         render: (eq) => {
           const parent = getParentInfo(eq.parent_id);
           return parent ? (
-            <Text size="2">
-              {parent.code || '—'} – {parent.name}
-            </Text>
+            <Text size="2">{parent.code || '—'} – {parent.name}</Text>
           ) : (
-            <Text size="2" color="gray">
-              —
-            </Text>
+            <Text size="2" color="gray">—</Text>
           );
         },
       },
@@ -93,11 +76,7 @@ export default function EquipementsListTab({ equipements, loading, error, getPar
         header: 'Action',
         align: 'end',
         render: (eq) => (
-          <Button
-            size="1"
-            variant="ghost"
-            onClick={() => navigate(`/equipements/${eq.id}`)}
-          >
+          <Button size="1" variant="ghost" onClick={() => navigate(`/equipements/${eq.id}`)}>
             <Eye size={16} /> Voir
           </Button>
         ),
@@ -106,34 +85,65 @@ export default function EquipementsListTab({ equipements, loading, error, getPar
     [getParentInfo, navigate]
   );
 
-  if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
 
   return (
     <Box pt="4">
+      {/* Filtre par classe */}
+      {classOptions.length > 0 && (
+        <Flex align="center" gap="2" mb="3">
+          <Layers size={14} color="var(--gray-9)" />
+          <Text size="2" color="gray" weight="medium">Classe :</Text>
+          <Select.Root value={classFilter || '__all__'} onValueChange={(v) => onClassFilterChange(v === '__all__' ? '' : v)}>
+            <Select.Trigger variant="soft" />
+            <Select.Content>
+              <Select.Item value="__all__">Toutes les classes</Select.Item>
+              {classOptions.map((f) => (
+                <Select.Item key={f.code} value={f.code}>
+                  {f.label ?? f.code} ({f.count})
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Flex>
+      )}
+
       <DataTable
         headerProps={{
           icon: Search,
           title: 'Recherche',
-          count: filteredEquipements.length,
-          searchValue: searchText,
-          onSearchChange: setSearchText,
-          searchPlaceholder: 'Rechercher par code ou nom...',
+          count: pagination.total,
+          searchValue: search,
+          onSearchChange,
+          searchPlaceholder: 'Rechercher par code, nom ou affectation...',
           showSearchInput: true,
           showResetButton: true,
           showRefreshButton: false,
         }}
         columns={columns}
-        data={filteredEquipements}
+        data={equipements}
         loading={loading}
         emptyState={{
           icon: Search,
           title: 'Aucun équipement trouvé',
-          description: searchText.trim()
-            ? 'Aucun équipement ne correspond à votre recherche.'
+          description: search.trim() || classFilter
+            ? 'Aucun équipement ne correspond à vos filtres.'
             : 'Aucun équipement disponible.',
         }}
       />
+
+      {!loading && pagination.total > 0 && (
+        <Box mt="4">
+          <Pagination
+            currentPage={page}
+            totalItems={pagination.total}
+            itemsPerPage={pageSize}
+            onPageChange={onPageChange}
+            onItemsPerPageChange={onPageSizeChange}
+            pageSizeOptions={[25, 50, 100]}
+          />
+        </Box>
+      )}
     </Box>
   );
 }
@@ -143,4 +153,15 @@ EquipementsListTab.propTypes = {
   loading: PropTypes.bool.isRequired,
   error: PropTypes.string,
   getParentInfo: PropTypes.func.isRequired,
+  search: PropTypes.string.isRequired,
+  onSearchChange: PropTypes.func.isRequired,
+  classFilter: PropTypes.string.isRequired,
+  onClassFilterChange: PropTypes.func.isRequired,
+  facets: PropTypes.array.isRequired,
+  pagination: PropTypes.object.isRequired,
+  page: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+  pageSize: PropTypes.number.isRequired,
+  onPageSizeChange: PropTypes.func.isRequired,
 };
+

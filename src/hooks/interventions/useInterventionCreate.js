@@ -23,7 +23,7 @@ export function useInterventionCreate({ navigate }) {
   const [error, setError] = useState(null);
 
   const fetchEquipementsFn = useCallback(
-    (search) => fetchEquipements({ search }),
+    (search) => fetchEquipements({ search }).then((r) => r.items ?? []),
     []
   );
 

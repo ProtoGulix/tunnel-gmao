@@ -18,25 +18,26 @@ import { useEquipements } from '@/hooks/equipements/useEquipements';
  */
 export default function EquipementsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('equipements', 'tab');
-  const { equipements, loading, error, getParentInfo, refresh } = useEquipements();
+  const {
+    equipements, loading, error, getParentInfo, refresh,
+    pagination, facets,
+    page, setPage, pageSize, setPageSize,
+    search, setSearch, classFilter, setClassFilter,
+  } = useEquipements();
 
   const headerStats = useMemo(() => {
     const counts = equipements.reduce(
-      (acc, eq) => {
-        const level = eq?.health?.level || 'unknown';
-        acc[level] = (acc[level] || 0) + 1;
-        return acc;
-      },
-      { ok: 0, maintenance: 0, warning: 0, critical: 0, unknown: 0 }
+      (acc, eq) => { const level = eq?.health?.level || 'unknown'; acc[level] = (acc[level] || 0) + 1; return acc; },
+      { ok: 0, maintenance: 0, warning: 0, critical: 0 }
     );
     return [
-      { label: 'Total', value: equipements.length },
+      { label: 'Total', value: pagination.total },
       { label: 'Critique', value: counts.critical },
       { label: 'Alerte', value: counts.warning },
       { label: 'Maintenance', value: counts.maintenance },
       { label: 'OK', value: counts.ok },
     ];
-  }, [equipements]);
+  }, [equipements, pagination.total]);
 
   return (
     <Container>
@@ -73,6 +74,16 @@ export default function EquipementsPage() {
             loading={loading}
             error={error}
             getParentInfo={getParentInfo}
+            search={search}
+            onSearchChange={setSearch}
+            classFilter={classFilter}
+            onClassFilterChange={setClassFilter}
+            facets={facets}
+            pagination={pagination}
+            page={page}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
           />
         </Tabs.Content>
 

@@ -8,13 +8,25 @@
 import { api } from '@/lib/api/client';
 
 /**
- * Liste tous les équipements avec état de santé
+ * Liste les équipements avec pagination serveur, recherche et filtres
  * @param {Object} [params]
  * @param {string} [params.search] - Recherche sur code, name, affectation
- * @returns {Promise<Array>} Liste des équipements
+ * @param {number} [params.skip] - Offset
+ * @param {number} [params.limit] - Taille de page (max 500)
+ * @param {string} [params.selectClass] - Codes de classes à inclure (filtre exclusif, csv)
+ * @param {string} [params.excludeClass] - Codes de classes à exclure (csv)
+ * @returns {Promise<{ items: Array, pagination: Object, facets: Object }>}
  */
 export async function fetchEquipements(params = {}) {
-  const response = await api.get('/equipements', { params });
+  const queryParams = {
+    skip: params.skip ?? 0,
+    limit: params.limit ?? 50,
+  };
+  if (params.search?.trim()) queryParams.search = params.search.trim();
+  if (params.selectClass) queryParams.select_class = params.selectClass;
+  if (params.excludeClass) queryParams.exclude_class = params.excludeClass;
+
+  const response = await api.get('/equipements', { params: queryParams });
   return response.data;
 }
 
