@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as equipementsApi from '@/api/equipements';
 import { useDebounce } from '@/hooks/useDebounce';
 
-export function useEquipements() {
+export function useEquipements({ selectMere } = {}) {
   const [equipements, setEquipements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ export function useEquipements() {
 
   const debouncedSearch = useDebounce(search, 350);
 
-  const load = useCallback(async (p, ps, s, cls) => {
+  const load = useCallback(async (p, ps, s, cls, sm) => {
     try {
       setLoading(true);
       setError(null);
@@ -38,6 +38,7 @@ export function useEquipements() {
         limit: ps,
         search: s,
         selectClass: cls || undefined,
+        selectMere: sm,
       });
       setEquipements(result.items ?? []);
       setPagination(result.pagination ?? { total: 0 });
@@ -52,8 +53,8 @@ export function useEquipements() {
   }, []);
 
   useEffect(() => {
-    load(page, pageSize, debouncedSearch, classFilter);
-  }, [page, pageSize, debouncedSearch, classFilter, load]);
+    load(page, pageSize, debouncedSearch, classFilter, selectMere);
+  }, [page, pageSize, debouncedSearch, classFilter, selectMere, load]);
 
   // Remonter en page 1 quand search ou classFilter change
   const handleSearchChange = useCallback((v) => {
@@ -81,32 +82,32 @@ export function useEquipements() {
   const createEquipement = useCallback(
     async (data) => {
       const created = await equipementsApi.createEquipement(data);
-      load(page, pageSize, debouncedSearch, classFilter);
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
       return created;
     },
-    [load, page, pageSize, debouncedSearch, classFilter]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
   const updateEquipement = useCallback(
     async (id, updates) => {
       const updated = await equipementsApi.updateEquipement(id, updates);
-      load(page, pageSize, debouncedSearch, classFilter);
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
       return updated;
     },
-    [load, page, pageSize, debouncedSearch, classFilter]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
   const deleteEquipement = useCallback(
     async (id) => {
       await equipementsApi.deleteEquipement(id);
-      load(page, pageSize, debouncedSearch, classFilter);
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
     },
-    [load, page, pageSize, debouncedSearch, classFilter]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
   const refresh = useCallback(
-    () => load(page, pageSize, debouncedSearch, classFilter),
-    [load, page, pageSize, debouncedSearch, classFilter]
+    () => load(page, pageSize, debouncedSearch, classFilter, selectMere),
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
   return {

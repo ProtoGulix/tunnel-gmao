@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { Container, Flex, Text, Badge, Tabs } from '@radix-ui/themes';
 import { Search, Layers, Factory } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import EquipementsListTab from '@/components/equipements/tabs/EquipementsListTab';
+import EquipementTable from '@/components/equipements/EquipementTable';
 import EquipementClassesTab from '@/components/equipements/tabs/EquipementClassesTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { useEquipements } from '@/hooks/equipements/useEquipements';
@@ -69,7 +69,7 @@ export default function EquipementsPage() {
         </Tabs.List>
 
         <Tabs.Content value="equipements">
-          <EquipementsListTab
+          <EquipementTable
             equipements={equipements}
             loading={loading}
             error={error}

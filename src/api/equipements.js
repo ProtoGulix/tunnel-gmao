@@ -15,6 +15,7 @@ import { api } from '@/lib/api/client';
  * @param {number} [params.limit] - Taille de page (max 500)
  * @param {string} [params.selectClass] - Codes de classes à inclure (filtre exclusif, csv)
  * @param {string} [params.excludeClass] - Codes de classes à exclure (csv)
+ * @param {string} [params.selectMere] - UUID du parent : retourne uniquement ses enfants directs
  * @returns {Promise<{ items: Array, pagination: Object, facets: Object }>}
  */
 export async function fetchEquipements(params = {}) {
@@ -25,6 +26,7 @@ export async function fetchEquipements(params = {}) {
   if (params.search?.trim()) queryParams.search = params.search.trim();
   if (params.selectClass) queryParams.select_class = params.selectClass;
   if (params.excludeClass) queryParams.exclude_class = params.excludeClass;
+  if (params.selectMere) queryParams.select_mere = params.selectMere;
 
   const response = await api.get('/equipements', { params: queryParams });
   return response.data;

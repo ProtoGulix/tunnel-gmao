@@ -1,6 +1,8 @@
 /**
- * @fileoverview Onglet liste des équipements avec recherche serveur, filtre par classe et pagination
- * @module components/equipements/tabs/EquipementsListTab
+ * @fileoverview Tableau des équipements avec recherche serveur, filtre par classe et pagination
+ * @module components/equipements/EquipementTable
+ *
+ * Composant partagé utilisé par EquipementsPage et EquipementChildrenTab.
  */
 
 import { useMemo } from 'react';
@@ -11,14 +13,14 @@ import { Search, Eye, Layers } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
-import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
-export default function EquipementsListTab({
+export default function EquipementTable({
   equipements, loading, error, getParentInfo,
   search, onSearchChange,
   classFilter, onClassFilterChange, facets,
   pagination, page, onPageChange, pageSize, onPageSizeChange,
+  showParentColumn,
 }) {
   const navigate = useNavigate();
 
@@ -59,18 +61,20 @@ export default function EquipementsListTab({
         header: 'Cause',
         render: (eq) => <Text size="2" color="gray">{eq.health?.reason || '—'}</Text>,
       },
-      {
-        key: 'parent',
-        header: 'Équipement mère',
-        render: (eq) => {
-          const parent = getParentInfo(eq.parent_id);
-          return parent ? (
-            <Text size="2">{parent.code || '—'} – {parent.name}</Text>
-          ) : (
-            <Text size="2" color="gray">—</Text>
-          );
+      ...(showParentColumn ? [
+        {
+          key: 'parent',
+          header: 'Équipement mère',
+          render: (eq) => {
+            const parent = getParentInfo(eq.parent_id);
+            return parent ? (
+              <Text size="2">{parent.code || '—'} – {parent.name}</Text>
+            ) : (
+              <Text size="2" color="gray">—</Text>
+            );
+          },
         },
-      },
+      ] : []),
       {
         key: 'action',
         header: 'Action',
@@ -82,7 +86,7 @@ export default function EquipementsListTab({
         ),
       },
     ],
-    [getParentInfo, navigate]
+    [getParentInfo, navigate, showParentColumn]
   );
 
   if (error) return <ErrorState error={error} />;
@@ -148,7 +152,7 @@ export default function EquipementsListTab({
   );
 }
 
-EquipementsListTab.propTypes = {
+EquipementTable.propTypes = {
   equipements: PropTypes.array.isRequired,
   loading: PropTypes.bool.isRequired,
   error: PropTypes.string,
@@ -163,5 +167,9 @@ EquipementsListTab.propTypes = {
   onPageChange: PropTypes.func.isRequired,
   pageSize: PropTypes.number.isRequired,
   onPageSizeChange: PropTypes.func.isRequired,
+  showParentColumn: PropTypes.bool,
 };
 
+EquipementTable.defaultProps = {
+  showParentColumn: true,
+};
