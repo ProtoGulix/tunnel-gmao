@@ -9,15 +9,15 @@ import { Box, Flex, Text, TextField, Select, Badge } from '@radix-ui/themes';
 import { Clock, Activity, Tag } from 'lucide-react';
 import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
-function ActionFormFields({ formState, handlers, metadata }) {
+function ActionFormFields({ formState, handlers, metadata, hiddenFields = [] }) {
   const { time, date, category } = formState;
   const { handleTimeChange, handleDateChange, handleCategoryChange } = handlers;
   const { subcategories = [] } = metadata;
 
   return (
     <Flex gap="2" wrap="wrap">
-      {/* Temps passé */}
-      <Box style={{ flex: '1', minWidth: '100px' }}>
+      {/* Temps passé — masqué si hiddenFields inclut 'time' (ex: planningMode) */}
+      {!hiddenFields.includes('time') && <Box style={{ flex: '1', minWidth: '100px' }}>
         <Flex align="center" gap="1" mb="1">
           <Clock size={14} color="var(--gray-9)" />
           <Text size="1" weight="bold">Temps</Text>
@@ -35,7 +35,7 @@ function ActionFormFields({ formState, handlers, metadata }) {
             <Text size="1" color="gray">h</Text>
           </TextField.Slot>
         </TextField.Root>
-      </Box>
+      </Box>}
 
       {/* Date de l'action */}
       <Box style={{ flex: '1', minWidth: '100px' }}>
@@ -151,6 +151,7 @@ ActionFormFields.propTypes = {
     date: PropTypes.string,
     category: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }).isRequired,
+  hiddenFields: PropTypes.arrayOf(PropTypes.string),
   handlers: PropTypes.shape({
     handleTimeChange: PropTypes.func.isRequired,
     handleDateChange: PropTypes.func.isRequired,
