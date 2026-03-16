@@ -156,12 +156,13 @@ export default function ActionsTab({
   }, [metadataLoaded]);
 
   // Handler pour soumettre la nouvelle action
-  const handleSubmitNewAction = useCallback(async (formData) => {
+  // ActionForm construit le payload canonique, on le passe directement à onAddAction
+  const handleSubmitNewAction = useCallback(async (payload) => {
     if (!onAddAction) return;
 
     try {
       setSubmitting(true);
-      await onAddAction(formData);
+      await onAddAction(payload);
       setShowNewActionForm(false);
     } catch (error) {
       console.error('Erreur création action:', error);
@@ -216,6 +217,7 @@ export default function ActionsTab({
               complexityFactors: [],
             }}
             metadata={{ subcategories, complexityFactors }}
+            interventionId={String(interventionId)}
             onCancel={() => setShowNewActionForm(false)}
             onSubmit={handleSubmitNewAction}
             style={{ marginBottom: '1rem' }}

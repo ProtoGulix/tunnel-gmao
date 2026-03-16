@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Flex, Link, Select, Text } from '@radix-ui/themes';
-import { Loader2 } from 'lucide-react';
+import { Loader2, TriangleAlert } from 'lucide-react';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 
 const STATUS_LABELS = {
@@ -58,9 +58,15 @@ export default function InterventionSelector({ equipementId, value, onChange, di
 
   if (interventions.length === 0) {
     return (
-      <Flex direction="column" gap="1">
-        <Text size="2" color="amber">Aucune intervention ouverte sur cet équipement.</Text>
-        <Link href="/intervention/new" size="2">Créer une intervention</Link>
+      <Flex align="center" gap="2" style={{
+        padding: '6px 10px',
+        background: 'var(--amber-3)',
+        borderRadius: 'var(--radius-2)',
+        border: '1px solid var(--amber-6)',
+      }}>
+        <TriangleAlert size={14} color="var(--amber-9)" />
+        <Text size="2" color="amber" weight="medium">Aucune intervention ouverte sur cet équipement.</Text>
+        <Link href="/interventions/new" size="2" ml="1">Créer</Link>
       </Flex>
     );
   }

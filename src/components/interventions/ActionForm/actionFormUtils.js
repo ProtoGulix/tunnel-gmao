@@ -60,9 +60,10 @@ export const areComplexityFactorsRequired = (complexity) => Number(complexity) >
 /**
  * Valide l'état du formulaire
  * @param {Object} formState - État du formulaire
+ * @param {{ start: string|null, end: string|null }} timeRange - Plage horaire sélectionnée
  * @returns {Object} { isValid: boolean, errors: string[] }
  */
-export const validateFormState = (formState) => {
+export const validateFormState = (formState, timeRange = null) => {
   const errors = [];
 
   if (!isDescriptionValid(formState.description)) {
@@ -79,6 +80,9 @@ export const validateFormState = (formState) => {
   ) {
     errors.push('Au moins un facteur de complexité est requis pour complexité > 5');
   }
+
+  if (!timeRange?.start) errors.push('Heure de début requise');
+  if (!timeRange?.end) errors.push('Heure de fin requise');
 
   return {
     isValid: errors.length === 0,

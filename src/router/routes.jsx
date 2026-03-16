@@ -20,7 +20,6 @@ import StockPage from '@/pages/stock/StockPage';
 import SuppliersPage from '@/pages/suppliers/SuppliersPage';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import InterventionRequestsPage from '@/pages/intervention-requests/InterventionRequestsPage';
-import PlanningView from '@/pages/planning/PlanningView';
 
 /**
  * Composant de route protégée
@@ -201,17 +200,6 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <InterventionRequestsPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/planning"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <PlanningView />
             </Layout>
           </ProtectedRoute>
         }

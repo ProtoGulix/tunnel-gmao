@@ -1,60 +1,29 @@
 /**
- * ActionForm - Composant principal
- * Formulaire de création d'action avec validation
+ * @fileoverview ActionForm — formulaire unifié d'action
+ * @module components/interventions/ActionForm
  *
- * Props :
- *  - initialState, metadata, onCancel, onSubmit, style  → mode normal (inchangé)
- *  - planningMode: bool    → active les champs équipement/intervention + TimeRangePicker
- *  - defaultTechId: string → pré-remplit et verrouille le champ technicien
- *  - onSuccess(action)     → appelé après soumission réussie (optionnel)
+ * Calqué sur le pattern SupplierItemForm : les props de contexte se verrouillent
+ * quand elles sont fournies, sinon les sélecteurs s'affichent.
+ *
+ * Le formulaire construit toujours un payload canonique :
+ *   { intervention_id, action_start, action_end, action_subcategory, description,
+ *     created_at?, complexity_score, tech, complexity_factor? }
+ *
+ * Props de verrou (modes badge vs sélecteur) :
+ *   interventionId — intervention déjà connue → badges verrouillés
+ *   techId         — technicien fixé (sinon fallback sur l'utilisateur connecté)
  */
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, Card, Button, TextField } from '@radix-ui/themes';
-import { Plus, MapPin, Wrench } from 'lucide-react';
+import { Box, Flex, Text, Card, Button } from '@radix-ui/themes';
+import { Plus } from 'lucide-react';
+import { useAuth } from '@/auth/useAuth';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
-import EquipementSearch from '@/components/planning/EquipementSearch';
-import InterventionSelector from '@/components/planning/InterventionSelector';
-import TimeRangePicker from '@/components/planning/TimeRangePicker';
-
-/* ── Champs planning (équipement + intervention) ──────────────────────────── */
-function PlanningContextFields({ equipement, onEquipementChange, intervention, onInterventionChange }) {
-  return (
-    <Flex direction="column" gap="3">
-      <Box>
-        <Flex align="center" gap="1" mb="1">
-          <MapPin size={14} color="var(--gray-9)" />
-          <Text size="1" weight="bold">Équipement <Text as="span" color="red">*</Text></Text>
-        </Flex>
-        <EquipementSearch value={equipement} onChange={onEquipementChange} />
-      </Box>
-
-      <Box>
-        <Flex align="center" gap="1" mb="1">
-          <Wrench size={14} color="var(--gray-9)" />
-          <Text size="1" weight="bold">Intervention <Text as="span" color="red">*</Text></Text>
-        </Flex>
-        <InterventionSelector
-          equipementId={equipement?.id ?? null}
-          value={intervention}
-          onChange={onInterventionChange}
-          disabled={!equipement}
-        />
-      </Box>
-    </Flex>
-  );
-}
-
-PlanningContextFields.propTypes = {
-  equipement: PropTypes.object,
-  onEquipementChange: PropTypes.func.isRequired,
-  intervention: PropTypes.object,
-  onInterventionChange: PropTypes.func.isRequired,
-};
+import { ContextSection } from './ActionFormContext';
 
 /* ── ActionForm principal ─────────────────────────────────────────────────── */
 /* eslint-disable complexity */
@@ -65,55 +34,55 @@ function ActionForm({
   onSubmit,
   onSuccess,
   style,
-  planningMode = false,
-  defaultTechId = null,
+  interventionId = null,
+  techId = null,
 }) {
+  const { user } = useAuth();
   const form = useActionForm(initialState);
 
-  // Planning : état local équipement/intervention/plage horaire
-  const [equipement, setEquipement] = useState(null);
-  const [intervention, setIntervention] = useState(null);
+  const [pickedEquipement, setPickedEquipement] = useState(null);
+  const [pickedIntervention, setPickedIntervention] = useState(null);
   const [timeRange, setTimeRange] = useState({ start: null, end: null });
+  const [submitError, setSubmitError] = useState(null);
 
-  // Erreurs planning supplémentaires
-  const [planningErrors, setPlanningErrors] = useState([]);
+  const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
+  // techId prop > utilisateur connecté
+  const resolvedTechId = techId ?? user?.id ?? null;
 
-  const validatePlanning = () => {
-    const errs = [];
-    if (!intervention) errs.push('Une intervention est requise');
-    if (!timeRange.start || !timeRange.end) errs.push('La plage horaire est requise');
-    if (!form.formState.category) errs.push('Le type d\'action est requis');
-    if (!defaultTechId) errs.push('Aucun technicien sélectionné');
-    setPlanningErrors(errs);
-    return errs.length === 0;
+  const buildPayload = () => {
+    const complexityScore = Number(form.formState.complexity);
+    const subcategoryId = Number(form.formState.category) || undefined;
+    const complexityFactor =
+      complexityScore > 5 && form.formState.complexityFactors.length > 0
+        ? form.formState.complexityFactors[0]
+        : undefined;
+
+    return {
+      intervention_id: resolvedInterventionId,
+      action_subcategory: subcategoryId,
+      description: form.formState.description,
+      complexity_score: complexityScore,
+      tech: resolvedTechId,
+      action_start: `${timeRange.start}:00`,
+      action_end: `${timeRange.end}:00`,
+      ...(form.formState.date && { created_at: form.formState.date }),
+      ...(complexityFactor && { complexity_factor: complexityFactor }),
+    };
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
 
-    if (!form.handlers.handleValidate()) return;
-    if (planningMode && !validatePlanning()) return;
+    if (!form.handlers.handleValidate(timeRange)) return;
 
-    const subcategoryId = Number(form.formState.category);
-    const complexityScore = Number(form.formState.complexity);
-
-    const payload = planningMode
-      ? {
-          intervention_id: intervention.id,
-          action_start: `${timeRange.start}:00`,
-          action_end: `${timeRange.end}:00`,
-          description: form.formState.description,
-          action_subcategory: subcategoryId,
-          tech: defaultTechId,
-          complexity_score: complexityScore,
-          ...(complexityScore > 5 && form.formState.complexityFactors.length > 0 && {
-            complexity_factor: form.formState.complexityFactors[0],
-          }),
-        }
-      : form.formState;
-
-    const result = await onSubmit(payload);
-    onSuccess?.(result);
+    try {
+      const result = await onSubmit(buildPayload());
+      onSuccess?.(result);
+    } catch (err) {
+      const detail = err?.response?.data?.detail ?? err?.message ?? 'Erreur lors de la soumission';
+      setSubmitError(Array.isArray(detail) ? detail.map((e) => e.msg ?? String(e)).join(', ') : String(detail));
+    }
   };
 
   const handleCancel = () => {
@@ -121,7 +90,7 @@ function ActionForm({
     onCancel();
   };
 
-  const allErrors = [...form.validation.errors, ...planningErrors];
+  const allErrors = [...form.validation.errors, ...(submitError ? [submitError] : [])];
 
   if (!metadata) {
     return (
@@ -134,13 +103,11 @@ function ActionForm({
   return (
     <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style }}>
       <Flex direction="column" gap="3">
-        {/* Header */}
         <Flex align="center" gap="2">
           <Plus size={20} color="var(--blue-9)" />
           <Text size="3" weight="bold">Nouvelle action</Text>
         </Flex>
 
-        {/* Erreurs */}
         {allErrors.length > 0 && (
           <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: '6px', padding: '12px' }}>
             <Text color="red" weight="bold" size="2">Erreurs de validation</Text>
@@ -154,37 +121,23 @@ function ActionForm({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            {/* Champs planning (équipement + intervention) */}
-            {planningMode && (
-              <PlanningContextFields
-                equipement={equipement}
-                onEquipementChange={(eq) => { setEquipement(eq); setIntervention(null); }}
-                intervention={intervention}
-                onInterventionChange={setIntervention}
-              />
-            )}
+            {/* Section contexte — sélecteurs ou badges verrouillés */}
+            <ContextSection
+              interventionId={interventionId}
+              pickedEquipement={pickedEquipement}
+              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
+              pickedIntervention={pickedIntervention}
+              onInterventionChange={setPickedIntervention}
+            />
 
-            {/* Champs communs : Date + Type. En planning : remplace Temps par TimeRangePicker */}
-            {planningMode ? (
-              <Flex direction="column" gap="3">
-                <Box>
-                  <Text size="1" weight="bold" mb="1" style={{ display: 'block' }}>Plage horaire <Text as="span" color="red">*</Text></Text>
-                  <TimeRangePicker value={timeRange} onChange={setTimeRange} />
-                </Box>
-                <ActionFormFields
-                  formState={{ ...form.formState, time: '__hidden__' }}
-                  handlers={form.handlers}
-                  metadata={metadata}
-                  hiddenFields={['time']}
-                />
-              </Flex>
-            ) : (
-              <ActionFormFields
-                formState={form.formState}
-                handlers={form.handlers}
-                metadata={metadata}
-              />
-            )}
+            {/* Plage horaire + Date + Type sur une même ligne */}
+            <ActionFormFields
+              formState={form.formState}
+              handlers={form.handlers}
+              metadata={metadata}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+            />
 
             <ActionFormDescription formState={form.formState} handlers={form.handlers} />
             <ActionFormComplexity
@@ -194,7 +147,6 @@ function ActionForm({
               validation={form.validation}
             />
 
-            {/* Boutons */}
             <Flex justify="end" gap="2">
               <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
                 Annuler
@@ -214,7 +166,6 @@ ActionForm.displayName = 'ActionForm';
 
 ActionForm.propTypes = {
   initialState: PropTypes.shape({
-    time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     date: PropTypes.string,
     category: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     description: PropTypes.string,
@@ -232,8 +183,9 @@ ActionForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onSuccess: PropTypes.func,
   style: PropTypes.object,
-  planningMode: PropTypes.bool,
-  defaultTechId: PropTypes.string,
+  interventionId: PropTypes.string,
+  techId: PropTypes.string,
 };
 
 export default ActionForm;
+

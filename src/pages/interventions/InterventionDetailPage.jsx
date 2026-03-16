@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
 import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2 } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
@@ -58,7 +58,13 @@ const mapDtoStatusToConfigKey = (dtoStatus) => {
 export default function InterventionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('actions');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'actions');
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    setSearchParams((prev) => { prev.set('tab', tab); return prev; }, { replace: true });
+  }, [setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
 
   const {
@@ -294,7 +300,7 @@ export default function InterventionDetailPage() {
       {/* TABS */}
       <Tabs.Root
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
         style={{ marginTop: '2rem' }}
       >
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>

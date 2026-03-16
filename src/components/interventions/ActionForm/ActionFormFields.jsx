@@ -1,44 +1,32 @@
 /**
  * ActionFormFields - Sous-composant
- * Métadonnées : Temps, Date, Catégorie
- * Props structurées : { formState, handlers, metadata }
+ * Plage horaire, Date, Catégorie sur une même ligne
+ * Props structurées : { formState, handlers, metadata, timeRange, onTimeRangeChange }
  */
 
 import PropTypes from 'prop-types';
 import { Box, Flex, Text, TextField, Select, Badge } from '@radix-ui/themes';
-import { Clock, Activity, Tag } from 'lucide-react';
+import { Activity, Tag } from 'lucide-react';
+import TimeRangePicker from '@/components/planning/TimeRangePicker';
 import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
-function ActionFormFields({ formState, handlers, metadata, hiddenFields = [] }) {
-  const { time, date, category } = formState;
-  const { handleTimeChange, handleDateChange, handleCategoryChange } = handlers;
+function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange }) {
+  const { date, category } = formState;
+  const { handleDateChange, handleCategoryChange } = handlers;
   const { subcategories = [] } = metadata;
 
   return (
-    <Flex gap="2" wrap="wrap">
-      {/* Temps passé — masqué si hiddenFields inclut 'time' (ex: planningMode) */}
-      {!hiddenFields.includes('time') && <Box style={{ flex: '1', minWidth: '100px' }}>
-        <Flex align="center" gap="1" mb="1">
-          <Clock size={14} color="var(--gray-9)" />
-          <Text size="1" weight="bold">Temps</Text>
-        </Flex>
-        <TextField.Root
-          type="number"
-          step="0.25"
-          min="0"
-          placeholder="0.5"
-          value={time}
-          onChange={(e) => handleTimeChange(e.target.value)}
-          style={{ backgroundColor: 'white' }}
-        >
-          <TextField.Slot side="right">
-            <Text size="1" color="gray">h</Text>
-          </TextField.Slot>
-        </TextField.Root>
-      </Box>}
+    <Flex gap="2" wrap="wrap" align="end">
+      {/* Plage horaire */}
+      <Box style={{ minWidth: '180px' }}>
+        <Text size="1" weight="bold" mb="1" style={{ display: 'block' }}>
+          Plage horaire <Text as="span" color="red">*</Text>
+        </Text>
+        <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} />
+      </Box>
 
       {/* Date de l'action */}
-      <Box style={{ flex: '1', minWidth: '100px' }}>
+      <Box style={{ flex: '1', minWidth: '120px' }}>
         <Flex align="center" gap="1" mb="1">
           <Activity size={14} color="var(--gray-9)" />
           <Text size="1" weight="bold">Date</Text>
@@ -147,19 +135,21 @@ ActionFormFields.displayName = 'ActionFormFields';
 
 ActionFormFields.propTypes = {
   formState: PropTypes.shape({
-    time: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     date: PropTypes.string,
     category: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }).isRequired,
-  hiddenFields: PropTypes.arrayOf(PropTypes.string),
   handlers: PropTypes.shape({
-    handleTimeChange: PropTypes.func.isRequired,
     handleDateChange: PropTypes.func.isRequired,
     handleCategoryChange: PropTypes.func.isRequired
   }).isRequired,
   metadata: PropTypes.shape({
     subcategories: PropTypes.array
-  }).isRequired
+  }).isRequired,
+  timeRange: PropTypes.shape({
+    start: PropTypes.string,
+    end: PropTypes.string,
+  }).isRequired,
+  onTimeRangeChange: PropTypes.func.isRequired,
 };
 
 export default ActionFormFields;

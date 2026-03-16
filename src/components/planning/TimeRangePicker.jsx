@@ -52,7 +52,7 @@ export default function TimeRangePicker({ value, onChange, disabled }) {
         <Text size="1" color="gray">De</Text>
         <Select.Root value={start ?? ''} onValueChange={handleStart} disabled={disabled}>
           <Select.Trigger placeholder="--:--" />
-          <Select.Content style={{ maxHeight: 220 }}>
+          <Select.Content position="popper" sideOffset={4} style={{ maxHeight: 220 }}>
             {ALL_SLOTS.map((s) => (
               <Select.Item key={s} value={s}>{s}</Select.Item>
             ))}
@@ -64,7 +64,7 @@ export default function TimeRangePicker({ value, onChange, disabled }) {
         <Text size="1" color="gray">à</Text>
         <Select.Root value={end ?? ''} onValueChange={handleEnd} disabled={disabled || !start}>
           <Select.Trigger placeholder="--:--" />
-          <Select.Content style={{ maxHeight: 220 }}>
+          <Select.Content position="popper" sideOffset={4} style={{ maxHeight: 220 }}>
             {endSlots.map((s) => (
               <Select.Item key={s} value={s}>{s}</Select.Item>
             ))}

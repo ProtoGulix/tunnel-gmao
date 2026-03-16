@@ -6,14 +6,22 @@
 import { api } from '@/lib/api/client';
 
 /**
- * Actions d'un technicien pour un jour donné
- * @param {string} date - Format YYYY-MM-DD
- * @param {string} techId - UUID du technicien
- * @returns {Promise<Array>}
+ * Actions sur une plage de dates, tous les techniciens ou un seul.
+ * Retourne { [date]: action[] } prêt à l'emploi.
+ * @param {string} startDate - Format YYYY-MM-DD
+ * @param {string} endDate   - Format YYYY-MM-DD
+ * @param {string|null} [techId] - UUID du technicien, omis = tous
+ * @returns {Promise<Record<string, Array>>}
  */
-export async function fetchDayActions(date, techId) {
-  const res = await api.get('/intervention-actions', { params: { date, tech_id: techId } });
-  return res.data ?? [];
+export async function fetchWeekActions(startDate, endDate, techId = null) {
+  const params = { start_date: startDate, end_date: endDate };
+  if (techId) params.tech_id = techId;
+  const res = await api.get('/intervention-actions', { params });
+  const grouped = {};
+  for (const entry of res.data ?? []) {
+    grouped[entry.date] = entry.actions ?? [];
+  }
+  return grouped;
 }
 
 /**

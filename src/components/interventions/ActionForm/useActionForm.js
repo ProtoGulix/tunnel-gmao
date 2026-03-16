@@ -14,7 +14,6 @@ import { areComplexityFactorsRequired, validateFormState } from './actionFormUti
 export function useActionForm(initialState = {}) {
   // ===== STATE =====
   const [formState, setFormState] = useState({
-    time: initialState.time ?? '',
     date: initialState.date ?? '',
     category: initialState.category ?? '',
     description: initialState.description ?? '',
@@ -25,10 +24,6 @@ export function useActionForm(initialState = {}) {
   const [validationErrors, setValidationErrors] = useState([]);
 
   // ===== HANDLERS =====
-  const handleTimeChange = useCallback((value) => {
-    setFormState((prev) => ({ ...prev, time: value }));
-  }, []);
-
   const handleDateChange = useCallback((value) => {
     setFormState((prev) => ({ ...prev, date: value }));
   }, []);
@@ -59,7 +54,6 @@ export function useActionForm(initialState = {}) {
 
   const handleReset = useCallback(() => {
     setFormState({
-      time: initialState.time ?? '',
       date: initialState.date ?? '',
       category: initialState.category ?? '',
       description: initialState.description ?? '',
@@ -69,17 +63,19 @@ export function useActionForm(initialState = {}) {
     setValidationErrors([]);
   }, [initialState]);
 
-  const handleValidate = useCallback(() => {
-    const validation = validateFormState(formState);
-    setValidationErrors(validation.errors);
-    return validation.isValid;
-  }, [formState]);
+  const handleValidate = useCallback(
+    (timeRange = null) => {
+      const validation = validateFormState(formState, timeRange);
+      setValidationErrors(validation.errors);
+      return validation.isValid;
+    },
+    [formState]
+  );
 
   // ===== RETURN =====
   return {
     formState,
     handlers: {
-      handleTimeChange,
       handleDateChange,
       handleCategoryChange,
       handleDescriptionChange,
