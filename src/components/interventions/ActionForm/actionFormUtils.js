@@ -81,8 +81,12 @@ export const validateFormState = (formState, timeRange = null) => {
     errors.push('Au moins un facteur de complexité est requis pour complexité > 5');
   }
 
-  if (!timeRange?.start) errors.push('Heure de début requise');
-  if (!timeRange?.end) errors.push('Heure de fin requise');
+  // Plage horaire — optionnelle si l'action est au format ancien (time_spent seul)
+  // On ne bloque que si l'utilisateur a commencé à saisir une borne sans finir
+  const hasStart = Boolean(timeRange?.start);
+  const hasEnd = Boolean(timeRange?.end);
+  if (hasStart && !hasEnd) errors.push('Heure de fin requise');
+  if (!hasStart && hasEnd) errors.push('Heure de début requise');
 
   return {
     isValid: errors.length === 0,

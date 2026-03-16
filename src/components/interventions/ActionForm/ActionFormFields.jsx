@@ -10,19 +10,26 @@ import { Activity, Tag } from 'lucide-react';
 import TimeRangePicker from '@/components/planning/TimeRangePicker';
 import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
-function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange }) {
+function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange, legacyTimeSpent }) {
   const { date, category } = formState;
   const { handleDateChange, handleCategoryChange } = handlers;
   const { subcategories = [] } = metadata;
+
+  const showLegacyHint = legacyTimeSpent && !timeRange?.start && !timeRange?.end;
 
   return (
     <Flex gap="2" wrap="wrap" align="end">
       {/* Plage horaire */}
       <Box style={{ minWidth: '180px' }}>
         <Text size="1" weight="bold" mb="1" style={{ display: 'block' }}>
-          Plage horaire <Text as="span" color="red">*</Text>
+          Plage horaire
         </Text>
         <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} />
+        {showLegacyHint && (
+          <Text size="1" color="amber" mt="1" style={{ display: 'block' }}>
+            Ancien format — temps saisi : {legacyTimeSpent}h. Saisissez une plage pour mettre à jour.
+          </Text>
+        )}
       </Box>
 
       {/* Date de l'action */}

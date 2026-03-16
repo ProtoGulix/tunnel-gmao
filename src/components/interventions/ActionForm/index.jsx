@@ -36,13 +36,18 @@ function ActionForm({
   style,
   interventionId = null,
   techId = null,
+  legacyTimeSpent = null,
 }) {
   const { user } = useAuth();
   const form = useActionForm(initialState);
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
-  const [timeRange, setTimeRange] = useState({ start: null, end: null });
+  const [timeRange, setTimeRange] = useState({
+    start: initialState?.actionStart ?? null,
+    end: initialState?.actionEnd ?? null,
+  });
+
   const [submitError, setSubmitError] = useState(null);
 
   const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
@@ -63,8 +68,10 @@ function ActionForm({
       description: form.formState.description,
       complexity_score: complexityScore,
       tech: resolvedTechId,
-      action_start: `${timeRange.start}:00`,
-      action_end: `${timeRange.end}:00`,
+      ...(timeRange.start && timeRange.end
+        ? { action_start: `${timeRange.start}:00`, action_end: `${timeRange.end}:00` }
+        : { time_spent: legacyTimeSpent ?? 0 }
+      ),
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
     };
@@ -137,6 +144,7 @@ function ActionForm({
               metadata={metadata}
               timeRange={timeRange}
               onTimeRangeChange={setTimeRange}
+              legacyTimeSpent={legacyTimeSpent}
             />
 
             <ActionFormDescription formState={form.formState} handlers={form.handlers} />

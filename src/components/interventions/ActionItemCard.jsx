@@ -71,12 +71,13 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const buildInitialEditState = () => {
     const dateIso = createdAt ? new Date(createdAt).toISOString().split('T')[0] : '';
     return {
-      time: timeSpent || '',
       date: dateIso,
       category: subcategory?.id ? String(subcategory.id) : '',
       description: description || '',
-      complexity: String(complexityScore || '5'),
-      complexityFactors: Array.isArray(localAction?.complexityFactors) ? [...localAction.complexityFactors] : [],
+      complexity: complexityScore ? String(complexityScore) : '',
+      complexityFactors: getComplexityFactors(localAction),
+      actionStart: localAction?.actionStart ?? null,
+      actionEnd: localAction?.actionEnd ?? null,
     };
   };
 
@@ -110,7 +111,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         ? { id: localAction.technician.id }
         : (user?.id ? { id: user.id } : undefined)),
       // Ensure intervention context stays attached
-      intervention: localAction.intervention?.id ? { id: String(localAction.intervention.id) } : undefined,
+      intervention: interventionId ? { id: String(interventionId) } : undefined,
       // Always include complexityFactors to allow updates/clearing
       complexityFactors: Array.isArray(formData.complexityFactors) ? formData.complexityFactors : [],
     };
@@ -224,11 +225,14 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       {/* EDIT FORM */}
       {showEditForm && (
         <ActionForm
+          key={localAction.id}
           initialState={buildInitialEditState()}
           metadata={{ subcategories, complexityFactors }}
           onCancel={() => setShowEditForm(false)}
           onSubmit={handleSubmitEdit}
           style={{ marginTop: '0.75rem' }}
+          interventionId={interventionId ? String(interventionId) : null}
+          legacyTimeSpent={timeSpent || null}
         />
       )}
 

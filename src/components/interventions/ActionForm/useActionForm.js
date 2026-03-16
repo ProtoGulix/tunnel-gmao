@@ -17,7 +17,7 @@ export function useActionForm(initialState = {}) {
     date: initialState.date ?? '',
     category: initialState.category ?? '',
     description: initialState.description ?? '',
-    complexity: initialState.complexity ?? '5',
+    complexity: initialState.complexity ?? '',
     complexityFactors: initialState.complexityFactors ?? [],
   });
 
@@ -41,15 +41,10 @@ export function useActionForm(initialState = {}) {
   }, []);
 
   const handleComplexityFactorToggle = useCallback((factorId) => {
-    setFormState((prev) => {
-      const isSelected = prev.complexityFactors.includes(factorId);
-      return {
-        ...prev,
-        complexityFactors: isSelected
-          ? prev.complexityFactors.filter((id) => id !== factorId)
-          : [...prev.complexityFactors, factorId],
-      };
-    });
+    setFormState((prev) => ({
+      ...prev,
+      complexityFactors: prev.complexityFactors.includes(factorId) ? [] : [factorId],
+    }));
   }, []);
 
   const handleReset = useCallback(() => {
@@ -57,7 +52,7 @@ export function useActionForm(initialState = {}) {
       date: initialState.date ?? '',
       category: initialState.category ?? '',
       description: initialState.description ?? '',
-      complexity: initialState.complexity ?? '5',
+      complexity: initialState.complexity ?? '',
       complexityFactors: initialState.complexityFactors ?? [],
     });
     setValidationErrors([]);
