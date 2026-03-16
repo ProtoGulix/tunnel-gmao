@@ -4,6 +4,37 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.23.0 - 2026-03-16
+
+Stabilité : **STABLE** ✅
+
+### Planning — page dédiée et gestion complète des actions
+
+Nouvelle page `/planning` accessible depuis le menu principal, offrant une vue semaine interactive pour l'ensemble des actions planifiées.
+
+**API** : enrichissement de `planning.js` avec `createActionDirect`, récupération des bornes horaires (`action_start` / `action_end`) et gestion des paramètres de filtrage technicien.
+
+**Composants** :
+- `PlanningView` — page principale avec vue semaine, formulaire d'ajout d'action en ligne et filtrage par technicien.
+- `EquipementSearch` — champ de recherche serveur d'équipement utilisé dans le formulaire d'action.
+- `InterventionSelector` — sélecteur d'intervention par recherche textuelle, avec aperçu de la fiche sélectionnée.
+- `TimeRangePicker` — saisie des horaires début / fin d'une action (validation cohérence, affichage durée calculée).
+- `ActionForm` — refactorisation complète : champs horaires intégrés dans `ActionFormFields`, validation étendue des plages horaires.
+
+**Technicien par défaut** : à l'ouverture de la vue planning (page dédiée et onglet intervention), le technicien connecté est automatiquement pré-sélectionné s'il figure dans la liste des utilisateurs actifs. La sélection reste modifiable.
+
+### Équipements — tableau unifié avec pagination serveur
+
+Refontede la liste des équipements en un composant `EquipementTable` réutilisable, partagé entre la page principale et l'onglet sous-équipements d'une fiche équipement.
+
+**Pagination et recherche côté serveur** : l'API `fetchEquipements` supporte désormais les paramètres `page`, `page_size`, `search` et `class_id`. Le hook `useEquipements` gère l'état de pagination et déclenche un rechargement à chaque changement de filtre.
+
+**Relation parent-enfant** : le tableau affiche les sous-équipements d'un équipement parent via le même composant `EquipementTable`, ce qui supprime le hook `useEquipementChildren` devenu redondant.
+
+**Filtrage par classe** : sélecteur de classe d'équipement dans la barre de filtre de la page équipements, avec remise à zéro automatique de la pagination lors d'un changement.
+
+---
+
 ## 3.22.0 - 2026-03-12
 
 Stabilité : **STABLE** ✅
