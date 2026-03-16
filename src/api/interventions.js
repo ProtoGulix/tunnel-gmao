@@ -193,6 +193,15 @@ function mapInterventionDetailResponse(raw = {}) {
           complexityScore: a.complexity_score ?? null,
           createdAt: a.created_at,
           date: a.date,
+          actionStart: a.action_start ? a.action_start.slice(0, 5) : null,
+          actionEnd: a.action_end ? a.action_end.slice(0, 5) : null,
+          complexityFactors: a.complexity_factor
+            ? [
+                typeof a.complexity_factor === 'string'
+                  ? a.complexity_factor
+                  : a.complexity_factor?.code,
+              ]
+            : [],
           subcategory: a.subcategory
             ? {
                 id: a.subcategory.id?.toString() || '',

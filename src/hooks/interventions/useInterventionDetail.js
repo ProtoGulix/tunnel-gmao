@@ -14,7 +14,7 @@ import {
   deleteIntervention as apiDeleteIntervention,
   fetchInterventionPdf,
 } from '@/api/interventions';
-import { createAction } from '@/api/actions';
+import { createActionDirect } from '@/api/planning';
 import { useAuth } from '@/auth/useAuth';
 
 /**
@@ -118,34 +118,20 @@ export function useInterventionDetail(id) {
   );
 
   const addAction = useCallback(
-    async (formData) => {
+    async (payload) => {
       try {
-        // Transformer les données du formulaire vers le format API
-        const actionPayload = {
-          interventionId: id,
-          technicianId: user?.id, // ID du technicien courant
-          description: formData.description || '',
-          timeSpent: Number(formData.time) || 0.5, // Quarts d'heure
-          subcategoryId: Number(formData.category), // ID sous-catégorie
-          complexityScore: Number(formData.complexity) || 5,
-          date: formData.date || new Date().toISOString().split('T')[0],
-        };
-
-        // Ajouter le facteur de complexité si score > 5 et facteurs fournis
-        if (Number(formData.complexity) > 5 && formData.complexityFactors?.length > 0) {
-          // Envoyer le premier facteur (singulier) - le backend expect complexity_factor
-          actionPayload.complexityFactor = formData.complexityFactors[0];
-        }
-
-        await createAction(actionPayload);
-        // Refetch pour avoir les données à jour
+        // Le payload est déjà canonique (construit par ActionForm)
+        await createActionDirect({
+          ...payload,
+          intervention_id: payload.intervention_id ?? id,
+        });
         await fetchData(true);
       } catch (err) {
         console.error('Erreur ajout action:', err);
         throw err;
       }
     },
-    [id, user?.id, fetchData]
+    [id, fetchData]
   );
 
   const deleteIntervention = useCallback(async () => {

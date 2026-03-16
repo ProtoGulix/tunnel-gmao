@@ -116,6 +116,8 @@ function mapActionResponse(raw = {}) {
     complexityScore: raw.complexity_score ?? null,
     createdAt: raw.created_at,
     date: raw.date,
+    actionStart: raw.action_start ? raw.action_start.slice(0, 5) : null,
+    actionEnd: raw.action_end ? raw.action_end.slice(0, 5) : null,
     subcategory: raw.subcategory
       ? {
           id: raw.subcategory.id?.toString() || '',

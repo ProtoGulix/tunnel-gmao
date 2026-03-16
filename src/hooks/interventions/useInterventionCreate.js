@@ -23,7 +23,7 @@ export function useInterventionCreate({ navigate }) {
   const [error, setError] = useState(null);
 
   const fetchEquipementsFn = useCallback(
-    (search) => fetchEquipements({ search }),
+    (search) => fetchEquipements({ search }).then((r) => r.items ?? []),
     []
   );
 
@@ -34,24 +34,32 @@ export function useInterventionCreate({ navigate }) {
     return null;
   }, [formData]);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setError(null);
-    const validationError = validate();
-    if (validationError) { setError(validationError); return; }
-    try {
-      setSaving(true);
-      const created = await createIntervention({
-        ...formData,
-        reportedDate: formData.reportedDate ? new Date(formData.reportedDate).toISOString() : undefined,
-      });
-      navigate(`/intervention/${created.id}`);
-    } catch (err) {
-      setError(err.message || "Erreur lors de la création de l'intervention");
-    } finally {
-      setSaving(false);
-    }
-  }, [formData, validate, navigate]);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setError(null);
+      const validationError = validate();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+      try {
+        setSaving(true);
+        const created = await createIntervention({
+          ...formData,
+          reportedDate: formData.reportedDate
+            ? new Date(formData.reportedDate).toISOString()
+            : undefined,
+        });
+        navigate(`/intervention/${created.id}`);
+      } catch (err) {
+        setError(err.message || "Erreur lors de la création de l'intervention");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [formData, validate, navigate]
+  );
 
   return { formData, setFormData, fetchEquipementsFn, saving, error, handleSubmit };
 }

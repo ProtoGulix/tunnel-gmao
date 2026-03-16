@@ -86,7 +86,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
                 />
               ) : (
                 <AsyncSearchSelect
-                  fetchFn={(q) => fetchEquipements({ search: q })}
+                  fetchFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
                   onSelect={handleMachineSelect}
                   renderItem={(eq) => (
                     <Flex align="center" gap="2">

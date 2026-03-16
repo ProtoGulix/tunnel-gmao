@@ -14,21 +14,16 @@ import { areComplexityFactorsRequired, validateFormState } from './actionFormUti
 export function useActionForm(initialState = {}) {
   // ===== STATE =====
   const [formState, setFormState] = useState({
-    time: initialState.time ?? '',
     date: initialState.date ?? '',
     category: initialState.category ?? '',
     description: initialState.description ?? '',
-    complexity: initialState.complexity ?? '5',
+    complexity: initialState.complexity ?? '',
     complexityFactors: initialState.complexityFactors ?? [],
   });
 
   const [validationErrors, setValidationErrors] = useState([]);
 
   // ===== HANDLERS =====
-  const handleTimeChange = useCallback((value) => {
-    setFormState((prev) => ({ ...prev, time: value }));
-  }, []);
-
   const handleDateChange = useCallback((value) => {
     setFormState((prev) => ({ ...prev, date: value }));
   }, []);
@@ -46,40 +41,36 @@ export function useActionForm(initialState = {}) {
   }, []);
 
   const handleComplexityFactorToggle = useCallback((factorId) => {
-    setFormState((prev) => {
-      const isSelected = prev.complexityFactors.includes(factorId);
-      return {
-        ...prev,
-        complexityFactors: isSelected
-          ? prev.complexityFactors.filter((id) => id !== factorId)
-          : [...prev.complexityFactors, factorId],
-      };
-    });
+    setFormState((prev) => ({
+      ...prev,
+      complexityFactors: prev.complexityFactors.includes(factorId) ? [] : [factorId],
+    }));
   }, []);
 
   const handleReset = useCallback(() => {
     setFormState({
-      time: initialState.time ?? '',
       date: initialState.date ?? '',
       category: initialState.category ?? '',
       description: initialState.description ?? '',
-      complexity: initialState.complexity ?? '5',
+      complexity: initialState.complexity ?? '',
       complexityFactors: initialState.complexityFactors ?? [],
     });
     setValidationErrors([]);
   }, [initialState]);
 
-  const handleValidate = useCallback(() => {
-    const validation = validateFormState(formState);
-    setValidationErrors(validation.errors);
-    return validation.isValid;
-  }, [formState]);
+  const handleValidate = useCallback(
+    (timeRange = null) => {
+      const validation = validateFormState(formState, timeRange);
+      setValidationErrors(validation.errors);
+      return validation.isValid;
+    },
+    [formState]
+  );
 
   // ===== RETURN =====
   return {
     formState,
     handlers: {
-      handleTimeChange,
       handleDateChange,
       handleCategoryChange,
       handleDescriptionChange,
