@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Box, Flex } from '@radix-ui/themes';
 
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/auth/useAuth';
 import { useApiStatus } from '@/hooks/shared/useApiStatus';
 import { fetchWeekActions, fetchActiveUsers, createActionDirect } from '@/api/planning';
 import ActionForm from '@/components/interventions/ActionForm';
@@ -19,6 +20,7 @@ import { addDays, getMondayOf, getWeekDays, isWeekend, todayIso } from '@/compon
 export default function InterventionPlanningTab({ interventionId = null, onActionCreated }) {
   const today = todayIso();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
 
   // Semaine depuis query param ?week=YYYY-MM-DD (lundi)
   const weekParam = searchParams.get('week');
@@ -42,11 +44,16 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
     setSearchParams((prev) => { prev.set('week', m); return prev; }, { replace: true });
   }, [setSearchParams]);
 
-  // Charger users (techId reste null = tous par défaut)
+  // Charger users et pré-sélectionner l'utilisateur connecté s'il est technicien
   useEffect(() => {
     wrapUsers(async () => {
       const allUsers = await fetchActiveUsers();
       setUsers(allUsers);
+      setTechId((current) => {
+        if (current !== null) return current; // déjà sélectionné manuellement
+        const match = allUsers.find((u) => u.id === user?.id);
+        return match ? match.id : null;
+      });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
