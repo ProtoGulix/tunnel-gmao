@@ -39,6 +39,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [purchaseFormLoading, setPurchaseFormLoading] = useState(false);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
@@ -102,10 +103,14 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const handleSubmitEdit = useCallback(async (formData) => {
     const updates = {
       description: formData.description,
-      timeSpent: parseFloat(formData.time) || 0,
-      date: formData.date || undefined,
-      complexityScore: parseInt(formData.complexity) || undefined,
-      subcategory: formData.category ? { id: String(formData.category) } : undefined,
+      // Bornes horaires (nouveau format) ou time_spent (ancien format)
+      ...(formData.action_start && formData.action_end
+        ? { actionStart: formData.action_start, actionEnd: formData.action_end }
+        : { timeSpent: parseFloat(formData.time_spent) || 0 }
+      ),
+      date: formData.created_at || undefined,
+      complexityScore: formData.complexity_score || undefined,
+      subcategory: formData.action_subcategory ? { id: String(formData.action_subcategory) } : undefined,
       // Preserve or set technician
       technician: (localAction.technician?.id
         ? { id: localAction.technician.id }
@@ -113,19 +118,16 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       // Ensure intervention context stays attached
       intervention: interventionId ? { id: String(interventionId) } : undefined,
       // Always include complexityFactors to allow updates/clearing
-      complexityFactors: Array.isArray(formData.complexityFactors) ? formData.complexityFactors : [],
+      complexityFactors: formData.complexity_factor ? [formData.complexity_factor] : [],
     };
     const updated = await actionsApi.updateAction(String(localAction.id), updates);
     setLocalAction(updated || localAction);
     setShowEditForm(false);
-  }, [localAction, user?.id]);
+  }, [localAction, user?.id, interventionId]);
 
   const handleSubmitPurchaseRequest = useCallback(async (requestData) => {
     try {
-      if (!interventionId) {
-        throw new Error('Impossible de créer la demande : intervention absente');
-      }
-
+      setPurchaseFormLoading(true);
       const created = await stockApi.createPurchaseRequest({
         item_label: requestData.item_label,
         quantity: requestData.quantity,
@@ -133,7 +135,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         urgency: requestData.urgency,
         requested_by: requestData.requested_by,
         stock_item_id: requestData.stock_item_id || null,
-        intervention_id: interventionId,
+        intervention_action_id: localAction.id,
       });
 
       if (created?.id) {
@@ -144,8 +146,10 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       setShowPurchaseForm(false);
     } catch (error) {
       console.error('Error creating purchase request:', error);
+    } finally {
+      setPurchaseFormLoading(false);
     }
-  }, [interventionId, onPurchaseRequestCreated]);
+  }, [localAction.id, onPurchaseRequestCreated]);
 
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
@@ -244,6 +248,8 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
             actionId={localAction.id || action.id}
             onSubmit={handleSubmitPurchaseRequest}
             onCancel={() => setShowPurchaseForm(false)}
+            loading={purchaseFormLoading}
+            compact
           />
         </div>
       )}

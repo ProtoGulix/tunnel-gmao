@@ -4,6 +4,30 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.24.0 - 2026-03-17
+
+Stabilité : **STABLE** ✅
+
+### Équipements — nouvelles demandes d'intervention visibles dans la recherche
+
+Le composant `EquipementSearch` affiche désormais un badge **orange** indiquant le nombre de nouvelles demandes d'intervention (`health.new_requests_count`) retourné par l'API. Le badge apparaît dans la liste déroulante de recherche et dans le bandeau de sélection, entre le compteur d'interventions ouvertes et l'état de santé global.
+
+### Planning — gestion des horaires et ajustements API
+
+**Horaires d'action** : les bornes `action_start` / `action_end` sont désormais correctement transmises et affichées dans `ActionItemCard` et `ActionFormFields`. La saisie horaire dans le formulaire est renforcée avec la validation de cohérence début/fin.
+
+**Ajustements API** :
+- `actions.js` et `interventions.js` : mise à jour des payloads pour inclure les champs horaires.
+- `planning.js` : meilleure lisibilité dans `fetchOpenInterventionsByEquipement` (paramètres nommés).
+- `stock.js` : correction mineure de paramètre.
+- `PurchaseRequestForm` / `FormActions` : harmonisation des actions de formulaire d'achat.
+
+### Docker — exposition frontend sur toutes les interfaces
+
+Le service frontend dans `docker-compose.yml` expose désormais le port sur `0.0.0.0` pour être accessible depuis le réseau local (utile en développement sur machine distante ou VM).
+
+---
+
 ## 3.23.0 - 2026-03-16
 
 Stabilité : **STABLE** ✅

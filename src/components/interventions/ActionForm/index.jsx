@@ -47,6 +47,7 @@ function ActionForm({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
   });
+  const [manualTimeSpent, setManualTimeSpent] = useState(legacyTimeSpent ?? '');
 
   const [submitError, setSubmitError] = useState(null);
 
@@ -70,7 +71,7 @@ function ActionForm({
       tech: resolvedTechId,
       ...(timeRange.start && timeRange.end
         ? { action_start: `${timeRange.start}:00`, action_end: `${timeRange.end}:00` }
-        : { time_spent: legacyTimeSpent ?? 0 }
+        : { time_spent: parseFloat(manualTimeSpent) || legacyTimeSpent || 0 }
       ),
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
@@ -144,7 +145,8 @@ function ActionForm({
               metadata={metadata}
               timeRange={timeRange}
               onTimeRangeChange={setTimeRange}
-              legacyTimeSpent={legacyTimeSpent}
+              manualTimeSpent={manualTimeSpent}
+              onManualTimeSpentChange={setManualTimeSpent}
             />
 
             <ActionFormDescription formState={form.formState} handlers={form.handlers} />

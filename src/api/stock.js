@@ -15,7 +15,8 @@ import { api } from '@/lib/api/client';
  * @param {string} payload.urgency - Urgency level
  * @param {string} payload.requested_by - Requester identifier
  * @param {number} [payload.stock_item_id] - Stock item ID if linked
- * @param {number} [payload.intervention_id] - Intervention ID if linked
+ * @param {string} [payload.intervention_action_id] - Action ID (deduces intervention automatically, preferred)
+ * @param {string} [payload.intervention_id] - Intervention ID (mode autonome, ignored if intervention_action_id is set)
  * @param {string} [payload.reason] - Reason for request
  * @param {string} [payload.notes] - Additional notes
  * @returns {Promise<Object>} Created purchase request
