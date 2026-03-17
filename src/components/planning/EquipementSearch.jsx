@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text, IconButton } from '@radix-ui/themes';
-import { X, CheckCircle, AlertTriangle, AlertOctagon, Wrench } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, AlertOctagon, Wrench, ClipboardList } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import { fetchEquipements } from '@/api/equipements';
 
@@ -45,6 +45,19 @@ function InterventionCount({ health }) {
 
 InterventionCount.propTypes = { health: PropTypes.object };
 
+function NewRequestsCount({ health }) {
+  const count = health?.new_requests_count;
+  if (!count) return null;
+  return (
+    <Badge color="orange" variant="soft" size="1">
+      <ClipboardList size={10} style={{ marginRight: 2 }} />
+      {count} demande{count > 1 ? 's' : ''}
+    </Badge>
+  );
+}
+
+NewRequestsCount.propTypes = { health: PropTypes.object };
+
 async function searchEquipements(query) {
   const res = await fetchEquipements({ search: query, limit: 20 });
   return Array.isArray(res) ? res : (res.items ?? []);
@@ -68,6 +81,7 @@ export default function EquipementSearch({ value, onChange, disabled, placeholde
       <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}>
         <Badge color="blue" variant="soft" size="1">{selected.code}</Badge>
         <Text size="2" weight="medium" style={{ flex: 1 }}>{selected.name}</Text>
+        <NewRequestsCount health={selected.health} />
         <InterventionCount health={selected.health} />
         <HealthBadge level={selected.health?.level} />
         {!disabled && (
@@ -88,6 +102,7 @@ export default function EquipementSearch({ value, onChange, disabled, placeholde
         <Flex align="center" gap="2">
           <Badge color="gray" variant="soft" size="1">{item.code}</Badge>
           <Text size="2" style={{ flex: 1 }}>{item.name}</Text>
+          <NewRequestsCount health={item.health} />
           <InterventionCount health={item.health} />
           <HealthBadge level={item.health?.level} />
         </Flex>
