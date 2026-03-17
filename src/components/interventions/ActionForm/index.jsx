@@ -82,7 +82,7 @@ function ActionForm({
     e.preventDefault();
     setSubmitError(null);
 
-    if (!form.handlers.handleValidate(timeRange)) return;
+    if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
 
     try {
       const result = await onSubmit(buildPayload());
