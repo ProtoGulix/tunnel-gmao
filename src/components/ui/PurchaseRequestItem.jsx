@@ -119,7 +119,7 @@ export default function PurchaseRequestItem({ pr, onDelete }) {
 
   const isToQualify = !pr.stock_item_id && !pr.stockItemId;
   const isConsultation = derivedStatus?.code === 'CONSULTATION';
-  const consultationCount = isConsultation ? (pr.order_lines?.length ?? 0) : 0;
+  const consultationCount = isConsultation ? (pr.suppliers_count ?? pr.order_lines?.length ?? 0) : 0;
   const stockRef = pr.stock_item?.ref || pr.stockItemRef || pr.stock_item_ref || pr.stockItemCode;
   const { bg, icon } = derivePrStyle(isToQualify, isConsultation);
 

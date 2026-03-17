@@ -6,16 +6,30 @@
 
 import PropTypes from 'prop-types';
 import { Box, Flex, Text, TextField, Select, Badge } from '@radix-ui/themes';
-import { Activity, Tag } from 'lucide-react';
+import { Activity, Clock, Tag } from 'lucide-react';
 import TimeRangePicker from '@/components/planning/TimeRangePicker';
 import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
-function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange, legacyTimeSpent }) {
+function computeDuration(start, end) {
+  if (!start || !end) return '';
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const totalMin = (eh * 60 + em) - (sh * 60 + sm);
+  if (totalMin <= 0) return '';
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
+}
+
+function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange, manualTimeSpent, onManualTimeSpentChange }) {
   const { date, category } = formState;
   const { handleDateChange, handleCategoryChange } = handlers;
   const { subcategories = [] } = metadata;
 
-  const showLegacyHint = legacyTimeSpent && !timeRange?.start && !timeRange?.end;
+  const hasBounds = Boolean(timeRange?.start && timeRange?.end);
+  const durationValue = hasBounds
+    ? computeDuration(timeRange.start, timeRange.end)
+    : (manualTimeSpent ?? '');
 
   return (
     <Flex gap="2" wrap="wrap" align="end">
@@ -25,11 +39,30 @@ function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRang
           Plage horaire
         </Text>
         <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} />
-        {showLegacyHint && (
-          <Text size="1" color="amber" mt="1" style={{ display: 'block' }}>
-            Ancien format — temps saisi : {legacyTimeSpent}h. Saisissez une plage pour mettre à jour.
+      </Box>
+
+      {/* Durée — calculée depuis les bornes ou saisie manuelle (ancien format) */}
+      <Box style={{ minWidth: '80px', maxWidth: '90px' }}>
+        <Flex align="center" gap="1" mb="1">
+          <Clock size={14} color={hasBounds ? 'var(--gray-7)' : 'var(--gray-9)'} />
+          <Text size="1" weight="bold" color={hasBounds ? 'gray' : undefined}>
+            Durée {!hasBounds && <Text as="span" color="red">*</Text>}
           </Text>
-        )}
+        </Flex>
+        <TextField.Root
+          type={hasBounds ? 'text' : 'number'}
+          value={durationValue}
+          readOnly={hasBounds}
+          onChange={!hasBounds ? (e) => onManualTimeSpentChange(e.target.value) : undefined}
+          min={!hasBounds ? '0.25' : undefined}
+          step={!hasBounds ? '0.25' : undefined}
+          placeholder={!hasBounds ? '1.5' : ''}
+          style={{
+            backgroundColor: hasBounds ? 'var(--gray-3)' : 'white',
+            color: hasBounds ? 'var(--gray-10)' : undefined,
+            cursor: hasBounds ? 'default' : 'text',
+          }}
+        />
       </Box>
 
       {/* Date de l'action */}
@@ -157,6 +190,8 @@ ActionFormFields.propTypes = {
     end: PropTypes.string,
   }).isRequired,
   onTimeRangeChange: PropTypes.func.isRequired,
+  manualTimeSpent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onManualTimeSpentChange: PropTypes.func,
 };
 
 export default ActionFormFields;

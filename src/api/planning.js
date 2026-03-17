@@ -25,13 +25,13 @@ export async function fetchWeekActions(startDate, endDate, techId = null) {
 }
 
 /**
- * Interventions ouvertes/en_cours pour un équipement
+ * Interventions actives pour un équipement (ouvert, en_cours, attente_pieces, attente_prod)
  * @param {string} equipementId - UUID de l'équipement
  * @returns {Promise<Array<{ id, code, title, status_actual, priority, reported_date }>>}
  */
 export async function fetchOpenInterventionsByEquipement(equipementId) {
   const res = await api.get('/interventions', {
-    params: { equipement_id: equipementId, status: 'ouvert,en_cours', include: '' },
+    params: { equipement_id: equipementId, status: 'ouvert,en_cours,attente_pieces,attente_prod', include: '' },
   });
   return Array.isArray(res.data) ? res.data : [];
 }

@@ -71,7 +71,11 @@ export async function updateAction(id, updates) {
     payload.description = updates.description;
   }
 
-  if (updates.timeSpent !== undefined) {
+  // Bornes horaires OU time_spent — jamais les deux (ambiguïté API)
+  if (updates.actionStart && updates.actionEnd) {
+    payload.action_start = updates.actionStart;
+    payload.action_end = updates.actionEnd;
+  } else if (updates.timeSpent !== undefined) {
     payload.time_spent = updates.timeSpent;
   }
 
@@ -121,17 +125,18 @@ function mapActionResponse(raw = {}) {
     subcategory: raw.subcategory
       ? {
           id: raw.subcategory.id?.toString() || '',
-          label: raw.subcategory.label || '',
+          label: raw.subcategory.name || '',
           code: raw.subcategory.code || '',
         }
       : null,
-    technician: raw.technician
-      ? {
-          id: raw.technician.id?.toString() || '',
-          firstName: raw.technician.first_name || '',
-          lastName: raw.technician.last_name || '',
-        }
-      : null,
+    technician:
+      raw.tech || raw.technician
+        ? {
+            id: (raw.tech || raw.technician).id?.toString() || '',
+            firstName: (raw.tech || raw.technician).first_name || '',
+            lastName: (raw.tech || raw.technician).last_name || '',
+          }
+        : null,
     complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     purchaseRequests: raw.purchase_requests || [],
   };

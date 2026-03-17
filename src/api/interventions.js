@@ -205,24 +205,25 @@ function mapInterventionDetailResponse(raw = {}) {
           subcategory: a.subcategory
             ? {
                 id: a.subcategory.id?.toString() || '',
-                label: a.subcategory.label || '',
+                label: a.subcategory.name || '',
                 code: a.subcategory.code || '',
                 category: a.subcategory.category
                   ? {
                       id: a.subcategory.category.id?.toString() || '',
-                      label: a.subcategory.category.label || '',
+                      label: a.subcategory.category.name || '',
                       code: a.subcategory.category.code || '',
                     }
                   : null,
               }
             : null,
-          technician: a.technician
+          technician: a.tech
             ? {
-                id: a.technician.id?.toString() || '',
-                firstName: a.technician.first_name || '',
-                lastName: a.technician.last_name || '',
+                id: a.tech.id?.toString() || '',
+                firstName: a.tech.first_name || '',
+                lastName: a.tech.last_name || '',
               }
             : null,
+          purchaseRequests: a.purchase_requests || [],
         }))
       : [],
     statusLogs: Array.isArray(raw.status_logs)
