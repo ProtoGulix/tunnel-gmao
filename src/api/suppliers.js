@@ -6,7 +6,7 @@
 import { api } from '@/lib/api/client';
 
 export async function fetchSuppliers(params = {}) {
-  const response = await api.get('/suppliers/', { params });
+  const response = await api.get('/suppliers', { params });
   return response.data || [];
 }
 
