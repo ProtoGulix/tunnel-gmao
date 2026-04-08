@@ -7,7 +7,8 @@
       "Bash(dir:*)",
       "Bash(curl:*)",
       "Bash(python3:*)",
-      "Bash(ls c:/Users/Quentin/DEV/web.tunnel-gmao/*.md c:/Users/Quentin/DEV/web.tunnel-gmao/package.json)"
+      "Bash(ls c:/Users/Quentin/DEV/web.tunnel-gmao/*.md c:/Users/Quentin/DEV/web.tunnel-gmao/package.json)",
+      "Bash(ls src/pages/*/)"
     ]
   }
 }
