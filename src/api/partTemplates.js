@@ -11,7 +11,7 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Array>} Array of templates with fields
  */
 export async function fetchPartTemplates() {
-  const response = await api.get('/part-templates/');
+  const response = await api.get('/part-templates');
   return response.data || [];
 }
 
@@ -37,7 +37,7 @@ export async function fetchPartTemplate(templateId, version) {
  * @returns {Promise<Object>} Created template
  */
 export async function createPartTemplate(payload) {
-  const response = await api.post('/part-templates/', payload);
+  const response = await api.post('/part-templates', payload);
   return response.data || null;
 }
 

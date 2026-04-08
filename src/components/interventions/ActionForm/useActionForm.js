@@ -59,8 +59,8 @@ export function useActionForm(initialState = {}) {
   }, [initialState]);
 
   const handleValidate = useCallback(
-    (timeRange = null) => {
-      const validation = validateFormState(formState, timeRange);
+    (timeRange = null, manualTimeSpent = '') => {
+      const validation = validateFormState(formState, timeRange, manualTimeSpent);
       setValidationErrors(validation.errors);
       return validation.isValid;
     },

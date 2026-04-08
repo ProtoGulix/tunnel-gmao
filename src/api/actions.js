@@ -83,21 +83,17 @@ export async function updateAction(id, updates) {
     payload.complexity_score = updates.complexityScore;
   }
 
-  if (updates.date !== undefined) {
-    payload.date = updates.date;
-  }
+  // `created_at` et `intervention_id` ne sont pas modifiables via PATCH (doc API)
 
   if (updates.subcategory?.id) {
-    payload.subcategory_id = updates.subcategory.id;
+    payload.action_subcategory = Number(updates.subcategory.id);
   }
 
   if (updates.technician?.id) {
-    payload.technician_id = updates.technician.id;
+    payload.tech = updates.technician.id;
   }
 
-  if (updates.intervention?.id) {
-    payload.intervention_id = updates.intervention.id;
-  }
+  // `intervention_id` non modifiable — non envoyé
 
   // Envoyer le premier facteur de complexité (singulier) ou null
   if (Array.isArray(updates.complexityFactors) && updates.complexityFactors.length > 0) {

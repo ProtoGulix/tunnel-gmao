@@ -27,7 +27,7 @@ export async function fetchSupplierOrderStatuses() {
  * @returns {Promise<{items: Array, pagination: Object, facets: Array}>}
  */
 export async function fetchSupplierOrders(params = {}) {
-  const response = await api.get('/supplier-orders/', { params });
+  const response = await api.get('/supplier-orders', { params });
   const data = response.data?.data || response.data;
   return {
     items: data?.items || [],
@@ -52,7 +52,7 @@ export async function fetchSupplierOrderDetail(id) {
  * @returns {Promise<Object>}
  */
 export async function createSupplierOrder(payload) {
-  const response = await api.post('/supplier-orders/', payload);
+  const response = await api.post('/supplier-orders', payload);
   return response.data?.data || response.data || {};
 }
 

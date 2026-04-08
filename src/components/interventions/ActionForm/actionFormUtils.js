@@ -63,7 +63,7 @@ export const areComplexityFactorsRequired = (complexity) => Number(complexity) >
  * @param {{ start: string|null, end: string|null }} timeRange - Plage horaire sélectionnée
  * @returns {Object} { isValid: boolean, errors: string[] }
  */
-export const validateFormState = (formState, timeRange = null) => {
+export const validateFormState = (formState, timeRange = null, manualTimeSpent = '') => {
   const errors = [];
 
   if (!isDescriptionValid(formState.description)) {
@@ -81,12 +81,22 @@ export const validateFormState = (formState, timeRange = null) => {
     errors.push('Au moins un facteur de complexité est requis pour complexité > 5');
   }
 
-  // Plage horaire — optionnelle si l'action est au format ancien (time_spent seul)
-  // On ne bloque que si l'utilisateur a commencé à saisir une borne sans finir
+  // Plage horaire — l'une des deux formes est obligatoire
   const hasStart = Boolean(timeRange?.start);
   const hasEnd = Boolean(timeRange?.end);
+  const hasBounds = hasStart && hasEnd;
+
   if (hasStart && !hasEnd) errors.push('Heure de fin requise');
   if (!hasStart && hasEnd) errors.push('Heure de début requise');
+
+  if (!hasBounds) {
+    const ts = parseFloat(manualTimeSpent);
+    if (!ts || ts < 0.25) {
+      errors.push('Durée obligatoire : saisissez une plage horaire ou une durée (min. 0h15)');
+    } else if (Math.round(ts * 4) !== ts * 4) {
+      errors.push('La durée doit être un multiple de 0h15 (ex : 0.25, 0.5, 0.75…)');
+    }
+  }
 
   return {
     isValid: errors.length === 0,

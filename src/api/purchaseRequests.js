@@ -16,7 +16,7 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Array>}
  */
 export async function fetchPurchaseRequests(params = {}) {
-  const response = await api.get('/purchase-requests/list/', { params });
+  const response = await api.get('/purchase-requests/list', { params });
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 }
 
@@ -38,7 +38,7 @@ export async function fetchPurchaseRequestDetail(id) {
  * @returns {Promise<Object>}
  */
 export async function fetchPurchaseRequestStats(params = {}) {
-  const response = await api.get('/purchase-requests/stats/', { params });
+  const response = await api.get('/purchase-requests/stats', { params });
   return response.data?.data || response.data || {};
 }
 
@@ -61,7 +61,7 @@ export async function fetchPurchaseRequestsByIntervention(interventionId, view =
  * @returns {Promise<Object>}
  */
 export async function createPurchaseRequest(payload) {
-  const response = await api.post('/purchase-requests/', payload);
+  const response = await api.post('/purchase-requests', payload);
   return response.data?.data || response.data || {};
 }
 
@@ -90,7 +90,7 @@ export async function deletePurchaseRequest(id) {
  * @returns {Promise<Array>} [{ code, label, color }]
  */
 export async function fetchPurchaseRequestStatuses() {
-  const response = await api.get('/purchase-requests/statuses/');
+  const response = await api.get('/purchase-requests/statuses');
   return Array.isArray(response.data) ? response.data : response.data?.data || [];
 }
 
@@ -99,6 +99,6 @@ export async function fetchPurchaseRequestStatuses() {
  * @returns {Promise<Object>} { dispatched_count, created_orders, errors, details }
  */
 export async function dispatchPurchaseRequests() {
-  const response = await api.post('/purchase-requests/dispatch/');
+  const response = await api.post('/purchase-requests/dispatch');
   return response.data?.data || response.data || {};
 }

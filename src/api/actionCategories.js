@@ -21,7 +21,7 @@ export async function fetchActionCategories() {
  * @returns {Promise<Object>} Action category
  */
 export async function fetchActionCategory(id) {
-  const response = await api.get(`/action-categories/${id}`);
+  const response = await api.get(`/action-categories${id}`);
   return response.data || null;
 }
 
