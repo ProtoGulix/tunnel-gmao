@@ -23,6 +23,7 @@ export default function EquipementsPage() {
     pagination, facets,
     page, setPage, pageSize, setPageSize,
     search, setSearch, classFilter, setClassFilter,
+    createEquipement,
   } = useEquipements();
 
   const headerStats = useMemo(() => {
@@ -84,6 +85,7 @@ export default function EquipementsPage() {
             onPageChange={setPage}
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            onCreateEquipement={createEquipement}
           />
         </Tabs.Content>
 
