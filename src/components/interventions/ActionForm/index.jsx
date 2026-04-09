@@ -39,6 +39,7 @@ function ActionForm({
   interventionId = null,
   techId = null,
   legacyTimeSpent = null,
+  lockedDate = false,
 }) {
   const { user } = useAuth();
   const form = useActionForm(initialState);
@@ -163,6 +164,7 @@ function ActionForm({
               onTimeRangeChange={setTimeRange}
               manualTimeSpent={manualTimeSpent}
               onManualTimeSpentChange={setManualTimeSpent}
+              lockedDate={lockedDate}
             />
 
             <ActionFormDescription formState={form.formState} handlers={form.handlers} />
@@ -211,6 +213,7 @@ ActionForm.propTypes = {
   style: PropTypes.object,
   interventionId: PropTypes.string,
   techId: PropTypes.string,
+  lockedDate: PropTypes.bool,
 };
 
 export default ActionForm;

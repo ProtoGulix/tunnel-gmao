@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import { Box, Flex, Text, TextField, Select, Badge } from '@radix-ui/themes';
 import { Activity, Clock, Tag } from 'lucide-react';
 import TimeRangePicker from '@/components/planning/TimeRangePicker';
+import LockedBadge from '@/components/ui/LockedBadge';
 import { getCategoryCode, getCategoryName, getCategoryColor } from './actionFormUtils';
 
 function computeDuration(start, end) {
@@ -21,7 +22,7 @@ function computeDuration(start, end) {
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }
 
-function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange, manualTimeSpent, onManualTimeSpentChange }) {
+function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRangeChange, manualTimeSpent, onManualTimeSpentChange, lockedDate }) {
   const { date, category } = formState;
   const { handleDateChange, handleCategoryChange } = handlers;
   const { subcategories = [] } = metadata;
@@ -71,12 +72,17 @@ function ActionFormFields({ formState, handlers, metadata, timeRange, onTimeRang
           <Activity size={14} color="var(--gray-9)" />
           <Text size="1" weight="bold">Date</Text>
         </Flex>
-        <TextField.Root
-          type="date"
-          value={date}
-          onChange={(e) => handleDateChange(e.target.value)}
-          style={{ backgroundColor: 'white' }}
-        />
+        {lockedDate
+          ? <LockedBadge icon={Activity} label={date} />
+          : (
+            <TextField.Root
+              type="date"
+              value={date}
+              onChange={(e) => handleDateChange(e.target.value)}
+              style={{ backgroundColor: 'white' }}
+            />
+          )
+        }
       </Box>
 
       {/* Catégorie / Type d'action */}
@@ -176,6 +182,7 @@ ActionFormFields.displayName = 'ActionFormFields';
 ActionFormFields.propTypes = {
   formState: PropTypes.shape({
     date: PropTypes.string,
+    lockedDate: PropTypes.bool,
     category: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }).isRequired,
   handlers: PropTypes.shape({

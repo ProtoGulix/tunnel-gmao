@@ -94,7 +94,11 @@ export async function updateAction(id, updates) {
     payload.complexity_score = updates.complexityScore;
   }
 
-  // `created_at` et `intervention_id` ne sont pas modifiables via PATCH (doc API)
+  // `created_at` modifiable (backdating) — `intervention_id` non modifiable
+
+  if (updates.date) {
+    payload.created_at = updates.date;
+  }
 
   if (updates.subcategory?.id) {
     payload.action_subcategory = Number(updates.subcategory.id);
