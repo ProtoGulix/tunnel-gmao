@@ -50,6 +50,17 @@ export async function createAction(actionData) {
 }
 
 /**
+ * Fetch a single action by ID
+ *
+ * @param {string|number} id - Action ID
+ * @returns {Promise<Object>} Full action data including action_start/action_end
+ */
+export async function fetchAction(id) {
+  const response = await api.get(`/intervention-actions/${id}`);
+  return mapActionResponse(response.data);
+}
+
+/**
  * Update an existing action
  *
  * @param {string|number} id - Action ID

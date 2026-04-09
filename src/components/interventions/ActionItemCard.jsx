@@ -41,6 +41,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [purchaseFormLoading, setPurchaseFormLoading] = useState(false);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
+  const [fetchedAction, setFetchedAction] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [purchaseRequests, setPurchaseRequests] = useState([]);
@@ -68,37 +69,48 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     }
   }, [localAction?.purchaseRequests]);
 
-  // Compute initial state fresh from current localAction
+  // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {
-    const dateIso = createdAt ? new Date(createdAt).toISOString().split('T')[0] : '';
+    const source = fetchedAction ?? localAction;
+    const sourceCreatedAt = getCreatedAt(source);
+    const dateIso = sourceCreatedAt ? new Date(sourceCreatedAt).toISOString().split('T')[0] : '';
     return {
       date: dateIso,
-      category: subcategory?.id ? String(subcategory.id) : '',
-      description: description || '',
-      complexity: complexityScore ? String(complexityScore) : '',
-      complexityFactors: getComplexityFactors(localAction),
-      actionStart: localAction?.actionStart ?? null,
-      actionEnd: localAction?.actionEnd ?? null,
+      category: getSubcategory(source)?.id ? String(getSubcategory(source).id) : '',
+      description: getDescription(source) || '',
+      complexity: getComplexityScore(source) ? String(getComplexityScore(source)) : '',
+      complexityFactors: getComplexityFactors(source),
+      actionStart: source?.actionStart ?? null,
+      actionEnd: source?.actionEnd ?? null,
     };
   };
 
   const handleOpenEdit = useCallback(async () => {
-    setShowEditForm((prev) => !prev);
-    if (!editDataLoaded) {
-      try {
-        const [categoriesData, factorsData] = await Promise.all([
-          actionCategoriesApi.fetchActionCategories(),
-          complexityFactorsApi.fetchComplexityFactors(),
-        ]);
+    if (showEditForm) {
+      setShowEditForm(false);
+      return;
+    }
+
+    const shouldLoadMeta = !editDataLoaded;
+    try {
+      const [actionData, categoriesData, factorsData] = await Promise.all([
+        actionsApi.fetchAction(String(localAction.id)),
+        shouldLoadMeta ? actionCategoriesApi.fetchActionCategories() : Promise.resolve(null),
+        shouldLoadMeta ? complexityFactorsApi.fetchComplexityFactors() : Promise.resolve(null),
+      ]);
+      setFetchedAction(actionData);
+      if (shouldLoadMeta && categoriesData) {
         setSubcategories(categoriesData || []);
         setComplexityFactors(factorsData || []);
         setEditDataLoaded(true);
-      } catch {
-        // Silent fail: ActionForm will show metadata error card if needed
-        setEditDataLoaded(true);
       }
+    } catch {
+      // Silent fail: ActionForm will show metadata error card if needed
+      if (shouldLoadMeta) setEditDataLoaded(true);
+    } finally {
+      setShowEditForm(true);
     }
-  }, [editDataLoaded]);
+  }, [showEditForm, editDataLoaded, localAction]);
 
   const handleSubmitEdit = useCallback(async (formData) => {
     const updates = {

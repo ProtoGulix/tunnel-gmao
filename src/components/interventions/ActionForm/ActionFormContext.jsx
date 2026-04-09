@@ -2,8 +2,7 @@
  * @fileoverview Sous-composants de contexte pour ActionForm
  * @module components/interventions/ActionForm/ActionFormContext
  *
- * LockedBadge  — affiche un contexte verrouillé (comme dans SupplierItemForm)
- * ContextSection — section équipement + intervention : sélecteur ou badge fixé
+ * ContextSection — section équipement + intervention : sélecteur ou badge verrouillé
  */
 
 import PropTypes from 'prop-types';
@@ -11,32 +10,22 @@ import { Box, Flex, Text } from '@radix-ui/themes';
 import { MapPin, Wrench } from 'lucide-react';
 import EquipementSearch from '@/components/planning/EquipementSearch';
 import InterventionSelector from '@/components/planning/InterventionSelector';
-
-/* ── Badge contexte verrouillé ─────────────────────────────────────────────── */
-
-export function LockedBadge({ icon: Icon, label, color = 'gray' }) {
-  return (
-    <Flex align="center" gap="2" style={{
-      padding: '6px 10px',
-      background: `var(--${color}-3)`,
-      borderRadius: 'var(--radius-2)',
-      border: `1px solid var(--${color}-6)`,
-    }}>
-      <Icon size={14} color={`var(--${color}-9)`} />
-      <Text size="2" weight="medium">{label}</Text>
-    </Flex>
-  );
-}
-
-LockedBadge.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string.isRequired,
-  color: PropTypes.string,
-};
+import LockedBadge from '@/components/ui/LockedBadge';
 
 /* ── Section contexte : sélecteurs ou badges verrouillés ──────────────────── */
 
-export function ContextSection({ interventionId, pickedEquipement, onEquipementChange, pickedIntervention, onInterventionChange }) {
+/**
+ * ContextSection — sélecteurs équipement + intervention.
+ *
+ * onCreationFlowChange(active: boolean) est appelé quand le flow de création
+ * d'intervention (qui contient son propre <form>) devient actif ou inactif,
+ * afin que le parent puisse le sortir du <form> de l'ActionForm.
+ */
+export function ContextSection({ interventionId, pickedEquipement, onEquipementChange, pickedIntervention, onInterventionChange, onCreationFlowChange }) {
+  const equipementLabel = pickedEquipement
+    ? `${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`
+    : '';
+
   return (
     <Flex direction="column" gap="3">
       <Box>
@@ -47,7 +36,7 @@ export function ContextSection({ interventionId, pickedEquipement, onEquipementC
           </Text>
         </Flex>
         {interventionId
-          ? <LockedBadge icon={MapPin} label="Via l'intervention" color="blue" />
+          ? <LockedBadge icon={MapPin} label="Via l'intervention" />
           : <EquipementSearch value={pickedEquipement} onChange={onEquipementChange} />
         }
       </Box>
@@ -60,12 +49,15 @@ export function ContextSection({ interventionId, pickedEquipement, onEquipementC
           </Text>
         </Flex>
         {interventionId
-          ? <LockedBadge icon={Wrench} label="Intervention fixée" color="green" />
+          ? <LockedBadge icon={Wrench} label="Intervention fixée" />
           : (
             <InterventionSelector
               equipementId={pickedEquipement?.id ?? null}
+              equipementLabel={equipementLabel}
               value={pickedIntervention}
               onChange={onInterventionChange}
+              onInterventionCreated={onInterventionChange}
+              onCreationFlowChange={onCreationFlowChange}
               disabled={!pickedEquipement}
             />
           )
@@ -81,4 +73,5 @@ ContextSection.propTypes = {
   onEquipementChange: PropTypes.func.isRequired,
   pickedIntervention: PropTypes.object,
   onInterventionChange: PropTypes.func.isRequired,
+  onCreationFlowChange: PropTypes.func,
 };
