@@ -27,7 +27,7 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
   const [monday, setMonday] = useState(() => weekParam ?? getMondayOf(today));
 
   const [users, setUsers] = useState([]);
-  const [techId, setTechId] = useState(null);
+  const [techId, setTechId] = useState(user?.id ?? null);
   const [weekActions, setWeekActions] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -44,16 +44,11 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
     setSearchParams((prev) => { prev.set('week', m); return prev; }, { replace: true });
   }, [setSearchParams]);
 
-  // Charger users et pré-sélectionner l'utilisateur connecté s'il est technicien
+  // Charger la liste des utilisateurs actifs pour le sélecteur
   useEffect(() => {
     wrapUsers(async () => {
       const allUsers = await fetchActiveUsers();
       setUsers(allUsers);
-      setTechId((current) => {
-        if (current !== null) return current; // déjà sélectionné manuellement
-        const match = allUsers.find((u) => u.id === user?.id);
-        return match ? match.id : null;
-      });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -72,15 +67,16 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
 
   useEffect(() => { loadWeek(); }, [loadWeek]);
 
-  // Métadonnées ActionForm
+  // Métadonnées ActionForm — chargées uniquement à la première ouverture du formulaire
   useEffect(() => {
+    if (!showForm || metadata.subcategories.length > 0) return;
     Promise.all([
       import('@/api/actionCategories').then((m) => m.fetchActionCategories?.() ?? []),
       import('@/api/complexityFactors').then((m) => m.fetchComplexityFactors?.() ?? []),
     ])
       .then(([cats, factors]) => setMetadata({ subcategories: cats, complexityFactors: factors }))
       .catch(() => {});
-  }, []);
+  }, [showForm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSuccess = () => {
     setShowForm(false);
