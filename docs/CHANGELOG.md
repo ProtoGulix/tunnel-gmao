@@ -4,6 +4,28 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.24.1 - 2026-04-09
+
+Stabilité : **en consolidation** 🔧
+
+### Impact fonctionnel
+
+Aucun changement visible pour l'utilisateur.
+
+### Stabilisation / Dette technique
+
+- Suppression de l'ancien code hérité de la version 2 → réduction du risque de confusion entre deux bases de code coexistantes et élimination d'une source potentielle de régression.
+
+### Composants / Modules concernés
+
+- Architecture interne du projet (code historique supprimé)
+
+### Points de vigilance
+
+Aucun.
+
+---
+
 ## 3.24.0 - 2026-03-17
 
 Stabilité : **STABLE** ✅
