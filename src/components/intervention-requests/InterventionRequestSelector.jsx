@@ -52,7 +52,7 @@ RequestRow.propTypes = {
   onToggle: PropTypes.func.isRequired,
 };
 
-export default function InterventionRequestSelector({ selectedId, onSelect }) {
+export default function InterventionRequestSelector({ selectedId, onSelect, machineId = null, machineName = null }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -62,7 +62,9 @@ export default function InterventionRequestSelector({ selectedId, onSelect }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchInterventionRequests({ limit: 100, excludeStatuses: 'rejetee,cloturee,acceptee' })
+    const params = { limit: 100, excludeStatuses: 'rejetee,cloturee,acceptee' };
+    if (machineId) params.machineId = machineId;
+    fetchInterventionRequests(params)
       .then((res) => {
         if (cancelled) return;
         setItems(res.items ?? []);
@@ -70,7 +72,7 @@ export default function InterventionRequestSelector({ selectedId, onSelect }) {
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [refreshKey]);
+  }, [refreshKey, machineId]);
 
   const handleCreate = useCallback(async (formData) => {
     setSaving(true);
@@ -91,6 +93,8 @@ export default function InterventionRequestSelector({ selectedId, onSelect }) {
         onSubmit={handleCreate}
         onCancel={() => setShowCreate(false)}
         saving={saving}
+        machineId={machineId}
+        machineName={machineName}
       />
     );
   }
@@ -137,4 +141,6 @@ export default function InterventionRequestSelector({ selectedId, onSelect }) {
 InterventionRequestSelector.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
+  machineId: PropTypes.string,
+  machineName: PropTypes.string,
 };

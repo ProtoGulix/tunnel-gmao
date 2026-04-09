@@ -24,6 +24,8 @@ import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
 import { ContextSection } from './ActionFormContext';
+import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
+
 
 /* ── ActionForm principal ─────────────────────────────────────────────────── */
 /* eslint-disable complexity */
@@ -43,6 +45,7 @@ function ActionForm({
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
+  const [creationFlowActive, setCreationFlowActive] = useState(false);
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -127,17 +130,30 @@ function ActionForm({
           </Box>
         )}
 
+        {/* Section contexte — hors du <form> car InterventionCreatorFlow contient son propre <form> */}
+        <ContextSection
+          interventionId={interventionId}
+          pickedEquipement={pickedEquipement}
+          onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); }}
+          pickedIntervention={pickedIntervention}
+          onInterventionChange={setPickedIntervention}
+          onCreationFlowChange={setCreationFlowActive}
+        />
+
+        {/* Flow création demande → intervention — hors du <form> pour éviter l'imbrication */}
+        {creationFlowActive && pickedEquipement && (
+          <InterventionCreatorFlow
+            equipementId={pickedEquipement.id}
+            equipementLabel={`${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`}
+            onCreated={(intervention) => {
+              setPickedIntervention(intervention);
+              setCreationFlowActive(false);
+            }}
+          />
+        )}
+
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            {/* Section contexte — sélecteurs ou badges verrouillés */}
-            <ContextSection
-              interventionId={interventionId}
-              pickedEquipement={pickedEquipement}
-              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
-              pickedIntervention={pickedIntervention}
-              onInterventionChange={setPickedIntervention}
-            />
-
             {/* Plage horaire + Date + Type sur une même ligne */}
             <ActionFormFields
               formState={form.formState}

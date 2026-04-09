@@ -1,20 +1,123 @@
 /**
  * Sélecteur d'intervention déclenché par la sélection d'un équipement.
  * Charge les interventions ouvertes via GET /interventions/open-by-equipement/{id}.
+ *
+ * Quand aucune intervention ouverte n'existe (et que onInterventionCreated est fourni) :
+ *   Étape 1 — sélection/création d'une demande (InterventionRequestSelector filtré sur l'équipement)
+ *   Étape 2 — création de l'intervention liée (InterventionCreateForm)
+ *   → l'intervention créée est auto-sélectionnée
+ *
  * @module components/planning/InterventionSelector
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Flex, Link, Select, Text } from '@radix-ui/themes';
-import { Loader2, TriangleAlert } from 'lucide-react';
+import { Badge, Box, Button, Flex, Select, Spinner, Text } from '@radix-ui/themes';
+import { Loader2 } from 'lucide-react';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
+import { createIntervention } from '@/api/interventions';
+import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
+import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
+import { fetchEquipements } from '@/api/equipements';
 
 const STATUS_LABELS = {
   ouvert: 'Ouvert',
   en_cours: 'En cours',
 };
 
-export default function InterventionSelector({ equipementId, value, onChange, disabled }) {
+const getDefaultDateTimeLocal = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+
+/* ── Flow inline : demande → intervention ─────────────────────────────────── */
+
+export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated }) {
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'CUR',
+    priority: 'normale',
+    equipementId,
+    equipementLabel: equipementLabel ?? '',
+    techInitials: '',
+    reportedBy: '',
+    reportedDate: getDefaultDateTimeLocal(),
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const set = useCallback((field, value) => setFormData((prev) => ({ ...prev, [field]: value })), []);
+
+  const handleSelectRequest = useCallback((req) => {
+    if (!req) {
+      setSelectedRequest(null);
+      setFormData((prev) => ({ ...prev, title: '', reportedBy: '', requestId: null }));
+      return;
+    }
+    setSelectedRequest(req);
+    setFormData((prev) => ({
+      ...prev,
+      title: req.description ?? '',
+      reportedBy: req.demandeur_nom ?? '',
+      requestId: req.id,
+    }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!formData.title.trim()) { setError('Le titre est obligatoire'); return; }
+    if (!formData.techInitials.trim()) { setError('Les initiales du technicien sont obligatoires'); return; }
+    setSaving(true);
+    try {
+      const created = await createIntervention({
+        ...formData,
+        reportedDate: formData.reportedDate
+          ? new Date(formData.reportedDate).toISOString()
+          : undefined,
+      });
+      onCreated(created);
+    } catch (err) {
+      setError(err?.response?.data?.detail ?? err.message ?? "Erreur lors de la création de l'intervention");
+    } finally {
+      setSaving(false);
+    }
+  }, [formData, onCreated]);
+
+  return (
+    <Flex direction="column" gap="3">
+      <InterventionRequestSelector
+        selectedId={selectedRequest?.id}
+        onSelect={handleSelectRequest}
+        machineId={equipementId}
+        machineName={equipementLabel}
+      />
+
+      {selectedRequest && (
+        <InterventionCreateForm
+          formData={formData}
+          set={set}
+          locked={!!selectedRequest}
+          fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
+          saving={saving}
+          error={error}
+          onSubmit={handleSubmit}
+          onCancel={() => setSelectedRequest(null)}
+        />
+      )}
+    </Flex>
+  );
+}
+
+InterventionCreatorFlow.propTypes = {
+  equipementId: PropTypes.string.isRequired,
+  equipementLabel: PropTypes.string,
+  onCreated: PropTypes.func.isRequired,
+};
+
+/* ── Sélecteur principal ──────────────────────────────────────────────────── */
+
+export default function InterventionSelector({ equipementId, equipementLabel, value, onChange, disabled, onInterventionCreated, onCreationFlowChange }) {
   const [interventions, setInterventions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +125,7 @@ export default function InterventionSelector({ equipementId, value, onChange, di
     if (!equipementId) {
       setInterventions([]);
       onChange(null);
+      onCreationFlowChange?.(false);
       return;
     }
     setLoading(true);
@@ -33,8 +137,10 @@ export default function InterventionSelector({ equipementId, value, onChange, di
         } else {
           onChange(null);
         }
+        // Signal au parent si le flow de création doit s'afficher
+        onCreationFlowChange?.(data.length === 0 && !!onInterventionCreated);
       })
-      .catch(() => setInterventions([]))
+      .catch(() => { setInterventions([]); onCreationFlowChange?.(false); })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [equipementId]);
@@ -57,6 +163,8 @@ export default function InterventionSelector({ equipementId, value, onChange, di
   }
 
   if (interventions.length === 0) {
+    // Le flow de création est géré par le parent (hors du <form>) via onCreationFlowChange
+    if (onInterventionCreated) return null;
     return (
       <Flex align="center" gap="2" style={{
         padding: '6px 10px',
@@ -64,9 +172,7 @@ export default function InterventionSelector({ equipementId, value, onChange, di
         borderRadius: 'var(--radius-2)',
         border: '1px solid var(--amber-6)',
       }}>
-        <TriangleAlert size={14} color="var(--amber-9)" />
         <Text size="2" color="amber" weight="medium">Aucune intervention ouverte sur cet équipement.</Text>
-        <Link href="/interventions/new" size="2" ml="1">Créer</Link>
       </Flex>
     );
   }
@@ -106,7 +212,11 @@ export default function InterventionSelector({ equipementId, value, onChange, di
 
 InterventionSelector.propTypes = {
   equipementId: PropTypes.string,
+  equipementLabel: PropTypes.string,
   value: PropTypes.object,
   onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
+  onInterventionCreated: PropTypes.func,
+  /** Appelé avec true/false quand le flow de création (hors <form>) doit s'afficher */
+  onCreationFlowChange: PropTypes.func,
 };
