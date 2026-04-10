@@ -194,5 +194,4 @@ EmptyState.propTypes = {
   description: PropTypes.string,
   actions: PropTypes.arrayOf(PropTypes.element),
   compact: PropTypes.bool,
-  actions: PropTypes.arrayOf(PropTypes.element),
 };

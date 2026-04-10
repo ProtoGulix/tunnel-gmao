@@ -60,9 +60,20 @@ export async function createEquipement(data) {
 }
 
 /**
- * Met à jour un équipement
+ * Met à jour partiellement un équipement (PATCH)
  * @param {string} id - ID de l'équipement
- * @param {Object} updates - Champs à mettre à jour
+ * @param {Object} updates - Champs à mettre à jour (seuls les champs envoyés sont modifiés)
+ * @returns {Promise<Object>} Équipement mis à jour
+ */
+export async function patchEquipement(id, updates) {
+  const response = await api.patch(`/equipements/${id}`, updates);
+  return response.data;
+}
+
+/**
+ * Remplace complètement un équipement (PUT — name obligatoire)
+ * @param {string} id - ID de l'équipement
+ * @param {Object} updates - Corps complet
  * @returns {Promise<Object>} Équipement mis à jour
  */
 export async function updateEquipement(id, updates) {
@@ -114,4 +125,13 @@ export async function fetchEquipementHealth(id) {
 export async function fetchEquipementChildren(id, params = {}) {
   const response = await api.get(`/equipements/${id}/children`, { params });
   return response.data;
+}
+
+/**
+ * Récupère les statuts du cycle de vie des équipements
+ * @returns {Promise<Array>} Liste des statuts actifs triés par ordre_affichage
+ */
+export async function fetchEquipementStatuts() {
+  const response = await api.get('/equipement-statuts');
+  return response.data || [];
 }

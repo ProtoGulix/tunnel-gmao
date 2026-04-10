@@ -5,15 +5,16 @@
  * Composant partagé utilisé par EquipementsPage et EquipementChildrenTab.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Text, Button, Badge, Select } from '@radix-ui/themes';
-import { Search, Eye, Layers } from 'lucide-react';
+import { Search, Eye, Layers, Plus, BanIcon } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 import ErrorState from '@/components/ui/ErrorState';
+import EquipementCreateForm from '@/components/equipements/EquipementCreateForm';
 
 export default function EquipementTable({
   equipements, loading, error, getParentInfo,
@@ -21,8 +22,14 @@ export default function EquipementTable({
   classFilter, onClassFilterChange, facets,
   pagination, page, onPageChange, pageSize, onPageSizeChange,
   showParentColumn,
+  onCreateEquipement,
 }) {
   const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const handleCreate = useCallback(async (payload) => {
+    await onCreateEquipement(payload);
+  }, [onCreateEquipement]);
 
   const classOptions = useMemo(
     () => facets.filter((f) => f.code !== null),
@@ -57,6 +64,29 @@ export default function EquipementTable({
           ),
       },
       {
+        key: 'statut',
+        header: 'Statut',
+        width: 130,
+        render: (eq) => {
+          const s = eq.statut;
+          if (!s) return <Text size="2" color="gray">—</Text>;
+          const bg = s.couleur ? `${s.couleur}22` : 'var(--gray-3)';
+          return (
+            <Flex align="center" gap="1">
+              <Badge
+                variant="soft"
+                style={{ backgroundColor: bg, color: s.couleur || 'var(--gray-11)', border: `1px solid ${s.couleur || 'var(--gray-6)'}44` }}
+              >
+                {s.label}
+              </Badge>
+              {s.interventions === false && (
+                <BanIcon size={12} color="var(--red-9)" title="Interventions bloquées" />
+              )}
+            </Flex>
+          );
+        },
+      },
+      {
         key: 'cause',
         header: 'Cause',
         render: (eq) => <Text size="2" color="gray">{eq.health?.reason || '—'}</Text>,
@@ -66,9 +96,9 @@ export default function EquipementTable({
           key: 'parent',
           header: 'Équipement mère',
           render: (eq) => {
-            const parent = getParentInfo(eq.parent_id);
-            return parent ? (
-              <Text size="2">{parent.code || '—'} – {parent.name}</Text>
+            const p = eq.parent;
+            return p ? (
+              <Text size="2">{p.code || '—'} – {p.name}</Text>
             ) : (
               <Text size="2" color="gray">—</Text>
             );
@@ -91,27 +121,25 @@ export default function EquipementTable({
 
   if (error) return <ErrorState error={error} />;
 
+  const classSelect = classOptions.length > 0 ? (
+    <Flex align="center" gap="2">
+      <Layers size={14} color="var(--gray-9)" />
+      <Select.Root value={classFilter || '__all__'} onValueChange={(v) => onClassFilterChange(v === '__all__' ? '' : v)}>
+        <Select.Trigger variant="soft" />
+        <Select.Content>
+          <Select.Item value="__all__">Toutes les classes</Select.Item>
+          {classOptions.map((f) => (
+            <Select.Item key={f.code} value={f.code}>
+              {f.label ?? f.code} ({f.count})
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+    </Flex>
+  ) : null;
+
   return (
     <Box pt="4">
-      {/* Filtre par classe */}
-      {classOptions.length > 0 && (
-        <Flex align="center" gap="2" mb="3">
-          <Layers size={14} color="var(--gray-9)" />
-          <Text size="2" color="gray" weight="medium">Classe :</Text>
-          <Select.Root value={classFilter || '__all__'} onValueChange={(v) => onClassFilterChange(v === '__all__' ? '' : v)}>
-            <Select.Trigger variant="soft" />
-            <Select.Content>
-              <Select.Item value="__all__">Toutes les classes</Select.Item>
-              {classOptions.map((f) => (
-                <Select.Item key={f.code} value={f.code}>
-                  {f.label ?? f.code} ({f.count})
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
-        </Flex>
-      )}
-
       <DataTable
         headerProps={{
           icon: Search,
@@ -123,6 +151,20 @@ export default function EquipementTable({
           showSearchInput: true,
           showResetButton: true,
           showRefreshButton: false,
+          actions: classSelect,
+          rightActions: onCreateEquipement ? (
+            <Button size="2" onClick={() => setCreateOpen(true)}>
+              <Plus size={14} /> Nouvel équipement
+            </Button>
+          ) : null,
+          children: (onCreateEquipement && createOpen) ? (
+            <Box mt="4">
+              <EquipementCreateForm
+                onCancel={() => setCreateOpen(false)}
+                onSubmit={async (payload) => { await handleCreate(payload); setCreateOpen(false); }}
+              />
+            </Box>
+          ) : null,
         }}
         columns={columns}
         data={equipements}
@@ -168,6 +210,7 @@ EquipementTable.propTypes = {
   pageSize: PropTypes.number.isRequired,
   onPageSizeChange: PropTypes.func.isRequired,
   showParentColumn: PropTypes.bool,
+  onCreateEquipement: PropTypes.func,
 };
 
 EquipementTable.defaultProps = {

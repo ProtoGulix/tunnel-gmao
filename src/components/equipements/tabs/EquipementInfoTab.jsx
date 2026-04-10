@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Box, Flex, Text, Badge } from '@radix-ui/themes';
 import PropTypes from 'prop-types';
 
 export default function EquipementInfoTab({ equipement }) {
@@ -46,6 +46,22 @@ export default function EquipementInfoTab({ equipement }) {
               <Text size="2" color="gray">Équipement mère</Text>
               <Text size="2" weight="medium">{equipement.is_mere ? 'Oui' : 'Non'}</Text>
             </Flex>
+            {equipement.statut && (
+              <Flex justify="between" align="center">
+                <Text size="2" color="gray">Statut</Text>
+                <Badge
+                  size="1"
+                  variant="soft"
+                  style={{
+                    backgroundColor: equipement.statut.couleur ? `${equipement.statut.couleur}22` : 'var(--gray-3)',
+                    color: equipement.statut.couleur || 'var(--gray-11)',
+                    border: `1px solid ${equipement.statut.couleur || 'var(--gray-6)'}44`,
+                  }}
+                >
+                  {equipement.statut.label}
+                </Badge>
+              </Flex>
+            )}
           </Flex>
         </Box>
 
