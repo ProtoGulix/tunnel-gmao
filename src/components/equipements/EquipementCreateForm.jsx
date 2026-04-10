@@ -13,8 +13,6 @@ import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 
 const DEFAULT_FORM = {
   name: '',
-  code_suffix: '',   // partie numérique saisie par l'utilisateur
-  code_override: '', // si l'utilisateur édite manuellement le code généré
   no_machine: '',
   affectation: '',
   fabricant: '',
@@ -62,17 +60,18 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
     fetchEquipementStatuts().then(setStatuts).catch(() => {});
   }, []);
 
-  // Génération auto du code = classeCode-suffix
-  const generatedCode = selectedClass && form.code_suffix.trim()
-    ? `${selectedClass.code}-${form.code_suffix.trim()}`
+  // Génération auto du code = classeCode + no_machine paddé sur 3 chiffres
+  const no_machine_padded = form.no_machine.trim()
+    ? form.no_machine.trim().padStart(3, '0')
     : '';
-  // Le code final : override manuel prioritaire, sinon généré
-  const finalCode = form.code_override.trim() || generatedCode;
+  const generatedCode = selectedClass && no_machine_padded
+    ? `${selectedClass.code}${no_machine_padded}`
+    : '';
 
   const handleClassChange = (v) => {
     const cls = v === '__none__' ? null : classes.find((c) => c.id === v) ?? null;
     setSelectedClass(cls);
-    setForm((f) => ({ ...f, equipement_class_id: cls?.id ?? '', code_override: '' }));
+    setForm((f) => ({ ...f, equipement_class_id: cls?.id ?? '' }));
   };
 
   const handleParentChange = (eq) => {
@@ -87,7 +86,7 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
       setSubmitting(true);
       setErrors([]);
       const payload = { name: form.name.trim() };
-      if (finalCode) payload.code = finalCode;
+      if (generatedCode) payload.code = generatedCode;
       if (form.no_machine.trim()) payload.no_machine = form.no_machine.trim();
       if (form.affectation.trim()) payload.affectation = form.affectation.trim();
       if (form.fabricant.trim()) payload.fabricant = form.fabricant.trim();
@@ -145,9 +144,9 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
               </Box>
             </Flex>
 
-            {/* Ligne 2 — Code machine (généré) */}
+            {/* Ligne 2 — Classe + code généré (lecture seule) */}
             <Flex gap="3" wrap="wrap" align="end">
-              <Box style={{ flex: '1', minWidth: '160px' }}>
+              <Box style={{ flex: '2', minWidth: '160px' }}>
                 <Field label="Classe">
                   <Select.Root
                     value={form.equipement_class_id || '__none__'}
@@ -163,24 +162,13 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
                   </Select.Root>
                 </Field>
               </Box>
-              <Box style={{ flex: '1', minWidth: '100px' }}>
-                <Field label="Numéro" hint="assemblé avec la classe">
-                  <TextField.Root
-                    value={form.code_suffix}
-                    onChange={(e) => {
-                      setForm((f) => ({ ...f, code_suffix: e.target.value, code_override: '' }));
-                    }}
-                    placeholder="01, 042…"
-                  />
-                </Field>
-              </Box>
               <Box style={{ flex: '1', minWidth: '140px' }}>
-                <Field label="Code généré">
+                <Field label="Code" hint="généré automatiquement">
                   <TextField.Root
-                    value={form.code_override || generatedCode}
-                    onChange={(e) => setForm((f) => ({ ...f, code_override: e.target.value }))}
+                    value={generatedCode}
+                    readOnly
                     placeholder="—"
-                    style={generatedCode && !form.code_override ? { color: 'var(--blue-11)', fontWeight: 500 } : {}}
+                    style={generatedCode ? { color: 'var(--blue-11)', fontWeight: 500 } : {}}
                   />
                 </Field>
               </Box>
