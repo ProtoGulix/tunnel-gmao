@@ -9,7 +9,7 @@ import { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Text, Button, Badge, Select } from '@radix-ui/themes';
-import { Search, Eye, Layers, Plus } from 'lucide-react';
+import { Search, Eye, Layers, Plus, BanIcon } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
@@ -64,6 +64,29 @@ export default function EquipementTable({
           ),
       },
       {
+        key: 'statut',
+        header: 'Statut',
+        width: 130,
+        render: (eq) => {
+          const s = eq.statut;
+          if (!s) return <Text size="2" color="gray">—</Text>;
+          const bg = s.couleur ? `${s.couleur}22` : 'var(--gray-3)';
+          return (
+            <Flex align="center" gap="1">
+              <Badge
+                variant="soft"
+                style={{ backgroundColor: bg, color: s.couleur || 'var(--gray-11)', border: `1px solid ${s.couleur || 'var(--gray-6)'}44` }}
+              >
+                {s.label}
+              </Badge>
+              {s.interventions === false && (
+                <BanIcon size={12} color="var(--red-9)" title="Interventions bloquées" />
+              )}
+            </Flex>
+          );
+        },
+      },
+      {
         key: 'cause',
         header: 'Cause',
         render: (eq) => <Text size="2" color="gray">{eq.health?.reason || '—'}</Text>,
@@ -73,9 +96,9 @@ export default function EquipementTable({
           key: 'parent',
           header: 'Équipement mère',
           render: (eq) => {
-            const parent = getParentInfo(eq.parent_id);
-            return parent ? (
-              <Text size="2">{parent.code || '—'} – {parent.name}</Text>
+            const p = eq.parent;
+            return p ? (
+              <Text size="2">{p.code || '—'} – {p.name}</Text>
             ) : (
               <Text size="2" color="gray">—</Text>
             );

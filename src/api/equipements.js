@@ -115,3 +115,12 @@ export async function fetchEquipementChildren(id, params = {}) {
   const response = await api.get(`/equipements/${id}/children`, { params });
   return response.data;
 }
+
+/**
+ * Récupère les statuts du cycle de vie des équipements
+ * @returns {Promise<Array>} Liste des statuts actifs triés par ordre_affichage
+ */
+export async function fetchEquipementStatuts() {
+  const response = await api.get('/equipement-statuts');
+  return response.data || [];
+}

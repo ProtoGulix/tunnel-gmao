@@ -26,7 +26,7 @@ function buildTabs(childrenCount, interventionsCount) {
   ];
 }
 
-export default function EquipementDetailTab({ id, equipement, loading, error, health, stats, statsLoading, interventions, childrenCount, parentId }) {
+export default function EquipementDetailTab({ id, equipement, loading, error, health, stats, statsLoading, interventions, childrenCount, parent }) {
   const [activeTab, setActiveTab] = useState('info');
 
   if (error) return <ErrorState error={error} />;
@@ -36,7 +36,7 @@ export default function EquipementDetailTab({ id, equipement, loading, error, he
 
   return (
     <Box>
-      <EquipementInfoBanner equipement={equipement} health={health} parentId={parentId} />
+      <EquipementInfoBanner equipement={equipement} health={health} parent={parent} />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab} style={{ width: '100%' }}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
@@ -90,5 +90,5 @@ EquipementDetailTab.propTypes = {
   statsLoading: PropTypes.bool,
   interventions: PropTypes.object,
   childrenCount: PropTypes.number,
-  parentId: PropTypes.string,
+  parent: PropTypes.shape({ id: PropTypes.string, code: PropTypes.string, name: PropTypes.string }),
 };

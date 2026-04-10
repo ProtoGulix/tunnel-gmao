@@ -131,7 +131,7 @@ export function useEquipementDetail(id) {
     statsLoading,
     interventions: equipement?.interventions || { total: 0, items: [] },
     childrenCount: equipement?.children_count || 0,
-    parentId: equipement?.parent_id,
+    parent: equipement?.parent || null,
     updateEquipement,
     manualRefresh,
     refetch: fetchDetail,
