@@ -5,7 +5,6 @@
  * Chef d'orchestre du détail équipement avec onglets
  */
 
-import { useState } from 'react';
 import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
 import { Info, BarChart3, Users, Wrench } from 'lucide-react';
 import PropTypes from 'prop-types';
@@ -16,6 +15,7 @@ import EquipementChildrenTab from './EquipementChildrenTab';
 import EquipementInterventionsTab from './EquipementInterventionsTab';
 import EquipementInfoTab from './EquipementInfoTab';
 import EquipementStatsTab from './EquipementStatsTab';
+import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 function buildTabs(childrenCount, interventionsCount) {
   return [
@@ -27,7 +27,7 @@ function buildTabs(childrenCount, interventionsCount) {
 }
 
 export default function EquipementDetailTab({ id, equipement, loading, error, health, stats, statsLoading, interventions, childrenCount, parent }) {
-  const [activeTab, setActiveTab] = useState('info');
+  const { activeTab, setActiveTab } = useTabNavigation('info', 'tab');
 
   if (error) return <ErrorState error={error} />;
   if (loading && !equipement) return <LoadingState message="Chargement de l'équipement..." />;

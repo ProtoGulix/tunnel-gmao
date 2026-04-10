@@ -82,14 +82,12 @@ export function useEquipementDetail(id) {
   const refreshHealthRef = useRef(refreshHealth);
   refreshHealthRef.current = refreshHealth;
 
-  // Chargement initial
+  // Chargement initial + rechargement si l'id change (navigation entre équipements)
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      fetchDetail();
-      fetchStats();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    initialLoadRef.current = true;
+    fetchDetail();
+    fetchStats();
+  }, [fetchDetail, fetchStats]);
 
   // Auto-refresh santé toutes les 30 secondes
   useEffect(() => {
