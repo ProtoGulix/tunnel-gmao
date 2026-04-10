@@ -60,9 +60,20 @@ export async function createEquipement(data) {
 }
 
 /**
- * Met à jour un équipement
+ * Met à jour partiellement un équipement (PATCH)
  * @param {string} id - ID de l'équipement
- * @param {Object} updates - Champs à mettre à jour
+ * @param {Object} updates - Champs à mettre à jour (seuls les champs envoyés sont modifiés)
+ * @returns {Promise<Object>} Équipement mis à jour
+ */
+export async function patchEquipement(id, updates) {
+  const response = await api.patch(`/equipements/${id}`, updates);
+  return response.data;
+}
+
+/**
+ * Remplace complètement un équipement (PUT — name obligatoire)
+ * @param {string} id - ID de l'équipement
+ * @param {Object} updates - Corps complet
  * @returns {Promise<Object>} Équipement mis à jour
  */
 export async function updateEquipement(id, updates) {
