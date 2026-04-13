@@ -1,8 +1,7 @@
 /* eslint-disable complexity, max-lines, react/prop-types */
-import { Badge, Card, Text } from "@radix-ui/themes";
+import { Badge, Card, Flex, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
-import { Flex } from "@radix-ui/themes";
 import { CheckCircle2, ClipboardCheck, MinusCircle } from "lucide-react";
 import ActionForm from "@/components/interventions/ActionForm";
 import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
