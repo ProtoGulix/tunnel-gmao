@@ -31,7 +31,7 @@ const getDefaultDateTimeLocal = () => {
 
 /* ── Flow inline : demande → intervention ─────────────────────────────────── */
 
-export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated }) {
+export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel }) {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -86,6 +86,11 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
 
   return (
     <Flex direction="column" gap="3">
+      {onCancel && (
+        <Button size="1" variant="ghost" color="gray" type="button" onClick={onCancel}>
+          ← Retour au sélecteur d&apos;intervention
+        </Button>
+      )}
       <InterventionRequestSelector
         selectedId={selectedRequest?.id}
         onSelect={handleSelectRequest}
@@ -113,6 +118,7 @@ InterventionCreatorFlow.propTypes = {
   equipementId: PropTypes.string.isRequired,
   equipementLabel: PropTypes.string,
   onCreated: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
 };
 
 /* ── Sélecteur principal ──────────────────────────────────────────────────── */
@@ -180,33 +186,47 @@ export default function InterventionSelector({ equipementId, equipementLabel, va
   if (interventions.length === 1) {
     const i = interventions[0];
     return (
-      <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--green-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--green-6)' }}>
-        <Badge color="green" variant="soft" size="1">{i.code}</Badge>
-        <Text size="2" weight="medium">{i.title}</Text>
-        <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
+      <Flex direction="column" gap="1">
+        <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--green-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--green-6)' }}>
+          <Badge color="green" variant="soft" size="1">{i.code}</Badge>
+          <Text size="2" weight="medium">{i.title}</Text>
+          <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
+        </Flex>
+        {onInterventionCreated && (
+          <Button size="1" variant="ghost" color="gray" type="button" onClick={() => onCreationFlowChange?.(true)}>
+            + Créer une nouvelle intervention
+          </Button>
+        )}
       </Flex>
     );
   }
 
   return (
-    <Select.Root
-      value={value?.id ?? ''}
-      onValueChange={(id) => onChange(interventions.find((i) => i.id === id) ?? null)}
-      disabled={disabled}
-    >
-      <Select.Trigger placeholder="Sélectionner une intervention…" style={{ width: '100%' }} />
-      <Select.Content>
-        {interventions.map((i) => (
-          <Select.Item key={i.id} value={i.id}>
-            <Flex align="center" gap="2">
-              <Text size="2" weight="medium">{i.code}</Text>
-              <Text size="2" color="gray">— {i.title}</Text>
-              <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
-            </Flex>
-          </Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Root>
+    <Flex direction="column" gap="1">
+      <Select.Root
+        value={value?.id ?? ''}
+        onValueChange={(id) => onChange(interventions.find((i) => i.id === id) ?? null)}
+        disabled={disabled}
+      >
+        <Select.Trigger placeholder="Sélectionner une intervention…" style={{ width: '100%' }} />
+        <Select.Content>
+          {interventions.map((i) => (
+            <Select.Item key={i.id} value={i.id}>
+              <Flex align="center" gap="2">
+                <Text size="2" weight="medium">{i.code}</Text>
+                <Text size="2" color="gray">— {i.title}</Text>
+                <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
+              </Flex>
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+      {onInterventionCreated && (
+        <Button size="1" variant="ghost" color="gray" type="button" onClick={() => onCreationFlowChange?.(true)}>
+          + Créer une nouvelle intervention
+        </Button>
+      )}
+    </Flex>
   );
 }
 

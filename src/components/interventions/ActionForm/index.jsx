@@ -139,6 +139,7 @@ function ActionForm({
           pickedIntervention={pickedIntervention}
           onInterventionChange={setPickedIntervention}
           onCreationFlowChange={setCreationFlowActive}
+          creationFlowActive={creationFlowActive}
         />
 
         {/* Flow création demande → intervention — hors du <form> pour éviter l'imbrication */}
@@ -150,6 +151,7 @@ function ActionForm({
               setPickedIntervention(intervention);
               setCreationFlowActive(false);
             }}
+            onCancel={() => setCreationFlowActive(false)}
           />
         )}
 

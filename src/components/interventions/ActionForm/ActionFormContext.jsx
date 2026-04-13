@@ -21,7 +21,7 @@ import LockedBadge from '@/components/ui/LockedBadge';
  * d'intervention (qui contient son propre <form>) devient actif ou inactif,
  * afin que le parent puisse le sortir du <form> de l'ActionForm.
  */
-export function ContextSection({ interventionId, pickedEquipement, onEquipementChange, pickedIntervention, onInterventionChange, onCreationFlowChange }) {
+export function ContextSection({ interventionId, pickedEquipement, onEquipementChange, pickedIntervention, onInterventionChange, onCreationFlowChange, creationFlowActive }) {
   const equipementLabel = pickedEquipement
     ? `${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`
     : '';
@@ -50,7 +50,7 @@ export function ContextSection({ interventionId, pickedEquipement, onEquipementC
         </Flex>
         {interventionId
           ? <LockedBadge icon={Wrench} label="Intervention fixée" />
-          : (
+          : !creationFlowActive && (
             <InterventionSelector
               equipementId={pickedEquipement?.id ?? null}
               equipementLabel={equipementLabel}
@@ -74,4 +74,5 @@ ContextSection.propTypes = {
   pickedIntervention: PropTypes.object,
   onInterventionChange: PropTypes.func.isRequired,
   onCreationFlowChange: PropTypes.func,
+  creationFlowActive: PropTypes.bool,
 };
