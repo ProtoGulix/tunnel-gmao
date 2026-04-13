@@ -12,9 +12,13 @@ import { fetchPreventivePlans } from '@/api/preventivePlans';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
+import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
 
 const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
 const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
+
+const DI_STATUT_COLORS = { nouvelle: 'blue', en_attente: 'amber', acceptee: 'green', rejetee: 'red', cloturee: 'gray' };
+const DI_STATUT_LABELS = { nouvelle: 'Nouvelle', en_attente: 'En attente', acceptee: 'Acceptée', rejetee: 'Rejetée', cloturee: 'Clôturée' };
 
 export default function PreventiveOccurrencesTab() {
   const [planId, setPlanId] = useState('');
@@ -83,21 +87,37 @@ export default function PreventiveOccurrencesTab() {
       render: (r) => <Badge color={STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{STATUS_LABELS[r.status] || r.status}</Badge>,
     },
     {
-      key: 'links', header: 'Liens', width: 110,
-      render: (r) => (
-        <Flex gap="1">
-          {r.di_id && (
-            <Button size="1" variant="ghost" asChild>
-              <Link to={`/interventions?tab=demandes`}><ExternalLink size={11} />DI</Link>
-            </Button>
-          )}
-          {r.intervention_id && (
-            <Button size="1" variant="ghost" asChild>
-              <Link to={`/intervention/${r.intervention_id}`}><ExternalLink size={11} />INT</Link>
-            </Button>
-          )}
-        </Flex>
-      ),
+      key: 'di', header: 'Demande (DI)', width: 160,
+      render: (r) => {
+        if (!r.di_id) return <Text size="1" color="gray">—</Text>;
+        return (
+          <Flex direction="column" gap="1">
+            <Flex align="center" gap="1">
+              <Button size="1" variant="ghost" asChild>
+                <Link to={`/interventions?tab=demandes`}>
+                  <ExternalLink size={11} />
+                  <Text size="1" style={{ fontFamily: 'monospace' }}>{r.di_code ?? 'DI'}</Text>
+                </Link>
+              </Button>
+            </Flex>
+            {r.di_statut && (
+              <Badge color={DI_STATUT_COLORS[r.di_statut] ?? 'gray'} variant="soft" size="1">
+                {DI_STATUT_LABELS[r.di_statut] ?? r.di_statut}
+              </Badge>
+            )}
+          </Flex>
+        );
+      },
+    },
+    {
+      key: 'intervention', header: 'Intervention', width: 100,
+      render: (r) => r.intervention_id
+        ? (
+          <Button size="1" variant="ghost" asChild>
+            <Link to={`/intervention/${r.intervention_id}`}><ExternalLink size={11} />Voir</Link>
+          </Button>
+        )
+        : <Text size="1" color="gray">—</Text>,
     },
     {
       key: 'skip', header: '', width: 80,
@@ -157,6 +177,18 @@ export default function PreventiveOccurrencesTab() {
         loading={loading}
         getRowKey={(r) => r.id}
         emptyState={{ icon: CalendarClock, title: 'Aucune occurrence', description: 'Ajustez les filtres ou cliquez sur Générer.' }}
+        renderExpandedRow={(r) => {
+          if (r.status !== 'generated' && r.status !== 'done') return null;
+          return (
+            <Box px="4" py="3" style={{ backgroundColor: 'var(--gray-1)', borderTop: '1px solid var(--gray-4)' }}>
+              <GammeProgressBlock
+                mode="occurrence"
+                occurrenceId={r.id}
+                diId={r.di_id ?? null}
+              />
+            </Box>
+          );
+        }}
       />
 
       {/* Confirmation génération */}

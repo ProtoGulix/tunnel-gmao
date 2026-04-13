@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Heading, Spinner, Text } from '@radix-ui/themes';
-import { ClipboardList, Plus } from 'lucide-react';
+import { Badge, Box, Button, Card, Flex, Heading, Spinner, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList, Plus } from 'lucide-react';
 import { createInterventionRequest, fetchInterventionRequest, fetchInterventionRequests } from '@/api/intervention-requests';
 import InterventionRequestForm from '@/components/intervention-requests/InterventionRequestForm';
+import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
 function RequestRow({ req, isSelected, onToggle }) {
   const [hovered, setHovered] = useState(false);
@@ -34,13 +35,30 @@ function RequestRow({ req, isSelected, onToggle }) {
           {req.equipement?.code && <Badge color="gray" variant="soft" size="1">{req.equipement.code}</Badge>}
           <Text size="2" weight="medium">{req.equipement?.name ?? '—'}</Text>
         </Flex>
-        <Text size="1" color="gray">
-          {req.demandeur_nom}
-          {req.demandeur_service ? ` — ${req.demandeur_service}` : ''}
-        </Text>
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="1" color="gray">
+            {req.demandeur_nom}
+            {req.demandeur_service ? ` — ${req.demandeur_service}` : ''}
+          </Text>
+          {req.is_system && (
+            <Tooltip content="Demande générée automatiquement par le moteur préventif">
+              <Badge color="gray" variant="soft" size="1" style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Bot size={10} />Système
+              </Badge>
+            </Tooltip>
+          )}
+        </Flex>
         <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {req.description}
         </Text>
+        {req.suggested_type_inter && (
+          <Flex align="center" gap="1">
+            <Text size="1" color="gray">Type suggéré :</Text>
+            <Badge color="blue" variant="soft" size="1">
+              {TYPE_INTER_LABELS[req.suggested_type_inter] ?? req.suggested_type_inter}
+            </Badge>
+          </Flex>
+        )}
       </Flex>
     </Box>
   );

@@ -68,11 +68,6 @@ export default function InterventionDetailPage() {
   }, [setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
 
-  const tabs = useMemo(() => [
-    ...BASE_TABS,
-    ...(intervention?.plan_id ? [{ id: 'gamme', label: 'Gamme', icon: ClipboardCheck }] : []),
-  ], [intervention?.plan_id]);
-
   const {
     intervention,
     loading,
@@ -89,6 +84,11 @@ export default function InterventionDetailPage() {
     loadPdf,
     ficheFileName,
   } = useInterventionDetail(id);
+
+  const tabs = useMemo(() => [
+    ...BASE_TABS,
+    ...(intervention?.plan_id ? [{ id: 'gamme', label: 'Gamme', icon: ClipboardCheck }] : []),
+  ], [intervention?.plan_id]);
 
   // Charger le PDF quand l'onglet fiche est ouvert
   useEffect(() => {
@@ -368,7 +368,7 @@ export default function InterventionDetailPage() {
 
         {intervention.plan_id && (
           <Tabs.Content value="gamme">
-            <GammeProgressBlock interventionId={id} />
+            <GammeProgressBlock mode="intervention" interventionId={id} onProgressUpdate={refetch} />
           </Tabs.Content>
         )}
       </Tabs.Root>

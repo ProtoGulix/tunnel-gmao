@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
-import { Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextField } from '@radix-ui/themes';
 import { MapPin, Plus, User, Wrench } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import LockedBadge from '@/components/ui/LockedBadge';
 import SelectionSummary from '@/components/ui/SelectionSummary';
-import { INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
 const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgent' },
@@ -13,7 +13,7 @@ const PRIORITY_OPTIONS = [
   { value: 'faible', label: 'Faible' },
 ];
 
-export default function InterventionCreateForm({ formData, set, locked, fetchEquipementsFn, saving, error, onSubmit, onCancel }) {
+export default function InterventionCreateForm({ formData, set, locked, lockedType = false, fetchEquipementsFn, saving, error, onSubmit, onCancel }) {
   return (
     <Card style={{ padding: '1.5rem', backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
       <Flex direction="column" gap="3">
@@ -53,36 +53,67 @@ export default function InterventionCreateForm({ formData, set, locked, fetchEqu
                 onChange={(e) => set('reportedDate', e.target.value)} required />
             </Box>
 
-            {/* Équipement */}
-            <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Équipement <Text color="red">*</Text>
-              </Text>
-              {formData.equipementId ? (
-                locked ? (
-                  <LockedBadge icon={MapPin} label={formData.equipementLabel} />
+            {/* Équipement + Type + Priorité sur la même ligne */}
+            <Flex gap="3" align="end" wrap="wrap">
+              <Box style={{ flex: '1 1 200px' }}>
+                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                  Équipement <Text color="red">*</Text>
+                </Text>
+                {formData.equipementId ? (
+                  locked ? (
+                    <LockedBadge icon={MapPin} label={formData.equipementLabel} />
+                  ) : (
+                    <SelectionSummary
+                      badgeText={formData.equipementLabel?.split(' — ')[0] ?? ''}
+                      mainText={formData.equipementLabel?.split(' — ').slice(1).join(' — ') || formData.equipementLabel}
+                      onClear={() => { set('equipementId', null); set('equipementLabel', ''); }}
+                    />
+                  )
                 ) : (
-                  <SelectionSummary
-                    badgeText={formData.equipementLabel?.split(' — ')[0] ?? ''}
-                    mainText={formData.equipementLabel?.split(' — ').slice(1).join(' — ') || formData.equipementLabel}
-                    onClear={() => { set('equipementId', null); set('equipementLabel', ''); }}
+                  <AsyncSearchSelect
+                    fetchFn={fetchEquipementsFn}
+                    onSelect={(eq) => { set('equipementId', eq.id); set('equipementLabel', `${eq.code ? eq.code + ' — ' : ''}${eq.name}`); }}
+                    renderItem={(eq) => (
+                      <Flex align="center" gap="2">
+                        <Text size="2" weight="bold">{eq.code}</Text>
+                        <Text size="2">{eq.name}</Text>
+                      </Flex>
+                    )}
+                    placeholder="Rechercher par code, nom ou affectation..."
+                    minChars={1}
                   />
-                )
-              ) : (
-                <AsyncSearchSelect
-                  fetchFn={fetchEquipementsFn}
-                  onSelect={(eq) => { set('equipementId', eq.id); set('equipementLabel', `${eq.code ? eq.code + ' — ' : ''}${eq.name}`); }}
-                  renderItem={(eq) => (
-                    <Flex align="center" gap="2">
-                      <Text size="2" weight="bold">{eq.code}</Text>
-                      <Text size="2">{eq.name}</Text>
-                    </Flex>
-                  )}
-                  placeholder="Rechercher par code, nom ou affectation..."
-                  minChars={1}
-                />
-              )}
-            </Box>
+                )}
+              </Box>
+
+              <Box style={{ flex: '0 0 auto' }}>
+                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Type</Text>
+                {lockedType ? (
+                  <Flex align="center" gap="2" style={{ height: 32 }}>
+                    <Badge color="blue" variant="soft">
+                      {TYPE_INTER_LABELS[formData.type] ?? formData.type}
+                    </Badge>
+                    <Text size="1" color="gray">imposé par le système</Text>
+                  </Flex>
+                ) : (
+                  <Select.Root value={formData.type} onValueChange={(v) => set('type', v)}>
+                    <Select.Trigger />
+                    <Select.Content>
+                      {INTERVENTION_TYPES.map((t) => <Select.Item key={t.id} value={t.id}>{t.title}</Select.Item>)}
+                    </Select.Content>
+                  </Select.Root>
+                )}
+              </Box>
+
+              <Box style={{ flex: '0 0 auto' }}>
+                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Priorité</Text>
+                <Select.Root value={formData.priority} onValueChange={(v) => set('priority', v)}>
+                  <Select.Trigger />
+                  <Select.Content>
+                    {PRIORITY_OPTIONS.map((p) => <Select.Item key={p.value} value={p.value}>{p.label}</Select.Item>)}
+                  </Select.Content>
+                </Select.Root>
+              </Box>
+            </Flex>
 
             {/* Initiales technicien */}
             <Box>
@@ -107,28 +138,6 @@ export default function InterventionCreateForm({ formData, set, locked, fetchEqu
               )}
             </Box>
 
-            {/* Type */}
-            <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Type</Text>
-              <Select.Root value={formData.type} onValueChange={(v) => set('type', v)}>
-                <Select.Trigger />
-                <Select.Content>
-                  {INTERVENTION_TYPES.map((t) => <Select.Item key={t.id} value={t.id}>{t.title}</Select.Item>)}
-                </Select.Content>
-              </Select.Root>
-            </Box>
-
-            {/* Priorité */}
-            <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Priorité</Text>
-              <Select.Root value={formData.priority} onValueChange={(v) => set('priority', v)}>
-                <Select.Trigger />
-                <Select.Content>
-                  {PRIORITY_OPTIONS.map((p) => <Select.Item key={p.value} value={p.value}>{p.label}</Select.Item>)}
-                </Select.Content>
-              </Select.Root>
-            </Box>
-
             <Flex gap="3" justify="end" mt="2">
               <Button type="button" variant="soft" color="gray" size="2" disabled={saving} onClick={onCancel}>
                 Annuler
@@ -148,6 +157,7 @@ InterventionCreateForm.propTypes = {
   formData: PropTypes.object.isRequired,
   set: PropTypes.func.isRequired,
   locked: PropTypes.bool.isRequired,
+  lockedType: PropTypes.bool,
   fetchEquipementsFn: PropTypes.func.isRequired,
   saving: PropTypes.bool,
   error: PropTypes.string,

@@ -60,6 +60,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
       title: req.description ?? '',
       reportedBy: req.demandeur_nom ?? '',
       requestId: req.id,
+      ...(req.suggested_type_inter && { type: req.suggested_type_inter }),
     }));
   }, []);
 
@@ -103,6 +104,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           formData={formData}
           set={set}
           locked={!!selectedRequest}
+          lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
           fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
           saving={saving}
           error={error}

@@ -15,6 +15,16 @@ export async function fetchGammeProgress(intervention_id) {
   return res.data;
 }
 
+export async function fetchGammeStepValidationsByOccurrence(occurrence_id) {
+  const res = await api.get('/gamme-step-validations/by-occurrence', { params: { occurrence_id } });
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function fetchGammeProgressByOccurrence(occurrence_id) {
+  const res = await api.get('/gamme-step-validations/progress', { params: { occurrence_id } });
+  return res.data;
+}
+
 export async function patchGammeStepValidation(id, data) {
   const res = await api.patch(`/gamme-step-validations/${id}`, data);
   return res.data;
