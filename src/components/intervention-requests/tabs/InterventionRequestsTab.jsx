@@ -8,10 +8,11 @@
  */
 
 import { useCallback, useState } from 'react';
-import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
-import { ClipboardList, Plus } from 'lucide-react';
+import { Badge, Box, Button, Flex, Select, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList, Plus } from 'lucide-react';
 import { useInterventionRequests } from '@/hooks/intervention-requests/useInterventionRequests';
 import { createInterventionRequest } from '@/api/intervention-requests';
+import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
@@ -38,14 +39,34 @@ const columns = [
   { key: 'demandeur', header: 'Demandeur', width: 200,
     render: (row) => (
       <Flex direction="column" gap="0">
-        <Text size="2">{row.demandeur_nom}</Text>
+        <Flex align="center" gap="1" wrap="wrap">
+          <Text size="2">{row.demandeur_nom}</Text>
+          {row.is_system && (
+            <Tooltip content="Demande générée automatiquement par le moteur préventif">
+              <Badge color="gray" variant="soft" size="1" style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Bot size={10} />Système
+              </Badge>
+            </Tooltip>
+          )}
+        </Flex>
         {(row.service?.label || row.demandeur_service) && (
           <Text size="1" color="gray">{row.service?.label ?? row.demandeur_service}</Text>
         )}
       </Flex>
     ) },
   { key: 'description', header: 'Description',
-    render: (row) => <Text size="2" color="gray" style={ELLIPSIS}>{row.description}</Text> },
+    render: (row) => (
+      <Flex direction="column" gap="1">
+        <Text size="2" color="gray" style={ELLIPSIS}>{row.description}</Text>
+        {row.suggested_type_inter && (
+          <Tooltip content="Type d'intervention suggéré">
+            <Badge color="blue" variant="soft" size="1" style={{ cursor: 'default', width: 'fit-content' }}>
+              {TYPE_INTER_LABELS[row.suggested_type_inter] ?? row.suggested_type_inter}
+            </Badge>
+          </Tooltip>
+        )}
+      </Flex>
+    ) },
   { key: 'statut', header: 'Statut', width: 120,
     render: (row) => (
       <Badge style={{ backgroundColor: row.statut_color + '22', color: row.statut_color }} variant="soft" radius="full">
@@ -67,6 +88,8 @@ export default function InterventionRequestsTab() {
     setSearch,
     statut,
     setStatut,
+    isSystem,
+    setIsSystem,
     facets,
     page,
     setPage,
@@ -136,6 +159,22 @@ export default function InterventionRequestsTab() {
           )
         }
       />
+
+      {/* Filtre source */}
+      <Flex align="center" gap="2" mb="2">
+        <Text size="1" color="gray" weight="medium">Source :</Text>
+        <Select.Root
+          value={isSystem === null ? 'all' : isSystem ? 'system' : 'human'}
+          onValueChange={(v) => setIsSystem(v === 'all' ? null : v === 'system')}
+        >
+          <Select.Trigger size="1" />
+          <Select.Content>
+            <Select.Item value="all">Toutes</Select.Item>
+            <Select.Item value="human">Humaines</Select.Item>
+            <Select.Item value="system">Système</Select.Item>
+          </Select.Content>
+        </Select.Root>
+      </Flex>
 
       {/* Onglets statut (depuis facets) */}
       {facets.statut?.length > 0 && (

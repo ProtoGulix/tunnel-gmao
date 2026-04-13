@@ -7,11 +7,11 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Callout, Flex, Select, Separator, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
-import { AlertCircle, Clock, User, Wrench } from 'lucide-react';
+import { AlertCircle, Bot, Clock, User, Wrench } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import { INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
 /** Transitions autorisées par statut (source : doc API /intervention-requests/{id}/transition) */
 const TRANSITIONS = {
@@ -93,25 +93,45 @@ function RejectionForm({ onConfirm, onCancel, transitioning }) {
 RejectionForm.propTypes = { onConfirm: PropTypes.func.isRequired, onCancel: PropTypes.func.isRequired, transitioning: PropTypes.bool };
 
 // Formulaire d'acceptation — collecte type_inter, tech_initials, priority, reported_date
-function AcceptanceForm({ onConfirm, onCancel, transitioning }) {
-  const [typeInter, setTypeInter] = useState('CUR');
+function AcceptanceForm({ request, onConfirm, onCancel, transitioning, transitionError }) {
+  const isSystemLocked = !!(request?.is_system && request?.suggested_type_inter);
+  const [typeInter, setTypeInter] = useState(request?.suggested_type_inter || 'CUR');
   const [techInitials, setTechInitials] = useState('');
   const [priority, setPriority] = useState('normale');
   const [reportedDate, setReportedDate] = useState('');
-  const canSubmit = typeInter && techInitials.trim();
+  const effectiveTypeInter = isSystemLocked ? request.suggested_type_inter : typeInter;
+  const canSubmit = effectiveTypeInter && techInitials.trim();
   return (
     <Flex direction="column" gap="2">
       <Text size="2" weight="medium">Acceptation de la demande</Text>
       <Box>
-        <Text as="label" size="2" weight="medium">Type d&apos;intervention <Text as="span" color="red">*</Text></Text>
-        <Select.Root value={typeInter} onValueChange={setTypeInter}>
-          <Select.Trigger style={{ width: '100%', marginTop: '0.25rem' }} />
-          <Select.Content>
-            {INTERVENTION_TYPES.map((t) => (
-              <Select.Item key={t.id} value={t.id}>{t.title}</Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Root>
+        <Text as="label" size="2" weight="medium">
+          Type d&apos;intervention{!isSystemLocked && <Text as="span" color="red"> *</Text>}
+        </Text>
+        {isSystemLocked ? (
+          <Flex align="center" gap="2" mt="1">
+            <Badge color="blue" variant="soft">
+              {TYPE_INTER_LABELS[request.suggested_type_inter] ?? request.suggested_type_inter}
+            </Badge>
+            <Text size="1" color="gray">imposé par la demande système, non modifiable</Text>
+          </Flex>
+        ) : (
+          <>
+            <Select.Root value={typeInter} onValueChange={setTypeInter}>
+              <Select.Trigger style={{ width: '100%', marginTop: '0.25rem' }} />
+              <Select.Content>
+                {INTERVENTION_TYPES.map((t) => (
+                  <Select.Item key={t.id} value={t.id}>{t.title}</Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+            {request?.suggested_type_inter && (
+              <Text size="1" color="gray" style={{ display: 'block', marginTop: '0.25rem' }}>
+                Type suggéré à la création — modifiable
+              </Text>
+            )}
+          </>
+        )}
       </Box>
       <Box>
         <Text as="label" size="2" weight="medium">Initiales technicien <Text as="span" color="red">*</Text></Text>
@@ -143,9 +163,15 @@ function AcceptanceForm({ onConfirm, onCancel, transitioning }) {
           style={{ marginTop: '0.25rem' }}
         />
       </Box>
+      {transitionError && (
+        <Callout.Root color="red" size="1">
+          <Callout.Icon><AlertCircle size={14} /></Callout.Icon>
+          <Callout.Text>{transitionError}</Callout.Text>
+        </Callout.Root>
+      )}
       <Flex gap="2" mt="1">
         <Button size="2" color="green" disabled={transitioning || !canSubmit}
-          onClick={() => onConfirm({ typeInter, techInitials, priority, reportedDate: reportedDate || null })}>
+          onClick={() => onConfirm({ typeInter: effectiveTypeInter, techInitials, priority, reportedDate: reportedDate || null })}>
           {transitioning && <Spinner size="1" />}Accepter
         </Button>
         <Button size="2" variant="ghost" color="gray" onClick={onCancel}>Annuler</Button>
@@ -153,10 +179,10 @@ function AcceptanceForm({ onConfirm, onCancel, transitioning }) {
     </Flex>
   );
 }
-AcceptanceForm.propTypes = { onConfirm: PropTypes.func.isRequired, onCancel: PropTypes.func.isRequired, transitioning: PropTypes.bool };
+AcceptanceForm.propTypes = { request: PropTypes.object, onConfirm: PropTypes.func.isRequired, onCancel: PropTypes.func.isRequired, transitioning: PropTypes.bool, transitionError: PropTypes.string };
 
 // Zone de transition de statut — encapsule son propre état interim
-function TransitionZone({ statut, transitioning, transitionError, onTransition }) {
+function TransitionZone({ statut, request, transitioning, transitionError, onTransition }) {
   const [showRejection, setShowRejection] = useState(false);
   const [showAcceptance, setShowAcceptance] = useState(false);
   const available = TRANSITIONS[statut] ?? [];
@@ -173,7 +199,20 @@ function TransitionZone({ statut, transitioning, transitionError, onTransition }
   }
 
   if (showAcceptance) {
-    return <AcceptanceForm onConfirm={(d) => { setShowAcceptance(false); onTransition('acceptee', d); }} onCancel={() => setShowAcceptance(false)} transitioning={transitioning} />;
+    return (
+      <AcceptanceForm
+        request={request}
+        transitionError={transitionError}
+        onConfirm={async (d) => {
+          try {
+            await onTransition('acceptee', d);
+            setShowAcceptance(false);
+          } catch { /* transitionError affiché inline */ }
+        }}
+        onCancel={() => setShowAcceptance(false)}
+        transitioning={transitioning}
+      />
+    );
   }
 
   return (
@@ -194,7 +233,7 @@ function TransitionZone({ statut, transitioning, transitionError, onTransition }
     </Flex>
   );
 }
-TransitionZone.propTypes = { statut: PropTypes.string.isRequired, transitioning: PropTypes.bool, transitionError: PropTypes.string, onTransition: PropTypes.func.isRequired };
+TransitionZone.propTypes = { statut: PropTypes.string.isRequired, request: PropTypes.object, transitioning: PropTypes.bool, transitionError: PropTypes.string, onTransition: PropTypes.func.isRequired };
 
 function EquipementLabel({ equipement }) {
   return (
@@ -241,13 +280,29 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone 
 
       <Separator size="4" mb="3" />
 
-      <Flex gap="2" align="center" mb="2">
-        <User size={14} color="var(--gray-9)" />
-        <Text size="2" weight="medium">{detail.demandeur_nom}</Text>
-        {(detail.service?.label || detail.demandeur_service) && (
-          <Text size="2" color="gray">— {detail.service?.label ?? detail.demandeur_service}</Text>
+      <Box mb="2">
+        <Flex gap="2" align="center" mb="1">
+          <User size={14} color="var(--gray-9)" />
+          <Text size="2" weight="medium">{detail.demandeur_nom}</Text>
+          {(detail.service?.label || detail.demandeur_service) && (
+            <Text size="2" color="gray">— {detail.service?.label ?? detail.demandeur_service}</Text>
+          )}
+        </Flex>
+        {detail.is_system && (
+          <Flex gap="2" align="center" mb="1" style={{ paddingLeft: 22 }}>
+            <Bot size={13} color="var(--gray-9)" />
+            <Text size="1" color="gray">Générée automatiquement — moteur préventif</Text>
+          </Flex>
         )}
-      </Flex>
+        {detail.suggested_type_inter && (
+          <Flex gap="2" align="center" style={{ paddingLeft: 22 }}>
+            <Text size="1" color="gray" style={{ minWidth: 80 }}>Type suggéré</Text>
+            <Badge color="blue" variant="soft" size="1">
+              {TYPE_INTER_LABELS[detail.suggested_type_inter] ?? detail.suggested_type_inter}
+            </Badge>
+          </Flex>
+        )}
+      </Box>
 
       <Box mb="3" p="3" style={{ backgroundColor: 'var(--gray-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-4)' }}>
         <Text size="2">{detail.description}</Text>
@@ -267,6 +322,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone 
       <Box mb="3">
         <TransitionZone
           statut={detail.statut}
+          request={detail}
           transitioning={transitioning}
           transitionError={transitionError}
           onTransition={handleTransition}

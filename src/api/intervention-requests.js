@@ -36,6 +36,7 @@ export async function fetchInterventionRequests(params = {}) {
   if (params.statut) queryParams.statut = params.statut;
   if (params.excludeStatuses) queryParams.exclude_statuses = params.excludeStatuses;
   if (params.machineId) queryParams.machine_id = params.machineId;
+  if (params.isSystem !== undefined && params.isSystem !== null) queryParams.is_system = params.isSystem;
   if (params.search?.trim()) queryParams.search = params.search.trim();
 
   const response = await api.get('/intervention-requests', { params: queryParams });

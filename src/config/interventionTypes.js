@@ -9,6 +9,11 @@ export const INTERVENTION_TYPES = [
   { id: 'MES', title: 'Mise en service', color: 'amber' }, // Orange attente
 ];
 
+/** Map centralisée code → libellé français — dérivée de INTERVENTION_TYPES, jamais dupliquée */
+export const TYPE_INTER_LABELS = Object.fromEntries(
+  INTERVENTION_TYPES.map((t) => [t.id, t.title])
+);
+
 export const STATUS_CONFIG = {
   ouvert: { color: 'blue', label: 'Ouvert', bg: 'var(--blue-3)' }, // Bleu = en cours
   attente_prod: {
