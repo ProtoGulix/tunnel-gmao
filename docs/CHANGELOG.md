@@ -4,6 +4,33 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.25.0 - 2026-04-10
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Création d'un équipement possible directement depuis la liste, avec tous les champs disponibles : nom, classe, code automatique (classe + numéro machine), statut, affectation, fabricant, numéro de série, date de mise en service, équipement parent et notes.
+- Le code équipement est généré automatiquement à partir de la classe et du numéro machine (format `CODE001`) — il n'est plus saisi manuellement.
+- Le statut de chaque équipement est désormais affiché dans la liste et sur la fiche de détail ; si les interventions sont bloquées sur un équipement, un avertissement est visible en haut de la fiche.
+- L'onglet actif sur une fiche équipement est mémorisé dans le lien — permet de partager ou recharger la page en restant sur le bon onglet.
+
+### Stabilisation / Dette technique
+
+- Correction d'un bug de navigation silencieux : passer d'une fiche équipement à une autre ne rechargait pas les données → risque de lecture de données appartenant au mauvais équipement éliminé.
+- Uniformisation du champ de recherche d'équipement parent dans le formulaire de création → réduction du risque de comportement incohérent entre les formulaires.
+
+### Composants / Modules concernés
+
+- Équipements — liste, fiche de détail, formulaire de création
+
+### Points de vigilance
+
+- La fiche équipement attend désormais l'équipement parent sous forme d'objet complet `{id, code, name}` — incompatible avec une API renvoyant uniquement `parent_id`.
+- Le code équipement n'est plus modifiable manuellement dans le formulaire de création.
+
+---
+
 ## 3.24.1 - 2026-04-09
 
 Stabilité : **en consolidation** 🔧
