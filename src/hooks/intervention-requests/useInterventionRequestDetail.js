@@ -45,16 +45,16 @@ export function useInterventionRequestDetail(requestId) {
   /**
    * Effectue une transition de statut
    * @param {string} statusTo - Code du statut cible
-   * @param {string} [notes] - Notes (obligatoire pour 'rejetee')
+   * @param {Object} [extraData] - Données complémentaires : notes, typeInter, techInitials, priority, reportedDate
    * @returns {Promise<Object>} Demande mise à jour
    */
   const doTransition = useCallback(
-    async (statusTo, notes) => {
+    async (statusTo, extraData = {}) => {
       setTransitioning(true);
       setTransitionError(null);
 
       try {
-        const updated = await transitionInterventionRequest(requestId, { statusTo, notes });
+        const updated = await transitionInterventionRequest(requestId, { statusTo, ...extraData });
         setDetail(updated);
         return updated;
       } catch (err) {

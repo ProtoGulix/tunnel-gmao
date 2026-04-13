@@ -1,16 +1,17 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Heading, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
 import { ClipboardList, MapPin } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import LockedBadge from '@/components/ui/LockedBadge';
 import { fetchEquipements } from '@/api/equipements';
+import { fetchServices } from '@/api/services';
 
 const INITIAL_FORM = {
   machineId: '',
   machineName: '',
   demandeurNom: '',
-  demandeurService: '',
+  serviceId: '',
   description: '',
 };
 
@@ -27,6 +28,11 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
     ...(machineId ? { machineId, machineName: machineName ?? '' } : {}),
   }));
   const [error, setError] = useState(null);
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    fetchServices().then(setServices).catch(() => {});
+  }, []);
 
   const set = useCallback((field, value) => setForm((prev) => ({ ...prev, [field]: value })), []);
 
@@ -44,7 +50,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
       await onSubmit({
         machineId: form.machineId,
         demandeurNom: form.demandeurNom.trim(),
-        demandeurService: form.demandeurService.trim(),
+        serviceId: form.serviceId || null,
         description: form.description.trim(),
       });
     } catch (err) {
@@ -124,11 +130,14 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
               <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Service <Text color="gray" size="1">(optionnel)</Text>
               </Text>
-              <TextField.Root
-                placeholder="Service ou département"
-                value={form.demandeurService}
-                onChange={(e) => set('demandeurService', e.target.value)}
-              />
+              <Select.Root value={form.serviceId} onValueChange={(v) => set('serviceId', v)}>
+                <Select.Trigger placeholder="Sélectionner un service…" style={{ width: '100%' }} />
+                <Select.Content>
+                  {services.map((s) => (
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
             </Box>
 
             {/* Description */}
