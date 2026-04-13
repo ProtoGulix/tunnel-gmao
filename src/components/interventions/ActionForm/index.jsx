@@ -14,10 +14,10 @@
  *   techId         — technicien fixé (sinon fallback sur l'utilisateur connecté)
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, Card, Button } from '@radix-ui/themes';
-import { Plus } from 'lucide-react';
+import { Badge, Box, Checkbox, Flex, Text, Card, Button } from '@radix-ui/themes';
+import { ClipboardCheck, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
@@ -40,6 +40,7 @@ function ActionForm({
   techId = null,
   legacyTimeSpent = null,
   lockedDate = false,
+  gammeValidations = [],
 }) {
   const { user } = useAuth();
   const form = useActionForm(initialState);
@@ -52,8 +53,20 @@ function ActionForm({
     end: initialState?.actionEnd ?? null,
   });
   const [manualTimeSpent, setManualTimeSpent] = useState(legacyTimeSpent ?? '');
-
   const [submitError, setSubmitError] = useState(null);
+
+  const [selectedStepIds, setSelectedStepIds] = useState(() => new Set());
+  const pendingSteps = gammeValidations
+    .filter((v) => v.status === 'pending')
+    .sort((a, b) => (a.step_sort_order ?? 0) - (b.step_sort_order ?? 0));
+
+  const toggleStep = useCallback((id) => {
+    setSelectedStepIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
   const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
   // techId prop > utilisateur connecté
@@ -79,6 +92,9 @@ function ActionForm({
       ),
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
+      ...(selectedStepIds.size > 0 && {
+        gamme_step_validations: [...selectedStepIds].map((id) => ({ step_validation_id: id, status: 'validated' })),
+      }),
     };
   };
 
@@ -177,6 +193,33 @@ function ActionForm({
               validation={form.validation}
             />
 
+            {/* Étapes de gamme à valider avec cette action */}
+            {pendingSteps.length > 0 && (
+              <Box style={{ background: 'var(--green-2)', border: '1px solid var(--green-6)', borderRadius: 'var(--radius-2)', padding: '0.5rem 0.75rem' }}>
+                <Flex align="center" gap="2" mb="2">
+                  <ClipboardCheck size={14} color="var(--green-9)" />
+                  <Text size="2" weight="bold">Valider des étapes avec cette action</Text>
+                  {selectedStepIds.size > 0 && (
+                    <Badge color="green" variant="soft" size="1">
+                      {selectedStepIds.size}/{pendingSteps.length}
+                    </Badge>
+                  )}
+                </Flex>
+                <Flex direction="column" gap="1">
+                  {pendingSteps.map((v) => (
+                    <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '2px 0' }}>
+                      <Checkbox
+                        checked={selectedStepIds.has(v.id)}
+                        onCheckedChange={() => toggleStep(v.id)}
+                      />
+                      <Text size="2" style={{ flex: 1, userSelect: 'none' }}>{v.step_label}</Text>
+                      {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+                    </label>
+                  ))}
+                </Flex>
+              </Box>
+            )}
+
             <Flex justify="end" gap="2">
               <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
                 Annuler
@@ -216,7 +259,13 @@ ActionForm.propTypes = {
   interventionId: PropTypes.string,
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
+  gammeValidations: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    step_label: PropTypes.string.isRequired,
+    step_sort_order: PropTypes.number,
+    step_optional: PropTypes.bool,
+    status: PropTypes.string.isRequired,
+  })),
 };
 
 export default ActionForm;
-

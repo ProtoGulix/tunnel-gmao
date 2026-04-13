@@ -121,11 +121,12 @@ export function useInterventionDetail(id) {
     async (payload) => {
       try {
         // Le payload est déjà canonique (construit par ActionForm)
-        await createActionDirect({
+        const created = await createActionDirect({
           ...payload,
           intervention_id: payload.intervention_id ?? id,
         });
         await fetchData(true);
+        return created;
       } catch (err) {
         console.error('Erreur ajout action:', err);
         throw err;

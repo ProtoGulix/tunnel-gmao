@@ -225,6 +225,7 @@ function mapInterventionDetailResponse(raw = {}) {
               }
             : null,
           purchaseRequests: a.purchase_requests || [],
+          gammeStepValidations: a.gamme_step_validations || [],
         }))
       : [],
     statusLogs: Array.isArray(raw.status_logs)

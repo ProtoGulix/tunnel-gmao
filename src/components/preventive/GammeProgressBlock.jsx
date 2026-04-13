@@ -45,7 +45,7 @@ function StepIcon({ status, optional }) {
 }
 StepIcon.propTypes = { status: PropTypes.string.isRequired, optional: PropTypes.bool };
 
-function StepRow({ v, onValidate, onSkipOpen, saving, readOnly, canSkipObligatory }) {
+function StepRow({ v, onSkipOpen, saving, readOnly, canSkipObligatory }) {
   const isPending = v.status === 'pending';
   const isSaving = saving === v.id;
   const showSkip = isPending && (v.step_optional || canSkipObligatory);
@@ -77,9 +77,6 @@ function StepRow({ v, onValidate, onSkipOpen, saving, readOnly, canSkipObligator
       </Badge>
       {!readOnly && isPending && (
         <Flex gap="1">
-          <Button size="1" color="green" variant="soft" disabled={isSaving} onClick={() => onValidate(v)}>
-            {isSaving ? '…' : 'Valider'}
-          </Button>
           {showSkip && (
             <Button size="1" color="orange" variant="ghost" disabled={isSaving} onClick={() => onSkipOpen(v)}>
               Ignorer
@@ -92,7 +89,6 @@ function StepRow({ v, onValidate, onSkipOpen, saving, readOnly, canSkipObligator
 }
 StepRow.propTypes = {
   v: PropTypes.object.isRequired,
-  onValidate: PropTypes.func.isRequired,
   onSkipOpen: PropTypes.func.isRequired,
   saving: PropTypes.string,
   readOnly: PropTypes.bool,
@@ -135,7 +131,7 @@ function ProgressSummary({ progress }) {
 }
 ProgressSummary.propTypes = { progress: PropTypes.object };
 
-export default function GammeProgressBlock({ mode, interventionId, occurrenceId, diId, onProgressUpdate }) {
+export default function GammeProgressBlock({ mode, interventionId, occurrenceId, diId, onProgressUpdate, refreshKey = 0 }) {
   const { user } = useAuth();
   const readOnly = mode === 'occurrence';
   const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role));
@@ -166,18 +162,7 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
     }
   }, [mode, interventionId, occurrenceId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
-
-  const handleValidate = async (step) => {
-    try {
-      setSaving(step.id);
-      await patchGammeStepValidation(step.id, { status: 'validated', validated_by: user?.id });
-      await loadData();
-      onProgressUpdate?.();
-    } finally {
-      setSaving(null);
-    }
-  };
+  useEffect(() => { loadData(); }, [loadData, refreshKey]);
 
   const handleSkip = async () => {
     if (!skipTarget) return;
@@ -252,7 +237,6 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
         <StepRow
           key={v.id}
           v={v}
-          onValidate={handleValidate}
           onSkipOpen={(s) => { setSkipTarget(s); setSkipReason(''); }}
           saving={saving}
           readOnly={readOnly}

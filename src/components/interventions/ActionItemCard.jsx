@@ -1,8 +1,9 @@
 /* eslint-disable complexity, max-lines, react/prop-types */
-import { Card, Text } from "@radix-ui/themes";
+import { Badge, Card, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
 import { Flex } from "@radix-ui/themes";
+import { CheckCircle2, ClipboardCheck, MinusCircle } from "lucide-react";
 import ActionForm from "@/components/interventions/ActionForm";
 import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
 import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
@@ -13,6 +14,36 @@ import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import * as stockApi from "@/api/stock";
 import { useAuth } from "@/auth/useAuth";
+
+function GammeStepList({ steps }) {
+  if (!steps || steps.length === 0) return null;
+  return (
+    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
+      <Flex direction="column" gap="1">
+        <Text size="2" weight="bold" color="gray">
+          <Flex align="center" gap="1" as="span">
+            <ClipboardCheck size={13} />
+            Étapes validées ({steps.length})
+          </Flex>
+        </Text>
+        {steps.map((v) => (
+          <Flex key={v.id} align="center" gap="2"
+            style={{ padding: '4px 6px', background: 'var(--gray-2)', borderRadius: 'var(--radius-1)' }}>
+            {v.status === 'skipped'
+              ? <MinusCircle size={13} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+              : <CheckCircle2 size={13} color="var(--green-9)" style={{ flexShrink: 0 }} />
+            }
+            <Text size="2" style={{ flex: 1 }}>{v.step_label}</Text>
+            {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+            <Badge color={v.status === 'skipped' ? 'orange' : 'green'} variant="soft" size="1">
+              {v.status === 'skipped' ? 'Ignorée' : 'Validée'}
+            </Badge>
+          </Flex>
+        ))}
+      </Flex>
+    </div>
+  );
+}
 
 // DTO-friendly accessors with legacy fallback
 const getComplexityScore = (action) => Number(action?.complexityScore ?? action?.complexity_score ?? 0);
@@ -45,6 +76,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [purchaseRequests, setPurchaseRequests] = useState([]);
+  const [gammeSteps, setGammeSteps] = useState([]);
 
   const complexityScore = getComplexityScore(localAction);
   const complexityInfo = getComplexityColor(complexityScore);
@@ -68,6 +100,15 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       setPurchaseRequests([]);
     }
   }, [localAction?.purchaseRequests]);
+
+  // Gamme step validations liées à cette action
+  useEffect(() => {
+    if (localAction?.gammeStepValidations && Array.isArray(localAction.gammeStepValidations)) {
+      setGammeSteps(localAction.gammeStepValidations.filter((v) => v.status !== 'pending'));
+    } else {
+      setGammeSteps([]);
+    }
+  }, [localAction?.gammeStepValidations]);
 
   // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {
@@ -267,10 +308,13 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       )}
 
       {/* PURCHASE REQUESTS LIST */}
-      <PurchaseRequestList 
-        purchaseRequests={purchaseRequests} 
+      <PurchaseRequestList
+        purchaseRequests={purchaseRequests}
         onDelete={handleDeletePurchaseRequest}
       />
+
+      {/* GAMME STEP VALIDATIONS */}
+      <GammeStepList steps={gammeSteps} />
     </Card>
   );
 }

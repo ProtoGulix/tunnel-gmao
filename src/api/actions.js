@@ -150,5 +150,6 @@ function mapActionResponse(raw = {}) {
         : null,
     complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     purchaseRequests: raw.purchase_requests || [],
+    gammeStepValidations: raw.gamme_step_validations || [],
   };
 }
