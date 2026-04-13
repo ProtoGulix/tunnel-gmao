@@ -4,6 +4,31 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.26.0 - 2026-04-13
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Lors de l’acceptation d’une demande d’intervention, un formulaire s’affiche maintenant pour renseigner le type d’intervention, les initiales du technicien assigné, la priorité et la date de signalement — ces informations sont transmises directement à l’intervention créée.
+- Le champ « Service » dans le formulaire de demande d’intervention est désormais un sélecteur basé sur la liste des services de l’organisation, à la place d’une saisie libre.
+
+### Stabilisation / Dette technique
+
+- Uniformisation du champ service entre la création et la consultation d’une demande → élimine le risque d’incohérence entre ce qui est saisi et ce qui est affiché.
+
+### Composants / Modules concernés
+
+- Demandes d’intervention — formulaire de création, fiche de détail
+- Services — nouveau référentiel utilisé dans les demandes
+
+### Points de vigilance
+
+- Le champ service attend désormais un identifiant UUID issu du référentiel — incompatible avec une API renvoyant `demandeur_service` en texte libre uniquement.
+- L’acceptation d’une demande requiert maintenant les initiales du technicien et le type d’intervention — les deux champs sont obligatoires pour valider.
+
+---
+
 ## 3.25.0 - 2026-04-10
 
 Stabilité : **expérimental** 🧪

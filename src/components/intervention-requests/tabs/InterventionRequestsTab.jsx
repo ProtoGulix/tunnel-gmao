@@ -39,7 +39,9 @@ const columns = [
     render: (row) => (
       <Flex direction="column" gap="0">
         <Text size="2">{row.demandeur_nom}</Text>
-        {row.demandeur_service && <Text size="1" color="gray">{row.demandeur_service}</Text>}
+        {(row.service?.label || row.demandeur_service) && (
+          <Text size="1" color="gray">{row.service?.label ?? row.demandeur_service}</Text>
+        )}
       </Flex>
     ) },
   { key: 'description', header: 'Description',

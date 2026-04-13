@@ -256,7 +256,7 @@ function mapInterventionDetailResponse(raw = {}) {
           id: raw.request.id,
           code: raw.request.code,
           demandeurNom: raw.request.demandeur_nom,
-          demandeurService: raw.request.demandeur_service || null,
+          demandeurService: raw.request.service?.label || raw.request.demandeur_service || null,
           description: raw.request.description,
           statut: raw.request.statut,
           statutLabel: raw.request.statut_label,
