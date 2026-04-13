@@ -289,6 +289,7 @@ export default function ActionsTab({
             }}
             metadata={{ subcategories, complexityFactors }}
             interventionId={String(interventionId)}
+            showContext={false}
             onCancel={() => { setShowNewActionForm(false); setPendingValidations([]); }}
             onSubmit={handleSubmitNewAction}
             gammeValidations={pendingValidations}

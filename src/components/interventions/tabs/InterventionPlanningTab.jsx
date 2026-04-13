@@ -1,12 +1,15 @@
 /**
- * Onglet Planning d'une intervention.
- * Vue semaine avec filtre technicien — affiche les actions de l'intervention
- * sur la semaine sélectionnée.
+ * Onglet Planning — vue semaine avec filtre technicien.
+ * Utilisé depuis InterventionsListPage (planning global, interventionId=null)
+ * et potentiellement depuis InterventionDetailPage (interventionId fixé).
+ *
+ * Quand interventionId est null : ActionForm affiche les sélecteurs équipement/intervention
+ * et charge les steps gamme dynamiquement si l'intervention sélectionnée a un plan_id.
+ * Quand interventionId est fixé : ActionForm masque les sélecteurs (showContext=false).
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Flex } from '@radix-ui/themes';
-
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import { useApiStatus } from '@/hooks/shared/useApiStatus';
@@ -22,7 +25,6 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
-  // Semaine depuis query param ?week=YYYY-MM-DD (lundi)
   const weekParam = searchParams.get('week');
   const [monday, setMonday] = useState(() => weekParam ?? getMondayOf(today));
 
@@ -38,13 +40,11 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
 
   const weekDays = getWeekDays(monday);
 
-  // Sync monday → query param
   const setMondayAndParam = useCallback((m) => {
     setMonday(m);
     setSearchParams((prev) => { prev.set('week', m); return prev; }, { replace: true });
   }, [setSearchParams]);
 
-  // Charger la liste des utilisateurs actifs pour le sélecteur
   useEffect(() => {
     wrapUsers(async () => {
       const allUsers = await fetchActiveUsers();
@@ -53,7 +53,6 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Charger les actions de la semaine
   const loadWeek = useCallback(() => {
     const sunday = addDays(monday, 6);
     wrap(async () => {
@@ -67,7 +66,7 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
 
   useEffect(() => { loadWeek(); }, [loadWeek]);
 
-  // Métadonnées ActionForm — chargées uniquement à la première ouverture du formulaire
+  // Métadonnées ActionForm — chargées à la première ouverture du formulaire
   useEffect(() => {
     if (!showForm || metadata.subcategories.length > 0) return;
     Promise.all([
@@ -86,7 +85,6 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
 
   return (
     <Box pt="4">
-      {/* Barre de navigation semaine */}
       <Flex align="center" justify="between" mb="4" wrap="wrap" gap="3">
         <WeekNav
           monday={monday}
@@ -99,7 +97,6 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
         />
       </Flex>
 
-      {/* Formulaire */}
       {showForm && (
         <Box mb="4">
           <ActionForm
@@ -111,15 +108,14 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
             onSuccess={handleSuccess}
             interventionId={interventionId}
             techId={techId}
+            showContext={!interventionId}
           />
         </Box>
       )}
 
-      {/* États API */}
       {status === 'loading' && <LoadingState fullscreen={false} message="Chargement…" />}
       {status === 'error' && <ErrorState error={error} onRetry={loadWeek} />}
 
-      {/* Grille semaine : 5 × 1fr (Lun–Ven) + 80px (Sam) + 80px (Dim) */}
       {status !== 'loading' && (
         <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr) 80px 80px', gap: 8, overflowX: 'auto' }}>
           {weekDays.map((d) => (

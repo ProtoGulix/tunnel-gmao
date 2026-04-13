@@ -288,6 +288,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
           onSubmit={handleSubmitEdit}
           style={{ marginTop: '0.75rem' }}
           interventionId={interventionId ? String(interventionId) : null}
+          showContext={false}
           legacyTimeSpent={timeSpent || null}
         />
       )}

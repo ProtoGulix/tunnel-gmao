@@ -14,11 +14,12 @@
  *   techId         — technicien fixé (sinon fallback sur l'utilisateur connecté)
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Checkbox, Flex, Text, Card, Button } from '@radix-ui/themes';
 import { ClipboardCheck, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
+import { fetchGammeStepValidations } from '@/api/gammeStepValidations';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
@@ -41,6 +42,7 @@ function ActionForm({
   legacyTimeSpent = null,
   lockedDate = false,
   gammeValidations = [],
+  showContext = true,
 }) {
   const { user } = useAuth();
   const form = useActionForm(initialState);
@@ -56,7 +58,26 @@ function ActionForm({
   const [submitError, setSubmitError] = useState(null);
 
   const [selectedStepIds, setSelectedStepIds] = useState(() => new Set());
-  const pendingSteps = gammeValidations
+  // Steps chargés dynamiquement quand une intervention avec plan_id est sélectionnée dans le planning
+  const [dynamicGammeValidations, setDynamicGammeValidations] = useState([]);
+
+  useEffect(() => {
+    if (!pickedIntervention?.plan_id) {
+      setDynamicGammeValidations([]);
+      setSelectedStepIds(new Set());
+      return;
+    }
+    fetchGammeStepValidations(String(pickedIntervention.id))
+      .then((validations) => {
+        setDynamicGammeValidations(Array.isArray(validations) ? validations : []);
+        setSelectedStepIds(new Set());
+      })
+      .catch(() => setDynamicGammeValidations([]));
+  }, [pickedIntervention?.id, pickedIntervention?.plan_id]);
+
+  // La prop gammeValidations est prioritaire (contexte intervention fixée) ; sinon on utilise les dynamiques
+  const activeGammeValidations = gammeValidations.length > 0 ? gammeValidations : dynamicGammeValidations;
+  const pendingSteps = activeGammeValidations
     .filter((v) => v.status === 'pending')
     .sort((a, b) => (a.step_sort_order ?? 0) - (b.step_sort_order ?? 0));
 
@@ -147,28 +168,32 @@ function ActionForm({
           </Box>
         )}
 
-        {/* Section contexte — hors du <form> car InterventionCreatorFlow contient son propre <form> */}
-        <ContextSection
-          interventionId={interventionId}
-          pickedEquipement={pickedEquipement}
-          onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); }}
-          pickedIntervention={pickedIntervention}
-          onInterventionChange={setPickedIntervention}
-          onCreationFlowChange={setCreationFlowActive}
-          creationFlowActive={creationFlowActive}
-        />
+        {/* Section contexte — masquée quand l'intervention est déjà fixée par le parent */}
+        {showContext && (
+          <>
+            <ContextSection
+              interventionId={interventionId}
+              pickedEquipement={pickedEquipement}
+              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); }}
+              pickedIntervention={pickedIntervention}
+              onInterventionChange={setPickedIntervention}
+              onCreationFlowChange={setCreationFlowActive}
+              creationFlowActive={creationFlowActive}
+            />
 
-        {/* Flow création demande → intervention — hors du <form> pour éviter l'imbrication */}
-        {creationFlowActive && pickedEquipement && (
-          <InterventionCreatorFlow
-            equipementId={pickedEquipement.id}
-            equipementLabel={`${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`}
-            onCreated={(intervention) => {
-              setPickedIntervention(intervention);
-              setCreationFlowActive(false);
-            }}
-            onCancel={() => setCreationFlowActive(false)}
-          />
+            {/* Flow création demande → intervention — hors du <form> pour éviter l'imbrication */}
+            {creationFlowActive && pickedEquipement && (
+              <InterventionCreatorFlow
+                equipementId={pickedEquipement.id}
+                equipementLabel={`${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`}
+                onCreated={(intervention) => {
+                  setPickedIntervention(intervention);
+                  setCreationFlowActive(false);
+                }}
+                onCancel={() => setCreationFlowActive(false)}
+              />
+            )}
+          </>
         )}
 
         <form onSubmit={handleSubmit}>
@@ -259,6 +284,7 @@ ActionForm.propTypes = {
   interventionId: PropTypes.string,
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
+  showContext: PropTypes.bool,
   gammeValidations: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
     step_label: PropTypes.string.isRequired,
