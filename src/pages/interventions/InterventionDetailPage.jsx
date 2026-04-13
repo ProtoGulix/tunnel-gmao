@@ -7,10 +7,10 @@
  * - Auto-refresh toutes les 30s
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2 } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ClipboardCheck } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -23,10 +23,11 @@ import SheetTab from '@/components/interventions/tabs/SheetTab';
 import HistoryTab from '@/components/interventions/tabs/HistoryTab';
 import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
 import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
+import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
-// Configuration des onglets
-const TABS = [
+// Configuration de base des onglets
+const BASE_TABS = [
   { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
   { id: 'achats', label: 'Achats', icon: ShoppingCart },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
@@ -66,6 +67,11 @@ export default function InterventionDetailPage() {
     setSearchParams((prev) => { prev.set('tab', tab); return prev; }, { replace: true });
   }, [setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
+
+  const tabs = useMemo(() => [
+    ...BASE_TABS,
+    ...(intervention?.plan_id ? [{ id: 'gamme', label: 'Gamme', icon: ClipboardCheck }] : []),
+  ], [intervention?.plan_id]);
 
   const {
     intervention,
@@ -304,7 +310,7 @@ export default function InterventionDetailPage() {
         style={{ marginTop: '2rem' }}
       >
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const badgeValue = tab.badgeCount 
               ? tab.badgeCount(actions, statusLog)
@@ -359,6 +365,12 @@ export default function InterventionDetailPage() {
         <Tabs.Content value="history">
           <HistoryTab actions={actions} statusLog={statusLog} />
         </Tabs.Content>
+
+        {intervention.plan_id && (
+          <Tabs.Content value="gamme">
+            <GammeProgressBlock interventionId={id} />
+          </Tabs.Content>
+        )}
       </Tabs.Root>
     </PageContainer>
   );

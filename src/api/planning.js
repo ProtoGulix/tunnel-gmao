@@ -46,7 +46,14 @@ export async function fetchOpenInterventionsByEquipement(equipementId) {
  */
 export async function fetchActiveUsers() {
   const res = await api.get('/users', { params: { status: 'active' } });
-  return res.data ?? [];
+  const payload = res.data;
+
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.results)) return payload.results;
+  if (Array.isArray(payload?.data)) return payload.data;
+
+  return [];
 }
 
 /**

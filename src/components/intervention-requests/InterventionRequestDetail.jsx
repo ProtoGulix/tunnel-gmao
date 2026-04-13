@@ -5,8 +5,9 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Callout, Flex, Select, Separator, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
-import { AlertCircle, Clock, User } from 'lucide-react';
+import { AlertCircle, Clock, User, Wrench } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
@@ -251,6 +252,17 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone 
       <Box mb="3" p="3" style={{ backgroundColor: 'var(--gray-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-4)' }}>
         <Text size="2">{detail.description}</Text>
       </Box>
+
+      {detail.intervention_id && (
+        <Box mb="3">
+          <Button size="2" variant="soft" color="blue" asChild>
+            <Link to={`/intervention/${detail.intervention_id}`} style={{ textDecoration: 'none' }}>
+              <Wrench size={14} />
+              Voir l'intervention liée
+            </Link>
+          </Button>
+        </Box>
+      )}
 
       <Box mb="3">
         <TransitionZone

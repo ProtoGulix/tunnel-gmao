@@ -152,6 +152,7 @@ function mapInterventionResponse(raw = {}) {
     priority: raw.priority || 'normal',
     reportedDate: raw.reported_date,
     printedFiche: raw.printed_fiche ?? false,
+    plan_id: raw.plan_id || null,
     techInitials: raw.tech_initials || '',
     reportedBy: raw.reported_by || '',
     machine: raw.equipements

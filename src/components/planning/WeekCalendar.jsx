@@ -181,6 +181,8 @@ export function DayColumn({ dateStr, actions, isToday, onAddAction, isWeekend = 
 /* ── WeekNav ──────────────────────────────────────────────────────────────── */
 
 export function WeekNav({ monday, onPrev, onNext, onToday, techId, users, onTechChange }) {
+  const userList = Array.isArray(users) ? users : [];
+
   return (
     <Flex align="center" gap="3" wrap="wrap">
       <Flex align="center" gap="1">
@@ -198,12 +200,12 @@ export function WeekNav({ monday, onPrev, onNext, onToday, techId, users, onTech
         </Button>
       </Flex>
 
-      {users && onTechChange && (
+      {onTechChange && (
         <Select.Root value={techId ?? '__all__'} onValueChange={(v) => onTechChange(v === '__all__' ? null : v)}>
           <Select.Trigger placeholder="Technicien…" />
           <Select.Content>
             <Select.Item value="__all__">Tous les techniciens</Select.Item>
-            {users.map((u) => (
+            {userList.map((u) => (
               <Select.Item key={u.id} value={u.id}>
                 {u.first_name} {u.last_name}
               </Select.Item>
