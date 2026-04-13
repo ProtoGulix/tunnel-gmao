@@ -14,6 +14,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Timeline } from '@/components/ui/GenericTabComponents';
 import TimelineItemRenderer from '@/components/interventions/TimelineItemRenderer';
 import ActionForm from '@/components/interventions/ActionForm';
+import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
 import * as actionCategoriesApi from '@/api/actionCategories';
 import * as complexityFactorsApi from '@/api/complexityFactors';
 
@@ -84,6 +85,7 @@ export default function ActionsTab({
   onAddAction,
   interventionId,
   onPurchaseRequestCreated,
+  planId = null,
 }) {
   // State pour le formulaire de nouvelle action
   const [showNewActionForm, setShowNewActionForm] = useState(false);
@@ -224,6 +226,11 @@ export default function ActionsTab({
           />
         )}
 
+        {/* Gamme de maintenance */}
+        {planId && (
+          <GammeProgressBlock mode="intervention" interventionId={String(interventionId)} />
+        )}
+
         {/* Timeline ou état vide */}
         {filteredTimelineByDay.length === 0 ? (
           <EmptyState
@@ -257,6 +264,7 @@ ActionsTab.propTypes = {
   onAddAction: PropTypes.func,
   interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onPurchaseRequestCreated: PropTypes.func,
+  planId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 ActionsTab.defaultProps = {

@@ -341,6 +341,7 @@ export default function InterventionDetailPage() {
             onAddAction={addAction}
             interventionId={id}
             onPurchaseRequestCreated={handlePurchaseRequestCreated}
+            planId={intervention.plan_id ?? null}
           />
         </Tabs.Content>
 
