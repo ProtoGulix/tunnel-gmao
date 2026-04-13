@@ -7,10 +7,10 @@
  * - Auto-refresh toutes les 30s
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2 } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ClipboardCheck } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -23,10 +23,11 @@ import SheetTab from '@/components/interventions/tabs/SheetTab';
 import HistoryTab from '@/components/interventions/tabs/HistoryTab';
 import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
 import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
+import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
-// Configuration des onglets
-const TABS = [
+// Configuration de base des onglets
+const BASE_TABS = [
   { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
   { id: 'achats', label: 'Achats', icon: ShoppingCart },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
@@ -58,7 +59,13 @@ const mapDtoStatusToConfigKey = (dtoStatus) => {
 export default function InterventionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('actions');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'actions');
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab);
+    setSearchParams((prev) => { prev.set('tab', tab); return prev; }, { replace: true });
+  }, [setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
 
   const {
@@ -77,6 +84,11 @@ export default function InterventionDetailPage() {
     loadPdf,
     ficheFileName,
   } = useInterventionDetail(id);
+
+  const tabs = useMemo(() => [
+    ...BASE_TABS,
+    ...(intervention?.plan_id ? [{ id: 'gamme', label: 'Gamme', icon: ClipboardCheck }] : []),
+  ], [intervention?.plan_id]);
 
   // Charger le PDF quand l'onglet fiche est ouvert
   useEffect(() => {
@@ -294,11 +306,11 @@ export default function InterventionDetailPage() {
       {/* TABS */}
       <Tabs.Root
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
         style={{ marginTop: '2rem' }}
       >
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const badgeValue = tab.badgeCount 
               ? tab.badgeCount(actions, statusLog)
@@ -329,6 +341,7 @@ export default function InterventionDetailPage() {
             onAddAction={addAction}
             interventionId={id}
             onPurchaseRequestCreated={handlePurchaseRequestCreated}
+            planId={intervention.plan_id ?? null}
           />
         </Tabs.Content>
 
@@ -353,6 +366,12 @@ export default function InterventionDetailPage() {
         <Tabs.Content value="history">
           <HistoryTab actions={actions} statusLog={statusLog} />
         </Tabs.Content>
+
+        {intervention.plan_id && (
+          <Tabs.Content value="gamme">
+            <GammeProgressBlock mode="intervention" interventionId={id} onProgressUpdate={refetch} />
+          </Tabs.Content>
+        )}
       </Tabs.Root>
     </PageContainer>
   );

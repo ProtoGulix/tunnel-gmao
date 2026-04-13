@@ -50,6 +50,17 @@ export async function createAction(actionData) {
 }
 
 /**
+ * Fetch a single action by ID
+ *
+ * @param {string|number} id - Action ID
+ * @returns {Promise<Object>} Full action data including action_start/action_end
+ */
+export async function fetchAction(id) {
+  const response = await api.get(`/intervention-actions/${id}`);
+  return mapActionResponse(response.data);
+}
+
+/**
  * Update an existing action
  *
  * @param {string|number} id - Action ID
@@ -71,7 +82,11 @@ export async function updateAction(id, updates) {
     payload.description = updates.description;
   }
 
-  if (updates.timeSpent !== undefined) {
+  // Bornes horaires OU time_spent — jamais les deux (ambiguïté API)
+  if (updates.actionStart && updates.actionEnd) {
+    payload.action_start = updates.actionStart;
+    payload.action_end = updates.actionEnd;
+  } else if (updates.timeSpent !== undefined) {
     payload.time_spent = updates.timeSpent;
   }
 
@@ -79,21 +94,21 @@ export async function updateAction(id, updates) {
     payload.complexity_score = updates.complexityScore;
   }
 
-  if (updates.date !== undefined) {
-    payload.date = updates.date;
+  // `created_at` modifiable (backdating) — `intervention_id` non modifiable
+
+  if (updates.date) {
+    payload.created_at = updates.date;
   }
 
   if (updates.subcategory?.id) {
-    payload.subcategory_id = updates.subcategory.id;
+    payload.action_subcategory = Number(updates.subcategory.id);
   }
 
   if (updates.technician?.id) {
-    payload.technician_id = updates.technician.id;
+    payload.tech = updates.technician.id;
   }
 
-  if (updates.intervention?.id) {
-    payload.intervention_id = updates.intervention.id;
-  }
+  // `intervention_id` non modifiable — non envoyé
 
   // Envoyer le premier facteur de complexité (singulier) ou null
   if (Array.isArray(updates.complexityFactors) && updates.complexityFactors.length > 0) {
@@ -116,21 +131,25 @@ function mapActionResponse(raw = {}) {
     complexityScore: raw.complexity_score ?? null,
     createdAt: raw.created_at,
     date: raw.date,
+    actionStart: raw.action_start ? raw.action_start.slice(0, 5) : null,
+    actionEnd: raw.action_end ? raw.action_end.slice(0, 5) : null,
     subcategory: raw.subcategory
       ? {
           id: raw.subcategory.id?.toString() || '',
-          label: raw.subcategory.label || '',
+          label: raw.subcategory.name || '',
           code: raw.subcategory.code || '',
         }
       : null,
-    technician: raw.technician
-      ? {
-          id: raw.technician.id?.toString() || '',
-          firstName: raw.technician.first_name || '',
-          lastName: raw.technician.last_name || '',
-        }
-      : null,
+    technician:
+      raw.tech || raw.technician
+        ? {
+            id: (raw.tech || raw.technician).id?.toString() || '',
+            firstName: (raw.tech || raw.technician).first_name || '',
+            lastName: (raw.tech || raw.technician).last_name || '',
+          }
+        : null,
     complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     purchaseRequests: raw.purchase_requests || [],
+    gammeStepValidations: raw.gamme_step_validations || [],
   };
 }

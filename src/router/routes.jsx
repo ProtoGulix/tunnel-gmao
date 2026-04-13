@@ -19,7 +19,9 @@ import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
 import StockPage from '@/pages/stock/StockPage';
 import SuppliersPage from '@/pages/suppliers/SuppliersPage';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
-import InterventionRequestsPage from '@/pages/intervention-requests/InterventionRequestsPage';
+import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
+import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
+import PreventivePage from '@/pages/preventive/PreventivePage';
 
 /**
  * Composant de route protégée
@@ -195,12 +197,43 @@ export default function AppRoutes() {
       />
 
       <Route
-        path="/intervention-requests"
+        path="/preventive"
         element={
           <ProtectedRoute>
             <Layout>
-              <InterventionRequestsPage />
+              <PreventivePage />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/preventive-plans"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AdminPreventivePlansPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/preventive-occurrences"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AdminPreventiveOccurrencesPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/intervention-requests"
+        element={
+          <ProtectedRoute>
+            <Navigate to="/interventions?tab=demandes" replace />
           </ProtectedRoute>
         }
       />

@@ -16,4 +16,5 @@ export const PAGE_CONFIG = {
   requiresAuth: true,
   public: false,
   order: 15,
+  showInMenu: false,
 };

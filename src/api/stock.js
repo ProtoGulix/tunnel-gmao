@@ -15,13 +15,14 @@ import { api } from '@/lib/api/client';
  * @param {string} payload.urgency - Urgency level
  * @param {string} payload.requested_by - Requester identifier
  * @param {number} [payload.stock_item_id] - Stock item ID if linked
- * @param {number} [payload.intervention_id] - Intervention ID if linked
+ * @param {string} [payload.intervention_action_id] - Action ID (deduces intervention automatically, preferred)
+ * @param {string} [payload.intervention_id] - Intervention ID (mode autonome, ignored if intervention_action_id is set)
  * @param {string} [payload.reason] - Reason for request
  * @param {string} [payload.notes] - Additional notes
  * @returns {Promise<Object>} Created purchase request
  */
 export async function createPurchaseRequest(payload) {
-  const response = await api.post('/purchase-requests/', payload);
+  const response = await api.post('/purchase-requests', payload);
   return response.data || null;
 }
 
@@ -62,7 +63,7 @@ export async function updatePurchaseRequest(id, updates) {
  * @returns {Promise<Object>} Stock items paginated response
  */
 export async function fetchStockItems(params = {}) {
-  const response = await api.get('/stock-items/', { params });
+  const response = await api.get('/stock-items', { params });
   return response.data || { items: [], pagination: {} };
 }
 
@@ -71,7 +72,7 @@ export async function fetchStockItems(params = {}) {
  * @returns {Promise<Array>} Array of families
  */
 export async function fetchStockFamilies() {
-  const response = await api.get('/stock-families/');
+  const response = await api.get('/stock-families');
   return response.data || [];
 }
 
@@ -92,7 +93,7 @@ export async function fetchStockFamilyDetail(familyCode, params = {}) {
  * @returns {Promise<Array>} Array of sub families
  */
 export async function fetchStockSubFamilies() {
-  const response = await api.get('/stock-sub-families/');
+  const response = await api.get('/stock-sub-families');
   return response.data || [];
 }
 
@@ -125,7 +126,7 @@ export async function fetchStockItemDetail(id) {
 }
 
 export async function createStockItem(payload) {
-  const response = await api.post('/stock-items/', payload);
+  const response = await api.post('/stock-items', payload);
   return response.data || null;
 }
 
@@ -146,7 +147,7 @@ export async function deleteStockItem(id) {
  * @returns {Promise<Object>} Created family
  */
 export async function createStockFamily(payload) {
-  const response = await api.post('/stock-families/', payload);
+  const response = await api.post('/stock-families', payload);
   return response.data || null;
 }
 
@@ -171,6 +172,6 @@ export async function updateStockFamily(familyCode, updates) {
  * @returns {Promise<Object>} Created sub-family
  */
 export async function createStockSubFamily(familyCode, payload) {
-  const response = await api.post(`/stock-sub-families/${familyCode}/`, payload);
+  const response = await api.post(`/stock-sub-families/${familyCode}`, payload);
   return response.data || null;
 }

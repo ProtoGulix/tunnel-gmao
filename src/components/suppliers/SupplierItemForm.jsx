@@ -23,6 +23,7 @@ import {
   Separator, Text, TextField,
 } from '@radix-ui/themes';
 import { Building2, Edit2, Link, Package, Plus, X } from 'lucide-react';
+import LockedBadge from '@/components/ui/LockedBadge';
 import * as stockApi from '@/api/stock';
 import { fetchSuppliers } from '@/api/suppliers';
 import ManufacturerForm from '@/components/manufacturers/ManufacturerCreateForm';
@@ -68,29 +69,6 @@ function initForm(link) {
   };
 }
 
-// ─── Affichage d'un contexte verrouillé ───────────────────────────────────────
-
-function LockedBadge({ icon: Icon, label, sublabel, color = 'gray' }) {
-  return (
-    <Flex align="center" gap="2" p="2" style={{
-      background: 'var(--gray-2)', borderRadius: 'var(--radius-2)',
-      border: '1px solid var(--gray-5)',
-    }}>
-      <Icon size={14} color={`var(--${color}-9)`} />
-      <Box>
-        <Text size="2" weight="medium">{label}</Text>
-        {sublabel && <Text size="1" color="gray" style={{ display: 'block' }}>{sublabel}</Text>}
-      </Box>
-      <Badge size="1" color={color} variant="soft" style={{ marginLeft: 'auto' }}>fixé</Badge>
-    </Flex>
-  );
-}
-LockedBadge.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string.isRequired,
-  sublabel: PropTypes.string,
-  color: PropTypes.string,
-};
 
 // ─── Section fournisseur ──────────────────────────────────────────────────────
 
@@ -101,7 +79,7 @@ function SupplierSection({ supplierId, supplierName, selectedId, onSelect }) {
     return (
       <Box>
         <Text size="2" weight="bold" as="label" mb="1" style={{ display: 'block' }}>Fournisseur</Text>
-        <LockedBadge icon={Building2} label={supplierName || supplierId} color="blue" />
+        <LockedBadge icon={Building2} label={supplierName || supplierId} />
       </Box>
     );
   }
@@ -298,7 +276,7 @@ export default function SupplierItemForm({
               {stockItemId ? (
                 <Box>
                   <Text size="2" weight="bold" as="label" mb="1" style={{ display: 'block' }}>Pièce catalogue</Text>
-                  <LockedBadge icon={Package} label={stockItemLabel || stockItemId} color="amber" />
+                  <LockedBadge icon={Package} label={stockItemLabel || stockItemId} />
                 </Box>
               ) : (
                 <ItemForm

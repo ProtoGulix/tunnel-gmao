@@ -4,7 +4,8 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Box, Card, Flex, Grid, Text, Badge } from '@radix-ui/themes';
+import { Box, Card, Callout, Flex, Grid, Text, Badge } from '@radix-ui/themes';
+import { BanIcon } from 'lucide-react';
 import PropTypes from 'prop-types';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 
@@ -46,12 +47,23 @@ EquipementLink.propTypes = {
 export default function EquipementInfoBanner({
   equipement,
   health,
-  parentId,
+  parent,
 }) {
   if (!equipement) return null;
 
+  const interventionsBlocked = equipement.statut?.interventions === false;
+
   return (
-    <Card style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+    <Box mb="5">
+      {interventionsBlocked && (
+        <Callout.Root color="red" variant="soft" mb="3">
+          <Callout.Icon><BanIcon size={16} /></Callout.Icon>
+          <Callout.Text>
+            Cet équipement est en statut <strong>{equipement.statut.label}</strong> — la création d&apos;interventions est bloquée.
+          </Callout.Text>
+        </Callout.Root>
+      )}
+    <Card style={{ marginBottom: '0', padding: '1.5rem' }}>
       <Grid columns="2" gap="3">
         {/* Colonne gauche */}
         <Box>
@@ -93,6 +105,30 @@ export default function EquipementInfoBanner({
             </Flex>
           </InfoField>
 
+          <Box mt="4">
+            <InfoField label="Statut">
+              {equipement.statut ? (
+                <Flex align="center" gap="2">
+                  <Badge
+                    variant="soft"
+                    style={{
+                      backgroundColor: equipement.statut.couleur ? `${equipement.statut.couleur}22` : 'var(--gray-3)',
+                      color: equipement.statut.couleur || 'var(--gray-11)',
+                      border: `1px solid ${equipement.statut.couleur || 'var(--gray-6)'}44`,
+                    }}
+                  >
+                    {equipement.statut.label}
+                  </Badge>
+                  {equipement.statut.interventions === false && (
+                    <Text size="1" color="gray">Interventions bloquées</Text>
+                  )}
+                </Flex>
+              ) : (
+                <Text color="gray" size="2">—</Text>
+              )}
+            </InfoField>
+          </Box>
+
           {health.rules_triggered && health.rules_triggered.length > 0 && (
             <Box mt="4">
               <InfoField label="Règles déclenchées">
@@ -107,21 +143,25 @@ export default function EquipementInfoBanner({
             </Box>
           )}
 
-          {parentId && (
+          {parent && (
             <Box mt="4">
               <InfoField label="Équipement parent">
-                <EquipementLink to={`/equipements/${parentId}`} label={parentId} />
+                <EquipementLink
+                  to={`/equipements/${parent.id}`}
+                  label={[parent.code, parent.name].filter(Boolean).join(' – ')}
+                />
               </InfoField>
             </Box>
           )}
         </Box>
       </Grid>
     </Card>
+    </Box>
   );
 }
 
 EquipementInfoBanner.propTypes = {
   equipement: PropTypes.object.isRequired,
   health: PropTypes.object.isRequired,
-  parentId: PropTypes.string,
+  parent: PropTypes.shape({ id: PropTypes.string, code: PropTypes.string, name: PropTypes.string }),
 };

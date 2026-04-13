@@ -17,7 +17,7 @@ export default function EquipementDetailPage() {
   const { id } = useParams();
   const {
     equipement, loading, error, health,
-    stats, statsLoading, interventions, childrenCount, parentId,
+    stats, statsLoading, interventions, childrenCount, parent,
     manualRefresh,
   } = useEquipementDetail(id);
 
@@ -57,7 +57,7 @@ export default function EquipementDetailPage() {
         statsLoading={statsLoading}
         interventions={interventions}
         childrenCount={childrenCount}
-        parentId={parentId}
+        parent={parent}
       />
     </PageContainer>
   );

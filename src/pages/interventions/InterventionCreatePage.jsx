@@ -29,6 +29,7 @@ function useRequestLinking(setFormData) {
           : '',
         reportedBy: detail.demandeur_nom,
         requestId: detail.id,
+        ...(detail.suggested_type_inter && { type: detail.suggested_type_inter }),
       }));
     } catch { /* sélection silencieuse */ }
   }, [setFormData]);
@@ -53,6 +54,7 @@ export default function InterventionCreatePage() {
           formData={formData}
           set={set}
           locked={!!selectedRequest}
+          lockedType={!!(selectedRequest?.is_system && selectedRequest?.suggested_type_inter)}
           fetchEquipementsFn={fetchEquipementsFn}
           saving={saving}
           error={error}

@@ -9,7 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 const DEFAULT_PAGE_SIZE = 50;
 
-function buildParams({ page, pageSize, search, statut, machineId }) {
+function buildParams({ page, pageSize, search, statut, machineId, isSystem }) {
   const params = {
     skip: (page - 1) * pageSize,
     limit: pageSize,
@@ -18,6 +18,7 @@ function buildParams({ page, pageSize, search, statut, machineId }) {
   if (search.trim()) params.search = search.trim();
   if (statut) params.statut = statut;
   if (machineId) params.machineId = machineId;
+  if (isSystem !== null && isSystem !== undefined) params.isSystem = isSystem;
 
   return params;
 }
@@ -40,6 +41,7 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
   const [search, setSearchState] = useState(initialSearch);
   const [statut, setStatutState] = useState('');
   const [machineId, setMachineIdState] = useState('');
+  const [isSystem, setIsSystemState] = useState(null); // null=toutes | true=système | false=humaines
   const [facets, setFacets] = useState({ statut: [] });
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -55,7 +57,7 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
     setError(null);
 
     fetchInterventionRequests(
-      buildParams({ page, pageSize, search: debouncedSearch, statut, machineId })
+      buildParams({ page, pageSize, search: debouncedSearch, statut, machineId, isSystem })
     )
       .then((data) => {
         if (ctrl.signal.aborted) return;
@@ -74,7 +76,7 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
       });
 
     return () => ctrl.abort();
-  }, [page, pageSize, debouncedSearch, statut, machineId, refreshKey]);
+  }, [page, pageSize, debouncedSearch, statut, machineId, isSystem, refreshKey]);
 
   const setSearch = useCallback((v) => {
     setSearchState(v);
@@ -86,6 +88,10 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
   }, []);
   const setMachineId = useCallback((v) => {
     setMachineIdState(v);
+    setPage(1);
+  }, []);
+  const setIsSystem = useCallback((v) => {
+    setIsSystemState(v);
     setPage(1);
   }, []);
   const changePageSize = useCallback((s) => {
@@ -104,6 +110,8 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
     setStatut,
     machineId,
     setMachineId,
+    isSystem,
+    setIsSystem,
     facets,
     page,
     setPage,

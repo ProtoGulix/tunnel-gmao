@@ -1,16 +1,17 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Heading, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
-import { ClipboardList } from 'lucide-react';
+import { Badge, Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
+import { ClipboardList, MapPin } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
-import SelectionSummary from '@/components/ui/SelectionSummary';
+import LockedBadge from '@/components/ui/LockedBadge';
 import { fetchEquipements } from '@/api/equipements';
+import { fetchServices } from '@/api/services';
 
 const INITIAL_FORM = {
   machineId: '',
   machineName: '',
   demandeurNom: '',
-  demandeurService: '',
+  serviceId: '',
   description: '',
 };
 
@@ -21,9 +22,17 @@ function validate(form) {
   return null;
 }
 
-export default function InterventionRequestForm({ onSubmit, onCancel, saving = false }) {
-  const [form, setForm] = useState(INITIAL_FORM);
+export default function InterventionRequestForm({ onSubmit, onCancel, saving = false, machineId = null, machineName = null }) {
+  const [form, setForm] = useState(() => ({
+    ...INITIAL_FORM,
+    ...(machineId ? { machineId, machineName: machineName ?? '' } : {}),
+  }));
   const [error, setError] = useState(null);
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    fetchServices().then(setServices).catch(() => {});
+  }, []);
 
   const set = useCallback((field, value) => setForm((prev) => ({ ...prev, [field]: value })), []);
 
@@ -41,7 +50,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
       await onSubmit({
         machineId: form.machineId,
         demandeurNom: form.demandeurNom.trim(),
-        demandeurService: form.demandeurService.trim(),
+        serviceId: form.serviceId || null,
         description: form.description.trim(),
       });
     } catch (err) {
@@ -78,15 +87,18 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
                 Équipement <Text color="red">*</Text>
               </Text>
               {form.machineId ? (
-                <SelectionSummary
-                  variant="stock"
-                  badgeText={form.machineName.split(' — ')[0] || ''}
-                  mainText={form.machineName.split(' — ').slice(1).join(' — ') || form.machineName}
-                  onClear={() => { set('machineId', ''); set('machineName', ''); }}
-                />
+                machineId ? (
+                  <LockedBadge icon={MapPin} label={form.machineName} color="blue" />
+                ) : (
+                  <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--green-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--green-6)' }}>
+                    <MapPin size={14} color="var(--green-9)" />
+                    <Text size="2" weight="medium" style={{ flex: 1 }}>{form.machineName}</Text>
+                    <Button size="1" variant="ghost" color="gray" type="button" onClick={() => { set('machineId', ''); set('machineName', ''); }}>×</Button>
+                  </Flex>
+                )
               ) : (
                 <AsyncSearchSelect
-                  fetchFn={(q) => fetchEquipements({ search: q })}
+                  fetchFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
                   onSelect={handleMachineSelect}
                   renderItem={(eq) => (
                     <Flex align="center" gap="2">
@@ -118,11 +130,14 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
               <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Service <Text color="gray" size="1">(optionnel)</Text>
               </Text>
-              <TextField.Root
-                placeholder="Service ou département"
-                value={form.demandeurService}
-                onChange={(e) => set('demandeurService', e.target.value)}
-              />
+              <Select.Root value={form.serviceId} onValueChange={(v) => set('serviceId', v)}>
+                <Select.Trigger placeholder="Sélectionner un service…" style={{ width: '100%' }} />
+                <Select.Content>
+                  {services.map((s) => (
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
             </Box>
 
             {/* Description */}
@@ -159,4 +174,6 @@ InterventionRequestForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   saving: PropTypes.bool,
+  machineId: PropTypes.string,
+  machineName: PropTypes.string,
 };

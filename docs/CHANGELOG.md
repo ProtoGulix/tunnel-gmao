@@ -4,6 +4,135 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.26.0 - 2026-04-13
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Lors de l’acceptation d’une demande d’intervention, un formulaire s’affiche maintenant pour renseigner le type d’intervention, les initiales du technicien assigné, la priorité et la date de signalement — ces informations sont transmises directement à l’intervention créée.
+- Le champ « Service » dans le formulaire de demande d’intervention est désormais un sélecteur basé sur la liste des services de l’organisation, à la place d’une saisie libre.
+
+### Stabilisation / Dette technique
+
+- Uniformisation du champ service entre la création et la consultation d’une demande → élimine le risque d’incohérence entre ce qui est saisi et ce qui est affiché.
+
+### Composants / Modules concernés
+
+- Demandes d’intervention — formulaire de création, fiche de détail
+- Services — nouveau référentiel utilisé dans les demandes
+
+### Points de vigilance
+
+- Le champ service attend désormais un identifiant UUID issu du référentiel — incompatible avec une API renvoyant `demandeur_service` en texte libre uniquement.
+- L’acceptation d’une demande requiert maintenant les initiales du technicien et le type d’intervention — les deux champs sont obligatoires pour valider.
+
+---
+
+## 3.25.0 - 2026-04-10
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Création d'un équipement possible directement depuis la liste, avec tous les champs disponibles : nom, classe, code automatique (classe + numéro machine), statut, affectation, fabricant, numéro de série, date de mise en service, équipement parent et notes.
+- Le code équipement est généré automatiquement à partir de la classe et du numéro machine (format `CODE001`) — il n'est plus saisi manuellement.
+- Le statut de chaque équipement est désormais affiché dans la liste et sur la fiche de détail ; si les interventions sont bloquées sur un équipement, un avertissement est visible en haut de la fiche.
+- L'onglet actif sur une fiche équipement est mémorisé dans le lien — permet de partager ou recharger la page en restant sur le bon onglet.
+
+### Stabilisation / Dette technique
+
+- Correction d'un bug de navigation silencieux : passer d'une fiche équipement à une autre ne rechargait pas les données → risque de lecture de données appartenant au mauvais équipement éliminé.
+- Uniformisation du champ de recherche d'équipement parent dans le formulaire de création → réduction du risque de comportement incohérent entre les formulaires.
+
+### Composants / Modules concernés
+
+- Équipements — liste, fiche de détail, formulaire de création
+
+### Points de vigilance
+
+- La fiche équipement attend désormais l'équipement parent sous forme d'objet complet `{id, code, name}` — incompatible avec une API renvoyant uniquement `parent_id`.
+- Le code équipement n'est plus modifiable manuellement dans le formulaire de création.
+
+---
+
+## 3.24.1 - 2026-04-09
+
+Stabilité : **en consolidation** 🔧
+
+### Impact fonctionnel
+
+Aucun changement visible pour l'utilisateur.
+
+### Stabilisation / Dette technique
+
+- Suppression de l'ancien code hérité de la version 2 → réduction du risque de confusion entre deux bases de code coexistantes et élimination d'une source potentielle de régression.
+
+### Composants / Modules concernés
+
+- Architecture interne du projet (code historique supprimé)
+
+### Points de vigilance
+
+Aucun.
+
+---
+
+## 3.24.0 - 2026-03-17
+
+Stabilité : **STABLE** ✅
+
+### Équipements — nouvelles demandes d'intervention visibles dans la recherche
+
+Le composant `EquipementSearch` affiche désormais un badge **orange** indiquant le nombre de nouvelles demandes d'intervention (`health.new_requests_count`) retourné par l'API. Le badge apparaît dans la liste déroulante de recherche et dans le bandeau de sélection, entre le compteur d'interventions ouvertes et l'état de santé global.
+
+### Planning — gestion des horaires et ajustements API
+
+**Horaires d'action** : les bornes `action_start` / `action_end` sont désormais correctement transmises et affichées dans `ActionItemCard` et `ActionFormFields`. La saisie horaire dans le formulaire est renforcée avec la validation de cohérence début/fin.
+
+**Ajustements API** :
+- `actions.js` et `interventions.js` : mise à jour des payloads pour inclure les champs horaires.
+- `planning.js` : meilleure lisibilité dans `fetchOpenInterventionsByEquipement` (paramètres nommés).
+- `stock.js` : correction mineure de paramètre.
+- `PurchaseRequestForm` / `FormActions` : harmonisation des actions de formulaire d'achat.
+
+### Docker — exposition frontend sur toutes les interfaces
+
+Le service frontend dans `docker-compose.yml` expose désormais le port sur `0.0.0.0` pour être accessible depuis le réseau local (utile en développement sur machine distante ou VM).
+
+---
+
+## 3.23.0 - 2026-03-16
+
+Stabilité : **STABLE** ✅
+
+### Planning — page dédiée et gestion complète des actions
+
+Nouvelle page `/planning` accessible depuis le menu principal, offrant une vue semaine interactive pour l'ensemble des actions planifiées.
+
+**API** : enrichissement de `planning.js` avec `createActionDirect`, récupération des bornes horaires (`action_start` / `action_end`) et gestion des paramètres de filtrage technicien.
+
+**Composants** :
+- `PlanningView` — page principale avec vue semaine, formulaire d'ajout d'action en ligne et filtrage par technicien.
+- `EquipementSearch` — champ de recherche serveur d'équipement utilisé dans le formulaire d'action.
+- `InterventionSelector` — sélecteur d'intervention par recherche textuelle, avec aperçu de la fiche sélectionnée.
+- `TimeRangePicker` — saisie des horaires début / fin d'une action (validation cohérence, affichage durée calculée).
+- `ActionForm` — refactorisation complète : champs horaires intégrés dans `ActionFormFields`, validation étendue des plages horaires.
+
+**Technicien par défaut** : à l'ouverture de la vue planning (page dédiée et onglet intervention), le technicien connecté est automatiquement pré-sélectionné s'il figure dans la liste des utilisateurs actifs. La sélection reste modifiable.
+
+### Équipements — tableau unifié avec pagination serveur
+
+Refontede la liste des équipements en un composant `EquipementTable` réutilisable, partagé entre la page principale et l'onglet sous-équipements d'une fiche équipement.
+
+**Pagination et recherche côté serveur** : l'API `fetchEquipements` supporte désormais les paramètres `page`, `page_size`, `search` et `class_id`. Le hook `useEquipements` gère l'état de pagination et déclenche un rechargement à chaque changement de filtre.
+
+**Relation parent-enfant** : le tableau affiche les sous-équipements d'un équipement parent via le même composant `EquipementTable`, ce qui supprime le hook `useEquipementChildren` devenu redondant.
+
+**Filtrage par classe** : sélecteur de classe d'équipement dans la barre de filtre de la page équipements, avec remise à zéro automatique de la pagination lors d'un changement.
+
+---
+
 ## 3.22.0 - 2026-03-12
 
 Stabilité : **STABLE** ✅

@@ -152,6 +152,7 @@ function mapInterventionResponse(raw = {}) {
     priority: raw.priority || 'normal',
     reportedDate: raw.reported_date,
     printedFiche: raw.printed_fiche ?? false,
+    plan_id: raw.plan_id || null,
     techInitials: raw.tech_initials || '',
     reportedBy: raw.reported_by || '',
     machine: raw.equipements
@@ -193,27 +194,38 @@ function mapInterventionDetailResponse(raw = {}) {
           complexityScore: a.complexity_score ?? null,
           createdAt: a.created_at,
           date: a.date,
+          actionStart: a.action_start ? a.action_start.slice(0, 5) : null,
+          actionEnd: a.action_end ? a.action_end.slice(0, 5) : null,
+          complexityFactors: a.complexity_factor
+            ? [
+                typeof a.complexity_factor === 'string'
+                  ? a.complexity_factor
+                  : a.complexity_factor?.code,
+              ]
+            : [],
           subcategory: a.subcategory
             ? {
                 id: a.subcategory.id?.toString() || '',
-                label: a.subcategory.label || '',
+                label: a.subcategory.name || '',
                 code: a.subcategory.code || '',
                 category: a.subcategory.category
                   ? {
                       id: a.subcategory.category.id?.toString() || '',
-                      label: a.subcategory.category.label || '',
+                      label: a.subcategory.category.name || '',
                       code: a.subcategory.category.code || '',
                     }
                   : null,
               }
             : null,
-          technician: a.technician
+          technician: a.tech
             ? {
-                id: a.technician.id?.toString() || '',
-                firstName: a.technician.first_name || '',
-                lastName: a.technician.last_name || '',
+                id: a.tech.id?.toString() || '',
+                firstName: a.tech.first_name || '',
+                lastName: a.tech.last_name || '',
               }
             : null,
+          purchaseRequests: a.purchase_requests || [],
+          gammeStepValidations: a.gamme_step_validations || a.gamme_steps || [],
         }))
       : [],
     statusLogs: Array.isArray(raw.status_logs)
@@ -246,7 +258,7 @@ function mapInterventionDetailResponse(raw = {}) {
           id: raw.request.id,
           code: raw.request.code,
           demandeurNom: raw.request.demandeur_nom,
-          demandeurService: raw.request.demandeur_service || null,
+          demandeurService: raw.request.service?.label || raw.request.demandeur_service || null,
           description: raw.request.description,
           statut: raw.request.statut,
           statutLabel: raw.request.statut_label,

@@ -6,16 +6,69 @@
  * Inclut à la fois les actions et les changements de statut.
  */
 
-import { Box, Flex, TextField, Button } from '@radix-ui/themes';
-import { Activity, Search, Plus, X } from 'lucide-react';
+import { Box, Flex, TextField, Button, Text, Badge } from '@radix-ui/themes';
+import { Activity, Search, Plus, X, ClipboardCheck } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import EmptyState from '@/components/ui/EmptyState';
 import { Timeline } from '@/components/ui/GenericTabComponents';
 import TimelineItemRenderer from '@/components/interventions/TimelineItemRenderer';
 import ActionForm from '@/components/interventions/ActionForm';
 import * as actionCategoriesApi from '@/api/actionCategories';
 import * as complexityFactorsApi from '@/api/complexityFactors';
+import { fetchGammeStepValidations, fetchGammeProgress } from '@/api/gammeStepValidations';
+
+/**
+ * Bandeau compact de progression de gamme (comme la demande liée)
+ */
+function GammeProgressBanner({ interventionId, refreshKey }) {
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    fetchGammeProgress(String(interventionId))
+      .then(setProgress)
+      .catch(() => setProgress(null));
+  }, [interventionId, refreshKey]);
+
+  if (!progress || progress.total === 0) return null;
+
+  const { validated, total, blocking_pending } = progress;
+  const pct = Math.round((validated / total) * 100);
+
+  let badgeColor = 'green';
+  let badgeLabel = 'Complète';
+  if ((blocking_pending ?? 0) > 0) {
+    badgeColor = 'orange';
+    badgeLabel = `${blocking_pending} obligatoire${blocking_pending > 1 ? 's' : ''} restante${blocking_pending > 1 ? 's' : ''}`;
+  } else if (progress.pending > 0) {
+    badgeColor = 'blue';
+    badgeLabel = 'Optionnelles en attente';
+  }
+
+  return (
+    <Box style={{
+      background: 'var(--gray-2)',
+      border: '1px solid var(--gray-5)',
+      borderRadius: 'var(--radius-2)',
+      padding: '0.5rem 0.75rem',
+    }}>
+      <Flex align="center" gap="2">
+        <ClipboardCheck size={14} color="var(--blue-9)" style={{ flexShrink: 0 }} />
+        <Text size="2" weight="bold" style={{ flexShrink: 0 }}>Gamme</Text>
+        <Box style={{ flex: 1, height: 6, background: 'var(--gray-4)', borderRadius: 3, overflow: 'hidden' }}>
+          <Box style={{ height: '100%', width: `${pct}%`, background: 'var(--green-9)', transition: 'width 0.3s' }} />
+        </Box>
+        <Text size="1" color="gray" style={{ flexShrink: 0 }}>{validated}/{total}</Text>
+        <Badge color={badgeColor} variant="soft" size="1" style={{ flexShrink: 0 }}>{badgeLabel}</Badge>
+      </Flex>
+    </Box>
+  );
+}
+
+GammeProgressBanner.propTypes = {
+  interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  refreshKey: PropTypes.number,
+};
 
 /**
  * Groupe les éléments de timeline par jour
@@ -84,6 +137,7 @@ export default function ActionsTab({
   onAddAction,
   interventionId,
   onPurchaseRequestCreated,
+  planId = null,
 }) {
   // State pour le formulaire de nouvelle action
   const [showNewActionForm, setShowNewActionForm] = useState(false);
@@ -91,6 +145,8 @@ export default function ActionsTab({
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingValidations, setPendingValidations] = useState([]);
+  const [gammeRefreshKey, setGammeRefreshKey] = useState(0);
 
   // Fusionner et grouper actions + statusLog
   const timelineByDay = useMemo(() => {
@@ -139,37 +195,48 @@ export default function ActionsTab({
   // Handler pour ouvrir le formulaire et charger les métadonnées
   const handleOpenNewActionForm = useCallback(async () => {
     setShowNewActionForm(true);
-    if (!metadataLoaded) {
-      try {
-        const [categoriesData, factorsData] = await Promise.all([
-          actionCategoriesApi.fetchActionCategories(),
-          complexityFactorsApi.fetchComplexityFactors(),
-        ]);
-        setSubcategories(categoriesData || []);
-        setComplexityFactors(factorsData || []);
-        setMetadataLoaded(true);
-      } catch (error) {
-        console.error('Erreur chargement métadonnées:', error);
+    const tasks = [
+      !metadataLoaded && actionCategoriesApi.fetchActionCategories(),
+      !metadataLoaded && complexityFactorsApi.fetchComplexityFactors(),
+      planId && fetchGammeStepValidations(String(interventionId)),
+    ].filter(Boolean);
+
+    try {
+      const results = await Promise.all(tasks);
+      let idx = 0;
+      if (!metadataLoaded) {
+        setSubcategories(results[idx++] || []);
+        setComplexityFactors(results[idx++] || []);
         setMetadataLoaded(true);
       }
+      if (planId) {
+        const validations = results[idx] ?? [];
+        setPendingValidations(Array.isArray(validations) ? validations.filter((v) => v.status === 'pending') : []);
+      }
+    } catch (error) {
+      console.error('Erreur chargement métadonnées:', error);
+      if (!metadataLoaded) setMetadataLoaded(true);
     }
-  }, [metadataLoaded]);
+  }, [metadataLoaded, planId, interventionId]);
 
   // Handler pour soumettre la nouvelle action
-  const handleSubmitNewAction = useCallback(async (formData) => {
+  // ActionForm construit le payload canonique avec gamme_step_validations embarqué
+  const handleSubmitNewAction = useCallback(async (payload) => {
     if (!onAddAction) return;
 
     try {
       setSubmitting(true);
-      await onAddAction(formData);
+      await onAddAction(payload);
+      if (planId) setGammeRefreshKey((k) => k + 1);
       setShowNewActionForm(false);
+      setPendingValidations([]);
     } catch (error) {
       console.error('Erreur création action:', error);
       throw error;
     } finally {
       setSubmitting(false);
     }
-  }, [onAddAction]);
+  }, [onAddAction, planId]);
 
   return (
     <Box pt="4">
@@ -193,9 +260,9 @@ export default function ActionsTab({
               size="2"
               onClick={showNewActionForm ? () => setShowNewActionForm(false) : handleOpenNewActionForm}
               disabled={submitting}
-              style={{ 
-                backgroundColor: showNewActionForm ? 'var(--gray-9)' : 'var(--blue-9)', 
-                color: 'white' 
+              style={{
+                backgroundColor: showNewActionForm ? 'var(--gray-9)' : 'var(--blue-9)',
+                color: 'white'
               }}
             >
               {showNewActionForm ? <X size={16} /> : <Plus size={16} />}
@@ -203,6 +270,11 @@ export default function ActionsTab({
             </Button>
           )}
         </Flex>
+
+        {/* Bandeau gamme de maintenance */}
+        {planId && (
+          <GammeProgressBanner interventionId={interventionId} refreshKey={gammeRefreshKey} />
+        )}
 
         {/* Formulaire nouvelle action */}
         {showNewActionForm && (
@@ -216,8 +288,11 @@ export default function ActionsTab({
               complexityFactors: [],
             }}
             metadata={{ subcategories, complexityFactors }}
-            onCancel={() => setShowNewActionForm(false)}
+            interventionId={String(interventionId)}
+            showContext={false}
+            onCancel={() => { setShowNewActionForm(false); setPendingValidations([]); }}
             onSubmit={handleSubmitNewAction}
+            gammeValidations={pendingValidations}
             style={{ marginBottom: '1rem' }}
           />
         )}
@@ -234,8 +309,8 @@ export default function ActionsTab({
           <Timeline
             items={filteredTimelineByDay}
             renderItem={(item) => (
-              <TimelineItemRenderer 
-                item={item} 
+              <TimelineItemRenderer
+                item={item}
                 interventionId={interventionId}
                 onPurchaseRequestCreated={onPurchaseRequestCreated}
               />
@@ -255,6 +330,7 @@ ActionsTab.propTypes = {
   onAddAction: PropTypes.func,
   interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onPurchaseRequestCreated: PropTypes.func,
+  planId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 ActionsTab.defaultProps = {

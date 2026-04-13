@@ -1,61 +1,61 @@
 {
-    "name": "tunnel-gmao",
-    "version": "3.22.0",
-    "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
-    "author": "ProtoGulix",
-    "license": "AGPL-3.0-or-later",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ProtoGulix/tunnel-gmao.git"
-    },
-    "bugs": {
-        "url": "https://github.com/ProtoGulix/tunnel-gmao/issues"
-    },
-    "homepage": "https://github.com/ProtoGulix/tunnel-gmao#readme",
-    "keywords": [
-        "gmao",
-        "maintenance",
-        "gestion",
-        "interventions",
-        "stock",
-        "achats",
-        "directus",
-        "react",
-        "vite"
-    ],
-    "type": "module",
-    "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
-        "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
-        "lint:api": "node scripts/lint-api.js",
-        "arch:check": "powershell -ExecutionPolicy Bypass -File ./scripts/arch-check.ps1",
-        "arch:check:bash": "bash ./scripts/arch-check.sh",
-        "changelog:check": "node scripts/validate-changelog.cjs"
-    },
-    "dependencies": {
-        "@radix-ui/themes": "^3.2.1",
-        "axios": "^1.13.2",
-        "dompurify": "^3.3.1",
-        "html-react-parser": "^5.2.11",
-        "lucide-react": "^0.562.0",
-        "react": "^19.2.3",
-        "react-dom": "^19.2.3",
-        "react-router-dom": "^7.11.0"
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "@types/dompurify": "^3.0.5",
-        "@vitejs/plugin-react": "^4.2.1",
-        "eslint": "^9.39.2",
-        "eslint-plugin-jsx-a11y": "^6.10.2",
-        "eslint-plugin-react": "^7.37.5",
-        "eslint-plugin-react-hooks": "^7.0.1",
-        "globals": "^16.5.0",
-        "typescript-eslint": "^8.50.1",
-        "vite": "^7.2.6",
-        "vite-plugin-pwa": "^1.2.0"
-    }
+  "name": "tunnel-gmao",
+  "version": "3.27.0",
+  "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
+  "author": "ProtoGulix",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProtoGulix/tunnel-gmao.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ProtoGulix/tunnel-gmao/issues"
+  },
+  "homepage": "https://github.com/ProtoGulix/tunnel-gmao#readme",
+  "keywords": [
+    "gmao",
+    "maintenance",
+    "gestion",
+    "interventions",
+    "stock",
+    "achats",
+    "directus",
+    "react",
+    "vite"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:api": "node scripts/lint-api.js",
+    "arch:check": "powershell -ExecutionPolicy Bypass -File ./scripts/arch-check.ps1",
+    "arch:check:bash": "bash ./scripts/arch-check.sh",
+    "changelog:check": "node scripts/validate-changelog.cjs"
+  },
+  "dependencies": {
+    "@radix-ui/themes": "^3.2.1",
+    "axios": "^1.13.2",
+    "dompurify": "^3.3.1",
+    "html-react-parser": "^5.2.11",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.11.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/dompurify": "^3.0.5",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.50.1",
+    "vite": "^7.2.6",
+    "vite-plugin-pwa": "^1.2.0"
+  }
 }
 

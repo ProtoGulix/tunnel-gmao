@@ -89,5 +89,14 @@ export default defineConfig({
     hmr: {
       overlay: true, // ✅ Affiche les erreurs HMR
     },
+    // Proxy API → élimine le CORS en dev (même origine)
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        cookieDomainRewrite: 'localhost',
+      },
+    },
   },
 });

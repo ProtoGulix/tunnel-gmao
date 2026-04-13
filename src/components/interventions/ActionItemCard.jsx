@@ -1,8 +1,8 @@
 /* eslint-disable complexity, max-lines, react/prop-types */
-import { Card, Text } from "@radix-ui/themes";
+import { Badge, Card, Flex, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
-import { Flex } from "@radix-ui/themes";
+import { CheckCircle2, ClipboardCheck, MinusCircle } from "lucide-react";
 import ActionForm from "@/components/interventions/ActionForm";
 import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
 import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
@@ -13,6 +13,36 @@ import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import * as stockApi from "@/api/stock";
 import { useAuth } from "@/auth/useAuth";
+
+function GammeStepList({ steps }) {
+  if (!steps || steps.length === 0) return null;
+  return (
+    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
+      <Flex direction="column" gap="1">
+        <Text size="2" weight="bold" color="gray">
+          <Flex align="center" gap="1" as="span">
+            <ClipboardCheck size={13} />
+            Étapes validées ({steps.length})
+          </Flex>
+        </Text>
+        {steps.map((v) => (
+          <Flex key={v.id} align="center" gap="2"
+            style={{ padding: '4px 6px', background: 'var(--gray-2)', borderRadius: 'var(--radius-1)' }}>
+            {v.status === 'skipped'
+              ? <MinusCircle size={13} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+              : <CheckCircle2 size={13} color="var(--green-9)" style={{ flexShrink: 0 }} />
+            }
+            <Text size="2" style={{ flex: 1 }}>{v.step_label}</Text>
+            {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+            <Badge color={v.status === 'skipped' ? 'orange' : 'green'} variant="soft" size="1">
+              {v.status === 'skipped' ? 'Ignorée' : 'Validée'}
+            </Badge>
+          </Flex>
+        ))}
+      </Flex>
+    </div>
+  );
+}
 
 // DTO-friendly accessors with legacy fallback
 const getComplexityScore = (action) => Number(action?.complexityScore ?? action?.complexity_score ?? 0);
@@ -39,10 +69,13 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [purchaseFormLoading, setPurchaseFormLoading] = useState(false);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
+  const [fetchedAction, setFetchedAction] = useState(null);
   const [subcategories, setSubcategories] = useState([]);
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [purchaseRequests, setPurchaseRequests] = useState([]);
+  const [gammeSteps, setGammeSteps] = useState([]);
 
   const complexityScore = getComplexityScore(localAction);
   const complexityInfo = getComplexityColor(complexityScore);
@@ -67,64 +100,86 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     }
   }, [localAction?.purchaseRequests]);
 
-  // Compute initial state fresh from current localAction
+  // Gamme step validations liées à cette action
+  useEffect(() => {
+    if (localAction?.gammeStepValidations && Array.isArray(localAction.gammeStepValidations)) {
+      setGammeSteps(localAction.gammeStepValidations.filter((v) => v.status !== 'pending'));
+    } else {
+      setGammeSteps([]);
+    }
+  }, [localAction?.gammeStepValidations]);
+
+  // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {
-    const dateIso = createdAt ? new Date(createdAt).toISOString().split('T')[0] : '';
+    const source = fetchedAction ?? localAction;
+    const sourceCreatedAt = getCreatedAt(source);
+    const dateIso = sourceCreatedAt ? new Date(sourceCreatedAt).toISOString().split('T')[0] : '';
     return {
-      time: timeSpent || '',
       date: dateIso,
-      category: subcategory?.id ? String(subcategory.id) : '',
-      description: description || '',
-      complexity: String(complexityScore || '5'),
-      complexityFactors: Array.isArray(localAction?.complexityFactors) ? [...localAction.complexityFactors] : [],
+      category: getSubcategory(source)?.id ? String(getSubcategory(source).id) : '',
+      description: getDescription(source) || '',
+      complexity: getComplexityScore(source) ? String(getComplexityScore(source)) : '',
+      complexityFactors: getComplexityFactors(source),
+      actionStart: source?.actionStart ?? null,
+      actionEnd: source?.actionEnd ?? null,
     };
   };
 
   const handleOpenEdit = useCallback(async () => {
-    setShowEditForm((prev) => !prev);
-    if (!editDataLoaded) {
-      try {
-        const [categoriesData, factorsData] = await Promise.all([
-          actionCategoriesApi.fetchActionCategories(),
-          complexityFactorsApi.fetchComplexityFactors(),
-        ]);
+    if (showEditForm) {
+      setShowEditForm(false);
+      return;
+    }
+
+    const shouldLoadMeta = !editDataLoaded;
+    try {
+      const [actionData, categoriesData, factorsData] = await Promise.all([
+        actionsApi.fetchAction(String(localAction.id)),
+        shouldLoadMeta ? actionCategoriesApi.fetchActionCategories() : Promise.resolve(null),
+        shouldLoadMeta ? complexityFactorsApi.fetchComplexityFactors() : Promise.resolve(null),
+      ]);
+      setFetchedAction(actionData);
+      if (shouldLoadMeta && categoriesData) {
         setSubcategories(categoriesData || []);
         setComplexityFactors(factorsData || []);
         setEditDataLoaded(true);
-      } catch {
-        // Silent fail: ActionForm will show metadata error card if needed
-        setEditDataLoaded(true);
       }
+    } catch {
+      // Silent fail: ActionForm will show metadata error card if needed
+      if (shouldLoadMeta) setEditDataLoaded(true);
+    } finally {
+      setShowEditForm(true);
     }
-  }, [editDataLoaded]);
+  }, [showEditForm, editDataLoaded, localAction]);
 
   const handleSubmitEdit = useCallback(async (formData) => {
     const updates = {
       description: formData.description,
-      timeSpent: parseFloat(formData.time) || 0,
-      date: formData.date || undefined,
-      complexityScore: parseInt(formData.complexity) || undefined,
-      subcategory: formData.category ? { id: String(formData.category) } : undefined,
+      // Bornes horaires (nouveau format) ou time_spent (ancien format)
+      ...(formData.action_start && formData.action_end
+        ? { actionStart: formData.action_start, actionEnd: formData.action_end }
+        : { timeSpent: parseFloat(formData.time_spent) || 0 }
+      ),
+      date: formData.created_at || undefined,
+      complexityScore: formData.complexity_score || undefined,
+      subcategory: formData.action_subcategory ? { id: String(formData.action_subcategory) } : undefined,
       // Preserve or set technician
       technician: (localAction.technician?.id
         ? { id: localAction.technician.id }
         : (user?.id ? { id: user.id } : undefined)),
       // Ensure intervention context stays attached
-      intervention: localAction.intervention?.id ? { id: String(localAction.intervention.id) } : undefined,
+      intervention: interventionId ? { id: String(interventionId) } : undefined,
       // Always include complexityFactors to allow updates/clearing
-      complexityFactors: Array.isArray(formData.complexityFactors) ? formData.complexityFactors : [],
+      complexityFactors: formData.complexity_factor ? [formData.complexity_factor] : [],
     };
     const updated = await actionsApi.updateAction(String(localAction.id), updates);
     setLocalAction(updated || localAction);
     setShowEditForm(false);
-  }, [localAction, user?.id]);
+  }, [localAction, user?.id, interventionId]);
 
   const handleSubmitPurchaseRequest = useCallback(async (requestData) => {
     try {
-      if (!interventionId) {
-        throw new Error('Impossible de créer la demande : intervention absente');
-      }
-
+      setPurchaseFormLoading(true);
       const created = await stockApi.createPurchaseRequest({
         item_label: requestData.item_label,
         quantity: requestData.quantity,
@@ -132,7 +187,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         urgency: requestData.urgency,
         requested_by: requestData.requested_by,
         stock_item_id: requestData.stock_item_id || null,
-        intervention_id: interventionId,
+        intervention_action_id: localAction.id,
       });
 
       if (created?.id) {
@@ -143,8 +198,10 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       setShowPurchaseForm(false);
     } catch (error) {
       console.error('Error creating purchase request:', error);
+    } finally {
+      setPurchaseFormLoading(false);
     }
-  }, [interventionId, onPurchaseRequestCreated]);
+  }, [localAction.id, onPurchaseRequestCreated]);
 
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
@@ -224,11 +281,15 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       {/* EDIT FORM */}
       {showEditForm && (
         <ActionForm
+          key={localAction.id}
           initialState={buildInitialEditState()}
           metadata={{ subcategories, complexityFactors }}
           onCancel={() => setShowEditForm(false)}
           onSubmit={handleSubmitEdit}
           style={{ marginTop: '0.75rem' }}
+          interventionId={interventionId ? String(interventionId) : null}
+          showContext={false}
+          legacyTimeSpent={timeSpent || null}
         />
       )}
 
@@ -240,15 +301,20 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
             actionId={localAction.id || action.id}
             onSubmit={handleSubmitPurchaseRequest}
             onCancel={() => setShowPurchaseForm(false)}
+            loading={purchaseFormLoading}
+            compact
           />
         </div>
       )}
 
       {/* PURCHASE REQUESTS LIST */}
-      <PurchaseRequestList 
-        purchaseRequests={purchaseRequests} 
+      <PurchaseRequestList
+        purchaseRequests={purchaseRequests}
         onDelete={handleDeletePurchaseRequest}
       />
+
+      {/* GAMME STEP VALIDATIONS */}
+      <GammeStepList steps={gammeSteps} />
     </Card>
   );
 }

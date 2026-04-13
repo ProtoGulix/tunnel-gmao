@@ -36,6 +36,7 @@ export async function fetchInterventionRequests(params = {}) {
   if (params.statut) queryParams.statut = params.statut;
   if (params.excludeStatuses) queryParams.exclude_statuses = params.excludeStatuses;
   if (params.machineId) queryParams.machine_id = params.machineId;
+  if (params.isSystem !== undefined && params.isSystem !== null) queryParams.is_system = params.isSystem;
   if (params.search?.trim()) queryParams.search = params.search.trim();
 
   const response = await api.get('/intervention-requests', { params: queryParams });
@@ -60,7 +61,7 @@ export async function fetchInterventionRequest(id) {
  * @param {string} data.machineId - UUID de l'équipement
  * @param {string} data.demandeurNom - Nom du demandeur (requis)
  * @param {string} data.description - Description de l'intervention souhaitée (requis)
- * @param {string} [data.demandeurService] - Service ou département
+ * @param {string} [data.serviceId] - UUID du service/département du demandeur
  * @returns {Promise<Object>} Demande créée avec code et statut initial
  */
 export async function createInterventionRequest(data) {
@@ -70,8 +71,8 @@ export async function createInterventionRequest(data) {
     description: data.description,
   };
 
-  if (data.demandeurService?.trim()) {
-    payload.demandeur_service = data.demandeurService.trim();
+  if (data.serviceId) {
+    payload.service_id = data.serviceId;
   }
 
   const response = await api.post('/intervention-requests', payload);
@@ -86,6 +87,10 @@ export async function createInterventionRequest(data) {
  * @param {string} data.statusTo - Code du statut cible
  * @param {string} [data.notes] - Notes (obligatoire si statusTo === 'rejetee')
  * @param {string} [data.changedBy] - UUID utilisateur Directus
+ * @param {string} [data.typeInter] - Type d'intervention (obligatoire si statusTo === 'acceptee')
+ * @param {string} [data.techInitials] - Initiales du technicien (obligatoire si statusTo === 'acceptee')
+ * @param {string} [data.priority] - Priorité : 'faible', 'normale', 'important', 'urgent'
+ * @param {string} [data.reportedDate] - Date de signalement (YYYY-MM-DD)
  * @returns {Promise<Object>} Demande mise à jour avec status_log actualisé
  */
 export async function transitionInterventionRequest(id, data) {
@@ -93,6 +98,10 @@ export async function transitionInterventionRequest(id, data) {
 
   if (data.notes?.trim()) payload.notes = data.notes.trim();
   if (data.changedBy) payload.changed_by = data.changedBy;
+  if (data.typeInter) payload.type_inter = data.typeInter;
+  if (data.techInitials?.trim()) payload.tech_initials = data.techInitials.trim();
+  if (data.priority) payload.priority = data.priority;
+  if (data.reportedDate) payload.reported_date = data.reportedDate;
 
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
   return response.data;

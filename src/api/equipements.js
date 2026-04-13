@@ -8,13 +8,27 @@
 import { api } from '@/lib/api/client';
 
 /**
- * Liste tous les équipements avec état de santé
+ * Liste les équipements avec pagination serveur, recherche et filtres
  * @param {Object} [params]
  * @param {string} [params.search] - Recherche sur code, name, affectation
- * @returns {Promise<Array>} Liste des équipements
+ * @param {number} [params.skip] - Offset
+ * @param {number} [params.limit] - Taille de page (max 500)
+ * @param {string} [params.selectClass] - Codes de classes à inclure (filtre exclusif, csv)
+ * @param {string} [params.excludeClass] - Codes de classes à exclure (csv)
+ * @param {string} [params.selectMere] - UUID du parent : retourne uniquement ses enfants directs
+ * @returns {Promise<{ items: Array, pagination: Object, facets: Object }>}
  */
 export async function fetchEquipements(params = {}) {
-  const response = await api.get('/equipements', { params });
+  const queryParams = {
+    skip: params.skip ?? 0,
+    limit: params.limit ?? 50,
+  };
+  if (params.search?.trim()) queryParams.search = params.search.trim();
+  if (params.selectClass) queryParams.select_class = params.selectClass;
+  if (params.excludeClass) queryParams.exclude_class = params.excludeClass;
+  if (params.selectMere) queryParams.select_mere = params.selectMere;
+
+  const response = await api.get('/equipements', { params: queryParams });
   return response.data;
 }
 
@@ -46,9 +60,20 @@ export async function createEquipement(data) {
 }
 
 /**
- * Met à jour un équipement
+ * Met à jour partiellement un équipement (PATCH)
  * @param {string} id - ID de l'équipement
- * @param {Object} updates - Champs à mettre à jour
+ * @param {Object} updates - Champs à mettre à jour (seuls les champs envoyés sont modifiés)
+ * @returns {Promise<Object>} Équipement mis à jour
+ */
+export async function patchEquipement(id, updates) {
+  const response = await api.patch(`/equipements/${id}`, updates);
+  return response.data;
+}
+
+/**
+ * Remplace complètement un équipement (PUT — name obligatoire)
+ * @param {string} id - ID de l'équipement
+ * @param {Object} updates - Corps complet
  * @returns {Promise<Object>} Équipement mis à jour
  */
 export async function updateEquipement(id, updates) {
@@ -100,4 +125,13 @@ export async function fetchEquipementHealth(id) {
 export async function fetchEquipementChildren(id, params = {}) {
   const response = await api.get(`/equipements/${id}/children`, { params });
   return response.data;
+}
+
+/**
+ * Récupère les statuts du cycle de vie des équipements
+ * @returns {Promise<Array>} Liste des statuts actifs triés par ordre_affichage
+ */
+export async function fetchEquipementStatuts() {
+  const response = await api.get('/equipement-statuts');
+  return response.data || [];
 }

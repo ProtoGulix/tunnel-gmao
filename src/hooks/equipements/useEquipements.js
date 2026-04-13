@@ -2,36 +2,48 @@
  * @fileoverview Hook de gestion des équipements
  * @module hooks/equipements/useEquipements
  *
- * Gère la liste des équipements avec cache et hiérarchie parent/enfants
+ * Gère la liste des équipements avec pagination serveur, recherche et filtre par classe.
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as equipementsApi from '@/api/equipements';
+import { useDebounce } from '@/hooks/useDebounce';
 
-/**
- * Hook pour gérer la liste des équipements
- * @returns {Object} État et fonctions pour gérer les équipements
- */
-export function useEquipements() {
+export function useEquipements({ selectMere } = {}) {
   const [equipements, setEquipements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const initialLoadRef = useRef(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    page_size: 50,
+    total_pages: 1,
+  });
+  const [facets, setFacets] = useState([]);
 
-  // Cache pour accès rapide par ID
-  const equipementsById = useMemo(() => {
-    const map = new Map();
-    equipements.forEach((eq) => map.set(eq.id, eq));
-    return map;
-  }, [equipements]);
+  // Contrôles de navigation
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [search, setSearch] = useState('');
+  const [classFilter, setClassFilter] = useState(''); // code de classe sélectionné, '' = toutes
 
-  // Charger la liste initiale
-  const loadEquipements = useCallback(async () => {
+  const debouncedSearch = useDebounce(search, 350);
+
+  const load = useCallback(async (p, ps, s, cls, sm) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await equipementsApi.fetchEquipements();
-      setEquipements(Array.isArray(data) ? data : []);
+      const result = await equipementsApi.fetchEquipements({
+        skip: (p - 1) * ps,
+        limit: ps,
+        search: s,
+        selectClass: cls || undefined,
+        selectMere: sm,
+      });
+      setEquipements(result.items ?? []);
+      setPagination(result.pagination ?? { total: 0 });
+      // Conserver les facettes de la charge initiale (sans filtre) pour le menu déroulant
+      if (!cls && !s) setFacets(result.facets?.equipement_class ?? []);
     } catch (err) {
       setError(err.message || 'Erreur lors du chargement des équipements');
       setEquipements([]);
@@ -40,71 +52,79 @@ export function useEquipements() {
     }
   }, []);
 
-  // Chargement initial avec protection React StrictMode
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      loadEquipements();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    load(page, pageSize, debouncedSearch, classFilter, selectMere);
+  }, [page, pageSize, debouncedSearch, classFilter, selectMere, load]);
 
-  // Récupérer les infos d'un équipement parent
+  // Remonter en page 1 quand search ou classFilter change
+  const handleSearchChange = useCallback((v) => {
+    setSearch(v);
+    setPage(1);
+  }, []);
+  const handleClassFilterChange = useCallback((v) => {
+    setClassFilter(v);
+    setPage(1);
+  }, []);
+
+  // Cache courant pour getParentInfo (parents dans la page courante)
+  const equipementsById = useMemo(() => {
+    const map = new Map();
+    equipements.forEach((eq) => map.set(eq.id, eq));
+    return map;
+  }, [equipements]);
+
   const getParentInfo = useCallback(
-    (parentId) => {
-      if (!parentId) return null;
-      return equipementsById.get(parentId) || null;
-    },
+    (parentId) => (parentId ? (equipementsById.get(parentId) ?? null) : null),
     [equipementsById]
   );
 
-  // Récupérer les équipements enfants
-  const getChildrenInfo = useCallback(
-    (parentId) => {
-      return equipements.filter((eq) => eq.parent_id === parentId);
-    },
-    [equipements]
-  );
-
-  // Créer un équipement
+  // CRUD
   const createEquipement = useCallback(
     async (data) => {
-      const newEquipement = await equipementsApi.createEquipement(data);
-      await loadEquipements(); // Recharger pour avoir l'état complet
-      return newEquipement;
+      const created = await equipementsApi.createEquipement(data);
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
+      return created;
     },
-    [loadEquipements]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
-  // Mettre à jour un équipement
   const updateEquipement = useCallback(
     async (id, updates) => {
       const updated = await equipementsApi.updateEquipement(id, updates);
-      await loadEquipements();
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
       return updated;
     },
-    [loadEquipements]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
-  // Supprimer un équipement
   const deleteEquipement = useCallback(
     async (id) => {
       await equipementsApi.deleteEquipement(id);
-      await loadEquipements();
+      load(page, pageSize, debouncedSearch, classFilter, selectMere);
     },
-    [loadEquipements]
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
   );
 
-  // Rafraîchir la liste
-  const refresh = useCallback(() => {
-    loadEquipements();
-  }, [loadEquipements]);
+  const refresh = useCallback(
+    () => load(page, pageSize, debouncedSearch, classFilter, selectMere),
+    [load, page, pageSize, debouncedSearch, classFilter, selectMere]
+  );
 
   return {
     equipements,
     loading,
     error,
+    pagination,
+    facets,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch: handleSearchChange,
+    classFilter,
+    setClassFilter: handleClassFilterChange,
     getParentInfo,
-    getChildrenInfo,
     createEquipement,
     updateEquipement,
     deleteEquipement,

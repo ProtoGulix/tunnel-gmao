@@ -21,9 +21,38 @@ function ActionFormComplexity({
 
   return (
     <Box>
+      {/* Score de complexité */}
+      <Box mb={shouldShowComplexityFactors ? '3' : '0'}>
+        <Flex align="center" gap="2" mb="2">
+          <BarChart3 size={16} color="var(--gray-9)" />
+          <Text size="2" weight="bold">Complexité <Text as="span" color="red">*</Text></Text>
+        </Flex>
+        <Select.Root value={complexity} onValueChange={handleComplexityChange}>
+          <Select.Trigger
+            placeholder="Sélectionner…"
+            style={{ backgroundColor: 'white', width: '100%' }}
+          />
+          <Select.Content>
+            <Select.Item value="1">1 - Très simple</Select.Item>
+            <Select.Item value="2">2 - Simple</Select.Item>
+            <Select.Item value="3">3 - Facile</Select.Item>
+            <Select.Item value="4">4 - Moyen-</Select.Item>
+            <Select.Item value="5">5 - Moyen</Select.Item>
+            <Select.Item value="6">6 - Moyen+</Select.Item>
+            <Select.Item value="7">7 - Difficile</Select.Item>
+            <Select.Item value="8">8 - Complexe</Select.Item>
+            <Select.Item value="9">9 - Très complexe</Select.Item>
+            <Select.Item value="10">10 - Expert</Select.Item>
+          </Select.Content>
+        </Select.Root>
+        <Text size="1" color="gray" mt="1">
+          Évalue la difficulté de l&apos;intervention
+        </Text>
+      </Box>
+
       {/* Facteurs de complexité (si complexity > 5) */}
       {shouldShowComplexityFactors && (
-        <Box mb="4">
+        <Box>
           <Flex align="center" gap="2" mb="2">
             <BarChart3 size={16} color="var(--orange-9)" />
             <Text size="2" weight="bold">Facteurs de complexité</Text>
@@ -31,7 +60,7 @@ function ActionFormComplexity({
           </Flex>
           <Flex gap="2" wrap="wrap">
             {availableFactors.map((factor) => {
-              const factorCode = factor.code || factor.id;  // Utiliser code en priorité
+              const factorCode = factor.code || factor.id;
               const isSelected = complexityFactors.includes(factorCode);
               return (
                 <Button
@@ -52,35 +81,6 @@ function ActionFormComplexity({
           </Text>
         </Box>
       )}
-
-      {/* Score de complexité */}
-      <Box>
-        <Flex align="center" gap="2" mb="2">
-          <BarChart3 size={16} color="var(--gray-9)" />
-          <Text size="2" weight="bold">Complexité</Text>
-        </Flex>
-        <Select.Root value={complexity} onValueChange={handleComplexityChange}>
-          <Select.Trigger
-            placeholder="..."
-            style={{ backgroundColor: 'white', width: '100%' }}
-          />
-          <Select.Content>
-            <Select.Item value="1">1 - Très simple</Select.Item>
-            <Select.Item value="2">2 - Simple</Select.Item>
-            <Select.Item value="3">3 - Facile</Select.Item>
-            <Select.Item value="4">4 - Moyen-</Select.Item>
-            <Select.Item value="5">5 - Moyen</Select.Item>
-            <Select.Item value="6">6 - Moyen+</Select.Item>
-            <Select.Item value="7">7 - Difficile</Select.Item>
-            <Select.Item value="8">8 - Complexe</Select.Item>
-            <Select.Item value="9">9 - Très complexe</Select.Item>
-            <Select.Item value="10">10 - Expert</Select.Item>
-          </Select.Content>
-        </Select.Root>
-        <Text size="1" color="gray" mt="1">
-          Évalue la difficulté de l&apos;intervention
-        </Text>
-      </Box>
     </Box>
   );
 }
