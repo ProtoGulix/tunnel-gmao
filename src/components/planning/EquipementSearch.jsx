@@ -38,7 +38,7 @@ function InterventionCount({ health }) {
   return (
     <Badge color={color} variant="soft" size="1">
       <Wrench size={10} style={{ marginRight: 2 }} />
-      {count} ouvert{count > 1 ? 'es' : ''}{urgent > 0 ? ` · ${urgent} urgente${urgent > 1 ? 's' : ''}` : ''}
+      {count} inter. ouverte{count > 1 ? 's' : ''}{urgent > 0 ? ` · ${urgent} urgente${urgent > 1 ? 's' : ''}` : ''}
     </Badge>
   );
 }
@@ -51,7 +51,7 @@ function NewRequestsCount({ health }) {
   return (
     <Badge color="orange" variant="soft" size="1">
       <ClipboardList size={10} style={{ marginRight: 2 }} />
-      {count} demande{count > 1 ? 's' : ''}
+      {count} DI en attente
     </Badge>
   );
 }

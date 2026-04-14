@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.28.0] — 2026-04-15
+
+### Planning — panneau jour inline
+
+- Le clic sur un jour du planning ouvre désormais un panneau latéral directement sous la grille, sans popup flottante — l'équipement, les interventions et le formulaire d'action sont accessibles en deux colonnes sans quitter la vue
+- La recherche d'équipement affiche maintenant les compteurs **"inter. ouvertes"** et **"DI en attente"** pour identifier rapidement la criticité avant de sélectionner
+- Les sélecteurs de type d'action et de facteur de complexité se chargent correctement dans ce nouveau contexte
+
+### Clôture d'intervention à l'enregistrement d'une action
+
+- Après validation d'une action, une confirmation apparaît : **"L'intervention est-elle terminée ?"**
+- Deux choix : clôturer l'intervention immédiatement, ou la laisser ouverte pour continuer à y ajouter des actions
+- Si des étapes de gamme sont encore en attente, la clôture est bloquée et un message explicatif est affiché
+- Ce mécanisme ne s'active pas si l'intervention est déjà fermée
+
+### Fiche équipement — données de maintenance préventive
+
+- Nouvel onglet **Préventif** sur chaque fiche équipement : plans de maintenance actifs avec leur périodicité, prochaine occurrence planifiée, et résumé des occurrences (en attente, générées, passées)
+- Les **demandes d'intervention ouvertes** liées à l'équipement sont maintenant visibles dans l'onglet Informations, avec leur statut, description et date de création
+
+---
+
 ## [3.27.0] — 2026-04-13
 
 ### Gamme de maintenance & étapes préventives

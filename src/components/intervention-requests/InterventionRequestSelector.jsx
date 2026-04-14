@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Heading, Spinner, Text, Tooltip } from '@radix-ui/themes';
-import { Bot, ClipboardList, Plus } from 'lucide-react';
+import { Badge, Box, Flex, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList } from 'lucide-react';
 import { createInterventionRequest, fetchInterventionRequest, fetchInterventionRequests } from '@/api/intervention-requests';
 import InterventionRequestForm from '@/components/intervention-requests/InterventionRequestForm';
 import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
 
 function RequestRow({ req, isSelected, onToggle }) {
   const [hovered, setHovered] = useState(false);
@@ -70,7 +71,15 @@ RequestRow.propTypes = {
   onToggle: PropTypes.func.isRequired,
 };
 
-export default function InterventionRequestSelector({ selectedId, onSelect, machineId = null, machineName = null }) {
+export default function InterventionRequestSelector({
+  selectedId,
+  onSelect,
+  machineId = null,
+  machineName = null,
+  locked = false,
+  lockedLabel,
+  lockedIcon,
+}) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -78,6 +87,7 @@ export default function InterventionRequestSelector({ selectedId, onSelect, mach
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (locked) return;
     let cancelled = false;
     setLoading(true);
     const params = { limit: 100, excludeStatuses: 'rejetee,cloturee,acceptee' };
@@ -90,7 +100,7 @@ export default function InterventionRequestSelector({ selectedId, onSelect, mach
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [refreshKey, machineId]);
+  }, [refreshKey, machineId, locked]);
 
   const handleCreate = useCallback(async (formData) => {
     setSaving(true);
@@ -118,41 +128,23 @@ export default function InterventionRequestSelector({ selectedId, onSelect, mach
   }
 
   return (
-    <Card style={{ padding: 0, overflow: 'hidden' }}>
-      {/* En-tête */}
-      <Flex align="center" gap="2" px="3" py="3" style={{ borderBottom: '1px solid var(--gray-4)' }}>
-        <ClipboardList size={18} color="var(--accent-9)" />
-        <Heading size="3" weight="bold">Demandes ouvertes</Heading>
-        {!loading && <Badge color="gray" variant="soft" size="1">{items.length}</Badge>}
-        <Box style={{ flex: 1 }} />
-        <Button size="1" variant="soft" color="blue" onClick={() => setShowCreate(true)}>
-          <Plus size={12} />
-          Nouvelle
-        </Button>
-      </Flex>
-
-      {/* Corps */}
-      {loading && <Flex justify="center" p="4"><Spinner size="2" /></Flex>}
-
-      {!loading && items.length === 0 && (
-        <Text size="2" color="gray" style={{ display: 'block', padding: '1.5rem', textAlign: 'center' }}>
-          Aucune demande ouverte
-        </Text>
+    <EntitySelectorCard
+      title="Demandes ouvertes"
+      icon={ClipboardList}
+      items={items}
+      loading={loading}
+      selectedId={selectedId}
+      onSelect={onSelect}
+      renderRow={(req, isSelected, onSelect_) => (
+        <RequestRow req={req} isSelected={isSelected} onToggle={onSelect_} />
       )}
-
-      {!loading && items.length > 0 && (
-        <Box style={{ maxHeight: 480, overflowY: 'auto' }}>
-          {items.map((req) => (
-            <RequestRow
-              key={req.id}
-              req={req}
-              isSelected={req.id === selectedId}
-              onToggle={onSelect}
-            />
-          ))}
-        </Box>
-      )}
-    </Card>
+      onCreateClick={() => setShowCreate(true)}
+      createLabel="Nouvelle"
+      emptyMessage="Aucune demande ouverte"
+      locked={locked}
+      lockedLabel={lockedLabel}
+      lockedIcon={lockedIcon ?? ClipboardList}
+    />
   );
 }
 
@@ -161,4 +153,7 @@ InterventionRequestSelector.propTypes = {
   onSelect: PropTypes.func.isRequired,
   machineId: PropTypes.string,
   machineName: PropTypes.string,
+  locked: PropTypes.bool,
+  lockedLabel: PropTypes.string,
+  lockedIcon: PropTypes.elementType,
 };

@@ -6,7 +6,7 @@
  */
 
 import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
-import { Info, BarChart3, Users, Wrench } from 'lucide-react';
+import { Info, BarChart3, CalendarClock, Users, Wrench } from 'lucide-react';
 import PropTypes from 'prop-types';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
@@ -15,12 +15,14 @@ import EquipementChildrenTab from './EquipementChildrenTab';
 import EquipementInterventionsTab from './EquipementInterventionsTab';
 import EquipementInfoTab from './EquipementInfoTab';
 import EquipementStatsTab from './EquipementStatsTab';
+import EquipementPreventifTab from './EquipementPreventifTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
-function buildTabs(childrenCount, interventionsCount) {
+function buildTabs(childrenCount, interventionsCount, preventifBadge) {
   return [
     { id: 'info', label: 'Informations', icon: Info },
     { id: 'interventions', label: 'Interventions', icon: Wrench, badge: interventionsCount },
+    { id: 'preventif', label: 'Préventif', icon: CalendarClock, badge: preventifBadge },
     { id: 'children', label: 'Enfants', icon: Users, badge: childrenCount },
     { id: 'stats', label: 'Statistiques', icon: BarChart3 },
   ];
@@ -32,7 +34,8 @@ export default function EquipementDetailTab({ id, equipement, loading, error, he
   if (error) return <ErrorState error={error} />;
   if (loading && !equipement) return <LoadingState message="Chargement de l'équipement..." />;
 
-  const tabs = buildTabs(childrenCount, interventions?.total || 0);
+  const preventifBadge = equipement?.preventive_occurrences_summary?.pending_count || 0;
+  const tabs = buildTabs(childrenCount, interventions?.total || 0, preventifBadge);
 
   return (
     <Box>
@@ -64,6 +67,10 @@ export default function EquipementDetailTab({ id, equipement, loading, error, he
 
         <Tabs.Content value="interventions">
           <EquipementInterventionsTab interventions={interventions} />
+        </Tabs.Content>
+
+        <Tabs.Content value="preventif">
+          <EquipementPreventifTab equipement={equipement} />
         </Tabs.Content>
 
         <Tabs.Content value="children">

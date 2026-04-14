@@ -1,27 +1,111 @@
 /**
- * Sélecteur d'intervention déclenché par la sélection d'un équipement.
- * Charge les interventions ouvertes via GET /interventions/open-by-equipement/{id}.
+ * Sélecteur d'intervention — affiche les interventions ouvertes d'un équipement
+ * sous forme de liste carte, identique à InterventionRequestSelector.
  *
- * Quand aucune intervention ouverte n'existe (et que onInterventionCreated est fourni) :
- *   Étape 1 — sélection/création d'une demande (InterventionRequestSelector filtré sur l'équipement)
- *   Étape 2 — création de l'intervention liée (InterventionCreateForm)
- *   → l'intervention créée est auto-sélectionnée
+ * Le bouton "Créer" déclenche le flow via onCreationFlowChange(true).
+ * Export nommé : InterventionCreatorFlow — flow inline demande → intervention.
  *
  * @module components/planning/InterventionSelector
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Select, Spinner, Text } from '@radix-ui/themes';
-import { Loader2 } from 'lucide-react';
+import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
+import { Plus, ShieldCheck, Wrench } from 'lucide-react';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { createIntervention } from '@/api/interventions';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
 import { fetchEquipements } from '@/api/equipements';
+import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
+
+/* ── Constantes d'affichage ───────────────────────────────────────────────── */
 
 const STATUS_LABELS = {
   ouvert: 'Ouvert',
   en_cours: 'En cours',
+  attente_pieces: 'Attente pièces',
+  attente_prod: 'Attente production',
+};
+
+const STATUS_COLORS = {
+  ouvert: 'blue',
+  en_cours: 'green',
+  attente_pieces: 'orange',
+  attente_prod: 'orange',
+};
+
+const PRIORITY_LABELS = {
+  faible: 'Faible',
+  normale: 'Normale',
+  important: 'Important',
+  urgent: 'Urgent',
+};
+
+const PRIORITY_COLORS = {
+  faible: 'gray',
+  normale: 'gray',
+  important: 'orange',
+  urgent: 'red',
+};
+
+// Ordre de tri priorité ASC : urgent(0) → important(1) → normal/normale(2) → faible(3)
+const PRIORITY_SORT = { urgent: 0, important: 1, normal: 2, normale: 2, faible: 3 };
+
+function sortByPriority(items) {
+  return [...items].sort(
+    (a, b) => (PRIORITY_SORT[a.priority] ?? 2) - (PRIORITY_SORT[b.priority] ?? 2),
+  );
+}
+
+/* ── Liste avec groupement par priorité ──────────────────────────────────── */
+
+const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', normale: 'Normal', faible: 'Faible' };
+
+function GroupedInterventionList({ items, selectedId, onSelect }) {
+  // Regrouper par priorité dans l'ordre de tri
+  const groups = useMemo(() => {
+    const sorted = sortByPriority(items);
+    const map = new Map();
+    for (const item of sorted) {
+      const key = item.priority ?? 'normal';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
+    }
+    return [...map.entries()]; // [[priority, items[]], ...]
+  }, [items]);
+
+  const multipleGroups = groups.length > 1;
+
+  return (
+    <Box>
+      {groups.map(([priority, groupItems], gi) => (
+        <Box key={priority}>
+          {multipleGroups && (
+            <Flex align="center" gap="2" px="3" py="1" style={{ background: 'var(--gray-2)', borderBottom: '1px solid var(--gray-4)' }}>
+              <Text size="1" weight="bold" color="gray">
+                {GROUP_LABELS[priority] ?? priority} · {groupItems.length}
+              </Text>
+            </Flex>
+          )}
+          {groupItems.map((item) => (
+            <InterventionRow
+              key={item.id}
+              item={item}
+              isSelected={item.id === selectedId || item.id?.toString() === selectedId}
+              onToggle={onSelect}
+            />
+          ))}
+          {multipleGroups && gi < groups.length - 1 && <Separator size="4" />}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+GroupedInterventionList.propTypes = {
+  items: PropTypes.array.isRequired,
+  selectedId: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
 };
 
 const getDefaultDateTimeLocal = () => {
@@ -29,20 +113,76 @@ const getDefaultDateTimeLocal = () => {
   return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
 
+/* ── Ligne d'intervention ─────────────────────────────────────────────────── */
+
+function InterventionRow({ item, isSelected, onToggle }) {
+  const [hovered, setHovered] = useState(false);
+  const priority = item.priority;
+
+  return (
+    <Box
+      onClick={() => onToggle(isSelected ? null : item)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: 'pointer',
+        padding: '10px 12px',
+        borderBottom: '1px solid var(--gray-4)',
+        background: isSelected ? 'var(--accent-3)' : hovered ? 'var(--gray-2)' : undefined,
+        boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+        transition: 'background-color 0.15s',
+      }}
+    >
+      <Flex direction="column" gap="1">
+        <Flex align="center" justify="between" gap="2">
+          <Text size="1" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--accent-11)' }}>
+            {item.code}
+          </Text>
+          <Badge size="1" variant="soft" color={STATUS_COLORS[item.status_actual] ?? 'gray'}>
+            {STATUS_LABELS[item.status_actual] ?? item.status_actual}
+          </Badge>
+        </Flex>
+        {item.title && (
+          <Text size="2" weight="medium">{item.title}</Text>
+        )}
+        <Flex align="center" gap="1" wrap="wrap">
+          {priority && priority !== 'normale' && priority !== 'faible' && (
+            <Badge size="1" color={PRIORITY_COLORS[priority] ?? 'gray'} variant="soft">
+              {PRIORITY_LABELS[priority] ?? priority}
+            </Badge>
+          )}
+          {item.plan_id && (
+            <Badge size="1" color="green" variant="soft">
+              <ShieldCheck size={10} /> Préventif
+            </Badge>
+          )}
+        </Flex>
+      </Flex>
+    </Box>
+  );
+}
+
+InterventionRow.propTypes = {
+  item: PropTypes.object.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+};
+
 /* ── Flow inline : demande → intervention ─────────────────────────────────── */
 
-export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel }) {
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    type: 'CUR',
+export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel, initialRequest = null }) {
+  const [selectedRequest, setSelectedRequest] = useState(initialRequest);
+  const [formData, setFormData] = useState(() => ({
+    title: initialRequest?.description ?? '',
+    type: initialRequest?.suggested_type_inter ?? 'CUR',
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
     techInitials: '',
-    reportedBy: '',
+    reportedBy: initialRequest?.demandeur_nom ?? '',
     reportedDate: getDefaultDateTimeLocal(),
-  });
+    ...(initialRequest?.id && { requestId: initialRequest.id }),
+  }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -92,12 +232,16 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           ← Retour au sélecteur d&apos;intervention
         </Button>
       )}
-      <InterventionRequestSelector
-        selectedId={selectedRequest?.id}
-        onSelect={handleSelectRequest}
-        machineId={equipementId}
-        machineName={equipementLabel}
-      />
+
+      {/* Liste des demandes — masquée si une demande est pré-sélectionnée (venue de l'onglet Demandes) */}
+      {!initialRequest && (
+        <InterventionRequestSelector
+          selectedId={selectedRequest?.id}
+          onSelect={handleSelectRequest}
+          machineId={equipementId}
+          machineName={equipementLabel}
+        />
+      )}
 
       {selectedRequest && (
         <InterventionCreateForm
@@ -109,7 +253,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           saving={saving}
           error={error}
           onSubmit={handleSubmit}
-          onCancel={() => setSelectedRequest(null)}
+          onCancel={initialRequest ? onCancel : () => setSelectedRequest(null)}
         />
       )}
     </Flex>
@@ -121,114 +265,90 @@ InterventionCreatorFlow.propTypes = {
   equipementLabel: PropTypes.string,
   onCreated: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
+  initialRequest: PropTypes.object,
 };
 
 /* ── Sélecteur principal ──────────────────────────────────────────────────── */
 
-export default function InterventionSelector({ equipementId, equipementLabel, value, onChange, disabled, onInterventionCreated, onCreationFlowChange }) {
+export default function InterventionSelector({
+  equipementId,
+  equipementLabel,
+  value,
+  onChange,
+  onCreateClick,
+  locked = false,
+  lockedLabel,
+}) {
   const [interventions, setInterventions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (locked) return;
     if (!equipementId) {
       setInterventions([]);
-      onChange(null);
-      onCreationFlowChange?.(false);
+      onChange?.(null);
       return;
     }
     setLoading(true);
     fetchOpenInterventionsByEquipement(equipementId)
       .then((data) => {
         setInterventions(data);
-        if (data.length === 1) {
-          onChange(data[0]);
-        } else {
-          onChange(null);
-        }
-        // Signal au parent si le flow de création doit s'afficher
-        onCreationFlowChange?.(data.length === 0 && !!onInterventionCreated);
+        onChange?.(null);
       })
-      .catch(() => { setInterventions([]); onCreationFlowChange?.(false); })
+      .catch(() => setInterventions([]))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [equipementId]);
+  }, [equipementId, locked]);
 
-  if (!equipementId) {
+  if (locked) {
     return (
-      <Text size="2" color="gray" style={{ padding: '6px 0', display: 'block' }}>
-        Sélectionnez d&apos;abord un équipement
-      </Text>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Flex align="center" gap="2">
-        <Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />
-        <Text size="2" color="gray">Chargement…</Text>
-      </Flex>
-    );
-  }
-
-  if (interventions.length === 0) {
-    // Le flow de création est géré par le parent (hors du <form>) via onCreationFlowChange
-    if (onInterventionCreated) return null;
-    return (
-      <Flex align="center" gap="2" style={{
-        padding: '6px 10px',
-        background: 'var(--amber-3)',
-        borderRadius: 'var(--radius-2)',
-        border: '1px solid var(--amber-6)',
-      }}>
-        <Text size="2" color="amber" weight="medium">Aucune intervention ouverte sur cet équipement.</Text>
-      </Flex>
-    );
-  }
-
-  if (interventions.length === 1) {
-    const i = interventions[0];
-    return (
-      <Flex direction="column" gap="1">
-        <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--green-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--green-6)' }}>
-          <Badge color="green" variant="soft" size="1">{i.code}</Badge>
-          <Text size="2" weight="medium">{i.title}</Text>
-          <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
-        </Flex>
-        {onInterventionCreated && (
-          <Button size="1" variant="ghost" color="gray" type="button" onClick={() => onCreationFlowChange?.(true)}>
-            + Créer une nouvelle intervention
-          </Button>
-        )}
-      </Flex>
+      <EntitySelectorCard
+        title="Interventions ouvertes"
+        icon={Wrench}
+        items={[]}
+        loading={false}
+        selectedId=""
+        onSelect={onChange}
+        renderRow={() => null}
+        locked
+        lockedLabel={lockedLabel ?? 'Intervention fixée'}
+        lockedIcon={Wrench}
+      />
     );
   }
 
   return (
-    <Flex direction="column" gap="1">
-      <Select.Root
-        value={value?.id ?? ''}
-        onValueChange={(id) => onChange(interventions.find((i) => i.id === id) ?? null)}
-        disabled={disabled}
-      >
-        <Select.Trigger placeholder="Sélectionner une intervention…" style={{ width: '100%' }} />
-        <Select.Content>
-          {interventions.map((i) => (
-            <Select.Item key={i.id} value={i.id}>
-              <Flex align="center" gap="2">
-                <Text size="2" weight="medium">{i.code}</Text>
-                <Text size="2" color="gray">— {i.title}</Text>
-                <Badge color="gray" variant="soft" size="1">{STATUS_LABELS[i.status_actual] ?? i.status_actual}</Badge>
-              </Flex>
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-      {onInterventionCreated && (
-        <Button size="1" variant="ghost" color="gray" type="button" onClick={() => onCreationFlowChange?.(true)}>
-          + Créer une nouvelle intervention
-        </Button>
+    <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <Flex align="center" gap="2" px="3" py="3" style={{ borderBottom: '1px solid var(--gray-4)' }}>
+        <Wrench size={18} color="var(--accent-9)" />
+        <Text size="3" weight="bold">Interventions ouvertes</Text>
+        {!loading && <Badge color="gray" variant="soft" size="1">{interventions.length}</Badge>}
+        <Box style={{ flex: 1 }} />
+        {onCreateClick && (
+          <Button size="1" variant="soft" color="blue" type="button" onClick={onCreateClick}>
+            <Plus size={12} /> Créer
+          </Button>
+        )}
+      </Flex>
+
+      {loading && (
+        <Flex justify="center" p="4"><Spinner size="2" /></Flex>
       )}
-    </Flex>
+      {!loading && interventions.length === 0 && (
+        <Text size="2" color="gray" style={{ display: 'block', padding: '1.5rem', textAlign: 'center' }}>
+          Aucune intervention ouverte sur cet équipement
+        </Text>
+      )}
+      {!loading && interventions.length > 0 && (
+        <Box style={{ maxHeight: 480, overflowY: 'auto' }}>
+          <GroupedInterventionList
+            items={interventions}
+            selectedId={value?.id ?? ''}
+            onSelect={onChange}
+          />
+        </Box>
+      )}
+    </Card>
   );
 }
 
@@ -237,8 +357,8 @@ InterventionSelector.propTypes = {
   equipementLabel: PropTypes.string,
   value: PropTypes.object,
   onChange: PropTypes.func.isRequired,
-  disabled: PropTypes.bool,
-  onInterventionCreated: PropTypes.func,
-  /** Appelé avec true/false quand le flow de création (hors <form>) doit s'afficher */
-  onCreationFlowChange: PropTypes.func,
+  /** Déclenche le formulaire de création inline dans le parent */
+  onCreateClick: PropTypes.func,
+  locked: PropTypes.bool,
+  lockedLabel: PropTypes.string,
 };
