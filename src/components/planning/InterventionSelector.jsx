@@ -2,10 +2,7 @@
  * Sélecteur d'intervention — affiche les interventions ouvertes d'un équipement
  * sous forme de liste carte, identique à InterventionRequestSelector.
  *
- * Quand aucune intervention ouverte n'existe (et que onInterventionCreated est
- * fourni) : un bouton "Créer" déclenche le flow de création via
- * onCreationFlowChange(true) — le flow est rendu hors du <form> par le parent.
- *
+ * Le bouton "Créer" déclenche le flow via onCreationFlowChange(true).
  * Export nommé : InterventionCreatorFlow — flow inline demande → intervention.
  *
  * @module components/planning/InterventionSelector
@@ -211,8 +208,7 @@ export default function InterventionSelector({
   equipementLabel,
   value,
   onChange,
-  onInterventionCreated,
-  onCreationFlowChange,
+  onCreateClick,
   locked = false,
   lockedLabel,
 }) {
@@ -224,7 +220,6 @@ export default function InterventionSelector({
     if (!equipementId) {
       setInterventions([]);
       onChange?.(null);
-      onCreationFlowChange?.(false);
       return;
     }
     setLoading(true);
@@ -232,20 +227,11 @@ export default function InterventionSelector({
       .then((data) => {
         setInterventions(data);
         onChange?.(null);
-        onCreationFlowChange?.(data.length === 0 && !!onInterventionCreated);
       })
-      .catch(() => { setInterventions([]); onCreationFlowChange?.(false); })
+      .catch(() => setInterventions([]))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [equipementId, locked]);
-
-  if (!locked && !equipementId) {
-    return (
-      <Text size="2" color="gray" style={{ padding: '6px 0', display: 'block' }}>
-        Sélectionnez d&apos;abord un équipement
-      </Text>
-    );
-  }
 
   return (
     <EntitySelectorCard
@@ -258,7 +244,7 @@ export default function InterventionSelector({
       renderRow={(item, isSelected, onSelect) => (
         <InterventionRow item={item} isSelected={isSelected} onToggle={onSelect} />
       )}
-      onCreateClick={onInterventionCreated ? () => onCreationFlowChange?.(true) : undefined}
+      onCreateClick={onCreateClick}
       createLabel="Créer"
       emptyMessage="Aucune intervention ouverte sur cet équipement"
       locked={locked}
@@ -273,9 +259,8 @@ InterventionSelector.propTypes = {
   equipementLabel: PropTypes.string,
   value: PropTypes.object,
   onChange: PropTypes.func.isRequired,
-  onInterventionCreated: PropTypes.func,
-  /** Appelé avec true/false quand le flow de création (hors <form>) doit s'afficher */
-  onCreationFlowChange: PropTypes.func,
+  /** Déclenche le formulaire de création inline dans le parent */
+  onCreateClick: PropTypes.func,
   locked: PropTypes.bool,
   lockedLabel: PropTypes.string,
 };

@@ -25,7 +25,6 @@ import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
 import { ContextSection } from './ActionFormContext';
-import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
 
 
 /* ── ActionForm principal ─────────────────────────────────────────────────── */
@@ -49,13 +48,6 @@ function ActionForm({
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
-  const [creationFlowActive, setCreationFlowActive] = useState(false);
-  const [flowInitialRequest, setFlowInitialRequest] = useState(null);
-
-  const handleCreationFlowChange = useCallback((active, req = null) => {
-    setCreationFlowActive(active);
-    setFlowInitialRequest(active ? (req ?? null) : null);
-  }, []);
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -180,27 +172,10 @@ function ActionForm({
             <ContextSection
               interventionId={interventionId}
               pickedEquipement={pickedEquipement}
-              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); setFlowInitialRequest(null); }}
+              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
               pickedIntervention={pickedIntervention}
               onInterventionChange={setPickedIntervention}
-              onCreationFlowChange={handleCreationFlowChange}
-              creationFlowActive={creationFlowActive}
             />
-
-            {/* Flow création demande → intervention — hors du <form> pour éviter l'imbrication */}
-            {creationFlowActive && pickedEquipement && (
-              <InterventionCreatorFlow
-                equipementId={pickedEquipement.id}
-                equipementLabel={`${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`}
-                initialRequest={flowInitialRequest}
-                onCreated={(intervention) => {
-                  setPickedIntervention(intervention);
-                  setCreationFlowActive(false);
-                  setFlowInitialRequest(null);
-                }}
-                onCancel={() => { setCreationFlowActive(false); setFlowInitialRequest(null); }}
-              />
-            )}
           </>
         )}
 
