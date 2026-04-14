@@ -106,18 +106,19 @@ InterventionRow.propTypes = {
 
 /* ── Flow inline : demande → intervention ─────────────────────────────────── */
 
-export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel }) {
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    type: 'CUR',
+export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel, initialRequest = null }) {
+  const [selectedRequest, setSelectedRequest] = useState(initialRequest);
+  const [formData, setFormData] = useState(() => ({
+    title: initialRequest?.description ?? '',
+    type: initialRequest?.suggested_type_inter ?? 'CUR',
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
     techInitials: '',
-    reportedBy: '',
+    reportedBy: initialRequest?.demandeur_nom ?? '',
     reportedDate: getDefaultDateTimeLocal(),
-  });
+    ...(initialRequest?.id && { requestId: initialRequest.id }),
+  }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -167,12 +168,16 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           ← Retour au sélecteur d&apos;intervention
         </Button>
       )}
-      <InterventionRequestSelector
-        selectedId={selectedRequest?.id}
-        onSelect={handleSelectRequest}
-        machineId={equipementId}
-        machineName={equipementLabel}
-      />
+
+      {/* Liste des demandes — masquée si une demande est pré-sélectionnée (venue de l'onglet Demandes) */}
+      {!initialRequest && (
+        <InterventionRequestSelector
+          selectedId={selectedRequest?.id}
+          onSelect={handleSelectRequest}
+          machineId={equipementId}
+          machineName={equipementLabel}
+        />
+      )}
 
       {selectedRequest && (
         <InterventionCreateForm
@@ -184,7 +189,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           saving={saving}
           error={error}
           onSubmit={handleSubmit}
-          onCancel={() => setSelectedRequest(null)}
+          onCancel={initialRequest ? onCancel : () => setSelectedRequest(null)}
         />
       )}
     </Flex>
@@ -196,6 +201,7 @@ InterventionCreatorFlow.propTypes = {
   equipementLabel: PropTypes.string,
   onCreated: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
+  initialRequest: PropTypes.object,
 };
 
 /* ── Sélecteur principal ──────────────────────────────────────────────────── */
@@ -225,8 +231,7 @@ export default function InterventionSelector({
     fetchOpenInterventionsByEquipement(equipementId)
       .then((data) => {
         setInterventions(data);
-        if (data.length === 1) onChange?.(data[0]);
-        else onChange?.(null);
+        onChange?.(null);
         onCreationFlowChange?.(data.length === 0 && !!onInterventionCreated);
       })
       .catch(() => { setInterventions([]); onCreationFlowChange?.(false); })

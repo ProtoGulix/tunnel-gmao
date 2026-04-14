@@ -50,6 +50,12 @@ function ActionForm({
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
   const [creationFlowActive, setCreationFlowActive] = useState(false);
+  const [flowInitialRequest, setFlowInitialRequest] = useState(null);
+
+  const handleCreationFlowChange = useCallback((active, req = null) => {
+    setCreationFlowActive(active);
+    setFlowInitialRequest(active ? (req ?? null) : null);
+  }, []);
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -174,10 +180,10 @@ function ActionForm({
             <ContextSection
               interventionId={interventionId}
               pickedEquipement={pickedEquipement}
-              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); }}
+              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); setCreationFlowActive(false); setFlowInitialRequest(null); }}
               pickedIntervention={pickedIntervention}
               onInterventionChange={setPickedIntervention}
-              onCreationFlowChange={setCreationFlowActive}
+              onCreationFlowChange={handleCreationFlowChange}
               creationFlowActive={creationFlowActive}
             />
 
@@ -186,11 +192,13 @@ function ActionForm({
               <InterventionCreatorFlow
                 equipementId={pickedEquipement.id}
                 equipementLabel={`${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`}
+                initialRequest={flowInitialRequest}
                 onCreated={(intervention) => {
                   setPickedIntervention(intervention);
                   setCreationFlowActive(false);
+                  setFlowInitialRequest(null);
                 }}
-                onCancel={() => setCreationFlowActive(false)}
+                onCancel={() => { setCreationFlowActive(false); setFlowInitialRequest(null); }}
               />
             )}
           </>
