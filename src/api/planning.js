@@ -34,9 +34,28 @@ export async function fetchOpenInterventionsByEquipement(equipementId) {
     params: {
       equipement_id: equipementId,
       status: 'ouvert,en_cours,attente_pieces,attente_prod',
-      include: '',
     },
   });
+  return Array.isArray(res.data) ? res.data : [];
+}
+
+/**
+ * Interventions actives pour un technicien, avec filtre équipement optionnel.
+ * Si equipementId est fourni, délègue à fetchOpenInterventionsByEquipement (filtre plus précis).
+ * Sinon, filtre par tech_id — le backend ne supporte pas encore tech_id sur ce endpoint ;
+ * on charge toutes les interventions ouvertes sans filtre technicien et on commente le TODO.
+ * @param {string|null} techId        - UUID du technicien (ignoré si equipementId fourni)
+ * @param {string|null} equipementId  - UUID de l'équipement (prioritaire sur techId)
+ * @returns {Promise<Array>}
+ */
+export async function fetchOpenInterventions({ techId = null, equipementId = null } = {}) {
+  if (equipementId) {
+    return fetchOpenInterventionsByEquipement(equipementId);
+  }
+  // TODO: filtrer par technicien quand l'endpoint /interventions supportera tech_id
+  const params = { status: 'ouvert,en_cours,attente_pieces,attente_prod' };
+  if (techId) params.tech_id = techId;
+  const res = await api.get('/interventions', { params });
   return Array.isArray(res.data) ? res.data : [];
 }
 

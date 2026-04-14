@@ -50,6 +50,22 @@ export async function fetchIntervention(id) {
 }
 
 /**
+ * Retourne les facets (catégories d'action + facteurs de complexité) d'une intervention.
+ * Le backend inclut ces listes de référence dans sa réponse détaillée.
+ *
+ * @param {string} id - UUID de l'intervention
+ * @returns {Promise<{ subcategories: Array, complexityFactors: Array }>}
+ */
+export async function fetchInterventionFacets(id) {
+  const response = await api.get(`/interventions/${id}`);
+  const raw = response.data ?? {};
+  return {
+    subcategories: raw.facets?.action_categories ?? [],
+    complexityFactors: raw.facets?.complexity_factors ?? [],
+  };
+}
+
+/**
  * Crée une nouvelle intervention
  *
  * @param {Object} data - Données de la nouvelle intervention

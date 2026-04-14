@@ -7,10 +7,10 @@
  *
  * @module components/planning/InterventionSelector
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
-import { Wrench } from 'lucide-react';
+import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
+import { Plus, ShieldCheck, Wrench } from 'lucide-react';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { createIntervention } from '@/api/interventions';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
@@ -46,6 +46,66 @@ const PRIORITY_COLORS = {
   normale: 'gray',
   important: 'orange',
   urgent: 'red',
+};
+
+// Ordre de tri priorité ASC : urgent(0) → important(1) → normal/normale(2) → faible(3)
+const PRIORITY_SORT = { urgent: 0, important: 1, normal: 2, normale: 2, faible: 3 };
+
+function sortByPriority(items) {
+  return [...items].sort(
+    (a, b) => (PRIORITY_SORT[a.priority] ?? 2) - (PRIORITY_SORT[b.priority] ?? 2),
+  );
+}
+
+/* ── Liste avec groupement par priorité ──────────────────────────────────── */
+
+const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', normale: 'Normal', faible: 'Faible' };
+
+function GroupedInterventionList({ items, selectedId, onSelect }) {
+  // Regrouper par priorité dans l'ordre de tri
+  const groups = useMemo(() => {
+    const sorted = sortByPriority(items);
+    const map = new Map();
+    for (const item of sorted) {
+      const key = item.priority ?? 'normal';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
+    }
+    return [...map.entries()]; // [[priority, items[]], ...]
+  }, [items]);
+
+  const multipleGroups = groups.length > 1;
+
+  return (
+    <Box>
+      {groups.map(([priority, groupItems], gi) => (
+        <Box key={priority}>
+          {multipleGroups && (
+            <Flex align="center" gap="2" px="3" py="1" style={{ background: 'var(--gray-2)', borderBottom: '1px solid var(--gray-4)' }}>
+              <Text size="1" weight="bold" color="gray">
+                {GROUP_LABELS[priority] ?? priority} · {groupItems.length}
+              </Text>
+            </Flex>
+          )}
+          {groupItems.map((item) => (
+            <InterventionRow
+              key={item.id}
+              item={item}
+              isSelected={item.id === selectedId || item.id?.toString() === selectedId}
+              onToggle={onSelect}
+            />
+          ))}
+          {multipleGroups && gi < groups.length - 1 && <Separator size="4" />}
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+GroupedInterventionList.propTypes = {
+  items: PropTypes.array.isRequired,
+  selectedId: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
 };
 
 const getDefaultDateTimeLocal = () => {
@@ -85,11 +145,18 @@ function InterventionRow({ item, isSelected, onToggle }) {
         {item.title && (
           <Text size="2" weight="medium">{item.title}</Text>
         )}
-        {priority && priority !== 'normale' && priority !== 'faible' && (
-          <Badge size="1" color={PRIORITY_COLORS[priority] ?? 'gray'} variant="soft">
-            {PRIORITY_LABELS[priority] ?? priority}
-          </Badge>
-        )}
+        <Flex align="center" gap="1" wrap="wrap">
+          {priority && priority !== 'normale' && priority !== 'faible' && (
+            <Badge size="1" color={PRIORITY_COLORS[priority] ?? 'gray'} variant="soft">
+              {PRIORITY_LABELS[priority] ?? priority}
+            </Badge>
+          )}
+          {item.plan_id && (
+            <Badge size="1" color="green" variant="soft">
+              <ShieldCheck size={10} /> Préventif
+            </Badge>
+          )}
+        </Flex>
       </Flex>
     </Box>
   );
@@ -233,24 +300,55 @@ export default function InterventionSelector({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [equipementId, locked]);
 
+  if (locked) {
+    return (
+      <EntitySelectorCard
+        title="Interventions ouvertes"
+        icon={Wrench}
+        items={[]}
+        loading={false}
+        selectedId=""
+        onSelect={onChange}
+        renderRow={() => null}
+        locked
+        lockedLabel={lockedLabel ?? 'Intervention fixée'}
+        lockedIcon={Wrench}
+      />
+    );
+  }
+
   return (
-    <EntitySelectorCard
-      title="Interventions ouvertes"
-      icon={Wrench}
-      items={interventions}
-      loading={loading}
-      selectedId={value?.id ?? ''}
-      onSelect={onChange}
-      renderRow={(item, isSelected, onSelect) => (
-        <InterventionRow item={item} isSelected={isSelected} onToggle={onSelect} />
+    <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <Flex align="center" gap="2" px="3" py="3" style={{ borderBottom: '1px solid var(--gray-4)' }}>
+        <Wrench size={18} color="var(--accent-9)" />
+        <Text size="3" weight="bold">Interventions ouvertes</Text>
+        {!loading && <Badge color="gray" variant="soft" size="1">{interventions.length}</Badge>}
+        <Box style={{ flex: 1 }} />
+        {onCreateClick && (
+          <Button size="1" variant="soft" color="blue" type="button" onClick={onCreateClick}>
+            <Plus size={12} /> Créer
+          </Button>
+        )}
+      </Flex>
+
+      {loading && (
+        <Flex justify="center" p="4"><Spinner size="2" /></Flex>
       )}
-      onCreateClick={onCreateClick}
-      createLabel="Créer"
-      emptyMessage="Aucune intervention ouverte sur cet équipement"
-      locked={locked}
-      lockedLabel={lockedLabel ?? 'Intervention fixée'}
-      lockedIcon={Wrench}
-    />
+      {!loading && interventions.length === 0 && (
+        <Text size="2" color="gray" style={{ display: 'block', padding: '1.5rem', textAlign: 'center' }}>
+          Aucune intervention ouverte sur cet équipement
+        </Text>
+      )}
+      {!loading && interventions.length > 0 && (
+        <Box style={{ maxHeight: 480, overflowY: 'auto' }}>
+          <GroupedInterventionList
+            items={interventions}
+            selectedId={value?.id ?? ''}
+            onSelect={onChange}
+          />
+        </Box>
+      )}
+    </Card>
   );
 }
 

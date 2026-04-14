@@ -17,9 +17,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Checkbox, Flex, Text, Card, Button } from '@radix-ui/themes';
-import { ClipboardCheck, Plus } from 'lucide-react';
+import { ClipboardCheck, Plus, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
 import { fetchGammeStepValidations } from '@/api/gammeStepValidations';
+import { INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
@@ -37,6 +38,7 @@ function ActionForm({
   onSuccess,
   style,
   interventionId = null,
+  interventionMeta = null,
   techId = null,
   legacyTimeSpent = null,
   lockedDate = false,
@@ -78,6 +80,15 @@ function ActionForm({
   const pendingSteps = activeGammeValidations
     .filter((v) => v.status === 'pending')
     .sort((a, b) => (a.step_sort_order ?? 0) - (b.step_sort_order ?? 0));
+
+  const hasGamme = pendingSteps.length > 0;
+
+  // Mode préventif — identité visuelle verte
+  const typeInterCode = interventionMeta?.type_inter ?? pickedIntervention?.type_inter ?? null;
+  const isPreventif = typeInterCode === 'PRE';
+  const typeConfig = typeInterCode
+    ? INTERVENTION_TYPES.find((t) => t.id === typeInterCode)
+    : null;
 
   const toggleStep = useCallback((id) => {
     setSelectedStepIds((prev) => {
@@ -147,12 +158,77 @@ function ActionForm({
     );
   }
 
+  const cardStyle = isPreventif
+    ? { backgroundColor: 'var(--green-2)', border: '1px solid var(--green-6)', borderLeft: '3px solid var(--green-9)', ...style }
+    : { backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style };
+
+  const progressPct = hasGamme
+    ? Math.round((selectedStepIds.size / pendingSteps.length) * 100)
+    : 0;
+
+  const gammeBlock = hasGamme && (
+    <Box style={{ background: isPreventif ? 'var(--green-3)' : 'var(--green-2)', border: '1px solid var(--green-6)', borderRadius: 'var(--radius-3)', padding: '0.75rem' }}>
+      {/* Titre + compteur */}
+      <Flex align="center" gap="2" mb="1">
+        <ClipboardCheck size={14} color="var(--green-9)" />
+        <Text size="2" weight="bold" color="green">
+          Étapes de la gamme · {pendingSteps.length} à valider
+        </Text>
+        {selectedStepIds.size > 0 && (
+          <Badge color="green" variant="soft" size="1">
+            {selectedStepIds.size}/{pendingSteps.length}
+          </Badge>
+        )}
+      </Flex>
+
+      {/* Barre de progression */}
+      <Box style={{ height: 3, background: 'var(--green-3)', borderRadius: 2, marginBottom: '0.75rem', overflow: 'hidden' }}>
+        <Box style={{ height: '100%', width: `${progressPct}%`, background: 'var(--green-9)', transition: 'width 0.2s ease' }} />
+      </Box>
+
+      {/* Liste des étapes */}
+      <Flex direction="column" gap="1">
+        {pendingSteps.map((v) => {
+          const checked = selectedStepIds.has(v.id);
+          return (
+            <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '3px 0' }}>
+              <Checkbox
+                checked={checked}
+                onCheckedChange={() => toggleStep(v.id)}
+              />
+              <Text
+                size="2"
+                style={{
+                  flex: 1,
+                  userSelect: 'none',
+                  color: checked ? 'var(--green-11)' : 'var(--gray-12)',
+                  textDecoration: checked ? 'line-through' : 'none',
+                  opacity: checked ? 0.7 : 1,
+                  transition: 'color 0.15s, opacity 0.15s',
+                }}
+              >
+                {v.step_label}
+              </Text>
+              {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+            </label>
+          );
+        })}
+      </Flex>
+    </Box>
+  );
+
   return (
-    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style }}>
+    <Card style={cardStyle}>
       <Flex direction="column" gap="3">
+        {/* En-tête */}
         <Flex align="center" gap="2">
-          <Plus size={20} color="var(--blue-9)" />
+          {isPreventif ? <ShieldCheck size={20} color="var(--green-9)" /> : <Plus size={20} color="var(--blue-9)" />}
           <Text size="3" weight="bold">Nouvelle action</Text>
+          {typeConfig && (
+            <Badge size="1" color={typeConfig.color} variant="soft">
+              {typeConfig.title}
+            </Badge>
+          )}
         </Flex>
 
         {allErrors.length > 0 && (
@@ -181,7 +257,7 @@ function ActionForm({
 
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
-            {/* Plage horaire + Date + Type sur une même ligne */}
+            {/* Plage horaire + Date + Type */}
             <ActionFormFields
               formState={form.formState}
               handlers={form.handlers}
@@ -193,46 +269,35 @@ function ActionForm({
               lockedDate={lockedDate}
             />
 
-            <ActionFormDescription formState={form.formState} handlers={form.handlers} />
-            <ActionFormComplexity
-              formState={form.formState}
-              handlers={form.handlers}
-              metadata={metadata}
-              validation={form.validation}
-            />
-
-            {/* Étapes de gamme à valider avec cette action */}
-            {pendingSteps.length > 0 && (
-              <Box style={{ background: 'var(--green-2)', border: '1px solid var(--green-6)', borderRadius: 'var(--radius-2)', padding: '0.5rem 0.75rem' }}>
-                <Flex align="center" gap="2" mb="2">
-                  <ClipboardCheck size={14} color="var(--green-9)" />
-                  <Text size="2" weight="bold">Valider des étapes avec cette action</Text>
-                  {selectedStepIds.size > 0 && (
-                    <Badge color="green" variant="soft" size="1">
-                      {selectedStepIds.size}/{pendingSteps.length}
-                    </Badge>
-                  )}
-                </Flex>
-                <Flex direction="column" gap="1">
-                  {pendingSteps.map((v) => (
-                    <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '2px 0' }}>
-                      <Checkbox
-                        checked={selectedStepIds.has(v.id)}
-                        onCheckedChange={() => toggleStep(v.id)}
-                      />
-                      <Text size="2" style={{ flex: 1, userSelect: 'none' }}>{v.step_label}</Text>
-                      {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
-                    </label>
-                  ))}
-                </Flex>
-              </Box>
+            {/* Réordonnancement conditionnel selon présence de gamme */}
+            {hasGamme ? (
+              <>
+                {gammeBlock}
+                <ActionFormDescription formState={form.formState} handlers={form.handlers} />
+                <ActionFormComplexity
+                  formState={form.formState}
+                  handlers={form.handlers}
+                  metadata={metadata}
+                  validation={form.validation}
+                />
+              </>
+            ) : (
+              <>
+                <ActionFormDescription formState={form.formState} handlers={form.handlers} />
+                <ActionFormComplexity
+                  formState={form.formState}
+                  handlers={form.handlers}
+                  metadata={metadata}
+                  validation={form.validation}
+                />
+              </>
             )}
 
             <Flex justify="end" gap="2">
               <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
                 Annuler
               </Button>
-              <Button type="submit" color="blue" size="2">
+              <Button type="submit" color={isPreventif ? 'green' : 'blue'} size="2">
                 <Plus size={16} /> Enregistrer
               </Button>
             </Flex>
@@ -265,6 +330,12 @@ ActionForm.propTypes = {
   onSuccess: PropTypes.func,
   style: PropTypes.object,
   interventionId: PropTypes.string,
+  interventionMeta: PropTypes.shape({
+    type_inter: PropTypes.string,
+    plan_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    code: PropTypes.string,
+    title: PropTypes.string,
+  }),
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
   showContext: PropTypes.bool,

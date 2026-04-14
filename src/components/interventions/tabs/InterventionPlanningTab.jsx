@@ -1,11 +1,9 @@
 /**
  * Onglet Planning — vue semaine avec filtre technicien.
- * Utilisé depuis InterventionsListPage (planning global, interventionId=null)
- * et potentiellement depuis InterventionDetailPage (interventionId fixé).
+ * Utilisé depuis InterventionsListPage (planning global).
  *
- * Quand interventionId est null : ActionForm affiche les sélecteurs équipement/intervention
- * et charge les steps gamme dynamiquement si l'intervention sélectionnée a un plan_id.
- * Quand interventionId est fixé : ActionForm masque les sélecteurs (showContext=false).
+ * Le clic sur un jour (ou "+ Ajouter") ouvre DayContextPanel sous la grille :
+ * le tech sélectionne une intervention ou une DI à gauche, saisit son action à droite.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -13,14 +11,14 @@ import { Box, Flex } from '@radix-ui/themes';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 import { useApiStatus } from '@/hooks/shared/useApiStatus';
-import { fetchWeekActions, fetchActiveUsers, createActionDirect } from '@/api/planning';
-import ActionForm from '@/components/interventions/ActionForm';
+import { fetchWeekActions, fetchActiveUsers } from '@/api/planning';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
 import { DayColumn, WeekNav } from '@/components/planning/WeekCalendar';
 import { addDays, getMondayOf, getWeekDays, isWeekend, todayIso } from '@/components/planning/planningUtils';
+import DayContextPanel from '@/components/planning/DayContextPanel';
 
-export default function InterventionPlanningTab({ interventionId = null, onActionCreated }) {
+export default function InterventionPlanningTab({ onActionCreated }) {
   const today = todayIso();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
@@ -31,9 +29,13 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
   const [users, setUsers] = useState([]);
   const [techId, setTechId] = useState(user?.id ?? null);
   const [weekActions, setWeekActions] = useState({});
-  const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [metadata, setMetadata] = useState({ subcategories: [], complexityFactors: [] });
+
+  // Initiales du technicien sélectionné — transmises à InterventionCreatorFlow
+  const selectedUser = users.find((u) => u.id === techId) ?? null;
+  const techInitials = selectedUser
+    ? `${selectedUser.first_name?.[0] ?? ''}${selectedUser.last_name?.[0] ?? ''}`.toUpperCase()
+    : (user?.initials ?? '');
 
   const { status, error, wrap } = useApiStatus();
   const { wrap: wrapUsers } = useApiStatus();
@@ -66,19 +68,8 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
 
   useEffect(() => { loadWeek(); }, [loadWeek]);
 
-  // Métadonnées ActionForm — chargées à la première ouverture du formulaire
-  useEffect(() => {
-    if (!showForm || metadata.subcategories.length > 0) return;
-    Promise.all([
-      import('@/api/actionCategories').then((m) => m.fetchActionCategories?.() ?? []),
-      import('@/api/complexityFactors').then((m) => m.fetchComplexityFactors?.() ?? []),
-    ])
-      .then(([cats, factors]) => setMetadata({ subcategories: cats, complexityFactors: factors }))
-      .catch(() => {});
-  }, [showForm]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleSuccess = () => {
-    setShowForm(false);
+    setSelectedDate(null);
     loadWeek();
     onActionCreated?.();
   };
@@ -97,22 +88,6 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
         />
       </Flex>
 
-      {showForm && (
-        <Box mb="4">
-          <ActionForm
-            key={selectedDate}
-            initialState={{ date: selectedDate ?? '' }}
-            metadata={metadata}
-            onCancel={() => setShowForm(false)}
-            onSubmit={createActionDirect}
-            onSuccess={handleSuccess}
-            interventionId={interventionId}
-            techId={techId}
-            showContext={!interventionId}
-          />
-        </Box>
-      )}
-
       {status === 'loading' && <LoadingState fullscreen={false} message="Chargement…" />}
       {status === 'error' && <ErrorState error={error} onRetry={loadWeek} />}
 
@@ -124,11 +99,22 @@ export default function InterventionPlanningTab({ interventionId = null, onActio
               dateStr={d}
               actions={weekActions[d] ?? []}
               isToday={d === today}
-              onAddAction={(date) => { setSelectedDate(date); setShowForm(true); }}
+              onAddAction={(date) => setSelectedDate(date)}
               isWeekend={isWeekend(d)}
             />
           ))}
         </Box>
+      )}
+
+      {selectedDate && (
+        <DayContextPanel
+          date={selectedDate}
+          techId={techId}
+          techInitials={techInitials}
+          weekActionsForDay={weekActions[selectedDate] ?? []}
+          onClose={() => setSelectedDate(null)}
+          onActionCreated={handleSuccess}
+        />
       )}
     </Box>
   );

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Card, Flex, Select, Spinner, Text, TextField } from '@radix-ui/themes';
 import { MapPin, Plus, User, Wrench } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import LockedBadge from '@/components/ui/LockedBadge';
@@ -15,11 +15,11 @@ const PRIORITY_OPTIONS = [
 
 export default function InterventionCreateForm({ formData, set, locked, lockedType = false, fetchEquipementsFn, saving, error, onSubmit, onCancel }) {
   return (
-    <Card style={{ padding: '1.5rem', backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
       <Flex direction="column" gap="3">
-        <Flex align="center" gap="3">
+        <Flex align="center" gap="2">
           <Plus size={20} color="var(--blue-9)" />
-          <Heading size="4" weight="bold">Nouvelle intervention</Heading>
+          <Text size="3" weight="bold">Nouvelle intervention</Text>
         </Flex>
 
         {error && (
@@ -33,7 +33,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
 
             {/* Titre */}
             <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
                 Titre <Text color="red">*</Text>
               </Text>
               {locked ? (
@@ -46,7 +46,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
 
             {/* Date de signalement */}
             <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
                 Date de signalement <Text color="red">*</Text>
               </Text>
               <TextField.Root type="datetime-local" value={formData.reportedDate}
@@ -56,7 +56,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
             {/* Équipement + Type + Priorité sur la même ligne */}
             <Flex gap="3" align="end" wrap="wrap">
               <Box style={{ flex: '1 1 200px' }}>
-                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
                   Équipement <Text color="red">*</Text>
                 </Text>
                 {formData.equipementId ? (
@@ -86,7 +86,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
               </Box>
 
               <Box style={{ flex: '0 0 auto' }}>
-                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Type</Text>
+                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Type</Text>
                 {lockedType ? (
                   <Flex align="center" gap="2" style={{ height: 32 }}>
                     <Badge color="blue" variant="soft">
@@ -105,7 +105,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
               </Box>
 
               <Box style={{ flex: '0 0 auto' }}>
-                <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>Priorité</Text>
+                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Priorité</Text>
                 <Select.Root value={formData.priority} onValueChange={(v) => set('priority', v)}>
                   <Select.Trigger />
                   <Select.Content>
@@ -117,7 +117,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
 
             {/* Initiales technicien */}
             <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
                 Initiales technicien <Text color="red">*</Text>
               </Text>
               <TextField.Root placeholder="Ex. : QC" value={formData.techInitials}
@@ -127,7 +127,7 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
 
             {/* Signalé par */}
             <Box>
-              <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
                 Signalé par {locked ? '' : '(optionnel)'}
               </Text>
               {locked && formData.reportedBy ? (
