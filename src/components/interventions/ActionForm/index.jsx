@@ -26,6 +26,7 @@ import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
 import { ContextSection } from './ActionFormContext';
+import CloseInterventionOverlay from './CloseInterventionOverlay';
 
 
 /* ── ActionForm principal ─────────────────────────────────────────────────── */
@@ -58,6 +59,16 @@ function ActionForm({
   const [submitError, setSubmitError] = useState(null);
 
   const [selectedStepIds, setSelectedStepIds] = useState(() => new Set());
+  const [pendingPayload, setPendingPayload] = useState(null);
+
+  // Empêche la fermeture de l'onglet/navigation navigateur pendant l'overlay
+  useEffect(() => {
+    if (!pendingPayload) return;
+    const handler = (e) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [pendingPayload]);
+
   // Steps chargés dynamiquement quand une intervention avec plan_id est sélectionnée dans le planning
   const [dynamicGammeValidations, setDynamicGammeValidations] = useState([]);
 
@@ -133,6 +144,16 @@ function ActionForm({
     setSubmitError(null);
 
     if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
+
+    // Afficher l'overlay de clôture si l'intervention est connue et encore ouverte
+    const shouldShowOverlay =
+      resolvedInterventionId &&
+      !['ferme', 'cancelled'].includes(interventionMeta?.status_actual);
+
+    if (shouldShowOverlay) {
+      setPendingPayload(buildPayload());
+      return;
+    }
 
     try {
       const result = await onSubmit(buildPayload());
@@ -218,7 +239,7 @@ function ActionForm({
   );
 
   return (
-    <Card style={cardStyle}>
+    <Card style={{ ...cardStyle, position: 'relative' }}>
       <Flex direction="column" gap="3">
         {/* En-tête */}
         <Flex align="center" gap="2">
@@ -304,6 +325,17 @@ function ActionForm({
           </Flex>
         </form>
       </Flex>
+
+      {pendingPayload && (
+        <CloseInterventionOverlay
+          interventionId={resolvedInterventionId}
+          interventionCode={interventionMeta?.code ?? pickedIntervention?.code}
+          interventionTitle={interventionMeta?.title ?? pickedIntervention?.title}
+          onSubmitAction={() => onSubmit(pendingPayload)}
+          onSuccess={(result) => { setPendingPayload(null); onSuccess?.(result); }}
+          onCancel={() => setPendingPayload(null)}
+        />
+      )}
     </Card>
   );
 }
@@ -335,6 +367,7 @@ ActionForm.propTypes = {
     plan_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     code: PropTypes.string,
     title: PropTypes.string,
+    status_actual: PropTypes.string,
   }),
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
