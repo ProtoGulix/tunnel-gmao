@@ -4,6 +4,22 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.29.0 - 2026-04-15
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- L'onglet **Occurrences** du module Préventif affiche maintenant le détail des étapes de gamme directement dans chaque ligne : un indicateur `validées/total` est visible dans la colonne Gamme, et cliquer sur une occurrence déroule le tableau complet des étapes avec leur statut (En attente, Validée, Ignorée).
+- Un bouton **Corriger** est disponible dans l'onglet Occurrences pour réparer automatiquement deux anomalies connues : des étapes de gamme non rattachées à leur intervention lors d'une acceptation manuelle, et des occurrences restées bloquées à « Générée » alors que l'intervention liée avait bien été fermée. L'opération est sans risque et peut être relancée plusieurs fois.
+
+### Points de vigilance
+
+- La correction ne modifie que les données réellement incohérentes — aucun effet de bord sur les occurrences saines.
+- L'API doit renvoyer le champ `gamme_steps` dans la réponse des occurrences pour que le tableau d'étapes s'affiche.
+
+---
+
 ## 3.26.0 - 2026-04-13
 
 Stabilité : **expérimental** 🧪

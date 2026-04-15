@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchPreventiveOccurrences, skipPreventiveOccurrence, generatePreventiveOccurrences } from '@/api/preventiveOccurrences';
+import { fetchPreventiveOccurrences, skipPreventiveOccurrence, generatePreventiveOccurrences, repairPreventiveOccurrences } from '@/api/preventiveOccurrences';
 
 export function usePreventiveOccurrences(filters = {}) {
   const [items, setItems] = useState([]);
@@ -39,5 +39,11 @@ export function usePreventiveOccurrences(filters = {}) {
     return result;
   }, [load]);
 
-  return { items, loading, error, refresh: load, skipOccurrence, generate };
+  const repair = useCallback(async () => {
+    const result = await repairPreventiveOccurrences();
+    await load();
+    return result;
+  }, [load]);
+
+  return { items, loading, error, refresh: load, skipOccurrence, generate, repair };
 }
