@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertDialog, Badge, Box, Button, Flex, Select, Text, TextField } from '@radix-ui/themes';
-import { CalendarClock, ExternalLink, Play } from 'lucide-react';
+import { CalendarClock, ExternalLink, Play, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
 import { fetchPreventivePlans } from '@/api/preventivePlans';
@@ -31,6 +31,9 @@ export default function PreventiveOccurrencesTab() {
   const [toSkip, setToSkip] = useState(null);
   const [skipReason, setSkipReason] = useState('');
   const [confirmGen, setConfirmGen] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState(null);
+  const [confirmRepair, setConfirmRepair] = useState(false);
 
   const filters = {
     ...(planId ? { plan_id: planId } : {}),
@@ -39,7 +42,7 @@ export default function PreventiveOccurrencesTab() {
     ...(dateTo ? { scheduled_date_to: dateTo } : {}),
   };
 
-  const { items, loading, error, refresh, skipOccurrence, generate } = usePreventiveOccurrences(filters);
+  const { items, loading, error, refresh, skipOccurrence, generate, repair } = usePreventiveOccurrences(filters);
 
   useEffect(() => {
     fetchPreventivePlans({ active_only: false })
@@ -55,6 +58,17 @@ export default function PreventiveOccurrencesTab() {
     } finally {
       setGenerating(false);
       setConfirmGen(false);
+    }
+  };
+
+  const handleRepair = async () => {
+    try {
+      setRepairing(true);
+      const result = await repair();
+      setRepairResult(result);
+    } finally {
+      setRepairing(false);
+      setConfirmRepair(false);
     }
   };
 
@@ -143,9 +157,14 @@ export default function PreventiveOccurrencesTab() {
         showSearchInput={false}
         showRefreshButton={false}
         rightActions={
-          <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
-            <Play size={14} />{generating ? 'Génération…' : 'Générer'}
-          </Button>
+          <Flex gap="2">
+            <Button size="2" color="amber" variant="soft" onClick={() => setConfirmRepair(true)} disabled={repairing}>
+              <Wrench size={14} />{repairing ? 'Correction…' : 'Corriger'}
+            </Button>
+            <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
+              <Play size={14} />{generating ? 'Génération…' : 'Générer'}
+            </Button>
+          </Flex>
         }
       />
       <Flex gap="2" mb="3" wrap="wrap">
@@ -220,6 +239,49 @@ export default function PreventiveOccurrencesTab() {
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Action>
               <Button color="blue" onClick={() => { setGenResult(null); refresh(); }}>OK</Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      {/* Confirmation correction */}
+      <AlertDialog.Root open={confirmRepair} onOpenChange={setConfirmRepair}>
+        <AlertDialog.Content maxWidth="420px">
+          <AlertDialog.Title>Corriger les données</AlertDialog.Title>
+          <AlertDialog.Description>
+            Cette procédure corrige les données corrompues par deux bugs :
+            <Text as="p" mt="2" size="2">• Étapes de gamme non liées à leur intervention</Text>
+            <Text as="p" size="2">• Occurrences bloquées à «&nbsp;Générée&nbsp;» alors que l'intervention est fermée</Text>
+            <Text as="p" mt="2" size="1" color="gray">L'opération est idempotente et sans effet secondaire.</Text>
+          </AlertDialog.Description>
+          <Flex gap="3" mt="4" justify="end">
+            <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button color="amber" onClick={handleRepair} disabled={repairing}>Corriger</Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      {/* Résultat correction */}
+      <AlertDialog.Root open={!!repairResult} onOpenChange={(open) => !open && setRepairResult(null)}>
+        <AlertDialog.Content maxWidth="480px">
+          <AlertDialog.Title>Résultat de la correction</AlertDialog.Title>
+          <AlertDialog.Description>
+            <Text as="p" size="2">• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
+            <Text as="p" size="2">• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
+            <Text as="p" size="2">• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
+            {repairResult?.details?.length > 0 && (
+              <Box mt="3" style={{ maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}>
+                {repairResult.details.map((d, i) => (
+                  <Text key={i} as="p" size="1" color="gray">{d}</Text>
+                ))}
+              </Box>
+            )}
+          </AlertDialog.Description>
+          <Flex gap="3" mt="4" justify="end">
+            <AlertDialog.Action>
+              <Button color="blue" onClick={() => { setRepairResult(null); refresh(); }}>OK</Button>
             </AlertDialog.Action>
           </Flex>
         </AlertDialog.Content>

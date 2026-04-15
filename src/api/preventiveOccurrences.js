@@ -25,3 +25,8 @@ export async function generatePreventiveOccurrences() {
   const res = await api.post('/preventive-occurrences/generate');
   return res.data;
 }
+
+export async function repairPreventiveOccurrences() {
+  const res = await api.post('/preventive-occurrences/repair');
+  return res.data;
+}
