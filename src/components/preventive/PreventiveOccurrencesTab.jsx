@@ -267,17 +267,19 @@ export default function PreventiveOccurrencesTab() {
       <AlertDialog.Root open={!!repairResult} onOpenChange={(open) => !open && setRepairResult(null)}>
         <AlertDialog.Content maxWidth="480px">
           <AlertDialog.Title>Résultat de la correction</AlertDialog.Title>
-          <AlertDialog.Description>
-            <Text as="p" size="2">• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
-            <Text as="p" size="2">• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
-            <Text as="p" size="2">• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
-            {repairResult?.details?.length > 0 && (
-              <Box mt="3" style={{ maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}>
-                {repairResult.details.map((d, i) => (
-                  <Text key={i} as="p" size="1" color="gray">{d}</Text>
-                ))}
-              </Box>
-            )}
+          <AlertDialog.Description asChild>
+            <div>
+              <Text as="p" size="2">• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
+              <Text as="p" size="2">• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
+              <Text as="p" size="2">• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
+              {repairResult?.details?.length > 0 && (
+                <Box mt="3" style={{ maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}>
+                  {repairResult.details.map((d, i) => (
+                    <Text key={i} as="p" size="1" color="gray">{d}</Text>
+                  ))}
+                </Box>
+              )}
+            </div>
           </AlertDialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Action>
