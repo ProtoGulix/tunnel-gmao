@@ -115,6 +115,15 @@ export async function updateAction(id, updates) {
     payload.complexity_factor = updates.complexityFactors[0];
   }
 
+  if (Array.isArray(updates.tasks)) {
+    payload.tasks = updates.tasks.map((task) => ({
+      task_id: String(task.task_id ?? task.id),
+      ...(task.close_task ? { close_task: true } : {}),
+      ...(task.skip ? { skip: true } : {}),
+      ...(task.skip_reason ? { skip_reason: task.skip_reason } : {}),
+    }));
+  }
+
   const response = await api.patch(`/intervention-actions/${id}`, payload);
   return mapActionResponse(response.data?.data || response.data);
 }

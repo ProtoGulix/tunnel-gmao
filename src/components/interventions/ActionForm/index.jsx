@@ -84,6 +84,12 @@ function ActionForm({
   // techId prop > utilisateur connecté
   const resolvedTechId = techId ?? user?.id ?? null;
 
+  const hasMissingTaskStatus = selectedTasks.some((task) => !task.taskActionStatus);
+
+  const hasMissingSkippedReason = selectedTasks.some(
+    (task) => task.taskActionStatus === 'skipped' && !task.skipReason?.trim()
+  );
+
   const buildPayload = () => {
     const complexityScore = Number(form.formState.complexity);
     const subcategoryId = Number(form.formState.category) || undefined;
@@ -105,7 +111,13 @@ function ActionForm({
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
       ...(selectedTasks.length > 0 && {
-        tasks: selectedTasks.map((task) => ({ task_id: String(task.id) })),
+        tasks: selectedTasks.map((task) => ({
+          task_id: String(task.id),
+          ...(task.taskActionStatus === 'done' ? { close_task: true } : {}),
+          ...(task.taskActionStatus === 'skipped'
+            ? { skip: true, skip_reason: task.skipReason.trim() }
+            : {}),
+        })),
       }),
     };
   };
@@ -113,6 +125,16 @@ function ActionForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
+
+    if (hasMissingTaskStatus) {
+      setSubmitError('Un état est obligatoire pour chaque tâche sélectionnée');
+      return;
+    }
+
+    if (hasMissingSkippedReason) {
+      setSubmitError('Un motif est obligatoire pour chaque tâche marquée comme ignorée');
+      return;
+    }
 
     if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
 
