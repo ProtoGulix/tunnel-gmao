@@ -5,8 +5,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, TextArea, Badge } from '@radix-ui/themes';
-import { Folder } from 'lucide-react';
+import { Box, TextArea } from '@radix-ui/themes';
 
 function ActionFormDescription({ formState, handlers }) {
   const { description } = formState;
@@ -14,25 +13,18 @@ function ActionFormDescription({ formState, handlers }) {
 
   return (
     <Box>
-      <Flex align="center" gap="2" mb="2">
-        <Folder size={16} color="var(--gray-9)" />
-        <Text size="2" weight="bold">Description de l&apos;action</Text>
-        <Badge color="red" size="1">Obligatoire</Badge>
-      </Flex>
       <TextArea
-        placeholder="Décris en détail ce qui a été fait : diagnostic, réparation, remplacement..."
+        placeholder="Remarque ou information complémentaire (optionnel)…"
         value={description}
         onChange={(e) => handleDescriptionChange(e.target.value)}
-        required
-        rows={4}
+        rows={2}
         style={{
           resize: 'vertical',
-          backgroundColor: 'white'
+          backgroundColor: 'var(--gray-2)',
+          fontSize: 'var(--font-size-1)',
+          color: 'var(--gray-11)',
         }}
       />
-      <Text size="1" color="gray" mt="1">
-        Sois précis : cela aide pour l&apos;analyse et les prochaines interventions
-      </Text>
     </Box>
   );
 }
