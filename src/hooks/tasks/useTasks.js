@@ -6,7 +6,6 @@ import {
   fetchInterventionTasksList,
   updateInterventionTask,
 } from '@/api/interventionTasks';
-import { setTasksSidebarBadgeCount } from '@/hooks/tasks/tasksBadge';
 
 const GROUPING_KEY = 'tunnel_tasks_grouping';
 
@@ -170,11 +169,6 @@ export function useTasks() {
       setItems(mapped);
       setUsers(Array.isArray(usersRaw) ? usersRaw : []);
       setOpenInterventions(Array.isArray(interventionsRaw) ? interventionsRaw : []);
-
-      const badgeCount = mapped.filter(
-        (task) => task.status === 'todo' && isUnassigned(task)
-      ).length;
-      setTasksSidebarBadgeCount(badgeCount);
     } catch (err) {
       setError(
         err?.response?.data?.detail || err?.message || 'Erreur lors du chargement des taches'

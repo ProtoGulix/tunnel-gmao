@@ -8,9 +8,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { TASKS_BADGE, getTasksSidebarBadgeCount } from '@/hooks/tasks/tasksBadge';
 
 /**
  * Item de menu dans la sidebar avec état actif
@@ -25,32 +23,9 @@ import { TASKS_BADGE, getTasksSidebarBadgeCount } from '@/hooks/tasks/tasksBadge
  * @param {boolean} [props.isPublic=false] - Si l'item est dans la section publique
  * @returns {JSX.Element}
  */
-export default function SidebarMenuItem({ item, colors, isPublic = false }) {
+export default function SidebarMenuItem({ item, colors, isPublic = false, badgeCount = 0 }) {
   const location = useLocation();
   const isActive = location.pathname === item.path;
-  const [badgeCount, setBadgeCount] = useState(() => {
-    if (item.badgeStorageKey === TASKS_BADGE.key) return getTasksSidebarBadgeCount();
-    return 0;
-  });
-
-  useEffect(() => {
-    if (!item.badgeStorageKey) return undefined;
-
-    const syncBadge = () => {
-      if (item.badgeStorageKey === TASKS_BADGE.key) {
-        setBadgeCount(getTasksSidebarBadgeCount());
-      }
-    };
-
-    syncBadge();
-
-    window.addEventListener(TASKS_BADGE.event, syncBadge);
-    window.addEventListener('storage', syncBadge);
-    return () => {
-      window.removeEventListener(TASKS_BADGE.event, syncBadge);
-      window.removeEventListener('storage', syncBadge);
-    };
-  }, [item.badgeStorageKey]);
 
   return (
     <Link
@@ -110,7 +85,6 @@ SidebarMenuItem.propTypes = {
     path: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
     icon: PropTypes.elementType.isRequired,
-    badgeStorageKey: PropTypes.string,
   }).isRequired,
   colors: PropTypes.shape({
     text: PropTypes.string.isRequired,
@@ -121,4 +95,5 @@ SidebarMenuItem.propTypes = {
     hoverBg: PropTypes.string.isRequired,
   }).isRequired,
   isPublic: PropTypes.bool,
+  badgeCount: PropTypes.number,
 };

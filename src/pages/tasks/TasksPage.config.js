@@ -11,5 +11,4 @@ export const PAGE_CONFIG = {
   requiresAuth: true,
   public: false,
   order: 15,
-  badgeStorageKey: 'tunnel_tasks_unassigned_todo_count',
 };
