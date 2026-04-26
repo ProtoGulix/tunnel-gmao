@@ -32,8 +32,8 @@ function GammeStepList({ steps }) {
               ? <MinusCircle size={13} color="var(--orange-9)" style={{ flexShrink: 0 }} />
               : <CheckCircle2 size={13} color="var(--green-9)" style={{ flexShrink: 0 }} />
             }
-            <Text size="2" style={{ flex: 1 }}>{v.step_label}</Text>
-            {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+            <Text size="2" style={{ flex: 1 }}>{v.label}</Text>
+            {v.optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
             <Badge color={v.status === 'skipped' ? 'orange' : 'green'} variant="soft" size="1">
               {v.status === 'skipped' ? 'Ignorée' : 'Validée'}
             </Badge>
@@ -100,14 +100,15 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     }
   }, [localAction?.purchaseRequests]);
 
-  // Gamme step validations liées à cette action
+  // Tâche liée à cette action (nouvelle API : action.task est un objet singulier ou null)
   useEffect(() => {
-    if (localAction?.gammeStepValidations && Array.isArray(localAction.gammeStepValidations)) {
-      setGammeSteps(localAction.gammeStepValidations.filter((v) => v.status !== 'pending'));
+    const task = localAction?.task;
+    if (task && (task.status === 'done' || task.status === 'skipped')) {
+      setGammeSteps([task]);
     } else {
       setGammeSteps([]);
     }
-  }, [localAction?.gammeStepValidations]);
+  }, [localAction?.task]);
 
   // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {

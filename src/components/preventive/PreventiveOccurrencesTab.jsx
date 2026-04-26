@@ -19,17 +19,17 @@ const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped:
 const DI_STATUT_COLORS = { nouvelle: 'blue', en_attente: 'amber', acceptee: 'green', rejetee: 'red', cloturee: 'gray' };
 const DI_STATUT_LABELS = { nouvelle: 'Nouvelle', en_attente: 'En attente', acceptee: 'Acceptée', rejetee: 'Rejetée', cloturee: 'Clôturée' };
 
-const STEP_STATUS_COLORS = { validated: 'green', skipped: 'orange', pending: 'gray' };
-const STEP_STATUS_LABELS = { validated: 'Validée', skipped: 'Ignorée', pending: 'En attente' };
+const STEP_STATUS_COLORS = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
+const STEP_STATUS_LABELS = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
 
 const stepColumns = [
-  { key: 'order', header: '#', width: 36, render: (s) => <Text size="1" color="gray">{s.step_sort_order}</Text> },
+  { key: 'order', header: '#', width: 36, render: (s) => <Text size="1" color="gray">{s.sort_order}</Text> },
   {
     key: 'label', header: 'Étape',
     render: (s) => (
       <Flex align="center" gap="2">
-        <Text size="2">{s.step_label}</Text>
-        {s.step_optional && <Badge color="gray" variant="outline" size="1">Optionnelle</Badge>}
+        <Text size="2">{s.label}</Text>
+        {s.optional && <Badge color="gray" variant="outline" size="1">Optionnelle</Badge>}
       </Flex>
     ),
   },
@@ -93,7 +93,7 @@ export default function PreventiveOccurrencesTab() {
   };
 
   const handleRowClick = (r) => {
-    if (!(r.gamme_steps ?? []).length) return;
+    if (!(r.tasks ?? []).length) return;
     setExpandedRowId(r.id === expandedRowId ? null : r.id);
   };
 
@@ -124,7 +124,7 @@ export default function PreventiveOccurrencesTab() {
     {
       key: 'gamme', header: 'Gamme', width: 80,
       render: (r) => {
-        const steps = r.gamme_steps ?? [];
+        const steps = r.tasks ?? [];
         if (!steps.length) return <Text size="1" color="gray">—</Text>;
         const validated = steps.filter((s) => s.status === 'validated').length;
         const color = validated === steps.length ? 'green' : validated > 0 ? 'blue' : 'gray';
@@ -171,7 +171,7 @@ export default function PreventiveOccurrencesTab() {
     {
       key: 'skip', header: '', width: 100,
       render: (r) => {
-        const hasSteps = (r.gamme_steps ?? []).length > 0;
+        const hasSteps = (r.tasks ?? []).length > 0;
         return (
           <Flex align="center" gap="2" justify="end">
             {r.status === 'pending' && (
@@ -241,11 +241,11 @@ export default function PreventiveOccurrencesTab() {
         loading={loading}
         getRowKey={(r) => r.id}
         onRowClick={handleRowClick}
-        rowStyles={(r) => (r.gamme_steps ?? []).length > 0 ? { cursor: 'pointer' } : undefined}
+        rowStyles={(r) => (r.tasks ?? []).length > 0 ? { cursor: 'pointer' } : undefined}
         isRowExpanded={(r) => r.id === expandedRowId}
         emptyState={{ icon: CalendarClock, title: 'Aucune occurrence', description: 'Ajustez les filtres ou cliquez sur Générer.' }}
         renderExpandedRow={(r) => {
-          const steps = [...(r.gamme_steps ?? [])].sort((a, b) => a.step_sort_order - b.step_sort_order);
+          const steps = [...(r.tasks ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
           if (!steps.length) return null;
           return (
             <Box px="4" py="3" style={{ backgroundColor: 'var(--gray-1)', borderTop: '1px solid var(--gray-4)' }}>
@@ -304,9 +304,9 @@ export default function PreventiveOccurrencesTab() {
           <AlertDialog.Title>Corriger les données</AlertDialog.Title>
           <AlertDialog.Description>
             Cette procédure corrige les données corrompues par deux bugs :
-            <Text as="p" mt="2" size="2">• Étapes de gamme non liées à leur intervention</Text>
-            <Text as="p" size="2">• Occurrences bloquées à «&nbsp;Générée&nbsp;» alors que l'intervention est fermée</Text>
-            <Text as="p" mt="2" size="1" color="gray">L'opération est idempotente et sans effet secondaire.</Text>
+            <Text as="span" mt="2" size="2" style={{ display: 'block' }}>• Étapes de gamme non liées à leur intervention</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• Occurrences bloquées à «&nbsp;Générée&nbsp;» alors que l'intervention est fermée</Text>
+            <Text as="span" mt="2" size="1" color="gray" style={{ display: 'block' }}>L'opération est idempotente et sans effet secondaire.</Text>
           </AlertDialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
@@ -321,20 +321,24 @@ export default function PreventiveOccurrencesTab() {
       <AlertDialog.Root open={!!repairResult} onOpenChange={(open) => !open && setRepairResult(null)}>
         <AlertDialog.Content maxWidth="480px">
           <AlertDialog.Title>Résultat de la correction</AlertDialog.Title>
-          <AlertDialog.Description asChild>
-            <div>
-              <Text as="p" size="2">• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
-              <Text as="p" size="2">• {repairResult?.occurrences_relinked ?? 0} occurrence(s) réliée(s) à leur intervention (Bug 2 pré-étape)</Text>
-              <Text as="p" size="2">• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
-              <Text as="p" size="2">• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
-              {repairResult?.details?.length > 0 && (
-                <Box mt="3" style={{ maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}>
-                  {repairResult.details.map((d, i) => (
-                    <Text key={i} as="p" size="1" color="gray">{d}</Text>
-                  ))}
-                </Box>
-              )}
-            </div>
+          <AlertDialog.Description>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.occurrences_relinked ?? 0} occurrence(s) réliée(s) à leur intervention (Bug 2 pré-étape)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
+            {repairResult?.details?.length > 0 && (
+              <Text
+                as="span"
+                mt="3"
+                size="1"
+                color="gray"
+                style={{ display: 'block', maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}
+              >
+                {repairResult.details.map((d, i) => (
+                  <Text key={i} as="span" size="1" color="gray" style={{ display: 'block' }}>{d}</Text>
+                ))}
+              </Text>
+            )}
           </AlertDialog.Description>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Action>

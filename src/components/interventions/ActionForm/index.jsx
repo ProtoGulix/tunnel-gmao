@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Checkbox, Flex, Text, Card, Button } from '@radix-ui/themes';
 import { ClipboardCheck, Plus, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
-import { fetchGammeStepValidations } from '@/api/gammeStepValidations';
+import { fetchInterventionTasks } from '@/api/interventionTasks';
 import { INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
@@ -78,9 +78,9 @@ function ActionForm({
       setSelectedStepIds(new Set());
       return;
     }
-    fetchGammeStepValidations(String(pickedIntervention.id))
-      .then((validations) => {
-        setDynamicGammeValidations(Array.isArray(validations) ? validations : []);
+    fetchInterventionTasks(String(pickedIntervention.id))
+      .then((tasks) => {
+        setDynamicGammeValidations(Array.isArray(tasks) ? tasks.filter((t) => t.origin === 'plan') : []);
         setSelectedStepIds(new Set());
       })
       .catch(() => setDynamicGammeValidations([]));
@@ -89,8 +89,8 @@ function ActionForm({
   // La prop gammeValidations est prioritaire (contexte intervention fixée) ; sinon on utilise les dynamiques
   const activeGammeValidations = gammeValidations.length > 0 ? gammeValidations : dynamicGammeValidations;
   const pendingSteps = activeGammeValidations
-    .filter((v) => v.status === 'pending')
-    .sort((a, b) => (a.step_sort_order ?? 0) - (b.step_sort_order ?? 0));
+    .filter((t) => t.status === 'todo' || t.status === 'in_progress')
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
   const hasGamme = pendingSteps.length > 0;
 
@@ -134,7 +134,7 @@ function ActionForm({
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
       ...(selectedStepIds.size > 0 && {
-        gamme_step_validations: [...selectedStepIds].map((id) => ({ step_validation_id: id, status: 'validated' })),
+        task_id: [...selectedStepIds][0],
       }),
     };
   };
@@ -209,13 +209,13 @@ function ActionForm({
 
       {/* Liste des étapes */}
       <Flex direction="column" gap="1">
-        {pendingSteps.map((v) => {
-          const checked = selectedStepIds.has(v.id);
+        {pendingSteps.map((task) => {
+          const checked = selectedStepIds.has(task.id);
           return (
-            <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '3px 0' }}>
+            <label key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '3px 0' }}>
               <Checkbox
                 checked={checked}
-                onCheckedChange={() => toggleStep(v.id)}
+                onCheckedChange={() => toggleStep(task.id)}
               />
               <Text
                 size="2"
@@ -228,9 +228,9 @@ function ActionForm({
                   transition: 'color 0.15s, opacity 0.15s',
                 }}
               >
-                {v.step_label}
+                {task.label}
               </Text>
-              {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+              {task.optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
             </label>
           );
         })}
@@ -374,9 +374,9 @@ ActionForm.propTypes = {
   showContext: PropTypes.bool,
   gammeValidations: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
-    step_label: PropTypes.string.isRequired,
-    step_sort_order: PropTypes.number,
-    step_optional: PropTypes.bool,
+    label: PropTypes.string.isRequired,
+    sort_order: PropTypes.number,
+    optional: PropTypes.bool,
     status: PropTypes.string.isRequired,
   })),
 };

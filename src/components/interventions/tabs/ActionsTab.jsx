@@ -16,7 +16,7 @@ import TimelineItemRenderer from '@/components/interventions/TimelineItemRendere
 import ActionForm from '@/components/interventions/ActionForm';
 import * as actionCategoriesApi from '@/api/actionCategories';
 import * as complexityFactorsApi from '@/api/complexityFactors';
-import { fetchGammeStepValidations, fetchGammeProgress } from '@/api/gammeStepValidations';
+import { fetchInterventionTasks, fetchInterventionTasksProgress } from '@/api/interventionTasks';
 
 /**
  * Bandeau compact de progression de gamme (comme la demande liée)
@@ -25,15 +25,15 @@ function GammeProgressBanner({ interventionId, refreshKey }) {
   const [progress, setProgress] = useState(null);
 
   useEffect(() => {
-    fetchGammeProgress(String(interventionId))
+    fetchInterventionTasksProgress(String(interventionId))
       .then(setProgress)
       .catch(() => setProgress(null));
   }, [interventionId, refreshKey]);
 
   if (!progress || progress.total === 0) return null;
 
-  const { validated, total, blocking_pending } = progress;
-  const pct = Math.round((validated / total) * 100);
+  const { done, total, blocking_pending } = progress;
+  const pct = Math.round((done / total) * 100);
 
   let badgeColor = 'green';
   let badgeLabel = 'Complète';
@@ -58,7 +58,7 @@ function GammeProgressBanner({ interventionId, refreshKey }) {
         <Box style={{ flex: 1, height: 6, background: 'var(--gray-4)', borderRadius: 3, overflow: 'hidden' }}>
           <Box style={{ height: '100%', width: `${pct}%`, background: 'var(--green-9)', transition: 'width 0.3s' }} />
         </Box>
-        <Text size="1" color="gray" style={{ flexShrink: 0 }}>{validated}/{total}</Text>
+        <Text size="1" color="gray" style={{ flexShrink: 0 }}>{done}/{total}</Text>
         <Badge color={badgeColor} variant="soft" size="1" style={{ flexShrink: 0 }}>{badgeLabel}</Badge>
       </Flex>
     </Box>
@@ -198,7 +198,7 @@ export default function ActionsTab({
     const tasks = [
       !metadataLoaded && actionCategoriesApi.fetchActionCategories(),
       !metadataLoaded && complexityFactorsApi.fetchComplexityFactors(),
-      planId && fetchGammeStepValidations(String(interventionId)),
+      planId && fetchInterventionTasks(String(interventionId)),
     ].filter(Boolean);
 
     try {
@@ -210,8 +210,8 @@ export default function ActionsTab({
         setMetadataLoaded(true);
       }
       if (planId) {
-        const validations = results[idx] ?? [];
-        setPendingValidations(Array.isArray(validations) ? validations.filter((v) => v.status === 'pending') : []);
+        const tasks = results[idx] ?? [];
+        setPendingValidations(Array.isArray(tasks) ? tasks.filter((t) => t.origin === 'plan' && (t.status === 'todo' || t.status === 'in_progress')) : []);
       }
     } catch (error) {
       console.error('Erreur chargement métadonnées:', error);
@@ -220,7 +220,6 @@ export default function ActionsTab({
   }, [metadataLoaded, planId, interventionId]);
 
   // Handler pour soumettre la nouvelle action
-  // ActionForm construit le payload canonique avec gamme_step_validations embarqué
   const handleSubmitNewAction = useCallback(async (payload) => {
     if (!onAddAction) return;
 
