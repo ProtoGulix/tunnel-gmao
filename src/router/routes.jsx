@@ -22,7 +22,6 @@ import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
 import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
 import PreventivePage from '@/pages/preventive/PreventivePage';
-import TasksPage from '@/pages/tasks/TasksPage';
 
 /**
  * Composant de route protégée
@@ -120,17 +119,6 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <InterventionsListPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/tasks"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <TasksPage />
             </Layout>
           </ProtectedRoute>
         }

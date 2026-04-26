@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Avatar,
   Badge,
   Box,
   Button,
@@ -11,6 +10,7 @@ import {
   Select,
   Separator,
   Switch,
+  Table,
   Text,
   TextField,
 } from '@radix-ui/themes';
@@ -29,19 +29,23 @@ function detailDate(value) {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function detailDateTime(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function formatDuration(value) {
   const number = Number(value || 0);
   if (!Number.isFinite(number)) return '0.00 h';
   return `${number.toFixed(2)} h`;
-}
-
-function initialsFromAction(action) {
-  const initials = action?.tech?.initials || action?.tech_initials || action?.tech?.initial;
-  if (initials) return String(initials).toUpperCase();
-
-  const first = String(action?.tech?.first_name || action?.tech?.firstName || '').trim();
-  const last = String(action?.tech?.last_name || action?.tech?.lastName || '').trim();
-  return `${first[0] || ''}${last[0] || ''}`.toUpperCase() || '—';
 }
 
 function CardHeader({ title }) {
@@ -82,8 +86,10 @@ ReadOnlyRow.propTypes = {
 };
 
 export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh }) {
-  const [actions, setActions] = useState([]);
-  const [loadingActions, setLoadingActions] = useState(false);
+  // Si les actions ont été préchargées par include_actions=true, on les utilise directement.
+  // Sinon fallback vers un appel dédié (rétro-compatibilité).
+  const [actions, setActions] = useState(() => task.actions ?? null);
+  const [loadingActions, setLoadingActions] = useState(task.actions === null);
 
   const [editingLabel, setEditingLabel] = useState(task.label || '');
   const [editingAssignee, setEditingAssignee] = useState(task.assignedId || NO_ASSIGNEE);
@@ -106,6 +112,14 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
   }, [task]);
 
   useEffect(() => {
+    // Réinitialiser depuis les données préchargées si disponibles
+    if (task.actions !== null) {
+      setActions(task.actions ?? []);
+      setLoadingActions(false);
+      return undefined;
+    }
+
+    // Fallback: fetch dédié si actions non préchargées
     let cancelled = false;
 
     const loadActions = async () => {
@@ -124,7 +138,7 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
     return () => {
       cancelled = true;
     };
-  }, [task.id]);
+  }, [task.id, task.actions]);
 
   const assigneeOptions = useMemo(() => {
     return users.map((user) => ({
@@ -188,7 +202,7 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
   return (
     <Box p="4">
       <Flex direction="column" gap="3">
-        <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
+        <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-3)', alignItems: 'stretch' }}>
           <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
             <CardHeader title="Detail" />
 
@@ -229,48 +243,6 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
           </Card>
 
           <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
-            <CardHeader title="Actions liees" />
-
-            {loadingActions ? (
-              <Text size="1" color="gray">Chargement...</Text>
-            ) : actions.length === 0 ? (
-              <Text size="2" color="gray">Aucune action loggee sur cette tache.</Text>
-            ) : (
-              <Flex direction="column" gap="2">
-                {actions.map((action) => (
-                  <Card key={action.id || `${action.created_at}-${action.description || ''}`} size="1" variant="ghost">
-                    <Flex align="start" gap="2">
-                      <Avatar
-                        fallback={initialsFromAction(action)}
-                        radius="full"
-                        size="1"
-                        style={{ backgroundColor: 'var(--gray-5)', color: 'var(--gray-12)' }}
-                      />
-                      <Box style={{ flex: 1 }}>
-                        <Flex align="center" justify="between" gap="2" wrap="wrap">
-                          <Text size="1" color="gray">{detailDate(action.created_at || action.date)}</Text>
-                          <Badge size="1" color="blue" variant="soft">{formatDuration(action.time_spent)}</Badge>
-                        </Flex>
-                        <Text
-                          size="2"
-                          style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {action.description || 'Sans description'}
-                        </Text>
-                      </Box>
-                    </Flex>
-                  </Card>
-                ))}
-              </Flex>
-            )}
-          </Card>
-
-          <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
             <CardHeader title="Intervention parente" />
 
             <Flex direction="column" gap="2">
@@ -289,6 +261,72 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
               )}
             </Flex>
           </Card>
+        </Box>
+
+        <Box>
+          <Text size="2" weight="medium" color="gray" mb="2" style={{ display: 'block' }}>
+            Actions liees
+          </Text>
+
+          {loadingActions ? (
+            <Text size="1" color="gray">Chargement...</Text>
+          ) : !actions || actions.length === 0 ? (
+            <Text size="2" color="gray">Aucune action loggee sur cette tache.</Text>
+          ) : (
+            <Box style={{ overflowX: 'auto' }}>
+              <Table.Root variant="surface" size="1">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeaderCell>Date</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Description</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Temps</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Tech initials</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Tech prenom</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Tech nom</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Tech ID</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>Action ID</Table.ColumnHeaderCell>
+                  </Table.Row>
+                </Table.Header>
+
+                <Table.Body>
+                  {(actions ?? []).map((action) => {
+                    const tech = action?.tech || null;
+                    const techInitials = tech?.initials || '—';
+                    const techFirstName = tech?.first_name || '—';
+                    const techLastName = tech?.last_name || '—';
+                    return (
+                      <Table.Row key={action.id || `${action.created_at}-${action.description || ''}`}>
+                        <Table.Cell>
+                          <Text size="1" color="gray">{detailDateTime(action.created_at || action.date)}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="2">{action.description || 'Sans description'}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge size="1" color="blue" variant="soft">{formatDuration(action.time_spent)}</Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1">{techInitials}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1">{techFirstName}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1">{techLastName}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1" color="gray">{tech?.id || '—'}</Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text size="1" color="gray">{action.id || '—'}</Text>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table.Root>
+            </Box>
+          )}
         </Box>
 
         <Separator size="4" />

@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchInterventions } from '@/api/interventions';
-import { fetchActiveUsers } from '@/api/planning';
-import {
-  createInterventionTask,
-  fetchInterventionTasksList,
-  updateInterventionTask,
-} from '@/api/interventionTasks';
+import { fetchTasksWorkspace } from '@/api/tasks';
+import { createInterventionTask, updateInterventionTask } from '@/api/interventionTasks';
 
 const GROUPING_KEY = 'tunnel_tasks_grouping';
 
@@ -33,9 +28,9 @@ function deriveInitials(assignedTo) {
 }
 
 function mapTask(raw) {
-  const assignedTo = raw.assigned_to || raw.assignedTo || null;
+  const assignedTo = raw.assigned_to || null;
   const intervention = raw.intervention || null;
-  const equipement = raw.equipement || raw.machine || intervention?.equipement || null;
+  const equipement = raw.equipement || null;
 
   const originCode = raw.origin || 'resp';
   const statusCode = raw.status || 'todo';
@@ -47,21 +42,23 @@ function mapTask(raw) {
     status: statusCode,
     statusLabel: STATUS_LABEL[statusCode] || statusCode,
     label: raw.label || 'Sans libelle',
-    interventionId: String(raw.intervention_id || intervention?.id || ''),
-    interventionCode: raw.intervention_code || intervention?.code || '—',
-    interventionTitle: raw.intervention_title || intervention?.title || '',
-    equipementId: String(raw.equipement_id || equipement?.id || ''),
-    equipementName:
-      raw.equipement_name || equipement?.name || equipement?.code || 'Machine inconnue',
+    interventionId: String(intervention?.id || ''),
+    interventionCode: intervention?.code || '—',
+    interventionTitle: intervention?.title || '',
+    interventionStatus: intervention?.status || '',
+    equipementId: String(equipement?.id || ''),
+    equipementName: equipement?.name || equipement?.code || 'Machine inconnue',
     assignedTo,
     assignedInitial: deriveInitials(assignedTo),
     assignedId: String(assignedTo?.id || ''),
-    timeSpent: Number(raw.time_spent ?? raw.total_time_spent ?? 0) || 0,
+    timeSpent: Number(raw.time_spent_total ?? 0) || 0,
     dueDate: raw.due_date || null,
     optional: Boolean(raw.optional),
     createdBy: raw.created_by || null,
     createdAt: raw.created_at || null,
     skipReason: raw.skip_reason || '',
+    // Actions préchargées par include_actions=true
+    actions: Array.isArray(raw.actions) ? raw.actions : null,
   };
 }
 
@@ -126,6 +123,7 @@ export function useTasks() {
   const [items, setItems] = useState([]);
   const [users, setUsers] = useState([]);
   const [openInterventions, setOpenInterventions] = useState([]);
+  const [serverCounters, setServerCounters] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -152,23 +150,26 @@ export function useTasks() {
     setError(null);
 
     try {
-      const [openTasksRaw, closedTasksRaw, usersRaw, interventionsRaw] = await Promise.all([
-        fetchInterventionTasksList({ status: 'todo,in_progress', include_done: false }),
-        fetchInterventionTasksList({ status: 'done,skipped', include_done: true }),
-        fetchActiveUsers(),
-        fetchInterventions({ status: 'ouvert,en_cours,attente_pieces,attente_prod', limit: 1000 }),
-      ]);
-
-      const unique = new Map();
-      [...openTasksRaw, ...closedTasksRaw].forEach((raw) => {
-        const key = String(raw?.id ?? '');
-        if (key && !unique.has(key)) unique.set(key, raw);
+      const result = await fetchTasksWorkspace({
+        include_closed: true,
+        include_actions: true,
+        include_options: true,
+        include_counters: true,
+        limit: 200,
       });
 
-      const mapped = Array.from(unique.values()).map(mapTask);
-      setItems(mapped);
-      setUsers(Array.isArray(usersRaw) ? usersRaw : []);
-      setOpenInterventions(Array.isArray(interventionsRaw) ? interventionsRaw : []);
+      const rawTasks = Array.isArray(result.tasks) ? result.tasks : [];
+      setItems(rawTasks.map(mapTask));
+
+      if (result.options?.users) {
+        setUsers(result.options.users);
+      }
+      if (result.options?.interventions) {
+        setOpenInterventions(result.options.interventions);
+      }
+      if (result.counters) {
+        setServerCounters(result.counters);
+      }
     } catch (err) {
       setError(
         err?.response?.data?.detail || err?.message || 'Erreur lors du chargement des taches'
@@ -183,12 +184,22 @@ export function useTasks() {
   }, [load]);
 
   const counters = useMemo(() => {
+    // Priorité aux compteurs serveur (précis, incluent toutes les tâches)
+    if (serverCounters) {
+      return {
+        total: serverCounters.total ?? 0,
+        backlog: serverCounters.backlog_unassigned_todo ?? 0,
+        inProgress: serverCounters.in_progress ?? 0,
+        skipped: serverCounters.skipped ?? 0,
+      };
+    }
+    // Fallback local si pas de compteurs serveur
     const total = items.length;
     const backlog = items.filter((task) => task.status === 'todo' && isUnassigned(task)).length;
     const inProgress = items.filter((task) => task.status === 'in_progress').length;
     const skipped = items.filter((task) => task.status === 'skipped').length;
     return { total, backlog, inProgress, skipped };
-  }, [items]);
+  }, [items, serverCounters]);
 
   const filteredItems = useMemo(() => {
     return items.filter((task) => {

@@ -1,14 +1,2 @@
-import { CheckSquare } from 'lucide-react';
-
-export const PAGE_CONFIG = {
-  id: 'tasks',
-  path: '/tasks',
-  label: 'Taches',
-  icon: CheckSquare,
-  pageTitle: 'Taches',
-  pageSubtitle: 'Pilotage des taches intervention',
-  section: 'maintenance',
-  requiresAuth: true,
-  public: false,
-  order: 15,
-};
+// La page Tâches est désormais intégrée comme onglet dans /interventions.
+// Ce fichier est conservé pour compatibilité éventuelle mais n'exporte plus de PAGE_CONFIG.

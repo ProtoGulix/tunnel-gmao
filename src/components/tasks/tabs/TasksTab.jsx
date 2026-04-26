@@ -8,18 +8,7 @@ import ErrorState from '@/components/ui/ErrorState';
 import TaskDetail from '@/components/tasks/TaskDetail';
 import TaskCreateInlineForm from '@/components/tasks/TaskCreateInlineForm';
 import { useTasks } from '@/hooks/tasks/useTasks';
-import { COLUMNS, GroupingTabs, TasksFilters } from '@/components/tasks/tabs/TasksTabParts';
-
-function CounterButton({ label, value, onClick }) {
-  return (
-    <Button variant="soft" color="gray" onClick={onClick}>
-      <Flex direction="column" align="start" gap="0">
-        <Text size="1" color="gray">{label}</Text>
-        <Text size="3" weight="bold">{value}</Text>
-      </Flex>
-    </Button>
-  );
-}
+import { COLUMNS, TasksFilters } from '@/components/tasks/tabs/TasksTabParts';
 
 export default function TasksTab() {
   const {
@@ -36,11 +25,8 @@ export default function TasksTab() {
     assignee,
     setAssignee,
     sortedItems,
-    grouping,
-    setGrouping,
     counters,
     assigneeOptions,
-    quickFilter,
     refresh,
     expandedRowId,
     setExpandedRowId,
@@ -64,17 +50,6 @@ export default function TasksTab() {
 
   return (
     <Box>
-      <Flex direction="column" gap="3" mb="3">
-        <Flex gap="2" wrap="wrap">
-          <CounterButton label="Total" value={counters.total} onClick={() => quickFilter('reset')} />
-          <CounterButton label="Backlog" value={counters.backlog} onClick={() => quickFilter('backlog')} />
-          <CounterButton label="En cours" value={counters.inProgress} onClick={() => quickFilter('in_progress')} />
-          <CounterButton label="Ignorees" value={counters.skipped} onClick={() => quickFilter('skipped')} />
-        </Flex>
-
-        <GroupingTabs value={grouping} onValueChange={setGrouping} />
-      </Flex>
-
       <TableHeader
         icon={CheckSquare}
         title="Taches"
