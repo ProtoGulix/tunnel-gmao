@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 
 // Layout
@@ -22,6 +22,7 @@ import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
 import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
 import PreventivePage from '@/pages/preventive/PreventivePage';
+import TasksPage from '@/pages/tasks/TasksPage';
 
 /**
  * Composant de route protégée
@@ -43,6 +44,11 @@ function ProtectedRoute({ children }) {
   }
 
   return children;
+}
+
+function InterventionAliasRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/intervention/${id}`} replace />;
 }
 
 ProtectedRoute.propTypes = {
@@ -120,6 +126,17 @@ export default function AppRoutes() {
       />
 
       <Route
+        path="/tasks"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TasksPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/intervention/new"
         element={
           <ProtectedRoute>
@@ -137,6 +154,15 @@ export default function AppRoutes() {
             <Layout>
               <InterventionDetailPage />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/interventions/:id"
+        element={
+          <ProtectedRoute>
+            <InterventionAliasRedirect />
           </ProtectedRoute>
         }
       />
