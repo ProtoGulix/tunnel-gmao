@@ -51,7 +51,11 @@ function ActionForm({
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(initialState?.task ?? null);
+  const [selectedTasks, setSelectedTasks] = useState(
+    Array.isArray(initialState?.tasks)
+      ? initialState.tasks
+      : (initialState?.task ? [initialState.task] : [])
+  );
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -100,7 +104,9 @@ function ActionForm({
       ),
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
-      ...(selectedTask?.id && { task_id: String(selectedTask.id) }),
+      ...(selectedTasks.length > 0 && {
+        tasks: selectedTasks.map((task) => ({ task_id: String(task.id) })),
+      }),
     };
   };
 
@@ -202,8 +208,8 @@ function ActionForm({
 
             <ActionTaskSection
               interventionId={resolvedInterventionId}
-              value={selectedTask}
-              onChange={setSelectedTask}
+              value={selectedTasks}
+              onChange={setSelectedTasks}
               accentColor={isPreventif ? 'green' : 'blue'}
             />
             <ActionFormComplexity

@@ -22,7 +22,7 @@ function GammeStepList({ steps }) {
         <Text size="2" weight="bold" color="gray">
           <Flex align="center" gap="1" as="span">
             <ClipboardCheck size={13} />
-            Étapes validées ({steps.length})
+            Tâches taggées ({steps.length})
           </Flex>
         </Text>
         {steps.map((v) => (
@@ -34,8 +34,26 @@ function GammeStepList({ steps }) {
             }
             <Text size="2" style={{ flex: 1 }}>{v.label}</Text>
             {v.optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
-            <Badge color={v.status === 'skipped' ? 'orange' : 'green'} variant="soft" size="1">
-              {v.status === 'skipped' ? 'Ignorée' : 'Validée'}
+            <Badge color={v.origin === 'plan' ? 'green' : 'gray'} variant="soft" size="1">
+              {v.origin === 'plan' ? 'Gamme' : 'Manuelle'}
+            </Badge>
+            <Badge
+              color={
+                v.status === 'done' ? 'green'
+                  : v.status === 'skipped' ? 'orange'
+                    : v.status === 'in_progress' ? 'blue'
+                      : 'gray'
+              }
+              variant="soft"
+              size="1"
+            >
+              {v.status === 'done'
+                ? 'Validée'
+                : v.status === 'skipped'
+                  ? 'Ignorée'
+                  : v.status === 'in_progress'
+                    ? 'En cours'
+                    : 'En attente'}
             </Badge>
           </Flex>
         ))}
@@ -100,20 +118,21 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     }
   }, [localAction?.purchaseRequests]);
 
-  // Tâche liée à cette action (nouvelle API : action.task est un objet singulier ou null)
+  // Tâches liées à cette action (nouvelle API : action.tasks est une liste)
   useEffect(() => {
-    const task = localAction?.task;
-    if (task && (task.status === 'done' || task.status === 'skipped')) {
-      setGammeSteps([task]);
-    } else {
-      setGammeSteps([]);
-    }
-  }, [localAction?.task]);
+    const rawTasks = Array.isArray(localAction?.tasks)
+      ? localAction.tasks
+      : (localAction?.task ? [localAction.task] : []);
+    setGammeSteps(rawTasks);
+  }, [localAction?.tasks, localAction?.task]);
 
   // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {
     const source = fetchedAction ?? localAction;
     const sourceCreatedAt = getCreatedAt(source);
+    const sourceTasks = Array.isArray(source?.tasks)
+      ? source.tasks
+      : (source?.task ? [source.task] : []);
     const dateIso = sourceCreatedAt ? new Date(sourceCreatedAt).toISOString().split('T')[0] : '';
     return {
       date: dateIso,
@@ -123,6 +142,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       complexityFactors: getComplexityFactors(source),
       actionStart: source?.actionStart ?? null,
       actionEnd: source?.actionEnd ?? null,
+      tasks: sourceTasks,
     };
   };
 

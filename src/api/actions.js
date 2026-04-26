@@ -150,6 +150,7 @@ function mapActionResponse(raw = {}) {
         : null,
     complexityFactors: raw.complexity_factor ? [raw.complexity_factor] : [],
     purchaseRequests: raw.purchase_requests || [],
-    task: raw.task ?? null,
+    tasks: Array.isArray(raw.tasks) ? raw.tasks : raw.task ? [raw.task] : [],
+    task: Array.isArray(raw.tasks) ? (raw.tasks[0] ?? null) : (raw.task ?? null),
   };
 }

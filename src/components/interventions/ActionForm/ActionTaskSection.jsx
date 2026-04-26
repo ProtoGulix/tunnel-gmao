@@ -10,7 +10,7 @@
  * @module components/interventions/ActionForm/ActionTaskSection
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text, TextField, Badge, Spinner } from '@radix-ui/themes';
 import { CheckSquare, Plus, X } from 'lucide-react';
@@ -73,9 +73,24 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
       .finally(() => setLoading(false));
   }, [interventionId]);
 
+  const selectedTasks = useMemo(() => {
+    if (Array.isArray(value)) return value;
+    return value ? [value] : [];
+  }, [value]);
+
+  const isSelectedTask = useCallback(
+    (task) => selectedTasks.some((t) => String(t.id) === String(task.id)),
+    [selectedTasks]
+  );
+
   const handleToggle = useCallback((task) => {
-    onChange(value?.id === task.id ? null : task);
-  }, [value, onChange]);
+    const exists = selectedTasks.some((t) => String(t.id) === String(task.id));
+    if (exists) {
+      onChange(selectedTasks.filter((t) => String(t.id) !== String(task.id)));
+      return;
+    }
+    onChange([...selectedTasks, task]);
+  }, [selectedTasks, onChange]);
 
   const handleCreate = useCallback(async () => {
     if (!newLabel.trim() || !interventionId) return;
@@ -88,7 +103,7 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
         status: 'todo',
       });
       setTasks((prev) => [...prev, created]);
-      onChange(created);
+      onChange([...selectedTasks, created]);
       setShowCreate(false);
       setNewLabel('');
     } catch (err) {
@@ -96,7 +111,7 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
     } finally {
       setCreating(false);
     }
-  }, [newLabel, interventionId, onChange]);
+  }, [newLabel, interventionId, onChange, selectedTasks]);
 
   const handleCancelCreate = useCallback(() => {
     setShowCreate(false);
@@ -108,49 +123,30 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
 
   return (
     <Box>
-
-
-      {/* Tâche sélectionnée */}
-      {value ? (
-        <Flex
-          align="center"
-          gap="2"
-          px="3"
-          py="2"
-          style={{
-            background: `var(--${accentColor}-3)`,
-            border: `1px solid var(--${accentColor}-6)`,
-            borderLeft: `3px solid var(--${accentColor}-9)`,
-            borderRadius: 'var(--radius-2)',
-          }}
-        >
-          <CheckSquare size={14} color={`var(--${accentColor}-9)`} />
-          <Text size="2" style={{ flex: 1 }}>{value.label}</Text>
-          <Button size="1" variant="ghost" color="gray" type="button" onClick={() => onChange(null)}>
-            <X size={12} />
-          </Button>
-        </Flex>
-      ) : (
-        /* Sélecteur avec liste */
-        <EntitySelectorCard
-          title="Tâche"
-          icon={CheckSquare}
-          items={tasks}
-          loading={loading}
-          selectedId={value?.id?.toString()}
-          onSelect={handleToggle}
-          renderRow={(item, isSelected, onSelect) => (
-            <TaskRow key={item.id} item={item} isSelected={isSelected} onSelect={onSelect} accentColor={accentColor} />
-          )}
-          onCreateClick={() => setShowCreate((v) => !v)}
-          createLabel="Nouvelle tâche"
-          emptyMessage="Aucune tâche ouverte — créez-en une"
-          maxHeight={200}
-        />
-      )}
+      <EntitySelectorCard
+        title="Tâche"
+        icon={CheckSquare}
+        items={tasks}
+        loading={loading}
+        selectedId={undefined}
+        onSelect={handleToggle}
+        renderRow={(item, _isSelected, onSelect) => (
+          <TaskRow
+            key={item.id}
+            item={item}
+            isSelected={isSelectedTask(item)}
+            onSelect={onSelect}
+            accentColor={accentColor}
+          />
+        )}
+        onCreateClick={() => setShowCreate((v) => !v)}
+        createLabel="Nouvelle tâche"
+        emptyMessage="Aucune tâche ouverte — créez-en une"
+        maxHeight={200}
+      />
 
       {/* Formulaire de création inline */}
-      {!value && showCreate && (
+      {showCreate && (
         <Box mt="2">
           <Flex gap="2" align="center">
             <TextField.Root
@@ -187,12 +183,20 @@ ActionTaskSection.displayName = 'ActionTaskSection';
 
 ActionTaskSection.propTypes = {
   interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  value: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    label: PropTypes.string.isRequired,
-    status: PropTypes.string,
-    origin: PropTypes.string,
-  }),
+  value: PropTypes.oneOfType([
+    PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+      status: PropTypes.string,
+      origin: PropTypes.string,
+    })),
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+      status: PropTypes.string,
+      origin: PropTypes.string,
+    }),
+  ]),
   onChange: PropTypes.func.isRequired,
   accentColor: PropTypes.string,
 };

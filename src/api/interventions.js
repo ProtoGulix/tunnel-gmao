@@ -241,7 +241,8 @@ function mapInterventionDetailResponse(raw = {}) {
               }
             : null,
           purchaseRequests: a.purchase_requests || [],
-          task: a.task ?? null,
+          tasks: Array.isArray(a.tasks) ? a.tasks : a.task ? [a.task] : [],
+          task: Array.isArray(a.tasks) ? (a.tasks[0] ?? null) : (a.task ?? null),
         }))
       : [],
     statusLogs: Array.isArray(raw.status_logs)
