@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ClipboardCheck } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -23,12 +23,13 @@ import SheetTab from '@/components/interventions/tabs/SheetTab';
 import HistoryTab from '@/components/interventions/tabs/HistoryTab';
 import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
 import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
-import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
+import TasksTab from '@/components/interventions/tabs/TasksTab';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 
 // Configuration de base des onglets
 const BASE_TABS = [
   { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
+  { id: 'taches', label: 'Tâches', icon: ListTodo, badgeCount: null },
   { id: 'achats', label: 'Achats', icon: ShoppingCart },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
   { id: 'fiche', label: 'Fiche', icon: FileText },
@@ -85,10 +86,7 @@ export default function InterventionDetailPage() {
     ficheFileName,
   } = useInterventionDetail(id);
 
-  const tabs = useMemo(() => [
-    ...BASE_TABS,
-    ...(intervention?.plan_id ? [{ id: 'gamme', label: 'Gamme', icon: ClipboardCheck }] : []),
-  ], [intervention?.plan_id]);
+  const tabs = useMemo(() => BASE_TABS, []);
 
   // Charger le PDF quand l'onglet fiche est ouvert
   useEffect(() => {
@@ -345,6 +343,10 @@ export default function InterventionDetailPage() {
           />
         </Tabs.Content>
 
+        <Tabs.Content value="taches">
+          <TasksTab interventionId={id} />
+        </Tabs.Content>
+
         <Tabs.Content value="achats">
           <InterventionPurchaseTab interventionId={id} />
         </Tabs.Content>
@@ -366,12 +368,6 @@ export default function InterventionDetailPage() {
         <Tabs.Content value="history">
           <HistoryTab actions={actions} statusLog={statusLog} />
         </Tabs.Content>
-
-        {intervention.plan_id && (
-          <Tabs.Content value="gamme">
-            <GammeProgressBlock mode="intervention" interventionId={id} onProgressUpdate={refetch} />
-          </Tabs.Content>
-        )}
       </Tabs.Root>
     </PageContainer>
   );
