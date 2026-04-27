@@ -241,7 +241,8 @@ function mapInterventionDetailResponse(raw = {}) {
               }
             : null,
           purchaseRequests: a.purchase_requests || [],
-          gammeStepValidations: a.gamme_step_validations || a.gamme_steps || [],
+          tasks: Array.isArray(a.tasks) ? a.tasks : a.task ? [a.task] : [],
+          task: Array.isArray(a.tasks) ? (a.tasks[0] ?? null) : (a.task ?? null),
         }))
       : [],
     statusLogs: Array.isArray(raw.status_logs)

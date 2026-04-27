@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
 
 // Layout
@@ -43,6 +43,11 @@ function ProtectedRoute({ children }) {
   }
 
   return children;
+}
+
+function InterventionAliasRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/intervention/${id}`} replace />;
 }
 
 ProtectedRoute.propTypes = {
@@ -137,6 +142,15 @@ export default function AppRoutes() {
             <Layout>
               <InterventionDetailPage />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/interventions/:id"
+        element={
+          <ProtectedRoute>
+            <InterventionAliasRedirect />
           </ProtectedRoute>
         }
       />

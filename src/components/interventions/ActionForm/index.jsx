@@ -16,15 +16,15 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Checkbox, Flex, Text, Card, Button } from '@radix-ui/themes';
-import { ClipboardCheck, Plus, ShieldCheck } from 'lucide-react';
+import { Badge, Box, Flex, Text, Card, Button } from '@radix-ui/themes';
+import { Plus, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
-import { fetchGammeStepValidations } from '@/api/gammeStepValidations';
 import { INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { useActionForm } from './useActionForm';
 import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
+import ActionTaskSection from './ActionTaskSection';
 import { ContextSection } from './ActionFormContext';
 import CloseInterventionOverlay from './CloseInterventionOverlay';
 
@@ -51,6 +51,11 @@ function ActionForm({
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
+  const [selectedTasks, setSelectedTasks] = useState(
+    Array.isArray(initialState?.tasks)
+      ? initialState.tasks
+      : (initialState?.task ? [initialState.task] : [])
+  );
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -58,7 +63,6 @@ function ActionForm({
   const [manualTimeSpent, setManualTimeSpent] = useState(legacyTimeSpent ?? '');
   const [submitError, setSubmitError] = useState(null);
 
-  const [selectedStepIds, setSelectedStepIds] = useState(() => new Set());
   const [pendingPayload, setPendingPayload] = useState(null);
 
   // Empêche la fermeture de l'onglet/navigation navigateur pendant l'overlay
@@ -69,31 +73,6 @@ function ActionForm({
     return () => window.removeEventListener('beforeunload', handler);
   }, [pendingPayload]);
 
-  // Steps chargés dynamiquement quand une intervention avec plan_id est sélectionnée dans le planning
-  const [dynamicGammeValidations, setDynamicGammeValidations] = useState([]);
-
-  useEffect(() => {
-    if (!pickedIntervention?.plan_id) {
-      setDynamicGammeValidations([]);
-      setSelectedStepIds(new Set());
-      return;
-    }
-    fetchGammeStepValidations(String(pickedIntervention.id))
-      .then((validations) => {
-        setDynamicGammeValidations(Array.isArray(validations) ? validations : []);
-        setSelectedStepIds(new Set());
-      })
-      .catch(() => setDynamicGammeValidations([]));
-  }, [pickedIntervention?.id, pickedIntervention?.plan_id]);
-
-  // La prop gammeValidations est prioritaire (contexte intervention fixée) ; sinon on utilise les dynamiques
-  const activeGammeValidations = gammeValidations.length > 0 ? gammeValidations : dynamicGammeValidations;
-  const pendingSteps = activeGammeValidations
-    .filter((v) => v.status === 'pending')
-    .sort((a, b) => (a.step_sort_order ?? 0) - (b.step_sort_order ?? 0));
-
-  const hasGamme = pendingSteps.length > 0;
-
   // Mode préventif — identité visuelle verte
   const typeInterCode = interventionMeta?.type_inter ?? pickedIntervention?.type_inter ?? null;
   const isPreventif = typeInterCode === 'PRE';
@@ -101,17 +80,15 @@ function ActionForm({
     ? INTERVENTION_TYPES.find((t) => t.id === typeInterCode)
     : null;
 
-  const toggleStep = useCallback((id) => {
-    setSelectedStepIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }, []);
-
   const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
   // techId prop > utilisateur connecté
   const resolvedTechId = techId ?? user?.id ?? null;
+
+  const hasMissingTaskStatus = selectedTasks.some((task) => !task.taskActionStatus);
+
+  const hasMissingSkippedReason = selectedTasks.some(
+    (task) => task.taskActionStatus === 'skipped' && !task.skipReason?.trim()
+  );
 
   const buildPayload = () => {
     const complexityScore = Number(form.formState.complexity);
@@ -133,8 +110,14 @@ function ActionForm({
       ),
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
-      ...(selectedStepIds.size > 0 && {
-        gamme_step_validations: [...selectedStepIds].map((id) => ({ step_validation_id: id, status: 'validated' })),
+      ...(selectedTasks.length > 0 && {
+        tasks: selectedTasks.map((task) => ({
+          task_id: String(task.id),
+          ...(task.taskActionStatus === 'done' ? { close_task: true } : {}),
+          ...(task.taskActionStatus === 'skipped'
+            ? { skip: true, skip_reason: task.skipReason.trim() }
+            : {}),
+        })),
       }),
     };
   };
@@ -142,6 +125,16 @@ function ActionForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
+
+    if (hasMissingTaskStatus) {
+      setSubmitError('Un état est obligatoire pour chaque tâche sélectionnée');
+      return;
+    }
+
+    if (hasMissingSkippedReason) {
+      setSubmitError('Un motif est obligatoire pour chaque tâche marquée comme ignorée');
+      return;
+    }
 
     if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
 
@@ -182,61 +175,6 @@ function ActionForm({
   const cardStyle = isPreventif
     ? { backgroundColor: 'var(--green-2)', border: '1px solid var(--green-6)', borderLeft: '3px solid var(--green-9)', ...style }
     : { backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style };
-
-  const progressPct = hasGamme
-    ? Math.round((selectedStepIds.size / pendingSteps.length) * 100)
-    : 0;
-
-  const gammeBlock = hasGamme && (
-    <Box style={{ background: isPreventif ? 'var(--green-3)' : 'var(--green-2)', border: '1px solid var(--green-6)', borderRadius: 'var(--radius-3)', padding: '0.75rem' }}>
-      {/* Titre + compteur */}
-      <Flex align="center" gap="2" mb="1">
-        <ClipboardCheck size={14} color="var(--green-9)" />
-        <Text size="2" weight="bold" color="green">
-          Étapes de la gamme · {pendingSteps.length} à valider
-        </Text>
-        {selectedStepIds.size > 0 && (
-          <Badge color="green" variant="soft" size="1">
-            {selectedStepIds.size}/{pendingSteps.length}
-          </Badge>
-        )}
-      </Flex>
-
-      {/* Barre de progression */}
-      <Box style={{ height: 3, background: 'var(--green-3)', borderRadius: 2, marginBottom: '0.75rem', overflow: 'hidden' }}>
-        <Box style={{ height: '100%', width: `${progressPct}%`, background: 'var(--green-9)', transition: 'width 0.2s ease' }} />
-      </Box>
-
-      {/* Liste des étapes */}
-      <Flex direction="column" gap="1">
-        {pendingSteps.map((v) => {
-          const checked = selectedStepIds.has(v.id);
-          return (
-            <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '3px 0' }}>
-              <Checkbox
-                checked={checked}
-                onCheckedChange={() => toggleStep(v.id)}
-              />
-              <Text
-                size="2"
-                style={{
-                  flex: 1,
-                  userSelect: 'none',
-                  color: checked ? 'var(--green-11)' : 'var(--gray-12)',
-                  textDecoration: checked ? 'line-through' : 'none',
-                  opacity: checked ? 0.7 : 1,
-                  transition: 'color 0.15s, opacity 0.15s',
-                }}
-              >
-                {v.step_label}
-              </Text>
-              {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
-            </label>
-          );
-        })}
-      </Flex>
-    </Box>
-  );
 
   return (
     <Card style={{ ...cardStyle, position: 'relative' }}>
@@ -290,29 +228,19 @@ function ActionForm({
               lockedDate={lockedDate}
             />
 
-            {/* Réordonnancement conditionnel selon présence de gamme */}
-            {hasGamme ? (
-              <>
-                {gammeBlock}
-                <ActionFormDescription formState={form.formState} handlers={form.handlers} />
-                <ActionFormComplexity
-                  formState={form.formState}
-                  handlers={form.handlers}
-                  metadata={metadata}
-                  validation={form.validation}
-                />
-              </>
-            ) : (
-              <>
-                <ActionFormDescription formState={form.formState} handlers={form.handlers} />
-                <ActionFormComplexity
-                  formState={form.formState}
-                  handlers={form.handlers}
-                  metadata={metadata}
-                  validation={form.validation}
-                />
-              </>
-            )}
+            <ActionTaskSection
+              interventionId={resolvedInterventionId}
+              value={selectedTasks}
+              onChange={setSelectedTasks}
+              accentColor={isPreventif ? 'green' : 'blue'}
+            />
+            <ActionFormComplexity
+              formState={form.formState}
+              handlers={form.handlers}
+              metadata={metadata}
+              validation={form.validation}
+            />
+            <ActionFormDescription formState={form.formState} handlers={form.handlers} />
 
             <Flex justify="end" gap="2">
               <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
@@ -372,13 +300,6 @@ ActionForm.propTypes = {
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
   showContext: PropTypes.bool,
-  gammeValidations: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    step_label: PropTypes.string.isRequired,
-    step_sort_order: PropTypes.number,
-    step_optional: PropTypes.bool,
-    status: PropTypes.string.isRequired,
-  })),
 };
 
 export default ActionForm;

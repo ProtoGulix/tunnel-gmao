@@ -32,7 +32,7 @@ import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Calendar, ClipboardList, Lock, MapPin, Wrench, X } from 'lucide-react';
 import { createActionDirect } from '@/api/planning';
-import { fetchGammeStepValidations } from '@/api/gammeStepValidations';
+import { fetchInterventionTasks } from '@/api/interventionTasks';
 import { fetchActionCategories } from '@/api/actionCategories';
 import { fetchComplexityFactors } from '@/api/complexityFactors';
 import ActionForm from '@/components/interventions/ActionForm';
@@ -203,8 +203,8 @@ function RightColumn({ date, techId, equipementId, equipementLabel, selectedInte
       setGammeValidations([]);
       return;
     }
-    fetchGammeStepValidations(String(selectedIntervention.id))
-      .then((data) => setGammeValidations(Array.isArray(data) ? data : []))
+    fetchInterventionTasks(String(selectedIntervention.id))
+      .then((data) => setGammeValidations(Array.isArray(data) ? data.filter((t) => t.origin === 'plan') : []))
       .catch(() => setGammeValidations([]));
   }, [selectedIntervention?.id, selectedIntervention?.plan_id]);
 

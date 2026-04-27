@@ -2,7 +2,7 @@
 import { Badge, Card, Flex, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
-import { CheckCircle2, ClipboardCheck, MinusCircle } from "lucide-react";
+import { CheckCircle2, MinusCircle } from "lucide-react";
 import ActionForm from "@/components/interventions/ActionForm";
 import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
 import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
@@ -17,14 +17,8 @@ import { useAuth } from "@/auth/useAuth";
 function GammeStepList({ steps }) {
   if (!steps || steps.length === 0) return null;
   return (
-    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
+    <div style={{ marginBottom: '0.75rem' }}>
       <Flex direction="column" gap="1">
-        <Text size="2" weight="bold" color="gray">
-          <Flex align="center" gap="1" as="span">
-            <ClipboardCheck size={13} />
-            Étapes validées ({steps.length})
-          </Flex>
-        </Text>
         {steps.map((v) => (
           <Flex key={v.id} align="center" gap="2"
             style={{ padding: '4px 6px', background: 'var(--gray-2)', borderRadius: 'var(--radius-1)' }}>
@@ -32,10 +26,28 @@ function GammeStepList({ steps }) {
               ? <MinusCircle size={13} color="var(--orange-9)" style={{ flexShrink: 0 }} />
               : <CheckCircle2 size={13} color="var(--green-9)" style={{ flexShrink: 0 }} />
             }
-            <Text size="2" style={{ flex: 1 }}>{v.step_label}</Text>
-            {v.step_optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
-            <Badge color={v.status === 'skipped' ? 'orange' : 'green'} variant="soft" size="1">
-              {v.status === 'skipped' ? 'Ignorée' : 'Validée'}
+            <Text size="2" style={{ flex: 1 }}>{v.label}</Text>
+            {v.optional && <Badge color="gray" variant="outline" size="1">Opt.</Badge>}
+            <Badge color={v.origin === 'plan' ? 'green' : 'gray'} variant="soft" size="1">
+              {v.origin === 'plan' ? 'Gamme' : 'Manuelle'}
+            </Badge>
+            <Badge
+              color={
+                v.status === 'done' ? 'green'
+                  : v.status === 'skipped' ? 'orange'
+                    : v.status === 'in_progress' ? 'blue'
+                      : 'gray'
+              }
+              variant="soft"
+              size="1"
+            >
+              {v.status === 'done'
+                ? 'Validée'
+                : v.status === 'skipped'
+                  ? 'Ignorée'
+                  : v.status === 'in_progress'
+                    ? 'En cours'
+                    : 'En attente'}
             </Badge>
           </Flex>
         ))}
@@ -100,19 +112,21 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
     }
   }, [localAction?.purchaseRequests]);
 
-  // Gamme step validations liées à cette action
+  // Tâches liées à cette action (nouvelle API : action.tasks est une liste)
   useEffect(() => {
-    if (localAction?.gammeStepValidations && Array.isArray(localAction.gammeStepValidations)) {
-      setGammeSteps(localAction.gammeStepValidations.filter((v) => v.status !== 'pending'));
-    } else {
-      setGammeSteps([]);
-    }
-  }, [localAction?.gammeStepValidations]);
+    const rawTasks = Array.isArray(localAction?.tasks)
+      ? localAction.tasks
+      : (localAction?.task ? [localAction.task] : []);
+    setGammeSteps(rawTasks);
+  }, [localAction?.tasks, localAction?.task]);
 
   // Compute initial state — prefer full action data fetched from GET /intervention-actions/{id}
   const buildInitialEditState = () => {
     const source = fetchedAction ?? localAction;
     const sourceCreatedAt = getCreatedAt(source);
+    const sourceTasks = Array.isArray(source?.tasks)
+      ? source.tasks
+      : (source?.task ? [source.task] : []);
     const dateIso = sourceCreatedAt ? new Date(sourceCreatedAt).toISOString().split('T')[0] : '';
     return {
       date: dateIso,
@@ -122,6 +136,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       complexityFactors: getComplexityFactors(source),
       actionStart: source?.actionStart ?? null,
       actionEnd: source?.actionEnd ?? null,
+      tasks: sourceTasks,
     };
   };
 
@@ -171,6 +186,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       intervention: interventionId ? { id: String(interventionId) } : undefined,
       // Always include complexityFactors to allow updates/clearing
       complexityFactors: formData.complexity_factor ? [formData.complexity_factor] : [],
+      tasks: Array.isArray(formData.tasks) ? formData.tasks : [],
     };
     const updated = await actionsApi.updateAction(String(localAction.id), updates);
     setLocalAction(updated || localAction);
@@ -270,13 +286,18 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         />
       </Flex>
 
+      {/* LINKED TASKS */}
+      <GammeStepList steps={gammeSteps} />
+
       {/* CONTENT : Description */}
-      <Text 
-        size="2"
-        style={{ lineHeight: '1.5', wordBreak: 'break-word' }}
-      >
-        {sanitizeDescription(description)}
-      </Text>
+      {description && (
+        <Text 
+          size="2"
+          style={{ lineHeight: '1.5', wordBreak: 'break-word', marginBottom: '0.75rem' }}
+        >
+          {sanitizeDescription(description)}
+        </Text>
+      )}
 
       {/* EDIT FORM */}
       {showEditForm && (
@@ -293,6 +314,12 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         />
       )}
 
+      {/* PURCHASE REQUESTS LIST */}
+      <PurchaseRequestList
+        purchaseRequests={purchaseRequests}
+        onDelete={handleDeletePurchaseRequest}
+      />
+
       {/* PURCHASE REQUEST FORM DROPDOWN */}
       {showPurchaseForm && (
         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
@@ -306,15 +333,6 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
           />
         </div>
       )}
-
-      {/* PURCHASE REQUESTS LIST */}
-      <PurchaseRequestList
-        purchaseRequests={purchaseRequests}
-        onDelete={handleDeletePurchaseRequest}
-      />
-
-      {/* GAMME STEP VALIDATIONS */}
-      <GammeStepList steps={gammeSteps} />
     </Card>
   );
 }

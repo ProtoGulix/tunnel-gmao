@@ -66,10 +66,6 @@ export const areComplexityFactorsRequired = (complexity) => Number(complexity) >
 export const validateFormState = (formState, timeRange = null, manualTimeSpent = '') => {
   const errors = [];
 
-  if (!isDescriptionValid(formState.description)) {
-    errors.push('Description est obligatoire');
-  }
-
   if (!isComplexityValid(formState.complexity)) {
     errors.push('Complexité doit être entre 1 et 10');
   }

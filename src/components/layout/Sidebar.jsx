@@ -168,7 +168,11 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Hook personnalisé pour gérer les effets et l'état
-  const { serverStatus, isMobile } = useSidebarState(isMobileProp, setMenuOpen, MOBILE_BREAKPOINT);
+  const { serverStatus, isMobile, menuBadges } = useSidebarState(
+    isMobileProp,
+    setMenuOpen,
+    MOBILE_BREAKPOINT
+  );
 
   // Récupérer les sections du menu selon l'état d'authentification
   const menuSections = getMenuSections(isAuthenticated);
@@ -227,7 +231,12 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
                 
                 {/* Section items */}
                 {items.map((item) => (
-                  <SidebarMenuItem key={item.id} item={item} colors={COLORS} />
+                  <SidebarMenuItem
+                    key={item.id}
+                    item={item}
+                    colors={COLORS}
+                    badgeCount={menuBadges?.[item.id] ?? 0}
+                  />
                 ))}
               </div>
             );
@@ -238,7 +247,13 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
             <>
               {renderPublicSeparator(isAuthenticated, COLORS)}
               {menuSections.public.map((item) => (
-                <SidebarMenuItem key={item.id} item={item} colors={COLORS} isPublic />
+                <SidebarMenuItem
+                  key={item.id}
+                  item={item}
+                  colors={COLORS}
+                  isPublic
+                  badgeCount={menuBadges?.[item.id] ?? 0}
+                />
               ))}
             </>
           )}
