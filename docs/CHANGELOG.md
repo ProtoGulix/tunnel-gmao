@@ -4,6 +4,29 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.30.0 - 2026-04-27
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Un nouveau module **Tâches** est accessible depuis le menu latéral : il liste l'ensemble des tâches liées aux interventions, avec filtrage par statut (ouvertes, terminées, ignorées) et regroupement par intervention.
+- Lors de l'enregistrement d'une action, il est possible de créer des tâches directement depuis le formulaire : saisir un intitulé, sélectionner des tâches existantes à valider, et indiquer un motif si une tâche est ignorée.
+- Un **badge dans la barre latérale** indique en temps réel le nombre de tâches non assignées — visible sans avoir à ouvrir le module.
+- La fiche de chaque tâche permet de consulter son détail, modifier son statut et consulter son historique.
+
+### Composants / Modules concernés
+
+- Tâches — nouvelle page dédiée, onglet dans la fiche intervention, formulaire inline dans le formulaire d'action
+- Tableau de bord — compteur de tâches non assignées intégré au sommaire dynamique
+
+### Points de vigilance
+
+- L'API doit exposer l'endpoint `/tasks` et inclure le champ `unassigned_tasks_count` dans la réponse du sommaire tableau de bord pour que le badge s'affiche.
+- Les tâches créées depuis le formulaire d'action sont immédiatement liées à l'intervention en cours.
+
+---
+
 ## 3.29.0 - 2026-04-15
 
 Stabilité : **expérimental** 🧪

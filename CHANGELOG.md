@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.30.0] — 2026-04-27
+
+### Tâches — nouveau module
+
+- **`TasksPage`** : nouvelle page de liste des tâches avec filtrage (statut, intervention) et regroupement
+- **`TasksTab`** : onglet Tâches intégré dans la fiche intervention
+- **`TaskCreateInlineForm`** : formulaire de création rapide depuis `ActionForm`
+- **`TaskDetail`** : fiche de détail/édition d'une tâche (statut, `skip_reason`, commentaire)
+- **Badge sidebar** : compteur de tâches non assignées alimenté par le sommaire tableau de bord (`unassigned_tasks_count`)
+- **`ActionForm`** : sélection et création de tâches inline, gestion du statut et du motif de saut
+- **`useTasks`** : hook centralisé pour l'état et les appels API des tâches
+- Nouveau endpoint API : `/tasks` mappé dans `src/api/tasks.js`
+- Dashboard summary polled pour `unassigned_tasks_count` → badge dynamique dans `SidebarMenuItem`
+
+### Nettoyage
+
+- Suppression de la liaison `gamme_step_validations` dans l'intégration API des tâches — remplacée par le modèle de tâches dédié
+
+---
+
 ## [3.28.0] — 2026-04-15
 
 ### Planning — panneau jour inline
