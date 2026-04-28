@@ -50,8 +50,30 @@ export default defineConfig({
         skipWaiting: true, // ✅ Force mise à jour immédiate
         clientsClaim: true, // ✅ Prend contrôle immédiatement
         cleanupOutdatedCaches: true, // ✅ Nettoie les anciens caches
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // index.html exclu du précache : le navigateur doit toujours le
+        // récupérer depuis le réseau pour détecter les nouvelles versions.
+        // Les assets hashés (JS/CSS) sont inclus — leur nom change à chaque build.
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        // Pour les navigations SPA, toujours réseau en premier.
+        // Si hors-ligne, on accepte le cache — mais dès que le réseau répond
+        // avec un nouveau SW, skipWaiting prend le relais immédiatement.
+        navigateFallback: null,
         runtimeCaching: [
+          {
+            // index.html (et toutes les routes SPA) — réseau en priorité,
+            // jamais servi depuis le cache SW si le réseau est disponible.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-navigation',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 1,
+                maxAgeSeconds: 0, // invalide immédiatement
+              },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             urlPattern: /^http:\/\/localhost:8055\/.*/i,
             handler: "NetworkFirst", // ✅ Réseau d'abord pour l'API
