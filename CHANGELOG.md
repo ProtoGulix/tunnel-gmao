@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.31.0] — 2026-04-28
+
+### Interventions fermées — verrouillage complet
+
+- Calcul de `isLocked` sur la page détail d'intervention (`ferme` ou `cancelled`)
+- Dropdown statut et priorité désactivés et grisés quand l'intervention est verrouillée
+- Onglet Actions : bouton "+ Action" masqué, formulaire d'édition et formulaire DA inaccessibles
+- Onglet Tâches : bouton "Nouvelle tâche" masqué, boutons "Ignorer" désactivés
+- Onglet Achats : boutons Modifier / Supprimer masqués sur les DA
+- Onglet Fiche : bouton "Marquer comme imprimée" masqué
+
+### Messages d'erreur — normalisation
+
+- `extractApiErrorMessage` partagé sur tous les formulaires et hooks : extrait `response.data.detail` > `errors[0].message` > `message` > fallback
+- `ErrorState` robuste : accepte `string | object | Error`, ne crash plus sur les objets Axios bruts
+- Les messages d'erreur FastAPI (ex : "Tâche déjà clôturée — impossible de la skipper") s'affichent maintenant avec leur texte exact
+
+---
+
 ## [3.30.0] — 2026-04-27
 
 ### Tâches — nouveau module

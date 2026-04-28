@@ -4,6 +4,27 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.31.0 - 2026-04-28
+
+Stabilité : **stable** ✅
+
+### Impact fonctionnel
+
+- Une intervention dont le statut est **"Fermé"** est désormais entièrement verrouillée : les boutons d'ajout d'action, de modification d'action, de création de demande d'achat, de création de tâche et les boutons "Ignorer" sont automatiquement grisés et non cliquables. Le changement de statut et de priorité est également bloqué.
+- Les **messages d'erreur** retournés par le serveur (ex : *"Tâche déjà clôturée — impossible de la skipper"*) s'affichent désormais avec leur texte exact sur tous les formulaires, au lieu d'un message technique peu compréhensible.
+
+### Composants / Modules concernés
+
+- Fiche intervention — verrouillage complet sur les onglets Actions, Tâches, Achats et Fiche quand l'intervention est fermée
+- Messages d'erreur — affichage du détail serveur sur tous les formulaires et pages
+
+### Points de vigilance
+
+- Aucun changement d'API requis. Ce verrouillage est purement côté interface.
+- Les interventions déjà fermées avant cette mise à jour auront leurs boutons automatiquement désactivés à la prochaine ouverture de la fiche.
+
+---
+
 ## 3.30.0 - 2026-04-27
 
 Stabilité : **expérimental** 🧪
