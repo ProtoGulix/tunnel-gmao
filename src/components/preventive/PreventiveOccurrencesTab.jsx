@@ -5,20 +5,39 @@
 
 import { useEffect, useState } from 'react';
 import { AlertDialog, Badge, Box, Button, Flex, Select, Text, TextField } from '@radix-ui/themes';
-import { CalendarClock, ExternalLink, Play } from 'lucide-react';
+import { CalendarClock, ChevronDown, ChevronRight, ExternalLink, Play, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
 import { fetchPreventivePlans } from '@/api/preventivePlans';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
-import GammeProgressBlock from '@/components/preventive/GammeProgressBlock';
 
 const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
 const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
 
 const DI_STATUT_COLORS = { nouvelle: 'blue', en_attente: 'amber', acceptee: 'green', rejetee: 'red', cloturee: 'gray' };
 const DI_STATUT_LABELS = { nouvelle: 'Nouvelle', en_attente: 'En attente', acceptee: 'Acceptée', rejetee: 'Rejetée', cloturee: 'Clôturée' };
+
+const STEP_STATUS_COLORS = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
+const STEP_STATUS_LABELS = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
+
+const stepColumns = [
+  { key: 'order', header: '#', width: 36, render: (s) => <Text size="1" color="gray">{s.sort_order}</Text> },
+  {
+    key: 'label', header: 'Étape',
+    render: (s) => (
+      <Flex align="center" gap="2">
+        <Text size="2">{s.label}</Text>
+        {s.optional && <Badge color="gray" variant="outline" size="1">Optionnelle</Badge>}
+      </Flex>
+    ),
+  },
+  {
+    key: 'status', header: 'Statut', width: 110,
+    render: (s) => <Badge color={STEP_STATUS_COLORS[s.status] || 'gray'} variant="soft" size="1">{STEP_STATUS_LABELS[s.status] || s.status}</Badge>,
+  },
+];
 
 export default function PreventiveOccurrencesTab() {
   const [planId, setPlanId] = useState('');
@@ -31,6 +50,10 @@ export default function PreventiveOccurrencesTab() {
   const [toSkip, setToSkip] = useState(null);
   const [skipReason, setSkipReason] = useState('');
   const [confirmGen, setConfirmGen] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState(null);
+  const [confirmRepair, setConfirmRepair] = useState(false);
+  const [expandedRowId, setExpandedRowId] = useState(null);
 
   const filters = {
     ...(planId ? { plan_id: planId } : {}),
@@ -39,7 +62,7 @@ export default function PreventiveOccurrencesTab() {
     ...(dateTo ? { scheduled_date_to: dateTo } : {}),
   };
 
-  const { items, loading, error, refresh, skipOccurrence, generate } = usePreventiveOccurrences(filters);
+  const { items, loading, error, refresh, skipOccurrence, generate, repair } = usePreventiveOccurrences(filters);
 
   useEffect(() => {
     fetchPreventivePlans({ active_only: false })
@@ -56,6 +79,22 @@ export default function PreventiveOccurrencesTab() {
       setGenerating(false);
       setConfirmGen(false);
     }
+  };
+
+  const handleRepair = async () => {
+    try {
+      setRepairing(true);
+      const result = await repair();
+      setRepairResult(result);
+    } finally {
+      setRepairing(false);
+      setConfirmRepair(false);
+    }
+  };
+
+  const handleRowClick = (r) => {
+    if (!(r.tasks ?? []).length) return;
+    setExpandedRowId(r.id === expandedRowId ? null : r.id);
   };
 
   const handleSkip = async () => {
@@ -82,6 +121,16 @@ export default function PreventiveOccurrencesTab() {
       ),
     },
     { key: 'date', header: 'Date prévue', width: 110, render: (r) => <Text size="1">{fmtDate(r.scheduled_date)}</Text> },
+    {
+      key: 'gamme', header: 'Gamme', width: 80,
+      render: (r) => {
+        const steps = r.tasks ?? [];
+        if (!steps.length) return <Text size="1" color="gray">—</Text>;
+        const validated = steps.filter((s) => s.status === 'validated').length;
+        const color = validated === steps.length ? 'green' : validated > 0 ? 'blue' : 'gray';
+        return <Badge color={color} variant="soft" size="1">{validated}/{steps.length}</Badge>;
+      },
+    },
     {
       key: 'status', header: 'Statut', width: 110,
       render: (r) => <Badge color={STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{STATUS_LABELS[r.status] || r.status}</Badge>,
@@ -120,14 +169,24 @@ export default function PreventiveOccurrencesTab() {
         : <Text size="1" color="gray">—</Text>,
     },
     {
-      key: 'skip', header: '', width: 80,
-      render: (r) => r.status === 'pending'
-        ? (
-          <Button size="1" variant="ghost" color="orange" onClick={(e) => { e.stopPropagation(); setToSkip(r); }}>
-            Ignorer
-          </Button>
-        )
-        : null,
+      key: 'skip', header: '', width: 100,
+      render: (r) => {
+        const hasSteps = (r.tasks ?? []).length > 0;
+        return (
+          <Flex align="center" gap="2" justify="end">
+            {r.status === 'pending' && (
+              <Button size="1" variant="ghost" color="orange" onClick={(e) => { e.stopPropagation(); setToSkip(r); }}>
+                Ignorer
+              </Button>
+            )}
+            {hasSteps && (
+              r.id === expandedRowId
+                ? <ChevronDown size={14} color="var(--gray-9)" />
+                : <ChevronRight size={14} color="var(--gray-9)" />
+            )}
+          </Flex>
+        );
+      },
     },
   ];
 
@@ -143,9 +202,14 @@ export default function PreventiveOccurrencesTab() {
         showSearchInput={false}
         showRefreshButton={false}
         rightActions={
-          <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
-            <Play size={14} />{generating ? 'Génération…' : 'Générer'}
-          </Button>
+          <Flex gap="2">
+            <Button size="2" color="amber" variant="soft" onClick={() => setConfirmRepair(true)} disabled={repairing}>
+              <Wrench size={14} />{repairing ? 'Correction…' : 'Corriger'}
+            </Button>
+            <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
+              <Play size={14} />{generating ? 'Génération…' : 'Générer'}
+            </Button>
+          </Flex>
         }
       />
       <Flex gap="2" mb="3" wrap="wrap">
@@ -176,15 +240,24 @@ export default function PreventiveOccurrencesTab() {
         data={items}
         loading={loading}
         getRowKey={(r) => r.id}
+        onRowClick={handleRowClick}
+        rowStyles={(r) => (r.tasks ?? []).length > 0 ? { cursor: 'pointer' } : undefined}
+        isRowExpanded={(r) => r.id === expandedRowId}
         emptyState={{ icon: CalendarClock, title: 'Aucune occurrence', description: 'Ajustez les filtres ou cliquez sur Générer.' }}
         renderExpandedRow={(r) => {
-          if (r.status !== 'generated' && r.status !== 'done') return null;
+          const steps = [...(r.tasks ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+          if (!steps.length) return null;
           return (
             <Box px="4" py="3" style={{ backgroundColor: 'var(--gray-1)', borderTop: '1px solid var(--gray-4)' }}>
-              <GammeProgressBlock
-                mode="occurrence"
-                occurrenceId={r.id}
-                diId={r.di_id ?? null}
+              <Text size="1" weight="medium" color="gray" style={{ display: 'block', marginBottom: 8 }}>Étapes de gamme</Text>
+              <DataTable
+                columns={stepColumns}
+                data={steps}
+                getRowKey={(s) => s.id}
+                size="1"
+                variant="ghost"
+                stickyHeader={false}
+                emptyState={{ icon: CalendarClock, title: 'Aucune étape', description: '' }}
               />
             </Box>
           );
@@ -220,6 +293,56 @@ export default function PreventiveOccurrencesTab() {
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Action>
               <Button color="blue" onClick={() => { setGenResult(null); refresh(); }}>OK</Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      {/* Confirmation correction */}
+      <AlertDialog.Root open={confirmRepair} onOpenChange={setConfirmRepair}>
+        <AlertDialog.Content maxWidth="420px">
+          <AlertDialog.Title>Corriger les données</AlertDialog.Title>
+          <AlertDialog.Description>
+            Cette procédure corrige les données corrompues par deux bugs :
+            <Text as="span" mt="2" size="2" style={{ display: 'block' }}>• Étapes de gamme non liées à leur intervention</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• Occurrences bloquées à «&nbsp;Générée&nbsp;» alors que l'intervention est fermée</Text>
+            <Text as="span" mt="2" size="1" color="gray" style={{ display: 'block' }}>L'opération est idempotente et sans effet secondaire.</Text>
+          </AlertDialog.Description>
+          <Flex gap="3" mt="4" justify="end">
+            <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button color="amber" onClick={handleRepair} disabled={repairing}>Corriger</Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+
+      {/* Résultat correction */}
+      <AlertDialog.Root open={!!repairResult} onOpenChange={(open) => !open && setRepairResult(null)}>
+        <AlertDialog.Content maxWidth="480px">
+          <AlertDialog.Title>Résultat de la correction</AlertDialog.Title>
+          <AlertDialog.Description>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.steps_relinked ?? 0} étape(s) rattachée(s) (Bug 1)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.occurrences_relinked ?? 0} occurrence(s) réliée(s) à leur intervention (Bug 2 pré-étape)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.occurrences_completed ?? 0} occurrence(s) clôturée(s) (Bug 2)</Text>
+            <Text as="span" size="2" style={{ display: 'block' }}>• {repairResult?.requests_closed ?? 0} demande(s) clôturée(s) (Bug 2)</Text>
+            {repairResult?.details?.length > 0 && (
+              <Text
+                as="span"
+                mt="3"
+                size="1"
+                color="gray"
+                style={{ display: 'block', maxHeight: 200, overflowY: 'auto', background: 'var(--gray-2)', borderRadius: 'var(--radius-2)', padding: '8px 12px' }}
+              >
+                {repairResult.details.map((d, i) => (
+                  <Text key={i} as="span" size="1" color="gray" style={{ display: 'block' }}>{d}</Text>
+                ))}
+              </Text>
+            )}
+          </AlertDialog.Description>
+          <Flex gap="3" mt="4" justify="end">
+            <AlertDialog.Action>
+              <Button color="blue" onClick={() => { setRepairResult(null); refresh(); }}>OK</Button>
             </AlertDialog.Action>
           </Flex>
         </AlertDialog.Content>

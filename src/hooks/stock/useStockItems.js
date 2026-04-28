@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchStockItems, createStockItem, updateStockItem, deleteStockItem } from '@/api/stock';
 import { useDebounce } from '@/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_TOTAL_PAGES = 1;
@@ -82,7 +83,7 @@ export function useStockItems({ initialSearch = '' } = {}) {
         setFacets(nextFacets);
       } catch (err) {
         if (currentController.signal.aborted) return;
-        setError(err.message || 'Erreur lors du chargement des pieces');
+        setError(extractApiErrorMessage(err, 'Erreur lors du chargement des pieces'));
         setItems([]);
         setTotal(0);
         setTotalPages(DEFAULT_TOTAL_PAGES);

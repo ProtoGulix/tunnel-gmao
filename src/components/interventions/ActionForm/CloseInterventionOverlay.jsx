@@ -12,11 +12,7 @@ import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
 import { updateInterventionStatus } from '@/api/interventions';
-
-const toErrorMessage = (err) => {
-  const detail = err?.response?.data?.detail ?? err?.message ?? 'Erreur lors de la soumission';
-  return Array.isArray(detail) ? detail.map((e) => e.msg ?? String(e)).join(', ') : String(detail);
-};
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * @param {Object}   props
@@ -56,7 +52,7 @@ export default function CloseInterventionOverlay({
     try {
       result = await onSubmitAction();
     } catch (err) {
-      setError(toErrorMessage(err));
+      setError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
       setSubmitting(false);
       return;
     }

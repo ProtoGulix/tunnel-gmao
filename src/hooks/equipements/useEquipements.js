@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as equipementsApi from '@/api/equipements';
 import { useDebounce } from '@/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useEquipements({ selectMere } = {}) {
   const [equipements, setEquipements] = useState([]);
@@ -45,7 +46,7 @@ export function useEquipements({ selectMere } = {}) {
       // Conserver les facettes de la charge initiale (sans filtre) pour le menu déroulant
       if (!cls && !s) setFacets(result.facets?.equipement_class ?? []);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des équipements');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des équipements'));
       setEquipements([]);
     } finally {
       setLoading(false);

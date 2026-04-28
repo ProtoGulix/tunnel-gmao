@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { fetchManufacturerDetail } from '@/api/manufacturers';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useManufacturerDetail(manufacturerId) {
   const [detail, setDetail] = useState(null);
@@ -22,7 +23,7 @@ export function useManufacturerDetail(manufacturerId) {
       const data = await fetchManufacturerDetail(manufacturerId);
       setDetail(data);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement du fabricant');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement du fabricant'));
       setDetail(null);
     } finally {
       setLoading(false);

@@ -12,6 +12,7 @@ import {
   fetchEquipementStats,
   fetchEquipementHealth,
 } from '@/api/equipements';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour gérer le détail d'un équipement
@@ -47,7 +48,7 @@ export function useEquipementDetail(id) {
         );
       } catch (err) {
         console.error('Erreur fetch équipement:', err);
-        setError(err.message || "Erreur lors du chargement de l'équipement");
+        setError(extractApiErrorMessage(err, "Erreur lors du chargement de l'équipement"));
       } finally {
         if (!silent) setLoading(false);
       }
@@ -114,7 +115,9 @@ export function useEquipementDetail(id) {
         return updated;
       } catch (err) {
         console.error('Erreur update équipement:', err);
-        throw err;
+        throw new Error(
+          extractApiErrorMessage(err, "Erreur lors de la mise à jour de l'équipement")
+        );
       }
     },
     [id]

@@ -4,6 +4,66 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.31.0 - 2026-04-28
+
+Stabilité : **stable** ✅
+
+### Impact fonctionnel
+
+- Une intervention dont le statut est **"Fermé"** est désormais entièrement verrouillée : les boutons d'ajout d'action, de modification d'action, de création de demande d'achat, de création de tâche et les boutons "Ignorer" sont automatiquement grisés et non cliquables. Le changement de statut et de priorité est également bloqué.
+- Les **messages d'erreur** retournés par le serveur (ex : *"Tâche déjà clôturée — impossible de la skipper"*) s'affichent désormais avec leur texte exact sur tous les formulaires, au lieu d'un message technique peu compréhensible.
+
+### Composants / Modules concernés
+
+- Fiche intervention — verrouillage complet sur les onglets Actions, Tâches, Achats et Fiche quand l'intervention est fermée
+- Messages d'erreur — affichage du détail serveur sur tous les formulaires et pages
+
+### Points de vigilance
+
+- Aucun changement d'API requis. Ce verrouillage est purement côté interface.
+- Les interventions déjà fermées avant cette mise à jour auront leurs boutons automatiquement désactivés à la prochaine ouverture de la fiche.
+
+---
+
+## 3.30.0 - 2026-04-27
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- Un nouveau module **Tâches** est accessible depuis le menu latéral : il liste l'ensemble des tâches liées aux interventions, avec filtrage par statut (ouvertes, terminées, ignorées) et regroupement par intervention.
+- Lors de l'enregistrement d'une action, il est possible de créer des tâches directement depuis le formulaire : saisir un intitulé, sélectionner des tâches existantes à valider, et indiquer un motif si une tâche est ignorée.
+- Un **badge dans la barre latérale** indique en temps réel le nombre de tâches non assignées — visible sans avoir à ouvrir le module.
+- La fiche de chaque tâche permet de consulter son détail, modifier son statut et consulter son historique.
+
+### Composants / Modules concernés
+
+- Tâches — nouvelle page dédiée, onglet dans la fiche intervention, formulaire inline dans le formulaire d'action
+- Tableau de bord — compteur de tâches non assignées intégré au sommaire dynamique
+
+### Points de vigilance
+
+- L'API doit exposer l'endpoint `/tasks` et inclure le champ `unassigned_tasks_count` dans la réponse du sommaire tableau de bord pour que le badge s'affiche.
+- Les tâches créées depuis le formulaire d'action sont immédiatement liées à l'intervention en cours.
+
+---
+
+## 3.29.0 - 2026-04-15
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- L'onglet **Occurrences** du module Préventif affiche maintenant le détail des étapes de gamme directement dans chaque ligne : un indicateur `validées/total` est visible dans la colonne Gamme, et cliquer sur une occurrence déroule le tableau complet des étapes avec leur statut (En attente, Validée, Ignorée).
+- Un bouton **Corriger** est disponible dans l'onglet Occurrences pour réparer automatiquement deux anomalies connues : des étapes de gamme non rattachées à leur intervention lors d'une acceptation manuelle, et des occurrences restées bloquées à « Générée » alors que l'intervention liée avait bien été fermée. L'opération est sans risque et peut être relancée plusieurs fois.
+
+### Points de vigilance
+
+- La correction ne modifie que les données réellement incohérentes — aucun effet de bord sur les occurrences saines.
+- L'API doit renvoyer le champ `gamme_steps` dans la réponse des occurrences pour que le tableau d'étapes s'affiche.
+
+---
+
 ## 3.26.0 - 2026-04-13
 
 Stabilité : **expérimental** 🧪

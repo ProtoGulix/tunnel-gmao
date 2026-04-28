@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchStockFamilies, createStockFamily, updateStockFamily } from '@/api/stock';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useStockFamilies() {
   const [families, setFamilies] = useState([]);
@@ -20,7 +21,7 @@ export function useStockFamilies() {
       const data = await fetchStockFamilies();
       setFamilies(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des familles');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des familles'));
       setFamilies([]);
     } finally {
       setLoading(false);

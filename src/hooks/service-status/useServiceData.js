@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchServiceStatus } from '@/api/service-status';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour charger les données d'état du service
@@ -35,7 +36,7 @@ export function useServiceData(startDate, endDate) {
       const result = await fetchServiceStatus(startDate, endDate);
       setData(result);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement du statut du service');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement du statut du service'));
       setData(null);
     } finally {
       setLoading(false);

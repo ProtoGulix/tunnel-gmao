@@ -11,6 +11,7 @@ import {
   deletePreventivePlan,
   patchPreventivePlanSteps,
 } from '@/api/preventivePlans';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function usePreventivePlans({ active_only = true } = {}) {
   const [plans, setPlans] = useState([]);
@@ -24,20 +25,25 @@ export function usePreventivePlans({ active_only = true } = {}) {
       const data = await fetchPreventivePlans({ active_only });
       setPlans(data);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des plans préventifs');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des plans préventifs'));
       setPlans([]);
     } finally {
       setLoading(false);
     }
   }, [active_only]);
 
-  useEffect(() => { load(); }, [load]);
-
-  const createPlan = useCallback(async (payload) => {
-    const created = await createPreventivePlan(payload);
-    await load();
-    return created;
+  useEffect(() => {
+    load();
   }, [load]);
+
+  const createPlan = useCallback(
+    async (payload) => {
+      const created = await createPreventivePlan(payload);
+      await load();
+      return created;
+    },
+    [load]
+  );
 
   const updatePlan = useCallback(async (id, payload) => {
     const updated = await updatePreventivePlan(id, payload);
@@ -45,10 +51,13 @@ export function usePreventivePlans({ active_only = true } = {}) {
     return updated;
   }, []);
 
-  const deactivatePlan = useCallback(async (id) => {
-    await deletePreventivePlan(id);
-    await load();
-  }, [load]);
+  const deactivatePlan = useCallback(
+    async (id) => {
+      await deletePreventivePlan(id);
+      await load();
+    },
+    [load]
+  );
 
   const saveSteps = useCallback(async (id, steps) => {
     const updated = await patchPreventivePlanSteps(id, steps);
@@ -56,5 +65,14 @@ export function usePreventivePlans({ active_only = true } = {}) {
     return updated;
   }, []);
 
-  return { plans, loading, error, refresh: load, createPlan, updatePlan, deactivatePlan, saveSteps };
+  return {
+    plans,
+    loading,
+    error,
+    refresh: load,
+    createPlan,
+    updatePlan,
+    deactivatePlan,
+    saveSteps,
+  };
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { createIntervention } from '@/api/interventions';
 import { fetchEquipements } from '@/api/equipements';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const getDefaultDateTimeLocal = () => {
   const now = new Date();
@@ -53,7 +54,7 @@ export function useInterventionCreate({ navigate }) {
         });
         navigate(`/intervention/${created.id}`);
       } catch (err) {
-        setError(err.message || "Erreur lors de la création de l'intervention");
+        setError(extractApiErrorMessage(err, "Erreur lors de la création de l'intervention"));
       } finally {
         setSaving(false);
       }

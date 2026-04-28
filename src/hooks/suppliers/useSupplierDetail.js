@@ -14,6 +14,7 @@ import {
   deleteSupplierItemLink,
   setPreferredSupplierItemLink,
 } from '@/api/suppliers';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useSupplierDetail(supplierId) {
   const [supplier, setSupplier] = useState(null);
@@ -33,7 +34,7 @@ export function useSupplierDetail(supplierId) {
       setSupplier(detail);
       setLinks(Array.isArray(itemLinks) ? itemLinks : []);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement du fournisseur');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement du fournisseur'));
     } finally {
       setLoading(false);
     }

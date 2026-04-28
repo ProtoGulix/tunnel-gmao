@@ -7,16 +7,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Box, Container, Flex, Tabs, Text, TextField } from '@radix-ui/themes';
 import { CalendarDays, ClipboardList, List, Search, Wrench } from 'lucide-react';
+import { CheckSquare } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import InterventionsListTab from '@/components/interventions/tabs/InterventionsListTab';
 import InterventionPlanningTab from '@/components/interventions/tabs/InterventionPlanningTab';
 import InterventionRequestsTab from '@/components/intervention-requests/tabs/InterventionRequestsTab';
+import GlobalTasksTab from '@/components/tasks/tabs/TasksTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 const TABS = [
   { id: 'planning', label: 'Planning', icon: CalendarDays },
   { id: 'liste', label: 'Liste', icon: List },
   { id: 'demandes', label: 'Demandes', icon: ClipboardList },
+  { id: 'taches', label: 'Tâches', icon: CheckSquare },
 ];
 
 export default function InterventionsListPage() {
@@ -69,6 +72,10 @@ export default function InterventionsListPage() {
 
           <Tabs.Content value="demandes">
             <InterventionRequestsTab />
+          </Tabs.Content>
+
+          <Tabs.Content value="taches">
+            <GlobalTasksTab />
           </Tabs.Content>
         </Tabs.Root>
       </Container>

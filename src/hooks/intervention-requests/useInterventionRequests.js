@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { useDebounce } from '@/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -68,7 +69,7 @@ export function useInterventionRequests({ initialSearch = '' } = {}) {
       })
       .catch((err) => {
         if (ctrl.signal.aborted) return;
-        setError(err.message || 'Erreur lors du chargement des demandes');
+        setError(extractApiErrorMessage(err, 'Erreur lors du chargement des demandes'));
         setItems([]);
       })
       .finally(() => {

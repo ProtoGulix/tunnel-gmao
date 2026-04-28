@@ -14,6 +14,7 @@ import {
   fetchSupplierOrderLines,
   updateSupplierOrderLine,
 } from '@/api/supplierOrders';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * @param {Object} options
@@ -41,7 +42,7 @@ export function useSupplierOrders({ status = '' } = {}) {
       setFacets(facetData);
       setPagination(paginationData);
     } catch (err) {
-      setError(err);
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des commandes fournisseurs'));
     } finally {
       setLoading(false);
     }

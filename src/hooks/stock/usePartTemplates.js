@@ -10,6 +10,7 @@ import {
   deletePartTemplate,
   fetchPartTemplates,
 } from '@/api/partTemplates';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function usePartTemplates() {
   const [templates, setTemplates] = useState([]);
@@ -26,7 +27,7 @@ export function usePartTemplates() {
         const data = await fetchPartTemplates();
         if (isActive) setTemplates(Array.isArray(data) ? data : []);
       } catch (err) {
-        if (isActive) setError(err.message || 'Erreur chargement templates');
+        if (isActive) setError(extractApiErrorMessage(err, 'Erreur chargement templates'));
       } finally {
         if (isActive) setLoading(false);
       }

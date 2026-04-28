@@ -74,7 +74,7 @@ const COLUMNS = [
   },
 ];
 
-export default function InterventionPurchaseTab({ interventionId }) {
+export default function InterventionPurchaseTab({ interventionId, isLocked = false }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -153,8 +153,8 @@ export default function InterventionPurchaseTab({ interventionId }) {
     return (
       <PurchaseRequestDetail
         item={selected}
-        onEdit={() => setMode('edit')}
-        onDelete={handleDelete}
+        onEdit={isLocked ? null : () => setMode('edit')}
+        onDelete={isLocked ? null : handleDelete}
       />
     );
   };
@@ -200,4 +200,5 @@ export default function InterventionPurchaseTab({ interventionId }) {
 
 InterventionPurchaseTab.propTypes = {
   interventionId: PropTypes.string.isRequired,
+  isLocked: PropTypes.bool,
 };

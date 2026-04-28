@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { fetchInterventions } from '@/api/interventions';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour gérer la liste segmentée des interventions
@@ -32,7 +33,7 @@ export function useInterventionsList(searchTerm = '') {
       setError(null);
     } catch (err) {
       console.error('Erreur fetch interventions:', err);
-      setError(err.message || 'Erreur lors du chargement des interventions');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des interventions'));
     } finally {
       if (!silent) setLoading(false);
     }

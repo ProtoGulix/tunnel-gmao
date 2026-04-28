@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchStockFamilyDetail, updateStockSubFamily, createStockSubFamily } from '@/api/stock';
 import { useDebounce } from '@/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useStockFamilyDetail(familyCode) {
   const [family, setFamily] = useState(null);
@@ -23,7 +24,7 @@ export function useStockFamilyDetail(familyCode) {
         const data = await fetchStockFamilyDetail(familyCode, params);
         setFamily(data || null);
       } catch (err) {
-        setError(err.message || 'Erreur lors du chargement de la famille');
+        setError(extractApiErrorMessage(err, 'Erreur lors du chargement de la famille'));
         setFamily(null);
       } finally {
         setLoading(false);

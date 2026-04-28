@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { checkServerStatus } from '@/lib/serverStatus';
+import { fetchDashboardSummary } from '@/api/dashboard';
 
 /**
  * Hook for managing sidebar state including server status polling,
@@ -29,6 +30,7 @@ export function useSidebarState(isMobileProp, setMenuOpen, mobileBreakpoint = 76
     lastChecked: null,
   });
   const [isMobileInternal, setIsMobileInternal] = useState(window.innerWidth < mobileBreakpoint);
+  const [menuBadges, setMenuBadges] = useState({});
 
   const location = useLocation();
 
@@ -74,10 +76,35 @@ export function useSidebarState(isMobileProp, setMenuOpen, mobileBreakpoint = 76
     return () => clearInterval(interval);
   }, []);
 
+  // Sidebar badges polling from dashboard summary
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const summary = await fetchDashboardSummary();
+        setMenuBadges({
+          interventions: Number(summary?.interventions?.open ?? 0),
+          tasks: Number(summary?.tasks?.pending ?? 0),
+          equipements: Number(summary?.equipements?.total ?? 0),
+          preventive: Number(summary?.preventive?.pending ?? 0),
+          stock: Number(summary?.stock?.items ?? 0),
+          'purchase-requests': Number(summary?.purchase_requests?.open ?? 0),
+          suppliers: Number(summary?.suppliers?.total ?? 0),
+        });
+      } catch {
+        // Keep existing badges on transient errors.
+      }
+    };
+
+    loadSummary();
+    const interval = setInterval(loadSummary, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileInternal;
 
   return {
     serverStatus,
     isMobile,
+    menuBadges,
   };
 }

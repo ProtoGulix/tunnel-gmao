@@ -23,7 +23,7 @@ import { Link, useLocation } from 'react-router-dom';
  * @param {boolean} [props.isPublic=false] - Si l'item est dans la section publique
  * @returns {JSX.Element}
  */
-export default function SidebarMenuItem({ item, colors, isPublic = false }) {
+export default function SidebarMenuItem({ item, colors, isPublic = false, badgeCount = 0 }) {
   const location = useLocation();
   const isActive = location.pathname === item.path;
 
@@ -55,7 +55,26 @@ export default function SidebarMenuItem({ item, colors, isPublic = false }) {
       }}
     >
       <item.icon size={18} />
-      <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
+      <span style={{ fontSize: '0.9rem', flex: 1 }}>{item.label}</span>
+      {badgeCount > 0 && (
+        <span
+          style={{
+            minWidth: '20px',
+            height: '20px',
+            borderRadius: '999px',
+            background: 'var(--orange-9)',
+            color: 'white',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 6px',
+          }}
+        >
+          {badgeCount > 99 ? '99+' : badgeCount}
+        </span>
+      )}
     </Link>
   );
 }
@@ -76,4 +95,5 @@ SidebarMenuItem.propTypes = {
     hoverBg: PropTypes.string.isRequired,
   }).isRequired,
   isPublic: PropTypes.bool,
+  badgeCount: PropTypes.number,
 };
