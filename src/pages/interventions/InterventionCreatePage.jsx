@@ -38,7 +38,7 @@ function useRequestLinking(setFormData) {
 
 export default function InterventionCreatePage() {
   const navigate = useNavigate();
-  const { formData, setFormData, fetchEquipementsFn, saving, error, handleSubmit } =
+  const { formData, setFormData, users, fetchEquipementsFn, saving, error, handleSubmit } =
     useInterventionCreate({ navigate });
   const set = useCallback((field, value) => setFormData((prev) => ({ ...prev, [field]: value })), [setFormData]);
   const { selectedRequest, handleSelectRequest } = useRequestLinking(setFormData);
@@ -56,6 +56,7 @@ export default function InterventionCreatePage() {
           locked={!!selectedRequest}
           lockedType={!!(selectedRequest?.is_system && selectedRequest?.suggested_type_inter)}
           fetchEquipementsFn={fetchEquipementsFn}
+          users={users}
           saving={saving}
           error={error}
           onSubmit={handleSubmit}

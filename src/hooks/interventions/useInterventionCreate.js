@@ -1,7 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createIntervention } from '@/api/interventions';
 import { fetchEquipements } from '@/api/equipements';
+import { fetchActiveUsers } from '@/api/planning';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import { useAuth } from '@/auth/useAuth';
 
 const getDefaultDateTimeLocal = () => {
   const now = new Date();
@@ -10,18 +12,31 @@ const getDefaultDateTimeLocal = () => {
 };
 
 export function useInterventionCreate({ navigate }) {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     type: 'CUR',
     priority: 'normale',
     equipementId: null,
     equipementLabel: '',
-    techInitials: '',
+    techId: '',
     reportedBy: '',
     reportedDate: getDefaultDateTimeLocal(),
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchActiveUsers().then((list) => {
+      setUsers(list);
+      if (user?.id) {
+        const match = list.find((u) => u.id === user.id);
+        if (match) setFormData((prev) => ({ ...prev, techId: match.id }));
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const fetchEquipementsFn = useCallback(
     (search) => fetchEquipements({ search }).then((r) => r.items ?? []),
@@ -31,7 +46,7 @@ export function useInterventionCreate({ navigate }) {
   const validate = useCallback(() => {
     if (!formData.title.trim()) return 'Le titre est obligatoire';
     if (!formData.equipementId) return 'Veuillez sélectionner un équipement';
-    if (!formData.techInitials.trim()) return 'Les initiales du technicien sont obligatoires';
+    if (!formData.techId) return 'Veuillez sélectionner un technicien';
     return null;
   }, [formData]);
 
@@ -62,5 +77,5 @@ export function useInterventionCreate({ navigate }) {
     [formData, validate, navigate]
   );
 
-  return { formData, setFormData, fetchEquipementsFn, saving, error, handleSubmit };
+  return { formData, setFormData, users, fetchEquipementsFn, saving, error, handleSubmit };
 }
