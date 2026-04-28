@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text } from '@radix-ui/themes';
+import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
 import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
@@ -25,6 +25,7 @@ import InterventionPurchaseTab from '@/components/interventions/tabs/Interventio
 import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
 import TasksTab from '@/components/interventions/tabs/TasksTab';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 // Configuration de base des onglets
 const BASE_TABS = [
@@ -62,6 +63,7 @@ export default function InterventionDetailPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'actions');
+  const [mutationError, setMutationError] = useState('');
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -99,9 +101,10 @@ export default function InterventionDetailPage() {
   const handleStatusChange = useCallback(
     async (newStatus) => {
       try {
+        setMutationError('');
         await updateStatus(newStatus);
       } catch (err) {
-        console.error('Erreur changement statut:', err);
+        setMutationError(extractApiErrorMessage(err, 'Erreur changement statut'));
       }
     },
     [updateStatus]
@@ -110,9 +113,10 @@ export default function InterventionDetailPage() {
   const handlePriorityChange = useCallback(
     async (newPriority) => {
       try {
+        setMutationError('');
         await updateIntervention({ priority: newPriority });
       } catch (err) {
-        console.error('Erreur changement priorité:', err);
+        setMutationError(extractApiErrorMessage(err, 'Erreur changement priorité'));
       }
     },
     [updateIntervention]
@@ -120,9 +124,10 @@ export default function InterventionDetailPage() {
 
   const handleMarkPrinted = useCallback(async () => {
     try {
+      setMutationError('');
       await updateIntervention({ printedFiche: true });
     } catch (err) {
-      console.error('Erreur marquage imprimé:', err);
+      setMutationError(extractApiErrorMessage(err, 'Erreur marquage imprimé'));
     }
   }, [updateIntervention]);
 
@@ -132,8 +137,13 @@ export default function InterventionDetailPage() {
   }, [refetch]);
 
   const handleDelete = useCallback(async () => {
-    await deleteIntervention();
-    navigate('/interventions');
+    try {
+      setMutationError('');
+      await deleteIntervention();
+      navigate('/interventions');
+    } catch (err) {
+      setMutationError(extractApiErrorMessage(err, 'Erreur suppression intervention'));
+    }
   }, [deleteIntervention, navigate]);
 
   // Error state
@@ -165,7 +175,7 @@ export default function InterventionDetailPage() {
     return (
       <PageContainer>
         <ErrorState
-          error={{ message: 'Intervention non trouvée' }}
+          error="Intervention non trouvée"
           backLink="/interventions"
           backLabel="Retour aux interventions"
         />
@@ -175,6 +185,7 @@ export default function InterventionDetailPage() {
 
   const stats = intervention.stats || {};
   const isDeletable = !stats.actionCount && !stats.purchaseCount;
+  const isLocked = ['ferme', 'cancelled'].includes(mapDtoStatusToConfigKey(intervention?.status));
 
   return (
     <PageContainer style={{ paddingBottom: '4rem' }}>
@@ -228,6 +239,7 @@ export default function InterventionDetailPage() {
                   STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.textActive ||
                   'white'
                 }
+                disabled={isLocked}
                 items={[
                   {
                     label: STATE_COLORS.ouvert.label,
@@ -268,6 +280,7 @@ export default function InterventionDetailPage() {
                   PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.textActive ||
                   'white'
                 }
+                disabled={isLocked}
                 items={[
                   {
                     label: 'Urgent',
@@ -307,6 +320,14 @@ export default function InterventionDetailPage() {
         onValueChange={handleTabChange}
         style={{ marginTop: '2rem' }}
       >
+
+      {mutationError && (
+        <Box mt="3">
+          <Callout.Root color="red" size="1" role="alert" aria-live="polite">
+            <Callout.Text>{mutationError}</Callout.Text>
+          </Callout.Root>
+        </Box>
+      )}
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -336,19 +357,20 @@ export default function InterventionDetailPage() {
             statusLog={statusLog}
             searchTerm={searchActions}
             onSearchChange={setSearchActions}
-            onAddAction={addAction}
+            onAddAction={isLocked ? null : addAction}
             interventionId={id}
             onPurchaseRequestCreated={handlePurchaseRequestCreated}
             planId={intervention.plan_id ?? null}
+            isLocked={isLocked}
           />
         </Tabs.Content>
 
         <Tabs.Content value="taches">
-          <TasksTab interventionId={id} />
+          <TasksTab interventionId={id} isLocked={isLocked} />
         </Tabs.Content>
 
         <Tabs.Content value="achats">
-          <InterventionPurchaseTab interventionId={id} />
+          <InterventionPurchaseTab interventionId={id} isLocked={isLocked} />
         </Tabs.Content>
 
         <Tabs.Content value="summary">
@@ -361,7 +383,7 @@ export default function InterventionDetailPage() {
             pdfLoading={pdfLoading}
             printedFiche={intervention.printedFiche}
             fileName={ficheFileName}
-            onMarkPrinted={handleMarkPrinted}
+            onMarkPrinted={isLocked ? null : handleMarkPrinted}
           />
         </Tabs.Content>
 

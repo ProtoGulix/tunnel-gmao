@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { emitSystemError, clearSystemError } from '@/lib/api/systemErrors';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /** Erreurs sans réponse HTTP (réseau, timeout) ou 5xx → niveau 3 banneau layout */
 function isSystemError(err) {
@@ -46,7 +47,7 @@ export function useApiStatus() {
     } catch (err) {
       if (mounted.current) {
         setStatus('error');
-        setError(err);
+        setError(extractApiErrorMessage(err, 'Une erreur est survenue'));
       }
       if (isSystemError(err)) emitSystemError(err);
     }

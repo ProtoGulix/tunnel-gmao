@@ -112,18 +112,22 @@ export default function DropdownButton({
   color = 'var(--gray-6)', 
   textColor = 'white',
   items = [],
-  showColorDot = false
+  showColorDot = false,
+  disabled = false,
 }) {
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger>
+      <DropdownMenu.Trigger disabled={disabled}>
         <Button 
           size="2" 
           variant="soft"
+          disabled={disabled}
           style={{
             backgroundColor: color,
             color: textColor,
-            border: 'none'
+            border: 'none',
+            opacity: disabled ? 0.5 : 1,
+            cursor: disabled ? 'not-allowed' : 'pointer',
           }}
           aria-label={`Sélectionner ${label}`}
         >

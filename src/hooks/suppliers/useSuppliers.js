@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchSuppliers, createSupplier, updateSupplier } from '@/api/suppliers';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useSuppliers({ initialSearch = '' } = {}) {
   const [suppliers, setSuppliers] = useState([]);
@@ -22,7 +23,7 @@ export function useSuppliers({ initialSearch = '' } = {}) {
       const data = await fetchSuppliers(params);
       setSuppliers(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des fournisseurs');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fournisseurs'));
       setSuppliers([]);
     } finally {
       setLoading(false);

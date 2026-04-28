@@ -26,6 +26,7 @@ import { Link } from "react-router-dom";
 import { Container, Box, Card, Flex, Heading, Text, Button } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { AlertCircle } from "lucide-react";
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /** Message d'erreur par défaut */
 const DEFAULT_ERROR_MESSAGE = "Une erreur est survenue";
@@ -66,7 +67,7 @@ function ErrorMessage({ message }) {
 }
 
 ErrorMessage.propTypes = {
-  message: PropTypes.string,
+  message: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
 };
 
 /**
@@ -158,13 +159,15 @@ export default function ErrorState({
   backLink = DEFAULT_BACK_LINK, 
   backLabel = DEFAULT_BACK_LABEL 
 }) {
+  const normalizedError = extractApiErrorMessage(error, DEFAULT_ERROR_MESSAGE);
+
   return (
     <Container size="4">
       <Box p="2">
         <Card>
           <Flex direction="column" align="center" gap="4" p="6">
             <ErrorHeader />
-            <ErrorMessage message={error} />
+            <ErrorMessage message={normalizedError} />
             <Flex gap="2" wrap="wrap">
               <RetryButton onRetry={onRetry} />
               <BackButton backLink={backLink} backLabel={backLabel} />
@@ -177,7 +180,7 @@ export default function ErrorState({
 }
 
 ErrorState.propTypes = {
-  error: PropTypes.string,
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onRetry: PropTypes.func,
   backLink: PropTypes.string,
   backLabel: PropTypes.string,

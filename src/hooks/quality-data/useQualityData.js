@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { fetchQualityData } from '@/api/quality-data';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour charger les données de qualité
@@ -22,7 +23,7 @@ export function useQualityData(filters = {}) {
       const result = await fetchQualityData(filters);
       setData(result);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des données');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des données'));
     } finally {
       setLoading(false);
     }

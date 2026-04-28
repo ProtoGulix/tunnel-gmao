@@ -11,6 +11,7 @@ import {
   deleteManufacturer,
 } from '@/api/manufacturers';
 import { useDebounce } from '@/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -36,7 +37,7 @@ export function useManufacturers({ initialSearch = '' } = {}) {
       setManufacturers(Array.isArray(items) ? items : []);
       setTotal(pagination?.total ?? 0);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des fabricants');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fabricants'));
       setManufacturers([]);
     } finally {
       setLoading(false);

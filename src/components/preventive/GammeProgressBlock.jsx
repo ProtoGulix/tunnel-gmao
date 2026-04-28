@@ -184,7 +184,7 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
   };
 
   if (loadState === 'loading') return <LoadingState fullscreen={false} message="Chargement de la gamme…" />;
-  if (loadState === 'error') return <ErrorState error={{ message: loadError }} onRetry={loadData} />;
+  if (loadState === 'error') return <ErrorState error={loadError} onRetry={loadData} />;
 
   if (!tasks.length) {
     return (

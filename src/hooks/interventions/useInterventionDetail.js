@@ -16,6 +16,7 @@ import {
 } from '@/api/interventions';
 import { createActionDirect } from '@/api/planning';
 import { useAuth } from '@/auth/useAuth';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour gérer le détail d'une intervention
@@ -47,7 +48,7 @@ export function useInterventionDetail(id) {
         setError(null);
       } catch (err) {
         console.error('Erreur fetch intervention:', err);
-        setError(err.message || "Erreur lors du chargement de l'intervention");
+        setError(extractApiErrorMessage(err, "Erreur lors du chargement de l'intervention"));
       } finally {
         if (!silent) setLoading(false);
       }
@@ -97,7 +98,9 @@ export function useInterventionDetail(id) {
         return updated;
       } catch (err) {
         console.error('Erreur update intervention:', err);
-        throw err;
+        throw new Error(
+          extractApiErrorMessage(err, "Erreur lors de la mise à jour de l'intervention")
+        );
       }
     },
     [id]
@@ -111,7 +114,7 @@ export function useInterventionDetail(id) {
         return updated;
       } catch (err) {
         console.error('Erreur update status:', err);
-        throw err;
+        throw new Error(extractApiErrorMessage(err, 'Erreur lors du changement de statut'));
       }
     },
     [id]
@@ -129,14 +132,20 @@ export function useInterventionDetail(id) {
         return created;
       } catch (err) {
         console.error('Erreur ajout action:', err);
-        throw err;
+        throw new Error(extractApiErrorMessage(err, "Erreur lors de l'ajout de l'action"));
       }
     },
     [id, fetchData]
   );
 
   const deleteIntervention = useCallback(async () => {
-    await apiDeleteIntervention(id);
+    try {
+      await apiDeleteIntervention(id);
+    } catch (err) {
+      throw new Error(
+        extractApiErrorMessage(err, "Erreur lors de la suppression de l'intervention")
+      );
+    }
   }, [id]);
 
   // Chargement du PDF
@@ -159,7 +168,7 @@ export function useInterventionDetail(id) {
       setPdfUrl(blobUrl);
     } catch (err) {
       console.error('Erreur chargement PDF:', err);
-      throw err;
+      throw new Error(extractApiErrorMessage(err, 'Erreur lors du chargement du PDF'));
     } finally {
       setPdfLoading(false);
     }

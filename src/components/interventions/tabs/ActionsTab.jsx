@@ -17,6 +17,7 @@ import ActionForm from '@/components/interventions/ActionForm';
 import * as actionCategoriesApi from '@/api/actionCategories';
 import * as complexityFactorsApi from '@/api/complexityFactors';
 import { fetchInterventionTasks, fetchInterventionTasksProgress } from '@/api/interventionTasks';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Bandeau compact de progression de gamme (comme la demande liée)
@@ -138,6 +139,7 @@ export default function ActionsTab({
   interventionId,
   onPurchaseRequestCreated,
   planId = null,
+  isLocked = false,
 }) {
   // State pour le formulaire de nouvelle action
   const [showNewActionForm, setShowNewActionForm] = useState(false);
@@ -231,7 +233,7 @@ export default function ActionsTab({
       setPendingValidations([]);
     } catch (error) {
       console.error('Erreur création action:', error);
-      throw error;
+      throw new Error(extractApiErrorMessage(error, "Erreur lors de la création de l'action"));
     } finally {
       setSubmitting(false);
     }
@@ -312,6 +314,7 @@ export default function ActionsTab({
                 item={item}
                 interventionId={interventionId}
                 onPurchaseRequestCreated={onPurchaseRequestCreated}
+                isLocked={isLocked}
               />
             )}
           />
@@ -330,6 +333,7 @@ ActionsTab.propTypes = {
   interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onPurchaseRequestCreated: PropTypes.func,
   planId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  isLocked: PropTypes.bool,
 };
 
 ActionsTab.defaultProps = {

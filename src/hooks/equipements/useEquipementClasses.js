@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import * as equipementClassesApi from '@/api/equipementClasses';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour gérer les classes d'équipement
@@ -26,7 +27,7 @@ export function useEquipementClasses() {
       const data = await equipementClassesApi.fetchEquipementClasses();
       setClasses(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des classes');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des classes'));
       setClasses([]);
     } finally {
       setLoading(false);

@@ -4,7 +4,13 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchPreventiveOccurrences, skipPreventiveOccurrence, generatePreventiveOccurrences, repairPreventiveOccurrences } from '@/api/preventiveOccurrences';
+import {
+  fetchPreventiveOccurrences,
+  skipPreventiveOccurrence,
+  generatePreventiveOccurrences,
+  repairPreventiveOccurrences,
+} from '@/api/preventiveOccurrences';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function usePreventiveOccurrences(filters = {}) {
   const [items, setItems] = useState([]);
@@ -18,20 +24,25 @@ export function usePreventiveOccurrences(filters = {}) {
       const data = await fetchPreventiveOccurrences(filters);
       setItems(data);
     } catch (err) {
-      setError(err.message || 'Erreur lors du chargement des occurrences');
+      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des occurrences'));
       setItems([]);
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]);
 
-  useEffect(() => { load(); }, [load]);
-
-  const skipOccurrence = useCallback(async (id, skip_reason) => {
-    await skipPreventiveOccurrence(id, skip_reason);
-    await load();
+  useEffect(() => {
+    load();
   }, [load]);
+
+  const skipOccurrence = useCallback(
+    async (id, skip_reason) => {
+      await skipPreventiveOccurrence(id, skip_reason);
+      await load();
+    },
+    [load]
+  );
 
   const generate = useCallback(async () => {
     const result = await generatePreventiveOccurrences();

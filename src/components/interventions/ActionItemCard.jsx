@@ -76,7 +76,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated }) {
+export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated, isLocked = false }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -278,9 +278,9 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
         />
 
         <ActionButtons
-          onEdit={handleOpenEdit}
+          onEdit={isLocked ? undefined : handleOpenEdit}
           onDuplicate={undefined}
-          onPurchase={() => setShowPurchaseForm(!showPurchaseForm)}
+          onPurchase={isLocked ? undefined : () => setShowPurchaseForm(!showPurchaseForm)}
           onDelete={undefined}
           purchaseRequestCount={purchaseRequests.length}
         />
@@ -300,7 +300,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       )}
 
       {/* EDIT FORM */}
-      {showEditForm && (
+      {!isLocked && showEditForm && (
         <ActionForm
           key={localAction.id}
           initialState={buildInitialEditState()}
@@ -321,7 +321,7 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
       />
 
       {/* PURCHASE REQUEST FORM DROPDOWN */}
-      {showPurchaseForm && (
+      {!isLocked && showPurchaseForm && (
         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--gray-5)' }}>
           <PurchaseRequestForm
             interventionId={localAction.intervention?.id || action.intervention?.id}
@@ -370,4 +370,5 @@ ActionItemCard.propTypes = {
   getCategoryColor: PropTypes.func.isRequired,
   sanitizeDescription: PropTypes.func.isRequired,
   onPurchaseRequestCreated: PropTypes.func,
+  isLocked: PropTypes.bool,
 };

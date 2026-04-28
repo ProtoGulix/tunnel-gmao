@@ -8,6 +8,7 @@ import {
   fetchInterventionRequest,
   transitionInterventionRequest,
 } from '@/api/intervention-requests';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Charge le détail complet d'une demande et expose la fonction de transition.
@@ -31,7 +32,7 @@ export function useInterventionRequestDetail(requestId) {
       const data = await fetchInterventionRequest(requestId);
       setDetail(data);
     } catch (err) {
-      setError(err.message || 'Impossible de charger la demande');
+      setError(extractApiErrorMessage(err, 'Impossible de charger la demande'));
     } finally {
       setLoading(false);
     }
@@ -58,9 +59,9 @@ export function useInterventionRequestDetail(requestId) {
         setDetail(updated);
         return updated;
       } catch (err) {
-        const msg = err.message || 'Transition impossible';
+        const msg = extractApiErrorMessage(err, 'Transition impossible');
         setTransitionError(msg);
-        throw err;
+        throw new Error(msg);
       } finally {
         setTransitioning(false);
       }

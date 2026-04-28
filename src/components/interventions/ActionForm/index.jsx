@@ -27,6 +27,7 @@ import ActionFormComplexity from './ActionFormComplexity';
 import ActionTaskSection from './ActionTaskSection';
 import { ContextSection } from './ActionFormContext';
 import CloseInterventionOverlay from './CloseInterventionOverlay';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 
 /* ── ActionForm principal ─────────────────────────────────────────────────── */
@@ -152,8 +153,7 @@ function ActionForm({
       const result = await onSubmit(buildPayload());
       onSuccess?.(result);
     } catch (err) {
-      const detail = err?.response?.data?.detail ?? err?.message ?? 'Erreur lors de la soumission';
-      setSubmitError(Array.isArray(detail) ? detail.map((e) => e.msg ?? String(e)).join(', ') : String(detail));
+      setSubmitError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
     }
   };
 

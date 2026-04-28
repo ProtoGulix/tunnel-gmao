@@ -51,11 +51,11 @@ function TaskIcon({ status, optional }) {
 }
 TaskIcon.propTypes = { status: PropTypes.string.isRequired, optional: PropTypes.bool };
 
-function TaskRow({ task, onSkipOpen, saving, canSkipObligatory }) {
+function TaskRow({ task, onSkipOpen, saving, canSkipObligatory, isLocked }) {
   const isPending = task.status === 'todo' || task.status === 'in_progress';
   const isSaving = saving === task.id;
   const isGamme = task.origin === 'plan';
-  const showSkip = isGamme && isPending && (task.optional || canSkipObligatory);
+  const showSkip = isGamme && isPending && (task.optional || canSkipObligatory) && !isLocked;
 
   return (
     <Flex align="center" gap="2" py="2" style={{ borderBottom: '1px solid var(--gray-3)' }}>
@@ -96,11 +96,12 @@ TaskRow.propTypes = {
   onSkipOpen: PropTypes.func.isRequired,
   saving: PropTypes.string,
   canSkipObligatory: PropTypes.bool,
+  isLocked: PropTypes.bool,
 };
 
 /* ── Composant principal ────────────────────────────────────────────────────── */
 
-export default function TasksTab({ interventionId }) {
+export default function TasksTab({ interventionId, isLocked = false }) {
   const { user } = useAuth();
   const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role));
 
@@ -174,7 +175,7 @@ export default function TasksTab({ interventionId }) {
   };
 
   if (loadState === 'loading') return <LoadingState fullscreen={false} message="Chargement des tâches…" />;
-  if (loadState === 'error') return <ErrorState error={{ message: loadError }} onRetry={loadData} />;
+  if (loadState === 'error') return <ErrorState error={loadError} onRetry={loadData} />;
 
   const gammeTasks = [...tasks]
     .filter((t) => t.origin === 'plan')
@@ -228,6 +229,7 @@ export default function TasksTab({ interventionId }) {
               onSkipOpen={(t) => { setSkipTarget(t); setSkipReason(''); }}
               saving={saving}
               canSkipObligatory={canSkipObligatory}
+              isLocked={isLocked}
             />
           ))
       ) : (
@@ -238,6 +240,7 @@ export default function TasksTab({ interventionId }) {
       )}
 
       {/* ── Création inline ── */}
+      {!isLocked && (
       <Box mt="3">
         {showCreate ? (
           <Flex gap="2" align="center">
@@ -265,6 +268,7 @@ export default function TasksTab({ interventionId }) {
         )}
         {createError && <Text size="1" color="red" mt="1">{createError}</Text>}
       </Box>
+      )}
 
       {/* ── Dialog Ignorer ── */}
       <AlertDialog.Root open={!!skipTarget} onOpenChange={(open) => { if (!open) { setSkipTarget(null); setSkipReason(''); } }}>
@@ -294,4 +298,5 @@ TasksTab.displayName = 'TasksTab';
 
 TasksTab.propTypes = {
   interventionId: PropTypes.string.isRequired,
+  isLocked: PropTypes.bool,
 };

@@ -6,6 +6,7 @@ import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import LockedBadge from '@/components/ui/LockedBadge';
 import { fetchEquipements } from '@/api/equipements';
 import { fetchServices } from '@/api/services';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const INITIAL_FORM = {
   machineId: '',
@@ -54,7 +55,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
         description: form.description.trim(),
       });
     } catch (err) {
-      setError(err.message || 'Erreur lors de la création de la demande');
+      setError(extractApiErrorMessage(err, 'Erreur lors de la création de la demande'));
     }
   };
 
