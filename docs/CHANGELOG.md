@@ -4,6 +4,31 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.32.0 - 2026-04-29
+
+Stabilité : **expérimental** 🧪
+
+### Impact fonctionnel
+
+- La **création de tâche** s'ouvre désormais dans une boîte de dialogue dédiée, accessible depuis l'onglet Tâches d'une intervention : plus lisible qu'un formulaire inline, avec gestion de l'assignation directement à la création.
+- La **page d'accueil** affiche maintenant un résumé des données de la journée : interventions en cours, demandes en attente, tâches ouvertes — chargé de façon centralisée et cohérente.
+- Le **formulaire de création d'intervention** permet de sélectionner le technicien responsable dès la création, sans avoir à modifier la fiche ensuite.
+- Les **modèles de pièces** (stock) bénéficient d'un formulaire de création et d'édition de champs enrichi : ajout de champs personnalisés, types de valeurs, validation et réorganisation.
+
+### Composants / Modules concernés
+
+- Tâches — dialogue de création remplaçant le formulaire inline
+- Page d'accueil — données synthétiques chargées via `useHomeData`
+- Interventions — sélection de l'utilisateur à la création
+- Stock / Modèles de pièces — formulaire de création et rangées de champs refondus
+
+### Points de vigilance
+
+- L'API doit renvoyer les données résumées attendues par la page d'accueil (`interventions_ouvertes`, `taches_ouvertes`, etc.) pour que les compteurs s'affichent.
+- La création de tâche via dialogue nécessite que l'endpoint d'assignation soit accessible (`/tasks/:id/assign` ou équivalent).
+
+---
+
 ## 3.31.0 - 2026-04-28
 
 Stabilité : **stable** ✅
