@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { CheckSquare, Plus } from 'lucide-react';
 import TableHeader from '@/components/ui/TableHeader';
@@ -6,14 +6,13 @@ import DataTable from '@/components/ui/DataTable';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import TaskDetail from '@/components/tasks/TaskDetail';
-import TaskCreateInlineForm from '@/components/tasks/TaskCreateInlineForm';
+import TaskCreateDialog from '@/components/tasks/TaskCreateDialog';
 import { useTasks } from '@/hooks/tasks/useTasks';
 import { COLUMNS, TasksFilters } from '@/components/tasks/tabs/TasksTabParts';
 
 export default function TasksTab() {
   const {
     users,
-    openInterventions,
     loading,
     error,
     search,
@@ -30,12 +29,11 @@ export default function TasksTab() {
     refresh,
     expandedRowId,
     setExpandedRowId,
-    mode,
-    setMode,
     saving,
     patchTask,
-    createTask,
   } = useTasks();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleSelect = useCallback((row) => {
     if (expandedRowId === row.id) {
@@ -70,23 +68,17 @@ export default function TasksTab() {
           />
         }
         rightActions={
-          <Button size="2" color="blue" onClick={() => setMode((prev) => (prev === 'create' ? null : 'create'))}>
+          <Button size="2" color="blue" onClick={() => setDialogOpen(true)}>
             <Plus size={14} /> Nouvelle tache
           </Button>
         }
       />
 
-      {mode === 'create' && (
-        <Box mb="3">
-          <TaskCreateInlineForm
-            interventions={openInterventions}
-            users={users}
-            loading={saving}
-            onSubmit={createTask}
-            onCancel={() => setMode(null)}
-          />
-        </Box>
-      )}
+      <TaskCreateDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={() => { refresh(); }}
+      />
 
       <DataTable
         columns={COLUMNS}

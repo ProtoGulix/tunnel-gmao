@@ -13,7 +13,8 @@ const PRIORITY_OPTIONS = [
   { value: 'faible', label: 'Faible' },
 ];
 
-export default function InterventionCreateForm({ formData, set, locked, lockedType = false, fetchEquipementsFn, saving, error, onSubmit, onCancel }) {
+export default function InterventionCreateForm({ formData, set, locked, lockedType = false, fetchEquipementsFn, users, saving, error, onSubmit, onCancel }) {
+  const userList = Array.isArray(users) ? users : [];
   return (
     <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
       <Flex direction="column" gap="3">
@@ -115,14 +116,21 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
               </Box>
             </Flex>
 
-            {/* Initiales technicien */}
+            {/* Technicien pilote */}
             <Box>
               <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
-                Initiales technicien <Text color="red">*</Text>
+                Technicien pilote <Text color="red">*</Text>
               </Text>
-              <TextField.Root placeholder="Ex. : QC" value={formData.techInitials}
-                onChange={(e) => set('techInitials', e.target.value.toUpperCase())} maxLength={5} required />
-              <Text size="1" color="gray" mt="1" style={{ display: 'block' }}>Intégrées dans le code d&apos;intervention</Text>
+              <Select.Root value={formData.techId} onValueChange={(v) => set('techId', v)} required>
+                <Select.Trigger placeholder="Sélectionner un technicien…" style={{ width: '100%' }} />
+                <Select.Content>
+                  {userList.map((u) => (
+                    <Select.Item key={u.id} value={u.id}>
+                      {u.first_name} {u.last_name}{u.initial ? ` (${u.initial})` : ''}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
             </Box>
 
             {/* Signalé par */}
@@ -159,6 +167,7 @@ InterventionCreateForm.propTypes = {
   locked: PropTypes.bool.isRequired,
   lockedType: PropTypes.bool,
   fetchEquipementsFn: PropTypes.func.isRequired,
+  users: PropTypes.array,
   saving: PropTypes.bool,
   error: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,

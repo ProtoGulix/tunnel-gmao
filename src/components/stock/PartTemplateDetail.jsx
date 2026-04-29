@@ -86,9 +86,43 @@ export default function PartTemplateDetail({ template, onEdit, onDelete, deletin
                   </Badge>
                 </Table.Cell>
                 <Table.Cell>
-                  <Text size="1" color="gray">
-                    {field.enum_values?.map((v) => v.label).join(', ') || '—'}
-                  </Text>
+                  {field.enum_values?.length ? (
+                    <Flex gap="1" wrap="wrap">
+                      {field.enum_values.map((v) => (
+                        <Flex
+                          key={v.value}
+                          align="center"
+                          style={{
+                            border: '1px solid var(--orange-6)',
+                            borderRadius: 4,
+                            overflow: 'hidden',
+                            fontSize: 11,
+                            lineHeight: '18px',
+                          }}
+                        >
+                          <Box style={{
+                            background: 'var(--orange-9)',
+                            color: 'white',
+                            padding: '0 6px',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 600,
+                            letterSpacing: '0.02em',
+                          }}>
+                            {v.value}
+                          </Box>
+                          <Box style={{
+                            background: 'var(--orange-2)',
+                            color: 'var(--gray-11)',
+                            padding: '0 6px',
+                          }}>
+                            {v.label}
+                          </Box>
+                        </Flex>
+                      ))}
+                    </Flex>
+                  ) : (
+                    <Text size="1" color="gray">—</Text>
+                  )}
                 </Table.Cell>
               </Table.Row>
             ))}

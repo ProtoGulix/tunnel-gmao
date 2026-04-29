@@ -13,18 +13,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Spinner, Text, TextField,
+  AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField,
 } from '@radix-ui/themes';
-import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
 import {
-  createInterventionTask,
   fetchInterventionTasks,
   fetchInterventionTasksProgress,
   patchInterventionTask,
 } from '@/api/interventionTasks';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
+import TaskCreateDialog from '@/components/tasks/TaskCreateDialog';
 
 /* ── Constantes ─────────────────────────────────────────────────────────────── */
 
@@ -113,11 +113,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
   const [skipTarget, setSkipTarget] = useState(null);
   const [skipReason, setSkipReason] = useState('');
 
-  // Création inline
-  const [showCreate, setShowCreate] = useState(false);
-  const [newLabel, setNewLabel] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoadState('loading');
@@ -151,26 +147,6 @@ export default function TasksTab({ interventionId, isLocked = false }) {
       setSaving(null);
       setSkipTarget(null);
       setSkipReason('');
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!newLabel.trim()) return;
-    setCreating(true);
-    setCreateError(null);
-    try {
-      await createInterventionTask({
-        intervention_id: String(interventionId),
-        label: newLabel.trim(),
-        status: 'todo',
-      });
-      setNewLabel('');
-      setShowCreate(false);
-      await loadData();
-    } catch (err) {
-      setCreateError(err?.response?.data?.detail ?? 'Erreur lors de la création');
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -239,35 +215,20 @@ export default function TasksTab({ interventionId, isLocked = false }) {
         </Callout.Root>
       )}
 
-      {/* ── Création inline ── */}
+      {/* ── Création via Dialog ── */}
       {!isLocked && (
-      <Box mt="3">
-        {showCreate ? (
-          <Flex gap="2" align="center">
-            <TextField.Root
-              placeholder="Libellé de la nouvelle tâche…"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } }}
-              style={{ flex: 1 }}
-              autoFocus
-            />
-            <Button size="2" type="button" onClick={handleCreate} disabled={!newLabel.trim() || creating}>
-              {creating ? <Spinner size="1" /> : <Plus size={14} />}
-              Créer
-            </Button>
-            <Button size="2" variant="soft" color="gray" type="button" onClick={() => { setShowCreate(false); setNewLabel(''); setCreateError(null); }}>
-              <X size={14} />
-            </Button>
-          </Flex>
-        ) : (
-          <Button size="2" variant="soft" color="gray" onClick={() => setShowCreate(true)}>
+        <Box mt="3">
+          <Button size="2" variant="soft" color="gray" onClick={() => setCreateDialogOpen(true)}>
             <Plus size={14} />
             Nouvelle tâche
           </Button>
-        )}
-        {createError && <Text size="1" color="red" mt="1">{createError}</Text>}
-      </Box>
+          <TaskCreateDialog
+            open={createDialogOpen}
+            onOpenChange={setCreateDialogOpen}
+            interventionId={String(interventionId)}
+            onSuccess={() => loadData()}
+          />
+        </Box>
       )}
 
       {/* ── Dialog Ignorer ── */}

@@ -31,6 +31,7 @@ export async function fetchInterventions(filters = {}) {
   if (filters.status) params.status = filters.status;
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;
+  if (filters.include) params.include = filters.include;
 
   const response = await api.get('/interventions', { params });
   const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
@@ -80,7 +81,7 @@ export async function createIntervention(data) {
   const payload = {
     machine_id: data.equipementId,
     type_inter: data.type,
-    tech_initials: data.techInitials,
+    tech_id: data.techId,
     title: data.title,
     priority: data.priority,
     status_actual: 'ouvert',
@@ -188,6 +189,7 @@ function mapInterventionResponse(raw = {}) {
           totalTime: raw.stats.total_time ?? 0,
           avgComplexity: raw.stats.avg_complexity ?? 0,
           purchaseCount: raw.stats.purchase_count ?? 0,
+          taskProgress: raw.stats.task_progress ?? null,
         }
       : null,
   };
