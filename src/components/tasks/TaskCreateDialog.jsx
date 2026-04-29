@@ -79,10 +79,10 @@ export default function TaskCreateDialog({ open, onOpenChange, interventionId = 
                 {/* Assigné */}
                 <Box>
                   <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Assigné à</Text>
-                  <Select.Root value={formData.assignedTo} onValueChange={(v) => set('assignedTo', v)} disabled={optionsLoading}>
+                  <Select.Root value={formData.assignedTo || '__none__'} onValueChange={(v) => set('assignedTo', v === '__none__' ? '' : v)} disabled={optionsLoading}>
                     <Select.Trigger placeholder="Non assigné" style={{ width: '100%' }} />
                     <Select.Content>
-                      <Select.Item value="">Non assigné</Select.Item>
+                      <Select.Item value="__none__">Non assigné</Select.Item>
                       {users.map((u) => {
                         const initials = (u.initials || u.initial || '').toUpperCase();
                         const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();

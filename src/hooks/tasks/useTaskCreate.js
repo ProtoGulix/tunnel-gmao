@@ -51,29 +51,35 @@ export function useTaskCreate({ interventionId: lockedInterventionId = null, onS
     return errs;
   }, [formData, lockedInterventionId]);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (errs.length) { setErrors(errs); return; }
-    setErrors([]);
-    setSaving(true);
-    try {
-      const created = await createInterventionTask({
-        intervention_id: lockedInterventionId ?? formData.interventionId,
-        label: formData.label.trim(),
-        assigned_to: formData.assignedTo || undefined,
-        due_date: formData.dueDate || undefined,
-        optional: formData.optional,
-        origin: 'tech',
-      });
-      reset();
-      onSuccess?.(created);
-    } catch (err) {
-      setErrors([extractApiErrorMessage(err, 'Erreur lors de la création de la tâche')]);
-    } finally {
-      setSaving(false);
-    }
-  }, [formData, lockedInterventionId, validate, reset, onSuccess]);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      const errs = validate();
+      if (errs.length) {
+        setErrors(errs);
+        return;
+      }
+      setErrors([]);
+      setSaving(true);
+      try {
+        const created = await createInterventionTask({
+          intervention_id: lockedInterventionId ?? formData.interventionId,
+          label: formData.label.trim(),
+          assigned_to: formData.assignedTo || undefined,
+          due_date: formData.dueDate || undefined,
+          optional: formData.optional,
+          origin: 'tech',
+        });
+        reset();
+        onSuccess?.(created);
+      } catch (err) {
+        setErrors([extractApiErrorMessage(err, 'Erreur lors de la création de la tâche')]);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [formData, lockedInterventionId, validate, reset, onSuccess]
+  );
 
   return {
     formData,
