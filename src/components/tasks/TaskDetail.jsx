@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   Flex,
-  Link,
   Select,
   Separator,
   Switch,
@@ -14,6 +13,7 @@ import {
   Text,
   TextField,
 } from '@radix-ui/themes';
+import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import {
   createInterventionActionForTask,
@@ -252,7 +252,7 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
               <Text size="2" weight="medium">{task.interventionTitle || 'Sans titre'}</Text>
               <Text size="1" color="gray">{task.equipementName || 'Machine inconnue'}</Text>
               {task.interventionId && (
-                <Link href={`/interventions/${task.interventionId}`}>
+                <Link to={`/interventions/${task.interventionId}`} style={{ textDecoration: 'none', color: 'var(--accent-11)' }}>
                   <Flex align="center" gap="1">
                     <Text size="2">Ouvrir</Text>
                     <ExternalLink size={12} />

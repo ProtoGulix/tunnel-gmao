@@ -12,10 +12,11 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text, TextField, Badge, Spinner, Select } from '@radix-ui/themes';
-import { CheckSquare, Plus, X } from 'lucide-react';
-import { fetchInterventionTasks, createInterventionTask } from '@/api/interventionTasks';
+import { Box, Button, Flex, Text, TextField, Badge, Select } from '@radix-ui/themes';
+import { CheckSquare } from 'lucide-react';
+import { fetchInterventionTasks } from '@/api/interventionTasks';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
+import TaskCreateDialog from '@/components/tasks/TaskCreateDialog';
 
 function normalizeSelectedTask(task, preserveExistingStatus = true) {
   if (!task) return null;
@@ -117,10 +118,7 @@ TaskRow.propTypes = {
 export default function ActionTaskSection({ interventionId, value, onChange, accentColor = 'blue' }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newLabel, setNewLabel] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!interventionId) return;
@@ -170,32 +168,10 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
     )));
   }, [selectedTasks, onChange]);
 
-  const handleCreate = useCallback(async () => {
-    if (!newLabel.trim() || !interventionId) return;
-    setCreating(true);
-    setCreateError(null);
-    try {
-      const created = await createInterventionTask({
-        intervention_id: String(interventionId),
-        label: newLabel.trim(),
-        status: 'todo',
-      });
-      setTasks((prev) => [...prev, created]);
-      onChange([...selectedTasks, normalizeSelectedTask(created, false)]);
-      setShowCreate(false);
-      setNewLabel('');
-    } catch (err) {
-      setCreateError(err?.response?.data?.detail ?? 'Erreur lors de la création');
-    } finally {
-      setCreating(false);
-    }
-  }, [newLabel, interventionId, onChange, selectedTasks]);
-
-  const handleCancelCreate = useCallback(() => {
-    setShowCreate(false);
-    setNewLabel('');
-    setCreateError(null);
-  }, []);
+  const handleCreate = useCallback((createdTask) => {
+    setTasks((prev) => [...prev, createdTask]);
+    onChange([...selectedTasks, normalizeSelectedTask(createdTask, false)]);
+  }, [onChange, selectedTasks]);
 
   if (!interventionId) return null;
 
@@ -220,42 +196,18 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
             accentColor={accentColor}
           />
         )}
-        onCreateClick={() => setShowCreate((v) => !v)}
+        onCreateClick={() => setCreateDialogOpen(true)}
         createLabel="Nouvelle tâche"
         emptyMessage="Aucune tâche ouverte — créez-en une"
         maxHeight={200}
       />
 
-      {/* Formulaire de création inline */}
-      {showCreate && (
-        <Box mt="2">
-          <Flex gap="2" align="center">
-            <TextField.Root
-              placeholder="Libellé de la tâche…"
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCreate(); } }}
-              style={{ flex: 1 }}
-              autoFocus
-            />
-            <Button
-              size="2"
-              type="button"
-              onClick={handleCreate}
-              disabled={!newLabel.trim() || creating}
-            >
-              {creating ? <Spinner size="1" /> : <Plus size={14} />}
-              Créer
-            </Button>
-            <Button size="2" variant="soft" color="gray" type="button" onClick={handleCancelCreate}>
-              <X size={14} />
-            </Button>
-          </Flex>
-          {createError && (
-            <Text size="1" color="red" mt="1">{createError}</Text>
-          )}
-        </Box>
-      )}
+      <TaskCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        interventionId={String(interventionId)}
+        onSuccess={handleCreate}
+      />
 
     </Box>
   );

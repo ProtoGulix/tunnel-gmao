@@ -4,7 +4,8 @@
  */
 
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, Link } from '@radix-ui/themes';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
 /**
@@ -35,7 +36,7 @@ export default function EquipementHierarchy({ parentInfo = null, childrenInfo = 
             Équipement mère
           </Text>
           <ChevronRight size={16} />
-          <Link href={`/equipements/${parentInfo.id}`}>
+          <Link to={`/equipements/${parentInfo.id}`} style={{ textDecoration: 'none', color: 'var(--accent-11)' }}>
             <Text size="2" weight="medium">
               {parentInfo.code || '—'} – {parentInfo.name}
             </Text>
@@ -50,7 +51,7 @@ export default function EquipementHierarchy({ parentInfo = null, childrenInfo = 
           </Text>
           <Flex direction="column" gap="1">
             {childrenInfo.map((child) => (
-              <Link key={child.id} href={`/equipements/${child.id}`}>
+              <Link key={child.id} to={`/equipements/${child.id}`} style={{ textDecoration: 'none', color: 'var(--accent-11)' }}>
                 <Flex align="center" gap="2">
                   <ChevronRight size={14} />
                   <Text size="2">
