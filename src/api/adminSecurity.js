@@ -36,3 +36,20 @@ export async function createEmailDomainRule(data) {
 export async function deleteEmailDomainRule(id) {
   await api.delete(`/admin/email-domain-rules/${id}`);
 }
+
+// --- Clés API machine-to-machine ---
+export async function fetchApiKeys() {
+  const r = await api.get('/api-keys');
+  return r.data?.data || r.data;
+}
+export async function createApiKey(data) {
+  const r = await api.post('/api-keys', data);
+  return r.data?.data || r.data;
+}
+export async function updateApiKey(id, data) {
+  const r = await api.patch(`/api-keys/${id}`, data);
+  return r.data?.data || r.data;
+}
+export async function deleteApiKey(id) {
+  await api.delete(`/api-keys/${id}`);
+}

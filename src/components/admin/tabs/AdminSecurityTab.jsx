@@ -5,11 +5,17 @@
 
 import { useState, useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
-import { CheckCircle, XCircle, Activity, Ban, Globe } from 'lucide-react';
+import { CheckCircle, XCircle, Activity, Ban, Globe, KeyRound } from 'lucide-react';
 import AdminSecurityLogsTable from '@/components/admin/AdminSecurityLogsTable';
 import AdminSecurityBlocklist from '@/components/admin/AdminSecurityBlocklist';
 import AdminSecurityDomains from '@/components/admin/AdminSecurityDomains';
-import { useSecurityLogs, useIpBlocklist, useEmailDomainRules } from '@/hooks/admin/useAdminSecurity';
+import AdminSecurityApiKeys from '@/components/admin/AdminSecurityApiKeys';
+import {
+  useSecurityLogs,
+  useIpBlocklist,
+  useEmailDomainRules,
+  useApiKeys,
+} from '@/hooks/admin/useAdminSecurity';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
@@ -25,6 +31,7 @@ export default function AdminSecurityTab() {
   const logsHook = useSecurityLogs({ eventType, startDate, endDate });
   const blocklistHook = useIpBlocklist();
   const domainsHook = useEmailDomainRules();
+  const apiKeysHook = useApiKeys();
 
   const handleBlockIp = useCallback(async (payload) => {
     try {
@@ -66,6 +73,37 @@ export default function AdminSecurityTab() {
     }
   }, [domainsHook, notify]);
 
+  const handleCreateApiKey = useCallback(async (payload) => {
+    try {
+      const created = await apiKeysHook.createKey(payload);
+      notify('Cle API creee');
+      return created;
+    } catch (err) {
+      notify(extractApiErrorMessage(err, 'Erreur lors de la creation de cle'), 'error');
+      throw err;
+    }
+  }, [apiKeysHook, notify]);
+
+  const handlePatchApiKey = useCallback(async (id, payload) => {
+    try {
+      await apiKeysHook.patchKey(id, payload);
+      notify('Cle API mise a jour');
+    } catch (err) {
+      notify(extractApiErrorMessage(err, 'Erreur lors de la mise a jour'), 'error');
+      throw err;
+    }
+  }, [apiKeysHook, notify]);
+
+  const handleRevokeApiKey = useCallback(async (id) => {
+    try {
+      await apiKeysHook.revokeKey(id);
+      notify('Cle API revoquee');
+    } catch (err) {
+      notify(extractApiErrorMessage(err, 'Erreur lors de la revocation'), 'error');
+      throw err;
+    }
+  }, [apiKeysHook, notify]);
+
   return (
     <Box pt="4">
       {notification && (
@@ -87,6 +125,9 @@ export default function AdminSecurityTab() {
           </Tabs.Trigger>
           <Tabs.Trigger value="domains">
             <Flex align="center" gap="2"><Globe size={13} /><Text>Domaines</Text></Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="api-keys">
+            <Flex align="center" gap="2"><KeyRound size={13} /><Text>Cles API</Text></Flex>
           </Tabs.Trigger>
         </Tabs.List>
 
@@ -124,6 +165,18 @@ export default function AdminSecurityTab() {
               loading={domainsHook.loading}
               onAdd={handleAddDomain}
               onRemove={handleRemoveDomain}
+            />
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="api-keys">
+          {activeTab === 'api-keys' && (
+            <AdminSecurityApiKeys
+              items={apiKeysHook.items}
+              loading={apiKeysHook.loading}
+              onCreate={handleCreateApiKey}
+              onPatch={handlePatchApiKey}
+              onRevoke={handleRevokeApiKey}
             />
           )}
         </Tabs.Content>

@@ -20,33 +20,36 @@ export function useSecurityLogs({ eventType = '', startDate = '', endDate = '' }
   const abortRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const load = useCallback(async (silent = false) => {
-    if (abortRef.current) abortRef.current.abort();
-    abortRef.current = new AbortController();
-    const ctrl = abortRef.current;
+  const load = useCallback(
+    async (silent = false) => {
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+      const ctrl = abortRef.current;
 
-    if (!silent) setLoading(true);
-    setError(null);
-    try {
-      const params = { skip: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE };
-      if (eventType) params.event_type = eventType;
-      if (startDate) params.start_date = startDate;
-      if (endDate) params.end_date = endDate;
+      if (!silent) setLoading(true);
+      setError(null);
+      try {
+        const params = { skip: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE };
+        if (eventType) params.event_type = eventType;
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
 
-      const data = await secApi.fetchSecurityLogs(params);
-      if (ctrl.signal.aborted) return;
+        const data = await secApi.fetchSecurityLogs(params);
+        if (ctrl.signal.aborted) return;
 
-      const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
-      setLogs(items);
-      setTotal(data?.pagination?.total ?? items.length);
-      setTotalPages(data?.pagination?.total_pages ?? 1);
-    } catch (err) {
-      if (ctrl.signal.aborted) return;
-      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des logs'));
-    } finally {
-      if (!ctrl.signal.aborted && !silent) setLoading(false);
-    }
-  }, [page, eventType, startDate, endDate]);
+        const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+        setLogs(items);
+        setTotal(data?.pagination?.total ?? items.length);
+        setTotalPages(data?.pagination?.total_pages ?? 1);
+      } catch (err) {
+        if (ctrl.signal.aborted) return;
+        setError(extractApiErrorMessage(err, 'Erreur lors du chargement des logs'));
+      } finally {
+        if (!ctrl.signal.aborted && !silent) setLoading(false);
+      }
+    },
+    [page, eventType, startDate, endDate]
+  );
 
   useEffect(() => {
     load();
@@ -58,7 +61,9 @@ export function useSecurityLogs({ eventType = '', startDate = '', endDate = '' }
   }, [load]);
 
   return {
-    logs, loading, error,
+    logs,
+    loading,
+    error,
     pagination: { total, page, pageSize: PAGE_SIZE, totalPages },
     goToPage: setPage,
     refresh: () => load(),
@@ -74,8 +79,11 @@ export function useIpBlocklist() {
 
   useEffect(() => {
     setLoading(true);
-    secApi.fetchIpBlocklist()
-      .then((data) => setItems(Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []))
+    secApi
+      .fetchIpBlocklist()
+      .then((data) =>
+        setItems(Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [])
+      )
       .catch((err) => setError(extractApiErrorMessage(err, 'Erreur chargement blocklist')))
       .finally(() => setLoading(false));
   }, [refreshKey]);
@@ -103,8 +111,11 @@ export function useEmailDomainRules() {
 
   useEffect(() => {
     setLoading(true);
-    secApi.fetchEmailDomainRules()
-      .then((data) => setItems(Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []))
+    secApi
+      .fetchEmailDomainRules()
+      .then((data) =>
+        setItems(Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [])
+      )
       .catch((err) => setError(extractApiErrorMessage(err, 'Erreur chargement domaines')))
       .finally(() => setLoading(false));
   }, [refreshKey]);
@@ -121,4 +132,47 @@ export function useEmailDomainRules() {
   }, []);
 
   return { items, loading, error, addDomain, removeDomain };
+}
+
+// ---- Clés API ----
+export function useApiKeys() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await secApi.fetchApiKeys();
+      setItems(Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(extractApiErrorMessage(err, 'Erreur chargement clés API'));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const createKey = useCallback(async (payload) => {
+    const created = await secApi.createApiKey(payload);
+    setItems((prev) => [created, ...prev]);
+    return created;
+  }, []);
+
+  const patchKey = useCallback(async (id, payload) => {
+    const updated = await secApi.updateApiKey(id, payload);
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
+    return updated;
+  }, []);
+
+  const revokeKey = useCallback(async (id) => {
+    await secApi.deleteApiKey(id);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+
+  return { items, loading, error, createKey, patchKey, revokeKey, refresh: load };
 }
