@@ -174,8 +174,8 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
     MOBILE_BREAKPOINT
   );
 
-  // Récupérer les sections du menu selon l'état d'authentification
-  const menuSections = getMenuSections(isAuthenticated);
+  // Récupérer les sections du menu selon l'état d'authentification et le rôle
+  const menuSections = getMenuSections(isAuthenticated, user?.role ?? null);
 
   const handleLogoutClick = () => {
     if (logoutConfirm) {

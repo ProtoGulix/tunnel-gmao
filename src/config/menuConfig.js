@@ -219,18 +219,23 @@ export const MENU_CONFIG = {
   private: PAGES_CONFIG.filter((p) => p.requiresAuth && !p.publicOnly),
 };
 
-/** Retourne les items du menu selon l'état d'authentification */
-export function getMenuItems(isAuthenticated) {
+/** Retourne les items du menu selon l'état d'authentification et le rôle */
+export function getMenuItems(isAuthenticated, userRole = null) {
   return PAGES_CONFIG.filter((item) => {
     if (item.showInMenu === false || item.disabled === true) return false;
-    if (isAuthenticated) return !item.publicOnly;
+    if (isAuthenticated) {
+      if (item.publicOnly) return false;
+      // Filtrer les items qui requièrent un rôle spécifique
+      if (item.requiredRoles && !item.requiredRoles.includes(userRole)) return false;
+      return true;
+    }
     return item.public || item.publicOnly;
   });
 }
 
 /** Retourne les sections groupées et triées pour l'affichage */
-export function getMenuSections(isAuthenticated) {
-  const menuItems = getMenuItems(isAuthenticated);
+export function getMenuSections(isAuthenticated, userRole = null) {
+  const menuItems = getMenuItems(isAuthenticated, userRole);
 
   if (isAuthenticated) {
     // Grouper par section
