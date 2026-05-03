@@ -8,7 +8,6 @@ import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
 import { CheckCircle, XCircle, Layers, Wrench } from 'lucide-react';
 import {
   ActionCategoriesSection,
-  ActionSubcategoriesSection,
   ComplexityFactorsSection,
 } from '@/components/admin/AdminRefActionsSection';
 import {
@@ -17,7 +16,6 @@ import {
 } from '@/components/admin/AdminRefInterventionsSection';
 import {
   useActionCategories,
-  useActionSubcategories,
   useComplexityFactors,
   useInterventionTypes,
   useInterventionStatuses,
@@ -32,7 +30,6 @@ export default function AdminReferentielTab() {
   const { notification, notify } = useNotification();
 
   const categories = useActionCategories();
-  const subcategories = useActionSubcategories();
   const factors = useComplexityFactors();
   const intTypes = useInterventionTypes();
   const intStatuses = useInterventionStatuses();
@@ -58,25 +55,6 @@ export default function AdminReferentielTab() {
       const updated = await refApi.toggleActionCategoryActive(id, is_active);
       categories.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, is_active ? 'Catégorie activée' : 'Catégorie désactivée'), [categories, wrap]);
-
-  // Sous-catégories
-  const handleCreateSubcategory = useCallback((payload) =>
-    wrap(async () => {
-      await refApi.createActionSubcategory(payload);
-      subcategories.refresh();
-    }, 'Sous-catégorie créée'), [subcategories, wrap]);
-
-  const handleUpdateSubcategory = useCallback((id, payload) =>
-    wrap(async () => {
-      const updated = await refApi.updateActionSubcategory(id, payload);
-      subcategories.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
-    }, 'Sous-catégorie modifiée'), [subcategories, wrap]);
-
-  const handleToggleSubcategoryActive = useCallback((id, is_active) =>
-    wrap(async () => {
-      const updated = await refApi.toggleActionSubcategoryActive(id, is_active);
-      subcategories.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
-    }, is_active ? 'Activée' : 'Désactivée'), [subcategories, wrap]);
 
   // Facteurs
   const handleUpdateFactor = useCallback((id, payload) =>
@@ -146,15 +124,6 @@ export default function AdminReferentielTab() {
                 loading={categories.loading}
                 error={categories.error}
                 onUpdate={handleUpdateCategory}
-                onToggleActive={handleToggleCategoryActive}
-              />
-              <ActionSubcategoriesSection
-                items={subcategories.items}
-                categories={categories.items}
-                loading={subcategories.loading}
-                onCreate={handleCreateSubcategory}
-                onUpdate={handleUpdateSubcategory}
-                onToggleActive={handleToggleSubcategoryActive}
               />
               <ComplexityFactorsSection
                 items={factors.items}

@@ -10,25 +10,20 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import AdminRolePermissionsMatrix from '@/components/admin/AdminRolePermissionsMatrix';
 import AdminPermissionAuditPanel from '@/components/admin/AdminPermissionAuditPanel';
-import { useAdminRoles, useRolePermissions, usePermissionAudit } from '@/hooks/admin/useAdminRoles';
+import { useRolesMatrix, usePermissionAudit } from '@/hooks/admin/useAdminRoles';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export default function AdminRolesTab() {
-  const { roles, loading, error } = useAdminRoles();
-  const [selectedRoleId, setSelectedRoleId] = useState(null);
+  const { matrix, loading, error, togglePermission } = useRolesMatrix();
   const [auditOpen, setAuditOpen] = useState(false);
 
-  const { permissions, loadingPermissions, errorPermissions, togglePermission } =
-    useRolePermissions(selectedRoleId);
-
   const { audit, loading: auditLoading, load: loadAudit } = usePermissionAudit();
-
   const { notification, notify } = useNotification();
 
-  const handleToggle = useCallback(async (permId, newValue) => {
+  const handleToggle = useCallback(async (permId, roleCode, endpointId, newAllowed) => {
     try {
-      await togglePermission(permId, newValue);
+      await togglePermission(permId, roleCode, endpointId, newAllowed);
       notify('Permission modifiée');
     } catch (err) {
       notify(extractApiErrorMessage(err, 'Erreur lors de la modification'), 'error');
@@ -59,13 +54,8 @@ export default function AdminRolesTab() {
       )}
 
       <AdminRolePermissionsMatrix
-        roles={roles}
-        selectedRoleId={selectedRoleId}
-        onSelectRole={setSelectedRoleId}
-        permissions={permissions}
-        loadingPermissions={loadingPermissions}
-        errorPermissions={errorPermissions}
-        onTogglePermission={handleToggle}
+        matrix={matrix}
+        onToggle={handleToggle}
         onShowAudit={handleShowAudit}
       />
 

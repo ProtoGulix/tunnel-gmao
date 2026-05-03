@@ -10,6 +10,11 @@ export async function fetchAdminRoles() {
   return response.data?.data || response.data;
 }
 
+export async function fetchRolesMatrix() {
+  const response = await api.get('/admin/roles/matrix');
+  return response.data?.data || response.data;
+}
+
 export async function fetchRolePermissions(roleId) {
   const response = await api.get(`/admin/roles/${roleId}/permissions`);
   return response.data?.data || response.data;
