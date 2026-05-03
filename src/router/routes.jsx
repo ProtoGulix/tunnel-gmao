@@ -21,7 +21,9 @@ import SuppliersPage from '@/pages/suppliers/SuppliersPage';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
 import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
+import AdminPage from '@/pages/admin/AdminPage';
 import PreventivePage from '@/pages/preventive/PreventivePage';
+import RequireRole from '@/auth/RequireRole';
 
 /**
  * Composant de route protégée
@@ -217,6 +219,19 @@ export default function AppRoutes() {
             <Layout>
               <PreventivePage />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <RequireRole roles={['RESP', 'ADMIN']}>
+              <Layout>
+                <AdminPage />
+              </Layout>
+            </RequireRole>
           </ProtectedRoute>
         }
       />
