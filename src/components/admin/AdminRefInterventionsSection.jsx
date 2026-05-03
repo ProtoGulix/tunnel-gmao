@@ -33,13 +33,14 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ label: '' });
+  const [form, setForm] = useState({ code: '', label: '' });
+  const [isEditMode, setIsEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleCreate = useCallback(async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try { await onCreate(form); setCreateOpen(false); setForm({ label: '' }); }
+    try { await onCreate({ code: form.code.trim().toUpperCase(), label: form.label.trim() }); setCreateOpen(false); setForm({ code: '', label: '' }); }
     finally { setSubmitting(false); }
   }, [form, onCreate]);
 
@@ -50,7 +51,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
     finally { setSubmitting(false); }
   }, [form, selected, onUpdate]);
 
-  const openEdit = (item) => { setSelected(item); setForm({ label: item.label || '' }); setEditOpen(true); };
+  const openEdit = (item) => { setSelected(item); setForm({ code: item.code || '', label: item.label || '' }); setIsEditMode(true); setEditOpen(true); };
 
   const columns = useMemo(() => [
     { key: 'label', header: 'Libellé', render: (i) => <Text size="2" weight="medium">{i.label}</Text> },
@@ -74,9 +75,15 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
   const LabelForm = ({ onSubmit, submitLabel }) => (
     <form onSubmit={onSubmit}>
       <Flex direction="column" gap="3" mt="4">
+        {!isEditMode && (
+          <label>
+            <Text size="2" weight="bold" mb="1" as="div">Code * (ex: CURATIF)</Text>
+            <TextField.Root value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="CODE" required />
+          </label>
+        )}
         <label>
           <Text size="2" weight="bold" mb="1" as="div">Libellé *</Text>
-          <TextField.Root value={form.label} onChange={(e) => setForm({ label: e.target.value })} required />
+          <TextField.Root value={form.label} onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))} required />
         </label>
       </Flex>
       <Flex gap="3" mt="4" justify="end">
@@ -95,7 +102,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
         </Dialog.Content>
       </Dialog.Root>
 
-      <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog.Root open={editOpen} onOpenChange={(v) => { if (!v) setIsEditMode(false); setEditOpen(v); }}>
         <Dialog.Content style={{ maxWidth: 380 }}>
           <Dialog.Title>Modifier le type</Dialog.Title>
           <LabelForm onSubmit={handleEdit} submitLabel="Enregistrer" />
@@ -107,7 +114,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
           title: "Types d'intervention",
           count: items.length,
           showSearchInput: false,
-          actions: <Button size="2" onClick={() => { setForm({ label: '' }); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>,
+          actions: <Button size="2" onClick={() => { setForm({ code: '', label: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>,
         }}
         columns={columns}
         data={items}

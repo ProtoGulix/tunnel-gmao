@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import { Flex, Text, Button, Dialog, Select, Callout, Code } from '@radix-ui/themes';
 import { Copy, AlertTriangle } from 'lucide-react';
 
-const ROLES = ['RESP', 'TECH', 'CONSULTANT', 'ADMIN'];
+const ROLES = ['RESP', 'TECH', 'OPE', 'ADMIN'];
 
 // ---- Modal changement de rôle ----
 
@@ -37,7 +37,7 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3" mt="4">
             <Text size="2">
-              Changer le rôle de <Text weight="bold">{user.first_name} {user.last_name}</Text> (actuellement <Text weight="bold">{user.role}</Text>).
+              Changer le rôle de <Text weight="bold">{user.first_name} {user.last_name}</Text> (actuellement <Text weight="bold">{user.role_code || '?'}</Text>).
             </Text>
             <Callout.Root color="orange" size="1">
               <Callout.Icon><AlertTriangle size={14} /></Callout.Icon>
@@ -48,7 +48,7 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
               <Select.Root value={newRole} onValueChange={setNewRole}>
                 <Select.Trigger placeholder="Choisir..." style={{ width: '100%' }} />
                 <Select.Content>
-                  {ROLES.filter((r) => r !== user.role).map((r) => (
+                  {ROLES.filter((r) => r !== user.role_code).map((r) => (
                     <Select.Item key={r} value={r}>{r}</Select.Item>
                   ))}
                 </Select.Content>

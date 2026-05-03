@@ -68,7 +68,7 @@ export default function AdminSecurityLogsTable({
       key: 'user',
       header: 'Utilisateur',
       width: 160,
-      render: (l) => <Text size="2">{l.user_email || l.user_id || '—'}</Text>,
+      render: (l) => <Text size="2">{(typeof l.user_email === 'string' ? l.user_email : l.user_email?.email) || l.user_id || '—'}</Text>,
     },
     {
       key: 'ip',
@@ -79,7 +79,11 @@ export default function AdminSecurityLogsTable({
     {
       key: 'detail',
       header: 'Détail',
-      render: (l) => <Text size="1" color="gray">{l.detail || l.message || '—'}</Text>,
+      render: (l) => {
+        const raw = l.detail || l.message;
+        const text = raw && typeof raw === 'object' ? JSON.stringify(raw) : raw || '—';
+        return <Text size="1" color="gray">{text}</Text>;
+      },
     },
   ], []);
 

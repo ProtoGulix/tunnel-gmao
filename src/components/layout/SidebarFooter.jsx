@@ -56,7 +56,8 @@ export default function SidebarFooter(props) {
   const statusTooltip = `Latence: ${latencyLabel} | API: ${serverStatus.online ? 'OK' : 'KO'} | Dernier check: ${lastCheckedLabel}`;
   const firstName = user?.first_name ?? user?.firstName ?? '';
   const lastName = user?.last_name ?? user?.lastName ?? '';
-  const roleLabel = user?.role?.name || user?.role?.label || user?.role || '';
+  const rawRole = user?.role;
+  const roleLabel = rawRole?.name || rawRole?.label || rawRole?.code || (typeof rawRole === 'string' ? rawRole : '') || '';
 
   const openChangelog = () => {
     window.open(CHANGELOG_URL, '_blank', 'noopener,noreferrer');

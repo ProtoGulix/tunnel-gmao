@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   password_confirm: '',
 };
 
-const ROLES = ['RESP', 'TECH', 'CONSULTANT', 'ADMIN'];
+const ROLES = ['RESP', 'TECH', 'OPE', 'ADMIN'];
 
 export default function AdminUserCreateModal({ open, onOpenChange, onSubmit, submitting }) {
   const [form, setForm] = useState(EMPTY_FORM);
@@ -49,8 +49,8 @@ export default function AdminUserCreateModal({ open, onOpenChange, onSubmit, sub
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
       email: form.email.trim(),
-      initials: form.initials.trim().toUpperCase(),
-      role: form.role,
+      initial: form.initials.trim().toUpperCase(),
+      role_code: form.role,
       password: form.password,
     });
     setForm(EMPTY_FORM);

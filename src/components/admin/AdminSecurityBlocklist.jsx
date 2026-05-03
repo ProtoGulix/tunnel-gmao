@@ -31,7 +31,7 @@ function BlockIpModal({ open, onOpenChange, onSubmit, submitting }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = { ip: form.ip, reason: form.reason || null, expires_at: durationToExpiry(form.duration) };
+    const payload = { ip_address: form.ip, reason: form.reason || null, blocked_until: durationToExpiry(form.duration) };
     await onSubmit(payload);
     setForm({ ip: '', reason: '', duration: 'permanent' });
   };
@@ -136,7 +136,7 @@ export default function AdminSecurityBlocklist({ items, loading, onBlock, onUnbl
         </Badge>
       ),
     },
-    { key: 'created_by', header: 'Créé par', width: 130, render: (i) => <Text size="2">{i.created_by || '—'}</Text> },
+    { key: 'created_by', header: 'Créé par', width: 130, render: (i) => <Text size="2">{(typeof i.created_by === 'string' ? i.created_by : i.created_by?.email) || '—'}</Text> },
     {
       key: 'actions', header: '', align: 'end', width: 100,
       render: (i) => (

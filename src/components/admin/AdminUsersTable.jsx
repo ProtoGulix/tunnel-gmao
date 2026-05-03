@@ -12,7 +12,7 @@ import DataTable from '@/components/ui/DataTable';
 const ROLE_COLORS = {
   RESP: 'blue',
   TECH: 'green',
-  CONSULTANT: 'gray',
+  OPE: 'gray',
   ADMIN: 'orange',
 };
 
@@ -20,7 +20,7 @@ const ROLE_OPTIONS = [
   { value: '__all__', label: 'Tous les rôles' },
   { value: 'RESP', label: 'RESP' },
   { value: 'TECH', label: 'TECH' },
-  { value: 'CONSULTANT', label: 'CONSULTANT' },
+  { value: 'OPE', label: 'OPE' },
   { value: 'ADMIN', label: 'ADMIN' },
 ];
 
@@ -53,7 +53,7 @@ export default function AdminUsersTable({
       width: 90,
       render: (u) => (
         <Badge variant="soft" color="blue" style={{ fontFamily: 'monospace' }}>
-          {u.initials}
+          {u.initial}
         </Badge>
       ),
     },
@@ -74,8 +74,8 @@ export default function AdminUsersTable({
       header: 'Rôle',
       width: 110,
       render: (u) => (
-        <Badge variant="soft" color={ROLE_COLORS[u.role] ?? 'gray'}>
-          {u.role}
+        <Badge variant="soft" color={ROLE_COLORS[u.role_code] ?? 'gray'}>
+          {u.role_code || '?'}
         </Badge>
       ),
     },

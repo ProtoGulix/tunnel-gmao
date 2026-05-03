@@ -8,22 +8,23 @@ import PropTypes from 'prop-types';
 import {
   Box, Flex, Text, Badge, Switch, Table, Spinner, ScrollArea,
 } from '@radix-ui/themes';
-import { Shield, History, AlertTriangle } from 'lucide-react';
+import { Shield, History } from 'lucide-react';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
 const ROLE_COLORS = {
   RESP: 'blue',
   TECH: 'green',
-  CONSULTANT: 'gray',
+  OPE: 'gray',
   ADMIN: 'orange',
 };
 
-// Grouper les permissions par module
+// Grouper les permissions par module (dérivé du préfixe de endpoint_code)
 function groupByModule(permissions) {
   const groups = {};
   for (const p of permissions) {
-    const mod = p.module || 'général';
+    const parts = (p.endpoint_code || 'général').split(':');
+    const mod = parts.length >= 2 ? `${parts[0]}:${parts[1]}` : parts[0];
     if (!groups[mod]) groups[mod] = [];
     groups[mod].push(p);
   }
@@ -34,18 +35,10 @@ function PermissionRow({ perm, onToggle, toggling }) {
   return (
     <Table.Row>
       <Table.Cell>
-        <Flex align="center" gap="2">
-          <Text size="2">{perm.name || perm.code}</Text>
-          {perm.is_sensitive && (
-            <Badge color="red" variant="soft" size="1">
-              <AlertTriangle size={10} />
-              Sensible
-            </Badge>
-          )}
-        </Flex>
-        {perm.description && (
-          <Text size="1" color="gray">{perm.description}</Text>
-        )}
+        <Text size="2">{perm.endpoint_code}</Text>
+        <Text size="1" color="gray" as="div">
+          {perm.endpoint_method} {perm.endpoint_path}
+        </Text>
       </Table.Cell>
       <Table.Cell align="center">
         {toggling === perm.id ? (

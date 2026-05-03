@@ -17,7 +17,7 @@ export default function AdminUserEditModal({ open, onOpenChange, user, onSubmit,
         first_name: user.first_name ?? '',
         last_name: user.last_name ?? '',
         email: user.email ?? '',
-        initials: user.initials ?? '',
+        initials: user.initial ?? '',
       });
       setErrors({});
     }
@@ -46,7 +46,7 @@ export default function AdminUserEditModal({ open, onOpenChange, user, onSubmit,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
       email: form.email.trim(),
-      initials: form.initials.trim().toUpperCase(),
+      initial: form.initials.trim().toUpperCase(),
     });
   };
 

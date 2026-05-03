@@ -237,7 +237,7 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
 
               <Separator size="4" />
 
-              <ReadOnlyRow label="Cree par" value={task.createdBy?.initial || task.createdBy?.name || task.createdBy || '—'} />
+              <ReadOnlyRow label="Cree par" value={(typeof task.createdBy === 'string' ? task.createdBy : task.createdBy?.initial || task.createdBy?.name || task.createdBy?.email || null) || '—'} />
               <ReadOnlyRow label="Cree le" value={detailDate(task.createdAt)} />
             </Flex>
           </Card>
