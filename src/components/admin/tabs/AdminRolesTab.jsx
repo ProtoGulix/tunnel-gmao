@@ -4,8 +4,9 @@
  */
 
 import { useState, useCallback } from 'react';
-import { Box, Callout } from '@radix-ui/themes';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { Box, Button, Callout, Flex } from '@radix-ui/themes';
+import { CheckCircle, RefreshCw, XCircle } from 'lucide-react';
+import { syncAdminEndpoints } from '@/api/adminEndpoints';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import AdminRolePermissionsMatrix from '@/components/admin/AdminRolePermissionsMatrix';
@@ -15,7 +16,7 @@ import { useNotification } from '@/hooks/shared/useNotification';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export default function AdminRolesTab() {
-  const { matrix, loading, error, togglePermission } = useRolesMatrix();
+  const { matrix, loading, error, togglePermission, refresh: refreshMatrix } = useRolesMatrix();
   const [auditOpen, setAuditOpen] = useState(false);
 
   const { audit, loading: auditLoading, load: loadAudit } = usePermissionAudit();
@@ -35,6 +36,23 @@ export default function AdminRolesTab() {
     setAuditOpen(true);
   }, [loadAudit]);
 
+  const [syncing, setSyncing] = useState(false);
+  const handleSyncEndpoints = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const result = await syncAdminEndpoints();
+      const msg = result?.synced != null
+        ? `Endpoints synchronisés — ${result.synced} ajouté(s) / mis à jour`
+        : 'Endpoints synchronisés';
+      notify(msg);
+      refreshMatrix();
+    } catch (err) {
+      notify(extractApiErrorMessage(err, 'Erreur lors de la synchronisation'), 'error');
+    } finally {
+      setSyncing(false);
+    }
+  }, [notify, matrix]);
+
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
 
@@ -52,6 +70,19 @@ export default function AdminRolesTab() {
           <Callout.Text>{notification.message}</Callout.Text>
         </Callout.Root>
       )}
+
+      <Flex justify="end" mb="3">
+        <Button
+          variant="soft"
+          color="gray"
+          size="2"
+          onClick={handleSyncEndpoints}
+          disabled={syncing}
+        >
+          <RefreshCw size={14} />
+          {syncing ? 'Synchronisation...' : 'Synchroniser les endpoints'}
+        </Button>
+      </Flex>
 
       <AdminRolePermissionsMatrix
         matrix={matrix}

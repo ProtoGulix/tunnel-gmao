@@ -87,15 +87,20 @@ export function useRolesMatrix() {
 
   const initialRef = useRef(false);
 
-  useEffect(() => {
-    if (initialRef.current) return;
-    initialRef.current = true;
+  const load = useCallback(() => {
     setLoading(true);
+    setError(null);
     fetchRolesMatrix()
       .then((data) => setMatrix(data))
       .catch((err) => setError(extractApiErrorMessage(err, 'Erreur chargement matrice')))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (initialRef.current) return;
+    initialRef.current = true;
+    load();
+  }, [load]);
 
   const togglePermission = useCallback(
     async (permissionId, roleCode, endpointId, newAllowed) => {
@@ -126,7 +131,7 @@ export function useRolesMatrix() {
     [matrix]
   );
 
-  return { matrix, loading, error, togglePermission };
+  return { matrix, loading, error, togglePermission, refresh: load };
 }
 
 export function usePermissionAudit() {
