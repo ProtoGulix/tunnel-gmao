@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField,
+  AlertDialog, Badge, Box, Button, Card, Callout, Flex, Select, Separator, Spinner, Switch, Text, TextField,
 } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
@@ -22,9 +22,9 @@ import {
   fetchInterventionTasksProgress,
   patchInterventionTask,
 } from '@/api/interventionTasks';
+import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import TaskCreateDialog from '@/components/tasks/TaskCreateDialog';
 
 /* ── Constantes ─────────────────────────────────────────────────────────────── */
 
@@ -113,7 +113,11 @@ export default function TasksTab({ interventionId, isLocked = false }) {
   const [skipTarget, setSkipTarget] = useState(null);
   const [skipReason, setSkipReason] = useState('');
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const { formData, set, users, saving: savingCreate, errors: createErrors, reset, handleSubmit: handleCreateSubmit } = useTaskCreate({
+    interventionId: String(interventionId),
+    onSuccess: () => { setShowCreate(false); loadData(); },
+  });
 
   const loadData = useCallback(async () => {
     setLoadState('loading');
@@ -215,19 +219,99 @@ export default function TasksTab({ interventionId, isLocked = false }) {
         </Callout.Root>
       )}
 
-      {/* ── Création via Dialog ── */}
+      {/* ── Création inline ── */}
       {!isLocked && (
         <Box mt="3">
-          <Button size="2" variant="soft" color="gray" onClick={() => setCreateDialogOpen(true)}>
-            <Plus size={14} />
-            Nouvelle tâche
-          </Button>
-          <TaskCreateDialog
-            open={createDialogOpen}
-            onOpenChange={setCreateDialogOpen}
-            interventionId={String(interventionId)}
-            onSuccess={() => loadData()}
-          />
+          {!showCreate ? (
+            <Button size="2" variant="soft" color="gray" onClick={() => setShowCreate(true)}>
+              <Plus size={14} />
+              Nouvelle tâche
+            </Button>
+          ) : (
+            <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+              <form onSubmit={handleCreateSubmit}>
+                <Flex direction="column" gap="3">
+                  <Flex align="center" gap="2">
+                    <Plus size={18} color="var(--blue-9)" />
+                    <Text size="2" weight="bold">Nouvelle tâche</Text>
+                  </Flex>
+
+                  {createErrors.length > 0 && (
+                    <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 12 }}>
+                      {createErrors.map((err, idx) => (
+                        <Text key={idx} as="div" color="red" size="1">• {err}</Text>
+                      ))}
+                    </Box>
+                  )}
+
+                  <Box>
+                    <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
+                      Libellé <Text color="red">*</Text>
+                    </Text>
+                    <TextField.Root
+                      value={formData.label}
+                      onChange={(e) => set('label', e.target.value)}
+                      placeholder="Ex : Contrôle alignement capteur"
+                      autoFocus
+                    />
+                  </Box>
+
+                  <Box>
+                    <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Assigné à</Text>
+                    <Select.Root
+                      value={formData.assignedTo || '__none__'}
+                      onValueChange={(v) => set('assignedTo', v === '__none__' ? '' : v)}
+                    >
+                      <Select.Trigger placeholder="Non assigné" style={{ width: '100%' }} />
+                      <Select.Content>
+                        <Select.Item value="__none__">Non assigné</Select.Item>
+                        {users.map((u) => {
+                          const initials = (u.initials || u.initial || '').toUpperCase();
+                          const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+                          return (
+                            <Select.Item key={u.id} value={String(u.id)}>
+                              {initials ? `${initials} — ${fullName}` : fullName}
+                            </Select.Item>
+                          );
+                        })}
+                      </Select.Content>
+                    </Select.Root>
+                  </Box>
+
+                  <Box>
+                    <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Échéance</Text>
+                    <TextField.Root
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={(e) => set('dueDate', e.target.value)}
+                    />
+                  </Box>
+
+                  <Flex align="center" gap="2">
+                    <Switch checked={formData.optional} onCheckedChange={(v) => set('optional', v)} size="2" />
+                    <Text size="2">Tâche optionnelle</Text>
+                    <Text size="1" color="gray">(ne bloque pas la clôture)</Text>
+                  </Flex>
+
+                  <Flex justify="end" gap="2">
+                    <Button
+                      type="button"
+                      variant="soft"
+                      color="gray"
+                      size="2"
+                      onClick={() => { reset(); setShowCreate(false); }}
+                    >
+                      Annuler
+                    </Button>
+                    <Button type="submit" color="blue" size="2" disabled={savingCreate}>
+                      {savingCreate ? <Spinner size="1" /> : <Plus size={14} />}
+                      Enregistrer
+                    </Button>
+                  </Flex>
+                </Flex>
+              </form>
+            </Card>
+          )}
         </Box>
       )}
 
