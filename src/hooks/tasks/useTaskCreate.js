@@ -21,7 +21,9 @@ export function useTaskCreate({ interventionId: lockedInterventionId = null, onS
   const [errors, setErrors] = useState([]);
 
   useEffect(() => {
-    fetchActiveUsers().then(setUsers).catch(() => {});
+    fetchActiveUsers()
+      .then(setUsers)
+      .catch(() => {});
   }, []);
 
   const loadOptions = useCallback(async () => {
@@ -56,7 +58,7 @@ export function useTaskCreate({ interventionId: lockedInterventionId = null, onS
 
   const handleSubmit = useCallback(
     async (e) => {
-      e.preventDefault();
+      e?.preventDefault?.();
       const errs = validate();
       if (errs.length) {
         setErrors(errs);

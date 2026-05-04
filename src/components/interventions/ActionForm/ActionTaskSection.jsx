@@ -12,11 +12,50 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Card, Flex, Select, Spinner, Text, TextField, Badge } from '@radix-ui/themes';
-import { CheckSquare, Plus } from 'lucide-react';
+import { Box, Badge, Button, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { CalendarClock, CheckSquare, Plus, User } from 'lucide-react';
 import { fetchInterventionTasks } from '@/api/interventionTasks';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
+import TaskCreateForm from '@/components/tasks/TaskCreateForm';
+
+function deriveInitials(assignedTo) {
+  if (!assignedTo) return '';
+  if (assignedTo.initial) return String(assignedTo.initial).toUpperCase();
+  if (assignedTo.initials) return String(assignedTo.initials).toUpperCase();
+
+  const first = String(assignedTo.first_name || assignedTo.firstName || '').trim();
+  const last = String(assignedTo.last_name || assignedTo.lastName || '').trim();
+  return `${first[0] || ''}${last[0] || ''}`.toUpperCase();
+}
+
+function getAssigneeLabel(task) {
+  const assignedTo = task.assignedTo || task.assigned_to || null;
+  if (!assignedTo) return 'Non assignée';
+
+  const fullName = `${assignedTo.first_name || assignedTo.firstName || ''} ${assignedTo.last_name || assignedTo.lastName || ''}`.trim();
+  if (fullName) return fullName;
+
+  return deriveInitials(assignedTo) || assignedTo.initial || assignedTo.initials || 'Assignée';
+}
+
+function formatDueDateFR(iso) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+}
+
+function getDueDateColor(dueDate) {
+  if (!dueDate) return 'gray';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  const diff = Math.round((due - today) / 86400000);
+  if (diff < 0) return 'red';
+  if (diff === 0) return 'amber';
+  if (diff === 1) return 'blue';
+  return 'gray';
+}
 
 function normalizeSelectedTask(task, preserveExistingStatus = true) {
   if (!task) return null;
@@ -42,6 +81,9 @@ function normalizeSelectedTask(task, preserveExistingStatus = true) {
 /* ── Ligne de tâche ─────────────────────────────────────────────────────────── */
 
 function TaskRow({ item, selectedTask, isSelected, onSelect, onTaskActionStatusChange, onSkipReasonChange, accentColor }) {
+  const dueDate = item.dueDate || item.due_date || null;
+  const assigneeLabel = getAssigneeLabel(item);
+
   return (
     <Flex
       gap="2"
@@ -59,7 +101,23 @@ function TaskRow({ item, selectedTask, isSelected, onSelect, onTaskActionStatusC
       }}
     >
       <CheckSquare size={13} color={isSelected ? `var(--${accentColor}-9)` : 'var(--gray-7)'} />
-      <Text size="2" style={{ flex: '1 1 240px', minWidth: 0 }}>{item.label}</Text>
+      <Flex direction="column" gap="1" style={{ flex: '1 1 240px', minWidth: 0 }}>
+        <Text size="2" style={{ minWidth: 0 }}>{item.label}</Text>
+        <Flex gap="2" wrap="wrap" align="center">
+          <Flex gap="1" align="center">
+            <User size={11} color="var(--gray-9)" />
+            <Text size="1" color="gray">{assigneeLabel}</Text>
+          </Flex>
+          {dueDate && (
+            <Badge size="1" color={getDueDateColor(dueDate)} variant={getDueDateColor(dueDate) === 'red' ? 'solid' : 'soft'}>
+              <Flex gap="1" align="center">
+                <CalendarClock size={10} />
+                <span>{formatDueDateFR(dueDate)}</span>
+              </Flex>
+            </Badge>
+          )}
+        </Flex>
+      </Flex>
       {item.origin === 'plan' && (
         <Badge size="1" color="green" variant="soft">Gamme</Badge>
       )}
@@ -177,11 +235,6 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
     )));
   }, [selectedTasks, onChange]);
 
-  const handleCreate = useCallback((createdTask) => {
-    setTasks((prev) => [...prev, createdTask]);
-    onChange([...selectedTasks, normalizeSelectedTask(createdTask, false)]);
-  }, [onChange, selectedTasks]);
-
   if (!interventionId) return null;
 
   return (
@@ -212,69 +265,21 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
       />
 
       {showCreate && (
-        <Card mt="2" style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
-          <form onSubmit={handleCreateSubmit}>
-            <Flex direction="column" gap="2">
-              {createErrors.length > 0 && (
-                <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 8 }}>
-                  {createErrors.map((err, idx) => (
-                    <Text key={idx} as="div" color="red" size="1">• {err}</Text>
-                  ))}
-                </Box>
-              )}
-
-              <Box>
-                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
-                  Libellé <Text color="red">*</Text>
-                </Text>
-                <TextField.Root
-                  value={formData.label}
-                  onChange={(e) => set('label', e.target.value)}
-                  placeholder="Ex : Contrôle alignement capteur"
-                  autoFocus
-                />
-              </Box>
-
-              <Box>
-                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Assigné à</Text>
-                <Select.Root
-                  value={formData.assignedTo || '__none__'}
-                  onValueChange={(v) => set('assignedTo', v === '__none__' ? '' : v)}
-                >
-                  <Select.Trigger placeholder="Non assigné" style={{ width: '100%' }} />
-                  <Select.Content>
-                    <Select.Item value="__none__">Non assigné</Select.Item>
-                    {users.map((u) => {
-                      const initials = (u.initials || u.initial || '').toUpperCase();
-                      const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-                      return (
-                        <Select.Item key={u.id} value={String(u.id)}>
-                          {initials ? `${initials} — ${fullName}` : fullName}
-                        </Select.Item>
-                      );
-                    })}
-                  </Select.Content>
-                </Select.Root>
-              </Box>
-
-              <Flex justify="end" gap="2" mt="1">
-                <Button
-                  type="button"
-                  variant="soft"
-                  color="gray"
-                  size="1"
-                  onClick={() => { reset(); setShowCreate(false); }}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" color="blue" size="1" disabled={savingCreate}>
-                  {savingCreate ? <Spinner size="1" /> : <Plus size={12} />}
-                  Enregistrer
-                </Button>
-              </Flex>
-            </Flex>
-          </form>
-        </Card>
+        <Box mt="2">
+          <TaskCreateForm
+            formData={formData}
+            set={set}
+            users={users}
+            saving={savingCreate}
+            errors={createErrors}
+            onSubmit={handleCreateSubmit}
+            onCancel={() => { reset(); setShowCreate(false); }}
+            interventionId={String(interventionId)}
+            interventionLabel="Intervention fixée"
+            embedded
+            size="1"
+          />
+        </Box>
       )}
     </Box>
   );

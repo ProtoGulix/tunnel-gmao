@@ -13,25 +13,33 @@ const PRIORITY_OPTIONS = [
   { value: 'faible', label: 'Faible' },
 ];
 
-export default function InterventionCreateForm({ formData, set, locked, lockedType = false, fetchEquipementsFn, users, saving, error, onSubmit, onCancel }) {
+export default function InterventionCreateForm({ formData, set, locked, lockedType = false, embedded = false, fetchEquipementsFn, users, saving, error, onSubmit, onCancel }) {
   const userList = Array.isArray(users) ? users : [];
-  return (
-    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+  const handleSubmit = (event) => {
+    event?.preventDefault?.();
+    onSubmit(event);
+  };
+
+  const preventParentSubmit = (event) => {
+    if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+      event.preventDefault();
+    }
+  };
+
+  const content = (
+    <Flex direction="column" gap="3">
+      <Flex align="center" gap="2">
+        <Plus size={20} color="var(--blue-9)" />
+        <Text size="3" weight="bold">Nouvelle intervention</Text>
+      </Flex>
+
+      {error && (
+        <Box style={{ backgroundColor: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 4, padding: '0.75rem' }}>
+          <Text size="2" color="red" weight="medium">{error}</Text>
+        </Box>
+      )}
+
       <Flex direction="column" gap="3">
-        <Flex align="center" gap="2">
-          <Plus size={20} color="var(--blue-9)" />
-          <Text size="3" weight="bold">Nouvelle intervention</Text>
-        </Flex>
-
-        {error && (
-          <Box style={{ backgroundColor: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 4, padding: '0.75rem' }}>
-            <Text size="2" color="red" weight="medium">{error}</Text>
-          </Box>
-        )}
-
-        <form onSubmit={onSubmit}>
-          <Flex direction="column" gap="3">
-
             {/* Titre */}
             <Box>
               <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
@@ -150,13 +158,26 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
               <Button type="button" variant="soft" color="gray" size="2" disabled={saving} onClick={onCancel}>
                 Annuler
               </Button>
-              <Button type="submit" size="2" disabled={saving} style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}>
+              <Button
+                type={embedded ? 'button' : 'submit'}
+                size="2"
+                disabled={saving}
+                onClick={embedded ? handleSubmit : undefined}
+                style={{ backgroundColor: 'var(--blue-9)', color: 'white' }}
+              >
                 {saving ? <Spinner size="2" /> : 'Enregistrer'}
               </Button>
             </Flex>
-          </Flex>
-        </form>
       </Flex>
+    </Flex>
+  );
+
+  return (
+    <Card
+      onKeyDownCapture={embedded ? preventParentSubmit : undefined}
+      style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}
+    >
+      {embedded ? content : <form onSubmit={handleSubmit}>{content}</form>}
     </Card>
   );
 }
@@ -166,6 +187,7 @@ InterventionCreateForm.propTypes = {
   set: PropTypes.func.isRequired,
   locked: PropTypes.bool.isRequired,
   lockedType: PropTypes.bool,
+  embedded: PropTypes.bool,
   fetchEquipementsFn: PropTypes.func.isRequired,
   users: PropTypes.array,
   saving: PropTypes.bool,
