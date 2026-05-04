@@ -85,7 +85,7 @@ export function ContextSection({
   }, [pickedEquipement, equipementLabel]);
 
   const handleCreate = useCallback(async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     setCreateError(null);
     if (!formData?.title?.trim()) { setCreateError('Le titre est obligatoire'); return; }
     if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; }
@@ -176,6 +176,7 @@ export function ContextSection({
                       set={set}
                       locked={false}
                       lockedType={false}
+                      embedded
                       fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
                       users={users}
                       saving={saving}
@@ -202,6 +203,7 @@ export function ContextSection({
                       set={set}
                       locked={true}
                       lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
+                      embedded
                       fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
                       users={users}
                       saving={saving}
