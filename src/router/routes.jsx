@@ -7,7 +7,9 @@ import Layout from '@/components/layout/Layout';
 
 // Pages
 import Login from '@/pages/auth/Login';
-import HomePage from '@/pages/home/HomePage';
+import HomeSplit from '@/pages/HomeSplit';
+import HomeBriefing from '@/pages/HomeBriefing';
+import HomeOld from '@/pages/home/HomeOld';
 import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
 import QualityDataPage from '@/pages/quality-data/QualityDataPage';
 import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
@@ -87,7 +89,29 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout>
-              <HomePage />
+              <HomeSplit />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/home-briefing"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <HomeBriefing />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/home-old"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <HomeOld />
             </Layout>
           </ProtectedRoute>
         }
