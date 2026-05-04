@@ -47,7 +47,7 @@ export function useAdminUsers() {
         };
         if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
         if (filterActive !== '') params.is_active = filterActive === 'active';
-        if (filterRole) params.role_code = filterRole;
+        if (filterRole) params.role_code = filterRole.toLowerCase();
 
         const data = await fetchAdminUsers(params);
         if (ctrl.signal.aborted) return;

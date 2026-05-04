@@ -221,12 +221,13 @@ export const MENU_CONFIG = {
 
 /** Retourne les items du menu selon l'état d'authentification et le rôle */
 export function getMenuItems(isAuthenticated, userRole = null) {
+  const normalizedRole = userRole?.toUpperCase() ?? null;
   return PAGES_CONFIG.filter((item) => {
     if (item.showInMenu === false || item.disabled === true) return false;
     if (isAuthenticated) {
       if (item.publicOnly) return false;
       // Filtrer les items qui requièrent un rôle spécifique
-      if (item.requiredRoles && !item.requiredRoles.includes(userRole)) return false;
+      if (item.requiredRoles && !item.requiredRoles.map((r) => r.toUpperCase()).includes(normalizedRole)) return false;
       return true;
     }
     return item.public || item.publicOnly;

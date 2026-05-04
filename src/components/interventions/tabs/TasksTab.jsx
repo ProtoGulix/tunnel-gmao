@@ -103,7 +103,7 @@ TaskRow.propTypes = {
 
 export default function TasksTab({ interventionId, isLocked = false }) {
   const { user } = useAuth();
-  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role));
+  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role.toUpperCase()));
 
   const [tasks, setTasks] = useState([]);
   const [progress, setProgress] = useState(null);

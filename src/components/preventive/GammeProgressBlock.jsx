@@ -135,7 +135,7 @@ ProgressSummary.propTypes = { progress: PropTypes.object };
 export default function GammeProgressBlock({ mode, interventionId, occurrenceId, diId, onProgressUpdate, refreshKey = 0 }) {
   const { user } = useAuth();
   const readOnly = mode === 'occurrence';
-  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role));
+  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role.toUpperCase()));
 
   const [tasks, setTasks] = useState([]);
   const [progress, setProgress] = useState(null);

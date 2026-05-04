@@ -10,7 +10,8 @@ export default function RequireRole({ roles, children }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (!user || !roles.includes(user.role)) {
+  const userRole = user?.role?.toUpperCase();
+  if (!userRole || !roles.map((r) => r.toUpperCase()).includes(userRole)) {
     return <Navigate to="/" replace />;
   }
 

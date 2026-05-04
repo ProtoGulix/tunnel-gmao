@@ -37,7 +37,7 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3" mt="4">
             <Text size="2">
-              Changer le rôle de <Text weight="bold">{user.first_name} {user.last_name}</Text> (actuellement <Text weight="bold">{user.role_code || '?'}</Text>).
+              Changer le rôle de <Text weight="bold">{user.first_name} {user.last_name}</Text> (actuellement <Text weight="bold">{user.role_code?.toUpperCase() || '?'}</Text>).
             </Text>
             <Callout.Root color="orange" size="1">
               <Callout.Icon><AlertTriangle size={14} /></Callout.Icon>
@@ -48,7 +48,7 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
               <Select.Root value={newRole} onValueChange={setNewRole}>
                 <Select.Trigger placeholder="Choisir..." style={{ width: '100%' }} />
                 <Select.Content>
-                  {ROLES.filter((r) => r !== user.role_code).map((r) => (
+                  {ROLES.filter((r) => r !== user.role_code?.toUpperCase()).map((r) => (
                     <Select.Item key={r} value={r}>{r}</Select.Item>
                   ))}
                 </Select.Content>

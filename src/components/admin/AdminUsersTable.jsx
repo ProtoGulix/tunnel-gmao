@@ -73,11 +73,14 @@ export default function AdminUsersTable({
       key: 'role',
       header: 'Rôle',
       width: 110,
-      render: (u) => (
-        <Badge variant="soft" color={ROLE_COLORS[u.role_code] ?? 'gray'}>
-          {u.role_code || '?'}
-        </Badge>
-      ),
+      render: (u) => {
+          const roleUpper = u.role_code?.toUpperCase();
+          return (
+            <Badge variant="soft" color={ROLE_COLORS[roleUpper] ?? 'gray'}>
+              {roleUpper || '?'}
+            </Badge>
+          );
+        },
     },
     {
       key: 'status',
