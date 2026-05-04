@@ -61,7 +61,7 @@ Stabilité : **stable** ✅
 ### Impact fonctionnel
 
 - Une intervention dont le statut est **"Fermé"** est désormais entièrement verrouillée : les boutons d'ajout d'action, de modification d'action, de création de demande d'achat, de création de tâche et les boutons "Ignorer" sont automatiquement grisés et non cliquables. Le changement de statut et de priorité est également bloqué.
-- Les **messages d'erreur** retournés par le serveur (ex : *"Tâche déjà clôturée — impossible de la skipper"*) s'affichent désormais avec leur texte exact sur tous les formulaires, au lieu d'un message technique peu compréhensible.
+- Les **messages d'erreur** retournés par le serveur (ex : _"Tâche déjà clôturée — impossible de la skipper"_) s'affichent désormais avec leur texte exact sur tous les formulaires, au lieu d'un message technique peu compréhensible.
 
 ### Composants / Modules concernés
 
@@ -201,6 +201,7 @@ Le composant `EquipementSearch` affiche désormais un badge **orange** indiquant
 **Horaires d'action** : les bornes `action_start` / `action_end` sont désormais correctement transmises et affichées dans `ActionItemCard` et `ActionFormFields`. La saisie horaire dans le formulaire est renforcée avec la validation de cohérence début/fin.
 
 **Ajustements API** :
+
 - `actions.js` et `interventions.js` : mise à jour des payloads pour inclure les champs horaires.
 - `planning.js` : meilleure lisibilité dans `fetchOpenInterventionsByEquipement` (paramètres nommés).
 - `stock.js` : correction mineure de paramètre.
@@ -223,6 +224,7 @@ Nouvelle page `/planning` accessible depuis le menu principal, offrant une vue s
 **API** : enrichissement de `planning.js` avec `createActionDirect`, récupération des bornes horaires (`action_start` / `action_end`) et gestion des paramètres de filtrage technicien.
 
 **Composants** :
+
 - `PlanningView` — page principale avec vue semaine, formulaire d'ajout d'action en ligne et filtrage par technicien.
 - `EquipementSearch` — champ de recherche serveur d'équipement utilisé dans le formulaire d'action.
 - `InterventionSelector` — sélecteur d'intervention par recherche textuelle, avec aperçu de la fiche sélectionnée.
@@ -254,6 +256,7 @@ Création d'un module complet de gestion des demandes d'intervention, avec cycle
 **API** : nouveau module `intervention-requests.js` avec les opérations CRUD, la gestion des transitions de statut et le filtrage serveur par `statut` / `exclude_statuses`.
 
 **Composants** :
+
 - `InterventionRequestsTab` — tableau paginé filtrable par statut avec compteurs.
 - `InterventionRequestDetail` — fiche détail : équipement, demandeur, service, description, historique des transitions.
 - `InterventionRequestForm` — formulaire de création de demande lié à un équipement.
