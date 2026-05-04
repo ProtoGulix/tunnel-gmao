@@ -8,10 +8,10 @@
  */
 
 import { useCallback, useState } from 'react';
-import { Badge, Box, Button, Flex, Select, Text, Tooltip } from '@radix-ui/themes';
-import { Bot, ClipboardList, Plus } from 'lucide-react';
+import { Badge, Box, Button, Callout, Dialog, Flex, Select, Spinner, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList, Plus, Wrench } from 'lucide-react';
 import { useInterventionRequests } from '@/hooks/intervention-requests/useInterventionRequests';
-import { createInterventionRequest } from '@/api/intervention-requests';
+import { createInterventionRequest, repairInterventionRequests } from '@/api/intervention-requests';
 import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
@@ -102,6 +102,21 @@ export default function InterventionRequestsTab() {
   const [selectedId, setSelectedId] = useState(null);
   const [mode, setMode] = useState(null); // 'create' | null
   const [saving, setSaving] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState(null);
+
+  const handleRepair = async () => {
+    try {
+      setRepairing(true);
+      const result = await repairInterventionRequests();
+      setRepairResult(result);
+      if (result.repaired_count > 0) refresh();
+    } catch {
+      // ignoré — le bouton se désactive simplement
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   const handleRowClick = useCallback(
     (row) => {
@@ -135,6 +150,41 @@ export default function InterventionRequestsTab() {
         />
       )}
 
+      {/* Dialog résultat réparation */}
+      <Dialog.Root open={repairResult !== null} onOpenChange={(open) => { if (!open) setRepairResult(null); }}>
+        <Dialog.Content maxWidth="480px">
+          <Dialog.Title>Réparation des DIs orphelines</Dialog.Title>
+          {repairResult && (
+            <Flex direction="column" gap="3" mt="2">
+              {repairResult.repaired_count === 0 ? (
+                <Callout.Root color="gray" size="1">
+                  <Callout.Text>Aucune DI orpheline trouvée — tout est cohérent.</Callout.Text>
+                </Callout.Root>
+              ) : (
+                <>
+                  <Callout.Root color="green" size="1">
+                    <Callout.Text>{repairResult.repaired_count} DI{repairResult.repaired_count > 1 ? 's passées' : ' passée'} à <strong>Clôturée</strong>.</Callout.Text>
+                  </Callout.Root>
+                  <Flex direction="column" gap="1">
+                    {repairResult.details.map((d) => (
+                      <Flex key={d.id} gap="2" align="center">
+                        <Badge color="gray" variant="soft" size="1" style={{ fontFamily: 'monospace' }}>{d.code}</Badge>
+                        <Text size="1" color="gray">{d.machine_code}</Text>
+                      </Flex>
+                    ))}
+                  </Flex>
+                </>
+              )}
+              <Flex justify="end">
+                <Dialog.Close>
+                  <Button size="2" variant="soft" color="gray">Fermer</Button>
+                </Dialog.Close>
+              </Flex>
+            </Flex>
+          )}
+        </Dialog.Content>
+      </Dialog.Root>
+
       {/* En-tête avec recherche */}
       <TableHeader
         icon={ClipboardList}
@@ -147,16 +197,30 @@ export default function InterventionRequestsTab() {
         showRefreshButton
         onRefresh={refresh}
         rightActions={
-          mode !== 'create' && (
-            <Button
-              size="2"
-              color="blue"
-              onClick={() => { setSelectedId(null); setMode('create'); }}
-            >
-              <Plus size={14} />
-              Nouvelle demande
-            </Button>
-          )
+          <Flex gap="2" align="center">
+            <Tooltip content="Clôturer les DIs dont l'intervention liée est déjà fermée (correction de données orphelines)">
+              <Button
+                size="2"
+                color="amber"
+                variant="soft"
+                disabled={repairing}
+                onClick={handleRepair}
+              >
+                {repairing ? <Spinner size="1" /> : <Wrench size={14} />}
+                Réparer les DIs
+              </Button>
+            </Tooltip>
+            {mode !== 'create' && (
+              <Button
+                size="2"
+                color="blue"
+                onClick={() => { setSelectedId(null); setMode('create'); }}
+              >
+                <Plus size={14} />
+                Nouvelle demande
+              </Button>
+            )}
+          </Flex>
         }
       />
 

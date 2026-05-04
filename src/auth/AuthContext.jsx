@@ -1,9 +1,9 @@
 /**
  * Contexte d'authentification — Tunnel GMAO V3
- * 
- * Gère l'état d'authentification global de l'application.
- * Utilise l'API backend pour login/logout et récupération de l'utilisateur.
- * 
+ *
+ * JWT souverain : access_token + refresh_token + user (avec role).
+ * Le refresh automatique sur 401 est géré par le client HTTP (client.js).
+ *
  * @module auth/AuthContext
  */
 
@@ -17,60 +17,40 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      if (authApi.isAuthenticated()) {
-        try {
-          const userData = await authApi.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          console.error('Erreur lors du chargement de l\'utilisateur:', error);
-          // Nettoyer les tokens en cas d'erreur
-          localStorage.removeItem('auth_access_token');
-          localStorage.removeItem('auth_refresh_token');
-          localStorage.removeItem('auth_user');
-        }
+    // Restaurer l'utilisateur depuis le cache localStorage au démarrage
+    const cached = localStorage.getItem('auth_user');
+    if (cached && authApi.isAuthenticated()) {
+      try {
+        setUser(JSON.parse(cached));
+      } catch {
+        localStorage.removeItem('auth_user');
       }
-      setLoading(false);
-    };
-
-    loadUser();
+    }
+    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    try {
-      // Login : le backend configure automatiquement un cookie session_token
-      const response = await authApi.login(email, password);
-      
-      // Optionnel : stocker le token en fallback pour mobile ou cookies désactivés
-      if (response.access_token) {
-        localStorage.setItem('auth_access_token', response.access_token);
-      }
-      if (response.refresh_token) {
-        localStorage.setItem('auth_refresh_token', response.refresh_token);
-      }
-      
-      // Récupérer les infos utilisateur (le cookie est maintenant actif)
-      const userData = await authApi.getCurrentUser();
-      setUser(userData);
-      
-      // Stocker en cache pour éviter un appel au démarrage
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-      
-      return userData;
-    } catch (error) {
-      console.error('Erreur de connexion:', error);
-      throw error;
+    const response = await authApi.login(email, password);
+
+    // Le backend retourne { access_token, refresh_token, expires_in, user }
+    const { access_token, refresh_token, user: userData } = response;
+
+    localStorage.setItem('auth_access_token', access_token);
+    if (refresh_token) {
+      localStorage.setItem('auth_refresh_token', refresh_token);
     }
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+
+    setUser(userData);
+    return userData;
   };
 
   const logout = async () => {
     try {
       await authApi.logout();
-    } catch (error) {
-      console.error('Erreur de déconnexion:', error);
+    } catch {
+      // Ignorer les erreurs réseau
     } finally {
-      // Nettoyer le state et localStorage
-      // Note : le cookie session_token est géré côté serveur
       setUser(null);
       localStorage.removeItem('auth_access_token');
       localStorage.removeItem('auth_refresh_token');

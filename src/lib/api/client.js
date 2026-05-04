@@ -2,19 +2,11 @@
  * Client HTTP — Tunnel GMAO V3
  *
  * Client HTTP pur basé sur axios avec :
- * - Authentification JWT automatique
- * - Gestion centralisée des erreurs (401, 403, 404, 500)
- * - Pas de transformation de données
- * - Pas de logique métier
+ * - Authentification JWT automatique (Bearer token)
+ * - Refresh automatique sur 401 avant de renvoyer la requête
+ * - Gestion centralisée des erreurs (403, 404, 500)
  *
  * @module lib/api/client
- *
- * Usage :
- * ```javascript
- * import { api } from '@/lib/api/client';
- * const response = await api.get('/interventions');
- * const data = response.data;
- * ```
  */
 
 import axios from 'axios';
@@ -24,121 +16,144 @@ import { emitSystemError } from '@/lib/api/systemErrors';
 // CONFIGURATION
 // ==============================
 
-/**
- * URL de base de l'API backend Python (FastAPI)
- * Priorise la variable V3, conserve un fallback legacy pour compatibilite.
- */
 export const BASE_URL =
   import.meta.env.VITE_TUNNEL_BACKEND_URL ||
   import.meta.env.VITE_API_URL ||
   'http://localhost:8000';
 
-/**
- * Instance axios préconfigurée pour l'API Tunnel GMAO
- *
- * Fonctionnalités :
- * - Envoie automatiquement les cookies (session_token)
- * - Fallback sur Authorization header si token dans localStorage
- * - Gère les erreurs 401 avec redirection vers /login
- * - Gère les erreurs 403, 404, 500 avec logging
- * - Content-Type: application/json par défaut
- */
 export const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000, // 30 secondes
-  withCredentials: true, // Active l'envoi automatique des cookies
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 30000,
+  withCredentials: true,
 });
+
+// ==============================
+// STATE DU REFRESH
+// ==============================
+
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshDone(newToken) {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+}
+
+function redirectToLogin() {
+  const currentPath = window.location.pathname + window.location.search;
+  if (currentPath !== '/login') {
+    localStorage.setItem('redirect_after_login', currentPath);
+  }
+  localStorage.removeItem('auth_access_token');
+  localStorage.removeItem('auth_refresh_token');
+  localStorage.removeItem('auth_user');
+  window.location.href = '/login';
+}
 
 // ==============================
 // REQUEST INTERCEPTOR
 // ==============================
 
-/**
- * Ajoute le token JWT dans le header Authorization en fallback
- * (Le cookie session_token est automatiquement envoyé par le navigateur)
- */
 api.interceptors.request.use(
   (config) => {
-    // Fallback : si un token est stocké localement, l'envoyer en header
-    // (Utile pour mobile ou si les cookies sont désactivés)
     const token = localStorage.getItem('auth_access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // ==============================
 // RESPONSE INTERCEPTOR
 // ==============================
 
-/**
- * Gère les erreurs HTTP de manière centralisée
- *
- * - 401 (Non autorisé) : efface les tokens et redirige vers /login
- * - 403 (Interdit) : log l'erreur pour debugging
- * - 404 (Non trouvé) : log l'erreur
- * - 500 (Erreur serveur) : log l'erreur
- * - Autres : propage l'erreur à l'appelant
- */
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
+    const originalRequest = error.config;
 
-    // 401 Unauthorized - Session expirée ou token invalide
-    if (status === 401) {
-      // Sauvegarder la page actuelle pour redirection après login
-      const currentPath = window.location.pathname + window.location.search;
-      if (currentPath !== '/login') {
-        localStorage.setItem('redirect_after_login', currentPath);
+    // 401 — tenter un refresh avant de rediriger
+    if (status === 401 && !originalRequest._retry) {
+      const storedRefreshToken = localStorage.getItem('auth_refresh_token');
+
+      if (!storedRefreshToken) {
+        redirectToLogin();
+        return Promise.reject(error);
       }
 
-      // Nettoyer les tokens
-      localStorage.removeItem('auth_access_token');
-      localStorage.removeItem('auth_refresh_token');
-      localStorage.removeItem('auth_user');
+      if (isRefreshing) {
+        // Mettre en file d'attente pendant le refresh en cours
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((newToken) => {
+            if (newToken) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              resolve(api(originalRequest));
+            } else {
+              reject(error);
+            }
+          });
+        });
+      }
 
-      // Rediriger vers login
-      window.location.href = '/login';
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const response = await axios.post(
+          `${BASE_URL}/auth/refresh`,
+          { refresh_token: storedRefreshToken },
+          { withCredentials: true }
+        );
+        const data = response.data?.data || response.data;
+        const newAccessToken = data.access_token;
+        const newRefreshToken = data.refresh_token;
+
+        localStorage.setItem('auth_access_token', newAccessToken);
+        if (newRefreshToken) {
+          localStorage.setItem('auth_refresh_token', newRefreshToken);
+        }
+
+        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        onRefreshDone(newAccessToken);
+        isRefreshing = false;
+
+        return api(originalRequest);
+      } catch {
+        isRefreshing = false;
+        onRefreshDone(null);
+        redirectToLogin();
+        return Promise.reject(error);
+      }
     }
 
-    // 403 Forbidden - Permissions insuffisantes
+    // 403 Forbidden
     if (status === 403) {
-      console.error('[API] 403 Forbidden - Accès refusé', {
-        url: error.config?.url,
-        method: error.config?.method,
-        message: error.response?.data?.message,
-      });
+      console.error('[API] 403 Forbidden', { url: error.config?.url });
       emitSystemError(error);
     }
 
     // 404 Not Found
     if (status === 404) {
-      console.warn('[API] 404 Not Found', {
-        url: error.config?.url,
-        method: error.config?.method,
-      });
+      console.warn('[API] 404 Not Found', { url: error.config?.url });
     }
 
     // 5xx Server Error
     if (status >= 500) {
-      console.error(`[API] ${status} Server Error`, {
-        url: error.config?.url,
-        method: error.config?.method,
-        message: error.response?.data?.message,
-      });
+      console.error(`[API] ${status} Server Error`, { url: error.config?.url });
       emitSystemError(error);
     }
 
-    // Erreur réseau (pas de réponse)
+    // Erreur réseau
     if (!status) {
       emitSystemError(error);
     }

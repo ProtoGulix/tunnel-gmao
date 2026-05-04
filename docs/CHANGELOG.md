@@ -4,6 +4,31 @@ Toutes les modifications notables du projet sont documentées dans ce fichier.
 
 ---
 
+## 3.33.0 - 2026-05-03
+
+Stabilité : **en consolidation** 🔧
+
+### Impact fonctionnel
+
+- L'espace **Administration** devient réellement pilotable au quotidien : les écrans utilisateurs, rôles/permissions, sécurité et référentiels affichent correctement les informations attendues, avec des actions plus cohérentes et plus lisibles.
+- La gestion des permissions propose désormais une **vue matrice complète** : toutes les permissions visibles d'un coup avec une colonne par rôle, ce qui facilite les revues d'accès et les décisions de gouvernance.
+- La sécurité d'administration intègre la gestion des **clés API machine-to-machine** (création, activation/désactivation, révocation), avec affichage du secret une seule fois pour limiter les erreurs opérationnelles.
+- Le référentiel Actions gagne une navigation plus pratique : les sous-catégories se consultent directement sous chaque catégorie, sans changer d'écran.
+
+### Composants / Modules concernés
+
+- Administration — Utilisateurs
+- Administration — Rôles & Permissions
+- Administration — Sécurité
+- Administration — Référentiels (Actions)
+
+### Points de vigilance
+
+- Après création d'une clé API, le secret n'est affiché qu'une seule fois : il doit être sauvegardé immédiatement dans un coffre sécurisé.
+- Toute resynchronisation du catalogue d'endpoints peut modifier la vue des permissions ; une vérification rapide des rôles critiques est recommandée.
+
+---
+
 ## 3.32.0 - 2026-04-29
 
 Stabilité : **expérimental** 🧪

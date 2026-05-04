@@ -1,5 +1,36 @@
 # Changelog
 
+## [3.33.1] — 2026-05-04
+
+### Correctif — insensibilité à la casse des rôles utilisateur
+
+Les rôles sont stockés en minuscule en base de données (`admin`, `resp`, `tech`, `ope`) alors que les comparaisons attendaient des majuscules, provoquant des refus d'accès ou des affichages incorrects.
+
+- **`RequireRole`** — `user.role` normalisé en majuscule avant comparaison (accès route `/admin`)
+- **`menuConfig.getMenuItems`** — `userRole` normalisé en majuscule pour le filtrage du menu
+- **`AdminUsersTable`** — badge couleur et libellé du rôle utilisent `role_code?.toUpperCase()`
+- **`AdminUserConfirmModals`** — filtre d'exclusion du rôle actuel et affichage normalisés en majuscule
+- **`useAdminUsers`** — `filterRole` envoyé en minuscule à l'API pour correspondre aux valeurs BDD
+- **`TasksTab` (intervention)** — `canSkipObligatory` utilise `user.role.toUpperCase()`
+- **`GammeProgressBlock`** — `canSkipObligatory` utilise `user.role.toUpperCase()`
+
+---
+
+## [3.33.0] — 2026-05-04
+
+### Administration — matrice de permissions, clés API, référentiel Actions
+
+- **Matrice rôles × permissions** : tableau complet `AdminRolePermissionsMatrix` — toutes les permissions visibles d'un coup avec une colonne par rôle ; toggle par cellule avec log d'audit
+- **Clés API machine-to-machine** : création, activation/désactivation, révocation dans `AdminSecurityApiKeys` — le secret est affiché une seule fois à la création
+- **Synchronisation catalogue d'endpoints** : bouton "Sync Endpoints" dans l'onglet Rôles pour mettre à jour le catalogue depuis les routes backend
+- **Référentiel Actions** : consultation et ajout de sous-catégories inline dans `AdminRefActionsSection`
+- **Tableau utilisateurs** : filtres par rôle et par statut, actions rapides (modifier, changer rôle, activer/désactiver, reset mot de passe) dans `AdminUsersTable`
+- **Bouton "Réparer les DIs"** dans l'onglet Demandes d'Intervention → `POST /intervention-requests/repair`
+- **Formulaires de création de tâche** convertis de modal en inline dans les 3 contextes : onglet Tâches d'intervention, page globale des tâches, `ActionTaskSection` (planning)
+- **Sélecteur de technicien pilote** dans le formulaire de création d'intervention : `fetchActiveUsers` chargé via `useEffect` dans `ActionFormContext` et `InterventionSelector`
+
+---
+
 ## [3.31.0] — 2026-04-28
 
 ### Interventions fermées — verrouillage complet

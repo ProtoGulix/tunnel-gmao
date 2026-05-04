@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
 import { Plus, ShieldCheck, Wrench } from 'lucide-react';
-import { fetchOpenInterventionsByEquipement } from '@/api/planning';
+import { fetchOpenInterventionsByEquipement, fetchActiveUsers } from '@/api/planning';
 import { createIntervention } from '@/api/interventions';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
@@ -178,13 +178,18 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
-    techInitials: '',
+    techId: '',
     reportedBy: initialRequest?.demandeur_nom ?? '',
     reportedDate: getDefaultDateTimeLocal(),
     ...(initialRequest?.id && { requestId: initialRequest.id }),
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetchActiveUsers().then(setUsers).catch(() => {});
+  }, []);
 
   const set = useCallback((field, value) => setFormData((prev) => ({ ...prev, [field]: value })), []);
 
@@ -208,7 +213,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
     e.preventDefault();
     setError(null);
     if (!formData.title.trim()) { setError('Le titre est obligatoire'); return; }
-    if (!formData.techInitials.trim()) { setError('Les initiales du technicien sont obligatoires'); return; }
+    if (!formData.techId) { setError('Veuillez sélectionner un technicien'); return; }
     setSaving(true);
     try {
       const created = await createIntervention({
@@ -250,6 +255,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           locked={!!selectedRequest}
           lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
           fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
+          users={users}
           saving={saving}
           error={error}
           onSubmit={handleSubmit}

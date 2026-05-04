@@ -7,12 +7,13 @@
  * remplacer l'interface (tabs toujours visibles).
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Flex, Tabs, Text } from '@radix-ui/themes';
 import { ClipboardList, MapPin, Wrench } from 'lucide-react';
 import { createIntervention } from '@/api/interventions';
 import { fetchEquipements } from '@/api/equipements';
+import { fetchActiveUsers } from '@/api/planning';
 import EquipementSearch from '@/components/planning/EquipementSearch';
 import InterventionSelector from '@/components/planning/InterventionSelector';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
@@ -31,7 +32,7 @@ function buildFormData(equipementId, equipementLabel, req = null) {
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
-    techInitials: '',
+    techId: '',
     reportedBy: req?.demandeur_nom ?? '',
     reportedDate: getDefaultDateTimeLocal(),
     ...(req?.id && { requestId: req.id }),
@@ -55,6 +56,11 @@ export function ContextSection({
   const [formData, setFormData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetchActiveUsers().then(setUsers).catch(() => {});
+  }, []);
 
   const equipementLabel = pickedEquipement
     ? `${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`
@@ -82,7 +88,7 @@ export function ContextSection({
     e.preventDefault();
     setCreateError(null);
     if (!formData?.title?.trim()) { setCreateError('Le titre est obligatoire'); return; }
-    if (!formData?.techInitials?.trim()) { setCreateError('Les initiales sont obligatoires'); return; }
+    if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; }
     setSaving(true);
     try {
       const created = await createIntervention({
@@ -171,6 +177,7 @@ export function ContextSection({
                       locked={false}
                       lockedType={false}
                       fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
+                      users={users}
                       saving={saving}
                       error={createError}
                       onSubmit={handleCreate}
@@ -196,6 +203,7 @@ export function ContextSection({
                       locked={true}
                       lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
                       fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
+                      users={users}
                       saving={saving}
                       error={createError}
                       onSubmit={handleCreate}

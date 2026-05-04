@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createInterventionTask } from '@/api/interventionTasks';
 import { fetchTasksWorkspace } from '@/api/tasks';
+import { fetchActiveUsers } from '@/api/planning';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const EMPTY_FORM = {
@@ -19,14 +20,16 @@ export function useTaskCreate({ interventionId: lockedInterventionId = null, onS
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState([]);
 
+  useEffect(() => {
+    fetchActiveUsers().then(setUsers).catch(() => {});
+  }, []);
+
   const loadOptions = useCallback(async () => {
+    if (lockedInterventionId) return;
     setOptionsLoading(true);
     try {
       const result = await fetchTasksWorkspace({ include_options: true, limit: 1 });
-      setUsers(result.options?.users ?? []);
-      if (!lockedInterventionId) {
-        setInterventions(result.options?.interventions ?? []);
-      }
+      setInterventions(result.options?.interventions ?? []);
     } catch {
       // options non critiques
     } finally {

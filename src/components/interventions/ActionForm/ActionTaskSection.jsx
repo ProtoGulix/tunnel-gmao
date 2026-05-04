@@ -12,11 +12,11 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text, TextField, Badge, Select } from '@radix-ui/themes';
-import { CheckSquare } from 'lucide-react';
+import { Box, Button, Card, Flex, Select, Spinner, Text, TextField, Badge } from '@radix-ui/themes';
+import { CheckSquare, Plus } from 'lucide-react';
 import { fetchInterventionTasks } from '@/api/interventionTasks';
+import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
-import TaskCreateDialog from '@/components/tasks/TaskCreateDialog';
 
 function normalizeSelectedTask(task, preserveExistingStatus = true) {
   if (!task) return null;
@@ -118,7 +118,16 @@ TaskRow.propTypes = {
 export default function ActionTaskSection({ interventionId, value, onChange, accentColor = 'blue' }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const { formData, set, users, saving: savingCreate, errors: createErrors, reset, handleSubmit: handleCreateSubmit } = useTaskCreate({
+    interventionId: String(interventionId),
+    onSuccess: (createdTask) => {
+      setTasks((prev) => [...prev, createdTask]);
+      onChange([...selectedTasks, normalizeSelectedTask(createdTask, false)]);
+      setShowCreate(false);
+    },
+  });
 
   useEffect(() => {
     if (!interventionId) return;
@@ -196,19 +205,77 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
             accentColor={accentColor}
           />
         )}
-        onCreateClick={() => setCreateDialogOpen(true)}
+        onCreateClick={() => { reset(); setShowCreate((v) => !v); }}
         createLabel="Nouvelle tâche"
         emptyMessage="Aucune tâche ouverte — créez-en une"
         maxHeight={200}
       />
 
-      <TaskCreateDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        interventionId={String(interventionId)}
-        onSuccess={handleCreate}
-      />
+      {showCreate && (
+        <Card mt="2" style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+          <form onSubmit={handleCreateSubmit}>
+            <Flex direction="column" gap="2">
+              {createErrors.length > 0 && (
+                <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 8 }}>
+                  {createErrors.map((err, idx) => (
+                    <Text key={idx} as="div" color="red" size="1">• {err}</Text>
+                  ))}
+                </Box>
+              )}
 
+              <Box>
+                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>
+                  Libellé <Text color="red">*</Text>
+                </Text>
+                <TextField.Root
+                  value={formData.label}
+                  onChange={(e) => set('label', e.target.value)}
+                  placeholder="Ex : Contrôle alignement capteur"
+                  autoFocus
+                />
+              </Box>
+
+              <Box>
+                <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Assigné à</Text>
+                <Select.Root
+                  value={formData.assignedTo || '__none__'}
+                  onValueChange={(v) => set('assignedTo', v === '__none__' ? '' : v)}
+                >
+                  <Select.Trigger placeholder="Non assigné" style={{ width: '100%' }} />
+                  <Select.Content>
+                    <Select.Item value="__none__">Non assigné</Select.Item>
+                    {users.map((u) => {
+                      const initials = (u.initials || u.initial || '').toUpperCase();
+                      const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+                      return (
+                        <Select.Item key={u.id} value={String(u.id)}>
+                          {initials ? `${initials} — ${fullName}` : fullName}
+                        </Select.Item>
+                      );
+                    })}
+                  </Select.Content>
+                </Select.Root>
+              </Box>
+
+              <Flex justify="end" gap="2" mt="1">
+                <Button
+                  type="button"
+                  variant="soft"
+                  color="gray"
+                  size="1"
+                  onClick={() => { reset(); setShowCreate(false); }}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit" color="blue" size="1" disabled={savingCreate}>
+                  {savingCreate ? <Spinner size="1" /> : <Plus size={12} />}
+                  Enregistrer
+                </Button>
+              </Flex>
+            </Flex>
+          </form>
+        </Card>
+      )}
     </Box>
   );
 }

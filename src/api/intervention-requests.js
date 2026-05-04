@@ -106,3 +106,16 @@ export async function transitionInterventionRequest(id, data) {
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
   return response.data;
 }
+
+/**
+ * Outil de maintenance : clôture toutes les DIs en statut `acceptee`
+ * dont l'intervention liée est déjà fermée (correction de données historiques).
+ *
+ * Idempotent — peut être appelé plusieurs fois sans effet secondaire.
+ *
+ * @returns {Promise<{repaired_count: number, details: Array<{id: string, code: string, machine_code: string}>}>}
+ */
+export async function repairInterventionRequests() {
+  const response = await api.post('/intervention-requests/repair');
+  return response.data;
+}
