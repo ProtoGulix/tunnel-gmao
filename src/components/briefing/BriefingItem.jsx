@@ -88,14 +88,18 @@ function formatDelay(situation) {
 // ── Badges selon type de situation ────────────────────────────────────────
 
 function SituationBadges({ situation }) {
-  const { situationType, type } = situation;
+  const { situationType, type, tasksLinked, stats } = situation;
   const typeLabel = TYPE_INTER_LABELS[type] || type;
+  const tp = stats?.taskProgress;
+  const totalTasks = (tp?.total ?? 0);
+  const isNoTask = totalTasks === 0 && (tasksLinked?.length ?? 0) === 0;
 
   if (situationType === 'decision') {
     return (
       <Flex gap="1" align="center">
         <Badge color="red" variant="soft" size="1">critique</Badge>
         <Badge color="blue" variant="soft" size="1">décision</Badge>
+        {isNoTask && <Badge color="orange" variant="soft" size="1">sans tâche</Badge>}
       </Flex>
     );
   }
@@ -104,19 +108,75 @@ function SituationBadges({ situation }) {
       <Flex gap="1" align="center">
         <Badge color="red" variant="soft" size="1">urgent</Badge>
         <Badge color="orange" variant="soft" size="1">pièce</Badge>
+        {isNoTask && <Badge color="orange" variant="soft" size="1">sans tâche</Badge>}
       </Flex>
     );
   }
   if (situationType === 'blocked_piece') {
-    return <Badge color="orange" variant="soft" size="1">pièce</Badge>;
+    return (
+      <Flex gap="1" align="center">
+        <Badge color="orange" variant="soft" size="1">pièce</Badge>
+        {isNoTask && <Badge color="orange" variant="soft" size="1">sans tâche</Badge>}
+      </Flex>
+    );
   }
   if (situationType === 'in_progress') {
-    return <Badge color="blue" variant="soft" size="1">{typeLabel}</Badge>;
+    return (
+      <Flex gap="1" align="center">
+        <Badge color="blue" variant="soft" size="1">{typeLabel}</Badge>
+        {isNoTask && <Badge color="orange" variant="soft" size="1">sans tâche</Badge>}
+      </Flex>
+    );
   }
+
+  // Anomalie : pas de tâche, cas général
+  if (isNoTask) {
+    return <Badge color="orange" variant="soft" size="1">sans tâche</Badge>;
+  }
+
   return null;
 }
 
 SituationBadges.propTypes = {
+  situation: PropTypes.object.isRequired,
+};
+
+SituationBadges.propTypes = {
+  situation: PropTypes.object.isRequired,
+};
+
+// ── Ligne progression tâches (ligne 4) ──────────────────────────────────────
+
+function TaskProgressLine({ situation }) {
+  const { tasksLinked, stats } = situation;
+  const tp = stats?.taskProgress;
+  const total = tp?.total ?? 0;
+  const done = tp?.done ?? 0;
+  const active = tasksLinked?.length ?? 0;
+  const noTask = total === 0 && active === 0;
+
+  if (noTask) return null; // anomalie gérée via badge, pas de ligne ici
+
+  if (total > 0) {
+    const remaining = total - done;
+    const color = done === total ? 'var(--green-11)' : done > 0 ? 'var(--blue-11)' : 'var(--gray-11)';
+    return (
+      <Text size="1" style={{ color }}>
+        {done}/{total} tâche{total !== 1 ? 's' : ''} clôturée{done !== 1 ? 's' : ''}
+        {remaining > 0 ? ` · ${remaining} restante${remaining !== 1 ? 's' : ''}` : ''}
+      </Text>
+    );
+  }
+
+  // Seulement des tâches actives (sans taskProgress)
+  return (
+    <Text size="1" style={{ color: 'var(--blue-11)' }}>
+      {active} tâche{active !== 1 ? 's' : ''} active{active !== 1 ? 's' : ''}
+    </Text>
+  );
+}
+
+TaskProgressLine.propTypes = {
   situation: PropTypes.object.isRequired,
 };
 
@@ -343,6 +403,9 @@ export function BriefingItem({ situation, sectionId }) {
 
             {/* Ligne 3 : texte contextuel */}
             <ContextLine situation={situation} />
+
+            {/* Ligne 4 : progression tâches */}
+            <TaskProgressLine situation={situation} />
           </Flex>
 
           {/* Droite : avatar + délai */}
