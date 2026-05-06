@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.34.0] — 2026-05-06
+
+### Accueil — tableau de bord split Planning / Briefing
+
+- **Nouvelle page d'accueil** en deux volets côte à côte : Planning à gauche, Briefing à droite
+- **Volet Planning** : vue semaine avec sélecteur de technicien, interventions planifiées, création d'action directe depuis le panneau jour
+- **Volet Briefing** : résumé opérationnel en temps réel — demandes d'intervention en attente, interventions ouvertes, tâches assignées avec leurs statuts
+- **Badges de situation** (`SituationBadges`) sur chaque item du briefing pour identifier rapidement l'état (urgent, en retard, en cours…)
+- **Barre de progression des tâches** (`TaskProgressLine`) sur chaque intervention du briefing : avancement des tâches d'un coup d'œil
+- **Bouton "Demande d'achat"** en en-tête de l'accueil : création d'une demande d'achat spontanée sans avoir à naviguer dans une intervention
+
+---
+
 ## [3.33.1] — 2026-05-04
 
 ### Correctif — insensibilité à la casse des rôles utilisateur
