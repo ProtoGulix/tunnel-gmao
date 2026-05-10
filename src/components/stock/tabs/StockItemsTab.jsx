@@ -67,13 +67,14 @@ function StockBadge({ quantity, unit }) {
 StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
 
 function StockItem({ item, isSelected, onClick }) {
-  const primaryMfr = item.manufacturer_refs?.[0];
+  const manufacturers = item.manufacturer_refs ?? [];
+  const primaryMfr = manufacturers[0];
 
   return (
     <Box
       onClick={() => onClick(item)}
       style={{
-        padding: '10px 14px',
+        padding: '8px 14px',
         cursor: 'pointer',
         borderBottom: '1px solid var(--gray-4)',
         background: isSelected ? 'var(--accent-3)' : 'var(--gray-1)',
@@ -82,36 +83,43 @@ function StockItem({ item, isSelected, onClick }) {
       onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-3)'; }}
       onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-1)'; }}
     >
-      <Flex direction="column" gap="1">
-        {/* Ligne 1 : label fabricant + nom pièce */}
-        <Flex align="center" gap="2" wrap="wrap">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px', alignItems: 'start' }}>
+
+        {/* Colonne gauche — identité fabricant */}
+        <Flex direction="column" gap="1">
           {primaryMfr ? (
-            <Flex align="center" gap="1" style={{ background: 'var(--violet-3)', borderRadius: 'var(--radius-2)', padding: '1px 6px' }}>
-              <Factory size={11} color="var(--violet-9)" />
-              <Text size="1" weight="medium" style={{ color: 'var(--violet-11)' }}>{primaryMfr.name}</Text>
-              <Text size="1" weight="bold" style={{ color: 'var(--violet-11)', fontFamily: 'monospace' }}>{primaryMfr.ref}</Text>
-            </Flex>
+            <>
+              <Flex align="center" gap="1">
+                <Factory size={11} color="var(--violet-9)" />
+                <Text size="1" color="gray">{primaryMfr.name}</Text>
+              </Flex>
+              <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>
+                {primaryMfr.ref}
+              </Text>
+              {manufacturers.length > 1 && (
+                <Text size="1" color="gray">+{manufacturers.length - 1} autre{manufacturers.length > 2 ? 's' : ''}</Text>
+              )}
+            </>
           ) : (
-            <Flex align="center" gap="1" style={{ background: 'var(--gray-3)', borderRadius: 'var(--radius-2)', padding: '1px 6px' }}>
+            <Flex align="center" gap="1" style={{ opacity: 0.5 }}>
               <Factory size={11} color="var(--gray-8)" />
               <Text size="1" color="gray">Sans fabricant</Text>
             </Flex>
           )}
-          <Text size="2" weight="medium" style={{ lineHeight: 1.3 }}>{item.name}</Text>
+          <Text size="1" color="gray" style={{ lineHeight: 1.3, marginTop: 2 }}>{item.name}</Text>
         </Flex>
-        {/* Ligne 2 : ref stock, état, nb fournisseurs */}
-        <Flex gap="2" align="center" wrap="wrap">
+
+        {/* Colonne droite — infos stock */}
+        <Flex direction="column" gap="1" align="end">
           <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.ref}</Badge>
           <StockBadge quantity={item.quantity} unit={item.unit} />
           {item.supplier_refs_count > 0
             ? <Badge color="blue" variant="soft" size="1">{item.supplier_refs_count} fourn.</Badge>
-            : <Badge color="gray" variant="outline" size="1">À qualifier</Badge>
+            : <Badge color="orange" variant="soft" size="1">À qualifier</Badge>
           }
-          {!primaryMfr && item.supplier_refs_count === 0 && (
-            <Badge color="orange" variant="soft" size="1">Non référencé</Badge>
-          )}
         </Flex>
-      </Flex>
+
+      </div>
     </Box>
   );
 }
