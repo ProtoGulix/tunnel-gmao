@@ -159,8 +159,10 @@ export function useBriefingData() {
     const interventions =
       interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
     const tasksData =
-      tasksResult.status === 'fulfilled' ? tasksResult.value : { tasks: [], counters: null };
-    const tasks = tasksData.tasks ?? [];
+      tasksResult.status === 'fulfilled' ? tasksResult.value : { items: [], counters: null };
+    const tasks = (tasksData.items ?? []).flatMap((group) =>
+      (group.tasks ?? []).map((t) => ({ ...t, intervention: { id: group.id } }))
+    );
     const tasksCounters = tasksData.counters ?? null;
 
     if (interventionsResult.status === 'rejected' && tasksResult.status === 'rejected') {

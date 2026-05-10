@@ -1,10 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Tabs, Box } from '@radix-ui/themes';
 import { Home, ShoppingCart } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { PlanningPane } from '@/components/home/PlanningPane';
 import { TasksPane } from '@/components/home/TasksPane';
-import { BriefingPane } from '@/components/home/BriefingPane';
 import ActionModal from '@/components/home/ActionModal';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import { usePlanningWeek } from '@/hooks/usePlanningWeek';
@@ -77,26 +75,15 @@ export default function HomeSplit() {
       {/* ── Corps principal ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
 
-        {/* ── Colonne gauche — Tâches + onglet Briefing ───────────────────── */}
+        {/* ── Colonne gauche — Tâches ─────────────────────────────────────── */}
         <div style={{ width: '38%', borderRight: '1px solid var(--gray-5)' }}>
-          <Tabs.Root defaultValue="tasks">
-            <Tabs.List style={{ paddingLeft: 12, paddingRight: 12 }}>
-              <Tabs.Trigger value="tasks">Mes tâches</Tabs.Trigger>
-              <Tabs.Trigger value="briefing">Briefing</Tabs.Trigger>
-            </Tabs.List>
-            <Tabs.Content value="tasks">
-              <TasksPane
-                taskGroups={taskGroups}
-                pagination={taskPagination}
-                skip={taskSkip}
-                onPageChange={setTaskSkip}
-                onAddAction={handleTaskAddAction}
-              />
-            </Tabs.Content>
-            <Tabs.Content value="briefing">
-              <BriefingPane />
-            </Tabs.Content>
-          </Tabs.Root>
+          <TasksPane
+            taskGroups={taskGroups}
+            pagination={taskPagination}
+            skip={taskSkip}
+            onPageChange={setTaskSkip}
+            onAddAction={handleTaskAddAction}
+          />
         </div>
 
         {/* ── Colonne droite — Planning ────────────────────────────────────── */}

@@ -19,6 +19,7 @@ import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
 import EquipementsPage from '@/pages/equipements/EquipementsPage';
 import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
 import StockPage from '@/pages/stock/StockPage';
+import BriefingPage from '@/pages/briefing/BriefingPage';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
 import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
@@ -197,6 +198,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <EquipementDetailPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/briefing"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <BriefingPage />
             </Layout>
           </ProtectedRoute>
         }
