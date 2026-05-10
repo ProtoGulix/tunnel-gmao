@@ -3,7 +3,7 @@
  * @module pages/stock/StockPage
  */
 
-import { Container, Flex, Tabs, Text } from '@radix-ui/themes';
+import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Layers, Package, Shapes } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import StockItemsTab from '@/components/stock/tabs/StockItemsTab';
@@ -15,7 +15,7 @@ export default function StockPage() {
   const { activeTab, setActiveTab } = useTabNavigation('items', 'tab');
 
   return (
-    <Container>
+    <Box px="4">
       <PageHeader title="Stock" subtitle="Pieces referencees et familles" />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
@@ -52,6 +52,6 @@ export default function StockPage() {
           {activeTab === 'templates' && <StockTemplatesTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+    </Box>
   );
 }
