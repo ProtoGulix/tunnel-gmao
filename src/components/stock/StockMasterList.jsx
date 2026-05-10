@@ -5,8 +5,8 @@
 
 import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Flex, Select, Text, TextField } from '@radix-ui/themes';
-import { Package, Search, X } from 'lucide-react';
+import { Badge, Box, Button, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { ChevronLeft, ChevronRight, Package, Search, X } from 'lucide-react';
 import LoadingState from '@/components/ui/LoadingState';
 
 const ALL = '__all__';
@@ -135,19 +135,20 @@ RefItem.propTypes = {
 export default function StockMasterList({
   items, loading, search, onSearchChange,
   facets, familyCode, onFamilyChange, subFamilyCode, onSubFamilyChange,
-  selectedId, onSelect, count,
+  selectedId, onSelect, count, pagination,
 }) {
+  const hasPagination = pagination && pagination.totalPages > 1;
+
   return (
-    <Box style={{ border: '1px solid var(--gray-5)', borderRadius: 'var(--radius-3)', overflow: 'hidden' }}>
+    <Box style={{ border: '1px solid var(--gray-5)', borderRadius: 'var(--radius-3)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <Box style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-5)', background: 'var(--gray-2)' }}>
+      <Box style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-5)', background: 'var(--gray-2)', flexShrink: 0 }}>
         <Flex align="center" gap="2" mb="2">
           <Package size={14} color="var(--gray-11)" />
           <Text size="2" weight="bold" color="gray">Pièces référencées</Text>
           {count > 0 && <Badge color="gray" variant="soft" size="1">{count}</Badge>}
         </Flex>
 
-        {/* Searchbar */}
         <TextField.Root
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -175,11 +176,11 @@ export default function StockMasterList({
       </Box>
 
       {/* Liste */}
-      <Box style={{ height: 680, overflowY: 'auto' }}>
+      <Box style={{ flex: 1, overflowY: 'auto', minHeight: 0, maxHeight: 620 }}>
         {loading ? (
           <LoadingState fullscreen={false} message="Chargement…" />
         ) : items.length === 0 ? (
-          <Flex direction="column" align="center" justify="center" style={{ height: '100%', padding: 24 }} gap="2">
+          <Flex direction="column" align="center" justify="center" style={{ height: 200, padding: 24 }} gap="2">
             <Package size={28} color="var(--gray-7)" />
             <Text size="2" color="gray">Aucune pièce trouvée</Text>
           </Flex>
@@ -194,6 +195,34 @@ export default function StockMasterList({
           ))
         )}
       </Box>
+
+      {/* Footer pagination */}
+      {hasPagination && (
+        <Box style={{ padding: '8px 12px', borderTop: '1px solid var(--gray-5)', background: 'var(--gray-2)', flexShrink: 0 }}>
+          <Flex align="center" justify="between">
+            <Text size="1" color="gray">
+              Page {pagination.currentPage} / {pagination.totalPages}
+              {count > 0 && <> · {count} pièces</>}
+            </Text>
+            <Flex gap="1">
+              <Button
+                size="1" variant="soft" color="gray"
+                disabled={pagination.currentPage <= 1}
+                onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+              >
+                <ChevronLeft size={12} />
+              </Button>
+              <Button
+                size="1" variant="soft" color="gray"
+                disabled={pagination.currentPage >= pagination.totalPages}
+                onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+              >
+                <ChevronRight size={12} />
+              </Button>
+            </Flex>
+          </Flex>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -211,4 +240,9 @@ StockMasterList.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
   count: PropTypes.number,
+  pagination: PropTypes.shape({
+    currentPage: PropTypes.number,
+    totalPages: PropTypes.number,
+    onPageChange: PropTypes.func,
+  }),
 };

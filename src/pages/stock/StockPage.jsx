@@ -4,11 +4,11 @@
  */
 
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Layers, Package, Shapes } from 'lucide-react';
+import { Factory, Package, Truck } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import StockItemsTab from '@/components/stock/tabs/StockItemsTab';
-import StockFamiliesTab from '@/components/stock/tabs/StockFamiliesTab';
-import StockTemplatesTab from '@/components/stock/tabs/StockTemplatesTab';
+import SuppliersTab from '@/components/suppliers/tabs/SuppliersTab';
+import ManufacturersTab from '@/components/manufacturers/ManufacturersTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 export default function StockPage() {
@@ -16,26 +16,26 @@ export default function StockPage() {
 
   return (
     <Box px="4">
-      <PageHeader title="Stock" subtitle="Pieces referencees et familles" />
+      <PageHeader title="Stock" subtitle="Pièces, fournisseurs et fabricants" />
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="items">
             <Flex align="center" gap="2">
               <Package size={14} />
-              <Text>Pieces referencees</Text>
+              <Text>Pièces référencées</Text>
             </Flex>
           </Tabs.Trigger>
-          <Tabs.Trigger value="families">
+          <Tabs.Trigger value="suppliers">
             <Flex align="center" gap="2">
-              <Layers size={14} />
-              <Text>Familles et sous-familles</Text>
+              <Truck size={14} />
+              <Text>Fournisseurs</Text>
             </Flex>
           </Tabs.Trigger>
-          <Tabs.Trigger value="templates">
+          <Tabs.Trigger value="manufacturers">
             <Flex align="center" gap="2">
-              <Shapes size={14} />
-              <Text>Trames de reference</Text>
+              <Factory size={14} />
+              <Text>Fabricants</Text>
             </Flex>
           </Tabs.Trigger>
         </Tabs.List>
@@ -43,13 +43,11 @@ export default function StockPage() {
         <Tabs.Content value="items">
           {activeTab === 'items' && <StockItemsTab />}
         </Tabs.Content>
-
-        <Tabs.Content value="families">
-          {activeTab === 'families' && <StockFamiliesTab />}
+        <Tabs.Content value="suppliers">
+          {activeTab === 'suppliers' && <SuppliersTab />}
         </Tabs.Content>
-
-        <Tabs.Content value="templates">
-          {activeTab === 'templates' && <StockTemplatesTab />}
+        <Tabs.Content value="manufacturers">
+          {activeTab === 'manufacturers' && <ManufacturersTab />}
         </Tabs.Content>
       </Tabs.Root>
     </Box>
