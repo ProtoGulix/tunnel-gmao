@@ -8,7 +8,7 @@ import ItemForm from '@/components/ui/ItemForm';
 import DetailsRow from './DetailsRow';
 import FormActions from './FormActions';
 
-function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', compact = false, initialData = null }) {
+function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', initialData = null, bare = false }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [quantity, setQuantity] = useState(initialData ? String(initialData.quantity ?? '1') : '1');
@@ -25,22 +25,19 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
     setFormError('');
 
     const finalLabel = selectedItem ? selectedItem.name : searchTerm.trim();
-
     if (!finalLabel) {
       setFormError("Entrez un nom d'article");
       return;
     }
 
-    const data = {
+    await onSubmit({
       item_label: finalLabel,
       quantity: parseInt(quantity, 10),
       unit,
       urgency,
       requested_by: requestedBy.trim() || 'Système',
       stock_item_id: selectedItem?.id ?? initialData?.stock_item_id ?? null,
-    };
-
-    await onSubmit(data);
+    });
 
     if (!initialData) {
       setSelectedItem(null);
@@ -55,34 +52,23 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
 
   const submitDisabled = loading
     || (!selectedItem && !searchTerm.trim())
-    || parseInt(quantity, 10) < 1
-    || (!initialData && !requestedBy.trim());
+    || parseInt(quantity, 10) < 1;
 
-  return (
-    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', overflow: 'visible' }}>
-      <Flex direction="column" gap={compact ? '2' : '3'}>
-        <Flex align="center" gap="2">
-          <ShoppingCart size={20} color="var(--blue-9)" />
-          <Text size="3" weight="bold" color="blue">
-            Nouvelle demande d&apos;achat
-          </Text>
-        </Flex>
-
-        {!compact && (
-          <Text size="2" color="gray">Remplissez les informations ci-dessous</Text>
-        )}
+  const content = (
+    <Flex direction="column" gap="3">
+      <Flex align="center" gap="2">
+        <ShoppingCart size={20} color="var(--blue-9)" />
+        <Text size="3" weight="bold" color="blue">Nouvelle demande d&apos;achat</Text>
+      </Flex>
 
         {formError && (
-          <Box
-            aria-live="polite"
-            style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 12 }}
-          >
+          <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 12 }}>
             <Text color="red" weight="medium">{formError}</Text>
           </Box>
         )}
 
         <form onSubmit={handleSubmit}>
-          <Flex direction="column" gap={compact ? '2' : '3'}>
+          <Flex direction="column" gap="3">
             <Box style={{ position: 'relative', zIndex: 5 }}>
               <ItemForm
                 key={formKey}
@@ -106,14 +92,8 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                 )}
                 renderSelected={(item, onClear) => (
                   <Flex
-                    align="center"
-                    gap="2"
-                    style={{
-                      padding: '6px 10px',
-                      background: 'var(--blue-3)',
-                      borderRadius: 'var(--radius-2)',
-                      border: '1px solid var(--blue-6)',
-                    }}
+                    align="center" gap="2"
+                    style={{ padding: '6px 10px', background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}
                   >
                     <Badge color="blue" variant="soft" size="1">{item.ref}</Badge>
                     <Text size="2" weight="bold" style={{ flex: 1 }}>{item.name}</Text>
@@ -124,25 +104,15 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                   </Flex>
                 )}
                 confirmLabel="Utiliser cet article"
-                onChange={(item) => {
-                  setSelectedItem(item);
-                  setUnit(resolveUnitForItem(item));
-                }}
+                onChange={(item) => { setSelectedItem(item); setUnit(resolveUnitForItem(item)); }}
                 onSearchChange={setSearchTerm}
                 disableCreate
               />
 
               {isSpecialRequest && (
                 <Flex
-                  align="center"
-                  gap="2"
-                  mt="2"
-                  style={{
-                    padding: '6px 10px',
-                    background: 'var(--amber-3)',
-                    borderRadius: 'var(--radius-2)',
-                    border: '1px solid var(--amber-6)',
-                  }}
+                  align="center" gap="2" mt="2"
+                  style={{ padding: '6px 10px', background: 'var(--amber-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--amber-6)' }}
                 >
                   <Badge color="amber" variant="soft" size="1">Demande spéciale</Badge>
                   <Text size="2" color="amber" weight="medium">{searchTerm}</Text>
@@ -151,7 +121,6 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
             </Box>
 
             <DetailsRow
-              compact={compact}
               quantity={quantity}
               onQuantityChange={setQuantity}
               unit={unit}
@@ -163,7 +132,6 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
             />
 
             <FormActions
-              compact={compact}
               onCancel={onCancel}
               submitDisabled={submitDisabled}
               loading={loading}
@@ -171,7 +139,13 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
             />
           </Flex>
         </form>
-      </Flex>
+    </Flex>
+  );
+
+  if (bare) return content;
+  return (
+    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', overflow: 'visible' }}>
+      {content}
     </Card>
   );
 }
@@ -181,16 +155,8 @@ PurchaseRequestForm.propTypes = {
   loading: PropTypes.bool,
   onCancel: PropTypes.func,
   submitLabel: PropTypes.string,
-  compact: PropTypes.bool,
   initialData: PropTypes.object,
-};
-
-PurchaseRequestForm.defaultProps = {
-  loading: false,
-  onCancel: undefined,
-  submitLabel: 'Créer',
-  compact: false,
+  bare: PropTypes.bool,
 };
 
 export default PurchaseRequestForm;
-

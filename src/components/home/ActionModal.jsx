@@ -2,18 +2,6 @@ import PropTypes from 'prop-types';
 import { Dialog } from '@radix-ui/themes';
 import DayContextPanel from '@/components/planning/DayContextPanel';
 
-/**
- * Modal wrapping DayContextPanel for action creation from tasks or day slots.
- *
- * @param {Object}   props
- * @param {boolean}  props.open
- * @param {Function} props.onOpenChange
- * @param {string}   props.date           - YYYY-MM-DD
- * @param {string}   [props.techId]
- * @param {string}   [props.techInitials]
- * @param {Array}    [props.weekActionsForDay]
- * @param {Function} [props.onActionCreated]
- */
 export default function ActionModal({
   open,
   onOpenChange,
@@ -23,20 +11,20 @@ export default function ActionModal({
   weekActionsForDay = [],
   onActionCreated,
 }) {
-  function handleActionCreated() {
+  const handleActionCreated = () => {
     onActionCreated?.();
     onOpenChange(false);
-  }
+  };
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
         style={{
-          maxWidth: 860,
-          width: '95vw',
-          maxHeight: '90vh',
+          maxWidth: 1300,
+          width: '98vw',
+          maxHeight: '94vh',
           overflowY: 'auto',
-          padding: 'var(--space-4)',
+          padding: 'var(--space-5)',
         }}
       >
         {open && date && (

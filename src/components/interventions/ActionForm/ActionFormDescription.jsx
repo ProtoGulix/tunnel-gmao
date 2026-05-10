@@ -1,22 +1,13 @@
-/**
- * ActionFormDescription - Sous-composant
- * Champ de description avec validation
- * Props structurées : { formState, handlers }
- */
-
 import PropTypes from 'prop-types';
 import { Box, TextArea } from '@radix-ui/themes';
 
 function ActionFormDescription({ formState, handlers }) {
-  const { description } = formState;
-  const { handleDescriptionChange } = handlers;
-
   return (
     <Box>
       <TextArea
         placeholder="Remarque ou information complémentaire (optionnel)…"
-        value={description}
-        onChange={(e) => handleDescriptionChange(e.target.value)}
+        value={formState.description}
+        onChange={(e) => handlers.handleDescriptionChange(e.target.value)}
         rows={2}
         style={{
           resize: 'vertical',
@@ -32,12 +23,8 @@ function ActionFormDescription({ formState, handlers }) {
 ActionFormDescription.displayName = 'ActionFormDescription';
 
 ActionFormDescription.propTypes = {
-  formState: PropTypes.shape({
-    description: PropTypes.string.isRequired
-  }).isRequired,
-  handlers: PropTypes.shape({
-    handleDescriptionChange: PropTypes.func.isRequired
-  }).isRequired
+  formState: PropTypes.shape({ description: PropTypes.string.isRequired }).isRequired,
+  handlers: PropTypes.shape({ handleDescriptionChange: PropTypes.func.isRequired }).isRequired,
 };
 
 export default ActionFormDescription;
