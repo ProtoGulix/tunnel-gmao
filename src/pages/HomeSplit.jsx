@@ -11,9 +11,10 @@ import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 
 export default function HomeSplit() {
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
-  const [actionModal, setActionModal] = useState({ open: false, date: null, techId: null, techInitials: '', weekActionsForDay: [] });
+  const [actionModal, setActionModal] = useState({ open: false, date: null, techId: null, techInitials: '', weekActionsForDay: [], preselectedAction: null });
 
-  const { tasks, selectedTechId, retry: refreshTasks } = usePlanningWeek();
+  const planningHook = usePlanningWeek();
+  const { taskGroups, taskPagination, taskSkip, setTaskSkip, selectedTechId, retry: refreshTasks } = planningHook;
 
   const dateLabel = (() => {
     const raw = new Date().toLocaleDateString('fr-FR', {
@@ -28,17 +29,32 @@ export default function HomeSplit() {
     onClick: () => setPurchaseModalOpen(true),
   };
 
-  const handleOpenActionModal = useCallback(({ date, techId, techInitials, weekActionsForDay }) => {
-    setActionModal({ open: true, date, techId, techInitials, weekActionsForDay: weekActionsForDay ?? [] });
+  const handleOpenActionModal = useCallback(({ date, techId, techInitials, weekActionsForDay, preselectedAction }) => {
+    setActionModal({ open: true, date, techId, techInitials, weekActionsForDay: weekActionsForDay ?? [], preselectedAction: preselectedAction ?? null });
   }, []);
 
-  const handleTaskAddAction = useCallback(({ date, task }) => {
+  const handleTaskAddAction = useCallback(({ date, group, task }) => {
+    const preselectedAction = group
+      ? {
+          intervention: {
+            id: group.id,
+            code: group.code ?? '',
+            title: group.title ?? '',
+            status_actual: group.status ?? null,
+            plan_id: null,
+            machine: group.equipement
+              ? { id: group.equipement.id, code: group.equipement.code ?? '', name: group.equipement.name ?? '' }
+              : null,
+          },
+        }
+      : null;
     setActionModal({
       open: true,
       date,
       techId: selectedTechId,
       techInitials: '',
       weekActionsForDay: [],
+      preselectedAction,
     });
   }, [selectedTechId]);
 
@@ -69,7 +85,13 @@ export default function HomeSplit() {
               <Tabs.Trigger value="briefing">Briefing</Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="tasks">
-              <TasksPane tasks={tasks} onAddAction={handleTaskAddAction} />
+              <TasksPane
+                taskGroups={taskGroups}
+                pagination={taskPagination}
+                skip={taskSkip}
+                onPageChange={setTaskSkip}
+                onAddAction={handleTaskAddAction}
+              />
             </Tabs.Content>
             <Tabs.Content value="briefing">
               <BriefingPane />
@@ -82,6 +104,7 @@ export default function HomeSplit() {
           <PlanningPane
             onAddAction={handleOpenActionModal}
             onDataRefreshed={refreshTasks}
+            planningHook={planningHook}
           />
         </div>
       </div>
@@ -94,6 +117,7 @@ export default function HomeSplit() {
         techId={actionModal.techId}
         techInitials={actionModal.techInitials}
         weekActionsForDay={actionModal.weekActionsForDay}
+        preselectedAction={actionModal.preselectedAction}
         onActionCreated={handleActionCreated}
       />
 

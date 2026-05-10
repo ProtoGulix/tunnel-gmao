@@ -14,7 +14,8 @@ const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'te
  * @param {Function} [props.onAddAction] - Called with { date, actionsByDay } to open action modal
  * @param {Function} [props.onDataRefreshed] - Called after action created (to refresh tasks)
  */
-export function PlanningPane({ onAddAction, onDataRefreshed }) {
+export function PlanningPane({ onAddAction, onDataRefreshed, planningHook }) {
+  const ownHook = usePlanningWeek();
   const {
     actionsByDay,
     users,
@@ -26,7 +27,7 @@ export function PlanningPane({ onAddAction, onDataRefreshed }) {
     goToday,
     loading,
     retry,
-  } = usePlanningWeek();
+  } = planningHook ?? ownHook;
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [purchaseModalAction, setPurchaseModalAction] = useState(null);
@@ -38,13 +39,14 @@ export function PlanningPane({ onAddAction, onDataRefreshed }) {
     ? `${selectedUser.first_name?.[0] ?? ''}${selectedUser.last_name?.[0] ?? ''}`.toUpperCase()
     : '';
 
-  function handleAddActionForDay(dateStr) {
+  function handleAddActionForDay(dateStr, preselectedAction = null) {
     if (onAddAction) {
       onAddAction({
         date: dateStr,
         techId: selectedTechId,
         techInitials,
         weekActionsForDay: actionsByDay[dateStr] ?? [],
+        preselectedAction,
       });
     } else {
       setSelectedDate(dateStr);
@@ -146,4 +148,5 @@ export function PlanningPane({ onAddAction, onDataRefreshed }) {
 PlanningPane.propTypes = {
   onAddAction: PropTypes.func,
   onDataRefreshed: PropTypes.func,
+  planningHook: PropTypes.object,
 };

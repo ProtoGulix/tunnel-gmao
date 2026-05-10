@@ -12,7 +12,9 @@ export function usePlanningWeek() {
   const [weekStart, setWeekStart] = useState(() => getMondayOf(today));
   const [selectedTechId, setSelectedTechId] = useState(null);
   const [actionsByDay, setActionsByDay] = useState({});
-  const [tasks, setTasks] = useState([]);
+  const [taskGroups, setTaskGroups] = useState([]);
+  const [taskPagination, setTaskPagination] = useState(null);
+  const [taskSkip, setTaskSkip] = useState(0);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -43,7 +45,8 @@ export function usePlanningWeek() {
       fetchTasksWorkspace({
         status: 'todo,in_progress',
         assignee_id: selectedTechId,
-        limit: 50,
+        skip: taskSkip,
+        limit: 20,
       }),
     ]);
 
@@ -54,9 +57,11 @@ export function usePlanningWeek() {
     }
 
     if (tasksResult.status === 'fulfilled') {
-      setTasks(tasksResult.value.tasks ?? []);
+      setTaskGroups(tasksResult.value.items ?? []);
+      setTaskPagination(tasksResult.value.pagination ?? null);
     } else {
-      setTasks([]);
+      setTaskGroups([]);
+      setTaskPagination(null);
     }
 
     if (actionsResult.status === 'rejected' && tasksResult.status === 'rejected') {
@@ -66,7 +71,7 @@ export function usePlanningWeek() {
     }
 
     setLoading(false);
-  }, [weekStart, selectedTechId]);
+  }, [weekStart, selectedTechId, taskSkip]);
 
   useEffect(() => {
     if (selectedTechId) {
@@ -76,7 +81,10 @@ export function usePlanningWeek() {
 
   return {
     actionsByDay,
-    tasks,
+    taskGroups,
+    taskPagination,
+    taskSkip,
+    setTaskSkip,
     users,
     weekStart,
     weekEnd: addDays(weekStart, 6),

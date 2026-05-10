@@ -9,6 +9,7 @@ export default function ActionModal({
   techId,
   techInitials,
   weekActionsForDay = [],
+  preselectedAction = null,
   onActionCreated,
 }) {
   const handleActionCreated = () => {
@@ -33,6 +34,7 @@ export default function ActionModal({
             techId={techId}
             techInitials={techInitials}
             weekActionsForDay={weekActionsForDay}
+            preselectedAction={preselectedAction}
             onClose={() => onOpenChange(false)}
             onActionCreated={handleActionCreated}
           />
@@ -49,5 +51,6 @@ ActionModal.propTypes = {
   techId: PropTypes.string,
   techInitials: PropTypes.string,
   weekActionsForDay: PropTypes.array,
+  preselectedAction: PropTypes.object,
   onActionCreated: PropTypes.func,
 };

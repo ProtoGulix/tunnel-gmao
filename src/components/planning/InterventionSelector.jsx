@@ -7,7 +7,7 @@
  *
  * @module components/planning/InterventionSelector
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
 import { Plus, ShieldCheck, Wrench } from 'lucide-react';
@@ -287,6 +287,7 @@ export default function InterventionSelector({
 }) {
   const [interventions, setInterventions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const initialValueRef = useRef(value);
 
   useEffect(() => {
     if (locked) return;
@@ -299,7 +300,7 @@ export default function InterventionSelector({
     fetchOpenInterventionsByEquipement(equipementId)
       .then((data) => {
         setInterventions(data);
-        onChange?.(null);
+        if (!initialValueRef.current) onChange?.(null);
       })
       .catch(() => setInterventions([]))
       .finally(() => setLoading(false));

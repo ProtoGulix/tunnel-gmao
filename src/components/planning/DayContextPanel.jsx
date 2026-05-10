@@ -19,6 +19,7 @@ export default function DayContextPanel({
   date,
   techId,
   weekActionsForDay = [],
+  preselectedAction = null,
   onActionCreated,
 }) {
   const [metadata, setMetadata] = useState({ subcategories: [], complexityFactors: [] });
@@ -29,14 +30,24 @@ export default function DayContextPanel({
       .catch(() => {});
   }, []);
 
-  const preselectedEquipement = useMemo(
-    () => detectUniqueEquipement(weekActionsForDay),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  const preselectedEquipement = useMemo(() => {
+    if (preselectedAction?.intervention?.machine) {
+      const m = preselectedAction.intervention.machine;
+      return { id: m.id, code: m.code ?? '', name: m.name ?? '' };
+    }
+    return detectUniqueEquipement(weekActionsForDay);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const preselectedIntervention = useMemo(() => {
+    if (!preselectedAction?.intervention) return null;
+    const iv = preselectedAction.intervention;
+    return { id: iv.id, code: iv.code ?? '', title: iv.title ?? '', status_actual: iv.status_actual ?? null, plan_id: iv.plan_id ?? null, machine: iv.machine ?? null };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [pickedEquipement, setPickedEquipement] = useState(preselectedEquipement);
-  const [selectedIntervention, setSelectedIntervention] = useState(null);
+  const [selectedIntervention, setSelectedIntervention] = useState(preselectedIntervention);
   const [selectedRequest, setSelectedRequest] = useState(null);
 
   const equipementId = pickedEquipement?.id ?? null;
@@ -98,5 +109,6 @@ DayContextPanel.propTypes = {
   techId: PropTypes.string,
   techInitials: PropTypes.string,
   weekActionsForDay: PropTypes.arrayOf(PropTypes.object),
+  preselectedAction: PropTypes.object,
   onActionCreated: PropTypes.func,
 };

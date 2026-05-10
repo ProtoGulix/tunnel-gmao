@@ -266,7 +266,15 @@ export function DayColumn({ dateStr, actions, isToday, onAddAction, onAddPurchas
           <Text size="2" color="gray">Aucune action</Text>
         </Flex>
       ) : (
-        sorted.map((a) => <ActionItem key={a.id} action={a} compact={isWeekend} inline={inlineActions && !isWeekend} onAddPurchaseRequest={onAddPurchaseRequest} />)
+        sorted.map((a) => (
+          <ActionItem
+            key={a.id}
+            action={a}
+            compact={isWeekend}
+            inline={inlineActions && !isWeekend}
+            onAddPurchaseRequest={onAddPurchaseRequest}
+          />
+        ))
       )}
 
       {/* Total */}
