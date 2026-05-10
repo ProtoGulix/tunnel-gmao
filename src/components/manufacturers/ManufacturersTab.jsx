@@ -1,49 +1,62 @@
-﻿/**
- * @fileoverview Onglet fabricants — liste et gestion
+/**
+ * @fileoverview Onglet fabricants — master-detail
  * @module components/manufacturers/ManufacturersTab
  */
 
 import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Table, Text } from '@radix-ui/themes';
-import { Edit2, Factory, Plus, Trash2 } from 'lucide-react';
+import { Badge, Box, Button, Flex, Table, Text } from '@radix-ui/themes';
+import { Factory, Plus } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
-import TableHeader from '@/components/ui/TableHeader';
-import DataTable from '@/components/ui/DataTable';
+import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ManufacturerForm from '@/components/manufacturers/ManufacturerForm';
 import { useManufacturers } from '@/hooks/suppliers/useManufacturers';
 import { useManufacturerDetail } from '@/hooks/suppliers/useManufacturerDetail';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
 
-/**
- * Ligne d'une liaison pièce-fournisseur utilisant ce fabricant.
- * Données issues de ManufacturerItemDetail.supplier_items.
- */
-function ManufacturerLinkRow({ link }) {
+function ManufacturerItem({ manufacturer, isSelected, onClick }) {
   return (
-    <Table.Row>
-      <Table.Cell><Text size="2" weight="medium" style={{ fontFamily: 'monospace' }}>{link.stock_item_ref || '—'}</Text></Table.Cell>
-      <Table.Cell><Text size="2">{link.stock_item_name || '—'}</Text></Table.Cell>
-      <Table.Cell><Text size="2">{link.supplier_name}{link.supplier_code ? ` (${link.supplier_code})` : ''}</Text></Table.Cell>
-      <Table.Cell><Text size="2" color="gray">{link.supplier_ref || '—'}</Text></Table.Cell>
-    </Table.Row>
+    <Box
+      onClick={() => onClick(manufacturer)}
+      style={{
+        padding: '10px 14px',
+        cursor: 'pointer',
+        borderBottom: '1px solid var(--gray-4)',
+        background: isSelected ? 'var(--accent-3)' : 'var(--gray-1)',
+        boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+      }}
+      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-3)'; }}
+      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-1)'; }}
+    >
+      <Flex direction="column" gap="1">
+        <Flex align="center" gap="2">
+          <Factory size={13} color="var(--gray-9)" />
+          <Text size="2" weight="medium">{manufacturer.manufacturer_name}</Text>
+        </Flex>
+        <Flex gap="2" align="center">
+          {manufacturer.manufacturer_ref && (
+            <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>
+              {manufacturer.manufacturer_ref}
+            </Badge>
+          )}
+          {manufacturer.designation && (
+            <Text size="1" color="gray">{manufacturer.designation}</Text>
+          )}
+        </Flex>
+      </Flex>
+    </Box>
   );
 }
 
-ManufacturerLinkRow.propTypes = {
-  link: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    stock_item_ref: PropTypes.string,
-    stock_item_name: PropTypes.string,
-    supplier_name: PropTypes.string,
-    supplier_code: PropTypes.string,
-    supplier_ref: PropTypes.string,
-  }).isRequired,
+ManufacturerItem.propTypes = {
+  manufacturer: PropTypes.object.isRequired,
+  isSelected: PropTypes.bool,
+  onClick: PropTypes.func.isRequired,
 };
 
-function ManufacturerLinksSection({ links, loading }) {
-  if (loading) return <LoadingState message="Chargement des liaisons..." />;
+function LinksTable({ links, loading }) {
+  if (loading) return <LoadingState fullscreen={false} message="Chargement des liaisons…" />;
   if (!links.length) return <Text size="2" color="gray">Aucune liaison pièce-fournisseur pour ce fabricant.</Text>;
   return (
     <Table.Root variant="surface" size="1">
@@ -56,98 +69,74 @@ function ManufacturerLinksSection({ links, loading }) {
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {links.map((link) => <ManufacturerLinkRow key={link.id} link={link} />)}
+        {links.map((link) => (
+          <Table.Row key={link.id}>
+            <Table.Cell><Text size="2" weight="medium" style={{ fontFamily: 'monospace' }}>{link.stock_item_ref || '—'}</Text></Table.Cell>
+            <Table.Cell><Text size="2">{link.stock_item_name || '—'}</Text></Table.Cell>
+            <Table.Cell><Text size="2">{link.supplier_name}{link.supplier_code ? ` (${link.supplier_code})` : ''}</Text></Table.Cell>
+            <Table.Cell><Text size="2" color="gray">{link.supplier_ref || '—'}</Text></Table.Cell>
+          </Table.Row>
+        ))}
       </Table.Body>
     </Table.Root>
   );
 }
 
-ManufacturerLinksSection.propTypes = {
+LinksTable.propTypes = {
   links: PropTypes.array.isRequired,
   loading: PropTypes.bool,
 };
 
-function ManufacturerDetail({ base, detail, detailLoading, onEdit, onDelete }) {
+function ManufacturerDetailView({ base, detail, detailLoading, onEdit, onDelete }) {
   const name = detail?.manufacturer_name || base?.manufacturer_name || '';
   const ref = detail?.manufacturer_ref || base?.manufacturer_ref;
   const designation = detail?.designation || base?.designation;
   const links = detail?.supplier_items || [];
 
   return (
-    <Card>
-      <Flex direction="column" gap="3">
-        <Flex justify="between" align="start">
-          <Flex direction="column" gap="1">
-            <Flex align="center" gap="2">
-              <Factory size={20} color="var(--gray-9)" />
-              <Text size="4" weight="bold">{name}</Text>
-              {ref && <Text size="2" color="gray" style={{ fontFamily: 'monospace' }}>{ref}</Text>}
-            </Flex>
-            {designation && <Text size="2" color="gray" ml="6">{designation}</Text>}
+    <Flex direction="column" gap="4">
+      {/* Header */}
+      <Flex justify="between" align="start">
+        <Flex direction="column" gap="1">
+          <Flex align="center" gap="2">
+            <Factory size={18} color="var(--gray-9)" />
+            <Text size="4" weight="bold">{name}</Text>
+            {ref && (
+              <Badge variant="outline" color="gray" style={{ fontFamily: 'monospace' }}>{ref}</Badge>
+            )}
           </Flex>
-          <Flex gap="2">
-            <Button size="2" variant="soft" color="gray" onClick={onEdit}><Edit2 size={14} /> Modifier</Button>
-            <Button size="2" variant="soft" color="red" onClick={onDelete}><Trash2 size={14} /> Supprimer</Button>
-          </Flex>
+          {designation && <Text size="2" color="gray" ml="6">{designation}</Text>}
         </Flex>
-        <Box>
-          <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
-            Liaisons pièce-fournisseur ({links.length})
-          </Text>
-          <ManufacturerLinksSection links={links} loading={detailLoading} />
-        </Box>
+        <Flex gap="2">
+          <Button size="1" variant="soft" color="gray" onClick={onEdit}>Modifier</Button>
+          <Button size="1" variant="soft" color="red" onClick={onDelete}>Supprimer</Button>
+        </Flex>
       </Flex>
-    </Card>
+
+      {/* Liaisons */}
+      <Box>
+        <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
+          Liaisons pièce-fournisseur ({links.length})
+        </Text>
+        <LinksTable links={links} loading={detailLoading} />
+      </Box>
+    </Flex>
   );
 }
 
-ManufacturerDetail.propTypes = {
-  base: PropTypes.shape({
-    manufacturer_name: PropTypes.string,
-    manufacturer_ref: PropTypes.string,
-    designation: PropTypes.string,
-  }),
-  detail: PropTypes.shape({
-    manufacturer_name: PropTypes.string,
-    manufacturer_ref: PropTypes.string,
-    designation: PropTypes.string,
-    supplier_items: PropTypes.array,
-  }),
+ManufacturerDetailView.propTypes = {
+  base: PropTypes.object,
+  detail: PropTypes.object,
   detailLoading: PropTypes.bool,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
 
-const columns = [
-  {
-    key: 'manufacturer_name',
-    header: 'Fabricant',
-    render: (row) => (
-      <Flex align="center" gap="2" py="1">
-        <Factory size={13} color="var(--gray-9)" />
-        <Text size="2" weight="medium">{row.manufacturer_name}</Text>
-      </Flex>
-    ),
-  },
-  {
-    key: 'manufacturer_ref',
-    header: 'Référence',
-    render: (row) => row.manufacturer_ref
-      ? <Badge color="gray" variant="outline" radius="small">{row.manufacturer_ref}</Badge>
-      : <Text size="2" color="gray">—</Text>,
-  },
-  {
-    key: 'designation',
-    header: 'Désignation',
-    render: (row) => <Text size="2" color="gray">{row.designation || '—'}</Text>,
-  },
-];
-
 export default function ManufacturersTab() {
   const [urlSearch, setUrlSearch] = useUrlSearch('mq');
   const {
     manufacturers, total, page, pageSize, loading, error, search,
-    setSearch, setPage, setPageSize, refresh,
+    setSearch, setPage, refresh,
     createManufacturer, updateManufacturer, removeManufacturer,
   } = useManufacturers({ initialSearch: urlSearch });
   const [selected, setSelected] = useState(null);
@@ -157,18 +146,12 @@ export default function ManufacturersTab() {
   const handleSearch = useCallback((v) => { setSearch(v); setUrlSearch(v); }, [setSearch, setUrlSearch]);
 
   const handleSelect = useCallback((m) => {
-    if (m.id === selected?.id && mode !== 'edit') {
-      setSelected(null);
-      setMode(null);
-      return;
-    }
+    if (m.id === selected?.id && mode !== 'edit') { setSelected(null); setMode(null); return; }
     setMode(null);
     setSelected(m);
   }, [selected, mode]);
 
   const { detail, loading: detailLoading } = useManufacturerDetail(selected?.id);
-
-  if (error) return <ErrorState error={error} onRetry={refresh} />;
 
   const handleCreate = async (data) => {
     try { setSaving(true); await createManufacturer(data); setMode(null); }
@@ -189,25 +172,29 @@ export default function ManufacturersTab() {
     setSelected(null);
   };
 
-  const paginationProps = total > pageSize ? {
-    currentPage: page,
-    total,
-    pageSize,
-    onPageChange: setPage,
-    onPageSizeChange: setPageSize,
-    pageSizeOptions: [25, 50, 100],
-  } : undefined;
+  if (error) return <ErrorState error={error} onRetry={refresh} />;
 
-  const renderDetail = () => {
+  const totalPages = pageSize > 0 ? Math.ceil(total / pageSize) : 1;
+
+  const masterList = manufacturers.length === 0 && !loading ? (
+    <Flex direction="column" align="center" justify="center" style={{ height: 200, padding: 24 }} gap="2">
+      <Factory size={28} color="var(--gray-7)" />
+      <Text size="2" color="gray">Aucun fabricant trouvé</Text>
+    </Flex>
+  ) : manufacturers.map((m) => (
+    <ManufacturerItem key={m.id} manufacturer={m} isSelected={m.id === selected?.id} onClick={handleSelect} />
+  ));
+
+  const detailContent = () => {
     if (mode === 'edit' && selected) return (
       <ManufacturerForm manufacturer={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
     );
     if (!selected) return null;
     return (
-      <ManufacturerDetail
+      <ManufacturerDetailView
         base={selected}
         detail={detail}
-        detailLoading={detailLoading}
+        detailLoading={detailLoading && !detail}
         onEdit={() => setMode('edit')}
         onDelete={handleDelete}
       />
@@ -215,41 +202,31 @@ export default function ManufacturersTab() {
   };
 
   return (
-    <Box>
-      <TableHeader
-        icon={Factory}
-        title="Fabricants"
-        count={total}
-        searchValue={search}
-        onSearchChange={handleSearch}
-        loading={loading}
-        showRefreshButton={false}
-        rightActions={
-          <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-            <Plus size={14} /> Ajouter
-          </Button>
-        }
-      />
+    <Box pt="3">
+      <Flex justify="end" mb="2">
+        <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
+          <Plus size={14} /> Ajouter
+        </Button>
+      </Flex>
       {mode === 'create' && (
         <Box mb="3">
           <ManufacturerForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
-      <DataTable
-        columns={columns}
-        data={manufacturers}
-        loading={loading}
-        onRowClick={handleSelect}
-        getRowKey={(row) => row.id}
-        rowStyles={(row) => ({
-          cursor: 'pointer',
-          background: row.id === selected?.id ? 'var(--accent-3)' : undefined,
-          boxShadow: row.id === selected?.id ? 'inset 3px 0 0 var(--accent-9)' : undefined,
-        })}
-        isRowExpanded={(row) => row.id === selected?.id && mode !== 'create'}
-        renderExpandedRow={renderDetail}
-        emptyState={{ icon: Factory, title: 'Aucun fabricant', description: 'Aucun fabricant trouvé.' }}
-        pagination={paginationProps}
+
+      <MasterDetailLayout
+        masterProps={{
+          icon: Factory,
+          title: 'Fabricants',
+          count: total,
+          search,
+          onSearchChange: handleSearch,
+          loading,
+          children: masterList,
+          pagination: totalPages > 1 ? { currentPage: page, totalPages, onPageChange: setPage } : undefined,
+        }}
+        detailChildren={detailContent()}
+        emptyLabel="Sélectionnez un fabricant pour voir ses liaisons"
       />
     </Box>
   );
