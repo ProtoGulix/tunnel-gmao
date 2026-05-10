@@ -10,13 +10,15 @@ import PreventivePlansTab from '@/components/preventive/PreventivePlansTab';
 
 export default function AdminPreventivePlansPage() {
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="Plans Préventifs"
         subtitle="Définition et configuration des plans de maintenance préventive"
         icon={ClipboardCheck}
       />
-      <PreventivePlansTab />
-    </Container>
+      <Container size="4">
+        <PreventivePlansTab />
+      </Container>
+    </>
   );
 }

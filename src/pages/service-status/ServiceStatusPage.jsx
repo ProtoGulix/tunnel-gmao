@@ -31,7 +31,7 @@ export default function ServiceStatusPage() {
   };
 
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="État du service"
         subtitle="Charge, fragmentation, capacité réelle"
@@ -42,8 +42,10 @@ export default function ServiceStatusPage() {
           onFilterChange: handleDateRangeChange
         }}
       />
-      <ServiceStatusTab startDate={startDate} endDate={endDate} />
-    </Container>
+      <Container size="4">
+        <ServiceStatusTab startDate={startDate} endDate={endDate} />
+      </Container>
+    </>
   );
 }
 

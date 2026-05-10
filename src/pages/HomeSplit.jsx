@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { Flex, Heading, Text, Button, Tabs, Box } from '@radix-ui/themes';
+import { Tabs, Box } from '@radix-ui/themes';
 import { Home, ShoppingCart } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
 import { PlanningPane } from '@/components/home/PlanningPane';
 import { TasksPane } from '@/components/home/TasksPane';
 import { BriefingPane } from '@/components/home/BriefingPane';
@@ -14,12 +15,18 @@ export default function HomeSplit() {
 
   const { tasks, selectedTechId, retry: refreshTasks } = usePlanningWeek();
 
-  const dateLabel = new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const dateLabel = (() => {
+    const raw = new Date().toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  })();
+
+  const purchaseAction = {
+    label: "Demande d'achat",
+    icon: ShoppingCart,
+    onClick: () => setPurchaseModalOpen(true),
+  };
 
   const handleOpenActionModal = useCallback(({ date, techId, techInitials, weekActionsForDay }) => {
     setActionModal({ open: true, date, techId, techInitials, weekActionsForDay: weekActionsForDay ?? [] });
@@ -43,31 +50,13 @@ export default function HomeSplit() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, var(--gray-1) 0%, var(--gray-2) 100%)',
-          borderBottom: '1px solid var(--gray-6)',
-          padding: '14px 24px',
-          flexShrink: 0,
-        }}
-      >
-        <Flex justify="between" align="center">
-          <Flex align="center" gap="3">
-            <Home size={28} strokeWidth={1.5} aria-hidden="true" />
-            <Flex direction="column" gap="0">
-              <Heading size="5" weight="bold">Accueil</Heading>
-              <Text size="1" color="gray" style={{ textTransform: 'capitalize' }}>
-                {dateLabel}
-              </Text>
-            </Flex>
-          </Flex>
-
-          <Button size="2" onClick={() => setPurchaseModalOpen(true)}>
-            <ShoppingCart size={16} />
-            Demande d&apos;achat
-          </Button>
-        </Flex>
-      </div>
+      <PageHeader
+        noMargin
+        title="Accueil"
+        subtitle={dateLabel}
+        icon={Home}
+        actions={[purchaseAction]}
+      />
 
       {/* ── Corps principal ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>

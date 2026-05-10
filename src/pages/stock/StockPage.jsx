@@ -15,9 +15,10 @@ export default function StockPage() {
   const { activeTab, setActiveTab } = useTabNavigation('items', 'tab');
 
   return (
-    <Box px="4">
+    <>
       <PageHeader title="Stock" subtitle="Pièces, fournisseurs et fabricants" />
 
+      <Box px="4">
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="items">
@@ -50,6 +51,7 @@ export default function StockPage() {
           {activeTab === 'manufacturers' && <ManufacturersTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Box>
+      </Box>
+    </>
   );
 }

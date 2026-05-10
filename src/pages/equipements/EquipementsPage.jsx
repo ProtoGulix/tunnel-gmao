@@ -41,7 +41,7 @@ export default function EquipementsPage() {
   }, [equipements, pagination.total]);
 
   return (
-    <Container>
+    <>
       <PageHeader
         title="Équipements"
         description="Liste de tous les équipements"
@@ -50,6 +50,7 @@ export default function EquipementsPage() {
         icon={Factory}
       />
 
+      <Container>
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="equipements">
@@ -93,6 +94,7 @@ export default function EquipementsPage() {
           <EquipementClassesTab />
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+      </Container>
+    </>
   );
 }

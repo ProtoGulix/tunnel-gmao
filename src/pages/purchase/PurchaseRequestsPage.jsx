@@ -15,9 +15,10 @@ export default function PurchaseRequestsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab');
 
   return (
-    <Container>
+    <>
       <PageHeader title="Achats" subtitle="Demandes d'achat et paniers fournisseurs" />
 
+      <Container>
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="requests">
@@ -52,6 +53,7 @@ export default function PurchaseRequestsPage() {
           {activeTab === 'archives' && <PurchaseRequestsArchiveTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+      </Container>
+    </>
   );
 }

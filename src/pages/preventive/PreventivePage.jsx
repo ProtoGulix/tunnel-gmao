@@ -14,11 +14,12 @@ export default function PreventivePage() {
   const { activeTab, setActiveTab } = useTabNavigation('plans', 'tab');
 
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="Préventif"
         subtitle="Plans de maintenance préventive et suivi des occurrences"
       />
+      <Container size="4">
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="plans">
@@ -41,6 +42,7 @@ export default function PreventivePage() {
           {activeTab === 'occurrences' && <PreventiveOccurrencesTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+      </Container>
+    </>
   );
 }
