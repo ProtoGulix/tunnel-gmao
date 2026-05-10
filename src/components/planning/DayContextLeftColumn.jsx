@@ -1,10 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Calendar, ClipboardList, MapPin, Wrench } from 'lucide-react';
+import { Calendar, ClipboardList, MapPin, ShoppingCart, Wrench } from 'lucide-react';
 import InterventionSelector from '@/components/planning/InterventionSelector';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
 import EquipementSearch from '@/components/planning/EquipementSearch';
+import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
+import StatusCallout from '@/components/ui/StatusCallout';
+import { createPurchaseRequest } from '@/api/purchaseRequests';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 function EquipementRequired() {
   return (
@@ -25,6 +29,48 @@ function EquipementRequired() {
     </Flex>
   );
 }
+
+function PurchaseRequestTab({ interventionId }) {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+  const [formKey, setFormKey] = useState(0);
+
+  const handleSubmit = async (data) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await createPurchaseRequest({ ...data, ...(interventionId && { intervention_id: interventionId }) });
+      setSuccess(data.item_label);
+      setFormKey((k) => k + 1);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(extractApiErrorMessage(err, 'Erreur lors de la création'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Flex direction="column" gap="2" pt="2">
+      {success && (
+        <StatusCallout type="success">Demande créée — <strong>{success}</strong></StatusCallout>
+      )}
+      {error && <StatusCallout type="error">{error}</StatusCallout>}
+      <PurchaseRequestForm
+        key={formKey}
+        bare
+        onSubmit={handleSubmit}
+        loading={loading}
+        submitLabel="Créer la demande"
+      />
+    </Flex>
+  );
+}
+
+PurchaseRequestTab.propTypes = {
+  interventionId: PropTypes.string,
+};
 
 export default function DayContextLeftColumn({
   formattedDate,
@@ -79,6 +125,12 @@ export default function DayContextLeftColumn({
                 Demandes en attente
               </Flex>
             </Tabs.Trigger>
+            <Tabs.Trigger value="purchase">
+              <Flex align="center" gap="1">
+                <ShoppingCart size={12} />
+                Demande d&apos;achat
+              </Flex>
+            </Tabs.Trigger>
           </Tabs.List>
 
           <Box pt="2">
@@ -98,6 +150,9 @@ export default function DayContextLeftColumn({
                 machineId={equipementId}
                 machineName={equipementLabel}
               />
+            </Tabs.Content>
+            <Tabs.Content value="purchase">
+              <PurchaseRequestTab interventionId={selectedIntervention?.id?.toString() ?? null} />
             </Tabs.Content>
           </Box>
         </Tabs.Root>

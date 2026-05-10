@@ -33,7 +33,7 @@ export function TasksPane({ tasks, onAddAction }) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div>
       {/* Header */}
       <Flex
         align="center"
@@ -61,7 +61,7 @@ export function TasksPane({ tasks, onAddAction }) {
       </Flex>
 
       {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 10px 8px' }}>
+      <div style={{ padding: '6px 10px 8px' }}>
         {sorted.length === 0 && (
           <Text size="1" color="gray" style={{ display: 'block', marginTop: 8, textAlign: 'center' }}>
             Aucune tâche assignée

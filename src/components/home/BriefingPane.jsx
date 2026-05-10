@@ -61,7 +61,7 @@ export function BriefingPane() {
   const allEmpty = !loading && !error && visibleSections.length === 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <Flex
         justify="between"
@@ -89,7 +89,7 @@ export function BriefingPane() {
       </Flex>
 
       {/* ── Corps scrollable ───────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
+      <div style={{ padding: '10px 14px' }}>
         {/* Erreur */}
         {error && (
           <Callout.Root color="red" style={{ marginBottom: 14 }}>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Card, Flex, IconButton, Text } from '@radix-ui/themes';
-import { Package, ShoppingCart, X } from 'lucide-react';
+import { Factory, ShoppingCart, X } from 'lucide-react';
 import * as stockApi from '@/api/stock';
 import { DEFAULT_UNIT, resolveUnitForItem } from '@/config/units';
 import ItemForm from '@/components/ui/ItemForm';
@@ -78,31 +78,68 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                     Array.isArray(r) ? r : (r.items || [])
                   )
                 }
-                renderSearchItem={(item) => (
-                  <Flex align="center" justify="between" gap="2">
-                    <Flex align="center" gap="2">
-                      <Badge color="blue" variant="soft" size="1">{item.ref}</Badge>
-                      <Text size="2" weight="bold">{item.name}</Text>
+                renderSearchItem={(item) => {
+                  const primaryMfr = item.manufacturer_refs?.[0];
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0 12px', alignItems: 'start', width: '100%' }}>
+                      <Flex direction="column" gap="1">
+                        {primaryMfr ? (
+                          <>
+                            <Flex align="center" gap="1">
+                              <Factory size={11} color="var(--violet-9)" />
+                              <Text size="1" color="gray">{primaryMfr.name}</Text>
+                            </Flex>
+                            <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>
+                              {primaryMfr.ref}
+                            </Text>
+                          </>
+                        ) : (
+                          <Flex align="center" gap="1" style={{ opacity: 0.5 }}>
+                            <Factory size={11} color="var(--gray-8)" />
+                            <Text size="1" color="gray">Sans fabricant</Text>
+                          </Flex>
+                        )}
+                        <Text size="1" color="gray">{item.name}</Text>
+                      </Flex>
+                      <Flex direction="column" gap="1" align="end">
+                        <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.ref}</Badge>
+                        {item.quantity === 0
+                          ? <Badge color="red" variant="soft" size="1">Rupture</Badge>
+                          : item.quantity <= 3
+                            ? <Badge color="orange" variant="soft" size="1">Stock bas · {item.quantity}</Badge>
+                            : <Badge color="green" variant="soft" size="1">{item.quantity} {item.unit || ''}</Badge>
+                        }
+                      </Flex>
+                    </div>
+                  );
+                }}
+                renderSelected={(item, onClear) => {
+                  const primaryMfr = item.manufacturer_refs?.[0];
+                  return (
+                    <Flex
+                      align="center" gap="2"
+                      style={{ padding: '6px 10px', background: 'var(--violet-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--violet-6)' }}
+                    >
+                      {primaryMfr ? (
+                        <>
+                          <Factory size={12} color="var(--violet-9)" />
+                          <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)', flex: 1 }}>
+                            {primaryMfr.ref}
+                          </Text>
+                          <Text size="1" color="gray">{item.name}</Text>
+                        </>
+                      ) : (
+                        <>
+                          <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace' }}>{item.ref}</Badge>
+                          <Text size="2" weight="bold" style={{ flex: 1 }}>{item.name}</Text>
+                        </>
+                      )}
+                      <IconButton size="1" variant="ghost" color="gray" type="button" onClick={onClear}>
+                        <X size={12} />
+                      </IconButton>
                     </Flex>
-                    <Flex align="center" gap="1">
-                      <Package size={12} color="var(--gray-11)" />
-                      <Text size="1" color="gray">{item.quantity || 0} {item.unit || 'pcs'}</Text>
-                    </Flex>
-                  </Flex>
-                )}
-                renderSelected={(item, onClear) => (
-                  <Flex
-                    align="center" gap="2"
-                    style={{ padding: '6px 10px', background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}
-                  >
-                    <Badge color="blue" variant="soft" size="1">{item.ref}</Badge>
-                    <Text size="2" weight="bold" style={{ flex: 1 }}>{item.name}</Text>
-                    <Text size="1" color="gray">{item.quantity || 0} {item.unit || 'pcs'}</Text>
-                    <IconButton size="1" variant="ghost" color="gray" type="button" onClick={onClear}>
-                      <X size={12} />
-                    </IconButton>
-                  </Flex>
-                )}
+                  );
+                }}
                 confirmLabel="Utiliser cet article"
                 onChange={(item) => { setSelectedItem(item); setUnit(resolveUnitForItem(item)); }}
                 onSearchChange={setSearchTerm}

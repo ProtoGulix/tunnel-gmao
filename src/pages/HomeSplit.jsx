@@ -48,7 +48,7 @@ export default function HomeSplit() {
   }, [refreshTasks]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <div>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <PageHeader
         noMargin
@@ -59,45 +59,26 @@ export default function HomeSplit() {
       />
 
       {/* ── Corps principal ─────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
 
         {/* ── Colonne gauche — Tâches + onglet Briefing ───────────────────── */}
-        <div
-          style={{
-            width: '38%',
-            borderRight: '1px solid var(--gray-5)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <Tabs.Root defaultValue="tasks" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Tabs.List style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 12 }}>
+        <div style={{ width: '38%', borderRight: '1px solid var(--gray-5)' }}>
+          <Tabs.Root defaultValue="tasks">
+            <Tabs.List style={{ paddingLeft: 12, paddingRight: 12 }}>
               <Tabs.Trigger value="tasks">Mes tâches</Tabs.Trigger>
               <Tabs.Trigger value="briefing">Briefing</Tabs.Trigger>
             </Tabs.List>
-
-            <Box style={{ flex: 1, overflow: 'hidden' }}>
-              <Tabs.Content value="tasks" style={{ height: '100%' }}>
-                <TasksPane tasks={tasks} onAddAction={handleTaskAddAction} />
-              </Tabs.Content>
-
-              <Tabs.Content value="briefing" style={{ height: '100%' }}>
-                <BriefingPane />
-              </Tabs.Content>
-            </Box>
+            <Tabs.Content value="tasks">
+              <TasksPane tasks={tasks} onAddAction={handleTaskAddAction} />
+            </Tabs.Content>
+            <Tabs.Content value="briefing">
+              <BriefingPane />
+            </Tabs.Content>
           </Tabs.Root>
         </div>
 
         {/* ── Colonne droite — Planning ────────────────────────────────────── */}
-        <div
-          style={{
-            flex: 1,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div style={{ flex: 1, minWidth: 0 }}>
           <PlanningPane
             onAddAction={handleOpenActionModal}
             onDataRefreshed={refreshTasks}

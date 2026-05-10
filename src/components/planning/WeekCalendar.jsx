@@ -4,7 +4,7 @@
  */
 
 import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
-import { ChevronLeft, ChevronRight, Clock, Plus } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock, MinusCircle, Package, Plus, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   actionDurationMinutes,
@@ -15,10 +15,11 @@ import {
   formatWeekLabel,
   sortActions,
 } from './planningUtils';
+import { STATUS_CONFIG } from '@/config/interventionTypes';
 
 /* ── ActionItem ───────────────────────────────────────────────────────────── */
 
-export function ActionItem({ action, compact = false, inline = false }) {
+export function ActionItem({ action, compact = false, inline = false, onAddPurchaseRequest }) {
   const durationMin = actionDurationMinutes(action);
   const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
   const subcatCode = action.subcategory?.code ?? action.subcategory?.name ?? '—';
@@ -52,52 +53,99 @@ export function ActionItem({ action, compact = false, inline = false }) {
     );
   }
 
-  /* Version inline (home planning) : code + type + durée sur une ligne, description dessous */
+  /* Version inline (home planning) */
   if (inline) {
-    const codeEl = interventionId
-      ? <Link to={`/intervention/${interventionId}`} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none' }}>
-          <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: subcatColor, flexShrink: 0 }}>{interventionCode}</Text>
-        </Link>
-      : <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: subcatColor, flexShrink: 0 }}>{interventionCode}</Text>;
+    const statusCfg = STATUS_CONFIG[action.intervention?.status_actual] ?? null;
 
     return (
       <Box
         style={{
-          background: `${subcatColor}12`,
-          borderLeft: `3px solid ${subcatColor}`,
-          borderRadius: 4,
-          padding: '4px 8px',
-          marginBottom: 4,
+          background: `${subcatColor}0e`,
+          borderLeft: `4px solid ${subcatColor}`,
+          borderRadius: 6,
+          marginBottom: 8,
           overflow: 'hidden',
         }}
       >
-        {/* Ligne 1 : code · badge type · durée */}
-        <Flex align="center" gap="1" style={{ overflow: 'hidden' }}>
-          {codeEl}
-          <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none', flexShrink: 0, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {subcatCode}
-          </Badge>
-          <Text size="1" weight="medium" style={{ color: subcatColor, marginLeft: 'auto', flexShrink: 0 }}>
-            {startFmt ? `${startFmt}–${endFmt ?? '?'} · ` : ''}{formatDuration(durationMin)}
-          </Text>
+        {/* ── En-tête : code · titre · statut · bouton achat ── */}
+        <Flex align="center" gap="2" style={{ padding: '8px 10px 6px', borderBottom: '1px solid var(--gray-4)' }}>
+          {interventionId
+            ? <Link to={`/intervention/${interventionId}`} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13 }}>{interventionCode}</Badge>
+              </Link>
+            : <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{interventionCode}</Badge>
+          }
+          {interventionTitle && (
+            <Text size="2" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray-11)', fontStyle: 'italic' }}>
+              {interventionTitle}
+            </Text>
+          )}
+          {statusCfg && (
+            <Badge size="1" color={statusCfg.color} variant="soft" style={{ flexShrink: 0 }}>
+              {statusCfg.label}
+            </Badge>
+          )}
+          {onAddPurchaseRequest && (
+            <Button size="1" variant="soft" color="orange" style={{ flexShrink: 0 }}
+              onClick={(e) => { e.stopPropagation(); onAddPurchaseRequest(action); }}>
+              <ShoppingCart size={12} />
+            </Button>
+          )}
         </Flex>
-        {/* Ligne 2 : description tronquée */}
-        {description && (
-          <Text
-            size="1"
-            style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              color: 'var(--gray-11)',
-              marginTop: 2,
-              lineHeight: '1.3',
-            }}
-          >
-            {description}
-          </Text>
-        )}
+
+        {/* ── Corps : sous-catégorie · horaires · description ── */}
+        <Box style={{ padding: '6px 10px 8px' }}>
+          <Flex align="center" gap="2" mb={description ? '2' : '0'}>
+            <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none' }}>
+              {subcatCode}
+            </Badge>
+            <Text size="2" color="gray" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+              {startFmt ? `${startFmt}–${endFmt ?? '?'} · ` : ''}<strong>{formatDuration(durationMin)}</strong>
+            </Text>
+          </Flex>
+
+          {description && (
+            <Text size="2" style={{ display: 'block', color: 'var(--gray-11)', lineHeight: '1.4', fontStyle: 'italic' }}>
+              {description}
+            </Text>
+          )}
+
+          {/* Tâches liées */}
+          {action.tasks?.length > 0 && (
+            <Flex direction="column" gap="1" mt="2" style={{ borderTop: `1px solid ${subcatColor}20`, paddingTop: 6 }}>
+              {action.tasks.map((t) => (
+                <Flex key={t.id} align="center" gap="2">
+                  {t.status === 'skipped'
+                    ? <MinusCircle size={12} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+                    : <CheckCircle2 size={12} color="var(--green-9)" style={{ flexShrink: 0 }} />
+                  }
+                  <Text size="2" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t.label}
+                  </Text>
+                </Flex>
+              ))}
+            </Flex>
+          )}
+
+          {/* Demandes d'achat liées */}
+          {action.purchase_requests?.length > 0 && (
+            <Flex direction="column" gap="1" mt="2" style={{ borderTop: '1px solid var(--orange-4)', paddingTop: 6 }}>
+              {action.purchase_requests.map((pr) => (
+                <Flex key={pr.id} align="center" gap="2">
+                  <Package size={12} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+                  <Text size="2" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {pr.item_label}
+                  </Text>
+                  {pr.derived_status && (
+                    <Badge size="1" variant="soft" style={{ background: `${pr.derived_status.color}22`, color: pr.derived_status.color, border: 'none', flexShrink: 0 }}>
+                      {pr.derived_status.label}
+                    </Badge>
+                  )}
+                </Flex>
+              ))}
+            </Flex>
+          )}
+        </Box>
       </Box>
     );
   }
@@ -179,47 +227,46 @@ export function DayTotal({ actions, compact = false }) {
   const color = total >= TARGET_MINUTES ? 'green' : total >= 5 * 60 ? 'orange' : 'red';
   return (
     <Flex align="center" gap="1" pt="2">
-      <Clock size={12} />
-      <Text size="1" color={color} weight="bold">{formatDuration(total)}</Text>
-      <Text size="1" color="gray">/ 7h30</Text>
+      <Clock size={13} />
+      <Text size="2" color={color} weight="bold">{formatDuration(total)}</Text>
+      <Text size="2" color="gray">/ 7h30</Text>
     </Flex>
   );
 }
 
 /* ── DayColumn ────────────────────────────────────────────────────────────── */
 
-export function DayColumn({ dateStr, actions, isToday, onAddAction, isWeekend = false, inlineActions = false }) {
+export function DayColumn({ dateStr, actions, isToday, onAddAction, onAddPurchaseRequest, isWeekend = false, inlineActions = false }) {
   const sorted = sortActions(actions);
 
   return (
     <Box style={{ minWidth: 0 }}>
       {/* Date */}
       <Text
-        size="1"
+        size="3"
         weight="bold"
-        px="1"
-        style={{ display: 'block', textTransform: 'capitalize', color: isToday ? 'var(--blue-11)' : 'var(--gray-11)' }}
+        style={{ display: 'block', textTransform: 'capitalize', color: isToday ? 'var(--blue-11)' : 'var(--gray-11)', marginBottom: 4 }}
       >
         {isWeekend ? formatDayHeaderShort(dateStr) : formatDayHeader(dateStr)}
       </Text>
 
       {/* Séparateur */}
-      <Box mb="1" style={{ borderBottom: `2px solid ${isToday ? 'var(--blue-8)' : 'var(--gray-5)'}` }} />
+      <Box mb="2" style={{ borderBottom: `2px solid ${isToday ? 'var(--blue-8)' : 'var(--gray-5)'}` }} />
 
       {/* Bouton ajout — masqué Sam/Dim */}
       {!isWeekend && (
-        <Button size="1" variant="soft" color="blue" mb="2" style={{ width: '100%' }} onClick={() => onAddAction(dateStr)}>
-          <Plus size={12} /> Ajouter
+        <Button size="2" variant="soft" color="blue" mb="3" style={{ width: '100%' }} onClick={() => onAddAction(dateStr)}>
+          <Plus size={14} /> Ajouter
         </Button>
       )}
 
       {/* Actions ou empty state */}
       {sorted.length === 0 ? (
-        <Flex align="center" justify="center" py="3" style={{ background: '#f8f9fa', borderRadius: 4 }}>
-          <Text size="1" style={{ color: '#c0c0c0' }}>Aucune action</Text>
+        <Flex align="center" justify="center" py="4" style={{ background: 'var(--gray-2)', borderRadius: 6 }}>
+          <Text size="2" color="gray">Aucune action</Text>
         </Flex>
       ) : (
-        sorted.map((a) => <ActionItem key={a.id} action={a} compact={isWeekend} inline={inlineActions && !isWeekend} />)
+        sorted.map((a) => <ActionItem key={a.id} action={a} compact={isWeekend} inline={inlineActions && !isWeekend} onAddPurchaseRequest={onAddPurchaseRequest} />)
       )}
 
       {/* Total */}
