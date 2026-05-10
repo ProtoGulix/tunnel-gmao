@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
-import { Flex, Text, Badge } from '@radix-ui/themes';
+import { Flex, Text, Badge, Button } from '@radix-ui/themes';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 
 const STATUS_CONFIG = {
   in_progress: { color: 'var(--blue-9)', bg: 'var(--blue-2)', label: 'En cours', badge: 'blue' },
@@ -8,11 +9,13 @@ const STATUS_CONFIG = {
   done:        { color: 'var(--green-9)', bg: 'var(--green-2)', label: 'Fait',   badge: 'green' },
 };
 
-export function TasksPane({ tasks }) {
+export function TasksPane({ tasks, onAddAction }) {
   const navigate = useNavigate();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const todayIso = today.toISOString().slice(0, 10);
 
   function formatDue(iso) {
     if (!iso) return null;
@@ -24,29 +27,19 @@ export function TasksPane({ tasks }) {
     return iso && new Date(iso) < today;
   }
 
-  // Trier : in_progress en premier, puis todo, puis done
   const SORT_ORDER = { in_progress: 0, todo: 1, done: 2 };
   const sorted = [...tasks].sort(
     (a, b) => (SORT_ORDER[a.status] ?? 9) - (SORT_ORDER[b.status] ?? 9)
   );
 
   return (
-    <div
-      style={{
-        flexShrink: 0,
-        borderTop: '2px solid var(--gray-5)',
-        display: 'flex',
-        flexDirection: 'column',
-        maxHeight: '40%',
-        minHeight: 160,
-      }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Header */}
       <Flex
         align="center"
         gap="2"
         style={{
-          padding: '8px 14px 6px',
+          padding: '10px 14px 8px',
           flexShrink: 0,
           borderBottom: '1px solid var(--gray-4)',
           background: 'var(--gray-2)',
@@ -85,12 +78,6 @@ export function TasksPane({ tasks }) {
           return (
             <div
               key={task.id}
-              role={clickable ? 'button' : undefined}
-              tabIndex={clickable ? 0 : undefined}
-              onClick={() => clickable && navigate(`/intervention/${task.intervention.id}`)}
-              onKeyDown={(e) =>
-                e.key === 'Enter' && clickable && navigate(`/intervention/${task.intervention.id}`)
-              }
               style={{
                 display: 'flex',
                 alignItems: 'stretch',
@@ -100,13 +87,24 @@ export function TasksPane({ tasks }) {
                 border: '1px solid var(--gray-4)',
                 background: cfg.bg,
                 borderLeft: `4px solid ${cfg.color}`,
-                cursor: clickable ? 'pointer' : 'default',
                 overflow: 'hidden',
               }}
             >
-              {/* Corps */}
-              <div style={{ flex: 1, padding: '6px 10px', minWidth: 0 }}>
-                {/* Ligne 1 : code machine · code intervention */}
+              {/* Corps cliquable */}
+              <div
+                role={clickable ? 'button' : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onClick={() => clickable && navigate(`/intervention/${task.intervention.id}`)}
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && clickable && navigate(`/intervention/${task.intervention.id}`)
+                }
+                style={{
+                  flex: 1,
+                  padding: '6px 10px',
+                  minWidth: 0,
+                  cursor: clickable ? 'pointer' : 'default',
+                }}
+              >
                 {(machineCode || interventionCode) && (
                   <Flex align="center" gap="2" style={{ marginBottom: 2 }}>
                     {machineCode && (
@@ -125,7 +123,6 @@ export function TasksPane({ tasks }) {
                     )}
                   </Flex>
                 )}
-                {/* Ligne 2 : label tâche */}
                 <Text
                   size="2"
                   weight="medium"
@@ -141,13 +138,13 @@ export function TasksPane({ tasks }) {
                 </Text>
               </div>
 
-              {/* Droite : badge statut + échéance */}
+              {/* Droite : badge statut + échéance + bouton action */}
               <Flex
                 direction="column"
                 align="end"
                 justify="center"
                 gap="1"
-                style={{ padding: '6px 10px', flexShrink: 0 }}
+                style={{ padding: '6px 8px', flexShrink: 0 }}
               >
                 <Badge color={cfg.badge} variant="soft" size="1">
                   {cfg.label}
@@ -161,6 +158,21 @@ export function TasksPane({ tasks }) {
                     {overdue ? '⚠ ' : ''}{due}
                   </Text>
                 )}
+                {onAddAction && (
+                  <Button
+                    size="1"
+                    variant="ghost"
+                    color="blue"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddAction({ date: todayIso, task });
+                    }}
+                    title="Saisir une action pour cette tâche"
+                    style={{ marginTop: 2 }}
+                  >
+                    <Plus size={12} />
+                  </Button>
+                )}
               </Flex>
             </div>
           );
@@ -172,4 +184,5 @@ export function TasksPane({ tasks }) {
 
 TasksPane.propTypes = {
   tasks: PropTypes.array.isRequired,
+  onAddAction: PropTypes.func,
 };

@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { Flex, Heading, Text, Button } from '@radix-ui/themes';
+import { useState, useCallback } from 'react';
+import { Flex, Heading, Text, Button, Tabs, Box } from '@radix-ui/themes';
 import { Home, ShoppingCart } from 'lucide-react';
 import { PlanningPane } from '@/components/home/PlanningPane';
+import { TasksPane } from '@/components/home/TasksPane';
 import { BriefingPane } from '@/components/home/BriefingPane';
+import ActionModal from '@/components/home/ActionModal';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
+import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 
 export default function HomeSplit() {
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [actionModal, setActionModal] = useState({ open: false, date: null, techId: null, techInitials: '', weekActionsForDay: [] });
+
+  const { tasks, selectedTechId, retry: refreshTasks } = usePlanningWeek();
 
   const dateLabel = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
@@ -14,6 +20,25 @@ export default function HomeSplit() {
     month: 'long',
     year: 'numeric',
   });
+
+  const handleOpenActionModal = useCallback(({ date, techId, techInitials, weekActionsForDay }) => {
+    setActionModal({ open: true, date, techId, techInitials, weekActionsForDay: weekActionsForDay ?? [] });
+  }, []);
+
+  const handleTaskAddAction = useCallback(({ date, task }) => {
+    setActionModal({
+      open: true,
+      date,
+      techId: selectedTechId,
+      techInitials: '',
+      weekActionsForDay: [],
+    });
+  }, [selectedTechId]);
+
+  const handleActionCreated = useCallback(() => {
+    setActionModal((m) => ({ ...m, open: false }));
+    refreshTasks();
+  }, [refreshTasks]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
@@ -44,33 +69,63 @@ export default function HomeSplit() {
         </Flex>
       </div>
 
-      {/* ── Split planning / briefing ────────────────────────────────────────── */}
+      {/* ── Corps principal ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Colonne gauche — Planning */}
+
+        {/* ── Colonne gauche — Tâches + onglet Briefing ───────────────────── */}
         <div
           style={{
-            width: '50%',
+            width: '38%',
             borderRight: '1px solid var(--gray-5)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <PlanningPane />
+          <Tabs.Root defaultValue="tasks" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Tabs.List style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 12 }}>
+              <Tabs.Trigger value="tasks">Mes tâches</Tabs.Trigger>
+              <Tabs.Trigger value="briefing">Briefing</Tabs.Trigger>
+            </Tabs.List>
+
+            <Box style={{ flex: 1, overflow: 'hidden' }}>
+              <Tabs.Content value="tasks" style={{ height: '100%' }}>
+                <TasksPane tasks={tasks} onAddAction={handleTaskAddAction} />
+              </Tabs.Content>
+
+              <Tabs.Content value="briefing" style={{ height: '100%' }}>
+                <BriefingPane />
+              </Tabs.Content>
+            </Box>
+          </Tabs.Root>
         </div>
 
-        {/* Colonne droite — Briefing */}
+        {/* ── Colonne droite — Planning ────────────────────────────────────── */}
         <div
           style={{
-            width: '50%',
+            flex: 1,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <BriefingPane />
+          <PlanningPane
+            onAddAction={handleOpenActionModal}
+            onDataRefreshed={refreshTasks}
+          />
         </div>
       </div>
+
+      {/* ── Modal saisie action ─────────────────────────────────────────────── */}
+      <ActionModal
+        open={actionModal.open}
+        onOpenChange={(open) => setActionModal((m) => ({ ...m, open }))}
+        date={actionModal.date}
+        techId={actionModal.techId}
+        techInitials={actionModal.techInitials}
+        weekActionsForDay={actionModal.weekActionsForDay}
+        onActionCreated={handleActionCreated}
+      />
 
       <SpontaneousPurchaseRequestModal
         open={purchaseModalOpen}

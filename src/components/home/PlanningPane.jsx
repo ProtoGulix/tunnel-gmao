@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Flex, Text, Badge, Button, Spinner } from '@radix-ui/themes';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -5,15 +6,16 @@ import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 import { DayColumn } from '@/components/planning/WeekCalendar';
 import DayContextPanel from '@/components/planning/DayContextPanel';
 import { getWeekDays, todayIso, formatWeekLabel } from '@/components/planning/planningUtils';
-import { TasksPane } from './TasksPane';
 
-// ── Palette couleurs pour pills tech ─────────────────────────────────────────
 const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'teal'];
 
-export function PlanningPane() {
+/**
+ * @param {Function} [props.onAddAction] - Called with { date, actionsByDay } to open action modal
+ * @param {Function} [props.onDataRefreshed] - Called after action created (to refresh tasks)
+ */
+export function PlanningPane({ onAddAction, onDataRefreshed }) {
   const {
     actionsByDay,
-    tasks,
     users,
     weekStart,
     selectedTechId,
@@ -27,7 +29,6 @@ export function PlanningPane() {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const today = todayIso();
-  // Lun–Ven uniquement
   const weekDays = getWeekDays(weekStart).slice(0, 5);
 
   const selectedUser = users.find((u) => u.id === selectedTechId) ?? null;
@@ -35,9 +36,23 @@ export function PlanningPane() {
     ? `${selectedUser.first_name?.[0] ?? ''}${selectedUser.last_name?.[0] ?? ''}`.toUpperCase()
     : '';
 
+  function handleAddActionForDay(dateStr) {
+    if (onAddAction) {
+      onAddAction({
+        date: dateStr,
+        techId: selectedTechId,
+        techInitials,
+        weekActionsForDay: actionsByDay[dateStr] ?? [],
+      });
+    } else {
+      setSelectedDate(dateStr);
+    }
+  }
+
   function handleActionCreated() {
     setSelectedDate(null);
     retry();
+    onDataRefreshed?.();
   }
 
   return (
@@ -50,7 +65,6 @@ export function PlanningPane() {
           flexShrink: 0,
         }}
       >
-        {/* Titre + spinner */}
         <Flex justify="between" align="center" style={{ marginBottom: 8 }}>
           <Text size="3" weight="medium">
             Planning
@@ -110,15 +124,15 @@ export function PlanningPane() {
               dateStr={dateStr}
               actions={actionsByDay[dateStr] ?? []}
               isToday={dateStr === today}
-              onAddAction={setSelectedDate}
+              onAddAction={handleAddActionForDay}
               isWeekend={false}
               inlineActions
             />
           </div>
         ))}
 
-        {/* Panneau saisie action */}
-        {selectedDate && (
+        {/* Panneau saisie action inline (quand pas de modal externe) */}
+        {selectedDate && !onAddAction && (
           <DayContextPanel
             date={selectedDate}
             techId={selectedTechId}
@@ -129,9 +143,11 @@ export function PlanningPane() {
           />
         )}
       </div>
-
-      {/* ── Tâches (fixe en bas) ───────────────────────────────────────────── */}
-      <TasksPane tasks={tasks} />
     </div>
   );
 }
+
+PlanningPane.propTypes = {
+  onAddAction: PropTypes.func,
+  onDataRefreshed: PropTypes.func,
+};
