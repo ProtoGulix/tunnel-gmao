@@ -18,7 +18,7 @@ import {
 
 /* ── ActionItem ───────────────────────────────────────────────────────────── */
 
-export function ActionItem({ action, compact = false }) {
+export function ActionItem({ action, compact = false, inline = false }) {
   const durationMin = actionDurationMinutes(action);
   const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
   const subcatCode = action.subcategory?.code ?? action.subcategory?.name ?? '—';
@@ -48,6 +48,56 @@ export function ActionItem({ action, compact = false }) {
           {subcatCode}
         </Badge>
         <Text size="1" weight="medium" style={{ color: subcatColor }}>{formatDuration(durationMin)}</Text>
+      </Box>
+    );
+  }
+
+  /* Version inline (home planning) : code + type + durée sur une ligne, description dessous */
+  if (inline) {
+    const codeEl = interventionId
+      ? <Link to={`/intervention/${interventionId}`} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none' }}>
+          <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: subcatColor, flexShrink: 0 }}>{interventionCode}</Text>
+        </Link>
+      : <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: subcatColor, flexShrink: 0 }}>{interventionCode}</Text>;
+
+    return (
+      <Box
+        style={{
+          background: `${subcatColor}12`,
+          borderLeft: `3px solid ${subcatColor}`,
+          borderRadius: 4,
+          padding: '4px 8px',
+          marginBottom: 4,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Ligne 1 : code · badge type · durée */}
+        <Flex align="center" gap="1" style={{ overflow: 'hidden' }}>
+          {codeEl}
+          <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none', flexShrink: 0, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {subcatCode}
+          </Badge>
+          <Text size="1" weight="medium" style={{ color: subcatColor, marginLeft: 'auto', flexShrink: 0 }}>
+            {startFmt ? `${startFmt}–${endFmt ?? '?'} · ` : ''}{formatDuration(durationMin)}
+          </Text>
+        </Flex>
+        {/* Ligne 2 : description tronquée */}
+        {description && (
+          <Text
+            size="1"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              color: 'var(--gray-11)',
+              marginTop: 2,
+              lineHeight: '1.3',
+            }}
+          >
+            {description}
+          </Text>
+        )}
       </Box>
     );
   }
@@ -138,7 +188,7 @@ export function DayTotal({ actions, compact = false }) {
 
 /* ── DayColumn ────────────────────────────────────────────────────────────── */
 
-export function DayColumn({ dateStr, actions, isToday, onAddAction, isWeekend = false }) {
+export function DayColumn({ dateStr, actions, isToday, onAddAction, isWeekend = false, inlineActions = false }) {
   const sorted = sortActions(actions);
 
   return (
@@ -169,7 +219,7 @@ export function DayColumn({ dateStr, actions, isToday, onAddAction, isWeekend = 
           <Text size="1" style={{ color: '#c0c0c0' }}>Aucune action</Text>
         </Flex>
       ) : (
-        sorted.map((a) => <ActionItem key={a.id} action={a} compact={isWeekend} />)
+        sorted.map((a) => <ActionItem key={a.id} action={a} compact={isWeekend} inline={inlineActions && !isWeekend} />)
       )}
 
       {/* Total */}

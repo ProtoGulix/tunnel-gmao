@@ -112,6 +112,7 @@ export function PlanningPane() {
               isToday={dateStr === today}
               onAddAction={setSelectedDate}
               isWeekend={false}
+              inlineActions
             />
           </div>
         ))}
