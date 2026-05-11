@@ -1,19 +1,8 @@
-/**
- * ActionFormComplexity - Sous-composant
- * Score de complexité + Facteurs conditionnels (si > 5)
- * Props structurées : { formState, handlers, metadata, validation }
- */
-
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, Select, Button, Badge } from '@radix-ui/themes';
+import { Box, Flex, Text, Select, Badge } from '@radix-ui/themes';
 import { BarChart3 } from 'lucide-react';
 
-function ActionFormComplexity({
-  formState,
-  handlers,
-  metadata,
-  validation
-}) {
+function ActionFormComplexity({ formState, handlers, metadata, validation }) {
   const { complexity, complexityFactors } = formState;
   const { handleComplexityChange, handleComplexityFactorToggle } = handlers;
   const { complexityFactors: availableFactors = [] } = metadata;
@@ -21,17 +10,13 @@ function ActionFormComplexity({
 
   return (
     <Box>
-      {/* Score de complexité */}
       <Box mb={shouldShowComplexityFactors ? '3' : '0'}>
         <Flex align="center" gap="2" mb="2">
           <BarChart3 size={16} color="var(--gray-9)" />
           <Text size="2" weight="bold">Complexité <Text as="span" color="red">*</Text></Text>
         </Flex>
         <Select.Root value={complexity} onValueChange={handleComplexityChange}>
-          <Select.Trigger
-            placeholder="Sélectionner…"
-            style={{ backgroundColor: 'white', width: '100%' }}
-          />
+          <Select.Trigger placeholder="Sélectionner…" style={{ backgroundColor: 'white', width: '100%' }} />
           <Select.Content>
             <Select.Item value="1">1 - Très simple</Select.Item>
             <Select.Item value="2">2 - Simple</Select.Item>
@@ -45,12 +30,9 @@ function ActionFormComplexity({
             <Select.Item value="10">10 - Expert</Select.Item>
           </Select.Content>
         </Select.Root>
-        <Text size="1" color="gray" mt="1">
-          Évalue la difficulté de l&apos;intervention
-        </Text>
+        <Text size="1" color="gray" mt="1">Évalue la difficulté de l&apos;intervention</Text>
       </Box>
 
-      {/* Facteurs de complexité (si complexity > 5) */}
       {shouldShowComplexityFactors && (
         <Box>
           <Flex align="center" gap="2" mb="2">
@@ -58,27 +40,18 @@ function ActionFormComplexity({
             <Text size="2" weight="bold">Facteurs de complexité</Text>
             <Badge color="orange" size="1">Obligatoire pour complexité &gt; 5</Badge>
           </Flex>
-          <Flex gap="2" wrap="wrap">
-            {availableFactors.map((factor) => {
-              const factorCode = factor.code || factor.id;
-              const isSelected = complexityFactors.includes(factorCode);
-              return (
-                <Button
-                  key={factorCode}
-                  type="button"
-                  size="2"
-                  variant={isSelected ? 'solid' : 'soft'}
-                  color={isSelected ? 'orange' : 'gray'}
-                  onClick={() => handleComplexityFactorToggle(factorCode)}
-                >
-                  {factor.label}
-                </Button>
-              );
-            })}
-          </Flex>
-          <Text size="1" color="gray" mt="2">
-            Sélectionne les facteurs qui ont rendu cette action complexe
-          </Text>
+          <Select.Root value={complexityFactors[0] ?? ''} onValueChange={(v) => handleComplexityFactorToggle(v)}>
+            <Select.Trigger placeholder="Sélectionner un facteur…" style={{ backgroundColor: 'white', width: '100%' }} />
+            <Select.Content>
+              {availableFactors.map((factor) => {
+                const code = String(factor.code || factor.id);
+                return (
+                  <Select.Item key={code} value={code}>{factor.label}</Select.Item>
+                );
+              })}
+            </Select.Content>
+          </Select.Root>
+          <Text size="1" color="gray" mt="1">Sélectionne le facteur principal qui a rendu cette action complexe</Text>
         </Box>
       )}
     </Box>
@@ -90,25 +63,21 @@ ActionFormComplexity.displayName = 'ActionFormComplexity';
 ActionFormComplexity.propTypes = {
   formState: PropTypes.shape({
     complexity: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    complexityFactors: PropTypes.arrayOf(
-      PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-    ).isRequired
+    complexityFactors: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
   }).isRequired,
   handlers: PropTypes.shape({
     handleComplexityChange: PropTypes.func.isRequired,
-    handleComplexityFactorToggle: PropTypes.func.isRequired
+    handleComplexityFactorToggle: PropTypes.func.isRequired,
   }).isRequired,
   metadata: PropTypes.shape({
-    complexityFactors: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        label: PropTypes.string
-      })
-    )
+    complexityFactors: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string,
+    })),
   }).isRequired,
   validation: PropTypes.shape({
-    shouldShowComplexityFactors: PropTypes.bool.isRequired
-  }).isRequired
+    shouldShowComplexityFactors: PropTypes.bool.isRequired,
+  }).isRequired,
 };
 
 export default ActionFormComplexity;

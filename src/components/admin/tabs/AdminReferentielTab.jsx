@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
-import { CheckCircle, XCircle, Layers, Wrench } from 'lucide-react';
+import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench } from 'lucide-react';
 import {
   ActionCategoriesSection,
   ComplexityFactorsSection,
@@ -24,6 +24,8 @@ import * as refApi from '@/api/adminReferentiel';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import StockFamiliesTab from '@/components/stock/tabs/StockFamiliesTab';
+import StockTemplatesTab from '@/components/stock/tabs/StockTemplatesTab';
 
 export default function AdminReferentielTab() {
   const { activeTab, setActiveTab } = useTabNavigation('actions', 'ref');
@@ -114,6 +116,12 @@ export default function AdminReferentielTab() {
           <Tabs.Trigger value="interventions">
             <Flex align="center" gap="2"><Wrench size={13} /><Text>Interventions</Text></Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="families">
+            <Flex align="center" gap="2"><Package size={13} /><Text>Familles de pièces</Text></Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="templates">
+            <Flex align="center" gap="2"><Shapes size={13} /><Text>Trames de référence</Text></Flex>
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="actions">
@@ -153,6 +161,14 @@ export default function AdminReferentielTab() {
               />
             </>
           )}
+        </Tabs.Content>
+
+        <Tabs.Content value="families">
+          {activeTab === 'families' && <StockFamiliesTab />}
+        </Tabs.Content>
+
+        <Tabs.Content value="templates">
+          {activeTab === 'templates' && <StockTemplatesTab />}
         </Tabs.Content>
       </Tabs.Root>
     </Box>

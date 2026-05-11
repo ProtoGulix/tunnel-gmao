@@ -10,13 +10,15 @@ import PreventiveOccurrencesTab from '@/components/preventive/PreventiveOccurren
 
 export default function AdminPreventiveOccurrencesPage() {
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="Occurrences Préventives"
         subtitle="Suivi et génération des occurrences de maintenance préventive"
         icon={CalendarClock}
       />
-      <PreventiveOccurrencesTab />
-    </Container>
+      <Container size="4">
+        <PreventiveOccurrencesTab />
+      </Container>
+    </>
   );
 }

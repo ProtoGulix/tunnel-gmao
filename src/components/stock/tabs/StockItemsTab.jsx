@@ -1,17 +1,15 @@
 /**
- * @fileoverview Onglet pièces référencées — liste et détail
+ * @fileoverview Onglet pièces référencées — master-detail
  * @module components/stock/tabs/StockItemsTab
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Select } from '@radix-ui/themes';
-import { Package, Plus } from 'lucide-react';
+import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
+import { Factory, Package, Plus } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
-import LoadingState from '@/components/ui/LoadingState';
-import TableHeader from '@/components/ui/TableHeader';
-import StockItemsList from '@/components/stock/StockItemsList';
-import StockItemDetail from '@/components/stock/StockItemDetail';
+import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
+import StockDetailPanel from '@/components/stock/StockDetailPanel';
 import StockItemForm from '@/components/stock/StockItemForm';
 import { useStockItems } from '@/hooks/stock/useStockItems';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
@@ -25,42 +23,25 @@ function FamilyFilters({ facets, familyCode, onFamilyChange, subFamilyCode, onSu
     [facets, familyCode]
   );
   const subFamilies = selectedFamily?.sub_families ?? [];
+
   return (
-    <Flex gap="2" align="center" wrap="wrap">
-      <Select.Root
-        value={familyCode || ALL}
-        onValueChange={(v) => onFamilyChange(v === ALL ? '' : v)}
-        color={familyCode ? 'blue' : undefined}
-      >
-        <Select.Trigger
-          placeholder="Toutes les familles"
-          variant={familyCode ? 'soft' : 'surface'}
-        />
+    <Flex gap="2" wrap="wrap">
+      <Select.Root value={familyCode || ALL} onValueChange={(v) => onFamilyChange(v === ALL ? '' : v)} size="1">
+        <Select.Trigger placeholder="Toutes les familles" variant={familyCode ? 'soft' : 'surface'} color={familyCode ? 'blue' : undefined} />
         <Select.Content>
           <Select.Item value={ALL}>Toutes les familles</Select.Item>
           {facets.families.map((f) => (
-            <Select.Item key={f.code} value={f.code}>
-              {f.code}{f.label ? ` — ${f.label}` : ''}
-            </Select.Item>
+            <Select.Item key={f.code} value={f.code}>{f.code}{f.label ? ` — ${f.label}` : ''}</Select.Item>
           ))}
         </Select.Content>
       </Select.Root>
-      <Select.Root
-        value={subFamilyCode || ALL}
-        onValueChange={(v) => onSubFamilyChange(v === ALL ? '' : v)}
-        disabled={subFamilies.length === 0}
-        color={subFamilyCode ? 'indigo' : undefined}
-      >
-        <Select.Trigger
-          placeholder="Toutes les sous-familles"
-          variant={subFamilyCode ? 'soft' : 'surface'}
-        />
+
+      <Select.Root value={subFamilyCode || ALL} onValueChange={(v) => onSubFamilyChange(v === ALL ? '' : v)} disabled={subFamilies.length === 0} size="1">
+        <Select.Trigger placeholder="Sous-famille" variant={subFamilyCode ? 'soft' : 'surface'} color={subFamilyCode ? 'indigo' : undefined} />
         <Select.Content>
-          <Select.Item value={ALL}>Toutes les sous-familles</Select.Item>
+          <Select.Item value={ALL}>Toutes</Select.Item>
           {subFamilies.map((s) => (
-            <Select.Item key={s.code} value={s.code}>
-              {s.code}{s.label ? ` — ${s.label}` : ''}
-            </Select.Item>
+            <Select.Item key={s.code} value={s.code}>{s.code}{s.label ? ` — ${s.label}` : ''}</Select.Item>
           ))}
         </Select.Content>
       </Select.Root>
@@ -76,6 +57,79 @@ FamilyFilters.propTypes = {
   onSubFamilyChange: PropTypes.func.isRequired,
 };
 
+function StockBadge({ quantity, unit }) {
+  if (quantity == null) return <Badge color="gray" variant="soft" size="1">Non renseigné</Badge>;
+  if (quantity === 0) return <Badge color="red" variant="soft" size="1">Rupture</Badge>;
+  if (quantity <= 3) return <Badge color="orange" variant="soft" size="1">Stock bas · {quantity}{unit ? ` ${unit}` : ''}</Badge>;
+  return <Badge color="green" variant="soft" size="1">{quantity}{unit ? ` ${unit}` : ''}</Badge>;
+}
+
+StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
+
+function StockItem({ item, isSelected, onClick }) {
+  const manufacturers = item.manufacturer_refs ?? [];
+  const primaryMfr = manufacturers[0];
+
+  return (
+    <Box
+      onClick={() => onClick(item)}
+      style={{
+        padding: '8px 14px',
+        cursor: 'pointer',
+        borderBottom: '1px solid var(--gray-4)',
+        background: isSelected ? 'var(--accent-3)' : 'var(--gray-1)',
+        boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+      }}
+      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-3)'; }}
+      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-1)'; }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px', alignItems: 'start' }}>
+
+        {/* Colonne gauche — identité fabricant */}
+        <Flex direction="column" gap="1">
+          {primaryMfr ? (
+            <>
+              <Flex align="center" gap="1">
+                <Factory size={11} color="var(--violet-9)" />
+                <Text size="1" color="gray">{primaryMfr.name}</Text>
+              </Flex>
+              <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>
+                {primaryMfr.ref}
+              </Text>
+              {manufacturers.length > 1 && (
+                <Text size="1" color="gray">+{manufacturers.length - 1} autre{manufacturers.length > 2 ? 's' : ''}</Text>
+              )}
+            </>
+          ) : (
+            <Flex align="center" gap="1" style={{ opacity: 0.5 }}>
+              <Factory size={11} color="var(--gray-8)" />
+              <Text size="1" color="gray">Sans fabricant</Text>
+            </Flex>
+          )}
+          <Text size="1" color="gray" style={{ lineHeight: 1.3, marginTop: 2 }}>{item.name}</Text>
+        </Flex>
+
+        {/* Colonne droite — infos stock */}
+        <Flex direction="column" gap="1" align="end">
+          <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.ref}</Badge>
+          <StockBadge quantity={item.quantity} unit={item.unit} />
+          {item.supplier_refs_count > 0
+            ? <Badge color="blue" variant="soft" size="1">{item.supplier_refs_count} fourn.</Badge>
+            : <Badge color="orange" variant="soft" size="1">À qualifier</Badge>
+          }
+        </Flex>
+
+      </div>
+    </Box>
+  );
+}
+
+StockItem.propTypes = {
+  item: PropTypes.object.isRequired,
+  isSelected: PropTypes.bool,
+  onClick: PropTypes.func.isRequired,
+};
+
 export default function StockItemsTab() {
   const [urlSearch, setUrlSearch] = useUrlSearch('q');
   const {
@@ -88,17 +142,14 @@ export default function StockItemsTab() {
   } = useStockItems({ initialSearch: urlSearch });
 
   const [selected, setSelected] = useState(null);
-  const [mode, setMode] = useState(null); // 'create' | 'edit'
+  const [mode, setMode] = useState(null);
   const [saving, setSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const handleSearch = useCallback((v) => { setSearch(v); setUrlSearch(v); }, [setSearch, setUrlSearch]);
+
   const handleSelect = useCallback(async (row) => {
-    if (row.id === selected?.id && mode !== 'edit') {
-      setSelected(null);
-      setMode(null);
-      return;
-    }
+    if (row.id === selected?.id && mode !== 'edit') { setSelected(null); setMode(null); return; }
     setMode(null);
     setSelected(null);
     setDetailLoading(true);
@@ -109,17 +160,13 @@ export default function StockItemsTab() {
       setDetailLoading(false);
     }
   }, [selected, mode]);
-  const handleFamilyChange = (v) => { setFamilyCode(v); setSubFamilyCode(''); };
-  const handleSubFamilyChange = (v) => setSubFamilyCode(v);
+
+  const handleFamilyChange = useCallback((v) => { setFamilyCode(v); setSubFamilyCode(''); }, [setFamilyCode, setSubFamilyCode]);
+  const handleSubFamilyChange = useCallback((v) => setSubFamilyCode(v), [setSubFamilyCode]);
 
   const handleCreate = async (data) => {
-    try {
-      setSaving(true);
-      await createItem(data);
-      setMode(null);
-    } finally {
-      setSaving(false);
-    }
+    try { setSaving(true); await createItem(data); setMode(null); }
+    finally { setSaving(false); }
   };
 
   const handleEdit = async (data) => {
@@ -129,14 +176,13 @@ export default function StockItemsTab() {
       const detail = await fetchStockItemDetail(selected.id);
       setSelected(detail);
       setMode(null);
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
     await removeItem(selected.id);
     setSelected(null);
+    setMode(null);
   };
 
   const handleRefreshDetail = useCallback(async () => {
@@ -147,66 +193,70 @@ export default function StockItemsTab() {
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
-  const paginationProps = pagination.totalPages > 1 ? {
-    currentPage: pagination.page,
-    total: pagination.total,
-    pageSize: pagination.pageSize,
-    totalPages: pagination.totalPages,
-    onPageChange: goToPage,
-    onPageSizeChange: changePageSize,
-    pageSizeOptions: [50, 100, 200],
-  } : undefined;
+  const totalPages = pagination.totalPages ?? 1;
 
-  const renderDetail = () => {
-    if (detailLoading) return <LoadingState fullscreen={false} message="Chargement du détail..." />;
-    if (!selected) return null;
-    if (mode === 'edit') return (
+  const masterList = items.length === 0 && !loading ? (
+    <Flex direction="column" align="center" justify="center" style={{ height: 200, padding: 24 }} gap="2">
+      <Package size={28} color="var(--gray-7)" />
+      <Text size="2" color="gray">Aucune pièce trouvée</Text>
+    </Flex>
+  ) : items.map((item) => (
+    <StockItem key={item.id} item={item} isSelected={item.id === selected?.id} onClick={handleSelect} />
+  ));
+
+  const detailContent = () => {
+    if (mode === 'edit' && selected) return (
       <StockItemForm item={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
     );
+    if (!selected) return null;
     return (
-      <StockItemDetail item={selected} onEdit={() => setMode('edit')} onDelete={handleDelete} onRefresh={handleRefreshDetail} />
+      <StockDetailPanel
+        item={selected}
+        onEdit={() => setMode('edit')}
+        onDelete={handleDelete}
+        onRefresh={handleRefreshDetail}
+        onClose={() => { setSelected(null); setMode(null); }}
+      />
     );
   };
 
   return (
-    <Box>
-      <TableHeader
-        icon={Package}
-        title="Pièces référencées"
-        count={pagination.total}
-        searchValue={search}
-        onSearchChange={handleSearch}
-        loading={loading}
-        showRefreshButton={false}
-        actions={
-          <FamilyFilters
-            facets={facets}
-            familyCode={familyCode}
-            onFamilyChange={handleFamilyChange}
-            subFamilyCode={subFamilyCode}
-            onSubFamilyChange={handleSubFamilyChange}
-          />
-        }
-        rightActions={
-          <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-            <Plus size={14} /> Ajouter
-          </Button>
-        }
-      />
+    <Box pt="3">
+      <Flex justify="end" mb="2">
+        <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
+          <Plus size={14} /> Ajouter
+        </Button>
+      </Flex>
       {mode === 'create' && (
         <Box mb="3">
           <StockItemForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
-      <StockItemsList
-        items={items}
-        loading={loading}
-        selectedId={selected?.id}
-        onSelect={handleSelect}
-        pagination={paginationProps}
-        renderDetail={renderDetail}
+
+      <MasterDetailLayout
+        masterProps={{
+          icon: Package,
+          title: 'Pièces référencées',
+          count: pagination.total,
+          search,
+          onSearchChange: handleSearch,
+          loading,
+          children: masterList,
+          headerExtra: (
+            <FamilyFilters
+              facets={facets}
+              familyCode={familyCode}
+              onFamilyChange={handleFamilyChange}
+              subFamilyCode={subFamilyCode}
+              onSubFamilyChange={handleSubFamilyChange}
+            />
+          ),
+          pagination: totalPages > 1 ? { currentPage: pagination.page, totalPages, onPageChange: goToPage } : undefined,
+        }}
+        detailChildren={detailContent()}
+        detailLoading={detailLoading}
+        emptyLabel="Sélectionnez une pièce pour voir son détail"
       />
     </Box>
   );
 }
-

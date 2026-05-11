@@ -1,37 +1,18 @@
-/**
- * @fileoverview ActionForm — formulaire unifié d'action
- * @module components/interventions/ActionForm
- *
- * Calqué sur le pattern SupplierItemForm : les props de contexte se verrouillent
- * quand elles sont fournies, sinon les sélecteurs s'affichent.
- *
- * Le formulaire construit toujours un payload canonique :
- *   { intervention_id, action_start, action_end, action_subcategory, description,
- *     created_at?, complexity_score, tech, complexity_factor? }
- *
- * Props de verrou (modes badge vs sélecteur) :
- *   interventionId — intervention déjà connue → badges verrouillés
- *   techId         — technicien fixé (sinon fallback sur l'utilisateur connecté)
- */
-
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Flex, Text, Card, Button } from '@radix-ui/themes';
 import { Plus, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
 import { INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { useActionForm } from './useActionForm';
+import { useActionSubmit } from './useActionSubmit';
 import ActionFormFields from './ActionFormFields';
 import ActionFormDescription from './ActionFormDescription';
 import ActionFormComplexity from './ActionFormComplexity';
 import ActionTaskSection from './ActionTaskSection';
 import { ContextSection } from './ActionFormContext';
 import CloseInterventionOverlay from './CloseInterventionOverlay';
-import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
-
-/* ── ActionForm principal ─────────────────────────────────────────────────── */
-/* eslint-disable complexity */
 function ActionForm({
   initialState = {},
   metadata = {},
@@ -42,7 +23,6 @@ function ActionForm({
   interventionId = null,
   interventionMeta = null,
   techId = null,
-  legacyTimeSpent = null,
   lockedDate = false,
   gammeValidations = [],
   showContext = true,
@@ -53,116 +33,38 @@ function ActionForm({
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
   const [selectedTasks, setSelectedTasks] = useState(
-    Array.isArray(initialState?.tasks)
-      ? initialState.tasks
+    Array.isArray(initialState?.tasks) ? initialState.tasks
       : (initialState?.task ? [initialState.task] : [])
   );
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
   });
-  const [manualTimeSpent, setManualTimeSpent] = useState(legacyTimeSpent ?? '');
-  const [submitError, setSubmitError] = useState(null);
+  const [manualTimeSpent, setManualTimeSpent] = useState('');
 
-  const [pendingPayload, setPendingPayload] = useState(null);
-
-  // Empêche la fermeture de l'onglet/navigation navigateur pendant l'overlay
-  useEffect(() => {
-    if (!pendingPayload) return;
-    const handler = (e) => { e.preventDefault(); };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [pendingPayload]);
-
-  // Mode préventif — identité visuelle verte
   const typeInterCode = interventionMeta?.type_inter ?? pickedIntervention?.type_inter ?? null;
   const isPreventif = typeInterCode === 'PRE';
-  const typeConfig = typeInterCode
-    ? INTERVENTION_TYPES.find((t) => t.id === typeInterCode)
-    : null;
+  const typeConfig = typeInterCode ? INTERVENTION_TYPES.find((t) => t.id === typeInterCode) : null;
 
   const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
-  // techId prop > utilisateur connecté
   const resolvedTechId = techId ?? user?.id ?? null;
 
-  const hasMissingTaskStatus = selectedTasks.some((task) => !task.taskActionStatus);
+  const { submitError, pendingPayload, setPendingPayload, handleSubmit } = useActionSubmit({
+    form, resolvedInterventionId, resolvedTechId,
+    timeRange, manualTimeSpent, selectedTasks,
+    interventionMeta, onSubmit, onSuccess,
+  });
 
+  const hasMissingTaskStatus = selectedTasks.some((t) => !t.taskActionStatus);
   const hasMissingSkippedReason = selectedTasks.some(
-    (task) => task.taskActionStatus === 'skipped' && !task.skipReason?.trim()
+    (t) => t.taskActionStatus === 'skipped' && !t.skipReason?.trim()
   );
 
-  const buildPayload = () => {
-    const complexityScore = Number(form.formState.complexity);
-    const subcategoryId = Number(form.formState.category) || undefined;
-    const complexityFactor =
-      complexityScore > 5 && form.formState.complexityFactors.length > 0
-        ? form.formState.complexityFactors[0]
-        : undefined;
-
-    return {
-      intervention_id: resolvedInterventionId,
-      action_subcategory: subcategoryId,
-      description: form.formState.description,
-      complexity_score: complexityScore,
-      tech: resolvedTechId,
-      ...(timeRange.start && timeRange.end
-        ? { action_start: `${timeRange.start}:00`, action_end: `${timeRange.end}:00` }
-        : { time_spent: parseFloat(manualTimeSpent) || legacyTimeSpent || 0 }
-      ),
-      ...(form.formState.date && { created_at: form.formState.date }),
-      ...(complexityFactor && { complexity_factor: complexityFactor }),
-      ...(selectedTasks.length > 0 && {
-        tasks: selectedTasks.map((task) => ({
-          task_id: String(task.id),
-          ...(task.taskActionStatus === 'done' ? { close_task: true } : {}),
-          ...(task.taskActionStatus === 'skipped'
-            ? { skip: true, skip_reason: task.skipReason.trim() }
-            : {}),
-        })),
-      }),
-    };
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
-
-    if (hasMissingTaskStatus) {
-      setSubmitError('Un état est obligatoire pour chaque tâche sélectionnée');
-      return;
-    }
-
-    if (hasMissingSkippedReason) {
-      setSubmitError('Un motif est obligatoire pour chaque tâche marquée comme ignorée');
-      return;
-    }
-
-    if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
-
-    // Afficher l'overlay de clôture si l'intervention est connue et encore ouverte
-    const shouldShowOverlay =
-      resolvedInterventionId &&
-      !['ferme', 'cancelled'].includes(interventionMeta?.status_actual);
-
-    if (shouldShowOverlay) {
-      setPendingPayload(buildPayload());
-      return;
-    }
-
-    try {
-      const result = await onSubmit(buildPayload());
-      onSuccess?.(result);
-    } catch (err) {
-      setSubmitError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
-    }
-  };
-
-  const handleCancel = () => {
-    form.handlers.handleReset();
-    onCancel();
-  };
-
   const allErrors = [...form.validation.errors, ...(submitError ? [submitError] : [])];
+
+  const cardStyle = isPreventif
+    ? { backgroundColor: 'var(--green-2)', border: '1px solid var(--green-6)', borderLeft: '3px solid var(--green-9)', ...style }
+    : { backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style };
 
   if (!metadata) {
     return (
@@ -172,51 +74,36 @@ function ActionForm({
     );
   }
 
-  const cardStyle = isPreventif
-    ? { backgroundColor: 'var(--green-2)', border: '1px solid var(--green-6)', borderLeft: '3px solid var(--green-9)', ...style }
-    : { backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)', ...style };
-
   return (
     <Card style={{ ...cardStyle, position: 'relative' }}>
       <Flex direction="column" gap="3">
-        {/* En-tête */}
         <Flex align="center" gap="2">
           {isPreventif ? <ShieldCheck size={20} color="var(--green-9)" /> : <Plus size={20} color="var(--blue-9)" />}
           <Text size="3" weight="bold">Nouvelle action</Text>
-          {typeConfig && (
-            <Badge size="1" color={typeConfig.color} variant="soft">
-              {typeConfig.title}
-            </Badge>
-          )}
+          {typeConfig && <Badge size="1" color={typeConfig.color} variant="soft">{typeConfig.title}</Badge>}
         </Flex>
 
         {allErrors.length > 0 && (
           <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: '6px', padding: '12px' }}>
             <Text color="red" weight="bold" size="2">Erreurs de validation</Text>
             <Flex direction="column" gap="1" mt="1">
-              {allErrors.map((err, i) => (
-                <Text key={i} color="red" size="1">• {err}</Text>
-              ))}
+              {allErrors.map((err, i) => <Text key={i} color="red" size="1">• {err}</Text>)}
             </Flex>
           </Box>
         )}
 
-        {/* Section contexte — masquée quand l'intervention est déjà fixée par le parent */}
         {showContext && (
-          <>
-            <ContextSection
-              interventionId={interventionId}
-              pickedEquipement={pickedEquipement}
-              onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
-              pickedIntervention={pickedIntervention}
-              onInterventionChange={setPickedIntervention}
-            />
-          </>
+          <ContextSection
+            interventionId={interventionId}
+            pickedEquipement={pickedEquipement}
+            onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
+            pickedIntervention={pickedIntervention}
+            onInterventionChange={setPickedIntervention}
+          />
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => handleSubmit(e, { hasMissingTaskStatus, hasMissingSkippedReason })}>
           <Flex direction="column" gap="3">
-            {/* Plage horaire + Date + Type */}
             <ActionFormFields
               formState={form.formState}
               handlers={form.handlers}
@@ -227,7 +114,6 @@ function ActionForm({
               onManualTimeSpentChange={setManualTimeSpent}
               lockedDate={lockedDate}
             />
-
             <ActionTaskSection
               interventionId={resolvedInterventionId}
               value={selectedTasks}
@@ -241,9 +127,8 @@ function ActionForm({
               validation={form.validation}
             />
             <ActionFormDescription formState={form.formState} handlers={form.handlers} />
-
             <Flex justify="end" gap="2">
-              <Button type="button" variant="soft" color="gray" onClick={handleCancel} size="2">
+              <Button type="button" variant="soft" color="gray" onClick={() => { form.handlers.handleReset(); onCancel(); }} size="2">
                 Annuler
               </Button>
               <Button type="submit" color={isPreventif ? 'green' : 'blue'} size="2">
@@ -300,6 +185,7 @@ ActionForm.propTypes = {
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
   showContext: PropTypes.bool,
+  gammeValidations: PropTypes.array,
 };
 
 export default ActionForm;

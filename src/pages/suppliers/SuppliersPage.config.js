@@ -10,4 +10,5 @@ export const PAGE_CONFIG = {
   section: 'stock',
   requiresAuth: true,
   public: false,
+  showInMenu: false,
 };

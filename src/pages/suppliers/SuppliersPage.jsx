@@ -14,9 +14,10 @@ export default function SuppliersPage() {
   const { activeTab, setActiveTab } = useTabNavigation('suppliers', 'tab');
 
   return (
-    <Container>
+    <>
       <PageHeader title="Fournisseurs" subtitle="Repertoire, liaisons pieces et fabricants" />
 
+      <Container>
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="suppliers">
@@ -41,6 +42,7 @@ export default function SuppliersPage() {
           {activeTab === 'manufacturers' && <ManufacturersTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+      </Container>
+    </>
   );
 }

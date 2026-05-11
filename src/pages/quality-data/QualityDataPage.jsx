@@ -20,13 +20,14 @@ export default function QualityDataPage() {
   }), [severityFilter, entityFilter]);
 
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="Qualité des données"
         description="Contrôle de complétude et cohérence"
         icon={Database}
       />
 
+      <Container size="4">
       {/* Filtres */}
       <Card mb="4">
         <Flex gap="3" align="center">
@@ -59,6 +60,7 @@ export default function QualityDataPage() {
 
       {/* Contenu */}
       <QualityDataTab filters={filters} />
-    </Container>
+      </Container>
+    </>
   );
 }

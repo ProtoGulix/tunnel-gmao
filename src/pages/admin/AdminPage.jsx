@@ -16,12 +16,13 @@ export default function AdminPage() {
   const { activeTab, setActiveTab } = useTabNavigation('users', 'tab');
 
   return (
-    <Container size="4">
+    <>
       <PageHeader
         title="Administration"
         subtitle="Utilisateurs, rôles, référentiel et sécurité"
       />
 
+      <Container size="4">
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           <Tabs.Trigger value="users">
@@ -63,6 +64,7 @@ export default function AdminPage() {
           {activeTab === 'security' && <AdminSecurityTab />}
         </Tabs.Content>
       </Tabs.Root>
-    </Container>
+      </Container>
+    </>
   );
 }

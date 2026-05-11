@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { fetchInterventions } from '@/api/interventions';
 import { fetchTasksWorkspace } from '@/api/tasks';
+import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
-import { useEffect } from 'react';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -112,7 +112,18 @@ function classifySections(enriched) {
   ];
 }
 
-function computeCounters(interventions, tasksCounters) {
+function buildRequestsSection(requests) {
+  return {
+    id: 'requests',
+    label: 'Demandes en attente',
+    type: 'requests',
+    items: requests
+      .filter((r) => r.statut === 'nouvelle' || r.statut === 'en_attente')
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
+  };
+}
+
+function computeCounters(interventions, tasksCounters, requests) {
   return {
     critical: interventions.filter((iv) => iv.machine?.health?.level === 'critical').length,
     blocked_piece: interventions.filter((iv) => (iv.stats?.purchaseCount ?? 0) > 0).length,
@@ -121,6 +132,7 @@ function computeCounters(interventions, tasksCounters) {
     ).length,
     in_progress: tasksCounters?.in_progress ?? 0,
     preventive: tasksCounters?.todo ?? 0,
+    requests: requests.filter((r) => r.statut === 'nouvelle' || r.statut === 'en_attente').length,
   };
 }
 
@@ -134,6 +146,7 @@ export function useBriefingData() {
     decision: 0,
     in_progress: 0,
     preventive: 0,
+    requests: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -142,7 +155,7 @@ export function useBriefingData() {
     setLoading(true);
     setError(null);
 
-    const [interventionsResult, tasksResult] = await Promise.allSettled([
+    const [interventionsResult, tasksResult, requestsResult] = await Promise.allSettled([
       fetchInterventions({
         status: 'ouvert,en_cours',
         include: 'stats',
@@ -154,14 +167,22 @@ export function useBriefingData() {
         include_counters: true,
         limit: 200,
       }),
+      fetchInterventionRequests({
+        excludeStatuses: 'rejetee,cloturee,acceptee',
+        limit: 200,
+      }),
     ]);
 
     const interventions =
       interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
     const tasksData =
-      tasksResult.status === 'fulfilled' ? tasksResult.value : { tasks: [], counters: null };
-    const tasks = tasksData.tasks ?? [];
+      tasksResult.status === 'fulfilled' ? tasksResult.value : { items: [], counters: null };
+    const tasks = (tasksData.items ?? []).flatMap((group) =>
+      (group.tasks ?? []).map((t) => ({ ...t, intervention: { id: group.id } }))
+    );
     const tasksCounters = tasksData.counters ?? null;
+    const requests =
+      requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
 
     if (interventionsResult.status === 'rejected' && tasksResult.status === 'rejected') {
       setError(
@@ -172,8 +193,8 @@ export function useBriefingData() {
     }
 
     const enriched = interventions.map((iv) => enrichSituation(iv, tasks));
-    const newSections = classifySections(enriched);
-    const newCounters = computeCounters(interventions, tasksCounters);
+    const newSections = [...classifySections(enriched), buildRequestsSection(requests)];
+    const newCounters = computeCounters(interventions, tasksCounters, requests);
 
     setSections(newSections);
     setCounters(newCounters);

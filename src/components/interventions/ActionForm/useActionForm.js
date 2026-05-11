@@ -1,18 +1,7 @@
-/**
- * Hook personnalisé pour gérer l'état et la validation d'ActionForm
- * Centralise toute la logique métier
- */
-
 import { useState, useCallback } from 'react';
 import { areComplexityFactorsRequired, validateFormState } from './actionFormUtils';
 
-/**
- * Hook pour ActionForm
- * @param {Object} initialState - État initial optionnel
- * @returns {Object} { formState, handlers, validation }
- */
 export function useActionForm(initialState = {}) {
-  // ===== STATE =====
   const [formState, setFormState] = useState({
     date: initialState.date ?? '',
     category: initialState.category ?? '',
@@ -23,7 +12,6 @@ export function useActionForm(initialState = {}) {
 
   const [validationErrors, setValidationErrors] = useState([]);
 
-  // ===== HANDLERS =====
   const handleDateChange = useCallback((value) => {
     setFormState((prev) => ({ ...prev, date: value }));
   }, []);
@@ -67,7 +55,6 @@ export function useActionForm(initialState = {}) {
     [formState]
   );
 
-  // ===== RETURN =====
   return {
     formState,
     handlers: {

@@ -1,19 +1,23 @@
+import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Flex, Text, Badge, Button, Spinner } from '@radix-ui/themes';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 import { DayColumn } from '@/components/planning/WeekCalendar';
 import DayContextPanel from '@/components/planning/DayContextPanel';
+import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import { getWeekDays, todayIso, formatWeekLabel } from '@/components/planning/planningUtils';
-import { TasksPane } from './TasksPane';
 
-// ── Palette couleurs pour pills tech ─────────────────────────────────────────
 const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'teal'];
 
-export function PlanningPane() {
+/**
+ * @param {Function} [props.onAddAction] - Called with { date, actionsByDay } to open action modal
+ * @param {Function} [props.onDataRefreshed] - Called after action created (to refresh tasks)
+ */
+export function PlanningPane({ onAddAction, onDataRefreshed, planningHook }) {
+  const ownHook = usePlanningWeek();
   const {
     actionsByDay,
-    tasks,
     users,
     weekStart,
     selectedTechId,
@@ -23,11 +27,11 @@ export function PlanningPane() {
     goToday,
     loading,
     retry,
-  } = usePlanningWeek();
+  } = planningHook ?? ownHook;
 
   const [selectedDate, setSelectedDate] = useState(null);
+  const [purchaseModalAction, setPurchaseModalAction] = useState(null);
   const today = todayIso();
-  // Lun–Ven uniquement
   const weekDays = getWeekDays(weekStart).slice(0, 5);
 
   const selectedUser = users.find((u) => u.id === selectedTechId) ?? null;
@@ -35,45 +39,47 @@ export function PlanningPane() {
     ? `${selectedUser.first_name?.[0] ?? ''}${selectedUser.last_name?.[0] ?? ''}`.toUpperCase()
     : '';
 
+  function handleAddActionForDay(dateStr, preselectedAction = null) {
+    if (onAddAction) {
+      onAddAction({
+        date: dateStr,
+        techId: selectedTechId,
+        techInitials,
+        weekActionsForDay: actionsByDay[dateStr] ?? [],
+        preselectedAction,
+      });
+    } else {
+      setSelectedDate(dateStr);
+    }
+  }
+
   function handleActionCreated() {
     setSelectedDate(null);
     retry();
+    onDataRefreshed?.();
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <Flex direction="column" gap="4" p="4">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          padding: '12px 14px 10px',
-          borderBottom: '1px solid var(--gray-4)',
-          flexShrink: 0,
-        }}
-      >
-        {/* Titre + spinner */}
-        <Flex justify="between" align="center" style={{ marginBottom: 8 }}>
-          <Text size="3" weight="medium">
-            Planning
-          </Text>
+      <Flex direction="column" gap="2">
+        <Flex justify="between" align="center">
+          <Text size="4" weight="bold">Planning</Text>
           {loading && <Spinner size="1" />}
         </Flex>
 
         {/* Navigation semaine */}
-        <Flex align="center" gap="1" style={{ marginBottom: 8 }}>
-          <Button size="1" variant="soft" color="gray" onClick={prevWeek}>
-            <ChevronLeft size={14} />
+        <Flex align="center" gap="2">
+          <Button size="2" variant="soft" color="gray" onClick={prevWeek}>
+            <ChevronLeft size={16} />
           </Button>
-          <Text
-            size="2"
-            weight="medium"
-            style={{ flex: 1, textAlign: 'center', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-          >
+          <Text size="3" weight="medium" style={{ flex: 1, textAlign: 'center' }}>
             {formatWeekLabel(weekStart)}
           </Text>
-          <Button size="1" variant="soft" color="gray" onClick={nextWeek}>
-            <ChevronRight size={14} />
+          <Button size="2" variant="soft" color="gray" onClick={nextWeek}>
+            <ChevronRight size={16} />
           </Button>
-          <Button size="1" variant="ghost" color="blue" onClick={goToday} style={{ flexShrink: 0 }}>
+          <Button size="2" variant="ghost" color="blue" onClick={goToday}>
             Auj.
           </Button>
         </Flex>
@@ -84,7 +90,6 @@ export function PlanningPane() {
             const initials = `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase();
             const color = PILL_COLORS[i % PILL_COLORS.length];
             const isSelected = u.id === selectedTechId;
-
             return (
               <Badge
                 key={u.id}
@@ -100,37 +105,48 @@ export function PlanningPane() {
             );
           })}
         </Flex>
-      </div>
+      </Flex>
 
-      {/* ── Jours (scrollable) ──────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
+      {/* ── Jours ──────────────────────────────────────────────────────────── */}
+      <Flex direction="column" gap="3">
         {weekDays.map((dateStr) => (
-          <div key={dateStr} style={{ marginBottom: 12 }}>
-            <DayColumn
-              dateStr={dateStr}
-              actions={actionsByDay[dateStr] ?? []}
-              isToday={dateStr === today}
-              onAddAction={setSelectedDate}
-              isWeekend={false}
-            />
-          </div>
-        ))}
-
-        {/* Panneau saisie action */}
-        {selectedDate && (
-          <DayContextPanel
-            date={selectedDate}
-            techId={selectedTechId}
-            techInitials={techInitials}
-            weekActionsForDay={actionsByDay[selectedDate] ?? []}
-            onClose={() => setSelectedDate(null)}
-            onActionCreated={handleActionCreated}
+          <DayColumn
+            key={dateStr}
+            dateStr={dateStr}
+            actions={actionsByDay[dateStr] ?? []}
+            isToday={dateStr === today}
+            onAddAction={handleAddActionForDay}
+            onAddPurchaseRequest={(action) => setPurchaseModalAction(action)}
+            isWeekend={false}
+            inlineActions
           />
-        )}
-      </div>
+        ))}
+      </Flex>
 
-      {/* ── Tâches (fixe en bas) ───────────────────────────────────────────── */}
-      <TasksPane tasks={tasks} />
-    </div>
+      <SpontaneousPurchaseRequestModal
+        open={!!purchaseModalAction}
+        onOpenChange={(v) => { if (!v) setPurchaseModalAction(null); }}
+        action={purchaseModalAction}
+        onSuccess={retry}
+      />
+
+      {/* Panneau saisie action inline (quand pas de modal externe) */}
+      {selectedDate && !onAddAction && (
+        <DayContextPanel
+          date={selectedDate}
+          techId={selectedTechId}
+          techInitials={techInitials}
+          weekActionsForDay={actionsByDay[selectedDate] ?? []}
+          onClose={() => setSelectedDate(null)}
+          onActionCreated={handleActionCreated}
+        />
+      )}
+    </Flex>
   );
 }
+
+PlanningPane.propTypes = {
+  onAddAction: PropTypes.func,
+  onDataRefreshed: PropTypes.func,
+  planningHook: PropTypes.object,
+};

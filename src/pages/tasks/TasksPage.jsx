@@ -4,9 +4,11 @@ import TasksTab from '@/components/tasks/tabs/TasksTab';
 
 export default function TasksPage() {
   return (
-    <Container>
+    <>
       <PageHeader title="Taches" subtitle="Pilotage des taches intervention" />
-      <TasksTab />
-    </Container>
+      <Container>
+        <TasksTab />
+      </Container>
+    </>
   );
 }
