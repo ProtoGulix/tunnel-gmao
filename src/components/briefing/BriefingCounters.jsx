@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Flex, Badge, Text } from '@radix-ui/themes';
 
 const CHIP_CONFIG = [
+  { key: 'requests', label: 'DI en attente', color: 'purple' },
   { key: 'critical', label: 'critique(s)', color: 'red' },
   { key: 'blocked_piece', label: 'pièce(s) bloquée(s)', color: 'orange' },
   { key: 'decision', label: 'décision(s)', color: 'blue' },
@@ -27,6 +28,7 @@ export function BriefingCounters({ counters, loading }) {
 
 BriefingCounters.propTypes = {
   counters: PropTypes.shape({
+    requests: PropTypes.number,
     critical: PropTypes.number,
     blocked_piece: PropTypes.number,
     decision: PropTypes.number,

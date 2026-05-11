@@ -3,9 +3,10 @@ import { Flex, Text, Spinner, Callout, Button, Badge, IconButton } from '@radix-
 import {
   AlertCircle, ClipboardList, Clock, Package, ExternalLink,
   CalendarClock, UserCog, Wrench, CheckCircle2, MinusCircle, Circle,
-  AlertTriangle, Plus, ChevronUp, ChevronDown,
+  AlertTriangle, Plus, ChevronUp, ChevronDown, Inbox,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import InterventionRequestDetail from '@/components/intervention-requests/InterventionRequestDetail';
 import PageHeader from '@/components/layout/PageHeader';
 import { BriefingCounters } from '@/components/briefing/BriefingCounters';
 import { BriefingSection } from '@/components/briefing/BriefingSection';
@@ -177,6 +178,63 @@ function buildTaskColumns({ onMoveUp, onMoveDown, tasks }) {
       },
     },
   ];
+}
+
+/* ── Request item (tuile DI) ────────────────────────────────────────────── */
+
+const REQUEST_STATUT_COLOR = {
+  nouvelle:   'var(--gray-9)',
+  en_attente: 'var(--amber-9)',
+};
+
+function RequestItem({ request }) {
+  const barColor = REQUEST_STATUT_COLOR[request.statut] ?? 'var(--gray-9)';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const created = new Date(request.created_at);
+  const daysWaiting = Math.floor((today - created) / 86400000);
+
+  return (
+    <div style={{
+      display: 'flex',
+      background: 'var(--color-panel-solid)',
+      border: '1px solid var(--gray-4)',
+      borderLeft: `3px solid ${barColor}`,
+      borderRadius: 6,
+      overflow: 'hidden',
+    }}>
+      <Flex direction="column" style={{ flex: 1, padding: '10px 12px' }} gap="1">
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="1" weight="medium" style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--gray-12)' }}>
+            {request.code}
+          </Text>
+          <Badge size="1" variant="soft"
+            style={{ backgroundColor: request.statut_color + '22', color: request.statut_color }}>
+            {request.statut_label}
+          </Badge>
+          {request.equipement?.code && (
+            <Badge size="1" variant="outline" color="gray">{request.equipement.code}</Badge>
+          )}
+        </Flex>
+        <Text size="2" weight="medium"
+          style={{ color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {request.description}
+        </Text>
+        <Text size="1" color="gray">
+          {request.demandeur_nom}
+          {request.service?.label ? ` · ${request.service.label}` : ''}
+          {request.equipement?.name ? ` · ${request.equipement.name}` : ''}
+        </Text>
+      </Flex>
+      <Flex direction="column" align="center" justify="center" gap="1"
+        style={{ marginLeft: 8, paddingRight: 12, flexShrink: 0 }}>
+        <Inbox size={13} color="var(--gray-8)" />
+        <Text size="1" weight="medium"
+          style={{ color: daysWaiting > 7 ? 'var(--red-11)' : daysWaiting > 3 ? 'var(--orange-11)' : 'var(--gray-11)', lineHeight: 1 }}>
+          {daysWaiting === 0 ? 'auj.' : `${daysWaiting}j`}
+        </Text>
+      </Flex>
+    </div>
+  );
 }
 
 /* ── Detail panel ───────────────────────────────────────────────────────── */
@@ -373,10 +431,14 @@ function DetailPanel({ situation }) {
 
 export default function BriefingPage() {
   const { sections, counters, loading, error, retry } = useBriefingData();
-  const [selectedSituation, setSelectedSituation] = useState(null);
+  const [selected, setSelected] = useState(null); // { type: 'situation'|'request', item }
 
   const visibleSections = sections.filter((s) => s.items.length > 0);
   const allEmpty = !loading && !error && visibleSections.length === 0;
+
+  const handleSelect = (item, sectionType) => {
+    setSelected({ type: sectionType === 'requests' ? 'request' : 'situation', item });
+  };
 
   return (
     <>
@@ -384,7 +446,7 @@ export default function BriefingPage() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', height: 'calc(100vh - 64px)' }}>
 
-        {/* ── Left — intervention list ─────────────────────────────────── */}
+        {/* ── Left — list ──────────────────────────────────────────────── */}
         <div style={{ width: '42%', borderRight: '1px solid var(--gray-5)', height: '100%', overflowY: 'auto', padding: '10px 14px' }}>
           <BriefingCounters counters={counters} loading={loading} />
 
@@ -410,27 +472,39 @@ export default function BriefingPage() {
 
           {!loading && visibleSections.map((section, idx) => (
             <BriefingSection key={section.id} label={section.label} isFirst={idx === 0}>
-              {section.items.map((situation) => (
+              {section.items.map((item) => (
                 <div
-                  key={situation.id}
-                  onClick={() => setSelectedSituation(situation)}
+                  key={item.id}
+                  onClick={() => handleSelect(item, section.type)}
                   style={{
                     cursor: 'pointer',
                     borderRadius: 6,
-                    outline: selectedSituation?.id === situation.id ? '2px solid var(--blue-8)' : 'none',
+                    outline: selected?.item?.id === item.id ? '2px solid var(--blue-8)' : 'none',
                     outlineOffset: 1,
                   }}
                 >
-                  <BriefingItem situation={situation} sectionId={section.id} />
+                  {section.type === 'requests'
+                    ? <RequestItem request={item} />
+                    : <BriefingItem situation={item} sectionId={section.id} />
+                  }
                 </div>
               ))}
             </BriefingSection>
           ))}
         </div>
 
-        {/* ── Right — detail + tasks ───────────────────────────────────── */}
-        <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
-          <DetailPanel situation={selectedSituation} />
+        {/* ── Right — detail ───────────────────────────────────────────── */}
+        <div style={{ flex: 1, height: '100%', minWidth: 0, overflowY: 'auto' }}>
+          {selected?.type === 'request' ? (
+            <div style={{ padding: '12px 16px' }}>
+              <InterventionRequestDetail
+                requestId={selected.item.id}
+                onTransitionDone={retry}
+              />
+            </div>
+          ) : (
+            <DetailPanel situation={selected?.type === 'situation' ? selected.item : null} />
+          )}
         </div>
       </div>
     </>
