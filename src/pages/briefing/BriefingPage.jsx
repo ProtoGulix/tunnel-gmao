@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Flex, Text, Spinner, Callout, Button, Badge } from '@radix-ui/themes';
-import { AlertCircle, ClipboardList, Clock, Package, CheckCircle2, MinusCircle, ExternalLink } from 'lucide-react';
+import {
+  AlertCircle, ClipboardList, Clock, Package, ExternalLink,
+  CalendarClock, UserCog, Wrench, CheckCircle2, MinusCircle, Circle,
+  AlertTriangle,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageHeader from '@/components/layout/PageHeader';
 import { BriefingCounters } from '@/components/briefing/BriefingCounters';
@@ -8,115 +12,120 @@ import { BriefingSection } from '@/components/briefing/BriefingSection';
 import { BriefingItem } from '@/components/briefing/BriefingItem';
 import { useBriefingData } from '@/hooks/useBriefingData';
 import { fetchIntervention } from '@/api/interventions';
-import { useEffect } from 'react';
-import { formatTime, formatDuration } from '@/components/planning/planningUtils';
-import { STATUS_CONFIG } from '@/config/interventionTypes';
+import { fetchInterventionTasks } from '@/api/interventionTasks';
+import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
-/* ── Panneau détail ─────────────────────────────────────────────────────── */
+/* ── Config origine ─────────────────────────────────────────────────────── */
 
-const TASK_STATUS = {
-  done:        { Icon: CheckCircle2, color: 'var(--green-9)', label: 'Fait' },
-  in_progress: { Icon: CheckCircle2, color: 'var(--blue-9)',  label: 'En cours' },
-  skipped:     { Icon: MinusCircle,  color: 'var(--orange-9)', label: 'Ignorée' },
-  todo:        { Icon: CheckCircle2, color: 'var(--gray-6)',  label: 'À faire' },
+const ORIGIN_CONFIG = {
+  plan: { Icon: CalendarClock, color: 'var(--violet-9)', label: 'Préventif' },
+  resp: { Icon: UserCog,       color: 'var(--orange-9)', label: 'Responsable' },
+  tech: { Icon: Wrench,        color: 'var(--blue-9)',   label: 'Technicien' },
 };
 
-function ActionCard({ action }) {
-  const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
-  const subcatCode = action.subcategory?.code ?? action.subcategory?.label ?? '—';
-  const techName = action.technician
-    ? `${action.technician.firstName} ${action.technician.lastName}`
-    : '—';
-  const startFmt = action.actionStart ? formatTime(action.actionStart) : null;
-  const endFmt = action.actionEnd ? formatTime(action.actionEnd) : null;
-  const durationMin = action.timeSpent ? action.timeSpent * 60 : 0;
+const TASK_STATUS_CONFIG = {
+  todo:        { Icon: Circle,       color: 'var(--gray-7)',   label: 'À faire' },
+  in_progress: { Icon: Clock,        color: 'var(--blue-9)',   label: 'En cours' },
+  done:        { Icon: CheckCircle2, color: 'var(--green-9)',  label: 'Fait' },
+  skipped:     { Icon: MinusCircle,  color: 'var(--orange-9)', label: 'Ignorée' },
+};
 
-  const dateLabel = action.createdAt
-    ? new Date(action.createdAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+/* ── Tuile tâche ────────────────────────────────────────────────────────── */
+
+function TaskRow({ task }) {
+  const statusCfg = TASK_STATUS_CONFIG[task.status] ?? TASK_STATUS_CONFIG.todo;
+  const originCfg = ORIGIN_CONFIG[task.origin] ?? null;
+  const { Icon: StatusIcon } = statusCfg;
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const overdue = task.due_date && new Date(task.due_date) < today;
+  const dueFmt = task.due_date
+    ? new Date(task.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
     : null;
 
   return (
     <div style={{
-      background: `${subcatColor}0e`,
-      borderLeft: `4px solid ${subcatColor}`,
+      borderLeft: `3px solid ${statusCfg.color}`,
+      background: task.status === 'done' ? 'var(--green-2)' : task.status === 'skipped' ? 'var(--orange-2)' : 'var(--color-panel-solid)',
       borderRadius: 6,
-      marginBottom: 8,
-      overflow: 'hidden',
       border: '1px solid var(--gray-4)',
+      marginBottom: 6,
+      padding: '7px 10px',
+      opacity: task.status === 'done' ? 0.75 : 1,
     }}>
-      {/* En-tête */}
-      <Flex align="center" gap="2" style={{ padding: '7px 10px 5px', borderBottom: '1px solid var(--gray-4)' }}>
-        <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none', flexShrink: 0 }}>
-          {subcatCode}
-        </Badge>
-        <Text size="2" weight="medium" style={{ flex: 1, color: 'var(--gray-11)' }}>
-          {techName}
+      {/* Ligne 1 : statut + label + optional */}
+      <Flex align="center" gap="2">
+        <StatusIcon size={13} color={statusCfg.color} style={{ flexShrink: 0 }} />
+        <Text size="2" weight={task.status === 'in_progress' ? 'bold' : 'regular'}
+          style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {task.label}
         </Text>
-        {dateLabel && (
-          <Text size="1" color="gray" style={{ flexShrink: 0 }}>{dateLabel}</Text>
+        {task.optional && (
+          <Badge size="1" variant="soft" color="gray" style={{ flexShrink: 0 }}>optionnelle</Badge>
         )}
-        <Text size="2" color="gray" style={{ flexShrink: 0 }}>
-          {startFmt ? `${startFmt}–${endFmt ?? '?'} · ` : ''}<strong>{formatDuration(durationMin)}</strong>
-        </Text>
       </Flex>
 
-      {/* Corps */}
-      <div style={{ padding: '5px 10px 8px' }}>
-        {action.description && (
-          <Text size="2" style={{ display: 'block', color: 'var(--gray-11)', fontStyle: 'italic', lineHeight: 1.4 }}>
-            {action.description}
+      {/* Ligne 2 : origine + assigné + échéance + temps */}
+      <Flex align="center" gap="2" mt="1" style={{ flexWrap: 'wrap' }}>
+        {originCfg && (
+          <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
+            <originCfg.Icon size={11} color={originCfg.color} />
+            <Text size="1" style={{ color: originCfg.color }}>{originCfg.label}</Text>
+          </Flex>
+        )}
+        {task.assigned_to && (
+          <Badge size="1" variant="soft" color="gray" style={{ flexShrink: 0, fontFamily: 'monospace' }}>
+            {task.assigned_to.initial ?? `${task.assigned_to.first_name?.[0] ?? ''}${task.assigned_to.last_name?.[0] ?? ''}`}
+          </Badge>
+        )}
+        {task.action_count > 0 && (
+          <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
+            <Clock size={11} color="var(--gray-9)" />
+            <Text size="1" color="gray">{task.action_count} action{task.action_count > 1 ? 's' : ''} · {task.time_spent}h</Text>
+          </Flex>
+        )}
+        {overdue && dueFmt && (
+          <Badge color="red" variant="solid" size="1" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
+            <AlertTriangle size={10} />{dueFmt}
+          </Badge>
+        )}
+        {dueFmt && !overdue && (
+          <Text size="1" color="gray" style={{ flexShrink: 0 }}>{dueFmt}</Text>
+        )}
+        {task.status === 'skipped' && task.skip_reason && (
+          <Text size="1" color="orange" style={{ flexShrink: 0, fontStyle: 'italic' }}>
+            {task.skip_reason}
           </Text>
         )}
-
-        {/* Tâches */}
-        {action.tasks?.length > 0 && (
-          <Flex direction="column" gap="1" mt={action.description ? '2' : '0'}
-            style={{ borderTop: action.description ? `1px solid ${subcatColor}20` : 'none', paddingTop: action.description ? 6 : 0 }}>
-            {action.tasks.map((t) => {
-              const tCfg = TASK_STATUS[t.status] ?? TASK_STATUS.todo;
-              return (
-                <Flex key={t.id} align="center" gap="2">
-                  <tCfg.Icon size={12} color={tCfg.color} style={{ flexShrink: 0 }} />
-                  <Text size="2" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.label}
-                  </Text>
-                  {t.assigned_to?.initials && (
-                    <Text size="1" color="gray" style={{ flexShrink: 0 }}>{t.assigned_to.initials}</Text>
-                  )}
-                </Flex>
-              );
-            })}
-          </Flex>
-        )}
-
-        {/* Demandes d'achat */}
-        {action.purchaseRequests?.length > 0 && (
-          <Flex direction="column" gap="1" mt="2" style={{ borderTop: '1px solid var(--orange-4)', paddingTop: 6 }}>
-            {action.purchaseRequests.map((pr) => (
-              <Flex key={pr.id} align="center" gap="2">
-                <Package size={12} color="var(--orange-9)" style={{ flexShrink: 0 }} />
-                <Text size="2" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {pr.item_label}
-                </Text>
-              </Flex>
-            ))}
-          </Flex>
-        )}
-      </div>
+      </Flex>
     </div>
   );
 }
 
+/* ── Panneau détail intervention ────────────────────────────────────────── */
+
+const PRIORITY_CONFIG = {
+  urgent:    { color: 'red',    label: 'Urgent' },
+  important: { color: 'orange', label: 'Important' },
+  normale:   { color: 'gray',   label: 'Normale' },
+  faible:    { color: 'gray',   label: 'Faible' },
+};
+
 function DetailPanel({ situation }) {
-  const [detail, setDetail] = useState(null);
+  const [detail, setDetail]   = useState(null);
+  const [tasks, setTasks]     = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!situation) return;
     setDetail(null);
+    setTasks([]);
     setLoading(true);
-    fetchIntervention(situation.id)
-      .then(setDetail)
+    Promise.all([
+      fetchIntervention(situation.id),
+      fetchInterventionTasks(situation.id),
+    ])
+      .then(([iv, t]) => { setDetail(iv); setTasks(t); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [situation?.id]);
@@ -131,71 +140,104 @@ function DetailPanel({ situation }) {
     );
   }
 
-  const statusCfg = STATUS_CONFIG[situation.status_actual] ?? null;
-  const totalTime = detail?.action?.reduce((s, a) => s + (a.timeSpent ?? 0), 0) ?? situation.stats?.totalTime ?? 0;
-  const actionCount = detail?.action?.length ?? situation.stats?.actionCount ?? 0;
+  const statusCfg   = STATUS_CONFIG[situation.status_actual] ?? null;
+  const priorityCfg = PRIORITY_CONFIG[situation.priority] ?? PRIORITY_CONFIG.normale;
+  const typeLabel   = TYPE_INTER_LABELS[situation.type] ?? situation.type ?? '—';
+
+  const TASK_SORT = { in_progress: 0, todo: 1, skipped: 2, done: 3 };
+  const sortedTasks = [...tasks].sort((a, b) => (TASK_SORT[a.status] ?? 9) - (TASK_SORT[b.status] ?? 9));
+
+  const totalTime    = detail?.action?.reduce((s, a) => s + (a.timeSpent ?? 0), 0) ?? situation.stats?.totalTime ?? 0;
+  const actionCount  = detail?.action?.length ?? situation.stats?.actionCount ?? 0;
+  const purchaseCount = situation.stats?.purchaseCount ?? 0;
+  const daysOpen     = situation.daysOpen ?? 0;
 
   return (
-    <Flex direction="column" style={{ height: '100%' }}>
-      {/* En-tête intervention */}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+      {/* ── En-tête intervention ── */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-4)', flexShrink: 0 }}>
-        <Flex align="center" gap="2" mb="1">
+
+        {/* Ligne codes + lien */}
+        <Flex align="center" gap="2" mb="2">
           <Link to={`/intervention/${situation.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
             <Badge variant="outline" color="gray" size="2"
               style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13 }}>
               {situation.code}
             </Badge>
           </Link>
-          {statusCfg && (
-            <Badge size="1" color={statusCfg.color} variant="soft">{statusCfg.label}</Badge>
-          )}
+          {statusCfg && <Badge size="1" color={statusCfg.color} variant="soft">{statusCfg.label}</Badge>}
+          <Badge size="1" color={priorityCfg.color} variant="soft">{priorityCfg.label}</Badge>
+          <Badge size="1" color="gray" variant="soft">{typeLabel}</Badge>
           <Link to={`/intervention/${situation.id}`} style={{ marginLeft: 'auto', flexShrink: 0 }}>
-            <Button size="1" variant="ghost" color="gray"><ExternalLink size={12} /></Button>
+            <Button size="1" variant="ghost" color="gray"><ExternalLink size={13} /></Button>
           </Link>
         </Flex>
-        <Text size="2" style={{ fontStyle: 'italic', color: 'var(--gray-11)', display: 'block' }}>
+
+        {/* Titre */}
+        <Text size="3" weight="medium" style={{ display: 'block', color: 'var(--gray-12)', marginBottom: 2 }}>
           {situation.title}
         </Text>
+
+        {/* Équipement */}
         {situation.machine && (
-          <Text size="1" color="gray" style={{ display: 'block', marginTop: 2 }}>
+          <Text size="2" color="gray" style={{ display: 'block', fontStyle: 'italic' }}>
             {situation.machine.code} — {situation.machine.name}
           </Text>
         )}
 
-        {/* Compteurs résumé */}
-        <Flex align="center" gap="3" mt="2">
+        {/* DI à l'origine */}
+        {detail?.request && (
+          <Flex align="center" gap="2" mt="2" style={{ padding: '5px 8px', background: 'var(--gray-2)', borderRadius: 4 }}>
+            <ClipboardList size={12} color="var(--gray-9)" style={{ flexShrink: 0 }} />
+            <Text size="1" color="gray">
+              <strong>{detail.request.code}</strong>
+              {detail.request.demandeur_nom ? ` · ${detail.request.demandeur_nom}` : ''}
+              {detail.request.description ? ` — ${detail.request.description}` : ''}
+            </Text>
+          </Flex>
+        )}
+
+        {/* Compteurs */}
+        <Flex align="center" gap="3" mt="2" style={{ flexWrap: 'wrap' }}>
           <Flex align="center" gap="1">
             <Clock size={12} color="var(--gray-9)" />
             <Text size="1" color="gray">
               <strong>{actionCount}</strong> action{actionCount !== 1 ? 's' : ''} · <strong>{totalTime}h</strong>
             </Text>
           </Flex>
-          {(situation.stats?.purchaseCount ?? 0) > 0 && (
+          <Flex align="center" gap="1">
+            <Text size="1" color="gray"><strong>{daysOpen}j</strong> ouvert</Text>
+          </Flex>
+          {purchaseCount > 0 && (
             <Flex align="center" gap="1">
               <Package size={12} color="var(--orange-9)" />
               <Text size="1" style={{ color: 'var(--orange-11)' }}>
-                <strong>{situation.stats.purchaseCount}</strong> DA en attente
+                <strong>{purchaseCount}</strong> DA en attente
               </Text>
             </Flex>
+          )}
+          {situation.techInitials && (
+            <Badge size="1" variant="soft" color="gray" style={{ fontFamily: 'monospace' }}>
+              {situation.techInitials}
+            </Badge>
           )}
         </Flex>
       </div>
 
-      {/* Liste des actions */}
+      {/* ── Liste des tâches ── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px' }}>
-        {loading && (
-          <Flex justify="center" pt="4"><Spinner size="2" /></Flex>
-        )}
-        {!loading && detail?.action?.length === 0 && (
+        {loading && <Flex justify="center" pt="4"><Spinner size="2" /></Flex>}
+
+        {!loading && sortedTasks.length === 0 && (
           <Text size="2" color="gray" style={{ display: 'block', textAlign: 'center', marginTop: 24, fontStyle: 'italic' }}>
-            Aucune action enregistrée
+            Aucune tâche liée à cette intervention
           </Text>
         )}
-        {!loading && detail?.action?.map((action) => (
-          <ActionCard key={action.id} action={action} />
-        ))}
+
+        {!loading && sortedTasks.map((task) => <TaskRow key={task.id} task={task} />)}
       </div>
-    </Flex>
+    </div>
   );
 }
 
@@ -214,7 +256,7 @@ export default function BriefingPage() {
 
       <div style={{ display: 'flex', alignItems: 'flex-start', height: 'calc(100vh - 64px)' }}>
 
-        {/* ── Colonne gauche — liste ───────────────────────────────────── */}
+        {/* ── Colonne gauche — liste interventions ─────────────────────── */}
         <div style={{ width: '42%', borderRight: '1px solid var(--gray-5)', height: '100%', overflowY: 'auto', padding: '10px 14px' }}>
 
           <BriefingCounters counters={counters} loading={loading} />
@@ -229,9 +271,7 @@ export default function BriefingPage() {
             </Callout.Root>
           )}
 
-          {loading && (
-            <Flex justify="center" pt="4"><Spinner size="2" /></Flex>
-          )}
+          {loading && <Flex justify="center" pt="4"><Spinner size="2" /></Flex>}
 
           {allEmpty && (
             <Flex align="center" justify="center" style={{ minHeight: 200 }}>
@@ -261,7 +301,7 @@ export default function BriefingPage() {
           ))}
         </div>
 
-        {/* ── Colonne droite — détail ──────────────────────────────────── */}
+        {/* ── Colonne droite — détail + tâches ─────────────────────────── */}
         <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
           <DetailPanel situation={selectedSituation} />
         </div>
