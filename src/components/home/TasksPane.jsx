@@ -1,6 +1,8 @@
+import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge, IconButton, Button } from '@radix-ui/themes';
-import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Clock, UserCog, Wrench } from 'lucide-react';
+import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Clock, User, UserCog, Wrench } from 'lucide-react';
+import { patchInterventionTask } from '@/api/interventionTasks';
 
 const ORIGIN_CONFIG = {
   plan: { Icon: CalendarClock, color: 'var(--violet-9)', title: 'Préventif' },
@@ -22,7 +24,26 @@ const formatDue = (iso) => {
 
 const SORT_ORDER = { in_progress: 0, todo: 1, done: 2 };
 
-export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAction }) {
+function deriveInitials(assignedTo) {
+  if (!assignedTo) return null;
+  if (assignedTo.initial) return String(assignedTo.initial).toUpperCase();
+  if (assignedTo.initials) return String(assignedTo.initials).toUpperCase();
+  const f = String(assignedTo.first_name || assignedTo.firstName || '').trim();
+  const l = String(assignedTo.last_name || assignedTo.lastName || '').trim();
+  const initials = `${f[0] || ''}${l[0] || ''}`.toUpperCase();
+  return initials || null;
+}
+
+function userFullName(u) {
+  const f = u.first_name || u.firstName || '';
+  const l = u.last_name || u.lastName || '';
+  return `${f} ${l}`.trim() || u.email || u.initials || u.initial || String(u.id);
+}
+
+export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAction, users, onTaskUpdate }) {
+  const [editCell, setEditCell] = useState(null); // { taskId, field: 'due_date' | 'assigned_to' }
+  const [saving, setSaving] = useState(null);     // taskId being saved
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayIso = today.toISOString().slice(0, 10);
@@ -33,6 +54,25 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
   const pageSize = pagination?.page_size ?? 20;
   const hasPrev = skip > 0;
   const hasNext = pagination ? skip + pageSize < pagination.total : false;
+
+  const startEdit = useCallback((taskId, field) => {
+    setEditCell({ taskId, field });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditCell(null);
+  }, []);
+
+  const saveField = useCallback(async (taskId, field, value) => {
+    setSaving(taskId);
+    setEditCell(null);
+    try {
+      await patchInterventionTask(taskId, { [field]: value || null });
+      onTaskUpdate?.();
+    } finally {
+      setSaving(null);
+    }
+  }, [onTaskUpdate]);
 
   return (
     <div>
@@ -59,7 +99,6 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
         )}
 
         {taskGroups.map((group) => {
-          const machineCode = group.equipement?.code ?? null;
           const interventionCode = group.code ?? null;
           const interventionTitle = group.title ?? null;
           const sortedTasks = [...group.tasks].sort(
@@ -109,6 +148,14 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                   const cfg = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.todo;
                   const originCfg = ORIGIN_CONFIG[task.origin] ?? null;
                   const isLast = idx === sortedTasks.length - 1;
+                  const isSaving = saving === task.id;
+
+                  const editingDue = editCell?.taskId === task.id && editCell?.field === 'due_date';
+                  const editingAssignee = editCell?.taskId === task.id && editCell?.field === 'assigned_to';
+
+                  const assignedTo = task.assigned_to ?? null;
+                  const initials = deriveInitials(assignedTo);
+                  const currentAssigneeId = String(assignedTo?.id ?? '');
 
                   return (
                     <Flex
@@ -120,6 +167,8 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                         borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
                         background: cfg.bg,
                         borderLeft: `3px solid ${cfg.color}`,
+                        opacity: isSaving ? 0.6 : 1,
+                        transition: 'opacity 0.15s',
                       }}
                     >
                       {/* Icône origine */}
@@ -137,15 +186,131 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                         {cfg.label}
                       </Badge>
 
-                      {/* Échéance */}
-                      {overdue && (
-                        <Badge color="red" variant="solid" size="1" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3 }}>
-                          <AlertTriangle size={10} />
-                          {due}
-                        </Badge>
+                      {/* ── Échéance éditable ── */}
+                      {editingDue ? (
+                        <input
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          type="date"
+                          defaultValue={task.due_date?.slice(0, 10) ?? ''}
+                          onBlur={(e) => {
+                            const v = e.target.value;
+                            if (v !== (task.due_date?.slice(0, 10) ?? '')) {
+                              saveField(task.id, 'due_date', v || null);
+                            } else {
+                              cancelEdit();
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.target.blur();
+                            if (e.key === 'Escape') cancelEdit();
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 11,
+                            padding: '1px 4px',
+                            borderRadius: 4,
+                            border: '1px solid var(--accent-8)',
+                            background: 'var(--color-background)',
+                            color: 'var(--gray-12)',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          title="Modifier l'échéance"
+                          onClick={() => startEdit(task.id, 'due_date')}
+                          style={{
+                            flexShrink: 0,
+                            background: 'none',
+                            border: 'none',
+                            padding: '1px 3px',
+                            borderRadius: 4,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                        >
+                          {overdue && due ? (
+                            <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
+                              <AlertTriangle size={10} />
+                              {due}
+                            </Badge>
+                          ) : due ? (
+                            <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{due}</Text>
+                          ) : (
+                            <Text size="1" style={{ color: 'var(--gray-7)', whiteSpace: 'nowrap' }}>+date</Text>
+                          )}
+                        </button>
                       )}
-                      {due && !overdue && (
-                        <Text size="1" color="gray" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{due}</Text>
+
+                      {/* ── Affectation éditable ── */}
+                      {editingAssignee ? (
+                        <select
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          defaultValue={currentAssigneeId}
+                          onBlur={(e) => {
+                            const v = e.target.value;
+                            if (v !== currentAssigneeId) {
+                              saveField(task.id, 'assigned_to', v || null);
+                            } else {
+                              cancelEdit();
+                            }
+                          }}
+                          onChange={(e) => {
+                            saveField(task.id, 'assigned_to', e.target.value || null);
+                          }}
+                          onKeyDown={(e) => { if (e.key === 'Escape') cancelEdit(); }}
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 11,
+                            padding: '1px 4px',
+                            borderRadius: 4,
+                            border: '1px solid var(--accent-8)',
+                            background: 'var(--color-background)',
+                            color: 'var(--gray-12)',
+                            outline: 'none',
+                            cursor: 'pointer',
+                            maxWidth: 140,
+                          }}
+                        >
+                          <option value="">— Non assigné</option>
+                          {users.map((u) => (
+                            <option key={u.id} value={String(u.id)}>{userFullName(u)}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          type="button"
+                          title={initials ? `Affecté : ${userFullName(assignedTo)} — modifier` : 'Assigner'}
+                          onClick={() => startEdit(task.id, 'assigned_to')}
+                          style={{
+                            flexShrink: 0,
+                            background: initials ? 'var(--accent-4)' : 'var(--gray-3)',
+                            border: '1px solid',
+                            borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)',
+                            borderRadius: '50%',
+                            width: 22,
+                            height: 22,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          {initials ? (
+                            <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>
+                              {initials}
+                            </Text>
+                          ) : (
+                            <User size={11} color="var(--gray-9)" />
+                          )}
+                        </button>
                       )}
 
                       {/* Bouton Logger */}
@@ -194,4 +359,6 @@ TasksPane.propTypes = {
   skip: PropTypes.number,
   onPageChange: PropTypes.func,
   onAddAction: PropTypes.func,
+  users: PropTypes.array,
+  onTaskUpdate: PropTypes.func,
 };

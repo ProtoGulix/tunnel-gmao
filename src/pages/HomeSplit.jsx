@@ -83,6 +83,8 @@ export default function HomeSplit() {
             skip={taskSkip}
             onPageChange={setTaskSkip}
             onAddAction={handleTaskAddAction}
+            users={planningHook.users}
+            onTaskUpdate={refreshTasks}
           />
         </div>
 

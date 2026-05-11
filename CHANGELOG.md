@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.35.0] — 2026-05-11
+
+### Briefing — nouvelle page dédiée
+
+- **Page Briefing** accessible depuis le menu : liste des situations actives à gauche, volet de détail à droite
+- **Volet détail intervention** : en-tête complèt (code, statut, priorité, type, machine, actions, temps, DAs en attente), tableau des tâches avec réordonnancement ↑↓
+- **Édition inline des tâches** depuis le volet Briefing : échéance (clic sur la date → champ calendrier) et technicien assigné (clic sur l'avatar → sélecteur) — sauvegarde immédiate via PATCH
+- **Demandes d'intervention** affichées dans leur propre section du Briefing, avec volet détail DI cléquable
+- **Ajout de tâche** inline directement depuis le volet détail, sans quitter la page
+
+### Accueil (HomeSplit) — améliorations
+
+- **Édition inline des tâches** dans le volet Tâches : échéance et affectation modifiables en un clic
+- **Modal saisie d'action** : depuis n'importe quelle tâche du volet Tâches, bouton "Logger du temps" ouvre la modal avec l'intervention présélectionnée
+- **Demande d'achat depuis le planning** : bouton DA dans le panneau jour du calendrier, sans naviguer vers une intervention
+
+### Stock — refonte interface
+
+- **Layout master-détail** : liste filtrée à gauche (familles, recherche, pagination), fiche détail à droite — même modèle que la page Fournisseurs
+- **Onglet Modèles de pièces** et **onglet Familles** intégrés dans la page Stock
+- Composant `MasterDetailLayout` partagé entre Stock, Fournisseurs et Fabricants
+
+### Planning — panneau jour
+
+- **ActionForm refactorisé** : logique de soumission isolée dans `useActionSubmit`, panneau jour découpé en colonnes gauche/droite pour une meilleure lisibilité
+- **Demande d'achat spontanée** depuis la colonne gauche du panneau jour, sans sélectionner une intervention
+
+---
+
 ## [3.34.0] — 2026-05-06
 
 ### Accueil — tableau de bord split Planning / Briefing

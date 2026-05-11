@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Flex, Text, Spinner, Callout, Button, Badge, IconButton } from '@radix-ui/themes';
 import {
   AlertCircle, ClipboardList, Clock, Package, ExternalLink,
   CalendarClock, UserCog, Wrench, CheckCircle2, MinusCircle, Circle,
-  AlertTriangle, Plus, ChevronUp, ChevronDown, Inbox,
+  AlertTriangle, Plus, ChevronUp, ChevronDown, Inbox, User,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import InterventionRequestDetail from '@/components/intervention-requests/InterventionRequestDetail';
@@ -45,7 +45,9 @@ const TASK_SORT = { in_progress: 0, todo: 1, skipped: 2, done: 3 };
 
 /* ── Task table columns ─────────────────────────────────────────────────── */
 
-function buildTaskColumns({ onMoveUp, onMoveDown, tasks }) {
+function buildTaskColumns({ onMoveUp, onMoveDown, tasks, editCell, onStartEdit, onSaveField, onCancelEdit, users, editSaving }) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
   return [
     {
       key: 'order',
@@ -87,30 +89,73 @@ function buildTaskColumns({ onMoveUp, onMoveDown, tasks }) {
     {
       key: 'label',
       header: 'Tâche',
+      render: (task) => (
+        <Flex align="center" gap="2" style={{ flexWrap: 'wrap', opacity: editSaving === task.id ? 0.5 : 1, transition: 'opacity 0.15s' }}>
+          <Text size="2" weight={task.status === 'in_progress' ? 'bold' : 'regular'}
+            style={{ color: 'var(--gray-12)', opacity: task.status === 'done' ? 0.65 : 1 }}>
+            {task.label}
+          </Text>
+          {task.optional && <Badge size="1" variant="soft" color="gray">opt.</Badge>}
+          {task.status === 'skipped' && task.skip_reason && (
+            <Text size="1" color="orange" style={{ fontStyle: 'italic' }}>{task.skip_reason}</Text>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      key: 'due_date',
+      header: 'Échéance',
+      width: 90,
+      align: 'center',
       render: (task) => {
-        const today = new Date(); today.setHours(0, 0, 0, 0);
         const overdue = task.due_date && new Date(task.due_date) < today;
         const dueFmt = task.due_date
           ? new Date(task.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
           : null;
-        const cfg = TASK_STATUS_CONFIG[task.status] ?? TASK_STATUS_CONFIG.todo;
+        const editing = editCell?.taskId === task.id && editCell?.field === 'due_date';
+
+        if (editing) {
+          return (
+            <input
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              type="date"
+              defaultValue={task.due_date?.slice(0, 10) ?? ''}
+              onBlur={(e) => {
+                const v = e.target.value;
+                if (v !== (task.due_date?.slice(0, 10) ?? '')) {
+                  onSaveField(task.id, 'due_date', v || null);
+                } else {
+                  onCancelEdit();
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.target.blur();
+                if (e.key === 'Escape') onCancelEdit();
+              }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 11, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--accent-8)', background: 'var(--color-background)', color: 'var(--gray-12)', outline: 'none', width: 110 }}
+            />
+          );
+        }
+
         return (
-          <Flex align="center" gap="2" style={{ flexWrap: 'wrap' }}>
-            <Text size="2" weight={task.status === 'in_progress' ? 'bold' : 'regular'}
-              style={{ color: 'var(--gray-12)', opacity: task.status === 'done' ? 0.65 : 1 }}>
-              {task.label}
-            </Text>
-            {task.optional && <Badge size="1" variant="soft" color="gray">opt.</Badge>}
-            {task.status === 'skipped' && task.skip_reason && (
-              <Text size="1" color="orange" style={{ fontStyle: 'italic' }}>{task.skip_reason}</Text>
-            )}
-            {overdue && dueFmt && (
-              <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <button
+            type="button"
+            title="Modifier l'échéance"
+            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'due_date'); }}
+            style={{ background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, margin: '0 auto' }}
+          >
+            {overdue && dueFmt ? (
+              <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
                 <AlertTriangle size={10} />{dueFmt}
               </Badge>
+            ) : dueFmt ? (
+              <Text size="1" color="gray">{dueFmt}</Text>
+            ) : (
+              <Text size="1" style={{ color: 'var(--gray-6)' }}>+date</Text>
             )}
-            {dueFmt && !overdue && <Text size="1" color="gray">{dueFmt}</Text>}
-          </Flex>
+          </button>
         );
       },
     },
@@ -135,16 +180,66 @@ function buildTaskColumns({ onMoveUp, onMoveDown, tasks }) {
     {
       key: 'assigned',
       header: 'Tech',
-      width: 50,
+      width: 60,
       align: 'center',
       render: (task) => {
-        if (!task.assigned_to) return null;
-        const initials = task.assigned_to.initial
-          ?? `${task.assigned_to.first_name?.[0] ?? ''}${task.assigned_to.last_name?.[0] ?? ''}`;
+        const assignedTo = task.assigned_to ?? null;
+        const initials = assignedTo
+          ? (assignedTo.initial ?? `${assignedTo.first_name?.[0] ?? ''}${assignedTo.last_name?.[0] ?? ''}`).toUpperCase()
+          : null;
+        const currentAssigneeId = String(assignedTo?.id ?? '');
+        const editing = editCell?.taskId === task.id && editCell?.field === 'assigned_to';
+
+        if (editing) {
+          return (
+            <select
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              defaultValue={currentAssigneeId}
+              onChange={(e) => { onSaveField(task.id, 'assigned_to', e.target.value || null); }}
+              onBlur={(e) => { if (e.target.value === currentAssigneeId) onCancelEdit(); }}
+              onKeyDown={(e) => { if (e.key === 'Escape') onCancelEdit(); }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 11, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--accent-8)', background: 'var(--color-background)', color: 'var(--gray-12)', outline: 'none', maxWidth: 130 }}
+            >
+              <option value="">— Non assigné</option>
+              {(users ?? []).map((u) => (
+                <option key={u.id} value={String(u.id)}>
+                  {`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || String(u.id)}
+                </option>
+              ))}
+            </select>
+          );
+        }
+
         return (
-          <Badge size="1" variant="soft" color="gray" style={{ fontFamily: 'monospace' }}>
-            {initials}
-          </Badge>
+          <button
+            type="button"
+            title={initials ? `Affecté — modifier` : 'Assigner'}
+            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'assigned_to'); }}
+            style={{
+              background: initials ? 'var(--accent-4)' : 'var(--gray-3)',
+              border: '1px solid',
+              borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)',
+              borderRadius: '50%',
+              width: 22,
+              height: 22,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+              margin: '0 auto',
+            }}
+          >
+            {initials ? (
+              <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>
+                {initials}
+              </Text>
+            ) : (
+              <User size={11} color="var(--gray-9)" />
+            )}
+          </button>
         );
       },
     },
@@ -244,6 +339,8 @@ function DetailPanel({ situation }) {
   const [tasks, setTasks]     = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editCell, setEditCell] = useState(null); // { taskId, field }
+  const [editSaving, setEditSaving] = useState(null); // taskId being saved
 
   const loadDetail = (id) => {
     setDetail(null);
@@ -255,6 +352,21 @@ function DetailPanel({ situation }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   };
+
+  const startEdit = useCallback((taskId, field) => setEditCell({ taskId, field }), []);
+  const cancelEdit = useCallback(() => setEditCell(null), []);
+  const saveField = useCallback(async (taskId, field, value) => {
+    setEditCell(null);
+    setEditSaving(taskId);
+    try {
+      await patchInterventionTask(taskId, { [field]: value || null });
+      if (situation?.id) loadDetail(situation.id);
+    } catch {
+      if (situation?.id) loadDetail(situation.id);
+    } finally {
+      setEditSaving(null);
+    }
+  }, [situation?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (situation?.id) loadDetail(situation.id);
@@ -312,6 +424,12 @@ function DetailPanel({ situation }) {
     tasks: sortedTasks,
     onMoveUp: (task, idx) => handleMove(task, idx, -1),
     onMoveDown: (task, idx) => handleMove(task, idx, 1),
+    editCell,
+    onStartEdit: startEdit,
+    onSaveField: saveField,
+    onCancelEdit: cancelEdit,
+    users: taskCreate.users,
+    editSaving,
   });
 
   return (
