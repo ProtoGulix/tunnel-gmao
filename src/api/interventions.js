@@ -110,6 +110,12 @@ export async function updateIntervention(id, updates) {
   if (updates.title !== undefined) payload.title = updates.title;
   if (updates.status !== undefined) payload.status_actual = updates.status;
 
+  // Audit log — obligatoire pour les mutations manuelles
+  if (updates.auditReason?.reason_code) {
+    payload.reason_code = updates.auditReason.reason_code;
+    if (updates.auditReason.reason_text) payload.reason_text = updates.auditReason.reason_text;
+  }
+
   const response = await api.put(`/interventions/${id}`, payload);
   return mapInterventionDetailResponse(response.data);
 }
@@ -119,10 +125,11 @@ export async function updateIntervention(id, updates) {
  *
  * @param {string} id - ID de l'intervention
  * @param {string} newStatus - Nouveau statut (ouvert, attente_pieces, attente_prod, ferme, cancelled)
+ * @param {{ reason_code: string, reason_text?: string }} [reason] - Raison d'audit
  * @returns {Promise<Object>} Intervention mise à jour
  */
-export async function updateInterventionStatus(id, newStatus) {
-  return updateIntervention(id, { status: newStatus });
+export async function updateInterventionStatus(id, newStatus, reason) {
+  return updateIntervention(id, { status: newStatus, auditReason: reason });
 }
 
 /**

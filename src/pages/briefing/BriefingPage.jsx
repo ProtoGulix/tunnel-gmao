@@ -18,6 +18,7 @@ import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import DataTable from '@/components/ui/DataTable';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
+import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
 
 /* ── Task status config ─────────────────────────────────────────────────── */
 
@@ -341,6 +342,9 @@ function DetailPanel({ situation }) {
   const [showForm, setShowForm] = useState(false);
   const [editCell, setEditCell] = useState(null); // { taskId, field }
   const [editSaving, setEditSaving] = useState(null); // taskId being saved
+  // Mutation en attente de raison d'audit : { taskId, field, value, label }
+  const [pendingMutation, setPendingMutation] = useState(null);
+  const [auditSaving, setAuditSaving] = useState(false);
 
   const loadDetail = (id) => {
     setDetail(null);
@@ -355,18 +359,41 @@ function DetailPanel({ situation }) {
 
   const startEdit = useCallback((taskId, field) => setEditCell({ taskId, field }), []);
   const cancelEdit = useCallback(() => setEditCell(null), []);
-  const saveField = useCallback(async (taskId, field, value) => {
+
+  // Appelé depuis la colonne après que l'utilisateur a choisi la nouvelle valeur.
+  // On suspend la mutation et on ouvre la modale de raison.
+  const saveField = useCallback((taskId, field, value) => {
     setEditCell(null);
-    setEditSaving(taskId);
+    const task = tasks.find((t) => t.id === taskId);
+    const fieldLabel = field === 'due_date' ? "l'échéance" : "l'affectation";
+    setPendingMutation({
+      taskId,
+      field,
+      value,
+      label: task?.label ?? '',
+      title: `Modifier ${fieldLabel}`,
+      description: task?.label ? `Tâche : ${task.label}` : undefined,
+    });
+  }, [tasks]);
+
+  const applyPendingMutation = useCallback(async (reason) => {
+    if (!pendingMutation) return;
+    const { taskId, field, value } = pendingMutation;
+    setAuditSaving(true);
     try {
-      await patchInterventionTask(taskId, { [field]: value || null });
+      await patchInterventionTask(taskId, {
+        [field]: value || null,
+        reason_code: reason.reason_code,
+        ...(reason.reason_text ? { reason_text: reason.reason_text } : {}),
+      });
       if (situation?.id) loadDetail(situation.id);
     } catch {
       if (situation?.id) loadDetail(situation.id);
     } finally {
-      setEditSaving(null);
+      setAuditSaving(false);
+      setPendingMutation(null);
     }
-  }, [situation?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pendingMutation, situation?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (situation?.id) loadDetail(situation.id);
@@ -415,8 +442,8 @@ function DetailPanel({ situation }) {
       return t;
     }));
     await Promise.all([
-      patchInterventionTask(task.id, { sort_order: newOrder }),
-      patchInterventionTask(swapTask.id, { sort_order: taskOrder }),
+      patchInterventionTask(task.id, { sort_order: newOrder, reason_code: 'RECLASSIFICATION' }),
+      patchInterventionTask(swapTask.id, { sort_order: taskOrder, reason_code: 'RECLASSIFICATION' }),
     ]).catch(() => loadDetail(situation.id));
   };
 
@@ -496,6 +523,16 @@ function DetailPanel({ situation }) {
           )}
         </Flex>
       </div>
+
+      <AuditReasonDialog
+        open={!!pendingMutation}
+        entityType="task"
+        title={pendingMutation?.title ?? 'Modifier la tâche'}
+        description={pendingMutation?.description}
+        saving={auditSaving}
+        onConfirm={applyPendingMutation}
+        onCancel={() => setPendingMutation(null)}
+      />
 
       {/* ── Tasks + Form ── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>

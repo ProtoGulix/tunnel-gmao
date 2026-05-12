@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField,
+  Badge, Box, Button, Callout, Dialog, Flex, Separator, Text, TextField,
 } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
@@ -26,6 +26,7 @@ import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
+import AuditReasonPicker from '@/components/ui/AuditReasonPicker';
 
 /* ── Constantes ─────────────────────────────────────────────────────────────── */
 
@@ -113,6 +114,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
   const [saving, setSaving] = useState(null);
   const [skipTarget, setSkipTarget] = useState(null);
   const [skipReason, setSkipReason] = useState('');
+  const [skipAuditReason, setSkipAuditReason] = useState({ reason_code: '', reason_text: null });
 
   const [showCreate, setShowCreate] = useState(false);
   const { formData, set, users, saving: savingCreate, errors: createErrors, reset, handleSubmit: handleCreateSubmit } = useTaskCreate({
@@ -139,19 +141,26 @@ export default function TasksTab({ interventionId, isLocked = false }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const skipAuditValid =
+    !!skipAuditReason.reason_code &&
+    (skipAuditReason.reason_code !== 'OTHER' || !!skipAuditReason.reason_text?.trim());
+
   const handleSkip = async () => {
-    if (!skipTarget) return;
+    if (!skipTarget || !skipAuditValid) return;
     try {
       setSaving(skipTarget.id);
       await patchInterventionTask(skipTarget.id, {
         status: 'skipped',
         skip_reason: skipReason || null,
+        reason_code: skipAuditReason.reason_code,
+        ...(skipAuditReason.reason_text ? { reason_text: skipAuditReason.reason_text } : {}),
       });
       await loadData();
     } finally {
       setSaving(null);
       setSkipTarget(null);
       setSkipReason('');
+      setSkipAuditReason({ reason_code: '', reason_text: null });
     }
   };
 
@@ -245,25 +254,46 @@ export default function TasksTab({ interventionId, isLocked = false }) {
       )}
 
       {/* ── Dialog Ignorer ── */}
-      <AlertDialog.Root open={!!skipTarget} onOpenChange={(open) => { if (!open) { setSkipTarget(null); setSkipReason(''); } }}>
-        <AlertDialog.Content maxWidth="420px">
-          <AlertDialog.Title>Ignorer l&apos;étape</AlertDialog.Title>
-          <AlertDialog.Description>{skipTarget?.label}</AlertDialog.Description>
-          <Box mt="2">
+      <Dialog.Root
+        open={!!skipTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSkipTarget(null);
+            setSkipReason('');
+            setSkipAuditReason({ reason_code: '', reason_text: null });
+          }
+        }}
+      >
+        <Dialog.Content maxWidth="440px" style={{ padding: '20px 24px' }}>
+          <Dialog.Title size="3" mb="1">Ignorer l&apos;étape</Dialog.Title>
+          {skipTarget?.label && (
+            <Text as="p" size="2" color="gray" style={{ marginBottom: 12 }}>{skipTarget.label}</Text>
+          )}
+          <Box mb="3">
+            <Text as="div" size="1" weight="bold" mb="1">Motif du skip <Text size="1" color="gray">(optionnel)</Text></Text>
             <TextField.Root
               value={skipReason}
               onChange={(e) => setSkipReason(e.target.value)}
-              placeholder="Raison (optionnel)…"
+              placeholder="Ex : pièce manquante, hors périmètre…"
             />
           </Box>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="orange" onClick={handleSkip}>Ignorer</Button>
-            </AlertDialog.Action>
+          <Box mb="4">
+            <AuditReasonPicker
+              entityType="task"
+              value={skipAuditReason}
+              onChange={setSkipAuditReason}
+            />
+          </Box>
+          <Flex gap="2" justify="end">
+            <Button variant="soft" color="gray" onClick={() => { setSkipTarget(null); setSkipReason(''); setSkipAuditReason({ reason_code: '', reason_text: null }); }}>
+              Annuler
+            </Button>
+            <Button color="orange" disabled={!skipAuditValid || saving === skipTarget?.id} onClick={handleSkip}>
+              Ignorer
+            </Button>
           </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+        </Dialog.Content>
+      </Dialog.Root>
     </Box>
   );
 }

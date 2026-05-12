@@ -4,12 +4,13 @@
  */
 
 import { Container, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Users, Shield, Database, Lock } from 'lucide-react';
+import { Users, Shield, Database, Lock, ScrollText } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import AdminUsersTab from '@/components/admin/tabs/AdminUsersTab';
 import AdminRolesTab from '@/components/admin/tabs/AdminRolesTab';
 import AdminReferentielTab from '@/components/admin/tabs/AdminReferentielTab';
 import AdminSecurityTab from '@/components/admin/tabs/AdminSecurityTab';
+import AdminAuditTab from '@/components/admin/tabs/AdminAuditTab';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 
 export default function AdminPage() {
@@ -19,7 +20,7 @@ export default function AdminPage() {
     <>
       <PageHeader
         title="Administration"
-        subtitle="Utilisateurs, rôles, référentiel et sécurité"
+        subtitle="Utilisateurs, rôles, référentiel, sécurité et audit"
       />
 
       <Container size="4">
@@ -49,6 +50,12 @@ export default function AdminPage() {
               <Text>Sécurité</Text>
             </Flex>
           </Tabs.Trigger>
+          <Tabs.Trigger value="audit">
+            <Flex align="center" gap="2">
+              <ScrollText size={14} />
+              <Text>Audit</Text>
+            </Flex>
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="users">
@@ -62,6 +69,9 @@ export default function AdminPage() {
         </Tabs.Content>
         <Tabs.Content value="security">
           {activeTab === 'security' && <AdminSecurityTab />}
+        </Tabs.Content>
+        <Tabs.Content value="audit">
+          {activeTab === 'audit' && <AdminAuditTab />}
         </Tabs.Content>
       </Tabs.Root>
       </Container>
