@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Flex, Text, TextArea, Spinner } from '@radix-ui/themes';
+import { Box, Flex, Select, Text, TextArea, Spinner } from '@radix-ui/themes';
 import { fetchAuditReasons } from '@/api/auditReasons';
 
-/**
- * Sélecteur de raison d'audit — à intégrer dans tous les formulaires mutatifs.
- *
- * Expose { reason_code, reason_text } au parent via onChange.
- * Charge les raisons en arrière-plan depuis /audit/reasons (cache session).
- */
 export default function AuditReasonPicker({ entityType, value, onChange, required = true }) {
   const [reasons, setReasons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +18,10 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
   }, [entityType]);
 
   const handleCodeSelect = (code) => {
-    onChange({ reason_code: code, reason_text: code !== 'OTHER' ? null : (value.reason_text ?? '') });
+    onChange({
+      reason_code: code,
+      reason_text: code !== 'OTHER' ? (value.reason_text ?? null) : '',
+    });
   };
 
   if (loading) {
@@ -44,65 +41,55 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
     );
   }
 
+  const selectedReason = reasons.find((r) => r.code === value.reason_code);
+
   return (
-    <Box>
-      <Text as="div" size="1" weight="bold" mb="2">
-        Raison de la modification {required && <Text color="red">*</Text>}
-      </Text>
-
-      <Flex gap="2" wrap="wrap">
-        {reasons.map((reason) => {
-          const selected = value.reason_code === reason.code;
-          return (
-            <button
-              key={reason.code}
-              type="button"
-              onClick={() => handleCodeSelect(reason.code)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-full)',
-                border: selected
-                  ? `2px solid ${reason.color}`
-                  : '2px solid transparent',
-                background: selected
-                  ? `${reason.color}22`
-                  : 'var(--gray-3)',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: selected ? 700 : 400,
-                color: selected ? reason.color : 'var(--gray-11)',
-                transition: 'all 0.12s',
-                outline: 'none',
-              }}
-            >
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: reason.color, flexShrink: 0,
-              }} />
-              {reason.label}
-            </button>
-          );
-        })}
-      </Flex>
-
-      {value.reason_code === 'OTHER' && (
-        <Box mt="2">
-          <Text as="div" size="1" weight="bold" mb="1">
-            Préciser la raison <Text color="red">*</Text>
-          </Text>
-          <TextArea
-            placeholder="Décrivez la raison…"
-            value={value.reason_text ?? ''}
-            onChange={(e) => onChange({ ...value, reason_text: e.target.value })}
-            rows={2}
-            size="2"
+    <Flex direction="column" gap="2">
+      <Box>
+        <Text as="div" size="1" weight="bold" mb="1">
+          Raison {required && <Text color="red">*</Text>}
+        </Text>
+        <Select.Root value={value.reason_code ?? ''} onValueChange={handleCodeSelect}>
+          <Select.Trigger
+            placeholder="Sélectionner une raison…"
+            style={{
+              width: '100%',
+              ...(selectedReason ? {
+                borderColor: selectedReason.color,
+                boxShadow: `0 0 0 1px ${selectedReason.color}44`,
+              } : {}),
+            }}
           />
-        </Box>
-      )}
-    </Box>
+          <Select.Content>
+            {reasons.map((reason) => (
+              <Select.Item key={reason.code} value={reason.code}>
+                <Flex align="center" gap="2">
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: reason.color, flexShrink: 0, display: 'inline-block',
+                  }} />
+                  {reason.label}
+                </Flex>
+              </Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+      </Box>
+
+      <Box>
+        <Text as="div" size="1" weight="bold" mb="1">
+          Précision{value.reason_code === 'OTHER' && <Text color="red"> *</Text>}
+          {value.reason_code !== 'OTHER' && <Text size="1" color="gray" weight="regular"> (optionnel)</Text>}
+        </Text>
+        <TextArea
+          placeholder={value.reason_code === 'OTHER' ? 'Décrivez la raison…' : 'Ajouter un commentaire…'}
+          value={value.reason_text ?? ''}
+          onChange={(e) => onChange({ ...value, reason_text: e.target.value || null })}
+          rows={2}
+          size="2"
+        />
+      </Box>
+    </Flex>
   );
 }
 

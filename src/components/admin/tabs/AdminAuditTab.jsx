@@ -226,10 +226,14 @@ export default function AdminAuditTab() {
                 // reason est un objet imbriqué { code, label, color, ... }
                 const { reason } = log;
 
-                // changed_by est un UUID brut — on affiche les 8 premiers chars
-                const changedBy = log.changed_by
-                  ? log.changed_by.slice(0, 8)
+                // changed_by : { id, first_name, last_name, initials }
+                const cb = log.changed_by;
+                const changedByLabel = cb
+                  ? (cb.initials || [cb.first_name, cb.last_name].filter(Boolean).join(' ') || cb.id?.slice(0, 8) || '—')
                   : '—';
+                const changedByFull = cb
+                  ? [cb.first_name, cb.last_name].filter(Boolean).join(' ') || cb.id
+                  : null;
 
                 return (
                   <Table.Row key={log.id}>
@@ -306,17 +310,13 @@ export default function AdminAuditTab() {
                       )}
                     </Table.Cell>
 
-                    {/* changed_by (UUID tronqué) */}
+                    {/* changed_by */}
                     <Table.Cell>
-                      <Tooltip content={log.changed_by ?? 'Système'}>
-                        <Text
-                          size="1"
-                          color="gray"
-                          style={{ fontFamily: 'monospace', cursor: 'default' }}
-                        >
-                          {log.is_system ? (
-                            <Badge size="1" color="gray" variant="outline">système</Badge>
-                          ) : changedBy}
+                      <Tooltip content={changedByFull ?? 'Système'}>
+                        <Text size="1" color="gray" style={{ fontFamily: 'monospace', cursor: 'default' }}>
+                          {log.is_system
+                            ? <Badge size="1" color="gray" variant="outline">système</Badge>
+                            : changedByLabel}
                         </Text>
                       </Tooltip>
                     </Table.Cell>
