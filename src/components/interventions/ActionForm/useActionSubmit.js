@@ -43,18 +43,10 @@ export function useActionSubmit({ form, resolvedInterventionId, resolvedTechId, 
     };
   }, [form.formState, resolvedInterventionId, resolvedTechId, timeRange, manualTimeSpent, selectedTasks]);
 
-  const handleSubmit = useCallback(async (e, { hasMissingTaskStatus, hasMissingSkippedReason }) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setSubmitError(null);
 
-    if (hasMissingTaskStatus) {
-      setSubmitError('Un état est obligatoire pour chaque tâche sélectionnée');
-      return;
-    }
-    if (hasMissingSkippedReason) {
-      setSubmitError('Un motif est obligatoire pour chaque tâche marquée comme ignorée');
-      return;
-    }
     if (!form.handlers.handleValidate(timeRange, manualTimeSpent)) return;
 
     const shouldShowOverlay =

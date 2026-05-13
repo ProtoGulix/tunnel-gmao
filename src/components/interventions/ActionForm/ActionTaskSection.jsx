@@ -212,7 +212,7 @@ export default function ActionTaskSection({ interventionId, value, onChange, acc
       onChange(selectedTasks.filter((t) => String(t.id) !== String(task.id)));
       return;
     }
-    onChange([...selectedTasks, normalizeSelectedTask(task, false)]);
+    onChange([...selectedTasks, normalizeSelectedTask(task, true)]);
   }, [selectedTasks, onChange]);
 
   const handleTaskActionStatusChange = useCallback((taskId, taskActionStatus) => {
