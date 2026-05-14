@@ -26,7 +26,6 @@ import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
-import AuditReasonPicker from '@/components/ui/AuditReasonPicker';
 
 /* ── Constantes ─────────────────────────────────────────────────────────────── */
 
@@ -114,7 +113,6 @@ export default function TasksTab({ interventionId, isLocked = false }) {
   const [saving, setSaving] = useState(null);
   const [skipTarget, setSkipTarget] = useState(null);
   const [skipReason, setSkipReason] = useState('');
-  const [skipAuditReason, setSkipAuditReason] = useState({ reason_code: '', reason_text: null });
 
   const [showCreate, setShowCreate] = useState(false);
   const { formData, set, users, saving: savingCreate, errors: createErrors, reset, handleSubmit: handleCreateSubmit } = useTaskCreate({
@@ -141,26 +139,19 @@ export default function TasksTab({ interventionId, isLocked = false }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const skipAuditValid =
-    !!skipAuditReason.reason_code &&
-    (skipAuditReason.reason_code !== 'OTHER' || !!skipAuditReason.reason_text?.trim());
-
   const handleSkip = async () => {
-    if (!skipTarget || !skipAuditValid) return;
+    if (!skipTarget) return;
     try {
       setSaving(skipTarget.id);
       await patchInterventionTask(skipTarget.id, {
         status: 'skipped',
         skip_reason: skipReason || null,
-        reason_code: skipAuditReason.reason_code,
-        ...(skipAuditReason.reason_text ? { reason_text: skipAuditReason.reason_text } : {}),
       });
       await loadData();
     } finally {
       setSaving(null);
       setSkipTarget(null);
       setSkipReason('');
-      setSkipAuditReason({ reason_code: '', reason_text: null });
     }
   };
 
@@ -260,7 +251,6 @@ export default function TasksTab({ interventionId, isLocked = false }) {
           if (!open) {
             setSkipTarget(null);
             setSkipReason('');
-            setSkipAuditReason({ reason_code: '', reason_text: null });
           }
         }}
       >
@@ -277,18 +267,11 @@ export default function TasksTab({ interventionId, isLocked = false }) {
               placeholder="Ex : pièce manquante, hors périmètre…"
             />
           </Box>
-          <Box mb="4">
-            <AuditReasonPicker
-              entityType="task"
-              value={skipAuditReason}
-              onChange={setSkipAuditReason}
-            />
-          </Box>
           <Flex gap="2" justify="end">
-            <Button variant="soft" color="gray" onClick={() => { setSkipTarget(null); setSkipReason(''); setSkipAuditReason({ reason_code: '', reason_text: null }); }}>
+            <Button variant="soft" color="gray" onClick={() => { setSkipTarget(null); setSkipReason(''); }}>
               Annuler
             </Button>
-            <Button color="orange" disabled={!skipAuditValid || saving === skipTarget?.id} onClick={handleSkip}>
+            <Button color="orange" disabled={saving === skipTarget?.id} onClick={handleSkip}>
               Ignorer
             </Button>
           </Flex>

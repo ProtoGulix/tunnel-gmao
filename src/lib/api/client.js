@@ -11,6 +11,7 @@
 
 import axios from 'axios';
 import { emitSystemError } from '@/lib/api/systemErrors';
+import { isAuditRequiredError, handleAuditError } from '@/lib/api/auditGuard';
 
 // ==============================
 // CONFIGURATION
@@ -134,6 +135,11 @@ api.interceptors.response.use(
         redirectToLogin();
         return Promise.reject(error);
       }
+    }
+
+    // 400 — reason_code manquant (middleware audit) : déléguer au handler
+    if (!originalRequest._auditRetry && isAuditRequiredError(error)) {
+      return handleAuditError(error);
     }
 
     // 403 Forbidden

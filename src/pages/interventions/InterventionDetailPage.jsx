@@ -26,7 +26,6 @@ import InterventionRequestCard from '@/components/intervention-requests/Interven
 import TasksTab from '@/components/interventions/tabs/TasksTab';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
-import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
 
 // Configuration de base des onglets
 const BASE_TABS = [
@@ -65,9 +64,6 @@ export default function InterventionDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'actions');
   const [mutationError, setMutationError] = useState('');
-  // Mutation en attente de raison d'audit : { type: 'status'|'priority', value, title }
-  const [pendingMutation, setPendingMutation] = useState(null);
-  const [auditSaving, setAuditSaving] = useState(false);
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -101,42 +97,28 @@ export default function InterventionDetailPage() {
     }
   }, [activeTab, pdfUrl, pdfLoading, loadPdf]);
 
-  // Handlers — ouvrent la modale de raison avant d'appliquer la mutation
   const handleStatusChange = useCallback(
-    (newStatus) => {
-      const label = STATE_COLORS[newStatus]?.label ?? newStatus;
-      setPendingMutation({ type: 'status', value: newStatus, title: `Changer le statut vers « ${label} »` });
+    async (newStatus) => {
+      try {
+        setMutationError('');
+        await updateStatus(newStatus);
+      } catch (err) {
+        setMutationError(extractApiErrorMessage(err, 'Erreur lors de la modification'));
+      }
     },
-    []
+    [updateStatus]
   );
 
   const handlePriorityChange = useCallback(
-    (newPriority) => {
-      const label = PRIORITY_COLORS[mapPriorityToConfigKey(newPriority)]?.label ?? newPriority;
-      setPendingMutation({ type: 'priority', value: newPriority, title: `Changer la priorité vers « ${label} »` });
-    },
-    []
-  );
-
-  const applyPendingMutation = useCallback(
-    async (reason) => {
-      if (!pendingMutation) return;
-      setAuditSaving(true);
-      setMutationError('');
+    async (newPriority) => {
       try {
-        if (pendingMutation.type === 'status') {
-          await updateStatus(pendingMutation.value, reason);
-        } else {
-          await updateIntervention({ priority: pendingMutation.value, auditReason: reason });
-        }
+        setMutationError('');
+        await updateIntervention({ priority: newPriority });
       } catch (err) {
         setMutationError(extractApiErrorMessage(err, 'Erreur lors de la modification'));
-      } finally {
-        setAuditSaving(false);
-        setPendingMutation(null);
       }
     },
-    [pendingMutation, updateStatus, updateIntervention]
+    [updateIntervention]
   );
 
   const handleMarkPrinted = useCallback(async () => {
@@ -206,14 +188,6 @@ export default function InterventionDetailPage() {
 
   return (
     <PageContainer style={{ paddingBottom: '4rem' }}>
-      <AuditReasonDialog
-        open={!!pendingMutation}
-        entityType="intervention"
-        title={pendingMutation?.title ?? 'Modifier l\'intervention'}
-        saving={auditSaving}
-        onConfirm={applyPendingMutation}
-        onCancel={() => setPendingMutation(null)}
-      />
       <PageHeader
         icon={Wrench}
         title={`${intervention.machine?.name || 'Machine'} • ${intervention.code || `INT-${id}`}`}

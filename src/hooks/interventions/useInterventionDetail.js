@@ -107,9 +107,9 @@ export function useInterventionDetail(id) {
   );
 
   const updateStatus = useCallback(
-    async (newStatus, reason) => {
+    async (newStatus) => {
       try {
-        const updated = await updateInterventionStatus(id, newStatus, reason);
+        const updated = await updateInterventionStatus(id, newStatus);
         setIntervention(updated);
         return updated;
       } catch (err) {
