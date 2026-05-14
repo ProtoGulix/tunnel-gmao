@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { fetchInterventions } from '@/api/interventions';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -21,11 +22,13 @@ function enrichSituation(iv) {
   const tasksLinked = Array.isArray(iv.tasks) ? iv.tasks : [];
   const ac = iv.stats?.actionCount ?? 0;
   const pc = iv.stats?.purchasePending ?? iv.stats?.purchaseCount ?? 0;
+  const urgency = getInterventionUrgency(iv.next_due_date, iv.reportedDate);
 
   return {
     ...iv,
     daysOpen,
     tasksLinked,
+    urgency,
     hasDecision: iv.priority === 'urgent' && ac === 0,
     hasPiece: pc > 0,
     isNominal: ac > 0 && pc === 0,
@@ -61,11 +64,16 @@ function classifySections(enriched) {
     }
   });
 
-  // Tri section 1 : decision en premier, puis blocked_piece, puis reported_date ASC
+  // Tri section 1 : decision en premier, puis next_due_date ASC (overdue/urgent en tête), puis reported_date
   nowItems.sort((a, b) => {
     if (a.situationType !== b.situationType) {
       return a.situationType === 'decision' ? -1 : 1;
     }
+    const aHasDue = a.next_due_date != null;
+    const bHasDue = b.next_due_date != null;
+    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
+    if (aHasDue) return -1;
+    if (bHasDue) return 1;
     return new Date(a.reportedDate) - new Date(b.reportedDate);
   });
 
@@ -94,13 +102,13 @@ function classifySections(enriched) {
     }
   });
 
-  // Tri section 3 : due_date ASC des tâches liées, puis reportedDate ASC
+  // Tri section 3 : next_due_date ASC (champ intervention), puis reported_date ASC
   runningItems.sort((a, b) => {
-    const aTask = a.tasksLinked.find((t) => t.due_date);
-    const bTask = b.tasksLinked.find((t) => t.due_date);
-    if (aTask && bTask) return new Date(aTask.due_date) - new Date(bTask.due_date);
-    if (aTask) return -1;
-    if (bTask) return 1;
+    const aHasDue = a.next_due_date != null;
+    const bHasDue = b.next_due_date != null;
+    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
+    if (aHasDue) return -1;
+    if (bHasDue) return 1;
     return new Date(a.reportedDate) - new Date(b.reportedDate);
   });
 
@@ -157,7 +165,7 @@ export function useBriefingData() {
     const [interventionsResult, requestsResult] = await Promise.allSettled([
       fetchInterventions({
         status: 'ouvert,en_cours',
-        include: 'stats',
+        include: 'stats,tasks',
         sort: '-priority,-reported_date',
         limit: 200,
       }),

@@ -188,6 +188,8 @@ function mapInterventionResponse(raw = {}) {
           },
         }
       : null,
+    next_due_date: raw.next_due_date ?? null,
+    overdue: raw.overdue ?? false,
     stats: raw.stats
       ? {
           actionCount: raw.stats.action_count ?? 0,

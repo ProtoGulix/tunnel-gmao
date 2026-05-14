@@ -3,8 +3,9 @@ import { Flex, Text, Spinner, Callout, Button, Badge, IconButton } from '@radix-
 import {
   AlertCircle, ClipboardList, Clock, Package, ExternalLink,
   CalendarClock, UserCog, Wrench, CheckCircle2, MinusCircle, Circle,
-  AlertTriangle, Plus, ChevronUp, ChevronDown, Inbox, User,
+  AlertTriangle, Plus, ChevronUp, ChevronDown, Inbox, User, Target,
 } from 'lucide-react';
+import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
 import { Link } from 'react-router-dom';
 import InterventionRequestDetail from '@/components/intervention-requests/InterventionRequestDetail';
 import PageHeader from '@/components/layout/PageHeader';
@@ -400,6 +401,11 @@ function DetailPanel({ situation }) {
   const purchaseCount = detail?.stats?.purchasePending ?? situation.stats?.purchasePending ?? situation.stats?.purchaseCount ?? 0;
   const daysOpen     = situation.daysOpen ?? 0;
 
+  const urgency = getInterventionUrgency(situation.next_due_date, situation.reportedDate);
+  const criticalTask = tasks.find((t) => t.status !== 'done' && t.status !== 'skipped' && t.due_date)
+    ?? tasks.find((t) => t.status === 'in_progress')
+    ?? tasks[0];
+
   const sortedTasks = [...tasks].sort(
     (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
   );
@@ -496,6 +502,34 @@ function DetailPanel({ situation }) {
             </Badge>
           )}
         </Flex>
+
+        {/* Tâche critique + badge urgence next_due_date */}
+        {situation.next_due_date && (
+          <Flex align="center" gap="2" mt="2" style={{
+            padding: '6px 10px',
+            background: urgency.level === 'overdue' ? 'var(--red-2)' : urgency.level === 'urgent' ? 'var(--orange-2)' : 'var(--blue-2)',
+            borderRadius: 6,
+            borderLeft: `3px solid ${urgency.color}`,
+          }}>
+            <Target size={13} style={{ color: urgency.color, flexShrink: 0 }} />
+            <Flex direction="column" gap="0" style={{ flex: 1, minWidth: 0 }}>
+              {criticalTask && (
+                <Text size="1" weight="bold" style={{ color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {criticalTask.label}
+                </Text>
+              )}
+              <Text size="1" weight="medium" style={{ color: urgency.color }}>
+                Due : {formatDueDate(situation.next_due_date)}
+                {urgency.level === 'overdue' && ` — EN RETARD`}
+              </Text>
+            </Flex>
+          </Flex>
+        )}
+        {!situation.next_due_date && urgency.level === 'pending' && daysOpen > 0 && (
+          <Text size="1" color="gray" style={{ display: 'block', marginTop: 4 }}>
+            Ouvert depuis {daysOpen}j — aucune échéance définie
+          </Text>
+        )}
       </div>
 
       {/* ── Tasks + Form ── */}
@@ -514,7 +548,9 @@ function DetailPanel({ situation }) {
               opacity: task.status === 'done' ? 0.6 : 1,
               background: task.status === 'done' ? 'var(--green-2)'
                 : task.status === 'skipped' ? 'var(--orange-2)'
+                : (criticalTask && task.id === criticalTask.id) ? 'var(--accent-2)'
                 : undefined,
+              outline: (criticalTask && task.id === criticalTask.id) ? '1px solid var(--accent-6)' : undefined,
             })}
           />
         )}
