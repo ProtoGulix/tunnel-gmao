@@ -34,7 +34,9 @@ export async function fetchInterventions(filters = {}) {
   if (filters.include) params.include = filters.include;
 
   const response = await api.get('/interventions', { params });
-  const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
+  const raw = response.data;
+  // Enveloppe { data, audit } ou tableau plat
+  const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
 
   return list.map(mapInterventionResponse);
 }
@@ -47,7 +49,9 @@ export async function fetchInterventions(filters = {}) {
  */
 export async function fetchIntervention(id) {
   const response = await api.get(`/interventions/${id}`);
-  return mapInterventionDetailResponse(response.data);
+  // Enveloppe { data, audit }
+  const raw = response.data?.data ?? response.data;
+  return mapInterventionDetailResponse(raw);
 }
 
 /**
@@ -111,7 +115,8 @@ export async function updateIntervention(id, updates) {
   if (updates.status !== undefined) payload.status_actual = updates.status;
 
   const response = await api.put(`/interventions/${id}`, payload);
-  return mapInterventionDetailResponse(response.data);
+  const raw = response.data?.data ?? response.data;
+  return mapInterventionDetailResponse(raw);
 }
 
 /**
@@ -189,6 +194,12 @@ function mapInterventionResponse(raw = {}) {
           totalTime: raw.stats.total_time ?? 0,
           avgComplexity: raw.stats.avg_complexity ?? 0,
           purchaseCount: raw.stats.purchase_count ?? 0,
+          purchasePending: (() => {
+            const pr = raw.stats.purchase_requests;
+            if (!pr) return null;
+            return (pr.total ?? 0) - (pr.received ?? 0) - (pr.rejected ?? 0);
+          })(),
+          tasks: raw.stats.tasks ?? null,
           taskProgress: raw.stats.task_progress ?? null,
         }
       : null,
@@ -272,6 +283,8 @@ function mapInterventionDetailResponse(raw = {}) {
             : null,
         }))
       : [],
+    tasks: Array.isArray(raw.tasks) ? raw.tasks : [],
+    taskProgress: raw.task_progress ?? null,
     request: raw.request
       ? {
           id: raw.request.id,

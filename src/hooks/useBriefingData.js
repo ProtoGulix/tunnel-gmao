@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { fetchInterventions } from '@/api/interventions';
-import { fetchTasksWorkspace } from '@/api/tasks';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
@@ -17,11 +16,11 @@ function getDaysOpen(reportedDate) {
   return Math.floor((today - new Date(reportedDate)) / 86400000);
 }
 
-function enrichSituation(iv, tasks) {
+function enrichSituation(iv) {
   const daysOpen = getDaysOpen(iv.reportedDate);
-  const tasksLinked = tasks.filter((t) => String(t.intervention?.id) === String(iv.id));
+  const tasksLinked = Array.isArray(iv.tasks) ? iv.tasks : [];
   const ac = iv.stats?.actionCount ?? 0;
-  const pc = iv.stats?.purchaseCount ?? 0;
+  const pc = iv.stats?.purchasePending ?? iv.stats?.purchaseCount ?? 0;
 
   return {
     ...iv,
@@ -73,7 +72,7 @@ function classifySections(enriched) {
   // Section 2 — Attente pièces
   enriched.forEach((s) => {
     if (nowSet.has(s.id)) return;
-    const pc = s.stats?.purchaseCount ?? 0;
+    const pc = s.stats?.purchasePending ?? s.stats?.purchaseCount ?? 0;
     if (pc > 0) {
       waitingItems.push({ ...s, situationType: 'blocked_piece' });
       waitingSet.add(s.id);
@@ -123,15 +122,15 @@ function buildRequestsSection(requests) {
   };
 }
 
-function computeCounters(interventions, tasksCounters, requests) {
+function computeCounters(interventions, requests) {
   return {
     critical: interventions.filter((iv) => iv.machine?.health?.level === 'critical').length,
-    blocked_piece: interventions.filter((iv) => (iv.stats?.purchaseCount ?? 0) > 0).length,
+    blocked_piece: interventions.filter((iv) => (iv.stats?.purchasePending ?? iv.stats?.purchaseCount ?? 0) > 0).length,
     decision: interventions.filter(
       (iv) => iv.priority === 'urgent' && (iv.stats?.actionCount ?? 0) === 0
     ).length,
-    in_progress: tasksCounters?.in_progress ?? 0,
-    preventive: tasksCounters?.todo ?? 0,
+    in_progress: interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.in_progress ?? 0), 0),
+    preventive: interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.todo ?? 0), 0),
     requests: requests.filter((r) => r.statut === 'nouvelle' || r.statut === 'en_attente').length,
   };
 }
@@ -155,16 +154,11 @@ export function useBriefingData() {
     setLoading(true);
     setError(null);
 
-    const [interventionsResult, tasksResult, requestsResult] = await Promise.allSettled([
+    const [interventionsResult, requestsResult] = await Promise.allSettled([
       fetchInterventions({
         status: 'ouvert,en_cours',
         include: 'stats',
         sort: '-priority,-reported_date',
-        limit: 200,
-      }),
-      fetchTasksWorkspace({
-        status: 'todo,in_progress',
-        include_counters: true,
         limit: 200,
       }),
       fetchInterventionRequests({
@@ -175,16 +169,10 @@ export function useBriefingData() {
 
     const interventions =
       interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
-    const tasksData =
-      tasksResult.status === 'fulfilled' ? tasksResult.value : { items: [], counters: null };
-    const tasks = (tasksData.items ?? []).flatMap((group) =>
-      (group.tasks ?? []).map((t) => ({ ...t, intervention: { id: group.id } }))
-    );
-    const tasksCounters = tasksData.counters ?? null;
     const requests =
       requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
 
-    if (interventionsResult.status === 'rejected' && tasksResult.status === 'rejected') {
+    if (interventionsResult.status === 'rejected') {
       setError(
         extractApiErrorMessage(interventionsResult.reason, 'Erreur lors du chargement des données')
       );
@@ -192,9 +180,9 @@ export function useBriefingData() {
       return;
     }
 
-    const enriched = interventions.map((iv) => enrichSituation(iv, tasks));
+    const enriched = interventions.map((iv) => enrichSituation(iv));
     const newSections = [...classifySections(enriched), buildRequestsSection(requests)];
-    const newCounters = computeCounters(interventions, tasksCounters, requests);
+    const newCounters = computeCounters(interventions, requests);
 
     setSections(newSections);
     setCounters(newCounters);

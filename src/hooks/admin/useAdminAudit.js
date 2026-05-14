@@ -1,18 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { fetchAuditLogs, fetchAllAuditReasonCodes } from '@/api/auditLogs';
 
-// L'API ne pagine pas — on charge par fenêtre de 200 et on pagine côté client
 const PAGE_SIZE = 50;
 
 export function useAdminAudit() {
   const [filters, setFilters] = useState({
     entity_type: '',
     reason_code: '',
+    decision_type: '',
+    changed_by: '',
     from_dt: '',
     to_dt: '',
+    exclude_system: true,
   });
   const [page, setPage] = useState(0);
-  const [allLogs, setAllLogs] = useState([]);   // tous les logs chargés
+  const [logs, setLogs] = useState([]);
+  const [pagination, setPagination] = useState({ total: 0, total_pages: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [reasonCodes, setReasonCodes] = useState([]);
@@ -21,38 +24,49 @@ export function useAdminAudit() {
     fetchAllAuditReasonCodes().then(setReasonCodes).catch(() => {});
   }, []);
 
-  const load = useCallback(async (overrideFilters = filters) => {
+  const load = useCallback(async (overrideFilters = filters, overridePage = page) => {
     setLoading(true);
     setError(null);
     try {
-      const params = { exclude_system: true, limit: 1000 };
-      if (overrideFilters.entity_type) params.entity_type = overrideFilters.entity_type;
+      const params = {
+        limit: PAGE_SIZE,
+        offset: overridePage * PAGE_SIZE,
+        exclude_system: overrideFilters.exclude_system ?? true,
+      };
+      if (overrideFilters.entity_type)  params.entity_type  = overrideFilters.entity_type;
       if (overrideFilters.reason_code)  params.reason_code  = overrideFilters.reason_code;
+      if (overrideFilters.decision_type) params.decision_type = overrideFilters.decision_type;
+      if (overrideFilters.changed_by)   params.changed_by   = overrideFilters.changed_by;
       if (overrideFilters.from_dt) params.from_dt = overrideFilters.from_dt + 'T00:00:00Z';
       if (overrideFilters.to_dt)   params.to_dt   = overrideFilters.to_dt   + 'T23:59:59Z';
-      const rows = await fetchAuditLogs(params);
-      setAllLogs(rows);
-      setPage(0);
+
+      const { items, pagination: pag } = await fetchAuditLogs(params);
+      setLogs(items);
+      setPagination(pag);
     } catch (err) {
       setError(err.message || 'Erreur lors du chargement des logs');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, page]);
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyFilters = useCallback((newFilters) => {
     setFilters(newFilters);
-    load(newFilters);
+    setPage(0);
+    load(newFilters, 0);
   }, [load]);
 
-  const total = allLogs.length;
-  const logs  = allLogs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const goToPage = useCallback((newPage) => {
+    setPage(newPage);
+    load(filters, newPage);
+  }, [filters, load]);
 
   return {
     logs,
-    total,
+    total: pagination.total,
+    totalPages: pagination.total_pages,
     loading,
     error,
     filters,
@@ -60,7 +74,7 @@ export function useAdminAudit() {
     pageSize: PAGE_SIZE,
     reasonCodes,
     applyFilters,
-    goToPage: setPage,
+    goToPage,
     reload: () => load(),
   };
 }

@@ -13,7 +13,7 @@ import { BriefingSection } from '@/components/briefing/BriefingSection';
 import { BriefingItem } from '@/components/briefing/BriefingItem';
 import { useBriefingData } from '@/hooks/useBriefingData';
 import { fetchIntervention } from '@/api/interventions';
-import { fetchInterventionTasks, patchInterventionTask } from '@/api/interventionTasks';
+import { patchInterventionTask } from '@/api/interventionTasks';
 import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import DataTable from '@/components/ui/DataTable';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
@@ -347,8 +347,8 @@ function DetailPanel({ situation }) {
     setTasks([]);
     setLoading(true);
     setShowForm(false);
-    Promise.all([fetchIntervention(id), fetchInterventionTasks(id)])
-      .then(([iv, t]) => { setDetail(iv); setTasks(t); })
+    fetchIntervention(id)
+      .then((iv) => { setDetail(iv); setTasks(Array.isArray(iv.tasks) ? iv.tasks : []); })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -395,9 +395,9 @@ function DetailPanel({ situation }) {
   const priorityCfg = PRIORITY_CONFIG[situation.priority] ?? PRIORITY_CONFIG.normale;
   const typeLabel   = TYPE_INTER_LABELS[situation.type] ?? situation.type ?? '—';
 
-  const totalTime    = detail?.action?.reduce((s, a) => s + (a.timeSpent ?? 0), 0) ?? situation.stats?.totalTime ?? 0;
-  const actionCount  = detail?.action?.length ?? situation.stats?.actionCount ?? 0;
-  const purchaseCount = situation.stats?.purchaseCount ?? 0;
+  const totalTime    = detail?.stats?.totalTime ?? detail?.action?.reduce((s, a) => s + (Number(a.timeSpent) || 0), 0) ?? situation.stats?.totalTime ?? 0;
+  const actionCount  = detail?.stats?.actionCount ?? detail?.action?.length ?? situation.stats?.actionCount ?? 0;
+  const purchaseCount = detail?.stats?.purchasePending ?? situation.stats?.purchasePending ?? situation.stats?.purchaseCount ?? 0;
   const daysOpen     = situation.daysOpen ?? 0;
 
   const sortedTasks = [...tasks].sort(

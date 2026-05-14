@@ -57,7 +57,7 @@ function formatDelay(situation) {
 function SituationBadges({ situation }) {
   const { situationType, type, tasksLinked, stats } = situation;
   const typeLabel = TYPE_INTER_LABELS[type] || type;
-  const totalTasks = stats?.taskProgress?.total ?? 0;
+  const totalTasks = stats?.tasks?.total ?? stats?.taskProgress?.total ?? 0;
   const isNoTask = totalTasks === 0 && (tasksLinked?.length ?? 0) === 0;
 
   if (situationType === 'decision') {
@@ -103,7 +103,7 @@ SituationBadges.propTypes = { situation: PropTypes.object.isRequired };
 function ContextLine({ situation }) {
   const { situationType, daysOpen, stats, tasksLinked } = situation;
   const ac = stats?.actionCount ?? 0;
-  const pc = stats?.purchaseCount ?? 0;
+  const pc = stats?.purchasePending ?? stats?.purchaseCount ?? 0;
   const tt = stats?.totalTime ?? 0;
 
   if (situationType === 'decision') {

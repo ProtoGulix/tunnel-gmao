@@ -42,6 +42,11 @@ const DECISION_LABELS = {
 
 /* ── Sous-composants ─────────────────────────────────────────────────────────── */
 
+const EMPTY_FILTERS = {
+  entity_type: '', reason_code: '', decision_type: '',
+  changed_by: '', from_dt: '', to_dt: '', exclude_system: true,
+};
+
 function FiltersBar({ filters, reasonCodes, onApply }) {
   const [local, setLocal] = useState(filters);
   const set = (k, v) => setLocal((p) => ({ ...p, [k]: v }));
@@ -58,6 +63,22 @@ function FiltersBar({ filters, reasonCodes, onApply }) {
           <Select.Content>
             <Select.Item value="__all__">Toutes</Select.Item>
             {Object.entries(ENTITY_LABELS).map(([k, v]) => (
+              <Select.Item key={k} value={k}>{v}</Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+      </Box>
+
+      <Box>
+        <Text as="div" size="1" color="gray" mb="1">Type de décision</Text>
+        <Select.Root
+          value={local.decision_type || '__all__'}
+          onValueChange={(v) => set('decision_type', v === '__all__' ? '' : v)}
+        >
+          <Select.Trigger style={{ minWidth: 170 }} />
+          <Select.Content>
+            <Select.Item value="__all__">Tous</Select.Item>
+            {Object.entries(DECISION_LABELS).map(([k, v]) => (
               <Select.Item key={k} value={k}>{v}</Select.Item>
             ))}
           </Select.Content>
@@ -107,11 +128,7 @@ function FiltersBar({ filters, reasonCodes, onApply }) {
         size="2"
         variant="soft"
         color="gray"
-        onClick={() => {
-          const reset = { entity_type: '', reason_code: '', from_dt: '', to_dt: '' };
-          setLocal(reset);
-          onApply(reset);
-        }}
+        onClick={() => { setLocal(EMPTY_FILTERS); onApply(EMPTY_FILTERS); }}
       >
         Réinitialiser
       </Button>
@@ -119,11 +136,31 @@ function FiltersBar({ filters, reasonCodes, onApply }) {
   );
 }
 
+// Sérialise une valeur de diff en chaîne lisible.
+// Les valeurs peuvent être des primitives ou des objets hydratés (ex: assigned_to = { initials, first_name, ... })
+function _serializeDiffEntry(val) {
+  if (val === null || val === undefined) return '—';
+  if (typeof val !== 'object') return String(val);
+  // Objet utilisateur hydraté
+  if (val.initials || val.first_name) {
+    return val.initials ?? [val.first_name, val.last_name].filter(Boolean).join(' ') ?? val.id ?? '?';
+  }
+  // Objet générique : join des valeurs primitives
+  return Object.values(val)
+    .filter((v) => v !== null && typeof v !== 'object')
+    .join(' · ') || JSON.stringify(val);
+}
+
+function _serializeDiff(diffObj) {
+  if (!diffObj) return null;
+  return Object.values(diffObj).map(_serializeDiffEntry).join(', ') || null;
+}
+
 function ValueDiff({ oldValue, newValue }) {
   if (!oldValue && !newValue) return <Text size="1" color="gray">—</Text>;
 
-  const oldStr = oldValue ? Object.values(oldValue).join(', ') : null;
-  const newStr = newValue ? Object.values(newValue).join(', ') : null;
+  const oldStr = _serializeDiff(oldValue);
+  const newStr = _serializeDiff(newValue);
 
   if (!oldStr) return <Text size="1" color="green">{newStr}</Text>;
   if (!newStr) return <Text size="1" color="red" style={{ textDecoration: 'line-through' }}>{oldStr}</Text>;
