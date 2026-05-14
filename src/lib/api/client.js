@@ -137,7 +137,7 @@ api.interceptors.response.use(
       }
     }
 
-    // 400 — reason_code manquant (middleware audit) : déléguer au handler
+    // 400/422 — reason_code manquant (middleware ou Pydantic) : déléguer au handler audit
     if (!originalRequest._auditRetry && isAuditRequiredError(error)) {
       return handleAuditError(error);
     }

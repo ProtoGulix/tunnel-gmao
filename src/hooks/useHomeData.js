@@ -27,13 +27,13 @@ export function useHomeData() {
     setInterventionsError(null);
 
     const [tasksResult, interventionsResult, summaryResult] = await Promise.allSettled([
-      fetchTasksWorkspace({ assignee_id: user.id, status: 'todo,in_progress', limit: 10 }),
+      fetchTasksWorkspace({ assigned_to: user.id, status: 'todo,in_progress', limit: 10 }),
       fetchInterventions({ status: 'ouvert', include: 'stats', limit: 50, sort: '-priority' }),
       fetchDashboardSummary(),
     ]);
 
     if (tasksResult.status === 'fulfilled') {
-      setTasks(tasksResult.value.tasks ?? []);
+      setTasks((tasksResult.value.items ?? []).flatMap((g) => g.tasks ?? []));
     } else {
       setTasksError(
         extractApiErrorMessage(tasksResult.reason, 'Erreur lors du chargement des tâches')

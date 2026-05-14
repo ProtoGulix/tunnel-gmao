@@ -41,18 +41,32 @@ export function onAuditRequired(callback) {
 
 /**
  * Retourne true si l'erreur signifie que reason_code est manquant.
- * Détecte HTTP 400 avec error_type "ValidationError" et "reason_code" dans le message.
+ *
+ * Deux formats possibles :
+ *   1. HTTP 400 (middleware AuditMiddleware) :
+ *      { detail: "reason_code obligatoire pour cette mutation", error_type: "ValidationError" }
+ *
+ *   2. HTTP 422 (validation Pydantic, ex: PATCH /intervention-tasks) :
+ *      { detail: "Erreur de validation des données", errors: [{ loc: ["body","reason_code"], type: "missing" }] }
+ *
  * @param {import('axios').AxiosError} error
  */
 export function isAuditRequiredError(error) {
-  if (error?.response?.status !== 400) return false;
-
-  const { data } = error.response;
+  const status = error?.response?.status;
+  const { data } = error?.response ?? {};
   if (!data) return false;
 
-  // Format middleware : { detail: "reason_code obligatoire...", error_type: "ValidationError" }
-  if (data.error_type === 'ValidationError' && typeof data.detail === 'string') {
+  // Format 1 — middleware 400
+  if (status === 400 && data.error_type === 'ValidationError' && typeof data.detail === 'string') {
     return data.detail.toLowerCase().includes('reason_code');
+  }
+
+  // Format 2 — Pydantic 422 : au moins une erreur porte sur "reason_code"
+  if (status === 422 && Array.isArray(data.errors)) {
+    return data.errors.some((e) => {
+      const loc = Array.isArray(e.loc) ? e.loc : [];
+      return loc.includes('reason_code');
+    });
   }
 
   return false;
