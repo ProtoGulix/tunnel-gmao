@@ -2,22 +2,15 @@ import { api } from '@/lib/api/client';
 
 export async function fetchInterventionTasksList(params = {}) {
   const res = await api.get('/intervention-tasks', { params });
-  const raw = res.data;
-  if (Array.isArray(raw)) return raw;
-  if (Array.isArray(raw?.items)) return raw.items;
-  return raw?.data || [];
+  return res.data.items ?? [];
 }
 
 export async function fetchInterventionTasks(intervention_id) {
   const res = await api.get('/intervention-tasks', {
     params: { intervention_id, include_done: true },
   });
-  const raw = res.data;
-  if (Array.isArray(raw?.items)) {
-    return raw.items.flatMap((item) => Array.isArray(item.tasks) ? item.tasks : []);
-  }
-  if (Array.isArray(raw)) return raw;
-  return raw?.data || [];
+  const items = res.data.items ?? [];
+  return items.flatMap((item) => Array.isArray(item.tasks) ? item.tasks : []);
 }
 
 export async function fetchInterventionTasksByOccurrence(occurrence_id) {
@@ -52,13 +45,11 @@ export async function updateInterventionTask(id, data) {
 }
 
 export async function fetchInterventionTaskActions(task_id) {
-  const res = await api.get('/intervention-actions', {
-    params: { task_id },
-  });
-  return Array.isArray(res.data) ? res.data : res.data?.data || [];
+  const res = await api.get('/intervention-actions', { params: { task_id } });
+  return res.data.data ?? [];
 }
 
 export async function createInterventionActionForTask(data) {
   const res = await api.post('/intervention-actions', data);
-  return res.data?.data || res.data || {};
+  return res.data.data ?? {};
 }

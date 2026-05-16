@@ -40,7 +40,8 @@ export async function fetchInterventionRequests(params = {}) {
   if (params.search?.trim()) queryParams.search = params.search.trim();
 
   const response = await api.get('/intervention-requests', { params: queryParams });
-  return response.data;
+  const { items = [], pagination, facets } = response.data;
+  return { items, pagination, facets };
 }
 
 /**
@@ -51,7 +52,7 @@ export async function fetchInterventionRequests(params = {}) {
  */
 export async function fetchInterventionRequest(id) {
   const response = await api.get(`/intervention-requests/${id}`);
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -76,7 +77,7 @@ export async function createInterventionRequest(data) {
   }
 
   const response = await api.post('/intervention-requests', payload);
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -104,7 +105,7 @@ export async function transitionInterventionRequest(id, data) {
   if (data.reportedDate) payload.reported_date = data.reportedDate;
 
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
-  return response.data;
+  return response.data.data;
 }
 
 /**

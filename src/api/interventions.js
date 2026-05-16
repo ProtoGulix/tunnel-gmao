@@ -1,7 +1,6 @@
 import { api } from '@/lib/api/client';
 import { mapInterventionResponse, mapInterventionDetailResponse } from './interventionMappers';
 
-// eslint-disable-next-line complexity
 export async function fetchInterventions(filters = {}) {
   const params = {
     skip: filters.skip ?? 0,
@@ -14,23 +13,21 @@ export async function fetchInterventions(filters = {}) {
   if (filters.include) params.include = filters.include;
 
   const response = await api.get('/interventions', { params });
-  const raw = response.data;
-  const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
-  return list.map(mapInterventionResponse);
+  const items = response.data.items ?? [];
+  return items.map(mapInterventionResponse);
 }
 
 export async function fetchIntervention(id) {
   const response = await api.get(`/interventions/${id}`);
-  const raw = response.data?.data ?? response.data;
-  return mapInterventionDetailResponse(raw);
+  return mapInterventionDetailResponse(response.data.data);
 }
 
 export async function fetchInterventionFacets(id) {
   const response = await api.get(`/interventions/${id}`);
-  const raw = response.data ?? {};
+  const data = response.data.data ?? {};
   return {
-    subcategories: raw.facets?.action_categories ?? [],
-    complexityFactors: raw.facets?.complexity_factors ?? [],
+    subcategories: data.facets?.action_categories ?? [],
+    complexityFactors: data.facets?.complexity_factors ?? [],
   };
 }
 
@@ -49,7 +46,7 @@ export async function createIntervention(data) {
   if (data.reportedBy) payload.reported_by = data.reportedBy;
   if (data.requestId) payload.request_id = data.requestId;
   const response = await api.post('/interventions', payload);
-  return mapInterventionResponse(response.data);
+  return mapInterventionResponse(response.data.data);
 }
 
 export async function updateIntervention(id, updates) {
@@ -62,8 +59,7 @@ export async function updateIntervention(id, updates) {
   if (updates.reason_text !== undefined) payload.reason_text = updates.reason_text;
 
   const response = await api.put(`/interventions/${id}`, payload);
-  const raw = response.data?.data ?? response.data;
-  return mapInterventionDetailResponse(raw);
+  return mapInterventionDetailResponse(response.data.data);
 }
 
 export async function updateInterventionStatus(id, newStatus, reasonCode, reasonText) {

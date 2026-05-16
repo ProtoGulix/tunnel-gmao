@@ -2,11 +2,11 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Spinner, Callout, Button } from '@radix-ui/themes';
 import { AlertCircle, ClipboardList } from 'lucide-react';
-import InterventionRequestDetail from '@/components/intervention-requests/InterventionRequestDetail';
 import PageHeader from '@/components/layout/PageHeader';
 import { BriefingCounters } from '@/components/briefing/BriefingCounters';
 import { BriefingSection } from '@/components/briefing/BriefingSection';
 import { BriefingTile } from '@/components/briefing/BriefingTile';
+import { DIRightPanel } from '@/components/briefing/DIRightPanel';
 import { useBriefingData } from '@/hooks/useBriefingData';
 import { InterventionCard } from '@/components/briefing/InterventionCard';
 
@@ -66,22 +66,12 @@ EmptyRight.propTypes = { message: PropTypes.string.isRequired };
 function RightPanel({ selected, onRefresh }) {
   if (!selected) return <EmptyRight message="Sélectionne une demande" />;
 
-  if (selected.type === 'request') {
-    return (
-      <div style={{ padding: '12px 16px' }}>
-        <InterventionRequestDetail requestId={selected.item.id} onTransitionDone={onRefresh} />
-      </div>
-    );
+  // DI (nouvelle, en_attente, acceptée) → fetch la DI, branch sur detail.intervention
+  if (selected.type === 'request' || selected.type === 'request_accepted') {
+    return <DIRightPanel requestId={selected.item.id} onRefresh={onRefresh} />;
   }
 
-  if (selected.type === 'request_accepted') {
-    if (!selected.item.intervention_id) {
-      return <EmptyRight message="Aucune intervention liée à cette demande" />;
-    }
-    return <InterventionCard situation={{ id: selected.item.intervention_id }} onRefresh={onRefresh} />;
-  }
-
-  // situation (intervention orpheline)
+  // Intervention orpheline → InterventionCard directement avec la situation complète
   return <InterventionCard situation={selected.item} onRefresh={onRefresh} />;
 }
 

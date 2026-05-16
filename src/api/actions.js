@@ -125,7 +125,7 @@ export async function updateAction(id, updates) {
   }
 
   const response = await api.patch(`/intervention-actions/${id}`, payload);
-  return mapActionResponse(response.data?.data || response.data);
+  return mapActionResponse(response.data.data);
 }
 
 /**

@@ -29,23 +29,8 @@ import { api } from '@/lib/api/client';
  */
 export async function fetchAuditLogs(params = {}) {
   const response = await api.get('/audit/logs', { params });
-  const data = response.data;
-
-  // Compatibilité : ancienne API retournait un tableau plat
-  if (Array.isArray(data)) {
-    return {
-      items: data,
-      pagination: { total: data.length, offset: 0, limit: data.length, count: data.length, total_pages: 1 },
-      facets: null,
-    };
-  }
-
-  const { items, pagination, facets } = data ?? {};
-  return {
-    items: Array.isArray(items) ? items : [],
-    pagination: pagination ?? { total: 0, offset: 0, limit: 50, count: 0, total_pages: 0 },
-    facets: facets ?? null,
-  };
+  const { items = [], pagination = { total: 0, offset: 0, limit: 50, count: 0, total_pages: 0 }, facets = null } = response.data;
+  return { items, pagination, facets };
 }
 
 /**
@@ -53,5 +38,5 @@ export async function fetchAuditLogs(params = {}) {
  */
 export async function fetchAllAuditReasonCodes() {
   const response = await api.get('/audit/reasons', { params: { category: 'manual' } });
-  return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+  return response.data;
 }

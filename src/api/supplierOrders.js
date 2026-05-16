@@ -14,7 +14,7 @@ import { api } from '@/lib/api/client';
  */
 export async function fetchSupplierOrderStatuses() {
   const response = await api.get('/supplier-orders/statuses');
-  return Array.isArray(response.data) ? response.data : response.data?.data || [];
+  return response.data;
 }
 
 /**
@@ -28,12 +28,8 @@ export async function fetchSupplierOrderStatuses() {
  */
 export async function fetchSupplierOrders(params = {}) {
   const response = await api.get('/supplier-orders', { params });
-  const data = response.data?.data || response.data;
-  return {
-    items: data?.items || [],
-    pagination: data?.pagination || null,
-    facets: data?.facets || [],
-  };
+  const { items = [], pagination = null, facets = [] } = response.data;
+  return { items, pagination, facets };
 }
 
 /**
@@ -43,7 +39,7 @@ export async function fetchSupplierOrders(params = {}) {
  */
 export async function fetchSupplierOrderDetail(id) {
   const response = await api.get(`/supplier-orders/${id}`);
-  return response.data?.data || response.data || {};
+  return response.data.data;
 }
 
 /**
@@ -53,7 +49,7 @@ export async function fetchSupplierOrderDetail(id) {
  */
 export async function createSupplierOrder(payload) {
   const response = await api.post('/supplier-orders', payload);
-  return response.data?.data || response.data || {};
+  return response.data.data;
 }
 
 /**
@@ -64,7 +60,7 @@ export async function createSupplierOrder(payload) {
  */
 export async function updateSupplierOrder(id, updates) {
   const response = await api.put(`/supplier-orders/${id}`, updates);
-  return response.data?.data || response.data || {};
+  return response.data.data;
 }
 
 /**
@@ -74,7 +70,7 @@ export async function updateSupplierOrder(id, updates) {
  */
 export async function fetchSupplierOrderTransitions(id) {
   const response = await api.get(`/supplier-orders/${id}/transitions`);
-  return response.data?.data || response.data || { transitions: [] };
+  return response.data;
 }
 
 /**
@@ -93,7 +89,7 @@ export async function deleteSupplierOrder(id) {
  */
 export async function exportSupplierOrderEmail(id) {
   const response = await api.post(`/supplier-orders/${id}/export/email`);
-  return response.data?.data || response.data || {};
+  return response.data;
 }
 
 /**
@@ -119,7 +115,7 @@ export async function exportSupplierOrderCsv(id) {
  */
 export async function fetchSupplierOrderLines(supplierOrderId) {
   const response = await api.get(`/supplier-order-lines/order/${supplierOrderId}`);
-  return Array.isArray(response.data) ? response.data : response.data?.data || [];
+  return response.data;
 }
 
 /**
@@ -130,7 +126,7 @@ export async function fetchSupplierOrderLines(supplierOrderId) {
  */
 export async function updateSupplierOrderLine(id, updates) {
   const response = await api.patch(`/supplier-order-lines/${id}`, updates);
-  return response.data?.data || response.data || {};
+  return response.data.data;
 }
 
 /**

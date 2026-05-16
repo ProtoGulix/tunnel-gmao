@@ -19,7 +19,7 @@ export async function fetchAuditReasons(entityType) {
     params: { entity_type: entityType, category: 'manual' },
   });
 
-  const reasons = Array.isArray(response.data) ? response.data : response.data?.data || [];
+  const reasons = response.data;
   // OTHER toujours en dernier
   const sorted = [
     ...reasons.filter((r) => r.code !== 'OTHER'),
