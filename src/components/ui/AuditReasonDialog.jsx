@@ -3,27 +3,16 @@ import PropTypes from 'prop-types';
 import { Dialog, Flex, Button, Text, Box } from '@radix-ui/themes';
 import AuditReasonPicker from './AuditReasonPicker';
 
-/**
- * Modale interstitielle à placer avant toute mutation rapide (inline edit).
- *
- * Usage :
- *   <AuditReasonDialog
- *     open={!!pending}
- *     entityType="task"
- *     title="Modifier l'échéance"
- *     description="Tâche : Contrôle alignement capteur"
- *     onConfirm={(reason) => applyMutation(pending, reason)}
- *     onCancel={() => setPending(null)}
- *   />
- *
- * onConfirm reçoit { reason_code, reason_text }.
- */
 export default function AuditReasonDialog({ open, entityType, title, description, onConfirm, onCancel, saving = false }) {
   const [reason, setReason] = useState({ reason_code: '', reason_text: null });
+  const [requiresText, setRequiresText] = useState(false);
 
-  const isValid =
-    !!reason.reason_code &&
-    (reason.reason_code !== 'OTHER' || !!reason.reason_text?.trim());
+  const isValid = !!reason.reason_code && (!requiresText || !!reason.reason_text?.trim());
+
+  const handleChange = (v) => {
+    setReason((prev) => ({ ...prev, ...v }));
+    if ('requires_text' in v) setRequiresText(!!v.requires_text);
+  };
 
   const handleConfirm = () => {
     if (!isValid) return;
@@ -33,6 +22,7 @@ export default function AuditReasonDialog({ open, entityType, title, description
   const handleOpenChange = (isOpen) => {
     if (!isOpen) {
       setReason({ reason_code: '', reason_text: null });
+      setRequiresText(false);
       onCancel();
     }
   };
@@ -52,7 +42,7 @@ export default function AuditReasonDialog({ open, entityType, title, description
           <AuditReasonPicker
             entityType={entityType}
             value={reason}
-            onChange={(v) => setReason((prev) => ({ ...prev, ...v }))}
+            onChange={handleChange}
           />
         </Box>
 

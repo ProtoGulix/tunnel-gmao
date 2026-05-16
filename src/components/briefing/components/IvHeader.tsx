@@ -3,7 +3,7 @@ import { Clock, ExternalLink, Package, ClipboardList, Target } from 'lucide-reac
 import { Link } from 'react-router-dom';
 import { STATE_COLORS } from '@/config/interventionTypes';
 import { formatDueDate } from '@/hooks/useInterventionUrgency';
-import { AuditDialog } from '@/components/shared/AuditDialog';
+import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
 import { ProgressBar } from './ProgressBar';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
 
@@ -29,7 +29,7 @@ interface IvHeaderProps {
   onSelectStatus: (s: string) => void;
   pendingStatus: string | null;
   onClosePending: () => void;
-  onConfirmStatus: (reasonCode: string, reasonText: string) => void;
+  onConfirmStatus: (reason: { reason_code: string; reason_text?: string | null }) => void;
   statusSaving: boolean;
 }
 
@@ -43,12 +43,13 @@ export function IvHeader({
 
   return (
     <>
-      <AuditDialog
+      <AuditReasonDialog
         open={!!pendingStatus}
+        entityType="intervention"
         title="Changer le statut"
-        description={pendingCfg ? `Passer vers ${pendingCfg.label}. Choisissez une raison.` : undefined}
+        description={pendingCfg ? `Passer vers ${pendingCfg.label}` : undefined}
         saving={statusSaving}
-        onClose={onClosePending}
+        onCancel={onClosePending}
         onConfirm={onConfirmStatus}
       />
 

@@ -1,13 +1,9 @@
 import { api } from '@/lib/api/client';
-import { storeAuditReasons } from '@/lib/auditReasonsCache';
 
 export async function fetchInterventionTasksList(params = {}) {
   const res = await api.get('/intervention-tasks', { params });
   const raw = res.data;
-  if (Array.isArray(raw?.audit?.reasons)) storeAuditReasons(raw.audit.reasons);
-  // Ancien format tableau plat
   if (Array.isArray(raw)) return raw;
-  // Nouveau format { items, pagination, audit } — items est un tableau d'interventions
   if (Array.isArray(raw?.items)) return raw.items;
   return raw?.data || [];
 }
@@ -17,8 +13,6 @@ export async function fetchInterventionTasks(intervention_id) {
     params: { intervention_id, include_done: true },
   });
   const raw = res.data;
-  if (Array.isArray(raw?.audit?.reasons)) storeAuditReasons(raw.audit.reasons);
-  // Nouveau format { items, pagination, audit } — items[0].tasks contient les tâches
   if (Array.isArray(raw?.items)) {
     return raw.items.flatMap((item) => Array.isArray(item.tasks) ? item.tasks : []);
   }

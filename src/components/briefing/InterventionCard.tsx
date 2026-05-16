@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchIntervention } from '@/api/interventions';
 import { fetchAuditLogs } from '@/api/auditLogs';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
-import { AuditDialog } from '@/components/shared/AuditDialog';
 import { IvHeader } from './components/IvHeader';
 import { IvBody, EmptyState } from './components/IvBody';
 import { useCardDisplay, useCardActions } from './useInterventionCard';
@@ -101,13 +100,6 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <AuditDialog
-        open={actions.pendingTaskMutation}
-        title={actions.taskMutationLabel}
-        saving={actions.taskMutationSaving}
-        onClose={actions.cancelTaskMutation}
-        onConfirm={actions.confirmTaskMutation}
-      />
       <IvHeader
         situation={situation}
         detail={detail}
@@ -139,7 +131,7 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
         criticalTask={criticalTask}
         auditLogs={auditLogs}
         editCell={editCell}
-        editSaving={(actions.taskMutationSaving ? editCell?.taskId ?? null : null) as string | null}
+        editSaving={null}
         showForm={showForm}
         taskCreate={taskCreate}
         onStartEdit={startEdit}

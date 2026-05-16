@@ -17,11 +17,12 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
     return () => { cancelled = true; };
   }, [entityType]);
 
+  const selectedReason = reasons.find((r) => r.code === value.reason_code);
+  const requiresText = selectedReason?.requires_text ?? false;
+
   const handleCodeSelect = (code) => {
-    onChange({
-      reason_code: code,
-      reason_text: code !== 'OTHER' ? (value.reason_text ?? null) : '',
-    });
+    const r = reasons.find((x) => x.code === code);
+    onChange({ reason_code: code, reason_text: null, requires_text: r?.requires_text ?? false });
   };
 
   if (loading) {
@@ -40,8 +41,6 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
       </Box>
     );
   }
-
-  const selectedReason = reasons.find((r) => r.code === value.reason_code);
 
   return (
     <Flex direction="column" gap="2">
@@ -78,11 +77,11 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
 
       <Box>
         <Text as="div" size="1" weight="bold" mb="1">
-          Précision{value.reason_code === 'OTHER' && <Text color="red"> *</Text>}
-          {value.reason_code !== 'OTHER' && <Text size="1" color="gray" weight="regular"> (optionnel)</Text>}
+          Précision
+          {requiresText ? <Text color="red"> *</Text> : <Text size="1" color="gray" weight="regular"> (optionnel)</Text>}
         </Text>
         <TextArea
-          placeholder={value.reason_code === 'OTHER' ? 'Décrivez la raison…' : 'Ajouter un commentaire…'}
+          placeholder={requiresText ? 'Décrivez la raison…' : 'Ajouter un commentaire…'}
           value={value.reason_text ?? ''}
           onChange={(e) => onChange({ ...value, reason_text: e.target.value || null })}
           rows={2}

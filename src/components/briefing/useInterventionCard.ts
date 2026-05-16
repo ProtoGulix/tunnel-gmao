@@ -43,9 +43,6 @@ export function useCardDisplay(situation: BriefingSituation | null, detail: Inte
   };
 }
 
-// Mutation de tâche en attente de reason_code
-type TaskMutation = (reasonCode: string, reasonText: string) => Promise<void>;
-
 export function useCardActions(
   situation: BriefingSituation | null,
   tasks: InterventionTask[],
@@ -53,16 +50,14 @@ export function useCardActions(
   loadDetail: (id: string) => void,
   onRefresh?: () => void,
 ) {
-  // --- Changement de statut intervention ---
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [statusSaving, setStatusSaving]   = useState(false);
 
-  const handleStatusConfirm = useCallback(async (reasonCode: string, reasonText: string) => {
+  const handleStatusConfirm = useCallback(async (reason: { reason_code: string; reason_text?: string | null }) => {
     if (!pendingStatus || !situation?.id) return;
     setStatusSaving(true);
     try {
-      const text = reasonCode === 'OTHER' ? reasonText : undefined;
-      await updateInterventionStatus(situation.id, pendingStatus, reasonCode, text);
+      await updateInterventionStatus(situation.id, pendingStatus, reason.reason_code, reason.reason_text ?? undefined);
       setPendingStatus(null);
       loadDetail(situation.id);
       onRefresh?.();
@@ -71,39 +66,14 @@ export function useCardActions(
     }
   }, [pendingStatus, situation?.id, loadDetail, onRefresh]);
 
-  // --- Mutations de tâches (exigent reason_code utilisateur) ---
-  const [pendingTaskMutation, setPendingTaskMutation] = useState<TaskMutation | null>(null);
-  const [taskMutationLabel, setTaskMutationLabel]     = useState<string>('');
-  const [taskMutationSaving, setTaskMutationSaving]   = useState(false);
-
-  const requestTaskMutation = useCallback((label: string, mutation: TaskMutation) => {
-    setTaskMutationLabel(label);
-    setPendingTaskMutation(() => mutation);
+  // saveField — appel direct, l'axios guard intercepte 400/422 si reason_code requis
+  const saveField = useCallback((taskId: string, field: string, value: string | null, onDone: () => void) => {
+    patchInterventionTask(taskId, { [field]: value ?? null })
+      .then(onDone)
+      .catch(() => {});
   }, []);
 
-  const confirmTaskMutation = useCallback(async (reasonCode: string, reasonText: string) => {
-    if (!pendingTaskMutation) return;
-    setTaskMutationSaving(true);
-    try {
-      await pendingTaskMutation(reasonCode, reasonText);
-      setPendingTaskMutation(null);
-    } finally {
-      setTaskMutationSaving(false);
-    }
-  }, [pendingTaskMutation]);
-
-  const cancelTaskMutation = useCallback(() => setPendingTaskMutation(null), []);
-
-  // --- saveField : édition inline d'un champ de tâche ---
-  const saveField = useCallback((taskId: string, field: string, value: string | null, onDone: () => void) => {
-    requestTaskMutation(`Modifier ${field}`, async (reasonCode, reasonText) => {
-      const text = reasonCode === 'OTHER' ? reasonText : undefined;
-      await patchInterventionTask(taskId, { [field]: value ?? null, reason_code: reasonCode, ...(text ? { reason_text: text } : {}) });
-      onDone();
-    });
-  }, [requestTaskMutation]);
-
-  // --- handleMove : réordonnancement ---
+  // handleMove — appel direct, le guard gère l'audit si nécessaire
   const handleMove = useCallback((task: InterventionTask, idx: number, direction: number) => {
     if (!situation?.id) return;
     const sorted  = [...tasks].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -112,30 +82,21 @@ export function useCardActions(
     const swap      = sorted[swapIdx];
     const newOrder  = swap.sort_order ?? swapIdx;
     const taskOrder = task.sort_order ?? idx;
-    requestTaskMutation('Réordonner les tâches', async (reasonCode, reasonText) => {
-      const text    = reasonCode === 'OTHER' ? reasonText : undefined;
-      const payload = { reason_code: reasonCode, ...(text ? { reason_text: text } : {}) };
-      setTasks((prev) => prev.map((t) => {
-        if (t.id === task.id) return { ...t, sort_order: newOrder };
-        if (t.id === swap.id) return { ...t, sort_order: taskOrder };
-        return t;
-      }));
-      await Promise.all([
-        patchInterventionTask(task.id, { sort_order: newOrder, ...payload }),
-        patchInterventionTask(swap.id, { sort_order: taskOrder, ...payload }),
-      ]).catch(() => loadDetail(situation!.id));
-    });
-  }, [tasks, setTasks, situation?.id, loadDetail, requestTaskMutation]);
+    setTasks((prev) => prev.map((t) => {
+      if (t.id === task.id) return { ...t, sort_order: newOrder };
+      if (t.id === swap.id) return { ...t, sort_order: taskOrder };
+      return t;
+    }));
+    Promise.all([
+      patchInterventionTask(task.id, { sort_order: newOrder }),
+      patchInterventionTask(swap.id, { sort_order: taskOrder }),
+    ]).catch(() => loadDetail(situation.id));
+  }, [tasks, setTasks, situation?.id, loadDetail]);
 
   const closePending = useCallback(() => setPendingStatus(null), []);
 
   return {
-    // statut intervention
     pendingStatus, setPendingStatus, closePending, statusSaving, handleStatusConfirm,
-    // mutations tâches
-    pendingTaskMutation: pendingTaskMutation !== null,
-    taskMutationLabel, taskMutationSaving,
-    confirmTaskMutation, cancelTaskMutation,
     saveField, handleMove,
   };
 }
