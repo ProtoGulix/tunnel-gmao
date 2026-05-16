@@ -35,7 +35,7 @@ function enrichSituation(iv) {
   };
 }
 
-function classifySections(enriched) {
+function classifySections(enriched, { includeAll = false } = {}) {
   const nowItems = [];
   const waitingItems = [];
   const runningItems = [];
@@ -112,11 +112,28 @@ function classifySections(enriched) {
     return new Date(a.reportedDate) - new Date(b.reportedDate);
   });
 
-  return [
+  const sections = [
     { id: 'now', label: 'À traiter maintenant', items: nowItems },
     { id: 'waiting', label: 'Attente pièces — surveiller', items: waitingItems },
     { id: 'running', label: 'En cours — nominal', items: runningItems },
   ];
+
+  if (includeAll) {
+    const classifiedIds = new Set([
+      ...nowSet,
+      ...waitingSet,
+      ...runningItems.map((i) => i.id),
+    ]);
+    const uncategorized = enriched
+      .filter((s) => !classifiedIds.has(s.id))
+      .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate))
+      .map((s) => ({ ...s, situationType: 'in_progress' }));
+    if (uncategorized.length > 0) {
+      sections.push({ id: 'open', label: 'Ouvertes', items: uncategorized });
+    }
+  }
+
+  return sections;
 }
 
 function buildRequestsSection(requests) {
@@ -145,7 +162,7 @@ function computeCounters(interventions, requests) {
 
 // ── Hook ───────────────────────────────────────────────────────────────────
 
-export function useBriefingData() {
+export function useBriefingData({ equipementId } = {}) {
   const [sections, setSections] = useState([]);
   const [counters, setCounters] = useState({
     critical: 0,
@@ -162,23 +179,34 @@ export function useBriefingData() {
     setLoading(true);
     setError(null);
 
-    const [interventionsResult, requestsResult] = await Promise.allSettled([
-      fetchInterventions({
-        status: 'ouvert,en_cours',
-        include: 'stats,tasks',
-        sort: '-priority,-reported_date',
-        limit: 200,
-      }),
-      fetchInterventionRequests({
+    const interventionParams = {
+      include: 'stats,tasks',
+      sort: '-priority,-reported_date',
+      limit: 500,
+    };
+    if (equipementId) {
+      interventionParams.equipementId = equipementId;
+    } else {
+      interventionParams.status = 'ouvert,en_cours';
+      interventionParams.limit = 200;
+    }
+
+    const fetches = [fetchInterventions(interventionParams)];
+    if (!equipementId) {
+      fetches.push(fetchInterventionRequests({
         excludeStatuses: 'rejetee,cloturee,acceptee',
         limit: 200,
-      }),
-    ]);
+      }));
+    }
+
+    const [interventionsResult, requestsResult] = await Promise.allSettled(fetches);
 
     const interventions =
       interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
     const requests =
-      requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
+      !equipementId && requestsResult?.status === 'fulfilled'
+        ? (requestsResult.value.items ?? [])
+        : [];
 
     if (interventionsResult.status === 'rejected') {
       setError(
@@ -189,13 +217,29 @@ export function useBriefingData() {
     }
 
     const enriched = interventions.map((iv) => enrichSituation(iv));
-    const newSections = [...classifySections(enriched), buildRequestsSection(requests)];
+    const openEnriched = equipementId
+      ? enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled')
+      : enriched;
+    const classifiedSections = classifySections(openEnriched, { includeAll: !!equipementId });
+
+    let newSections;
+    if (equipementId) {
+      const archived = enriched
+        .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
+        .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
+      newSections = [
+        ...classifiedSections,
+        { id: 'archived', label: 'Archives', type: 'situation', items: archived },
+      ];
+    } else {
+      newSections = [...classifiedSections, buildRequestsSection(requests)];
+    }
     const newCounters = computeCounters(interventions, requests);
 
     setSections(newSections);
     setCounters(newCounters);
     setLoading(false);
-  }, []);
+  }, [equipementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchData();

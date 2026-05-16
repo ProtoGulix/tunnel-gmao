@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Dialog } from '@radix-ui/themes';
+import { Dialog, VisuallyHidden } from '@radix-ui/themes';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
 
@@ -21,6 +21,7 @@ export default function TaskCreateDialog({ open, onOpenChange, interventionId = 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Content style={{ maxWidth: 500, padding: 0, background: 'transparent', boxShadow: 'none' }}>
+        <VisuallyHidden><Dialog.Title>Nouvelle tâche</Dialog.Title></VisuallyHidden>
         <TaskCreateForm
           formData={formData}
           set={set}

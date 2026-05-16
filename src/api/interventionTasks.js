@@ -1,7 +1,9 @@
 import { api } from '@/lib/api/client';
+import { storeAuditReasons } from '@/lib/auditReasonsCache';
 
 export async function fetchInterventionTasksList(params = {}) {
   const res = await api.get('/intervention-tasks', { params });
+  if (Array.isArray(res.data?.audit?.reasons)) storeAuditReasons(res.data.audit.reasons);
   return Array.isArray(res.data) ? res.data : res.data?.data || [];
 }
 

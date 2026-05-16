@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { TYPE_INTER_LABELS, INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { ProgressBar } from './components/ProgressBar';
 
 const AVATAR_COLORS = {
   IB: 'var(--blue-9)',
@@ -31,6 +32,8 @@ const SECTION_BAR_COLOR = {
   now: 'var(--red-9)',
   waiting: 'var(--orange-9)',
   running: 'var(--blue-9)',
+  open: 'var(--gray-7)',
+  archived: 'var(--gray-5)',
 };
 
 function UrgencyBadge({ urgency }) {
@@ -105,40 +108,49 @@ export function BriefingItem({ situation, sectionId }) {
   const barColor = SECTION_BAR_COLOR[sectionId] || 'var(--gray-9)';
   const urgency = situation.urgency ?? { level: 'pending', label: '—', color: '#9ca3af' };
 
+  const tasks = situation.stats?.tasks;
+  const completionPct = tasks && (tasks.total ?? 0) > 0
+    ? Math.round(((tasks.done ?? 0) / tasks.total) * 100)
+    : null;
+
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       background: 'var(--color-panel-solid)',
       border: '1px solid var(--gray-4)',
       borderLeft: `3px solid ${barColor}`,
       borderRadius: 6,
       overflow: 'hidden',
     }}>
-      <Flex direction="column" style={{ flex: 1 }}>
-        <Flex justify="between" align="start" style={{ padding: '10px 12px' }}>
-          <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
-            {/* Ligne 1 : code machine + badges */}
-            <Flex align="center" gap="2" wrap="wrap">
-              <Text size="1" weight="medium"
-                style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--gray-12)' }}>
-                {situation.machine?.code || situation.code}
-              </Text>
-              <SituationBadges situation={situation} />
-            </Flex>
-            {/* Ligne 2 : titre */}
-            <Text size="2" weight="medium"
-              style={{ color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {situation.title}
+      <Flex justify="between" align="start" style={{ padding: '10px 12px' }}>
+        <Flex direction="column" gap="1" style={{ flex: 1, minWidth: 0 }}>
+          {/* Ligne 1 : code machine + badges */}
+          <Flex align="center" gap="2" wrap="wrap">
+            <Text size="1" weight="medium"
+              style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--gray-12)' }}>
+              {situation.machine?.code || situation.code}
             </Text>
+            <SituationBadges situation={situation} />
           </Flex>
+          {/* Ligne 2 : titre */}
+          <Text size="2" weight="medium"
+            style={{ color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {situation.title}
+          </Text>
+        </Flex>
 
-          {/* Avatar + badge urgence next_due_date */}
-          <Flex direction="column" align="center" gap="1" style={{ marginLeft: 12, flexShrink: 0 }}>
-            <Avatar initials={situation.techInitials} />
-            <UrgencyBadge urgency={urgency} />
-          </Flex>
+        {/* Avatar + badge urgence next_due_date */}
+        <Flex direction="column" align="center" gap="1" style={{ marginLeft: 12, flexShrink: 0 }}>
+          <Avatar initials={situation.techInitials} />
+          <UrgencyBadge urgency={urgency} />
         </Flex>
       </Flex>
+
+      {/* Barre de complétion — uniquement si des tâches existent */}
+      {completionPct !== null && (
+        <ProgressBar percentage={completionPct} height={22} />
+      )}
     </div>
   );
 }
@@ -154,11 +166,13 @@ BriefingItem.propTypes = {
     next_due_date: PropTypes.string,
     techInitials: PropTypes.string,
     machine: PropTypes.shape({ code: PropTypes.string, name: PropTypes.string }),
-    stats: PropTypes.object,
+    stats: PropTypes.shape({
+      tasks: PropTypes.shape({ total: PropTypes.number, done: PropTypes.number }),
+    }),
     daysOpen: PropTypes.number,
     tasksLinked: PropTypes.array,
     situationType: PropTypes.string,
     urgency: PropTypes.object,
   }).isRequired,
-  sectionId: PropTypes.oneOf(['now', 'waiting', 'running']).isRequired,
+  sectionId: PropTypes.oneOf(['now', 'waiting', 'running', 'open', 'archived']).isRequired,
 };

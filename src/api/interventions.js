@@ -6,6 +6,7 @@
  */
 
 import { api } from '@/lib/api/client';
+import { storeAuditReasons } from '@/lib/auditReasonsCache';
 
 /**
  * Récupère la liste des interventions avec filtres optionnels
@@ -37,6 +38,7 @@ export async function fetchInterventions(filters = {}) {
   const raw = response.data;
   // Enveloppe { data, audit } ou tableau plat
   const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+  if (Array.isArray(raw?.audit?.reasons)) storeAuditReasons(raw.audit.reasons);
 
   return list.map(mapInterventionResponse);
 }
@@ -51,6 +53,7 @@ export async function fetchIntervention(id) {
   const response = await api.get(`/interventions/${id}`);
   // Enveloppe { data, audit }
   const raw = response.data?.data ?? response.data;
+  if (Array.isArray(response.data?.audit?.reasons)) storeAuditReasons(response.data.audit.reasons);
   return mapInterventionDetailResponse(raw);
 }
 
@@ -113,6 +116,8 @@ export async function updateIntervention(id, updates) {
   if (updates.printedFiche !== undefined) payload.printed_fiche = updates.printedFiche;
   if (updates.title !== undefined) payload.title = updates.title;
   if (updates.status !== undefined) payload.status_actual = updates.status;
+  if (updates.reason_code !== undefined) payload.reason_code = updates.reason_code;
+  if (updates.reason_text !== undefined) payload.reason_text = updates.reason_text;
 
   const response = await api.put(`/interventions/${id}`, payload);
   const raw = response.data?.data ?? response.data;
@@ -124,10 +129,12 @@ export async function updateIntervention(id, updates) {
  *
  * @param {string} id - ID de l'intervention
  * @param {string} newStatus - Nouveau statut (ouvert, attente_pieces, attente_prod, ferme, cancelled)
+ * @param {string} reasonCode - Code raison audit obligatoire
+ * @param {string} [reasonText] - Texte libre optionnel
  * @returns {Promise<Object>} Intervention mise à jour
  */
-export async function updateInterventionStatus(id, newStatus) {
-  return updateIntervention(id, { status: newStatus });
+export async function updateInterventionStatus(id, newStatus, reasonCode = 'OPERATIONAL_CHANGE', reasonText) {
+  return updateIntervention(id, { status: newStatus, reason_code: reasonCode, reason_text: reasonText });
 }
 
 /**
@@ -224,7 +231,7 @@ function mapInterventionDetailResponse(raw = {}) {
           timeSpent: a.time_spent ?? 0,
           complexityScore: a.complexity_score ?? null,
           createdAt: a.created_at,
-          date: a.date,
+          date: a.date ?? a.created_at?.slice(0, 10) ?? null,
           actionStart: a.action_start ? a.action_start.slice(0, 5) : null,
           actionEnd: a.action_end ? a.action_end.slice(0, 5) : null,
           complexityFactors: a.complexity_factor
@@ -253,6 +260,7 @@ function mapInterventionDetailResponse(raw = {}) {
                 id: a.tech.id?.toString() || '',
                 firstName: a.tech.first_name || '',
                 lastName: a.tech.last_name || '',
+                initial: a.tech.initial || '',
               }
             : null,
           purchaseRequests: a.purchase_requests || [],
