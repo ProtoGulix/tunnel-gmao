@@ -12,11 +12,12 @@ const today = (() => {
   return d;
 })();
 
-function getDaysOpen(reportedDate) {
-  if (!reportedDate) return 0;
-  return Math.floor((today - new Date(reportedDate)) / 86400000);
+function getDaysOpen(dateStr) {
+  if (!dateStr) return 0;
+  return Math.floor((today - new Date(dateStr)) / 86400000);
 }
 
+// Enrichit une intervention (pour le fallback orphelines)
 function enrichSituation(iv) {
   const daysOpen = getDaysOpen(iv.reportedDate);
   const tasksLinked = Array.isArray(iv.tasks) ? iv.tasks : [];
@@ -35,14 +36,41 @@ function enrichSituation(iv) {
   };
 }
 
-function classifySections(enriched, { includeAll = false } = {}) {
+// ── Classification des DI en sections ─────────────────────────────────────
+
+function buildDISections(requests) {
+  const statuts = ['nouvelle', 'en_attente', 'acceptee'];
+  const sections = [];
+
+  const sectionMeta = {
+    nouvelle:   { id: 'di_nouvelle',   label: 'Demandes nouvelles',   type: 'request' },
+    en_attente: { id: 'di_en_attente', label: 'Demandes en attente',  type: 'request' },
+    acceptee:   { id: 'di_acceptee',   label: 'Demandes acceptées — en cours', type: 'request_accepted' },
+  };
+
+  for (const statut of statuts) {
+    const items = requests
+      .filter((r) => r.statut === statut)
+      .map((r) => ({ ...r, daysWaiting: getDaysOpen(r.created_at) }))
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    if (items.length > 0) {
+      sections.push({ ...sectionMeta[statut], items });
+    }
+  }
+
+  return sections;
+}
+
+// ── Classification des interventions orphelines (fallback) ─────────────────
+
+function classifyOrphanSections(enriched) {
   const nowItems = [];
   const waitingItems = [];
   const runningItems = [];
   const nowSet = new Set();
   const waitingSet = new Set();
 
-  // Section 1 — À traiter maintenant
   enriched.forEach((s) => {
     const ac = s.stats?.actionCount ?? 0;
     const pc = s.stats?.purchaseCount ?? 0;
@@ -64,11 +92,8 @@ function classifySections(enriched, { includeAll = false } = {}) {
     }
   });
 
-  // Tri section 1 : decision en premier, puis next_due_date ASC (overdue/urgent en tête), puis reported_date
   nowItems.sort((a, b) => {
-    if (a.situationType !== b.situationType) {
-      return a.situationType === 'decision' ? -1 : 1;
-    }
+    if (a.situationType !== b.situationType) return a.situationType === 'decision' ? -1 : 1;
     const aHasDue = a.next_due_date != null;
     const bHasDue = b.next_due_date != null;
     if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
@@ -77,7 +102,6 @@ function classifySections(enriched, { includeAll = false } = {}) {
     return new Date(a.reportedDate) - new Date(b.reportedDate);
   });
 
-  // Section 2 — Attente pièces
   enriched.forEach((s) => {
     if (nowSet.has(s.id)) return;
     const pc = s.stats?.purchasePending ?? s.stats?.purchaseCount ?? 0;
@@ -87,22 +111,100 @@ function classifySections(enriched, { includeAll = false } = {}) {
     }
   });
 
-  // Tri section 2 : daysOpen DESC (les plus longues en attente en premier)
   waitingItems.sort((a, b) => b.daysOpen - a.daysOpen);
 
-  // Section 3 — En cours nominal
   enriched.forEach((s) => {
     if (nowSet.has(s.id) || waitingSet.has(s.id)) return;
     const ac = s.stats?.actionCount ?? 0;
     const pc = s.stats?.purchaseCount ?? 0;
     const hasInProgressTask = s.tasksLinked.some((t) => t.status === 'in_progress');
-
     if ((ac > 0 && pc === 0) || hasInProgressTask) {
       runningItems.push({ ...s, situationType: 'in_progress' });
     }
   });
 
-  // Tri section 3 : next_due_date ASC (champ intervention), puis reported_date ASC
+  runningItems.sort((a, b) => {
+    const aHasDue = a.next_due_date != null;
+    const bHasDue = b.next_due_date != null;
+    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
+    if (aHasDue) return -1;
+    if (bHasDue) return 1;
+    return new Date(a.reportedDate) - new Date(b.reportedDate);
+  });
+
+  // Interventions restantes non classifiées (ouvertes sans actions ni pièces)
+  const classifiedIds = new Set([...nowSet, ...waitingSet, ...runningItems.map((i) => i.id)]);
+  const uncategorized = enriched
+    .filter((s) => !classifiedIds.has(s.id))
+    .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate))
+    .map((s) => ({ ...s, situationType: 'in_progress' }));
+
+  const sections = [];
+  if (nowItems.length > 0)      sections.push({ id: 'now',     label: 'À traiter maintenant',      type: 'situation', items: nowItems });
+  if (waitingItems.length > 0)  sections.push({ id: 'waiting', label: 'Attente pièces — surveiller', type: 'situation', items: waitingItems });
+  if (runningItems.length > 0)  sections.push({ id: 'running', label: 'En cours — nominal',          type: 'situation', items: runningItems });
+  if (uncategorized.length > 0) sections.push({ id: 'open',    label: 'Ouvertes',                   type: 'situation', items: uncategorized });
+
+  return sections;
+}
+
+// ── Sections pour vue équipement (inchangée) ───────────────────────────────
+
+function classifySections(enriched, { includeAll = false } = {}) {
+  const nowItems = [];
+  const waitingItems = [];
+  const runningItems = [];
+  const nowSet = new Set();
+  const waitingSet = new Set();
+
+  enriched.forEach((s) => {
+    const ac = s.stats?.actionCount ?? 0;
+    const pc = s.stats?.purchaseCount ?? 0;
+    const isUrgent = s.priority === 'urgent';
+    const isCritical = s.machine?.health?.level === 'critical';
+
+    let situationType = null;
+    if (isUrgent && ac === 0) situationType = 'decision';
+    else if (isUrgent && pc > 0) situationType = 'blocked_piece';
+    else if (isCritical && ac === 0) situationType = 'decision';
+
+    if (situationType) {
+      nowItems.push({ ...s, situationType });
+      nowSet.add(s.id);
+    }
+  });
+
+  nowItems.sort((a, b) => {
+    if (a.situationType !== b.situationType) return a.situationType === 'decision' ? -1 : 1;
+    const aHasDue = a.next_due_date != null;
+    const bHasDue = b.next_due_date != null;
+    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
+    if (aHasDue) return -1;
+    if (bHasDue) return 1;
+    return new Date(a.reportedDate) - new Date(b.reportedDate);
+  });
+
+  enriched.forEach((s) => {
+    if (nowSet.has(s.id)) return;
+    const pc = s.stats?.purchasePending ?? s.stats?.purchaseCount ?? 0;
+    if (pc > 0) {
+      waitingItems.push({ ...s, situationType: 'blocked_piece' });
+      waitingSet.add(s.id);
+    }
+  });
+
+  waitingItems.sort((a, b) => b.daysOpen - a.daysOpen);
+
+  enriched.forEach((s) => {
+    if (nowSet.has(s.id) || waitingSet.has(s.id)) return;
+    const ac = s.stats?.actionCount ?? 0;
+    const pc = s.stats?.purchaseCount ?? 0;
+    const hasInProgressTask = s.tasksLinked.some((t) => t.status === 'in_progress');
+    if ((ac > 0 && pc === 0) || hasInProgressTask) {
+      runningItems.push({ ...s, situationType: 'in_progress' });
+    }
+  });
+
   runningItems.sort((a, b) => {
     const aHasDue = a.next_due_date != null;
     const bHasDue = b.next_due_date != null;
@@ -119,11 +221,7 @@ function classifySections(enriched, { includeAll = false } = {}) {
   ];
 
   if (includeAll) {
-    const classifiedIds = new Set([
-      ...nowSet,
-      ...waitingSet,
-      ...runningItems.map((i) => i.id),
-    ]);
+    const classifiedIds = new Set([...nowSet, ...waitingSet, ...runningItems.map((i) => i.id)]);
     const uncategorized = enriched
       .filter((s) => !classifiedIds.has(s.id))
       .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate))
@@ -136,27 +234,20 @@ function classifySections(enriched, { includeAll = false } = {}) {
   return sections;
 }
 
-function buildRequestsSection(requests) {
-  return {
-    id: 'requests',
-    label: 'Demandes en attente',
-    type: 'requests',
-    items: requests
-      .filter((r) => r.statut === 'nouvelle' || r.statut === 'en_attente')
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
-  };
-}
-
 function computeCounters(interventions, requests) {
+  const activeRequests = requests.filter(
+    (r) => r.statut === 'nouvelle' || r.statut === 'en_attente' || r.statut === 'acceptee'
+  );
   return {
-    critical: interventions.filter((iv) => iv.machine?.health?.level === 'critical').length,
+    requests_new:      requests.filter((r) => r.statut === 'nouvelle').length,
+    requests_waiting:  requests.filter((r) => r.statut === 'en_attente').length,
+    requests_accepted: requests.filter((r) => r.statut === 'acceptee').length,
+    requests:          activeRequests.length,
+    critical:     interventions.filter((iv) => iv.machine?.health?.level === 'critical').length,
     blocked_piece: interventions.filter((iv) => (iv.stats?.purchasePending ?? iv.stats?.purchaseCount ?? 0) > 0).length,
-    decision: interventions.filter(
-      (iv) => iv.priority === 'urgent' && (iv.stats?.actionCount ?? 0) === 0
-    ).length,
-    in_progress: interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.in_progress ?? 0), 0),
-    preventive: interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.todo ?? 0), 0),
-    requests: requests.filter((r) => r.statut === 'nouvelle' || r.statut === 'en_attente').length,
+    decision:     interventions.filter((iv) => iv.priority === 'urgent' && (iv.stats?.actionCount ?? 0) === 0).length,
+    in_progress:  interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.in_progress ?? 0), 0),
+    preventive:   interventions.reduce((sum, iv) => sum + (iv.stats?.taskProgress?.todo ?? 0), 0),
   };
 }
 
@@ -165,12 +256,8 @@ function computeCounters(interventions, requests) {
 export function useBriefingData({ equipementId } = {}) {
   const [sections, setSections] = useState([]);
   const [counters, setCounters] = useState({
-    critical: 0,
-    blocked_piece: 0,
-    decision: 0,
-    in_progress: 0,
-    preventive: 0,
-    requests: 0,
+    requests: 0, requests_new: 0, requests_waiting: 0, requests_accepted: 0,
+    critical: 0, blocked_piece: 0, decision: 0, in_progress: 0, preventive: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -179,65 +266,93 @@ export function useBriefingData({ equipementId } = {}) {
     setLoading(true);
     setError(null);
 
-    const interventionParams = {
-      include: 'stats,tasks',
-      sort: '-priority,-reported_date',
-      limit: 500,
-    };
     if (equipementId) {
-      interventionParams.equipementId = equipementId;
-    } else {
-      interventionParams.status = 'ouvert,en_cours';
-      interventionParams.limit = 200;
-    }
+      // ── Mode équipement : vue inchangée ───────────────────────────────
+      const interventionParams = {
+        include: 'stats,tasks',
+        sort: '-priority,-reported_date',
+        limit: 500,
+        equipementId,
+      };
 
-    const fetches = [fetchInterventions(interventionParams)];
-    if (!equipementId) {
-      fetches.push(fetchInterventionRequests({
-        excludeStatuses: 'rejetee,cloturee,acceptee',
-        limit: 200,
-      }));
-    }
+      const result = await Promise.allSettled([fetchInterventions(interventionParams)]);
+      const [interventionsResult] = result;
 
-    const [interventionsResult, requestsResult] = await Promise.allSettled(fetches);
+      if (interventionsResult.status === 'rejected') {
+        setError(extractApiErrorMessage(interventionsResult.reason, 'Erreur lors du chargement des données'));
+        setLoading(false);
+        return;
+      }
 
-    const interventions =
-      interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
-    const requests =
-      !equipementId && requestsResult?.status === 'fulfilled'
-        ? (requestsResult.value.items ?? [])
-        : [];
+      const interventions = interventionsResult.value;
+      const enriched = interventions.map(enrichSituation);
+      const openEnriched = enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled');
+      const classifiedSections = classifySections(openEnriched, { includeAll: true });
+      const archived = enriched
+        .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
+        .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
 
-    if (interventionsResult.status === 'rejected') {
-      setError(
-        extractApiErrorMessage(interventionsResult.reason, 'Erreur lors du chargement des données')
-      );
+      setSections([
+        ...classifiedSections,
+        { id: 'archived', label: 'Archives', type: 'situation', items: archived },
+      ]);
+      setCounters(computeCounters(interventions, []));
       setLoading(false);
       return;
     }
 
-    const enriched = interventions.map((iv) => enrichSituation(iv));
-    const openEnriched = equipementId
-      ? enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled')
-      : enriched;
-    const classifiedSections = classifySections(openEnriched, { includeAll: !!equipementId });
+    // ── Mode briefing global : piloté par les DI ──────────────────────
+    const [requestsResult, interventionsResult] = await Promise.allSettled([
+      fetchInterventionRequests({ excludeStatuses: 'rejetee,cloturee', limit: 200 }),
+      fetchInterventions({
+        include: 'stats,tasks',
+        sort: '-priority,-reported_date',
+        status: 'ouvert,en_cours',
+        limit: 200,
+      }),
+    ]);
 
-    let newSections;
-    if (equipementId) {
-      const archived = enriched
-        .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
-        .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
-      newSections = [
-        ...classifiedSections,
-        { id: 'archived', label: 'Archives', type: 'situation', items: archived },
-      ];
-    } else {
-      newSections = [...classifiedSections, buildRequestsSection(requests)];
+    if (requestsResult.status === 'rejected' && interventionsResult.status === 'rejected') {
+      setError(extractApiErrorMessage(requestsResult.reason, 'Erreur lors du chargement des données'));
+      setLoading(false);
+      return;
     }
-    const newCounters = computeCounters(interventions, requests);
+
+    const requests = requestsResult.status === 'fulfilled'
+      ? (requestsResult.value.items ?? [])
+      : [];
+    const interventions = interventionsResult.status === 'fulfilled'
+      ? interventionsResult.value
+      : [];
+
+    // IDs d'interventions déjà couvertes par une DI acceptée
+    const coveredInterventionIds = new Set(
+      requests
+        .filter((r) => r.statut === 'acceptee' && r.intervention_id)
+        .map((r) => r.intervention_id)
+    );
+
+    // Interventions orphelines = ouvertes sans DI liée
+    const orphanInterventions = interventions.filter((iv) => !coveredInterventionIds.has(iv.id));
+    const enrichedOrphans = orphanInterventions.map(enrichSituation);
+
+    const diSections = buildDISections(requests);
+    const orphanSections = classifyOrphanSections(enrichedOrphans);
+
+    // Séparateur visuel uniquement si les deux groupes sont présents
+    const newSections = [...diSections];
+    if (orphanSections.length > 0) {
+      newSections.push({
+        id: 'separator_orphans',
+        label: 'Interventions sans demande',
+        type: 'separator',
+        items: [],
+      });
+      newSections.push(...orphanSections);
+    }
 
     setSections(newSections);
-    setCounters(newCounters);
+    setCounters(computeCounters(interventions, requests));
     setLoading(false);
   }, [equipementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
