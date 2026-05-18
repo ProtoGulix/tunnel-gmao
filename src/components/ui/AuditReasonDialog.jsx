@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Dialog, Flex, Button, Text, Box } from '@radix-ui/themes';
 import AuditReasonPicker from './AuditReasonPicker';
 
-export default function AuditReasonDialog({ open, entityType, title, description, onConfirm, onCancel, saving = false }) {
+export default function AuditReasonDialog({ open, entityType, reasons, title, description, onConfirm, onCancel, saving = false }) {
   const [reason, setReason] = useState({ reason_code: '', reason_text: null });
   const [requiresText, setRequiresText] = useState(false);
 
@@ -41,6 +41,7 @@ export default function AuditReasonDialog({ open, entityType, title, description
         <Box mb="4">
           <AuditReasonPicker
             entityType={entityType}
+            reasons={reasons}
             value={reason}
             onChange={handleChange}
           />
@@ -67,6 +68,7 @@ export default function AuditReasonDialog({ open, entityType, title, description
 AuditReasonDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action']).isRequired,
+  reasons: PropTypes.array,
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
   onConfirm: PropTypes.func.isRequired,

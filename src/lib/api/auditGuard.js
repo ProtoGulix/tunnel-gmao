@@ -9,6 +9,12 @@
  * L'intercepteur response de client.js appelle handleAuditError() sur ces erreurs.
  * handleAuditError suspend la requête et émet un événement auquel useAuditGuard réagit.
  * Une fois la raison collectée, la requête est relancée automatiquement.
+ *
+ * Aucune règle d'audit n'est codée en dur ici.
+ * Tout le comportement (silent, default_reason_code, reasons) vient de l'objet
+ * `audit` retourné par l'API dans les réponses GET, mis en cache par contexte :
+ *   - "entity:list"   → GET /interventions       → contexte création  (POST)
+ *   - "entity:detail" → GET /interventions/{id}  → contexte update   (PATCH/PUT/DELETE)
  */
 
 import { api } from '@/lib/api/client';
@@ -22,13 +28,40 @@ const _URL_ENTITY_MAP = {
   'purchase-requests':     'purchase_request',
 };
 
+// ── Cache dynamique ──────────────────────────────────────────────────────────
+
+// Clés : "intervention:list", "intervention:detail", "task:list", etc.
+const _auditConfigCache = new Map();
+
+/** Détermine si l'URL pointe vers une collection (list) ou une ressource (detail). */
+function _urlKind(url) {
+  const parts = (url ?? '').replace(/^\//, '').split('/');
+  return parts.length > 1 && parts[1] ? 'detail' : 'list';
+}
+
+/**
+ * Enregistre la config audit issue d'une réponse GET réussie.
+ * Appelé par l'intercepteur success de client.js.
+ * @param {import('axios').AxiosResponse} response
+ */
+export function cacheAuditFromResponse(response) {
+  if (response.config?.method?.toLowerCase() !== 'get') return;
+  const auditRules = response.data?.audit;
+  if (!auditRules || typeof auditRules.silent !== 'boolean') return;
+  const url = response.config.url ?? '';
+  const segment = url.replace(/^\//, '').split('/')[0];
+  const entityType = _URL_ENTITY_MAP[segment];
+  if (!entityType) return;
+  _auditConfigCache.set(`${entityType}:${_urlKind(url)}`, auditRules);
+}
+
 // ── Observable interne ───────────────────────────────────────────────────────
 
 const _subscribers = new Set();
 
 /**
  * S'abonner aux demandes d'audit.
- * Le callback reçoit { entityType, resolve, reject }.
+ * Le callback reçoit { entityType, reasons, resolve, reject }.
  * @param {Function} callback
  * @returns {Function} unsubscribe
  */
@@ -79,7 +112,6 @@ export function isAuditRequiredError(error) {
  */
 export function getAuditEntityType(error) {
   const url = error?.config?.url ?? '';
-  // url peut être "/intervention-tasks/uuid" ou "intervention-tasks/uuid"
   const segment = url.replace(/^\//, '').split('/')[0];
   return _URL_ENTITY_MAP[segment] ?? null;
 }
@@ -88,12 +120,33 @@ export function getAuditEntityType(error) {
 
 /**
  * Appelé par l'intercepteur response de client.js sur les erreurs d'audit.
- * Suspend la requête en créant une promesse et notifie les abonnés.
+ *
+ * Résolution depuis le cache GET uniquement (aucune règle en dur) :
+ *   - POST       → cherche "entity:list"   (config vue lors du chargement de la liste)
+ *   - PATCH/PUT/DELETE → cherche "entity:detail", avec fallback sur "entity:list"
+ *
+ * Si silent=true  → retry immédiat avec default_reason_code, aucun dialog.
+ * Si silent=false → notifie les abonnés avec les reasons du cache.
+ * Si pas de cache → notifie sans reasons (AuditReasonPicker fera le fetch).
+ *
  * @param {import('axios').AxiosError} error
  * @returns {Promise<import('axios').AxiosResponse>}
  */
 export function handleAuditError(error) {
   const entityType = getAuditEntityType(error);
+  const method = error?.config?.method?.toLowerCase() ?? '';
+
+  // POST = création → audit du contexte list ; sinon → contexte detail, fallback list
+  const cached =
+    method === 'post'
+      ? (_auditConfigCache.get(`${entityType}:list`) ?? null)
+      : (_auditConfigCache.get(`${entityType}:detail`) ?? _auditConfigCache.get(`${entityType}:list`) ?? null);
+
+  if (cached?.silent) {
+    return _retryWithReason(error, { reason_code: cached.default_reason_code });
+  }
+
+  const reasons = cached?.reasons?.length ? cached.reasons : undefined;
 
   return new Promise((resolve, reject) => {
     if (_subscribers.size === 0) {
@@ -104,6 +157,7 @@ export function handleAuditError(error) {
     _subscribers.forEach((cb) =>
       cb({
         entityType,
+        reasons,
         resolve: async (reason) => {
           try {
             const result = await _retryWithReason(error, reason);

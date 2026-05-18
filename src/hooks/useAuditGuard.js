@@ -9,7 +9,7 @@
  * Aucune modification des services API ou des hooks métier n'est nécessaire.
  *
  * Usage :
- *   const { auditProps } = useAuditGuard();
+ *   const { withAudit, auditProps } = useAuditGuard();
  *   <AuditGuardDialog {...auditProps} />
  */
 
@@ -20,15 +20,16 @@ export function useAuditGuard() {
   const [dialogState, setDialogState] = useState({
     open: false,
     entityType: null,
+    reasons: undefined,
     saving: false,
   });
 
   const pendingRef = useRef(null);
 
   useEffect(() => {
-    return onAuditRequired(({ entityType, resolve, reject }) => {
+    return onAuditRequired(({ entityType, reasons, resolve, reject }) => {
       pendingRef.current = { resolve, reject };
-      setDialogState({ open: true, entityType, saving: false });
+      setDialogState({ open: true, entityType, reasons, saving: false });
     });
   }, []);
 
@@ -37,7 +38,7 @@ export function useAuditGuard() {
     setDialogState((s) => ({ ...s, saving: true }));
     pendingRef.current.resolve(reason);
     pendingRef.current = null;
-    setDialogState({ open: false, entityType: null, saving: false });
+    setDialogState({ open: false, entityType: null, reasons: undefined, saving: false });
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -45,13 +46,14 @@ export function useAuditGuard() {
       pendingRef.current.reject();
       pendingRef.current = null;
     }
-    setDialogState({ open: false, entityType: null, saving: false });
+    setDialogState({ open: false, entityType: null, reasons: undefined, saving: false });
   }, []);
 
   return {
     auditProps: {
       open: dialogState.open,
       entityType: dialogState.entityType,
+      reasons: dialogState.reasons,
       saving: dialogState.saving,
       onConfirm: handleConfirm,
       onCancel: handleCancel,

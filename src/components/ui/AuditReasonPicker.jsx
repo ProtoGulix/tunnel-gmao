@@ -3,20 +3,32 @@ import PropTypes from 'prop-types';
 import { Box, Flex, Select, Text, TextArea, Spinner } from '@radix-ui/themes';
 import { fetchAuditReasons } from '@/api/auditReasons';
 
-export default function AuditReasonPicker({ entityType, value, onChange, required = true }) {
-  const [reasons, setReasons] = useState([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * @param {Object}   props
+ * @param {string}   props.entityType  - Type d'entité (pour le fetch fallback)
+ * @param {Array}    [props.reasons]   - Reasons pré-chargées depuis audit.reasons du GET.
+ *                                       Si fourni, le fetch /audit/reasons est ignoré.
+ * @param {Object}   props.value
+ * @param {Function} props.onChange
+ * @param {boolean}  [props.required]
+ */
+export default function AuditReasonPicker({ entityType, reasons: reasonsProp, value, onChange, required = true }) {
+  const [fetchedReasons, setFetchedReasons] = useState([]);
+  const [loading, setLoading] = useState(!reasonsProp);
   const [error, setError] = useState(null);
 
+  // Si reasons est fourni depuis le cache GET, on ne fetch pas
   useEffect(() => {
+    if (reasonsProp !== undefined) return;
     let cancelled = false;
     setLoading(true);
     fetchAuditReasons(entityType)
-      .then((data) => { if (!cancelled) { setReasons(data); setLoading(false); } })
+      .then((data) => { if (!cancelled) { setFetchedReasons(data); setLoading(false); } })
       .catch(() => { if (!cancelled) { setError('Impossible de charger les raisons'); setLoading(false); } });
     return () => { cancelled = true; };
-  }, [entityType]);
+  }, [entityType, reasonsProp]);
 
+  const reasons = reasonsProp ?? fetchedReasons;
   const selectedReason = reasons.find((r) => r.code === value.reason_code);
   const requiresText = selectedReason?.requires_text ?? false;
 
@@ -94,6 +106,7 @@ export default function AuditReasonPicker({ entityType, value, onChange, require
 
 AuditReasonPicker.propTypes = {
   entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action']).isRequired,
+  reasons: PropTypes.array,
   value: PropTypes.shape({
     reason_code: PropTypes.string,
     reason_text: PropTypes.string,
