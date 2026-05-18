@@ -11,7 +11,7 @@
 
 import axios from 'axios';
 import { emitSystemError } from '@/lib/api/systemErrors';
-import { isAuditRequiredError, handleAuditError } from '@/lib/api/auditGuard';
+import { isAuditRequiredError, handleAuditError, cacheAuditFromResponse } from '@/lib/api/auditGuard';
 
 // ==============================
 // CONFIGURATION
@@ -76,7 +76,10 @@ api.interceptors.request.use(
 // ==============================
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    cacheAuditFromResponse(response);
+    return response;
+  },
   async (error) => {
     const status = error.response?.status;
     const originalRequest = error.config;

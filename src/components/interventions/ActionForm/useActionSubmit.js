@@ -32,8 +32,8 @@ export function useActionSubmit({ form, resolvedInterventionId, resolvedTechId, 
       ...(form.formState.date && { created_at: form.formState.date }),
       ...(complexityFactor && { complexity_factor: complexityFactor }),
       ...(selectedTasks.length > 0 && {
-        tasks: selectedTasks.map((task) => ({
-          task_id: String(task.id),
+        tasks: selectedTasks.filter((task) => task.id != null).map((task) => ({
+          task_id: task.id,
           ...(task.taskActionStatus === 'done' ? { close_task: true } : {}),
           ...(task.taskActionStatus === 'skipped'
             ? { skip: true, skip_reason: task.skipReason.trim() }
