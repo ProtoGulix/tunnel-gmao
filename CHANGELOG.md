@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.36.0] — 2026-05-18
+
+### Journal d'audit
+
+- **Traçabilité des décisions** : chaque modification sensible (changement de statut, d'affectation, validation…) déclenche une invite demandant à l'opérateur de saisir la raison de sa décision
+- **Boîte de dialogue de confirmation** : avant d'appliquer toute action impactante, une fenêtre recense les raisons prédéfinies et permet d'en saisir une libre — l'action n'est validée qu'après confirmation explicite
+- **Consultation des logs dans l'Admin** : un nouvel onglet *Audit* liste l'ensemble des événements enregistrés, filtrable par type de décision et avec pagination
+
+### Interventions — alertes d'urgence
+
+- **Badge d'urgence automatique** : si la date de prochaine échéance d'une intervention est dépassée ou très proche, un badge rouge *Urgent* apparaît dans les listes, le briefing et les volets de détail
+- Aucune configuration requise : le calcul est entièrement automatique à partir des données existantes
+
+### Briefing — volet Demandes d'Intervention
+
+- **Volet détail dédié** : cliquer sur une demande d'intervention dans le Briefing ouvre un volet latéral complet avec toutes les informations de la demande, sans quitter la page
+
+### Correctifs
+
+- Comptage correct des tâches et demandes d'achat dans les tuiles du Briefing
+- Lecture des équipements depuis toutes les sources dans le panneau jour du Planning
+
+---
+
 ## [3.35.0] — 2026-05-11
 
 ### Briefing — nouvelle page dédiée
