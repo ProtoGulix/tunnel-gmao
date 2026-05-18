@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.37.0] — 2026-05-18
+
+### Journal d'audit — comportement intelligent
+
+- **Opérations de routine sans interruption** : la création d'une action, la gestion des tâches et des demandes d'intervention n'interrompent plus l'opérateur pour demander une raison — elles sont enregistrées automatiquement sous la catégorie *Routine*
+- **Raisons adaptées au contexte** : pour les opérations qui nécessitent toujours une raison explicite (modification d'une intervention, validation d'une demande d'achat), la liste des choix disponibles est désormais chargée instantanément depuis les données déjà reçues, sans requête supplémentaire
+- **Correctif** : dans de rares cas, la création d'une action avec des tâches associées pouvait échouer silencieusement — ce problème est résolu
+
+---
+
 ## [3.36.0] — 2026-05-18
 
 ### Journal d'audit
