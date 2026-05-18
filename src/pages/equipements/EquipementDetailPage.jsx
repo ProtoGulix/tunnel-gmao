@@ -41,7 +41,7 @@ export default function EquipementDetailPage() {
         onRefresh={manualRefresh}
         noMargin
       />
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
         <BriefingPage
           equipementId={id}
           leftHeader={<EquipementInfoHeader equipement={equipement} health={health} />}

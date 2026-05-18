@@ -119,6 +119,7 @@ export default function SuppliersTab() {
       )}
 
       <MasterDetailLayout
+        fullHeight={false}
         masterProps={{
           icon: Truck,
           title: 'Fournisseurs',

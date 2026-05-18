@@ -20,6 +20,8 @@ import EquipementsPage from '@/pages/equipements/EquipementsPage';
 import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
 import StockPage from '@/pages/stock/StockPage';
 import BriefingPage from '@/pages/briefing/BriefingPage';
+import PageHeader from '@/components/layout/PageHeader';
+import { ClipboardList } from 'lucide-react';
 import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
 import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
 import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
@@ -208,7 +210,12 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout>
-              <BriefingPage />
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+                <PageHeader title="Briefing" subtitle="Avancement des demandes au service technique" icon={ClipboardList} noMargin />
+                <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
+                  <BriefingPage />
+                </div>
+              </div>
             </Layout>
           </ProtectedRoute>
         }

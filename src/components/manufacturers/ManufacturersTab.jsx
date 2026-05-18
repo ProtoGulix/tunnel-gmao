@@ -215,6 +215,7 @@ export default function ManufacturersTab() {
       )}
 
       <MasterDetailLayout
+        fullHeight={false}
         masterProps={{
           icon: Factory,
           title: 'Fabricants',
