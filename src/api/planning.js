@@ -17,8 +17,9 @@ export async function fetchWeekActions(startDate, endDate, techId = null) {
   const params = { start_date: startDate, end_date: endDate };
   if (techId) params.tech_id = techId;
   const res = await api.get('/intervention-actions', { params });
+  const list = res.data.data ?? [];
   const grouped = {};
-  for (const entry of res.data ?? []) {
+  for (const entry of list) {
     grouped[entry.date] = entry.actions ?? [];
   }
   return grouped;
@@ -36,7 +37,7 @@ export async function fetchOpenInterventionsByEquipement(equipementId) {
       status: 'ouvert,en_cours,attente_pieces,attente_prod',
     },
   });
-  return Array.isArray(res.data) ? res.data : [];
+  return res.data.items ?? [];
 }
 
 /**
@@ -56,7 +57,7 @@ export async function fetchOpenInterventions({ techId = null, equipementId = nul
   const params = { status: 'ouvert,en_cours,attente_pieces,attente_prod' };
   if (techId) params.tech_id = techId;
   const res = await api.get('/interventions', { params });
-  return Array.isArray(res.data) ? res.data : [];
+  return res.data.items ?? [];
 }
 
 /**
@@ -84,5 +85,5 @@ export async function fetchActiveUsers() {
  */
 export async function createActionDirect(payload) {
   const res = await api.post('/intervention-actions', payload);
-  return res.data;
+  return res.data.data;
 }

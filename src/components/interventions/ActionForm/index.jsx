@@ -55,11 +55,6 @@ function ActionForm({
     interventionMeta, onSubmit, onSuccess,
   });
 
-  const hasMissingTaskStatus = selectedTasks.some((t) => !t.taskActionStatus);
-  const hasMissingSkippedReason = selectedTasks.some(
-    (t) => t.taskActionStatus === 'skipped' && !t.skipReason?.trim()
-  );
-
   const allErrors = [...form.validation.errors, ...(submitError ? [submitError] : [])];
 
   const cardStyle = isPreventif
@@ -102,7 +97,7 @@ function ActionForm({
           />
         )}
 
-        <form onSubmit={(e) => handleSubmit(e, { hasMissingTaskStatus, hasMissingSkippedReason })}>
+        <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3">
             <ActionFormFields
               formState={form.formState}

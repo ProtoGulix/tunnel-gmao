@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Dialog } from '@radix-ui/themes';
+import { Dialog, VisuallyHidden } from '@radix-ui/themes';
 import DayContextPanel from '@/components/planning/DayContextPanel';
 
 export default function ActionModal({
@@ -28,6 +28,7 @@ export default function ActionModal({
           padding: 'var(--space-5)',
         }}
       >
+        <VisuallyHidden><Dialog.Title>Planification</Dialog.Title></VisuallyHidden>
         {open && date && (
           <DayContextPanel
             date={date}

@@ -42,7 +42,7 @@ export async function fetchEquipements(params = {}) {
  */
 export async function fetchEquipementById(id, params = {}) {
   const response = await api.get(`/equipements/${id}`, { params });
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -56,7 +56,7 @@ export async function fetchEquipementById(id, params = {}) {
  */
 export async function createEquipement(data) {
   const response = await api.post('/equipements', data);
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -67,7 +67,7 @@ export async function createEquipement(data) {
  */
 export async function patchEquipement(id, updates) {
   const response = await api.patch(`/equipements/${id}`, updates);
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -78,7 +78,7 @@ export async function patchEquipement(id, updates) {
  */
 export async function updateEquipement(id, updates) {
   const response = await api.put(`/equipements/${id}`, updates);
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -100,7 +100,7 @@ export async function deleteEquipement(id) {
  */
 export async function fetchEquipementStats(id, params = {}) {
   const response = await api.get(`/equipements/${id}/stats`, { params });
-  return response.data;
+  return response.data.data;
 }
 
 /**
@@ -110,7 +110,7 @@ export async function fetchEquipementStats(id, params = {}) {
  */
 export async function fetchEquipementHealth(id) {
   const response = await api.get(`/equipements/${id}/health`);
-  return response.data;
+  return response.data.data;
 }
 
 /**

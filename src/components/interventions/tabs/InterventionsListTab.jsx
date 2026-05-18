@@ -41,6 +41,7 @@ export default function InterventionsListTab({ searchTerm = '' }) {
   const actionnableColumns = [
     { key: 'code', header: 'Code', width: '180px', align: 'left' },
     { key: 'title', header: 'Intervention', width: undefined, align: 'left' },
+    { key: 'due', header: 'Échéance', width: '100px', align: 'center' },
     { key: 'info', header: 'Info', width: '140px', align: 'left' },
     { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }
@@ -50,6 +51,7 @@ export default function InterventionsListTab({ searchTerm = '' }) {
   const bloqueColumns = [
     { key: 'code', header: 'Code', width: '180px', align: 'left' },
     { key: 'title', header: 'Intervention bloquée', width: undefined, align: 'left' },
+    { key: 'due', header: 'Échéance', width: '100px', align: 'center' },
     { key: 'info', header: 'Info', width: '140px', align: 'left' },
     { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }
@@ -59,6 +61,7 @@ export default function InterventionsListTab({ searchTerm = '' }) {
   const standardColumns = [
     { key: 'code', header: 'Code', width: '180px', align: 'left' },
     { key: 'title', header: 'Titre', width: undefined, align: 'left' },
+    { key: 'due', header: 'Échéance', width: '100px', align: 'center' },
     { key: 'info', header: 'Info', width: '140px', align: 'left' },
     { key: 'age', header: 'Âge', width: '80px', align: 'right' },
     { key: '_action', header: '', width: '100px', align: 'center' }

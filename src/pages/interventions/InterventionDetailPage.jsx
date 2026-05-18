@@ -97,14 +97,13 @@ export default function InterventionDetailPage() {
     }
   }, [activeTab, pdfUrl, pdfLoading, loadPdf]);
 
-  // Handlers
   const handleStatusChange = useCallback(
     async (newStatus) => {
       try {
         setMutationError('');
         await updateStatus(newStatus);
       } catch (err) {
-        setMutationError(extractApiErrorMessage(err, 'Erreur changement statut'));
+        setMutationError(extractApiErrorMessage(err, 'Erreur lors de la modification'));
       }
     },
     [updateStatus]
@@ -116,7 +115,7 @@ export default function InterventionDetailPage() {
         setMutationError('');
         await updateIntervention({ priority: newPriority });
       } catch (err) {
-        setMutationError(extractApiErrorMessage(err, 'Erreur changement priorité'));
+        setMutationError(extractApiErrorMessage(err, 'Erreur lors de la modification'));
       }
     },
     [updateIntervention]

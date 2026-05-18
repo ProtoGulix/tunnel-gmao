@@ -8,11 +8,17 @@ import DayContextRightColumn from './DayContextRightColumn';
 
 function detectUniqueEquipement(actions) {
   if (!actions?.length) return null;
-  const machines = actions.map((a) => a.intervention?.machine).filter(Boolean);
-  if (!machines.length) return null;
-  const firstId = machines[0].id;
-  if (!machines.every((m) => m.id === firstId)) return null;
-  return { id: machines[0].id, code: machines[0].code ?? '', name: machines[0].name ?? '' };
+  const equipements = actions.map((a) => {
+    const iv = a.intervention;
+    if (!iv) return null;
+    if (iv.machine) return { id: iv.machine.id, code: iv.machine.code ?? '', name: iv.machine.name ?? '' };
+    if (iv.equipement_id) return { id: iv.equipement_id, code: iv.equipement_code ?? '', name: iv.equipement_name ?? '' };
+    return null;
+  }).filter(Boolean);
+  if (!equipements.length) return null;
+  const firstId = equipements[0].id;
+  if (!equipements.every((m) => m.id === firstId)) return null;
+  return equipements[0];
 }
 
 export default function DayContextPanel({
@@ -21,6 +27,7 @@ export default function DayContextPanel({
   weekActionsForDay = [],
   preselectedAction = null,
   onActionCreated,
+  onClose,
 }) {
   const [metadata, setMetadata] = useState({ subcategories: [], complexityFactors: [] });
 
@@ -31,9 +38,13 @@ export default function DayContextPanel({
   }, []);
 
   const preselectedEquipement = useMemo(() => {
-    if (preselectedAction?.intervention?.machine) {
-      const m = preselectedAction.intervention.machine;
+    const iv = preselectedAction?.intervention;
+    if (iv?.machine) {
+      const m = iv.machine;
       return { id: m.id, code: m.code ?? '', name: m.name ?? '' };
+    }
+    if (iv?.equipement_id) {
+      return { id: iv.equipement_id, code: iv.equipement_code ?? '', name: iv.equipement_name ?? '' };
     }
     return detectUniqueEquipement(weekActionsForDay);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,6 +108,7 @@ export default function DayContextPanel({
           selectedIntervention={selectedIntervention}
           selectedRequest={selectedRequest}
           onSuccess={handleSuccess}
+          onCancel={onClose}
           metadata={metadata}
         />
       </Box>
@@ -111,4 +123,5 @@ DayContextPanel.propTypes = {
   weekActionsForDay: PropTypes.arrayOf(PropTypes.object),
   preselectedAction: PropTypes.object,
   onActionCreated: PropTypes.func,
+  onClose: PropTypes.func,
 };

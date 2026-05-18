@@ -44,7 +44,7 @@ export function usePlanningWeek() {
       fetchWeekActions(weekStart, weekEnd, selectedTechId),
       fetchTasksWorkspace({
         status: 'todo,in_progress',
-        assignee_id: selectedTechId,
+        assigned_to: selectedTechId,
         skip: taskSkip,
         limit: 20,
       }),

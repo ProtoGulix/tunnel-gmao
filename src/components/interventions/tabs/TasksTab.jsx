@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField,
+  Badge, Box, Button, Callout, Dialog, Flex, Separator, Text, TextField,
 } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
@@ -245,25 +245,38 @@ export default function TasksTab({ interventionId, isLocked = false }) {
       )}
 
       {/* ── Dialog Ignorer ── */}
-      <AlertDialog.Root open={!!skipTarget} onOpenChange={(open) => { if (!open) { setSkipTarget(null); setSkipReason(''); } }}>
-        <AlertDialog.Content maxWidth="420px">
-          <AlertDialog.Title>Ignorer l&apos;étape</AlertDialog.Title>
-          <AlertDialog.Description>{skipTarget?.label}</AlertDialog.Description>
-          <Box mt="2">
+      <Dialog.Root
+        open={!!skipTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSkipTarget(null);
+            setSkipReason('');
+          }
+        }}
+      >
+        <Dialog.Content maxWidth="440px" style={{ padding: '20px 24px' }}>
+          <Dialog.Title size="3" mb="1">Ignorer l&apos;étape</Dialog.Title>
+          {skipTarget?.label && (
+            <Text as="p" size="2" color="gray" style={{ marginBottom: 12 }}>{skipTarget.label}</Text>
+          )}
+          <Box mb="3">
+            <Text as="div" size="1" weight="bold" mb="1">Motif du skip <Text size="1" color="gray">(optionnel)</Text></Text>
             <TextField.Root
               value={skipReason}
               onChange={(e) => setSkipReason(e.target.value)}
-              placeholder="Raison (optionnel)…"
+              placeholder="Ex : pièce manquante, hors périmètre…"
             />
           </Box>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="orange" onClick={handleSkip}>Ignorer</Button>
-            </AlertDialog.Action>
+          <Flex gap="2" justify="end">
+            <Button variant="soft" color="gray" onClick={() => { setSkipTarget(null); setSkipReason(''); }}>
+              Annuler
+            </Button>
+            <Button color="orange" disabled={saving === skipTarget?.id} onClick={handleSkip}>
+              Ignorer
+            </Button>
           </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+        </Dialog.Content>
+      </Dialog.Root>
     </Box>
   );
 }

@@ -16,6 +16,7 @@ export default function DayContextRightColumn({
   selectedIntervention,
   selectedRequest,
   onSuccess,
+  onCancel,
   metadata,
 }) {
   const [createdIntervention, setCreatedIntervention] = useState(null);
@@ -124,7 +125,7 @@ export default function DayContextRightColumn({
                 key={`${resolvedInterventionId}-${date}`}
                 initialState={{ date: date ?? '' }}
                 metadata={metadata}
-                onCancel={() => {}}
+                onCancel={onCancel ?? (() => {})}
                 onSubmit={createActionDirect}
                 onSuccess={onSuccess}
                 interventionId={resolvedInterventionId}
@@ -149,5 +150,6 @@ DayContextRightColumn.propTypes = {
   selectedIntervention: PropTypes.object,
   selectedRequest: PropTypes.object,
   onSuccess: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
   metadata: PropTypes.object.isRequired,
 };

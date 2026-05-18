@@ -7,6 +7,34 @@
 
 import { Flex, Badge, Text } from '@radix-ui/themes';
 import { PRIORITY_CONFIG, STATUS_CONFIG } from '@/config/interventionTypes';
+import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
+
+/**
+ * Badge de colonne "Due" pour la liste des interventions.
+ * Affiche next_due_date avec code couleur urgence ; fallback sur reported_date.
+ */
+export function DueDateCell({ interv }) {
+  const urgency = getInterventionUrgency(interv.next_due_date, interv.reportedDate);
+  const label = interv.next_due_date ? formatDueDate(interv.next_due_date) : null;
+
+  if (!interv.next_due_date) {
+    return (
+      <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>
+        —
+      </Text>
+    );
+  }
+
+  const { level } = urgency;
+  const badgeColor = level === 'overdue' ? 'red' : level === 'urgent' ? 'orange' : level === 'planned' ? 'blue' : 'gray';
+  const badgeVariant = level === 'overdue' ? 'solid' : 'soft';
+
+  return (
+    <Badge color={badgeColor} variant={badgeVariant} size="1" style={{ whiteSpace: 'nowrap' }}>
+      {label}
+    </Badge>
+  );
+}
 
 /**
  * Calcul de l'âge en jours
@@ -114,7 +142,10 @@ export function renderActionnableCell(interv, column) {
           {age}j
         </Badge>
       );
-    
+
+    case 'due':
+      return <DueDateCell interv={interv} />;
+
     default:
       return null;
   }
@@ -186,7 +217,10 @@ export function renderBloqueCell(interv, column) {
     
     case 'age':
       return <Text size="2" color="gray">{age}j</Text>;
-    
+
+    case 'due':
+      return <DueDateCell interv={interv} />;
+
     default:
       return null;
   }
@@ -266,7 +300,10 @@ export function renderStandardCell(interv, column) {
         );
       }
       return <Text size="2" color="gray">{age}j</Text>;
-    
+
+    case 'due':
+      return <DueDateCell interv={interv} />;
+
     default:
       return null;
   }

@@ -282,7 +282,7 @@ export default function ActionsTab({
           <ActionForm
             initialState={{
               time: '',
-              date: new Date().toISOString().split('T')[0],
+              date: '',
               category: '',
               description: '',
               complexity: '5',

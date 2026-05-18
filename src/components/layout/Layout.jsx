@@ -56,6 +56,8 @@ import { SystemErrorBanner } from './SystemErrorBanner';
 import { useMediaQuery } from "@/hooks/shared/useMediaQuery";
 import { MOBILE_QUERY } from "@/config/layoutConfig";
 import styles from '@/styles/modules/Layout.module.css';
+import { useAuditGuard } from '@/hooks/useAuditGuard';
+import AuditGuardDialog from '@/components/ui/AuditGuardDialog';
 
 /**
  * Layout principal avec Sidebar + contenu responsive
@@ -82,6 +84,7 @@ export default function Layout({ children, requiresAuth = true }) {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const { auditProps } = useAuditGuard();
 
   const handleLogout = async () => {
     await logout();
@@ -96,6 +99,8 @@ export default function Layout({ children, requiresAuth = true }) {
         onLogout={handleLogout}
         isMobile={isMobile}
       />
+
+      <AuditGuardDialog {...auditProps} />
 
       <main className={styles.main} role="main" aria-label="Contenu principal">
         <SystemErrorBanner />

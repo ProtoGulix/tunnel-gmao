@@ -7,11 +7,11 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Badge, Box, Button, Callout, Flex, Select, Separator, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
-import { AlertCircle, Bot, Clock, User, Wrench } from 'lucide-react';
+import { AlertCircle, Bot, Clock, User, Wrench, Zap, ShoppingCart, ArrowUpRight } from 'lucide-react';
+import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
 /** Transitions autorisées par statut (source : doc API /intervention-requests/{id}/transition) */
 const TRANSITIONS = {
@@ -235,6 +235,117 @@ function TransitionZone({ statut, request, transitioning, transitionError, onTra
 }
 TransitionZone.propTypes = { statut: PropTypes.string.isRequired, request: PropTypes.object, transitioning: PropTypes.bool, transitionError: PropTypes.string, onTransition: PropTypes.func.isRequired };
 
+const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normale: 'Normal', faible: 'Faible' };
+const PRIORITY_COLOR = { urgent: 'var(--red-11)', important: 'var(--orange-11)', normale: 'var(--gray-11)', faible: 'var(--gray-9)' };
+
+function InterventionProgress({ iv, interventionId }) {
+  if (!iv && !interventionId) return null;
+
+  return (
+    <Box mb="3" p="3" style={{ backgroundColor: 'var(--blue-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-5)' }}>
+      <Flex justify="between" align="start" mb="2">
+        <Flex align="center" gap="2">
+          <Wrench size={14} color="var(--blue-9)" />
+          <Text size="2" weight="bold" style={{ color: 'var(--blue-11)' }}>Intervention liée</Text>
+        </Flex>
+        {interventionId && (
+          <Button size="1" variant="ghost" color="blue" asChild>
+            <Link to={`/intervention/${interventionId}`} style={{ textDecoration: 'none' }}>
+              Ouvrir <ArrowUpRight size={12} />
+            </Link>
+          </Button>
+        )}
+      </Flex>
+
+      {iv ? (
+        <>
+          {/* Code + type + priorité + statut */}
+          <Flex align="center" gap="2" wrap="wrap" mb="2">
+            <Text size="2" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--blue-11)' }}>
+              {iv.code}
+            </Text>
+            {iv.type_inter && (
+              <Badge size="1" variant="soft" color="blue">
+                {TYPE_INTER_LABELS[iv.type_inter] ?? iv.type_inter}
+              </Badge>
+            )}
+            {iv.status_label && (
+              <Badge size="1" variant="soft"
+                style={{ backgroundColor: (iv.status_color || '#888') + '22', color: iv.status_color || '#888' }}>
+                {iv.status_label}
+              </Badge>
+            )}
+            {iv.priority && iv.priority !== 'normale' && (
+              <Text size="1" weight="medium" style={{ color: PRIORITY_COLOR[iv.priority] }}>
+                {PRIORITY_LABEL[iv.priority] ?? iv.priority}
+              </Text>
+            )}
+          </Flex>
+
+          {/* Tech + date */}
+          <Flex gap="3" align="center" mb="2" wrap="wrap">
+            {iv.tech_initials && (
+              <Flex align="center" gap="1">
+                <User size={11} color="var(--gray-9)" />
+                <Text size="1" color="gray">Tech : {iv.tech_initials}</Text>
+              </Flex>
+            )}
+            {iv.reported_date && (
+              <Flex align="center" gap="1">
+                <Clock size={11} color="var(--gray-9)" />
+                <Text size="1" color="gray">Signalé le {new Date(iv.reported_date).toLocaleDateString('fr-FR')}</Text>
+              </Flex>
+            )}
+          </Flex>
+
+          {/* Stats */}
+          {iv.stats && (
+            <Flex gap="4" align="center" style={{ borderTop: '1px solid var(--blue-4)', paddingTop: 8 }}>
+              <Flex align="center" gap="1">
+                <Zap size={12} color="var(--gray-9)" />
+                <Text size="1" color="gray" weight="medium">{iv.stats.action_count ?? 0}</Text>
+                <Text size="1" color="gray">action{(iv.stats.action_count ?? 0) > 1 ? 's' : ''}</Text>
+              </Flex>
+              <Flex align="center" gap="1">
+                <Clock size={12} color="var(--gray-9)" />
+                <Text size="1" color="gray" weight="medium">{iv.stats.total_time ?? 0}h</Text>
+                <Text size="1" color="gray">passées</Text>
+              </Flex>
+              {(iv.stats.purchase_count ?? 0) > 0 && (
+                <Flex align="center" gap="1">
+                  <ShoppingCart size={12} color="var(--gray-9)" />
+                  <Text size="1" color="gray" weight="medium">{iv.stats.purchase_count}</Text>
+                  <Text size="1" color="gray">commande{iv.stats.purchase_count > 1 ? 's' : ''}</Text>
+                </Flex>
+              )}
+            </Flex>
+          )}
+        </>
+      ) : (
+        <Text size="1" color="gray">Identifiant : {interventionId}</Text>
+      )}
+    </Box>
+  );
+}
+
+InterventionProgress.propTypes = {
+  iv: PropTypes.shape({
+    code: PropTypes.string,
+    type_inter: PropTypes.string,
+    priority: PropTypes.string,
+    status_label: PropTypes.string,
+    status_color: PropTypes.string,
+    tech_initials: PropTypes.string,
+    reported_date: PropTypes.string,
+    stats: PropTypes.shape({
+      action_count: PropTypes.number,
+      total_time: PropTypes.number,
+      purchase_count: PropTypes.number,
+    }),
+  }),
+  interventionId: PropTypes.string,
+};
+
 function EquipementLabel({ equipement }) {
   return (
     <Flex align="center" gap="2">
@@ -309,14 +420,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone 
       </Box>
 
       {detail.intervention_id && (
-        <Box mb="3">
-          <Button size="2" variant="soft" color="blue" asChild>
-            <Link to={`/intervention/${detail.intervention_id}`} style={{ textDecoration: 'none' }}>
-              <Wrench size={14} />
-              Voir l'intervention liée
-            </Link>
-          </Button>
-        </Box>
+        <InterventionProgress iv={detail.intervention ?? null} interventionId={detail.intervention_id} />
       )}
 
       <Box mb="3">

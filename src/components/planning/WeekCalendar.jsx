@@ -19,7 +19,7 @@ import { STATUS_CONFIG } from '@/config/interventionTypes';
 
 /* ── ActionItem ───────────────────────────────────────────────────────────── */
 
-export function ActionItem({ action, compact = false, inline = false, onAddPurchaseRequest }) {
+export function ActionItem({ action, compact = false, inline = false, onAddPurchaseRequest, hideInterventionHeader = false }) {
   const durationMin = actionDurationMinutes(action);
   const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
   const subcatCode = action.subcategory?.code ?? action.subcategory?.name ?? '—';
@@ -68,7 +68,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
         }}
       >
         {/* ── En-tête : code · titre · statut · bouton achat ── */}
-        <Flex align="center" gap="2" style={{ padding: '8px 10px 6px', borderBottom: '1px solid var(--gray-4)' }}>
+        {!hideInterventionHeader && <Flex align="center" gap="2" style={{ padding: '8px 10px 6px', borderBottom: '1px solid var(--gray-4)' }}>
           {interventionId
             ? <Link to={`/intervention/${interventionId}`} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none', flexShrink: 0 }}>
                 <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13 }}>{interventionCode}</Badge>
@@ -91,7 +91,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
               <ShoppingCart size={12} />
             </Button>
           )}
-        </Flex>
+        </Flex>}
 
         {/* ── Corps : sous-catégorie · horaires · description ── */}
         <Box style={{ padding: '6px 10px 8px' }}>

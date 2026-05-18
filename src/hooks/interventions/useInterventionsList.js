@@ -83,17 +83,29 @@ export function useInterventionsList(searchTerm = '') {
       const priorityOrder = { urgent: 0, important: 1, normal: 2, faible: 3 };
 
       return [...interventions].sort((a, b) => {
-        // 1. Priorité
+        // 1. next_due_date ASC — celles sans date vont après celles avec date
+        const aHasDue = a.next_due_date != null;
+        const bHasDue = b.next_due_date != null;
+        if (aHasDue && bHasDue) {
+          const dueDiff = new Date(a.next_due_date) - new Date(b.next_due_date);
+          if (dueDiff !== 0) return dueDiff;
+        } else if (aHasDue) {
+          return -1;
+        } else if (bHasDue) {
+          return 1;
+        }
+
+        // 2. Priorité
         const priorityA = priorityOrder[a.priority?.toLowerCase()] ?? 2;
         const priorityB = priorityOrder[b.priority?.toLowerCase()] ?? 2;
         if (priorityA !== priorityB) return priorityA - priorityB;
 
-        // 2. Fiches non imprimées en haut (pour faciliter la clôture)
+        // 3. Fiches non imprimées en haut (pour faciliter la clôture)
         if (a.printedFiche !== b.printedFiche) {
           return a.printedFiche ? 1 : -1;
         }
 
-        // 3. Âge décroissant (plus récent en haut)
+        // 4. Âge décroissant (plus ancienne en haut)
         const ageA = calculateAge(a.reportedDate);
         const ageB = calculateAge(b.reportedDate);
         return ageB - ageA;

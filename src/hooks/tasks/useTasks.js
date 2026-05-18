@@ -151,14 +151,14 @@ export function useTasks() {
 
     try {
       const result = await fetchTasksWorkspace({
-        include_closed: true,
+        include_done: true,
         include_actions: true,
         include_options: true,
         include_counters: true,
         limit: 200,
       });
 
-      const rawTasks = Array.isArray(result.tasks) ? result.tasks : [];
+      const rawTasks = (result.items ?? []).flatMap((g) => g.tasks ?? []);
       setItems(rawTasks.map(mapTask));
 
       if (result.options?.users) {
