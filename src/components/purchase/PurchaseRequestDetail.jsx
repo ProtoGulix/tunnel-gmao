@@ -10,7 +10,6 @@ import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriang
 import { Link } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { hexBadgeStyle, PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
-import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 
 function DetailRow({ label, children }) {
   return (
@@ -215,17 +214,20 @@ function SupplierCell({ supplier }) {
 
 SupplierCell.propTypes = { supplier: PropTypes.object };
 
-function ManufacturerCell({ ref: mRef, name }) {
-  if (!mRef) return <Text size="1" color="gray">—</Text>;
+function ManufacturerCell({ manufacturer, catalogRef }) {
+  if (!manufacturer?.ref && !catalogRef) return <Text size="1" color="gray">—</Text>;
   return (
     <Flex direction="column" gap="1">
-      <Text size="1" weight="medium">{mRef}</Text>
-      {name && <Text size="1" color="gray">{name}</Text>}
+      {catalogRef && <Badge color="violet" variant="soft" size="1" style={{ width: 'fit-content' }}>{catalogRef}</Badge>}
+      {manufacturer?.ref && manufacturer.ref !== catalogRef && (
+        <Text size="1" weight="medium">{manufacturer.ref}</Text>
+      )}
+      {manufacturer?.name && <Text size="1" color="gray">{manufacturer.name}</Text>}
     </Flex>
   );
 }
 
-ManufacturerCell.propTypes = { ref: PropTypes.string, name: PropTypes.string };
+ManufacturerCell.propTypes = { manufacturer: PropTypes.object, catalogRef: PropTypes.string };
 
 function ReceivedCell({ received, total }) {
   if (received > 0) return <Badge size="1" variant="soft" color="teal">{received} / {total}</Badge>;
@@ -241,19 +243,24 @@ function PriceCell({ value, bold }) {
 
 PriceCell.propTypes = { value: PropTypes.number, bold: PropTypes.bool };
 
-function OrderStatusBadge({ status, orderStatuses }) {
-  const statusInfo = orderStatuses[status] ?? { label: status || '—', color: 'gray' };
-  const style = hexBadgeStyle(statusInfo.color);
+function OrderStatusBadge({ statusObj }) {
+  if (!statusObj) return <Text size="1" color="gray">—</Text>;
+  const style = hexBadgeStyle(statusObj.color);
   return (
-    <Badge size="1" {...(style ? { style } : { color: statusInfo.color, variant: 'soft' })}>
-      {statusInfo.label}
-    </Badge>
+    <Flex direction="column" gap="1">
+      <Badge size="1" {...(style ? { style } : { color: 'gray', variant: 'soft' })}>
+        {statusObj.label || statusObj.code}
+      </Badge>
+      {statusObj.description && (
+        <Text size="1" color="gray" style={{ maxWidth: 180 }}>{statusObj.description}</Text>
+      )}
+    </Flex>
   );
 }
 
-OrderStatusBadge.propTypes = { status: PropTypes.string, orderStatuses: PropTypes.object.isRequired };
+OrderStatusBadge.propTypes = { statusObj: PropTypes.object };
 
-function OrderLineRow({ line, itemQuantity, itemUnit, orderStatuses }) {
+function OrderLineRow({ line, itemQuantity, itemUnit }) {
   const price = line.unit_price ?? line.quote_price;
   const qty = line.quantity_allocated ?? itemQuantity;
   const total = line.total_price ?? (price != null ? price * qty : null);
@@ -261,8 +268,8 @@ function OrderLineRow({ line, itemQuantity, itemUnit, orderStatuses }) {
     <Table.Row style={line.is_selected ? { background: 'var(--green-2)' } : undefined}>
       <Table.Cell><OrderNumberCell number={line.supplier_order_number} /></Table.Cell>
       <Table.Cell><SupplierCell supplier={line.supplier} /></Table.Cell>
-      <Table.Cell><OrderStatusBadge status={line.supplier_order_status} orderStatuses={orderStatuses} /></Table.Cell>
-      <Table.Cell><ManufacturerCell ref={line.manufacturer_ref} name={line.manufacturer} /></Table.Cell>
+      <Table.Cell><OrderStatusBadge statusObj={line.supplier_order_status} /></Table.Cell>
+      <Table.Cell><ManufacturerCell manufacturer={line.manufacturer} catalogRef={line.catalog_ref} /></Table.Cell>
       <Table.Cell align="center"><Text size="2">{qty} {itemUnit || 'pcs'}</Text></Table.Cell>
       <Table.Cell align="right"><PriceCell value={price} /></Table.Cell>
       <Table.Cell align="right"><PriceCell value={total} bold /></Table.Cell>
@@ -279,10 +286,9 @@ OrderLineRow.propTypes = {
   line: PropTypes.object.isRequired,
   itemQuantity: PropTypes.number,
   itemUnit: PropTypes.string,
-  orderStatuses: PropTypes.object.isRequired,
 };
 
-function OrderLinesSection({ orderLines, itemQuantity, itemUnit, orderStatuses }) {
+function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
   return (
     <Box>
       <Flex align="center" gap="2" mb="2">
@@ -307,7 +313,7 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit, orderStatuses }
                 <Table.ColumnHeaderCell>N° panier</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Fournisseur</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>Réf. fabricant</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Réf. catalogue / fab.</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell align="center">Qté allouée</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell align="right">Prix u.</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell align="right">Total</Table.ColumnHeaderCell>
@@ -323,7 +329,6 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit, orderStatuses }
                   line={line}
                   itemQuantity={itemQuantity}
                   itemUnit={itemUnit}
-                  orderStatuses={orderStatuses}
                 />
               ))}
             </Table.Body>
@@ -338,7 +343,6 @@ OrderLinesSection.propTypes = {
   orderLines: PropTypes.array.isRequired,
   itemQuantity: PropTypes.number,
   itemUnit: PropTypes.string,
-  orderStatuses: PropTypes.object.isRequired,
 };
 
 function DetailHeader({ item, onEdit, onDelete }) {
@@ -378,8 +382,6 @@ DetailHeader.propTypes = {
 };
 
 export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
-  const { map: orderStatuses } = useSupplierOrderStatuses();
-
   if (!item) return null;
   const urgency = PURCHASE_URGENCY[item.urgency] || PURCHASE_URGENCY.normal;
   const statusColor = item.derived_status?.color;
@@ -401,7 +403,6 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
           orderLines={item.order_lines || []}
           itemQuantity={item.quantity}
           itemUnit={item.unit}
-          orderStatuses={orderStatuses}
         />
       </Flex>
     </Box>

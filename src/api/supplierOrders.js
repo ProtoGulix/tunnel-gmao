@@ -64,16 +64,6 @@ export async function updateSupplierOrder(id, updates) {
 }
 
 /**
- * Fetch allowed status transitions from current status
- * @param {string} id
- * @returns {Promise<{current_status: string, transitions: Array<{to: string, description: string}>}>}
- */
-export async function fetchSupplierOrderTransitions(id) {
-  const response = await api.get(`/supplier-orders/${id}/transitions`);
-  return response.data;
-}
-
-/**
  * Delete a supplier order
  * @param {string} id
  * @returns {Promise<void>}

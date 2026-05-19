@@ -1,6 +1,5 @@
 /**
  * Header du détail d'un panier fournisseur : numéro, statut, actions.
- * Les transitions disponibles viennent de GET /supplier-orders/{id}/transitions.
  * @module components/purchase/SupplierOrderHeader
  */
 

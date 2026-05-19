@@ -7,7 +7,7 @@
 import PropTypes from 'prop-types';
 import { Badge, Button, Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { Save } from 'lucide-react';
-import { LineBadges } from '@/components/purchase/SupplierOrderLines';
+import { LineBadges, LineRefs } from '@/components/purchase/SupplierOrderLines';
 
 function hasDraft(draft, line) {
   return (
@@ -37,6 +37,10 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
             )}
           </Flex>
         </Flex>
+      </Table.Cell>
+
+      <Table.Cell style={{ verticalAlign: 'middle' }}>
+        <LineRefs line={line} />
       </Table.Cell>
 
       <Table.Cell style={{ verticalAlign: 'middle' }}>
