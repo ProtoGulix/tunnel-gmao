@@ -24,6 +24,7 @@ function MasterPanel({
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
+      height: '100%',
     }}>
       {/* Header */}
       <Box style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-5)', background: 'var(--gray-2)', flexShrink: 0 }}>
@@ -54,7 +55,7 @@ function MasterPanel({
       </Box>
 
       {/* Liste */}
-      <Box style={{ flex: 1, overflowY: 'auto', minHeight: 0, maxHeight: 620 }}>
+      <Box style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {loading ? (
           <LoadingState fullscreen={false} message="Chargement…" />
         ) : children}
@@ -105,10 +106,14 @@ MasterPanel.propTypes = {
   headerExtra: PropTypes.node,
 };
 
-function DetailPanel({ children, loading, emptyLabel }) {
+function DetailPanel({ children, loading, emptyLabel, freeMode }) {
+  const borderStyle = freeMode
+    ? { borderLeft: '1px solid var(--gray-5)' }
+    : { border: '1px solid var(--gray-5)', borderRadius: 'var(--radius-3)' };
+
   if (loading) {
     return (
-      <Box style={{ border: '1px solid var(--gray-5)', borderRadius: 'var(--radius-3)', height: 730 }}>
+      <Box style={{ ...borderStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
         <LoadingState fullscreen={false} message="Chargement…" />
       </Box>
     );
@@ -117,9 +122,9 @@ function DetailPanel({ children, loading, emptyLabel }) {
   if (!children) {
     return (
       <Box style={{
-        border: '1px dashed var(--gray-6)',
-        borderRadius: 'var(--radius-3)',
-        height: 730,
+        ...borderStyle,
+        ...(freeMode ? {} : { borderStyle: 'dashed' }),
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -134,11 +139,13 @@ function DetailPanel({ children, loading, emptyLabel }) {
 
   return (
     <Box style={{
-      border: '1px solid var(--gray-5)',
-      borderRadius: 'var(--radius-3)',
+      ...borderStyle,
       overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
     }}>
-      <Box style={{ height: 730, overflowY: 'auto', padding: '14px 16px' }}>
+      <Box style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: freeMode ? 0 : '14px 16px' }}>
         {children}
       </Box>
     </Box>
@@ -151,17 +158,44 @@ DetailPanel.propTypes = {
   emptyLabel: PropTypes.string,
 };
 
+/**
+ * Panneau gauche libre — utilisé quand le contenu est entièrement custom
+ * (pas de header/search/pagination intégré). Le contenu scroll librement.
+ */
+function FreeMasterPanel({ children }) {
+  return (
+    <div style={{
+      height: '100%',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {children}
+    </div>
+  );
+}
+FreeMasterPanel.propTypes = { children: PropTypes.node };
+
 export default function MasterDetailLayout({
   masterProps,
+  leftPanel,
   detailChildren,
   detailLoading,
   emptyLabel,
-  ratio = '1fr 1.3fr',
+  ratio,
+  fullHeight,
 }) {
+  const gridRatio = ratio ?? (leftPanel ? '42% 1fr' : '1fr 1.3fr');
+  const gap = leftPanel ? 0 : '12px';
+  const height = fullHeight !== false ? '100%' : undefined;
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: ratio, gap: '12px', alignItems: 'start' }}>
-      <MasterPanel {...masterProps} />
-      <DetailPanel loading={detailLoading} emptyLabel={emptyLabel}>
+    <div style={{ display: 'grid', gridTemplateColumns: gridRatio, gap, alignItems: 'stretch', height }}>
+      {leftPanel
+        ? <FreeMasterPanel>{leftPanel}</FreeMasterPanel>
+        : <MasterPanel {...masterProps} />
+      }
+      <DetailPanel loading={detailLoading} emptyLabel={emptyLabel} freeMode={!!leftPanel}>
         {detailChildren}
       </DetailPanel>
     </div>
@@ -179,9 +213,11 @@ MasterDetailLayout.propTypes = {
     loading: PropTypes.bool,
     pagination: PropTypes.object,
     headerExtra: PropTypes.node,
-  }).isRequired,
+  }),
+  leftPanel: PropTypes.node,
   detailChildren: PropTypes.node,
   detailLoading: PropTypes.bool,
   emptyLabel: PropTypes.string,
   ratio: PropTypes.string,
+  fullHeight: PropTypes.bool,
 };

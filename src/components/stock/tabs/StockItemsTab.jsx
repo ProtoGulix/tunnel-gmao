@@ -234,6 +234,7 @@ export default function StockItemsTab() {
       )}
 
       <MasterDetailLayout
+        fullHeight={false}
         masterProps={{
           icon: Package,
           title: 'Pièces référencées',

@@ -25,7 +25,7 @@ export function DIRightPanel({ requestId, onRefresh }) {
   if (!iv) {
     return (
       <Flex align="center" justify="center" direction="column" gap="3"
-        style={{ height: '100%', minHeight: 300, color: 'var(--gray-8)' }}>
+        style={{ height: '100%', color: 'var(--gray-8)' }}>
         <ClipboardList size={32} strokeWidth={1.5} />
         <Text size="2" color="gray">Pas encore d'intervention pour cette demande</Text>
         <Text size="1" color="gray">{detail.statut_label ?? detail.statut}</Text>

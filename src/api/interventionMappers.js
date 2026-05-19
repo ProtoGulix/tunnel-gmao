@@ -28,6 +28,7 @@ export function mapInterventionResponse(raw = {}) {
       : null,
     next_due_date: raw.next_due_date ?? null,
     overdue: raw.overdue ?? false,
+    tasks: Array.isArray(raw.tasks) ? raw.tasks : [],
     stats: raw.stats
       ? {
           actionCount: raw.stats.action_count ?? 0,

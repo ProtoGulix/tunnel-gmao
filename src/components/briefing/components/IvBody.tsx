@@ -100,7 +100,7 @@ function UnlinkedActions({ actions }: { actions: InterventionAction[] }) {
 export function EmptyState() {
   return (
     <Flex align="center" justify="center" direction="column" gap="3"
-      style={{ height: '100%', minHeight: 300, color: 'var(--gray-8)' }}>
+      style={{ height: '100%', color: 'var(--gray-8)' }}>
       <ClipboardList size={32} strokeWidth={1.5} />
       <Text size="2" color="gray">Sélectionne une intervention</Text>
     </Flex>
