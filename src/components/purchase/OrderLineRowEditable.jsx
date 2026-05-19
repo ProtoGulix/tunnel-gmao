@@ -54,7 +54,7 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
             onChange={(e) => onChange({ quantity: e.target.value })}
             style={{ width: 70 }}
           />
-          <Text size="1" color="gray">{line.unit || 'pcs'}</Text>
+          <Text size="1" color="gray">{line.stock_item_unit || 'pcs'}</Text>
         </Flex>
       </Table.Cell>
 

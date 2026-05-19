@@ -71,7 +71,7 @@ function OrderLineRow({ line }) {
         </Flex>
       </Table.Cell>
       <Table.Cell><LineRefs line={line} /></Table.Cell>
-      <Table.Cell><Text size="2">{line.quantity} {line.unit || 'pcs'}</Text></Table.Cell>
+      <Table.Cell><Text size="2">{line.quantity} {line.stock_item_unit || 'pcs'}</Text></Table.Cell>
       <Table.Cell>
         {line.unit_price != null
           ? <Text size="2">{Number(line.unit_price).toFixed(2)} €</Text>
