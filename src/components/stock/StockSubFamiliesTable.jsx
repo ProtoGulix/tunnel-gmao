@@ -90,6 +90,21 @@ StockSubFamiliesTable.propTypes = {
         id: PropTypes.string,
         code: PropTypes.string,
         label: PropTypes.string,
+        version: PropTypes.number,
+        pattern: PropTypes.string,
+        is_active: PropTypes.bool,
+        fields: PropTypes.arrayOf(
+          PropTypes.shape({
+            id: PropTypes.string,
+            key: PropTypes.string,
+            label: PropTypes.string,
+            field_type: PropTypes.string,
+            unit: PropTypes.string,
+            required: PropTypes.bool,
+            sort_order: PropTypes.number,
+            enum_values: PropTypes.arrayOf(PropTypes.string),
+          })
+        ),
       }),
     })
   ).isRequired,
