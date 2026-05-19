@@ -7,7 +7,7 @@
 import PropTypes from 'prop-types';
 import { Badge, Button, Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { Save } from 'lucide-react';
-import { LineBadges } from '@/components/purchase/SupplierOrderLines';
+import { LineBadges, LineRefs } from '@/components/purchase/SupplierOrderLines';
 
 function hasDraft(draft, line) {
   return (
@@ -40,6 +40,10 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
       </Table.Cell>
 
       <Table.Cell style={{ verticalAlign: 'middle' }}>
+        <LineRefs line={line} />
+      </Table.Cell>
+
+      <Table.Cell style={{ verticalAlign: 'middle' }}>
         <Flex align="center" gap="1">
           <TextField.Root
             size="1"
@@ -50,7 +54,7 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
             onChange={(e) => onChange({ quantity: e.target.value })}
             style={{ width: 70 }}
           />
-          <Text size="1" color="gray">{line.unit || 'pcs'}</Text>
+          <Text size="1" color="gray">{line.stock_item_unit || 'pcs'}</Text>
         </Flex>
       </Table.Cell>
 

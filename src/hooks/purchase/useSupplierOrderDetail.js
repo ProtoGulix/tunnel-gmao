@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { fetchSupplierOrderDetail, fetchSupplierOrderTransitions, updateSupplierOrder } from '@/api/supplierOrders';
+import { fetchSupplierOrderDetail, updateSupplierOrder } from '@/api/supplierOrders';
 import { useNegotiationLines, useDeliveryDate } from '@/hooks/purchase/useNegotiationLines';
 
 export function useSupplierOrderDetail(orderId, onStatusChange) {
@@ -20,12 +20,9 @@ export function useSupplierOrderDetail(orderId, onStatusChange) {
   const { deliveryDate, setDeliveryDate, saving: savingDelivery, save: saveDelivery } = useDeliveryDate();
 
   const reloadDetail = useCallback(async (id) => {
-    const [data, transData] = await Promise.all([
-      fetchSupplierOrderDetail(id),
-      fetchSupplierOrderTransitions(id),
-    ]);
+    const data = await fetchSupplierOrderDetail(id);
     setDetail(data);
-    setTransitions(transData.transitions || []);
+    setTransitions(data.transitions || []);
     initDrafts(data.lines || []);
     return data;
   }, [initDrafts]);

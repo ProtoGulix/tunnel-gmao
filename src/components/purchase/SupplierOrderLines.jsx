@@ -10,6 +10,30 @@ import { AlertCircle, CheckCircle2, Package } from 'lucide-react';
 import StatusCallout from '@/components/ui/StatusCallout';
 import OrderLineRowEditable from '@/components/purchase/OrderLineRowEditable';
 
+/** Références fournisseur / fabricant communes aux deux modes */
+export function LineRefs({ line }) {
+  const supplierRef = line.supplier?.ref;
+  const mfrRef = line.manufacturer?.ref;
+  const mfrName = line.manufacturer?.name;
+  if (!supplierRef && !mfrRef) return null;
+  return (
+    <Flex direction="column" gap="1">
+      {supplierRef && (
+        <Badge color="indigo" variant="soft" size="1" style={{ width: 'fit-content' }}>
+          Fourn. : {supplierRef}
+        </Badge>
+      )}
+      {mfrRef && mfrRef !== supplierRef && (
+        <Badge color="gray" variant="soft" size="1" style={{ width: 'fit-content' }}>
+          {mfrName ? `${mfrName} : ${mfrRef}` : mfrRef}
+        </Badge>
+      )}
+    </Flex>
+  );
+}
+
+LineRefs.propTypes = { line: PropTypes.object.isRequired };
+
 /** Badges d'état communs aux deux modes (lecture + édition) */
 export function LineBadges({ line }) {
   return (
@@ -46,7 +70,8 @@ function OrderLineRow({ line }) {
           )}
         </Flex>
       </Table.Cell>
-      <Table.Cell><Text size="2">{line.quantity} {line.unit || 'pcs'}</Text></Table.Cell>
+      <Table.Cell><LineRefs line={line} /></Table.Cell>
+      <Table.Cell><Text size="2">{line.quantity} {line.stock_item_unit || 'pcs'}</Text></Table.Cell>
       <Table.Cell>
         {line.unit_price != null
           ? <Text size="2">{Number(line.unit_price).toFixed(2)} €</Text>
@@ -91,6 +116,7 @@ export default function SupplierOrderLines({ lines, isNegotiating, lineDrafts, s
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeaderCell>Article</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Références</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Qté</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Prix u.</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Total</Table.ColumnHeaderCell>

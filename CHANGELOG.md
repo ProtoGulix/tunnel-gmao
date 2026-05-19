@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.38.0] — 2026-05-19
+
+### Nouveautés
+
+- **Briefing** : ajout d'une liste de tâches directement accessible depuis le tableau de bord, pour un suivi rapide des actions en cours.
+- **Interface** : amélioration de la mise en page et de la réactivité des composants principaux pour une meilleure expérience sur tous les formats d'écran.
+
+### Corrections
+
+- **Commandes fournisseur** : correction de l'affichage des unités dans les lignes de commande, qui affichait parfois une valeur incorrecte.
+
+---
+
 ## [3.37.0] — 2026-05-18
 
 ### Journal d'audit — comportement intelligent

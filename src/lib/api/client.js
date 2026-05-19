@@ -78,6 +78,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     cacheAuditFromResponse(response);
+    if (
+      response.data !== null &&
+      typeof response.data === 'object' &&
+      !Array.isArray(response.data) &&
+      Object.keys(response.data).length === 1 &&
+      'data' in response.data
+    ) {
+      response.data = response.data.data;
+    }
     return response;
   },
   async (error) => {
