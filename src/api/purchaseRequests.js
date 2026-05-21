@@ -17,7 +17,7 @@ import { api } from '@/lib/api/client';
  */
 export async function fetchPurchaseRequests(params = {}) {
   const response = await api.get('/purchase-requests/list', { params });
-  return response.data.data ?? [];
+  return response.data ?? [];
 }
 
 /**
@@ -27,7 +27,7 @@ export async function fetchPurchaseRequests(params = {}) {
  */
 export async function fetchPurchaseRequestDetail(id) {
   const response = await api.get(`/purchase-requests/detail/${id}`);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -39,7 +39,7 @@ export async function fetchPurchaseRequestDetail(id) {
  */
 export async function fetchPurchaseRequestStats(params = {}) {
   const response = await api.get('/purchase-requests/stats', { params });
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -62,7 +62,7 @@ export async function fetchPurchaseRequestsByIntervention(interventionId, view =
  */
 export async function createPurchaseRequest(payload) {
   const response = await api.post('/purchase-requests', payload);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -73,7 +73,7 @@ export async function createPurchaseRequest(payload) {
  */
 export async function updatePurchaseRequest(id, updates) {
   const response = await api.put(`/purchase-requests/${id}`, updates);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -100,5 +100,5 @@ export async function fetchPurchaseRequestStatuses() {
  */
 export async function dispatchPurchaseRequests() {
   const response = await api.post('/purchase-requests/dispatch');
-  return response.data.data;
+  return response.data;
 }

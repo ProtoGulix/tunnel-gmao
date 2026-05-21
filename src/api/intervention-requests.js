@@ -52,7 +52,7 @@ export async function fetchInterventionRequests(params = {}) {
  */
 export async function fetchInterventionRequest(id) {
   const response = await api.get(`/intervention-requests/${id}`);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -77,7 +77,7 @@ export async function createInterventionRequest(data) {
   }
 
   const response = await api.post('/intervention-requests', payload);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -105,7 +105,7 @@ export async function transitionInterventionRequest(id, data) {
   if (data.reportedDate) payload.reported_date = data.reportedDate;
 
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
-  return response.data.data;
+  return response.data;
 }
 
 /**
