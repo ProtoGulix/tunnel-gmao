@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.39.0] — 2026-05-21
+
+### Corrections
+
+- **Demandes d'achat spontanées** : la création d'une demande d'achat en dehors du contexte d'une intervention ne demande plus de raison — elle est enregistrée automatiquement comme *Routine*, comme c'est déjà le cas pour les actions et les tâches.
+
+---
+
 ## [3.38.0] — 2026-05-19
 
 ### Nouveautés
