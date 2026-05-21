@@ -33,10 +33,14 @@ const _URL_ENTITY_MAP = {
 // Clés : "intervention:list", "intervention:detail", "task:list", etc.
 const _auditConfigCache = new Map();
 
-/** Détermine si l'URL pointe vers une collection (list) ou une ressource (detail). */
+/** Détermine si l'URL pointe vers une collection (list) ou une ressource (detail).
+ *  On considère "detail" uniquement si un UUID ou un ID numérique apparaît après le premier segment.
+ *  Les sous-chemins textuels (/list, /stats, /detail/…) restent dans le contexte "list". */
+const _UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function _urlKind(url) {
-  const parts = (url ?? '').replace(/^\//, '').split('/');
-  return parts.length > 1 && parts[1] ? 'detail' : 'list';
+  const parts = (url ?? '').replace(/^\//, '').split('/').filter(Boolean);
+  const hasId = parts.slice(1).some((p) => _UUID_RE.test(p) || /^\d+$/.test(p));
+  return hasId ? 'detail' : 'list';
 }
 
 /**

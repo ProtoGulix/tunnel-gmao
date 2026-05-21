@@ -16,8 +16,8 @@ import { api } from '@/lib/api/client';
  * @returns {Promise<Array>}
  */
 export async function fetchPurchaseRequests(params = {}) {
-  const response = await api.get('/purchase-requests/list', { params });
-  return response.data ?? [];
+  const response = await api.get('/purchase-requests', { params });
+  return response.data.data ?? [];
 }
 
 /**
