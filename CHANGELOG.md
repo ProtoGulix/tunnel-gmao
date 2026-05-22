@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.40.0] — 2026-05-22
+
+### Correctifs
+
+- **Briefing** : simplification de la logique de récupération des tâches dans `BriefingTile` — les tâches s'affichent désormais de manière plus fiable
+
+---
+
+## [3.39.0] — 2026-05-22
+
+### Correctifs
+
+- Mise à jour de l'endpoint `fetchPurchaseRequests` pour retourner les données depuis le bon chemin
+- Correction de la gestion des réponses API pour retourner les données directement
+
+---
+
+## [3.38.0] — 2026-05-22
+
+### Correctifs
+
+- Affichage de l'unité dans les lignes de commande fournisseur : utilisation de `stock_item_unit` pour cohérence
+- Refactorisation de la gestion des réponses API et amélioration des prop types pour les composants stock
+- Suppression de la fonction `fetchSupplierOrderTransitions` inutilisée dans le hook détail commande fournisseur
+
+---
+
 ## [3.37.0] — 2026-05-18
 
 ### Journal d'audit — comportement intelligent
