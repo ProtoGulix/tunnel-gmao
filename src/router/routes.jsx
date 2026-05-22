@@ -205,21 +205,24 @@ export default function AppRoutes() {
         }
       />
 
-      <Route
-        path="/briefing"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-                <PageHeader title="Briefing" subtitle="Avancement des demandes au service technique" icon={ClipboardList} noMargin />
-                <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
-                  <BriefingPage />
+      {['/briefing', '/briefing/di/:id', '/briefing/iv/:id'].map((path) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+                  <PageHeader title="Briefing" subtitle="Avancement des demandes au service technique" icon={ClipboardList} noMargin />
+                  <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
+                    <BriefingPage />
+                  </div>
                 </div>
-              </div>
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      ))}
 
       <Route
         path="/stock"
