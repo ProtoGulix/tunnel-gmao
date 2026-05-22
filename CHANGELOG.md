@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.40.0] — 2026-05-22
+
+### Correctifs
+
+- **Briefing** : simplification de la logique de récupération des tâches dans `BriefingTile` — les tâches s'affichent désormais de manière plus fiable
+
+---
+
 ## [3.39.0] — 2026-05-21
 
 ### Corrections

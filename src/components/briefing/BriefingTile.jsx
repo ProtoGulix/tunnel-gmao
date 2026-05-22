@@ -233,11 +233,9 @@ export function BriefingTile({ item, sectionId }) {
   const d = normalizeTileData(item, sectionId);
   const isDiSection = sectionId.startsWith('di_');
 
-  // Pour les DI : tâches de l'inter liée (si présente, champ raw tasks de la DI)
+  // Pour les DI : item.tasks livré directement par l'API au niveau de la DI
   // Pour les orphelines : item.tasks mappé depuis mapInterventionResponse
-  const tasks = isDiSection
-    ? (item.intervention?.tasks ?? [])
-    : (item.tasks ?? item.tasksLinked ?? []);
+  const tasks = item.tasks ?? item.tasksLinked ?? [];
 
   const hasIntervention = isDiSection ? !!item.intervention : true;
 
