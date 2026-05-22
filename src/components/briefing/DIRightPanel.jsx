@@ -1,18 +1,48 @@
 import PropTypes from 'prop-types';
 import { Flex, Text } from '@radix-ui/themes';
-import { ClipboardList } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import { InterventionCard } from './InterventionCard';
+import { MachineTitle } from './components/IvHeader';
+import { DiBlock, IvEmptyBlock } from './components/IvHeaderBlocks';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
-/**
- * Panneau droit pour une DI sélectionnée.
- *
- * Fetch GET /intervention-requests/{id}, puis :
- *   - detail.intervention présent → InterventionCard avec situation construite depuis la réponse
- *   - detail.intervention absent  → empty state "Pas encore d'intervention"
- */
+function DiOnlyPanel({ detail }) {
+  const eq = detail.equipement ?? null;
+  const machine = eq ? { id: eq.id, code: eq.code, name: eq.name, health: eq.health ?? null } : null;
+  const req = {
+    code:           detail.code,
+    createdAt:      detail.created_at ?? null,
+    description:    detail.description ?? null,
+    demandeurNom:   detail.demandeur_nom ?? null,
+    demandeurService: detail.service?.label ?? null,
+    statutLabel:    detail.statut_label ?? detail.statut ?? null,
+    statutColor:    detail.statut_color ?? null,
+  };
+
+  return (
+    <div style={{ flexShrink: 0, borderBottom: '1px solid var(--gray-4)' }}>
+      <MachineTitle machine={machine} />
+      <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
+        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
+          <Link2 size={22} style={{ color: 'var(--green-9)' }} />
+        </div>
+        <Flex gap="2" style={{ marginBottom: 6 }}>
+          <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
+          <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
+        </Flex>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
+          <DiBlock req={req} />
+          <IvEmptyBlock />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+DiOnlyPanel.propTypes = { detail: PropTypes.object.isRequired };
+
 export function DIRightPanel({ requestId, onRefresh }) {
   const { detail, loading, error } = useInterventionRequestDetail(requestId);
 
@@ -22,18 +52,8 @@ export function DIRightPanel({ requestId, onRefresh }) {
 
   const iv = detail.intervention ?? null;
 
-  if (!iv) {
-    return (
-      <Flex align="center" justify="center" direction="column" gap="3"
-        style={{ height: '100%', color: 'var(--gray-8)' }}>
-        <ClipboardList size={32} strokeWidth={1.5} />
-        <Text size="2" color="gray">Pas encore d'intervention pour cette demande</Text>
-        <Text size="1" color="gray">{detail.statut_label ?? detail.statut}</Text>
-      </Flex>
-    );
-  }
+  if (!iv) return <DiOnlyPanel detail={detail} />;
 
-  // Construit la situation depuis les données réelles de la réponse API
   const eq = detail.equipement ?? null;
   const situation = {
     id:           iv.id,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Flex, Text, Badge, Button } from '@radix-ui/themes';
-import { Clock, ExternalLink, Package, Target, User } from 'lucide-react';
+import { Clock, ExternalLink, Package, Target, User, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { STATE_COLORS } from '@/config/interventionTypes';
 import { formatDueDate } from '@/hooks/useInterventionUrgency';
@@ -126,6 +126,17 @@ export function IvBlock({ situation, typeLabel, statusCfg, priorityCfg, actionCo
           </Flex>
         )}
       </TileFooter>
+    </div>
+  );
+}
+
+// ── Bloc Intervention vide ────────────────────────────────────────────────
+
+export function IvEmptyBlock() {
+  return (
+    <div style={{ ...TILE_STYLE, alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: 8, color: 'var(--gray-7)' }}>
+      <Wrench size={22} strokeWidth={1.5} style={{ color: 'var(--gray-6)' }} />
+      <Text size="2" color="gray" align="center">Pas encore d&apos;intervention</Text>
     </div>
   );
 }

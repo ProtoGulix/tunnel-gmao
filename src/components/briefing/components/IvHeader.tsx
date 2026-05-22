@@ -1,6 +1,6 @@
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Link2 } from 'lucide-react';
 import { STATE_COLORS } from '@/config/interventionTypes';
 import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
@@ -28,7 +28,7 @@ interface IvHeaderProps {
   statusSaving: boolean;
 }
 
-function MachineTitle({ machine }: { machine: BriefingSituation['machine'] }) {
+export function MachineTitle({ machine }: { machine: BriefingSituation['machine'] }) {
   if (!machine) return null;
   return (
     <Flex align="center" gap="2" style={{ padding: '6px 14px', borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-2)' }}>
@@ -71,14 +71,27 @@ export function IvHeader({
         {/* Titre équipement */}
         <MachineTitle machine={situation.machine} />
         {/* Deux blocs côte à côte */}
-        <div style={{ display: 'grid', gridTemplateColumns: req ? '1fr 1fr' : '1fr', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
-          {req && <DiBlock req={req} />}
-          <IvBlock
-            situation={situation} typeLabel={typeLabel}
-            statusCfg={statusCfg} priorityCfg={priorityCfg}
-            actionCount={actionCount} totalTime={totalTime} purchaseCount={purchaseCount}
-            openFmt={openFmt} closeFmt={closeFmt} daysOpen={daysOpen}
-          />
+        <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
+          {req && (
+            <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
+              <Link2 size={22} style={{ color: 'var(--green-9)' }} />
+            </div>
+          )}
+          {req && (
+            <Flex gap="2" style={{ marginBottom: 6 }}>
+              <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
+              <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
+            </Flex>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: req ? '1fr 1fr' : '1fr', gap: 48 }}>
+            {req && <DiBlock req={req} />}
+            <IvBlock
+              situation={situation} typeLabel={typeLabel}
+              statusCfg={statusCfg} priorityCfg={priorityCfg}
+              actionCount={actionCount} totalTime={totalTime} purchaseCount={purchaseCount}
+              openFmt={openFmt} closeFmt={closeFmt} daysOpen={daysOpen}
+            />
+          </div>
         </div>
         <DueBanner situation={situation} urgency={urgency} criticalTask={criticalTask} />
         <StatusBar currentStatus={currentStatus} onSelectStatus={onSelectStatus} />
