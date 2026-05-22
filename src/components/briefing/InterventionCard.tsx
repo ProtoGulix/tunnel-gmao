@@ -110,8 +110,6 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
         actionCount={display.actionCount}
         totalTime={display.totalTime}
         purchaseCount={display.purchaseCount}
-        completionPct={display.completionPct}
-        hasTasks={sortedTasks.length > 0}
         criticalTask={criticalTask}
         urgency={display.urgency}
         openFmt={display.openFmt}
