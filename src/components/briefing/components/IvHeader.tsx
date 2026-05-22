@@ -1,10 +1,10 @@
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Link2 } from 'lucide-react';
+import { ExternalLink, Link2, Unlink2 } from 'lucide-react';
 import { STATE_COLORS } from '@/config/interventionTypes';
 import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
-import { IvBlock, DiBlock, DueBanner, StatusBar } from './IvHeaderBlocks';
+import { IvBlock, DiBlock, DiEmptyBlock, DueBanner, StatusBar } from './IvHeaderBlocks';
 
 interface IvHeaderProps {
   situation: BriefingSituation;
@@ -31,18 +31,18 @@ interface IvHeaderProps {
 export function MachineTitle({ machine }: { machine: BriefingSituation['machine'] }) {
   if (!machine) return null;
   return (
-    <Flex align="center" gap="2" style={{ padding: '6px 14px', borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-2)' }}>
-      <Badge size="2" variant="solid" color="gray" style={{ fontFamily: 'var(--font-mono, monospace)', letterSpacing: '0.04em', flexShrink: 0 }}>
+    <Flex align="center" gap="3" style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-3)' }}>
+      <Badge size="3" variant="solid" color="gray" style={{ fontFamily: 'var(--font-mono, monospace)', letterSpacing: '0.06em', flexShrink: 0 }}>
         {machine.code}
       </Badge>
       {machine.name && (
-        <Text size="2" style={{ color: 'var(--gray-11)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+        <Text size="4" weight="medium" style={{ color: 'var(--gray-12)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
           {machine.name}
         </Text>
       )}
       {machine.id && (
-        <Link to={`/equipements/${machine.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', color: 'var(--gray-10)', flexShrink: 0, fontSize: 12 }}>
-          <ExternalLink size={12} />
+        <Link to={`/equipements/${machine.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', color: 'var(--gray-10)', flexShrink: 0, fontSize: 13 }}>
+          <ExternalLink size={13} />
           Fiche équipement
         </Link>
       )}
@@ -72,19 +72,18 @@ export function IvHeader({
         <MachineTitle machine={situation.machine} />
         {/* Deux blocs côte à côte */}
         <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
-          {req && (
-            <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
-              <Link2 size={22} style={{ color: 'var(--green-9)' }} />
-            </div>
-          )}
-          {req && (
-            <Flex gap="2" style={{ marginBottom: 6 }}>
-              <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
-              <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
-            </Flex>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: req ? '1fr 1fr' : '1fr', gap: 48 }}>
-            {req && <DiBlock req={req} />}
+          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
+            {req
+              ? <Link2 size={22} style={{ color: 'var(--green-9)' }} />
+              : <Unlink2 size={22} style={{ color: 'var(--gray-6)' }} />
+            }
+          </div>
+          <Flex gap="2" style={{ marginBottom: 6 }}>
+            <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
+            <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
+          </Flex>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
+            {req ? <DiBlock req={req} /> : <DiEmptyBlock />}
             <IvBlock
               situation={situation} typeLabel={typeLabel}
               statusCfg={statusCfg} priorityCfg={priorityCfg}

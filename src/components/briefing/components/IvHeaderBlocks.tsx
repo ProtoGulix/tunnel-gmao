@@ -1,6 +1,6 @@
 import React from 'react';
 import { Flex, Text, Badge, Button } from '@radix-ui/themes';
-import { Clock, ExternalLink, Package, Target, User, Wrench } from 'lucide-react';
+import { Bot, Clock, ClipboardList, ExternalLink, Package, Target, User, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { STATE_COLORS } from '@/config/interventionTypes';
 import { formatDueDate } from '@/hooks/useInterventionUrgency';
@@ -49,22 +49,21 @@ export function DiBlock({ req }: { req: NonNullable<InterventionDetail['request'
             &laquo;&nbsp;{req.description}&nbsp;&raquo;
           </Text>
         )}
-        {req.demandeurNom && (
-          <Flex align="center" gap="2" mt="2">
-            <User size={13} color="var(--gray-8)" />
-            <Text size="2" color="gray">{req.demandeurNom}</Text>
-            {req.demandeurService && <Badge size="2" variant="outline" color="gray">{req.demandeurService}</Badge>}
-          </Flex>
-        )}
       </div>
-      {req.createdAt && (
-        <TileFooter>
-          <div style={{ flex: 1 }} />
-          <Text size="1" color="gray" style={{ fontFamily: 'monospace' }}>
+      <TileFooter>
+        {req.isSystem
+          ? <Bot size={13} color="var(--gray-8)" style={{ flexShrink: 0 }} />
+          : <User size={13} color="var(--gray-8)" style={{ flexShrink: 0 }} />
+        }
+        {req.demandeurNom && <Text size="1" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.demandeurNom}</Text>}
+        {req.demandeurService && <Badge size="1" variant="outline" color="gray" style={{ flexShrink: 0 }}>{req.demandeurService}</Badge>}
+        <div style={{ flex: 1 }} />
+        {req.createdAt && (
+          <Text size="1" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0 }}>
             {new Date(req.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
           </Text>
-        </TileFooter>
-      )}
+        )}
+      </TileFooter>
     </div>
   );
 }
@@ -130,13 +129,22 @@ export function IvBlock({ situation, typeLabel, statusCfg, priorityCfg, actionCo
   );
 }
 
-// ── Bloc Intervention vide ────────────────────────────────────────────────
+// ── Blocs vides ───────────────────────────────────────────────────────────
 
 export function IvEmptyBlock() {
   return (
     <div style={{ ...TILE_STYLE, alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: 8, color: 'var(--gray-7)' }}>
       <Wrench size={22} strokeWidth={1.5} style={{ color: 'var(--gray-6)' }} />
       <Text size="2" color="gray" align="center">Pas encore d&apos;intervention</Text>
+    </div>
+  );
+}
+
+export function DiEmptyBlock() {
+  return (
+    <div style={{ ...TILE_STYLE, alignItems: 'center', justifyContent: 'center', padding: '24px 12px', gap: 8 }}>
+      <ClipboardList size={22} strokeWidth={1.5} style={{ color: 'var(--gray-6)' }} />
+      <Text size="2" color="gray" align="center">Aucune demande liée</Text>
     </div>
   );
 }

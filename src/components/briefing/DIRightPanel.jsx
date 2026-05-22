@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Flex, Text } from '@radix-ui/themes';
-import { Link2 } from 'lucide-react';
+import { Unlink2 } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import { InterventionCard } from './InterventionCard';
 import { MachineTitle } from './components/IvHeader';
@@ -19,6 +19,7 @@ function DiOnlyPanel({ detail }) {
     demandeurService: detail.service?.label ?? null,
     statutLabel:    detail.statut_label ?? detail.statut ?? null,
     statutColor:    detail.statut_color ?? null,
+    isSystem:       detail.is_system ?? false,
   };
 
   return (
@@ -26,7 +27,7 @@ function DiOnlyPanel({ detail }) {
       <MachineTitle machine={machine} />
       <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
         <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
-          <Link2 size={22} style={{ color: 'var(--green-9)' }} />
+          <Unlink2 size={22} style={{ color: 'var(--gray-6)' }} />
         </div>
         <Flex gap="2" style={{ marginBottom: 6 }}>
           <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>

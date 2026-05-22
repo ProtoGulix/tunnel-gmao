@@ -145,5 +145,6 @@ export interface InterventionDetail extends BriefingSituation {
     statutLabel?: string;
     statutColor?: string;
     createdAt?: string;
+    isSystem?: boolean;
   } | null;
 }
