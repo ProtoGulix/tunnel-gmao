@@ -66,62 +66,76 @@ function formatDue(iso) {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
 }
 
-const MAX_TASKS = 3;
+
+function TaskDueBadge({ due, overdue }) {
+  if (!due) return null;
+  if (overdue) return (
+    <Badge color="red" variant="solid" size="1" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <AlertTriangle size={9} />{due}
+    </Badge>
+  );
+  return <Text size="1" color="gray" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{due}</Text>;
+}
+TaskDueBadge.propTypes = { due: PropTypes.string, overdue: PropTypes.bool };
+
+function TaskRowMeta({ status, due_date }) {
+  const cfg = TASK_STATUS[status] ?? TASK_STATUS.todo;
+  const due = formatDue(due_date);
+  const overdue = !!due && new Date(due_date) < today && status !== 'done' && status !== 'skipped';
+  return (
+    <>
+      <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>{cfg.label}</Badge>
+      <TaskDueBadge due={due} overdue={overdue} />
+    </>
+  );
+}
+TaskRowMeta.propTypes = { status: PropTypes.string, due_date: PropTypes.string };
+
+function TaskRowLeft({ origin, label }) {
+  const OriginIcon = TASK_ORIGIN_ICON[origin] ?? null;
+  const originColor = TASK_ORIGIN_COLOR[origin] ?? 'var(--gray-7)';
+  return (
+    <>
+      {OriginIcon && <OriginIcon size={11} color={originColor} style={{ flexShrink: 0 }} />}
+      <Text size="1" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}
+      </Text>
+    </>
+  );
+}
+TaskRowLeft.propTypes = { origin: PropTypes.string, label: PropTypes.string };
+
+function TaskRow({ task, isLast }) {
+  const cfg = TASK_STATUS[task.status] ?? TASK_STATUS.todo;
+  const initials = task.assigned_to?.initials ?? task.assigned_to?.initial ?? null;
+  return (
+    <Flex align="center" gap="2" style={{
+      padding: '5px 10px',
+      borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
+      background: cfg.bg,
+      borderLeft: `3px solid ${cfg.color}`,
+    }}>
+      <TaskRowLeft origin={task.origin} label={task.label} />
+      <TaskRowMeta status={task.status} due_date={task.due_date} />
+      {initials && (
+        <Text size="1" style={{ flexShrink: 0, color: 'var(--gray-10)', fontFamily: 'monospace' }}>{initials.toUpperCase()}</Text>
+      )}
+    </Flex>
+  );
+}
+TaskRow.propTypes = { task: PropTypes.object.isRequired, isLast: PropTypes.bool };
 
 function TaskList({ tasks }) {
   if (!tasks || tasks.length === 0) return null;
-
   const sorted = [...tasks].sort((a, b) => {
     const order = { in_progress: 0, todo: 1, done: 2, skipped: 3 };
     return (order[a.status] ?? 9) - (order[b.status] ?? 9);
   });
-
-  const visible = sorted.slice(0, MAX_TASKS);
-  const remaining = sorted.length - MAX_TASKS;
-
   return (
     <div style={{ borderTop: '1px solid var(--gray-4)' }}>
-      {visible.map((task, idx) => {
-        const cfg = TASK_STATUS[task.status] ?? TASK_STATUS.todo;
-        const OriginIcon = TASK_ORIGIN_ICON[task.origin] ?? null;
-        const originColor = TASK_ORIGIN_COLOR[task.origin] ?? 'var(--gray-7)';
-        const due = formatDue(task.due_date);
-        const overdue = due && new Date(task.due_date) < today && task.status !== 'done' && task.status !== 'skipped';
-        const isLast = idx === visible.length - 1 && remaining <= 0;
-        const initials = task.assigned_to?.initials ?? task.assigned_to?.initial ?? null;
-
-        return (
-          <Flex key={task.id} align="center" gap="2" style={{
-            padding: '5px 10px',
-            borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
-            background: cfg.bg,
-            borderLeft: `3px solid ${cfg.color}`,
-          }}>
-            {OriginIcon && <OriginIcon size={11} color={originColor} style={{ flexShrink: 0 }} />}
-            <Text size="1" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {task.label}
-            </Text>
-            <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>{cfg.label}</Badge>
-            {overdue && due ? (
-              <Badge color="red" variant="solid" size="1" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <AlertTriangle size={9} />{due}
-              </Badge>
-            ) : due ? (
-              <Text size="1" color="gray" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{due}</Text>
-            ) : null}
-            {initials && (
-              <Text size="1" style={{ flexShrink: 0, color: 'var(--gray-10)', fontFamily: 'monospace' }}>{initials.toUpperCase()}</Text>
-            )}
-          </Flex>
-        );
-      })}
-      {remaining > 0 && (
-        <Flex align="center" style={{ padding: '4px 10px', borderTop: '1px solid var(--gray-3)' }}>
-          <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>
-            … et {remaining} autre{remaining > 1 ? 's' : ''} tâche{remaining > 1 ? 's' : ''}
-          </Text>
-        </Flex>
-      )}
+      {sorted.map((task, idx) => (
+        <TaskRow key={task.id} task={task} isLast={idx === sorted.length - 1} />
+      ))}
     </div>
   );
 }
