@@ -30,20 +30,25 @@ interface IvHeaderProps {
   onSelectPriority: (p: string) => void;
 }
 
-export function MachineTitle({ machine }: { machine: BriefingSituation['machine'] }) {
-  if (!machine) return null;
+export function MachineTitle({ machine, situation }: { machine: BriefingSituation['machine']; situation?: Pick<BriefingSituation, 'code' | 'title'> }) {
+  const code  = machine?.code ?? situation?.code ?? null;
+  const name  = machine?.name ?? situation?.title ?? null;
+  const hasLink = !!machine?.id;
+
+  if (!code) return null;
+
   return (
     <Flex align="center" gap="3" style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-3)' }}>
       <Badge size="3" variant="solid" color="gray" style={{ fontFamily: 'var(--font-mono, monospace)', letterSpacing: '0.06em', flexShrink: 0 }}>
-        {machine.code}
+        {code}
       </Badge>
-      {machine.name && (
+      {name && (
         <Text size="4" weight="medium" style={{ color: 'var(--gray-12)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
-          {machine.name}
+          {name}
         </Text>
       )}
-      {machine.id && (
-        <Link to={`/equipements/${machine.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', color: 'var(--gray-10)', flexShrink: 0, fontSize: 13 }}>
+      {hasLink && (
+        <Link to={`/equipements/${machine!.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', color: 'var(--gray-10)', flexShrink: 0, fontSize: 13 }}>
           <ExternalLink size={13} />
           Fiche équipement
         </Link>
@@ -101,7 +106,7 @@ export function IvHeader({
 
   return (
     <div style={{ flexShrink: 0, borderBottom: '1px solid var(--gray-4)' }}>
-      <MachineTitle machine={situation.machine} />
+      <MachineTitle machine={situation.machine} situation={situation} />
       <div style={{ position: 'relative', padding: '10px 14px 0' }}>
         <ChainIcon linked={!!req} />
         <Flex gap="2" style={{ marginBottom: 6 }}>
