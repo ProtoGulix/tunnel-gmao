@@ -281,19 +281,33 @@ export const TaskCard: FC<TaskCardProps> = ({
 
   const hasGantt = !!reportedDate;
 
+  const effectiveCritical = isCritical && !isDone;
+
+  const headerBg = isDone
+    ? 'var(--gray-2)'
+    : effectiveCritical
+      ? 'var(--accent-2)'
+      : task.status === 'in_progress'
+        ? cfg.color + '18'
+        : 'var(--gray-2)';
+
+  const borderColor = isDone
+    ? 'var(--gray-4)'
+    : effectiveCritical
+      ? 'var(--accent-6)'
+      : cfg.color + '55';
+
   return (
     <div style={{
-      border: '1px solid var(--gray-4)',
-      borderLeft: `3px solid ${isCritical ? 'var(--accent-8)' : cfg.color}`,
+      border: `1px solid ${borderColor}`,
       borderRadius: 8,
       overflow: 'hidden',
-      background: isDone ? 'var(--gray-1)' : isCritical ? 'var(--accent-1)' : 'var(--color-panel-solid)',
       opacity: editSaving === task.id ? 0.6 : 1,
       transition: 'opacity 0.15s',
     }}>
 
       {/* ── En-tête tâche ── */}
-      <Flex align="center" gap="2" style={{ padding: '10px 12px 8px' }}>
+      <Flex align="center" gap="2" style={{ padding: '8px 10px', background: headerBg, borderBottom: `1px solid ${effectiveCritical ? 'var(--accent-4)' : cfg.color + '30'}` }}>
         {/* Réordonnancement */}
         <Flex direction="column" gap="0" style={{ flexShrink: 0 }}>
           <IconButton size="1" variant="ghost" color="gray" disabled={isFirst}
@@ -307,42 +321,60 @@ export const TaskCard: FC<TaskCardProps> = ({
         </Flex>
 
         {/* Icône statut */}
-        <cfg.Icon size={14} color={cfg.color} style={{ flexShrink: 0 }} />
+        <cfg.Icon size={15} color={effectiveCritical ? 'var(--accent-9)' : cfg.color} style={{ flexShrink: 0 }} />
 
         {/* Titre + badges */}
         <Flex direction="column" gap="0" style={{ flex: 1, minWidth: 0 }}>
           <Flex align="center" gap="2">
-            <Text size="1" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0 }}>
-              #{task.sort_order ?? '—'}
-            </Text>
             <Text
               size="2"
               weight={task.status === 'in_progress' ? 'bold' : 'medium'}
-              style={{ color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isDone ? 0.6 : 1 }}
+              style={{
+                color: isDone ? 'var(--gray-9)' : 'var(--gray-12)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                textDecoration: task.status === 'done' ? 'line-through' : 'none',
+              }}
             >
               {task.label}
             </Text>
             {task.optional && (
               <Badge size="1" variant="soft" color="gray" style={{ flexShrink: 0 }}>opt.</Badge>
             )}
+          </Flex>
+
+          {/* Statut + origine sur la même ligne secondaire */}
+          <Flex align="center" gap="2" mt="1" style={{ flexWrap: 'wrap' }}>
+            <Badge
+              size="1"
+              variant={task.status === 'in_progress' ? 'solid' : 'outline'}
+              style={{
+                background: task.status === 'in_progress' ? cfg.color : 'transparent',
+                color: task.status === 'in_progress' ? '#fff' : cfg.color,
+                borderColor: cfg.color + '88',
+                flexShrink: 0,
+              }}
+            >
+              {cfg.label}
+            </Badge>
             {task.status === 'skipped' && task.skip_reason && (
               <Text size="1" color="orange" style={{ fontStyle: 'italic', flexShrink: 0 }}>{task.skip_reason}</Text>
             )}
+            {task.origin && ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG] && (() => {
+              const oc = ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG];
+              return (
+                <>
+                  <oc.Icon size={11} color={oc.color} style={{ flexShrink: 0 }} />
+                  <Text size="1" style={{ color: oc.color, flexShrink: 0 }}>{oc.label}</Text>
+                  <Badge size="1" color={task.gamme_step_id ? 'green' : 'gray'} variant="soft" style={{ flexShrink: 0 }}>
+                    {task.gamme_step_id ? 'Gamme' : 'Manuelle'}
+                  </Badge>
+                </>
+              );
+            })()}
+            <Text size="1" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0, marginLeft: 'auto' }}>
+              #{task.sort_order ?? '—'}
+            </Text>
           </Flex>
-
-          {/* Origine */}
-          {task.origin && ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG] && (() => {
-            const oc = ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG];
-            return (
-              <Flex align="center" gap="1" mt="1">
-                <oc.Icon size={11} color={oc.color} />
-                <Text size="1" style={{ color: oc.color }}>{oc.label}</Text>
-                <Badge size="1" color={task.gamme_step_id ? 'green' : 'gray'} variant="soft">
-                  {task.gamme_step_id ? 'Gamme' : 'Manuelle'}
-                </Badge>
-              </Flex>
-            );
-          })()}
         </Flex>
 
         {/* Assigné */}

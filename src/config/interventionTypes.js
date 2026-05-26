@@ -41,7 +41,8 @@ export const PRIORITY_CONFIG = {
 export const STATE_COLORS = {
   ouvert: {
     label: 'En cours',
-    activeBg: 'var(--blue-9)', // Bleu industriel
+    activeBg: 'var(--blue-9)',
+    bandBg: 'var(--blue-3)',
     hoverBg: 'var(--blue-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',
@@ -49,7 +50,8 @@ export const STATE_COLORS = {
   },
   attente_pieces: {
     label: 'Attente pièces',
-    activeBg: 'var(--red-9)', // Rouge bloqué
+    activeBg: 'var(--red-9)',
+    bandBg: 'var(--red-3)',
     hoverBg: 'var(--red-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',
@@ -57,7 +59,8 @@ export const STATE_COLORS = {
   },
   attente_prod: {
     label: 'Attente prod.',
-    activeBg: 'var(--amber-9)', // Orange attente
+    activeBg: 'var(--amber-9)',
+    bandBg: 'var(--amber-3)',
     hoverBg: 'var(--amber-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',
@@ -65,7 +68,8 @@ export const STATE_COLORS = {
   },
   ferme: {
     label: 'Terminée',
-    activeBg: 'var(--green-9)', // Vert OK/clôturé
+    activeBg: 'var(--green-9)',
+    bandBg: 'var(--green-3)',
     hoverBg: 'var(--green-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',
@@ -74,6 +78,7 @@ export const STATE_COLORS = {
   cancelled: {
     label: 'Annulée',
     activeBg: 'var(--gray-9)',
+    bandBg: 'var(--gray-3)',
     hoverBg: 'var(--gray-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',

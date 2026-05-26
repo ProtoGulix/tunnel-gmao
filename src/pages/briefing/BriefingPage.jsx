@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Spinner, Callout, Button } from '@radix-ui/themes';
 import { AlertCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BriefingCounters } from '@/components/briefing/BriefingCounters';
 import { BriefingSection } from '@/components/briefing/BriefingSection';
 import { BriefingTile } from '@/components/briefing/BriefingTile';
@@ -67,7 +68,24 @@ RightPanel.propTypes = {
  */
 export default function BriefingPage({ equipementId, leftHeader }) {
   const { sections, counters, loading, error, retry } = useBriefingData({ equipementId });
-  const [selected, setSelected] = useState(null);
+  const { id: paramId } = useParams();
+  const navigate = useNavigate();
+
+  // Détermine le type depuis l'URL
+  const urlType = window.location.pathname.startsWith('/briefing/di/') ? 'request'
+    : window.location.pathname.startsWith('/briefing/iv/') ? 'situation'
+    : null;
+
+  const [selected, setSelected] = useState(
+    paramId && urlType ? { type: urlType, item: { id: paramId } } : null
+  );
+
+  // Sync URL → sélection quand on navigue directement vers une URL
+  useEffect(() => {
+    if (paramId && urlType) {
+      setSelected((prev) => prev?.item?.id === paramId ? prev : { type: urlType, item: { id: paramId } });
+    }
+  }, [paramId, urlType]);
 
   const visibleSections = sections.filter((s) => s.type !== 'separator' && s.items.length > 0);
   const renderedSections = sections.filter((s) => s.type === 'separator' || s.items.length > 0);
@@ -108,7 +126,11 @@ export default function BriefingPage({ equipementId, leftHeader }) {
             <SectionItemList
               section={section}
               selectedId={selected?.item?.id}
-              onSelect={(item, type) => setSelected({ type, item })}
+              onSelect={(item, type) => {
+          setSelected({ type, item });
+          if (type === 'request' || type === 'request_accepted') navigate(`/briefing/di/${item.id}`);
+          else navigate(`/briefing/iv/${item.id}`);
+        }}
             />
           </BriefingSection>
         );
