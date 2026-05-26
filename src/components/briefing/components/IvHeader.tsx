@@ -1,10 +1,13 @@
-import { Flex, Text, Badge } from '@radix-ui/themes';
+import React from 'react';
+import { Flex, Text, Badge, Select } from '@radix-ui/themes';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Link2, Unlink2 } from 'lucide-react';
-import { STATE_COLORS } from '@/config/interventionTypes';
-import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
+import { ExternalLink } from 'lucide-react';
+import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
-import { IvBlock, DiBlock, DiEmptyBlock, DueBanner, StatusBar } from './IvHeaderBlocks';
+import { IvBlock, DiBlock, DiEmptyBlock, DueBanner, ChainIcon } from './IvHeaderBlocks';
+
+const STATUS_ORDER = ['ouvert', 'attente_pieces', 'attente_prod', 'ferme'] as const;
+const PRIORITY_ORDER = ['urgent', 'important', 'normal', 'faible'] as const;
 
 interface IvHeaderProps {
   situation: BriefingSituation;
@@ -22,10 +25,9 @@ interface IvHeaderProps {
   closeFmt: string | null;
   daysOpen: number;
   onSelectStatus: (s: string) => void;
-  pendingStatus: string | null;
-  onClosePending: () => void;
-  onConfirmStatus: (reason: { reason_code: string; reason_text?: string | null }) => void;
   statusSaving: boolean;
+  currentPriority: string;
+  onSelectPriority: (p: string) => void;
 }
 
 export function MachineTitle({ machine }: { machine: BriefingSituation['machine'] }) {
@@ -50,51 +52,80 @@ export function MachineTitle({ machine }: { machine: BriefingSituation['machine'
   );
 }
 
+const triggerStyle = (color: string): React.CSSProperties => ({
+  background: color + '22', border: `1px solid ${color}44`, color, fontWeight: 600,
+});
+
+function IvSelectors({ currentStatus, onSelectStatus, statusSaving, currentPriority, onSelectPriority }: {
+  currentStatus: string; onSelectStatus: (s: string) => void; statusSaving: boolean;
+  currentPriority: string; onSelectPriority: (p: string) => void;
+}) {
+  const normalizedPriority = currentPriority === 'normale' ? 'normal' : currentPriority;
+  const statusColor   = STATE_COLORS[currentStatus as keyof typeof STATE_COLORS]?.activeBg ?? 'var(--gray-9)';
+  const priorityColor = PRIORITY_COLORS[normalizedPriority as keyof typeof PRIORITY_COLORS]?.activeBg ?? 'var(--gray-9)';
+
+  return (
+    <div style={{ padding: '8px 0 12px' }}>
+      <Text size="1" color="gray" style={{ display: 'block', marginBottom: 6 }}>Mise à jour</Text>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: '6px 8px' }}>
+        <Text size="2" color="gray" style={{ textAlign: 'right' }}>État</Text>
+        <Select.Root value={currentStatus} onValueChange={onSelectStatus} size="2" disabled={statusSaving}>
+          <Select.Trigger style={triggerStyle(statusColor)} />
+          <Select.Content>
+            {STATUS_ORDER.map((s) => (
+              <Select.Item key={s} value={s}>{STATE_COLORS[s].label}</Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+        <Text size="2" color="gray" style={{ textAlign: 'right' }}>Priorité</Text>
+        <Select.Root value={normalizedPriority} onValueChange={onSelectPriority} size="2">
+          <Select.Trigger style={triggerStyle(priorityColor)} />
+          <Select.Content>
+            {PRIORITY_ORDER.map((p) => (
+              <Select.Item key={p} value={p}>{PRIORITY_COLORS[p].label}</Select.Item>
+            ))}
+          </Select.Content>
+        </Select.Root>
+      </div>
+    </div>
+  );
+}
+
 export function IvHeader({
   situation, detail, currentStatus, statusCfg, priorityCfg, typeLabel,
-  actionCount, totalTime, purchaseCount,
-  criticalTask, urgency, openFmt, closeFmt, daysOpen, onSelectStatus,
-  pendingStatus, onClosePending, onConfirmStatus, statusSaving,
+  actionCount, totalTime, purchaseCount, criticalTask, urgency,
+  openFmt, closeFmt, daysOpen, onSelectStatus, statusSaving,
+  currentPriority, onSelectPriority,
 }: IvHeaderProps) {
-  const pendingCfg = pendingStatus ? STATE_COLORS[pendingStatus as keyof typeof STATE_COLORS] : null;
   const req = detail?.request ?? null;
 
   return (
-    <>
-      <AuditReasonDialog
-        open={!!pendingStatus} entityType="intervention" reasons={undefined}
-        title="Changer le statut"
-        description={pendingCfg ? `Passer vers ${pendingCfg.label}` : undefined}
-        saving={statusSaving} onCancel={onClosePending} onConfirm={onConfirmStatus}
-      />
-      <div style={{ flexShrink: 0, borderBottom: '1px solid var(--gray-4)' }}>
-        {/* Titre équipement */}
-        <MachineTitle machine={situation.machine} />
-        {/* Deux blocs côte à côte */}
-        <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
-          <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
-            {req
-              ? <Link2 size={22} style={{ color: 'var(--green-9)' }} />
-              : <Unlink2 size={22} style={{ color: 'var(--gray-6)' }} />
-            }
-          </div>
-          <Flex gap="2" style={{ marginBottom: 6 }}>
-            <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
-            <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
-          </Flex>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
-            {req ? <DiBlock req={req} /> : <DiEmptyBlock />}
-            <IvBlock
-              situation={situation} typeLabel={typeLabel}
-              statusCfg={statusCfg} priorityCfg={priorityCfg}
-              actionCount={actionCount} totalTime={totalTime} purchaseCount={purchaseCount}
-              openFmt={openFmt} closeFmt={closeFmt} daysOpen={daysOpen}
-            />
-          </div>
+    <div style={{ flexShrink: 0, borderBottom: '1px solid var(--gray-4)' }}>
+      <MachineTitle machine={situation.machine} />
+      <div style={{ position: 'relative', padding: '10px 14px 0' }}>
+        <ChainIcon linked={!!req} />
+        <Flex gap="2" style={{ marginBottom: 6 }}>
+          <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
+          <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
+        </Flex>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
+          {req ? <DiBlock req={req} /> : <DiEmptyBlock />}
+          <IvBlock
+            situation={situation} typeLabel={typeLabel}
+            statusCfg={statusCfg} priorityCfg={priorityCfg}
+            actionCount={actionCount} totalTime={totalTime} purchaseCount={purchaseCount}
+            openFmt={openFmt} closeFmt={closeFmt} daysOpen={daysOpen}
+          />
         </div>
-        <DueBanner situation={situation} urgency={urgency} criticalTask={criticalTask} />
-        <StatusBar currentStatus={currentStatus} onSelectStatus={onSelectStatus} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
+          <div />
+          <IvSelectors
+            currentStatus={currentStatus} onSelectStatus={onSelectStatus} statusSaving={statusSaving}
+            currentPriority={currentPriority} onSelectPriority={onSelectPriority}
+          />
+        </div>
       </div>
-    </>
+      <DueBanner situation={situation} urgency={urgency} criticalTask={criticalTask} />
+    </div>
   );
 }

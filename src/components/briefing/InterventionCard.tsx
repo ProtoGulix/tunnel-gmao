@@ -68,7 +68,6 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
   const { detail, tasks, setTasks, auditLogs, loading, loadDetail } = useIvDetail(situation?.id);
   const [showForm, setShowForm] = useState(false);
   const [editCell, setEditCell] = useState<{ taskId: string; field: string } | null>(null);
-
   const display = useCardDisplay(situation, detail);
   const actions = useCardActions(situation, tasks, setTasks, loadDetail, onRefresh);
 
@@ -115,11 +114,10 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
         openFmt={display.openFmt}
         closeFmt={display.closeFmt}
         daysOpen={situation.daysOpen ?? 0}
-        onSelectStatus={actions.setPendingStatus}
-        pendingStatus={actions.pendingStatus}
-        onClosePending={actions.closePending}
-        onConfirmStatus={actions.handleStatusConfirm}
+        onSelectStatus={actions.handleStatusChange}
         statusSaving={actions.statusSaving}
+        currentPriority={situation.priority ?? 'normale'}
+        onSelectPriority={actions.handlePrioritySelect}
       />
       <IvBody
         situation={situation}

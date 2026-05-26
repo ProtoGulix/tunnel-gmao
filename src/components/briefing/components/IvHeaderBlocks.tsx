@@ -1,8 +1,8 @@
 import React from 'react';
 import { Flex, Text, Badge, Button } from '@radix-ui/themes';
-import { Bot, Clock, ClipboardList, ExternalLink, Package, Target, User, Wrench } from 'lucide-react';
+import { Bot, Clock, ClipboardList, ExternalLink, Link as LinkIcon, Package, Target, Unlink, User, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { STATE_COLORS } from '@/config/interventionTypes';
+import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { formatDueDate } from '@/hooks/useInterventionUrgency';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
 
@@ -14,31 +14,48 @@ const TILE_STYLE: React.CSSProperties = {
   background: 'var(--color-panel-solid)',
 };
 
-function TileHeader({ children }: { children: React.ReactNode }) {
+function TileHeader({ children, bg }: { children: React.ReactNode; bg?: string }) {
   return (
-    <Flex align="center" gap="2" wrap="wrap" style={{ padding: '6px 10px', borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-2)', minWidth: 0 }}>
+    <Flex align="center" gap="2" wrap="wrap" style={{ padding: '6px 10px', borderBottom: '1px solid var(--gray-4)', background: bg ?? 'var(--gray-2)', minWidth: 0 }}>
       {children}
     </Flex>
   );
 }
 
-function TileFooter({ children }: { children: React.ReactNode }) {
+function TileFooter({ children, bg }: { children: React.ReactNode; bg?: string }) {
   return (
-    <Flex align="center" gap="2" style={{ padding: '4px 10px', borderTop: '1px solid var(--gray-4)', background: 'var(--gray-2)', minWidth: 0 }}>
+    <Flex align="center" gap="2" style={{ padding: '4px 10px', borderTop: '1px solid var(--gray-4)', background: bg ?? 'var(--gray-2)', minWidth: 0 }}>
       {children}
     </Flex>
+  );
+}
+
+// ── Icône de lien entre les blocs ────────────────────────────────────────
+
+export function ChainIcon({ linked }: { linked: boolean }) {
+  return (
+    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 1, pointerEvents: 'none' }}>
+      <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-7)', marginTop: 20, marginBottom: 10 }} />
+      {linked
+        ? <LinkIcon size={22} strokeWidth={2.5} style={{ color: 'var(--green-9)', flexShrink: 0 }} />
+        : <Unlink   size={22} strokeWidth={2.5} style={{ color: 'var(--gray-6)',  flexShrink: 0 }} />
+      }
+      <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-7)', marginTop: 10, marginBottom: 20 }} />
+    </div>
   );
 }
 
 // ── Bloc Demande (DI) ─────────────────────────────────────────────────────
 
 export function DiBlock({ req }: { req: NonNullable<InterventionDetail['request']> }) {
+  const borderColor = req.statutColor ?? 'var(--gray-4)';
+  const bandBg = borderColor + '18';
   return (
-    <div style={TILE_STYLE}>
-      <TileHeader>
+    <div style={{ ...TILE_STYLE, border: `2px solid ${borderColor}` }}>
+      <TileHeader bg={bandBg}>
         <Badge size="2" variant="outline" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{req.code}</Badge>
         {req.statutLabel && (
-          <Badge size="2" variant="soft" style={{ background: (req.statutColor ?? '#9ca3af') + '22', color: req.statutColor ?? 'var(--gray-10)', flexShrink: 0 }}>
+          <Badge size="2" variant="soft" style={{ background: borderColor + '22', color: borderColor, flexShrink: 0 }}>
             {req.statutLabel}
           </Badge>
         )}
@@ -50,7 +67,7 @@ export function DiBlock({ req }: { req: NonNullable<InterventionDetail['request'
           </Text>
         )}
       </div>
-      <TileFooter>
+      <TileFooter bg={bandBg}>
         {req.isSystem
           ? <Bot size={13} color="var(--gray-8)" style={{ flexShrink: 0 }} />
           : <User size={13} color="var(--gray-8)" style={{ flexShrink: 0 }} />
@@ -84,9 +101,12 @@ interface IvBlockProps {
 }
 
 export function IvBlock({ situation, typeLabel, statusCfg, priorityCfg, actionCount, totalTime, purchaseCount, openFmt, closeFmt, daysOpen }: IvBlockProps) {
+  const statusEntry = STATE_COLORS[situation.status as keyof typeof STATE_COLORS];
+  const borderColor = statusEntry?.activeBg ?? 'var(--gray-4)';
+  const bandBg = statusEntry?.bandBg ?? 'var(--gray-2)';
   return (
-    <div style={TILE_STYLE}>
-      <TileHeader>
+    <div style={{ ...TILE_STYLE, border: `2px solid ${borderColor}` }}>
+      <TileHeader bg={bandBg}>
         <Link to={`/intervention/${situation.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
           <Badge size="2" variant="outline" color="gray" style={{ fontFamily: 'monospace' }}>{situation.code}</Badge>
         </Link>
@@ -115,7 +135,7 @@ export function IvBlock({ situation, typeLabel, statusCfg, priorityCfg, actionCo
           )}
         </Flex>
       </div>
-      <TileFooter>
+      <TileFooter bg={bandBg}>
         {situation.techInitials && <Badge size="1" variant="soft" color="gray" style={{ fontFamily: 'monospace' }}>{situation.techInitials}</Badge>}
         <div style={{ flex: 1 }} />
         {openFmt && (
@@ -165,6 +185,34 @@ export function DueBanner({ situation, urgency, criticalTask }: { situation: Bri
           Due : {formatDueDate(situation.next_due_date)}{urgency.level === 'overdue' && ' — EN RETARD'}
         </Text>
       </Flex>
+    </Flex>
+  );
+}
+
+// ── Barres statut / priorité ──────────────────────────────────────────────
+
+const PRIORITY_ORDER = ['urgent', 'important', 'normal', 'faible'] as const;
+
+export function PriorityBar({ currentPriority, onSelectPriority }: { currentPriority: string; onSelectPriority: (p: string) => void }) {
+  return (
+    <Flex gap="1" style={{ padding: '0 14px 8px', flexWrap: 'wrap' }}>
+      {PRIORITY_ORDER.map((p) => {
+        const pcfg = PRIORITY_COLORS[p];
+        const isActive = currentPriority === p || (p === 'normal' && currentPriority === 'normale');
+        return (
+          <button key={p} type="button" disabled={isActive} onClick={() => { if (!isActive) onSelectPriority(p); }} style={{
+            flex: 1, padding: '5px 8px', fontSize: 13,
+            fontWeight: isActive ? 700 : 500, borderRadius: 6,
+            border: isActive ? 'none' : '1px solid var(--gray-5)',
+            cursor: isActive ? 'default' : 'pointer',
+            background: isActive ? pcfg.activeBg : pcfg.inactiveBg,
+            color: isActive ? pcfg.textActive : pcfg.textInactive,
+            transition: 'background 0.15s, color 0.15s', whiteSpace: 'nowrap',
+          }}>
+            {pcfg.label}
+          </button>
+        );
+      })}
     </Flex>
   );
 }

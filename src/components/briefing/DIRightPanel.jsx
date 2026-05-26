@@ -1,10 +1,9 @@
 import PropTypes from 'prop-types';
 import { Flex, Text } from '@radix-ui/themes';
-import { Unlink2 } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import { InterventionCard } from './InterventionCard';
 import { MachineTitle } from './components/IvHeader';
-import { DiBlock, IvEmptyBlock } from './components/IvHeaderBlocks';
+import { DiBlock, IvEmptyBlock, ChainIcon } from './components/IvHeaderBlocks';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
@@ -26,9 +25,7 @@ function DiOnlyPanel({ detail }) {
     <div style={{ flexShrink: 0, borderBottom: '1px solid var(--gray-4)' }}>
       <MachineTitle machine={machine} />
       <div style={{ position: 'relative', padding: '10px 14px', borderBottom: '1px solid var(--gray-4)' }}>
-        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', zIndex: 1, pointerEvents: 'none' }}>
-          <Unlink2 size={22} style={{ color: 'var(--gray-6)' }} />
-        </div>
+        <ChainIcon linked={false} />
         <Flex gap="2" style={{ marginBottom: 6 }}>
           <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Demande</Text>
           <Text size="2" weight="medium" style={{ flex: 1, textAlign: 'center', color: 'var(--gray-11)' }}>Intervention</Text>
