@@ -127,10 +127,12 @@ export default function BriefingPage({ equipementId, leftHeader }) {
               section={section}
               selectedId={selected?.item?.id}
               onSelect={(item, type) => {
-          setSelected({ type, item });
-          if (type === 'request' || type === 'request_accepted') navigate(`/briefing/di/${item.id}`);
-          else navigate(`/briefing/iv/${item.id}`);
-        }}
+                setSelected({ type, item });
+                if (!equipementId) {
+                  if (type === 'request' || type === 'request_accepted') navigate(`/briefing/di/${item.id}`);
+                  else navigate(`/briefing/iv/${item.id}`);
+                }
+              }}
             />
           </BriefingSection>
         );

@@ -275,36 +275,43 @@ export function useBriefingData({ equipementId } = {}) {
     setError(null);
 
     if (equipementId) {
-      // ── Mode équipement : vue inchangée ───────────────────────────────
-      const interventionParams = {
-        include: 'stats,tasks',
-        sort: '-priority,-reported_date',
-        limit: 500,
-        equipementId,
-      };
+      // ── Mode équipement : interventions + demandes filtrées ──────────
+      const [interventionsResult, requestsResult] = await Promise.allSettled([
+        fetchInterventions({
+          include: 'stats,tasks',
+          sort: '-priority,-reported_date',
+          limit: 500,
+          equipementId,
+          status: 'ouvert,en_cours,attente_pieces,attente_prod,ferme,cancelled',
+        }),
+        fetchInterventionRequests({ machineId: equipementId, excludeStatuses: 'rejetee,cloturee', limit: 200 }),
+      ]);
 
-      const result = await Promise.allSettled([fetchInterventions(interventionParams)]);
-      const [interventionsResult] = result;
-
-      if (interventionsResult.status === 'rejected') {
+      if (interventionsResult.status === 'rejected' && requestsResult.status === 'rejected') {
         setError(extractApiErrorMessage(interventionsResult.reason, 'Erreur lors du chargement des données'));
         setLoading(false);
         return;
       }
 
-      const interventions = interventionsResult.value;
+      const interventions = interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
+      const requests = requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
+
       const enriched = interventions.map(enrichSituation);
       const openEnriched = enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled');
-      const classifiedSections = classifySections(openEnriched, { includeAll: true });
+      const classifiedSections = classifySections(openEnriched, { includeAll: true })
+        .map((s) => ({ type: 'situation', ...s }));
       const archived = enriched
         .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
         .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
 
+      const diSections = buildDISections(requests);
+
       setSections([
+        ...diSections,
         ...classifiedSections,
         { id: 'archived', label: 'Archives', type: 'situation', items: archived },
       ]);
-      setCounters(computeCounters(interventions, []));
+      setCounters(computeCounters(interventions, requests));
       setLoading(false);
       return;
     }
