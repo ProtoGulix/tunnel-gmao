@@ -122,28 +122,44 @@ export function handleAuditError(error) {
   const entityType = getAuditEntityType(error);
   const method = error?.config?.method?.toLowerCase() ?? '';
 
-  const cached =
-    method === 'post'
-      ? (_auditConfigCache.get(`${entityType}:list`) ?? null)
-      : (_auditConfigCache.get(`${entityType}:detail`) ?? _auditConfigCache.get(`${entityType}:list`) ?? null);
+  // Priorité 1 : config audit fournie directement par l'endpoint dans la réponse d'erreur.
+  // Le backend inclut le champ `audit` dans le corps du 400/422 pour que le client
+  // n'ait pas besoin d'un GET préalable pour connaître les règles.
+  const auditFromError = error?.response?.data?.audit;
+  if (auditFromError && typeof auditFromError.silent === 'boolean') {
+    const kind = method === 'post' ? 'list' : 'detail';
+    _auditConfigCache.set(`${entityType}:${kind}`, {
+      silent:              auditFromError.silent,
+      default_reason_code: auditFromError.default_reason_code,
+      reasons:             auditFromError.reasons,
+      silent_fields:       Array.isArray(auditFromError.silent_fields) ? auditFromError.silent_fields : undefined,
+    });
+  }
 
-  if (cached?.silent) {
-    const silentFields = cached.silent_fields;
+  // Priorité 2 : cache alimenté par les GET précédents (fallback)
+  const auditConfig =
+    (auditFromError && typeof auditFromError.silent === 'boolean' ? auditFromError : null) ??
+    (method === 'post'
+      ? (_auditConfigCache.get(`${entityType}:list`) ?? null)
+      : (_auditConfigCache.get(`${entityType}:detail`) ?? _auditConfigCache.get(`${entityType}:list`) ?? null));
+
+  if (auditConfig?.silent) {
+    const silentFields = auditConfig.silent_fields;
     if (Array.isArray(silentFields)) {
       let payload = {};
       try { payload = error.config?.data ? JSON.parse(error.config.data) : {}; } catch { payload = {}; }
       const mutatedFields = Object.keys(payload).filter((k) => k !== 'reason_code' && k !== 'reason_text');
       if (mutatedFields.every((f) => silentFields.includes(f))) {
-        return _retryWithReason(error, { reason_code: cached.default_reason_code });
+        return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
       }
       // Au moins un champ hors silent_fields → dialog obligatoire
     } else {
       // Pas de silent_fields → tout passe silencieusement (rétrocompat)
-      return _retryWithReason(error, { reason_code: cached.default_reason_code });
+      return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
     }
   }
 
-  const reasons = cached?.reasons?.length ? cached.reasons : undefined;
+  const reasons = auditConfig?.reasons?.length ? auditConfig.reasons : undefined;
 
   return new Promise((resolve, reject) => {
     if (_subscribers.size === 0) {
