@@ -17,6 +17,30 @@ function getDaysOpen(dateStr) {
   return Math.floor((today - new Date(dateStr)) / 86400000);
 }
 
+const PRIORITY_ORDER = { urgent: 0, important: 1, normale: 2, faible: 3 };
+
+// Tri universel : date due (retard d'abord) → urgence → sans intervention en dernier
+function sortTileItems(a, b) {
+  const aNoIv = !a.intervention && a.statut !== undefined; // DI sans intervention liée
+  const bNoIv = !b.intervention && b.statut !== undefined;
+  if (aNoIv !== bNoIv) return aNoIv ? 1 : -1;
+
+  const aDue = a.intervention?.next_due_date ?? a.next_due_date ?? null;
+  const bDue = b.intervention?.next_due_date ?? b.next_due_date ?? null;
+
+  if (aDue && bDue) return new Date(aDue) - new Date(bDue);
+  if (aDue) return -1;
+  if (bDue) return 1;
+
+  const aPriority = PRIORITY_ORDER[a.intervention?.priority ?? a.priority ?? 'normale'] ?? 2;
+  const bPriority = PRIORITY_ORDER[b.intervention?.priority ?? b.priority ?? 'normale'] ?? 2;
+  if (aPriority !== bPriority) return aPriority - bPriority;
+
+  const aDate = a.intervention?.reported_date ?? a.reportedDate ?? a.created_at ?? null;
+  const bDate = b.intervention?.reported_date ?? b.reportedDate ?? b.created_at ?? null;
+  return new Date(aDate) - new Date(bDate);
+}
+
 // Enrichit une intervention (pour le fallback orphelines)
 function enrichSituation(iv) {
   const daysOpen = getDaysOpen(iv.reportedDate);
@@ -52,7 +76,7 @@ function buildDISections(requests) {
     const items = requests
       .filter((r) => r.statut === statut)
       .map((r) => ({ ...r, daysWaiting: getDaysOpen(r.created_at) }))
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      .sort(sortTileItems);
 
     if (items.length > 0) {
       sections.push({ ...sectionMeta[statut], items });
@@ -92,15 +116,7 @@ function classifyOrphanSections(enriched) {
     }
   });
 
-  nowItems.sort((a, b) => {
-    if (a.situationType !== b.situationType) return a.situationType === 'decision' ? -1 : 1;
-    const aHasDue = a.next_due_date != null;
-    const bHasDue = b.next_due_date != null;
-    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
-    if (aHasDue) return -1;
-    if (bHasDue) return 1;
-    return new Date(a.reportedDate) - new Date(b.reportedDate);
-  });
+  nowItems.sort(sortTileItems);
 
   enriched.forEach((s) => {
     if (nowSet.has(s.id)) return;
@@ -111,7 +127,7 @@ function classifyOrphanSections(enriched) {
     }
   });
 
-  waitingItems.sort((a, b) => b.daysOpen - a.daysOpen);
+  waitingItems.sort(sortTileItems);
 
   enriched.forEach((s) => {
     if (nowSet.has(s.id) || waitingSet.has(s.id)) return;
@@ -123,20 +139,12 @@ function classifyOrphanSections(enriched) {
     }
   });
 
-  runningItems.sort((a, b) => {
-    const aHasDue = a.next_due_date != null;
-    const bHasDue = b.next_due_date != null;
-    if (aHasDue && bHasDue) return new Date(a.next_due_date) - new Date(b.next_due_date);
-    if (aHasDue) return -1;
-    if (bHasDue) return 1;
-    return new Date(a.reportedDate) - new Date(b.reportedDate);
-  });
+  runningItems.sort(sortTileItems);
 
-  // Interventions restantes non classifiées (ouvertes sans actions ni pièces)
   const classifiedIds = new Set([...nowSet, ...waitingSet, ...runningItems.map((i) => i.id)]);
   const uncategorized = enriched
     .filter((s) => !classifiedIds.has(s.id))
-    .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate))
+    .sort(sortTileItems)
     .map((s) => ({ ...s, situationType: 'in_progress' }));
 
   const sections = [];
@@ -267,36 +275,43 @@ export function useBriefingData({ equipementId } = {}) {
     setError(null);
 
     if (equipementId) {
-      // ── Mode équipement : vue inchangée ───────────────────────────────
-      const interventionParams = {
-        include: 'stats,tasks',
-        sort: '-priority,-reported_date',
-        limit: 500,
-        equipementId,
-      };
+      // ── Mode équipement : interventions + demandes filtrées ──────────
+      const [interventionsResult, requestsResult] = await Promise.allSettled([
+        fetchInterventions({
+          include: 'stats,tasks',
+          sort: '-priority,-reported_date',
+          limit: 500,
+          equipementId,
+          status: 'ouvert,en_cours,attente_pieces,attente_prod,ferme,cancelled',
+        }),
+        fetchInterventionRequests({ machineId: equipementId, excludeStatuses: 'rejetee,cloturee', limit: 200 }),
+      ]);
 
-      const result = await Promise.allSettled([fetchInterventions(interventionParams)]);
-      const [interventionsResult] = result;
-
-      if (interventionsResult.status === 'rejected') {
+      if (interventionsResult.status === 'rejected' && requestsResult.status === 'rejected') {
         setError(extractApiErrorMessage(interventionsResult.reason, 'Erreur lors du chargement des données'));
         setLoading(false);
         return;
       }
 
-      const interventions = interventionsResult.value;
+      const interventions = interventionsResult.status === 'fulfilled' ? interventionsResult.value : [];
+      const requests = requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
+
       const enriched = interventions.map(enrichSituation);
       const openEnriched = enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled');
-      const classifiedSections = classifySections(openEnriched, { includeAll: true });
+      const classifiedSections = classifySections(openEnriched, { includeAll: true })
+        .map((s) => ({ type: 'situation', ...s }));
       const archived = enriched
         .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
         .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
 
+      const diSections = buildDISections(requests);
+
       setSections([
+        ...diSections,
         ...classifiedSections,
         { id: 'archived', label: 'Archives', type: 'situation', items: archived },
       ]);
-      setCounters(computeCounters(interventions, []));
+      setCounters(computeCounters(interventions, requests));
       setLoading(false);
       return;
     }

@@ -1,6 +1,15 @@
 import { TYPE_INTER_LABELS, INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
 
+const _today = new Date();
+_today.setHours(0, 0, 0, 0);
+
+function daysOpen(dateStr) {
+  if (!dateStr) return null;
+  const diff = _today - new Date(dateStr);
+  return Math.max(0, Math.floor(diff / 86400000));
+}
+
 export const TYPE_COLOR = Object.fromEntries(INTERVENTION_TYPES.map((t) => [t.id, t.color]));
 
 export const SECTION_BAR_COLOR = {
@@ -44,6 +53,7 @@ function normalizeRequest(item) {
 
   return {
     machineCode:   item.equipement?.code ?? null,
+    machineName:   item.equipement?.name ?? null,
     urgency:       getInterventionUrgency(nextDueDate, item.created_at),
     diCode:        item.code,
     diStatutLabel: item.statut_label,
@@ -54,6 +64,10 @@ function normalizeRequest(item) {
     techInitials:  iv?.tech_initials ?? null,
     nextDueDate,
     reportedDate:  iv?.reported_date ?? item.created_at ?? null,
+    daysOpen:      daysOpen(iv?.reported_date ?? item.created_at ?? null),
+    demandeurNom:  item.demandeur_nom ?? null,
+    serviceLabel:  item.service?.label ?? null,
+    isSystem:      item.is_system ?? false,
     completionPct: null,
     stats:         iv?.stats ?? null,
   };
@@ -69,6 +83,7 @@ function normalizeOrphan(item) {
 
   return {
     machineCode:   item.machine?.code ?? item.code ?? null,
+    machineName:   item.machine?.name ?? null,
     urgency:       item.urgency ?? getInterventionUrgency(item.next_due_date, item.reportedDate),
     diCode:        null,
     diStatutLabel: null,
@@ -79,6 +94,9 @@ function normalizeOrphan(item) {
     techInitials:  item.techInitials ?? null,
     nextDueDate:   item.next_due_date ?? null,
     reportedDate:  item.reportedDate ?? null,
+    daysOpen:      daysOpen(item.reportedDate ?? null),
+    demandeurNom:  null,
+    serviceLabel:  null,
     completionPct,
     stats:         item.stats ?? null,
   };

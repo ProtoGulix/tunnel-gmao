@@ -1,5 +1,5 @@
 import { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
-import { updateInterventionStatus } from '@/api/interventions';
+import { updateIntervention, updateInterventionStatus } from '@/api/interventions';
 import { patchInterventionTask } from '@/api/interventionTasks';
 import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
@@ -50,30 +50,51 @@ export function useCardActions(
   loadDetail: (id: string) => void,
   onRefresh?: () => void,
 ) {
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  const [statusSaving, setStatusSaving]   = useState(false);
+  const [statusSaving, setStatusSaving]     = useState(false);
+  const [prioritySaving, setPrioritySaving] = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
 
-  const handleStatusConfirm = useCallback(async (reason: { reason_code: string; reason_text?: string | null }) => {
-    if (!pendingStatus || !situation?.id) return;
+  // Changement de statut — l'intercepteur axios déclenche useAuditGuard si besoin
+  const handleStatusChange = useCallback(async (newStatus: string) => {
+    if (!situation?.id) return;
     setStatusSaving(true);
     try {
-      await updateInterventionStatus(situation.id, pendingStatus, reason.reason_code, reason.reason_text ?? undefined);
-      setPendingStatus(null);
+      await updateInterventionStatus(situation.id, newStatus);
       loadDetail(situation.id);
       onRefresh?.();
+    } catch (err: unknown) {
+      if (!(err instanceof Error && err.message === 'AUDIT_CANCELLED')) {
+        loadDetail(situation.id);
+        onRefresh?.();
+      }
     } finally {
       setStatusSaving(false);
     }
-  }, [pendingStatus, situation?.id, loadDetail, onRefresh]);
+  }, [situation?.id, loadDetail, onRefresh]);
 
-  // saveField — appel direct, l'axios guard intercepte 400/422 si reason_code requis
+  const handlePrioritySelect = useCallback(async (priority: string) => {
+    if (!situation?.id) return;
+    setPrioritySaving(true);
+    try {
+      await updateIntervention(situation.id, { priority });
+      loadDetail(situation.id);
+      onRefresh?.();
+    } catch (err: unknown) {
+      if (!(err instanceof Error && err.message === 'AUDIT_CANCELLED')) {
+        loadDetail(situation.id);
+        onRefresh?.();
+      }
+    } finally {
+      setPrioritySaving(false);
+    }
+  }, [situation?.id, loadDetail, onRefresh]);
+
   const saveField = useCallback((taskId: string, field: string, value: string | null, onDone: () => void) => {
     patchInterventionTask(taskId, { [field]: value ?? null })
       .then(onDone)
       .catch(() => {});
   }, []);
 
-  // handleMove — appel direct, le guard gère l'audit si nécessaire
   const handleMove = useCallback((task: InterventionTask, idx: number, direction: number) => {
     if (!situation?.id) return;
     const sorted  = [...tasks].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -93,10 +114,10 @@ export function useCardActions(
     ]).catch(() => loadDetail(situation.id));
   }, [tasks, setTasks, situation?.id, loadDetail]);
 
-  const closePending = useCallback(() => setPendingStatus(null), []);
-
   return {
-    pendingStatus, setPendingStatus, closePending, statusSaving, handleStatusConfirm,
+    statusSaving, handleStatusChange,
+    prioritySaving, handlePrioritySelect,
+    error, setError,
     saveField, handleMove,
   };
 }

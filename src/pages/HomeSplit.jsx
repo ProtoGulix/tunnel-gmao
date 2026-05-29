@@ -1,14 +1,16 @@
 import { useState, useCallback } from 'react';
-import { Home, ShoppingCart } from 'lucide-react';
+import { ClipboardList, Home, ShoppingCart } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { PlanningPane } from '@/components/home/PlanningPane';
 import { TasksPane } from '@/components/home/TasksPane';
 import ActionModal from '@/components/home/ActionModal';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
+import SpontaneousInterventionRequestModal from '@/components/home/SpontaneousInterventionRequestModal';
 import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 
 export default function HomeSplit() {
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [interventionModalOpen, setInterventionModalOpen] = useState(false);
   const [actionModal, setActionModal] = useState({ open: false, date: null, techId: null, techInitials: '', weekActionsForDay: [], preselectedAction: null });
 
   const planningHook = usePlanningWeek();
@@ -25,6 +27,12 @@ export default function HomeSplit() {
     label: "Demande d'achat",
     icon: ShoppingCart,
     onClick: () => setPurchaseModalOpen(true),
+  };
+
+  const interventionAction = {
+    label: "Demande d'inter",
+    icon: ClipboardList,
+    onClick: () => setInterventionModalOpen(true),
   };
 
   const handleOpenActionModal = useCallback(({ date, techId, techInitials, weekActionsForDay, preselectedAction }) => {
@@ -69,7 +77,7 @@ export default function HomeSplit() {
         title="Accueil"
         subtitle={dateLabel}
         icon={Home}
-        actions={[purchaseAction]}
+        actions={[interventionAction, purchaseAction]}
       />
 
       {/* ── Corps principal ─────────────────────────────────────────────────── */}
@@ -113,6 +121,11 @@ export default function HomeSplit() {
       <SpontaneousPurchaseRequestModal
         open={purchaseModalOpen}
         onOpenChange={setPurchaseModalOpen}
+      />
+
+      <SpontaneousInterventionRequestModal
+        open={interventionModalOpen}
+        onOpenChange={setInterventionModalOpen}
       />
     </div>
   );

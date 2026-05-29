@@ -115,6 +115,7 @@ export function mapInterventionDetailResponse(raw = {}) {
           statutLabel: raw.request.statut_label,
           statutColor: raw.request.statut_color,
           createdAt: raw.request.created_at,
+          isSystem: raw.request.is_system ?? false,
         }
       : null,
   };

@@ -15,7 +15,7 @@ export function BriefingSection({ label, children, isFirst }) {
         </Text>
         <div style={{ flex: 1, height: 1, background: 'var(--gray-5)' }} />
       </Flex>
-      <Flex direction="column" gap="1">
+      <Flex direction="column" gap="4">
         {children}
       </Flex>
     </div>

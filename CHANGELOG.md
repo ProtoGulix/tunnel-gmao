@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.42.0] — 2026-05-29
+
+### Page détail équipement — vue consolidée
+
+- **DI et interventions visibles** : la page détail d'un équipement affiche désormais les demandes d'intervention et les interventions dans les mêmes composants que le Briefing (`BriefingPage`)
+- **Navigation maintenue** : cliquer sur un élément dans la vue équipement reste sur `/equipements/:id` — plus de redirection vers `/briefing`
+- **Toutes les interventions** : les interventions terminées, annulées et archivées sont incluses dans la liste (filtre de statut exhaustif)
+
+### Journal d'audit — interception native
+
+- **Config audit depuis l'endpoint** : l'intercepteur lit maintenant le champ `audit` directement dans la réponse d'erreur 400/422 du backend — plus besoin d'un GET préalable pour connaître les règles
+- **Retry silencieux immédiat** : si le backend renvoie `silent: true` dans l'erreur, la requête est relancée automatiquement avec `default_reason_code` sans aucune interaction, même au premier appel
+- **Suppression des pré-chauffs** : les requêtes fictives `limit: 1` dans les formulaires de création ont été supprimées
+
+### Briefing — améliorations
+
+- Refonte de `DIRightPanel` et `IvHeader` avec chaînage visuel (`ChainIcon`) et sélection de priorité
+- Nouveau composant `IvHeaderBlocks` pour une mise en page modulaire des en-têtes d'intervention
+- Badge d'échéance de tâche (`TaskDueBadge`) avec refactorisation de `TaskRow`
+- `MachineTitle` enrichi avec support des données de situation et rendu conditionnel
+- URLs dynamiques dans `BriefingPage` pour une navigation cohérente
+
+---
+
 ## [3.40.0] — 2026-05-22
 
 ### Correctifs
@@ -8,24 +32,22 @@
 
 ---
 
-## [3.39.0] — 2026-05-21
+## [3.39.0] — 2026-05-22
 
-### Corrections
+### Correctifs
 
-- **Demandes d'achat spontanées** : la création d'une demande d'achat en dehors du contexte d'une intervention ne demande plus de raison — elle est enregistrée automatiquement comme *Routine*, comme c'est déjà le cas pour les actions et les tâches.
+- Mise à jour de l'endpoint `fetchPurchaseRequests` pour retourner les données depuis le bon chemin
+- Correction de la gestion des réponses API pour retourner les données directement
 
 ---
 
-## [3.38.0] — 2026-05-19
+## [3.38.0] — 2026-05-22
 
-### Nouveautés
+### Correctifs
 
-- **Briefing** : ajout d'une liste de tâches directement accessible depuis le tableau de bord, pour un suivi rapide des actions en cours.
-- **Interface** : amélioration de la mise en page et de la réactivité des composants principaux pour une meilleure expérience sur tous les formats d'écran.
-
-### Corrections
-
-- **Commandes fournisseur** : correction de l'affichage des unités dans les lignes de commande, qui affichait parfois une valeur incorrecte.
+- Affichage de l'unité dans les lignes de commande fournisseur : utilisation de `stock_item_unit` pour cohérence
+- Refactorisation de la gestion des réponses API et amélioration des prop types pour les composants stock
+- Suppression de la fonction `fetchSupplierOrderTransitions` inutilisée dans le hook détail commande fournisseur
 
 ---
 
