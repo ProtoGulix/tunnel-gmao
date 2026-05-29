@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.41.0] — 2026-05-29
+
+### Page détail équipement — vue consolidée
+
+- **DI et interventions visibles** : la page détail d'un équipement affiche désormais les demandes d'intervention et les interventions dans les mêmes composants que le Briefing (`BriefingPage`)
+- **Navigation maintenue** : cliquer sur un élément dans la vue équipement reste sur `/equipements/:id` — plus de redirection vers `/briefing`
+- **Toutes les interventions** : les interventions terminées, annulées et archivées sont incluses dans la liste (filtre de statut exhaustif)
+
+### Journal d'audit — interception native
+
+- **Config audit depuis l'endpoint** : l'intercepteur lit maintenant le champ `audit` directement dans la réponse d'erreur 400/422 du backend — plus besoin d'un GET préalable pour connaître les règles
+- **Retry silencieux immédiat** : si le backend renvoie `silent: true` dans l'erreur, la requête est relancée automatiquement avec `default_reason_code` sans aucune interaction, même au premier appel
+- **Suppression des pré-chauffs** : les requêtes fictives `limit: 1` dans les formulaires de création ont été supprimées
+
+### Briefing — améliorations
+
+- Refonte de `DIRightPanel` et `IvHeader` avec chaînage visuel (`ChainIcon`) et sélection de priorité
+- Nouveau composant `IvHeaderBlocks` pour une mise en page modulaire des en-têtes d'intervention
+- Badge d'échéance de tâche (`TaskDueBadge`) avec refactorisation de `TaskRow`
+- `MachineTitle` enrichi avec support des données de situation et rendu conditionnel
+- URLs dynamiques dans `BriefingPage` pour une navigation cohérente
+
+---
+
 ## [3.40.0] — 2026-05-22
 
 ### Correctifs
