@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.41.0] — 2026-05-29
+## [3.42.0] — 2026-05-29
 
 ### Page détail équipement — vue consolidée
 
