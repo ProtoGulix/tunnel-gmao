@@ -310,11 +310,11 @@ export const TaskCard: FC<TaskCardProps> = ({
       <Flex align="center" gap="2" style={{ padding: '8px 10px', background: headerBg, borderBottom: `1px solid ${effectiveCritical ? 'var(--accent-4)' : cfg.color + '30'}` }}>
         {/* Réordonnancement */}
         <Flex direction="column" gap="0" style={{ flexShrink: 0 }}>
-          <IconButton size="1" variant="ghost" color="gray" disabled={isFirst}
+          <IconButton size="1" variant="ghost" color="gray" disabled={isFirst || isDone}
             onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}>
             <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2 L9 8 L1 8 Z" fill="currentColor" /></svg>
           </IconButton>
-          <IconButton size="1" variant="ghost" color="gray" disabled={isLast}
+          <IconButton size="1" variant="ghost" color="gray" disabled={isLast || isDone}
             onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}>
             <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 8 L1 2 L9 2 Z" fill="currentColor" /></svg>
           </IconButton>
@@ -378,7 +378,7 @@ export const TaskCard: FC<TaskCardProps> = ({
         </Flex>
 
         {/* Assigné */}
-        {editingAssign ? (
+        {editingAssign && !isDone ? (
           <select
             autoFocus // eslint-disable-line jsx-a11y/no-autofocus
             defaultValue={String((assignedTo as any)?.id ?? '')}
@@ -398,26 +398,26 @@ export const TaskCard: FC<TaskCardProps> = ({
         ) : (
           <button
             type="button"
-            title={initials ? "Modifier l'assigné" : 'Assigner'}
-            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'assigned_to'); }}
+            title={isDone ? undefined : (initials ? "Modifier l'assigné" : 'Assigner')}
+            onClick={(e) => { if (isDone) return; e.stopPropagation(); onStartEdit(task.id, 'assigned_to'); }}
             style={{
-              background: initials ? 'var(--accent-4)' : 'var(--gray-3)',
+              background: initials ? (isDone ? 'var(--gray-3)' : 'var(--accent-4)') : 'var(--gray-3)',
               border: '1px solid',
-              borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)',
+              borderColor: initials && !isDone ? 'var(--accent-6)' : 'var(--gray-5)',
               borderRadius: '50%', width: 26, height: 26,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', padding: 0, flexShrink: 0,
+              cursor: isDone ? 'default' : 'pointer', padding: 0, flexShrink: 0,
             }}
           >
             {initials
-              ? <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>{initials}</Text>
+              ? <Text size="1" weight="bold" style={{ color: isDone ? 'var(--gray-9)' : 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>{initials}</Text>
               : <User size={12} color="var(--gray-9)" />
             }
           </button>
         )}
 
         {/* Échéance */}
-        {editingDue ? (
+        {editingDue && !isDone ? (
           <input
             autoFocus // eslint-disable-line jsx-a11y/no-autofocus
             type="date"
@@ -437,17 +437,19 @@ export const TaskCard: FC<TaskCardProps> = ({
         ) : (
           <button
             type="button"
-            title="Modifier l'échéance"
-            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'due_date'); }}
-            style={{ background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+            title={isDone ? undefined : "Modifier l'échéance"}
+            onClick={(e) => { if (isDone) return; e.stopPropagation(); onStartEdit(task.id, 'due_date'); }}
+            style={{ background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: isDone ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
           >
-            {overdue && dueFmt
+            {overdue && dueFmt && !isDone
               ? <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
                   <AlertTriangle size={10} />{dueFmt}
                 </Badge>
               : dueFmt
                 ? <Text size="1" color="gray">{dueFmt}</Text>
-                : <Text size="1" style={{ color: 'var(--gray-5)' }}>+ date</Text>
+                : !isDone
+                  ? <Text size="1" style={{ color: 'var(--gray-5)' }}>+ date</Text>
+                  : null
             }
           </button>
         )}
