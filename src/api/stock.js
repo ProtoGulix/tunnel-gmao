@@ -52,7 +52,7 @@ export async function fetchPurchaseRequests(params = {}) {
  * @returns {Promise<Object>} Updated purchase request
  */
 export async function updatePurchaseRequest(id, updates) {
-  const response = await api.patch(`/purchase-requests/${id}`, updates);
+  const response = await api.put(`/purchase-requests/${id}`, updates);
   return response.data || null;
 }
 
