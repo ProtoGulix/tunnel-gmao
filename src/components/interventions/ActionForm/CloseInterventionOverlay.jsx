@@ -37,7 +37,7 @@ export default function CloseInterventionOverlay({
 
   const tryClose = useCallback(async () => {
     try {
-      await updateInterventionStatus(String(interventionId), 'ferme');
+      await updateInterventionStatus(String(interventionId), 'ferme', 'ROUTINE');
       return false;
     } catch (err) {
       return err?.response?.status === 409;
