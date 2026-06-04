@@ -52,10 +52,15 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (partialUser) => {
+    setUser((prev) => prev ? { ...prev, ...partialUser } : prev);
+  };
+
   const value = {
     user,
     login,
     logout,
+    updateUser,
     loading,
     isAuthenticated: !!user,
   };

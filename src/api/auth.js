@@ -49,3 +49,30 @@ export async function logout() {
 export function isAuthenticated() {
   return !!localStorage.getItem('auth_access_token');
 }
+
+/**
+ * Retourne le profil complet de l'utilisateur connecté
+ */
+export async function getMe() {
+  const response = await api.get('/auth/me');
+  return response.data?.data || response.data;
+}
+
+/**
+ * Met à jour le profil de l'utilisateur connecté (prénom, nom, initiales)
+ */
+export async function updateMyProfile(data) {
+  const response = await api.patch('/users/me/profile', data);
+  return response.data?.data || response.data;
+}
+
+/**
+ * Change le mot de passe de l'utilisateur connecté
+ */
+export async function changeMyPassword(currentPassword, newPassword) {
+  const response = await api.post('/users/me/password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+  return response.data?.data || response.data;
+}

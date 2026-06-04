@@ -7,9 +7,11 @@
  * @requires lucide-react
  */
 
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn, UserPen } from 'lucide-react';
 import SidebarActionButton from '@/components/layout/SidebarActionButton';
+import UserProfileModal from '@/components/profile/UserProfileModal';
 
 const CHANGELOG_URL = 'https://github.com/ProtoGulix/tunnel-gmao/blob/main/docs/CHANGELOG.md';
 
@@ -37,11 +39,14 @@ export default function SidebarFooter(props) {
     logoutConfirm,
     onLogout,
     onLogin,
+    onProfileUpdated,
     serverStatus,
     appVersion,
     colors,
     statusColorMap,
   } = props;
+
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const latencyLabel = serverStatus.latencyMs !== null 
     ? `${Math.round(serverStatus.latencyMs)} ms` 
@@ -93,11 +98,24 @@ export default function SidebarFooter(props) {
             </div>
           )}
           <SidebarActionButton
+            label='Mon profil'
+            icon={UserPen}
+            onClick={() => setProfileOpen(true)}
+            variant='neutral'
+            colors={colors}
+          />
+          <SidebarActionButton
             label={logoutConfirm ? 'Confirmer' : 'Déconnexion'}
             icon={LogOut}
             onClick={onLogout}
             variant='neutral'
             colors={colors}
+          />
+          <UserProfileModal
+            open={profileOpen}
+            onOpenChange={setProfileOpen}
+            user={user}
+            onProfileUpdated={onProfileUpdated}
           />
         </>
       ) : (
@@ -212,6 +230,7 @@ SidebarFooter.propTypes = {
   logoutConfirm: PropTypes.bool.isRequired,
   onLogout: PropTypes.func.isRequired,
   onLogin: PropTypes.func.isRequired,
+  onProfileUpdated: PropTypes.func.isRequired,
   serverStatus: PropTypes.shape({
     online: PropTypes.bool.isRequired,
     health: PropTypes.string.isRequired,
