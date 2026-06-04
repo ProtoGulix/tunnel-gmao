@@ -254,6 +254,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           set={set}
           locked={!!selectedRequest}
           lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
+          diDetail={selectedRequest}
           fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
           users={users}
           saving={saving}

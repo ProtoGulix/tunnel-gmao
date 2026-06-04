@@ -141,12 +141,11 @@ export default function InterventionPurchaseTab({ interventionId, isLocked = fal
     if (!selected) return null;
     if (mode === 'edit') {
       return (
-        <PurchaseRequestForm
-          initialData={selected}
+        <PurchaseRequestEditForm
+          item={selected}
           onSubmit={handleUpdate}
           loading={saving}
           onCancel={() => setMode(null)}
-          submitLabel="Enregistrer"
         />
       );
     }

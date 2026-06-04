@@ -78,36 +78,14 @@ function TaskDueBadge({ due, overdue }) {
 }
 TaskDueBadge.propTypes = { due: PropTypes.string, overdue: PropTypes.bool };
 
-function TaskRowMeta({ status, due_date }) {
-  const cfg = TASK_STATUS[status] ?? TASK_STATUS.todo;
-  const due = formatDue(due_date);
-  const overdue = !!due && new Date(due_date) < today && status !== 'done' && status !== 'skipped';
-  return (
-    <>
-      <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>{cfg.label}</Badge>
-      <TaskDueBadge due={due} overdue={overdue} />
-    </>
-  );
-}
-TaskRowMeta.propTypes = { status: PropTypes.string, due_date: PropTypes.string };
-
-function TaskRowLeft({ origin, label }) {
-  const OriginIcon = TASK_ORIGIN_ICON[origin] ?? null;
-  const originColor = TASK_ORIGIN_COLOR[origin] ?? 'var(--gray-7)';
-  return (
-    <>
-      {OriginIcon && <OriginIcon size={11} color={originColor} style={{ flexShrink: 0 }} />}
-      <Text size="1" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label}
-      </Text>
-    </>
-  );
-}
-TaskRowLeft.propTypes = { origin: PropTypes.string, label: PropTypes.string };
 
 function TaskRow({ task, isLast }) {
   const cfg = TASK_STATUS[task.status] ?? TASK_STATUS.todo;
+  const OriginIcon = TASK_ORIGIN_ICON[task.origin] ?? null;
+  const originColor = TASK_ORIGIN_COLOR[task.origin] ?? 'var(--gray-7)';
   const initials = task.assigned_to?.initials ?? task.assigned_to?.initial ?? null;
+  const due = formatDue(task.due_date);
+  const overdue = !!due && new Date(task.due_date) < today && task.status !== 'done' && task.status !== 'skipped';
   return (
     <Flex align="center" gap="2" style={{
       padding: '5px 10px',
@@ -115,8 +93,12 @@ function TaskRow({ task, isLast }) {
       background: cfg.bg,
       borderLeft: `3px solid ${cfg.color}`,
     }}>
-      <TaskRowLeft origin={task.origin} label={task.label} />
-      <TaskRowMeta status={task.status} due_date={task.due_date} />
+      {OriginIcon && <OriginIcon size={11} color={originColor} style={{ flexShrink: 0 }} />}
+      <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>{cfg.label}</Badge>
+      <Text size="1" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {task.label}
+      </Text>
+      <TaskDueBadge due={due} overdue={overdue} />
       {initials && (
         <Text size="1" style={{ flexShrink: 0, color: 'var(--gray-10)', fontFamily: 'monospace' }}>{initials.toUpperCase()}</Text>
       )}
