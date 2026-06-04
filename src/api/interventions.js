@@ -45,6 +45,7 @@ export async function createIntervention(data) {
   };
   if (data.reportedBy) payload.reported_by = data.reportedBy;
   if (data.requestId) payload.request_id = data.requestId;
+  if (data.reasonCode) payload.reason_code = data.reasonCode;
   const response = await api.post('/interventions', payload);
   return mapInterventionResponse(response.data);
 }

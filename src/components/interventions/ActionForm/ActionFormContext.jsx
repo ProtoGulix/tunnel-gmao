@@ -94,6 +94,7 @@ export function ContextSection({
       const created = await createIntervention({
         ...formData,
         reportedDate: formData.reportedDate ? new Date(formData.reportedDate).toISOString() : undefined,
+        reasonCode: 'ROUTINE',
       });
       onInterventionChange(created);
       setShowInterventionCreate(false);

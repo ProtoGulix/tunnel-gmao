@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.43.0] — 2026-06-04
+
+Stabilité : **en consolidation**
+
+### Impact fonctionnel
+
+- **Profil utilisateur** : il est désormais possible de modifier ses informations personnelles et de changer son mot de passe directement depuis l'application
+- **Tâches terminées protégées** : la date d'échéance et le responsable d'une tâche terminée ne peuvent plus être modifiés accidentellement
+- **Création d'intervention depuis une demande** : le formulaire affiche le résumé de la demande liée, et l'intervention est automatiquement classée en statut « Routine »
+- **Demandes d'achat** : le champ « demandeur » est désormais pré-rempli avec le nom de l'utilisateur connecté ; correction d'un dysfonctionnement lors de la mise à jour d'une demande
+
+### Composants / Modules concernés
+
+- Profil utilisateur
+- Tâches
+- Interventions — Création depuis une demande d'intervention
+- Demandes d'achat
+
+### Points de vigilance
+
+- Le profil utilisateur est un nouveau module : surveiller les remontées sur la gestion des mots de passe
+
+---
+
 ## [3.42.0] — 2026-05-29
 
 ### Page détail équipement — vue consolidée

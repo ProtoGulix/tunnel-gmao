@@ -105,7 +105,7 @@ export default function DayContextRightColumn({
         </Flex>
       ) : (
         <Flex direction="column" gap="2">
-          {renderHeader()}
+          {!(selectedRequest && !createdIntervention) && renderHeader()}
 
           {selectedRequest && !createdIntervention && (
             <Box mt="1">

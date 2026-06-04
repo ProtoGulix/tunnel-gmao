@@ -2,8 +2,9 @@ import { useState, type FC } from 'react';
 import { Flex, Text, Badge, IconButton } from '@radix-ui/themes';
 import {
   CheckCircle2, Circle, Clock, MinusCircle,
-  AlertTriangle, User, CalendarClock, UserCog, Wrench,
+  AlertTriangle, User, CalendarClock, UserCog, Wrench, ShoppingCart,
 } from 'lucide-react';
+import { hexBadgeStyle } from '@/config/purchaseConfig';
 import { GanttTimeline } from './GanttTimeline';
 import type { InterventionTask, InterventionAction } from '@/types/briefing';
 
@@ -141,10 +142,6 @@ const ActionContextLine: FC<{ action: any; isHovered?: boolean; onHover?: (id: s
   const tech        = action.technician;
   const techInitials = tech?.initial
     ?? (tech ? `${tech.firstName?.[0] ?? ''}${tech.lastName?.[0] ?? ''}`.toUpperCase() || null : null);
-  const daRefs = (action.purchaseRequests ?? [])
-    .map((pr: any) => pr.code ?? pr.reference ?? pr.da_number)
-    .filter(Boolean);
-
   return (
     <Flex align="center" gap="2" style={{
       flexWrap: 'wrap', padding: '3px 4px', borderRadius: 4,
@@ -181,55 +178,39 @@ const ActionContextLine: FC<{ action: any; isHovered?: boolean; onHover?: (id: s
           {action.description}
         </Text>
       )}
-      {daRefs.map((ref: string) => (
-        <Badge key={ref} size="1" variant="soft" color="orange" style={{ fontFamily: 'monospace', flexShrink: 0 }}>
-          [{ref}]
-        </Badge>
-      ))}
     </Flex>
   );
 };
 
-/* ── Résumé compact des actions (une ligne sous la frise) ─────────────────── */
-
-function ActionsSummary({ taskActions }: { taskActions: any[] }) {
-  if (taskActions.length === 0) return null;
-
-  const totalTime = taskActions.reduce((s: number, a: any) => s + (a.timeSpent ?? 0), 0);
-  const daCount   = taskActions.filter((a: any) => a.purchaseRequests?.length > 0).length;
-
-  // Codes actions uniques (max 4 affichés)
-  const codes = taskActions
-    .map((a: any) => a.subcategory?.code ?? null)
-    .filter(Boolean) as string[];
-  const uniqueCodes = [...new Set(codes)];
-  const shown   = uniqueCodes.slice(0, 4);
-  const hidden  = uniqueCodes.length - shown.length;
+const PurchaseRequestLine: FC<{ pr: any }> = ({ pr }) => {
+  const label = pr.item_label ?? pr.itemLabel ?? '—';
+  const code  = pr.code ?? pr.reference ?? pr.da_number ?? null;
+  const derivedStatus = pr.derived_status ?? null;
+  const urgency = pr.urgency ?? null;
+  const urgencyColor = urgency === 'urgent' || urgency === 'critical' ? 'var(--red-9)' : urgency === 'high' ? 'var(--orange-9)' : 'var(--gray-7)';
+  const statusStyle = derivedStatus?.color ? hexBadgeStyle(derivedStatus.color) : undefined;
 
   return (
-    <Flex align="center" gap="2" style={{ flexWrap: 'wrap', padding: '6px 14px 2px' }}>
-      <Flex align="center" gap="1">
-        <Clock size={11} color="var(--gray-8)" />
-        <Text size="1" color="gray">
-          <strong>{taskActions.length}</strong> action{taskActions.length > 1 ? 's' : ''} · <strong>{totalTime}h</strong>
-        </Text>
-      </Flex>
-      {shown.map((code) => (
-        <Badge key={code} size="1" variant="soft" color="gray" style={{ fontFamily: 'monospace' }}>
-          {code}
-        </Badge>
-      ))}
-      {hidden > 0 && (
-        <Text size="1" color="gray">+{hidden}</Text>
+    <Flex align="center" gap="2" style={{ padding: '2px 4px 2px 20px' }}>
+      <ShoppingCart size={10} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+      {code && (
+        <Text size="1" style={{ fontFamily: 'monospace', color: 'var(--orange-9)', fontWeight: 700, flexShrink: 0 }}>{code}</Text>
       )}
-      {daCount > 0 && (
-        <Badge size="1" variant="soft" color="orange">
-          {daCount} DA
+      <Text size="1" style={{ color: 'var(--gray-10)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+        {label}
+      </Text>
+      {urgency && urgency !== 'normal' && (
+        <Text size="1" style={{ color: urgencyColor, flexShrink: 0, fontWeight: 600 }}>{urgency}</Text>
+      )}
+      {derivedStatus && (
+        <Badge size="1" {...(statusStyle ? { style: statusStyle } : { color: 'gray', variant: 'soft' })}>
+          {derivedStatus.label ?? '—'}
         </Badge>
       )}
     </Flex>
   );
-}
+};
+
 
 /* ── TaskCard principal ────────────────────────────────────────────────────── */
 
@@ -256,6 +237,7 @@ export const TaskCard: FC<TaskCardProps> = ({
   // hover unifié sur id (string) pour synchroniser frise ↔ liste
   const [hoveredActionId, setHoveredActionId] = useState<string | null>(null);
   const [hoveredLogId, setHoveredLogId]       = useState<string | null>(null);
+  const [showDetails, setShowDetails]         = useState(false);
 
   const taskAuditLogs = (auditLogs ?? [])
     .filter((l: any) => String(l.entity_id) === String(task.id))
@@ -308,13 +290,18 @@ export const TaskCard: FC<TaskCardProps> = ({
 
       {/* ── En-tête tâche ── */}
       <Flex align="center" gap="2" style={{ padding: '8px 10px', background: headerBg, borderBottom: `1px solid ${effectiveCritical ? 'var(--accent-4)' : cfg.color + '30'}` }}>
+        {/* Numéro */}
+        <Badge size="2" variant="soft" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0, fontWeight: 700 }}>
+          {task.sort_order || '?'}
+        </Badge>
+
         {/* Réordonnancement */}
         <Flex direction="column" gap="0" style={{ flexShrink: 0 }}>
-          <IconButton size="1" variant="ghost" color="gray" disabled={isFirst}
+          <IconButton size="1" variant="ghost" color="gray" disabled={isFirst || isDone}
             onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}>
             <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 2 L9 8 L1 8 Z" fill="currentColor" /></svg>
           </IconButton>
-          <IconButton size="1" variant="ghost" color="gray" disabled={isLast}
+          <IconButton size="1" variant="ghost" color="gray" disabled={isLast || isDone}
             onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}>
             <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 8 L1 2 L9 2 Z" fill="currentColor" /></svg>
           </IconButton>
@@ -323,62 +310,53 @@ export const TaskCard: FC<TaskCardProps> = ({
         {/* Icône statut */}
         <cfg.Icon size={15} color={effectiveCritical ? 'var(--accent-9)' : cfg.color} style={{ flexShrink: 0 }} />
 
-        {/* Titre + badges */}
-        <Flex direction="column" gap="0" style={{ flex: 1, minWidth: 0 }}>
-          <Flex align="center" gap="2">
-            <Text
-              size="2"
-              weight={task.status === 'in_progress' ? 'bold' : 'medium'}
-              style={{
-                color: isDone ? 'var(--gray-9)' : 'var(--gray-12)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                textDecoration: task.status === 'done' ? 'line-through' : 'none',
-              }}
-            >
-              {task.label}
-            </Text>
-            {task.optional && (
-              <Badge size="1" variant="soft" color="gray" style={{ flexShrink: 0 }}>opt.</Badge>
-            )}
-          </Flex>
-
-          {/* Statut + origine sur la même ligne secondaire */}
-          <Flex align="center" gap="2" mt="1" style={{ flexWrap: 'wrap' }}>
-            <Badge
-              size="1"
-              variant={task.status === 'in_progress' ? 'solid' : 'outline'}
-              style={{
-                background: task.status === 'in_progress' ? cfg.color : 'transparent',
-                color: task.status === 'in_progress' ? '#fff' : cfg.color,
-                borderColor: cfg.color + '88',
-                flexShrink: 0,
-              }}
-            >
-              {cfg.label}
-            </Badge>
-            {task.status === 'skipped' && task.skip_reason && (
-              <Text size="1" color="orange" style={{ fontStyle: 'italic', flexShrink: 0 }}>{task.skip_reason}</Text>
-            )}
-            {task.origin && ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG] && (() => {
-              const oc = ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG];
-              return (
-                <>
-                  <oc.Icon size={11} color={oc.color} style={{ flexShrink: 0 }} />
-                  <Text size="1" style={{ color: oc.color, flexShrink: 0 }}>{oc.label}</Text>
-                  <Badge size="1" color={task.gamme_step_id ? 'green' : 'gray'} variant="soft" style={{ flexShrink: 0 }}>
-                    {task.gamme_step_id ? 'Gamme' : 'Manuelle'}
-                  </Badge>
-                </>
-              );
-            })()}
-            <Text size="1" color="gray" style={{ fontFamily: 'monospace', flexShrink: 0, marginLeft: 'auto' }}>
-              #{task.sort_order ?? '—'}
-            </Text>
-          </Flex>
+        {/* Titre + badges sur une seule ligne */}
+        <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
+          <Badge
+            size="1"
+            variant={task.status === 'in_progress' ? 'solid' : 'outline'}
+            style={{
+              background: task.status === 'in_progress' ? cfg.color : 'transparent',
+              color: task.status === 'in_progress' ? '#fff' : cfg.color,
+              borderColor: cfg.color + '88',
+              flexShrink: 0,
+            }}
+          >
+            {cfg.label}
+          </Badge>
+          <Text
+            size="2"
+            weight={task.status === 'in_progress' ? 'bold' : 'medium'}
+            style={{
+              color: isDone ? 'var(--gray-9)' : 'var(--gray-12)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              textDecoration: task.status === 'done' ? 'line-through' : 'none',
+              flex: 1, minWidth: 0,
+            }}
+          >
+            {task.label}
+          </Text>
+          {task.optional && (
+            <Badge size="1" variant="soft" color="gray" style={{ flexShrink: 0 }}>opt.</Badge>
+          )}
+          {task.status === 'skipped' && task.skip_reason && (
+            <Text size="1" color="orange" style={{ fontStyle: 'italic', flexShrink: 0 }}>{task.skip_reason}</Text>
+          )}
+          {task.origin && ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG] && (() => {
+            const oc = ORIGIN_CFG[task.origin as keyof typeof ORIGIN_CFG];
+            return (
+              <>
+                <oc.Icon size={11} color={oc.color} style={{ flexShrink: 0 }} />
+                <Badge size="1" color={task.gamme_step_id ? 'green' : 'gray'} variant="soft" style={{ flexShrink: 0 }}>
+                  {task.gamme_step_id ? 'Gamme' : 'Manuelle'}
+                </Badge>
+              </>
+            );
+          })()}
         </Flex>
 
         {/* Assigné */}
-        {editingAssign ? (
+        {editingAssign && !isDone ? (
           <select
             autoFocus // eslint-disable-line jsx-a11y/no-autofocus
             defaultValue={String((assignedTo as any)?.id ?? '')}
@@ -398,26 +376,26 @@ export const TaskCard: FC<TaskCardProps> = ({
         ) : (
           <button
             type="button"
-            title={initials ? "Modifier l'assigné" : 'Assigner'}
-            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'assigned_to'); }}
+            title={isDone ? undefined : (initials ? "Modifier l'assigné" : 'Assigner')}
+            onClick={(e) => { if (isDone) return; e.stopPropagation(); onStartEdit(task.id, 'assigned_to'); }}
             style={{
-              background: initials ? 'var(--accent-4)' : 'var(--gray-3)',
+              background: initials ? (isDone ? 'var(--gray-3)' : 'var(--accent-4)') : 'var(--gray-3)',
               border: '1px solid',
-              borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)',
+              borderColor: initials && !isDone ? 'var(--accent-6)' : 'var(--gray-5)',
               borderRadius: '50%', width: 26, height: 26,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', padding: 0, flexShrink: 0,
+              cursor: isDone ? 'default' : 'pointer', padding: 0, flexShrink: 0,
             }}
           >
             {initials
-              ? <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>{initials}</Text>
+              ? <Text size="1" weight="bold" style={{ color: isDone ? 'var(--gray-9)' : 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>{initials}</Text>
               : <User size={12} color="var(--gray-9)" />
             }
           </button>
         )}
 
         {/* Échéance */}
-        {editingDue ? (
+        {editingDue && !isDone ? (
           <input
             autoFocus // eslint-disable-line jsx-a11y/no-autofocus
             type="date"
@@ -437,17 +415,19 @@ export const TaskCard: FC<TaskCardProps> = ({
         ) : (
           <button
             type="button"
-            title="Modifier l'échéance"
-            onClick={(e) => { e.stopPropagation(); onStartEdit(task.id, 'due_date'); }}
-            style={{ background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
+            title={isDone ? undefined : "Modifier l'échéance"}
+            onClick={(e) => { if (isDone) return; e.stopPropagation(); onStartEdit(task.id, 'due_date'); }}
+            style={{ background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: isDone ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}
           >
-            {overdue && dueFmt
+            {overdue && dueFmt && !isDone
               ? <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
                   <AlertTriangle size={10} />{dueFmt}
                 </Badge>
               : dueFmt
                 ? <Text size="1" color="gray">{dueFmt}</Text>
-                : <Text size="1" style={{ color: 'var(--gray-5)' }}>+ date</Text>
+                : !isDone
+                  ? <Text size="1" style={{ color: 'var(--gray-5)' }}>+ date</Text>
+                  : null
             }
           </button>
         )}
@@ -461,55 +441,76 @@ export const TaskCard: FC<TaskCardProps> = ({
         )}
       </Flex>
 
-      {/* ── Frise Gantt full-width — hover bidirectionnel ── */}
-      {hasGantt && (
-        <div style={{ padding: '0 12px', borderTop: '1px solid var(--gray-3)' }}>
-          <GanttTimeline
-            task={task}
-            actions={actions}
-            auditLogs={auditLogs}
-            reportedDate={reportedDate}
-            hoveredActionId={hoveredActionId}
-            hoveredLogId={hoveredLogId}
-            onHoverAction={setHoveredActionId}
-            onHoverLog={setHoveredLogId}
-          />
-        </div>
-      )}
-
-      {/* ── Résumé compact des actions ── */}
-      {enrichedActions.length > 0 && <ActionsSummary taskActions={enrichedActions} />}
-
       {/* ── Liste détaillée des actions ── */}
       {enrichedActions.length > 0 && (
         <div style={{ padding: '4px 12px 6px', display: 'flex', flexDirection: 'column', gap: 2, borderTop: '1px solid var(--gray-3)' }}>
           {enrichedActions.map((a: any) => (
-            <ActionContextLine
-              key={a.id}
-              action={a}
-              isHovered={hoveredActionId === a.id}
-              onHover={(id) => setHoveredActionId(id ?? null)}
-            />
+            <div key={a.id}>
+              <ActionContextLine
+                action={a}
+                isHovered={hoveredActionId === a.id}
+                onHover={(id) => setHoveredActionId(id ?? null)}
+              />
+              {(a.purchaseRequests ?? []).map((pr: any) => (
+                <PurchaseRequestLine key={pr.id ?? pr.code} pr={pr} />
+              ))}
+            </div>
           ))}
         </div>
       )}
 
-      {/* ── Historique audit tâche ── */}
-      {taskAuditLogs.length > 0 && (
-        <div style={{
-          padding: '4px 12px 8px',
-          borderTop: '1px solid var(--gray-3)',
-          display: 'flex', flexDirection: 'column', gap: 1,
-        }}>
-          <Text size="1" color="gray" weight="medium" style={{ marginBottom: 2 }}>Historique :</Text>
-          {taskAuditLogs.map((log: any, i: number) => (
-            <AuditLogLine
-              key={log.id ?? i}
-              log={log}
-              isHovered={hoveredLogId === log.id}
-              onHover={setHoveredLogId}
-            />
-          ))}
+      {/* ── Footer : détails (frise + historique) ── */}
+      {(hasGantt || taskAuditLogs.length > 0) && (
+        <div style={{ borderTop: '1px solid var(--gray-3)', background: 'var(--gray-1)' }}>
+          <button
+            type="button"
+            onClick={() => setShowDetails((v) => !v)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+              padding: '4px 12px', background: 'none', border: 'none',
+              borderBottom: showDetails ? '1px solid var(--gray-3)' : 'none',
+              cursor: 'pointer', color: 'var(--gray-9)',
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10"
+              style={{ flexShrink: 0, transform: showDetails ? 'rotate(180deg)' : 'rotate(90deg)', transition: 'transform 0.15s' }}>
+              <path d="M5 8 L1 2 L9 2 Z" fill="currentColor" />
+            </svg>
+            <Text size="1" color="gray">Détails</Text>
+            {taskAuditLogs.length > 0 && (
+              <Badge size="1" variant="soft" color="gray" style={{ marginLeft: 2 }}>{taskAuditLogs.length}</Badge>
+            )}
+          </button>
+          {showDetails && (
+            <>
+              {hasGantt && (
+                <div style={{ padding: '0 12px', borderBottom: taskAuditLogs.length > 0 ? '1px solid var(--gray-3)' : 'none' }}>
+                  <GanttTimeline
+                    task={task}
+                    actions={actions}
+                    auditLogs={auditLogs}
+                    reportedDate={reportedDate}
+                    hoveredActionId={hoveredActionId}
+                    hoveredLogId={hoveredLogId}
+                    onHoverAction={setHoveredActionId}
+                    onHoverLog={setHoveredLogId}
+                  />
+                </div>
+              )}
+              {taskAuditLogs.length > 0 && (
+                <div style={{ padding: '4px 12px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {taskAuditLogs.map((log: any, i: number) => (
+                    <AuditLogLine
+                      key={log.id ?? i}
+                      log={log}
+                      isHovered={hoveredLogId === log.id}
+                      onHover={setHoveredLogId}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

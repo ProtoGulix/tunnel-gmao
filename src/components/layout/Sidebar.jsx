@@ -33,6 +33,7 @@ import { version as APP_VERSION } from '@/../package.json';
 
 // 5. Hooks
 import { useSidebarState } from '@/hooks/shared/useSidebarState';
+import { useAuth } from '@/auth/useAuth';
 
 // ===== CONSTANTES =====
 const COLORS = {
@@ -164,6 +165,7 @@ const renderPublicSeparator = (isAuthenticated, colors) => {
  */
 export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isMobileProp }) {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -265,6 +267,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
           logoutConfirm={logoutConfirm}
           onLogout={handleLogoutClick}
           onLogin={handleLogin}
+          onProfileUpdated={updateUser}
           serverStatus={serverStatus}
           appVersion={APP_VERSION}
           colors={COLORS}

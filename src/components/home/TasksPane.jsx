@@ -150,8 +150,9 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                   const isLast = idx === sortedTasks.length - 1;
                   const isSaving = saving === task.id;
 
-                  const editingDue = editCell?.taskId === task.id && editCell?.field === 'due_date';
-                  const editingAssignee = editCell?.taskId === task.id && editCell?.field === 'assigned_to';
+                  const isDone = task.status === 'done' || task.status === 'skipped';
+                  const editingDue = !isDone && editCell?.taskId === task.id && editCell?.field === 'due_date';
+                  const editingAssignee = !isDone && editCell?.taskId === task.id && editCell?.field === 'assigned_to';
 
                   const assignedTo = task.assigned_to ?? null;
                   const initials = deriveInitials(assignedTo);
@@ -220,30 +221,30 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                       ) : (
                         <button
                           type="button"
-                          title="Modifier l'échéance"
-                          onClick={() => startEdit(task.id, 'due_date')}
+                          title={isDone ? undefined : "Modifier l'échéance"}
+                          onClick={() => { if (!isDone) startEdit(task.id, 'due_date'); }}
                           style={{
                             flexShrink: 0,
                             background: 'none',
                             border: 'none',
                             padding: '1px 3px',
                             borderRadius: 4,
-                            cursor: 'pointer',
+                            cursor: isDone ? 'default' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: 3,
                           }}
                         >
-                          {overdue && due ? (
+                          {overdue && due && !isDone ? (
                             <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
                               <AlertTriangle size={10} />
                               {due}
                             </Badge>
                           ) : due ? (
                             <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{due}</Text>
-                          ) : (
+                          ) : !isDone ? (
                             <Text size="1" style={{ color: 'var(--gray-7)', whiteSpace: 'nowrap' }}>+date</Text>
-                          )}
+                          ) : null}
                         </button>
                       )}
 
@@ -286,25 +287,25 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                       ) : (
                         <button
                           type="button"
-                          title={initials ? `Affecté : ${userFullName(assignedTo)} — modifier` : 'Assigner'}
-                          onClick={() => startEdit(task.id, 'assigned_to')}
+                          title={isDone ? undefined : (initials ? `Affecté : ${userFullName(assignedTo)} — modifier` : 'Assigner')}
+                          onClick={() => { if (!isDone) startEdit(task.id, 'assigned_to'); }}
                           style={{
                             flexShrink: 0,
-                            background: initials ? 'var(--accent-4)' : 'var(--gray-3)',
+                            background: initials ? (isDone ? 'var(--gray-3)' : 'var(--accent-4)') : 'var(--gray-3)',
                             border: '1px solid',
-                            borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)',
+                            borderColor: initials && !isDone ? 'var(--accent-6)' : 'var(--gray-5)',
                             borderRadius: '50%',
                             width: 22,
                             height: 22,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: 'pointer',
+                            cursor: isDone ? 'default' : 'pointer',
                             padding: 0,
                           }}
                         >
                           {initials ? (
-                            <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>
+                            <Text size="1" weight="bold" style={{ color: isDone ? 'var(--gray-9)' : 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>
                               {initials}
                             </Text>
                           ) : (
@@ -314,7 +315,7 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                       )}
 
                       {/* Bouton Logger */}
-                      {onAddAction && (
+                      {onAddAction && !isDone && (
                         <IconButton
                           size="1"
                           variant="soft"
