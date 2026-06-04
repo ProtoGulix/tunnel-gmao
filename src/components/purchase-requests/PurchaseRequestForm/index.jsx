@@ -7,13 +7,17 @@ import { DEFAULT_UNIT, resolveUnitForItem } from '@/config/units';
 import ItemForm from '@/components/ui/ItemForm';
 import DetailsRow from './DetailsRow';
 import FormActions from './FormActions';
+import { useAuth } from '@/auth/useAuth';
 
 function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', initialData = null, bare = false }) {
+  const { user } = useAuth();
+  const userFullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
+
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [quantity, setQuantity] = useState(initialData ? String(initialData.quantity ?? '1') : '1');
   const [urgency, setUrgency] = useState(initialData?.urgency || 'normal');
-  const [requestedBy, setRequestedBy] = useState(initialData?.requester_name || initialData?.requested_by || '');
+  const [requestedBy, setRequestedBy] = useState(initialData?.requester_name || initialData?.requested_by || userFullName);
   const [unit, setUnit] = useState(initialData?.unit || DEFAULT_UNIT);
   const [formError, setFormError] = useState('');
   const [formKey, setFormKey] = useState(0);
@@ -44,7 +48,7 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
       setSearchTerm('');
       setQuantity('1');
       setUrgency('normal');
-      setRequestedBy('');
+      setRequestedBy(userFullName);
       setUnit(DEFAULT_UNIT);
       setFormKey((k) => k + 1);
     }

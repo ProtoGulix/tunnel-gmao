@@ -45,7 +45,7 @@ function DetailsRow({ quantity, onQuantityChange, unit, onUnitChange, urgency, o
       <Box>
         <Text size="2" weight="bold" mb="1" style={{ display: 'block' }}>Demandeur</Text>
         <TextField.Root
-          placeholder="Votre nom (optionnel)"
+          placeholder="Nom du demandeur"
           value={requestedBy}
           onChange={(e) => onRequestedByChange(e.target.value)}
         />
