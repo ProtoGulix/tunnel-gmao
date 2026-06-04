@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.43.1] — 2026-06-04
+
+Stabilité : **stable**
+
+### Impact fonctionnel
+
+- **Briefing — demande avec intervention liée** : cliquer sur une demande déjà traitée affiche désormais correctement le détail de la demande et de l’intervention associée, sans passer par le formulaire de création
+
+### Composants / Modules concernés
+
+- Briefing — Panneau droite (demandes d’intervention)
+
+---
+
 ## [3.43.0] — 2026-06-04
 
 Stabilité : **en consolidation**

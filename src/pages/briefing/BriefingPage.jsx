@@ -50,7 +50,7 @@ SectionItemList.propTypes = {
 
 function RightPanel({ selected, onRefresh }) {
   if (selected.type === 'request' || selected.type === 'request_accepted') {
-    return <DIRightPanel requestId={selected.item.id} onRefresh={onRefresh} />;
+    return <DIRightPanel requestId={selected.item.id} initialItem={selected.item} onRefresh={onRefresh} />;
   }
   return <InterventionCard situation={selected.item} onRefresh={onRefresh} />;
 }

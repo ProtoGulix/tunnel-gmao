@@ -151,22 +151,25 @@ DiOnlyPanel.propTypes = {
   onCreated: PropTypes.func,
 };
 
-export function DIRightPanel({ requestId, onRefresh }) {
+export function DIRightPanel({ requestId, initialItem, onRefresh }) {
   const { detail, loading, error } = useInterventionRequestDetail(requestId);
 
-  if (loading) return <LoadingState message="Chargement de la demande..." />;
+  if (loading && !initialItem) return <LoadingState message="Chargement de la demande..." />;
   if (error)   return <ErrorState error={error} />;
-  if (!detail) return null;
 
-  const iv = detail.intervention ?? null;
+  const effectiveDetail = detail ?? initialItem;
+  if (!effectiveDetail) return null;
 
-  if (!iv) return <DiOnlyPanel detail={detail} onCreated={onRefresh} />;
+  // L'endpoint de détail ne retourne pas toujours `intervention` — on se rabat sur la donnée de liste
+  const iv = detail?.intervention ?? initialItem?.intervention ?? null;
 
-  const eq = detail.equipement ?? null;
+  if (!iv) return <DiOnlyPanel detail={effectiveDetail} onCreated={onRefresh} />;
+
+  const eq = effectiveDetail.equipement ?? null;
   const situation = {
     id:           iv.id,
     code:         iv.code,
-    title:        iv.title ?? detail.description,
+    title:        iv.title ?? effectiveDetail.description,
     status:       iv.status_actual,
     type:         iv.type_inter,
     priority:     iv.priority,
@@ -189,5 +192,6 @@ export function DIRightPanel({ requestId, onRefresh }) {
 
 DIRightPanel.propTypes = {
   requestId: PropTypes.string.isRequired,
+  initialItem: PropTypes.object,
   onRefresh: PropTypes.func.isRequired,
 };
