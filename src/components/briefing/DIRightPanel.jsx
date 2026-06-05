@@ -160,8 +160,9 @@ export function DIRightPanel({ requestId, initialItem, onRefresh }) {
   const effectiveDetail = detail ?? initialItem;
   if (!effectiveDetail) return null;
 
-  // L'endpoint de détail ne retourne pas toujours `intervention` — on se rabat sur la donnée de liste
-  const iv = detail?.intervention ?? initialItem?.intervention ?? null;
+  // Les données de liste (initialItem) sont prioritaires pour `intervention` :
+  // le listing inclut toujours l'intervention liée, le endpoint de détail peut retourner un objet vide ou null.
+  const iv = initialItem?.intervention ?? detail?.intervention ?? null;
 
   if (!iv) return <DiOnlyPanel detail={effectiveDetail} onCreated={onRefresh} />;
 
