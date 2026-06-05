@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.43.2] — 2026-06-05
+
+Stabilité : **stable**
+
+### Impact fonctionnel
+
+- **Chargement des données — plusieurs modules** : actions, interventions, demandes d'intervention, demandes d'achat et stock ne se chargeaient plus correctement en raison d'un changement de structure dans les réponses serveur. Les pages concernées pouvaient afficher des listes vides ou ne pas répondre.
+- **Briefing — demande avec intervention liée** : le détail de l'intervention apparaissait brièvement au clic puis disparaissait immédiatement. L'affichage est désormais stable.
+
+### Composants / Modules concernés
+
+- Actions, Interventions, Demandes d'intervention, Demandes d'achat, Stock
+- Briefing — Panneau droite (demandes d'intervention)
+
+---
+
 ## [3.43.1] — 2026-06-04
 
 Stabilité : **stable**
