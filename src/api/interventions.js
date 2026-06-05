@@ -19,12 +19,12 @@ export async function fetchInterventions(filters = {}) {
 
 export async function fetchIntervention(id) {
   const response = await api.get(`/interventions/${id}`);
-  return mapInterventionDetailResponse(response.data);
+  return mapInterventionDetailResponse(response.data.data);
 }
 
 export async function fetchInterventionFacets(id) {
   const response = await api.get(`/interventions/${id}`);
-  const data = response.data ?? {};
+  const data = response.data.data ?? {};
   return {
     subcategories: data.facets?.action_categories ?? [],
     complexityFactors: data.facets?.complexity_factors ?? [],
@@ -47,7 +47,7 @@ export async function createIntervention(data) {
   if (data.requestId) payload.request_id = data.requestId;
   if (data.reasonCode) payload.reason_code = data.reasonCode;
   const response = await api.post('/interventions', payload);
-  return mapInterventionResponse(response.data);
+  return mapInterventionResponse(response.data.data);
 }
 
 export async function updateIntervention(id, updates) {
@@ -60,7 +60,7 @@ export async function updateIntervention(id, updates) {
   if (updates.reason_text !== undefined) payload.reason_text = updates.reason_text;
 
   const response = await api.put(`/interventions/${id}`, payload);
-  return mapInterventionDetailResponse(response.data);
+  return mapInterventionDetailResponse(response.data.data);
 }
 
 export async function updateInterventionStatus(id, newStatus, reasonCode, reasonText) {

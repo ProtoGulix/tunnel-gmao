@@ -41,7 +41,7 @@ export async function deletePurchaseRequest(id) {
  * @returns {Promise<Array>} Array of purchase requests
  */
 export async function fetchPurchaseRequests(params = {}) {
-  const response = await api.get('/purchase-requests', { params });
+  const response = await api.get('/purchase-requests/list', { params });
   return response.data || [];
 }
 
