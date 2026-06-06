@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Dialog, Flex, Text } from '@radix-ui/themes';
-import { Link2 } from 'lucide-react';
+import { Link } from 'lucide-react';
 import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
+
 import StatusCallout from '@/components/ui/StatusCallout';
 import { createPurchaseRequest } from '@/api/purchaseRequests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
@@ -38,37 +39,48 @@ export default function SpontaneousPurchaseRequestModal({ open, onOpenChange, ac
 
   const subcatColor = action?.subcategory?.category?.color ?? '#6b7280';
 
+  const contextBanner = action ? (
+    <Flex align="stretch" gap="4">
+      {/* Icône link dans la timeline */}
+      <Flex direction="column" align="center" style={{ flexShrink: 0, width: 18 }}>
+        <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-6)' }} />
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <Link size={18} strokeWidth={2.5} style={{ color: subcatColor, display: 'block' }} />
+        </div>
+        <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-6)', marginTop: 5 }} />
+      </Flex>
+
+      {/* Contenu du bando */}
+      <Flex
+        align="center" gap="2"
+        style={{
+          flex: 1, minWidth: 0,
+          margin: '8px 0',
+          padding: '6px 10px',
+          background: `${subcatColor}12`,
+          borderLeft: `3px solid ${subcatColor}`,
+          borderRadius: 'var(--radius-2)',
+        }}
+      >
+        <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: subcatColor, flexShrink: 0 }}>
+          {action.intervention?.code ?? '—'}
+        </Text>
+        <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none', flexShrink: 0 }}>
+          {action.subcategory?.code ?? action.subcategory?.name ?? '—'}
+        </Badge>
+        {action.description && (
+          <Text size="1" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {action.description}
+          </Text>
+        )}
+      </Flex>
+    </Flex>
+  ) : null;
+
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Content style={{ maxWidth: 560 }}>
-        <Dialog.Title>Demande d&apos;achat</Dialog.Title>
-
-        {action && (
-          <Box
-            mb="3"
-            style={{
-              padding: '8px 12px',
-              background: `${subcatColor}12`,
-              borderLeft: `3px solid ${subcatColor}`,
-              borderRadius: 'var(--radius-2)',
-            }}
-          >
-            <Flex align="center" gap="2">
-              <Link2 size={13} color={subcatColor} />
-              <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: subcatColor }}>
-                {action.intervention?.code ?? '—'}
-              </Text>
-              <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none' }}>
-                {action.subcategory?.code ?? action.subcategory?.name ?? '—'}
-              </Badge>
-              {action.description && (
-                <Text size="1" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {action.description}
-                </Text>
-              )}
-            </Flex>
-          </Box>
-        )}
+        <Dialog.Title style={{ display: 'none' }}>Demande d&apos;achat</Dialog.Title>
 
         {success && (
           <StatusCallout type="success">
@@ -84,6 +96,7 @@ export default function SpontaneousPurchaseRequestModal({ open, onOpenChange, ac
             loading={loading}
             onCancel={() => onOpenChange(false)}
             submitLabel="Créer la demande"
+            contextBanner={contextBanner}
           />
         )}
       </Dialog.Content>
