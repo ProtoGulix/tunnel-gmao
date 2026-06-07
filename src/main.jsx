@@ -18,7 +18,9 @@ import '@/styles/globals.css';
 import { registerSW } from 'virtual:pwa-register';
 
 // ===== SET DYNAMIC TITLE =====
-document.title = `TUNNEL v${packageJson.version}`;
+const appEnv = import.meta.env.VITE_APP_ENV;
+const envSuffix = appEnv && appEnv !== 'prod' ? ` [${appEnv.toUpperCase()}]` : '';
+document.title = `TUNNEL v${packageJson.version}${envSuffix}`;
 
 // ===== SERVICE WORKER — mise à jour des onglets ouverts =====
 // Stratégie : vérifier toutes les 60 secondes si un nouveau SW est disponible.

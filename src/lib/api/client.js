@@ -94,7 +94,8 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // 401 — tenter un refresh avant de rediriger
-    if (status === 401 && !originalRequest._retry) {
+    // Exclure le endpoint de login : un 401 = mauvais identifiants, pas besoin de refresh
+    if (status === 401 && !originalRequest._retry && !originalRequest.url?.endsWith('/auth/login')) {
       const storedRefreshToken = localStorage.getItem('auth_refresh_token');
 
       if (!storedRefreshToken) {

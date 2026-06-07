@@ -8,7 +8,7 @@
 
 import PropTypes from 'prop-types';
 import { X, Menu } from 'lucide-react';
-import BrandLogo from '@/components/common/BrandLogo';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 /**
  * En-tête mobile avec bouton menu hamburger
@@ -55,7 +55,7 @@ export default function MobileHeader({ menuOpen, onToggle, colors }) {
       >
         {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
-      
+
       <BrandLogo size="mobile" showTitle={true} />
 
       <div style={{ width: '40px' }} />

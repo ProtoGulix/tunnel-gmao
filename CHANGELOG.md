@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.44.0] — 2026-06-07
+
+### Briefing — tuile d'intervention synthétisée
+
+- **Résumé des tâches** : la liste détaillée des tâches dans la colonne gauche du Briefing est remplacée par une ligne de synthèse (comptage par statut : en cours, à faire, faits, ignorés)
+- **Tâches en retard mises en valeur** : si une ou plusieurs tâches ont dépassé leur date d'échéance, la bande passe sur fond rouge avec un badge `⚠ N en retard` bien visible
+- **Empty state** : quand une intervention n'a aucune tâche associée, un message *"Aucune tâche"* est affiché à la place
+
+### Vue détail intervention — tâches groupées par statut
+
+- Les tâches dans `IvBody` sont désormais regroupées visuellement par statut (en cours, à faire, terminées) avec une interface plus lisible
+
+### Demandes d'achat — bandeau contexte
+
+- Une bannière contextuelle s'affiche en haut du formulaire de demande d'achat pour rappeler l'intervention ou la DI de rattachement
+- Refactorisation du modal `SpontaneousPurchaseRequestModal` pour plus de clarté
+
+### Badge environnement
+
+- Le logo affiche un badge coloré selon l'environnement (`dev`, `staging`, `prod`)
+- Le titre de la page (`<title>`) inclut désormais le préfixe d'environnement
+- Ajout de `VITE_ALLOWED_HOSTS` dans la configuration Vite pour sécuriser les accès en développement réseau
+
+### Correctifs
+
+- **Briefing** : l'`InterventionCard` s'affiche correctement quand une DI a une intervention liée via les données de liste
+
+---
+
 ## [3.43.2] — 2026-06-05
 
 Stabilité : **stable**

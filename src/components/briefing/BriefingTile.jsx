@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge } from '@radix-ui/themes';
-import { AlertTriangle, CalendarClock, UserCog, Wrench, Clock, Bot, User } from 'lucide-react';
+import { AlertTriangle, Wrench, Clock, Bot, User } from 'lucide-react';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
 import { normalizeTileData, SECTION_BAR_COLOR } from './briefingTileNormalize';
 import { BriefingTileHeader } from './BriefingTileHeader';
@@ -11,11 +11,11 @@ const AVATAR_COLORS = {
 
 
 const SITUATION_BADGE = {
-  no_intervention: { color: 'gray',   label: 'sans intervention' },
-  no_action:       { color: 'orange', label: 'sans action'       },
-  no_task:         { color: 'orange', label: 'sans tâche'        },
-  blocked_piece:   { color: 'orange', label: 'pièces en attente' },
-  decision:        { color: 'red',    label: 'décision requise'  },
+  no_intervention: { color: 'gray', label: 'sans intervention' },
+  no_action: { color: 'orange', label: 'sans action' },
+  no_task: { color: 'orange', label: 'sans tâche' },
+  blocked_piece: { color: 'orange', label: 'pièces en attente' },
+  decision: { color: 'red', label: 'décision requise' },
 };
 
 function TypeAndSituationBadges({ typeLabel, typeColor, situationType }) {
@@ -47,81 +47,64 @@ function UrgencyLabel({ nextDueDate, reportedDate }) {
 }
 UrgencyLabel.propTypes = { nextDueDate: PropTypes.string, reportedDate: PropTypes.string };
 
-const TASK_STATUS = {
-  in_progress: { color: 'var(--blue-9)',  bg: 'var(--blue-2)',  label: 'En cours', badge: 'blue' },
-  todo:        { color: 'var(--gray-6)',  bg: 'transparent',    label: 'À faire',  badge: 'gray' },
-  done:        { color: 'var(--green-9)', bg: 'var(--green-2)', label: 'Fait',     badge: 'green' },
-  skipped:     { color: 'var(--gray-5)',  bg: 'transparent',    label: 'Ignoré',   badge: 'gray' },
-};
-
-const TASK_ORIGIN_ICON = { plan: CalendarClock, resp: UserCog, tech: Wrench };
-const TASK_ORIGIN_COLOR = { plan: 'var(--violet-9)', resp: 'var(--orange-9)', tech: 'var(--blue-9)' };
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
-function formatDue(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-}
+function TaskSummary({ tasks }) {
+  const hasTasks = tasks && tasks.length > 0;
 
+  if (!hasTasks) {
+    return (
+      <Flex align="center" gap="1" style={{ padding: '5px 10px', borderTop: '1px solid var(--gray-4)', background: 'var(--gray-2)' }}>
+        <Text size="1" style={{ color: 'var(--gray-8)', fontStyle: 'italic' }}>Aucune tâche</Text>
+      </Flex>
+    );
+  }
 
-function TaskDueBadge({ due, overdue }) {
-  if (!due) return null;
-  if (overdue) return (
-    <Badge color="red" variant="solid" size="1" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-      <AlertTriangle size={9} />{due}
-    </Badge>
-  );
-  return <Text size="1" color="gray" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{due}</Text>;
-}
-TaskDueBadge.propTypes = { due: PropTypes.string, overdue: PropTypes.bool };
+  const counts = { in_progress: 0, todo: 0, done: 0, skipped: 0 };
+  let overdueCount = 0;
+  tasks.forEach((task) => {
+    const s = task.status ?? 'todo';
+    if (s in counts) counts[s]++; else counts.todo++;
+    if (task.due_date && new Date(task.due_date) < today && task.status !== 'done' && task.status !== 'skipped') {
+      overdueCount++;
+    }
+  });
+  const hasOverdue = overdueCount > 0;
+  const parts = [
+    counts.in_progress > 0 && { label: `${counts.in_progress} en cours`, color: 'blue' },
+    counts.todo > 0 && { label: `${counts.todo} à faire`, color: 'gray' },
+    counts.done > 0 && { label: `${counts.done} fait${counts.done > 1 ? 's' : ''}`, color: 'green' },
+    counts.skipped > 0 && { label: `${counts.skipped} ignoré${counts.skipped > 1 ? 's' : ''}`, color: 'gray' },
+  ].filter(Boolean);
 
-
-function TaskRow({ task, isLast }) {
-  const cfg = TASK_STATUS[task.status] ?? TASK_STATUS.todo;
-  const OriginIcon = TASK_ORIGIN_ICON[task.origin] ?? null;
-  const originColor = TASK_ORIGIN_COLOR[task.origin] ?? 'var(--gray-7)';
-  const initials = task.assigned_to?.initials ?? task.assigned_to?.initial ?? null;
-  const due = formatDue(task.due_date);
-  const overdue = !!due && new Date(task.due_date) < today && task.status !== 'done' && task.status !== 'skipped';
   return (
-    <Flex align="center" gap="2" style={{
-      padding: '5px 10px',
-      borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
-      background: cfg.bg,
-      borderLeft: `3px solid ${cfg.color}`,
+    <Flex align="center" gap="2" wrap="wrap" style={{
+      padding: '6px 10px',
+      borderTop: hasOverdue ? '1px solid var(--red-5)' : '1px solid var(--gray-4)',
+      background: hasOverdue ? 'var(--red-2)' : 'var(--gray-2)',
     }}>
-      {OriginIcon && <OriginIcon size={11} color={originColor} style={{ flexShrink: 0 }} />}
-      <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>{cfg.label}</Badge>
-      <Text size="1" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {task.label}
+      {hasOverdue
+        ? <AlertTriangle size={12} color="var(--red-9)" style={{ flexShrink: 0 }} />
+        : <Wrench size={12} color="var(--gray-8)" style={{ flexShrink: 0 }} />
+      }
+      <Text size="1" weight="medium" style={{ color: 'var(--gray-11)' }}>
+        {tasks.length} tâche{tasks.length > 1 ? 's' : ''}
       </Text>
-      <TaskDueBadge due={due} overdue={overdue} />
-      {initials && (
-        <Text size="1" style={{ flexShrink: 0, color: 'var(--gray-10)', fontFamily: 'monospace' }}>{initials.toUpperCase()}</Text>
+      <Text size="1" style={{ color: 'var(--gray-7)' }}>·</Text>
+      {hasOverdue && (
+        <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <AlertTriangle size={9} />{overdueCount} en retard
+        </Badge>
       )}
+      {parts.map((p, i) => (
+        <Badge key={i} color={p.color} variant="soft" size="1">{p.label}</Badge>
+      ))}
     </Flex>
   );
 }
-TaskRow.propTypes = { task: PropTypes.object.isRequired, isLast: PropTypes.bool };
-
-function TaskList({ tasks }) {
-  if (!tasks || tasks.length === 0) return null;
-  const sorted = [...tasks].sort((a, b) => {
-    const order = { in_progress: 0, todo: 1, done: 2, skipped: 3 };
-    return (order[a.status] ?? 9) - (order[b.status] ?? 9);
-  });
-  return (
-    <div style={{ borderTop: '1px solid var(--gray-4)' }}>
-      {sorted.map((task, idx) => (
-        <TaskRow key={task.id} task={task} isLast={idx === sorted.length - 1} />
-      ))}
-    </div>
-  );
-}
-TaskList.propTypes = { tasks: PropTypes.array };
+TaskSummary.propTypes = { tasks: PropTypes.array };
 
 export function BriefingTile({ item, sectionId }) {
   const barColor = SECTION_BAR_COLOR[sectionId] ?? 'var(--gray-9)';
@@ -165,7 +148,7 @@ export function BriefingTile({ item, sectionId }) {
           </Flex>
         )}
       </Flex>
-      <TaskList tasks={tasks} />
+      <TaskSummary tasks={tasks} />
       <Flex align="center" gap="2" style={{ padding: '3px 12px', borderTop: '1px solid var(--gray-4)', background: 'var(--gray-2)' }}>
         {d.techInitials && (
           <Badge size="1" variant="soft" style={{ background: AVATAR_COLORS[d.techInitials.toUpperCase()] + '33', color: AVATAR_COLORS[d.techInitials.toUpperCase()] ?? 'var(--gray-9)', fontFamily: 'var(--font-mono, monospace)', fontWeight: 700 }}>
