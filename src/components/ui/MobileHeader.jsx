@@ -55,7 +55,7 @@ export default function MobileHeader({ menuOpen, onToggle, colors }) {
       >
         {menuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
-      
+
       <BrandLogo size="mobile" showTitle={true} />
 
       <div style={{ width: '40px' }} />
