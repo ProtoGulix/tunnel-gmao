@@ -1,11 +1,18 @@
 import type { FC } from 'react';
 import { Flex, Text, Badge, Spinner, Button } from '@radix-ui/themes';
-import { Clock, Plus, ClipboardList } from 'lucide-react';
+import { Clock, Plus, ClipboardList, Circle, CheckCircle2, MinusCircle } from 'lucide-react';
 import { STATUS_CONFIG } from '@/config/interventionTypes';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
 import { TaskCard } from './TaskCard';
 import type { InterventionDetail, InterventionAction } from '@/types/briefing';
 import type { BriefingSituation } from '@/types/briefing';
+
+const STATUS_GROUP_CFG = [
+  { key: 'in_progress', Icon: Clock,        color: 'var(--blue-9)',   label: 'En cours' },
+  { key: 'todo',        Icon: Circle,        color: 'var(--gray-7)',   label: 'À faire' },
+  { key: 'done',        Icon: CheckCircle2,  color: 'var(--green-9)',  label: 'Terminée' },
+  { key: 'skipped',     Icon: MinusCircle,   color: 'var(--orange-9)', label: 'Ignorée' },
+] as const;
 
 const DECISION_LABELS: Record<string, string> = {
   status_actual_changed: 'Statut modifié',
@@ -152,26 +159,44 @@ export function IvBody({
               Aucune tâche liée à cette intervention
             </Text>
           )}
-          {sortedTasks.map((task: any, idx: number) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              isCritical={criticalTask?.id === task.id}
-              actions={detail?.action ?? []}
-              reportedDate={situation.reportedDate ?? null}
-              auditLogs={auditLogs}
-              editCell={editCell}
-              onStartEdit={onStartEdit}
-              onSaveField={onSaveField}
-              onCancelEdit={onCancelEdit}
-              onMoveUp={() => onMoveUp(task, idx)}
-              onMoveDown={() => onMoveDown(task, idx)}
-              isFirst={idx === 0}
-              isLast={idx === sortedTasks.length - 1}
-              users={taskCreate.users}
-              editSaving={editSaving ?? null}
-            />
-          ))}
+          {STATUS_GROUP_CFG.map(({ key, Icon, color, label }) => {
+            const group = sortedTasks.filter((t: any) => t.status === key);
+            if (group.length === 0) return null;
+            return (
+              <div key={key}>
+                <Flex align="center" gap="2" style={{ padding: '2px 4px 6px' }}>
+                  <Icon size={12} color={color} />
+                  <Text size="1" weight="medium" style={{ color }}>{label}</Text>
+                  <Badge size="1" variant="soft" color="gray">{group.length}</Badge>
+                </Flex>
+                <Flex direction="column" gap="2">
+                  {group.map((task: any) => {
+                    const idx = sortedTasks.indexOf(task);
+                    return (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        isCritical={criticalTask?.id === task.id}
+                        actions={detail?.action ?? []}
+                        reportedDate={situation.reportedDate ?? null}
+                        auditLogs={auditLogs}
+                        editCell={editCell}
+                        onStartEdit={onStartEdit}
+                        onSaveField={onSaveField}
+                        onCancelEdit={onCancelEdit}
+                        onMoveUp={() => onMoveUp(task, idx)}
+                        onMoveDown={() => onMoveDown(task, idx)}
+                        isFirst={idx === 0}
+                        isLast={idx === sortedTasks.length - 1}
+                        users={taskCreate.users}
+                        editSaving={editSaving ?? null}
+                      />
+                    );
+                  })}
+                </Flex>
+              </div>
+            );
+          })}
           <UnlinkedActions actions={unlinkedActions} />
           {showForm ? (
             <TaskCreateForm
