@@ -8,7 +8,7 @@
 
 import PropTypes from 'prop-types';
 import { X, Menu } from 'lucide-react';
-import BrandLogo from '@/components/common/BrandLogo';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 /**
  * En-tête mobile avec bouton menu hamburger
