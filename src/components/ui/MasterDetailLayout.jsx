@@ -184,6 +184,7 @@ export default function MasterDetailLayout({
   emptyLabel,
   ratio,
   fullHeight,
+  freeDetail,
 }) {
   const gridRatio = ratio ?? (leftPanel ? '42% 1fr' : '1fr 1.3fr');
   const gap = leftPanel ? 0 : '12px';
@@ -195,7 +196,7 @@ export default function MasterDetailLayout({
         ? <FreeMasterPanel>{leftPanel}</FreeMasterPanel>
         : <MasterPanel {...masterProps} />
       }
-      <DetailPanel loading={detailLoading} emptyLabel={emptyLabel} freeMode={!!leftPanel}>
+      <DetailPanel loading={detailLoading} emptyLabel={emptyLabel} freeMode={!!(leftPanel || freeDetail)}>
         {detailChildren}
       </DetailPanel>
     </div>
@@ -220,4 +221,5 @@ MasterDetailLayout.propTypes = {
   emptyLabel: PropTypes.string,
   ratio: PropTypes.string,
   fullHeight: PropTypes.bool,
+  freeDetail: PropTypes.bool,
 };
