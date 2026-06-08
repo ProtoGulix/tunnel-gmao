@@ -1,33 +1,34 @@
+import { lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
-
-// Layout
-import Layout from '@/components/layout/Layout';
-
-// Pages
-import Login from '@/pages/auth/Login';
-import HomeSplit from '@/pages/HomeSplit';
-import HomeBriefing from '@/pages/HomeBriefing';
-import HomeOld from '@/pages/home/HomeOld';
-import ServiceStatusPage from '@/pages/service-status/ServiceStatusPage';
-import QualityDataPage from '@/pages/quality-data/QualityDataPage';
-import InterventionsListPage from '@/pages/interventions/InterventionsListPage';
-import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
-import InterventionCreatePage from '@/pages/interventions/InterventionCreatePage';
-import PurchaseRequestPage from '@/pages/purchase-requests/PurchaseRequestPage';
-import EquipementsPage from '@/pages/equipements/EquipementsPage';
-import EquipementDetailPage from '@/pages/equipements/EquipementDetailPage';
-import StockPage from '@/pages/stock/StockPage';
-import BriefingPage from '@/pages/briefing/BriefingPage';
-import PageHeader from '@/components/layout/PageHeader';
 import { ClipboardList } from 'lucide-react';
-import PurchaseRequestsPage from '@/pages/purchase/PurchaseRequestsPage';
-import AdminPreventivePlansPage from '@/pages/admin/AdminPreventivePlansPage';
-import AdminPreventiveOccurrencesPage from '@/pages/admin/AdminPreventiveOccurrencesPage';
-import AdminPage from '@/pages/admin/AdminPage';
-import PreventivePage from '@/pages/preventive/PreventivePage';
+
+// Layout (toujours présent, pas de lazy)
+import Layout from '@/components/layout/Layout';
+import PageHeader from '@/components/layout/PageHeader';
 import RequireRole from '@/auth/RequireRole';
+
+// Pages — chargées à la demande
+const Login = lazy(() => import('@/pages/auth/Login'));
+const HomeSplit = lazy(() => import('@/pages/HomeSplit'));
+const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
+const HomeOld = lazy(() => import('@/pages/home/HomeOld'));
+const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
+const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
+const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
+const InterventionDetailPage = lazy(() => import('@/pages/interventions/InterventionDetailPage'));
+const InterventionCreatePage = lazy(() => import('@/pages/interventions/InterventionCreatePage'));
+const PurchaseRequestPage = lazy(() => import('@/pages/purchase-requests/PurchaseRequestPage'));
+const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage'));
+const EquipementDetailPage = lazy(() => import('@/pages/equipements/EquipementDetailPage'));
+const StockPage = lazy(() => import('@/pages/stock/StockPage'));
+const BriefingPage = lazy(() => import('@/pages/briefing/BriefingPage'));
+const PurchaseRequestsPage = lazy(() => import('@/pages/purchase/PurchaseRequestsPage'));
+const AdminPreventivePlansPage = lazy(() => import('@/pages/admin/AdminPreventivePlansPage'));
+const AdminPreventiveOccurrencesPage = lazy(() => import('@/pages/admin/AdminPreventiveOccurrencesPage'));
+const AdminPage = lazy(() => import('@/pages/admin/AdminPage'));
+const PreventivePage = lazy(() => import('@/pages/preventive/PreventivePage'));
 
 /**
  * Composant de route protégée
@@ -71,6 +72,7 @@ ProtectedRoute.propTypes = {
  */
 export default function AppRoutes() {
   return (
+    <Suspense fallback={null}>
     <Routes>
       {/* Route publique - sans layout */}
       <Route path="/login" element={<Login />} />
@@ -313,5 +315,6 @@ export default function AppRoutes() {
       {/* Redirection par défaut */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }

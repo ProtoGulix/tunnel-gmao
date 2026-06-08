@@ -520,9 +520,9 @@
     "semantic_hash": "914ff225976d8719335ab32f47186861"
   },
   "components/interventions/ActionForm/actionFormUtils.js": {
-    "mtime": 1780834255.196485,
-    "ast_hash": "3146e6438fa975148df703d14e272565",
-    "semantic_hash": "3146e6438fa975148df703d14e272565"
+    "mtime": 1780952167.559804,
+    "ast_hash": "8d7192ca2fd2bf4661c5539d45d4934d",
+    "semantic_hash": "8d7192ca2fd2bf4661c5539d45d4934d"
   },
   "components/interventions/ActionForm/index.jsx": {
     "mtime": 1780834255.196485,
@@ -620,9 +620,9 @@
     "semantic_hash": "6d0199fab4d3eaf688b3ca1c48b3da3f"
   },
   "components/interventions/tabs/TasksTab.jsx": {
-    "mtime": 1780834255.196485,
-    "ast_hash": "a8888f7349b412fd37da61d8eacf0704",
-    "semantic_hash": "a8888f7349b412fd37da61d8eacf0704"
+    "mtime": 1780952089.203072,
+    "ast_hash": "8ef749fff07cd8958589911ff92076ee",
+    "semantic_hash": "8ef749fff07cd8958589911ff92076ee"
   },
   "components/layout/BrandLogo.jsx": {
     "mtime": 1780863244.0091689,
@@ -750,9 +750,9 @@
     "semantic_hash": "8907abf510a189335a628502a0713256"
   },
   "components/preventive/GammeProgressBlock.jsx": {
-    "mtime": 1780834255.200485,
-    "ast_hash": "aad7f7f75aa9a544997e6523f2830a1b",
-    "semantic_hash": "aad7f7f75aa9a544997e6523f2830a1b"
+    "mtime": 1780952104.675218,
+    "ast_hash": "d09da3b1b90518338dba6d8999f66c98",
+    "semantic_hash": "d09da3b1b90518338dba6d8999f66c98"
   },
   "components/preventive/GammeStepsPanel.jsx": {
     "mtime": 1780834255.200485,
@@ -1020,9 +1020,9 @@
     "semantic_hash": "77d88993a0af9e3cb18a72214cb74962"
   },
   "components/tasks/tabs/TasksTabParts.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "b20b5c770d0018bdd9c63eb4cf31eefc",
-    "semantic_hash": "b20b5c770d0018bdd9c63eb4cf31eefc"
+    "mtime": 1780952127.26743,
+    "ast_hash": "e13c9fb0243903b50df409bcff673d70",
+    "semantic_hash": "e13c9fb0243903b50df409bcff673d70"
   },
   "components/ui/ActionButtons.jsx": {
     "mtime": 1780834255.204485,
@@ -1610,9 +1610,9 @@
     "semantic_hash": "87811eebe6b58afd3d7be801fa01d48d"
   },
   "hooks/tasks/useTasks.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "751e96cf86211af8e922ffe53087df6e",
-    "semantic_hash": "751e96cf86211af8e922ffe53087df6e"
+    "mtime": 1780952074.3949316,
+    "ast_hash": "e36c586ff6688f3923d223674d6778fa",
+    "semantic_hash": "e36c586ff6688f3923d223674d6778fa"
   },
   "hooks/useAuditGuard.js": {
     "mtime": 1780834255.2124848,
@@ -1690,9 +1690,9 @@
     "semantic_hash": "a2d6eba5a6d20d4bb85c417587ce825d"
   },
   "lib/utils/actionUtils.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "e1b96e2b421acd67f4381229cc0421ed",
-    "semantic_hash": "e1b96e2b421acd67f4381229cc0421ed"
+    "mtime": 1780952155.015688,
+    "ast_hash": "0460fc1fde5e6edec26d1831f0dbae2e",
+    "semantic_hash": "0460fc1fde5e6edec26d1831f0dbae2e"
   },
   "lib/utils/colorUtils.js": {
     "mtime": 1780834255.2124848,
@@ -1710,9 +1710,9 @@
     "semantic_hash": "53ca5d773afae946256a0fcdf1037df3"
   },
   "lib/utils/interventionUtils.jsx": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "4a86a8f33a3d958880cf5f80391b90ef",
-    "semantic_hash": "4a86a8f33a3d958880cf5f80391b90ef"
+    "mtime": 1780952183.2959485,
+    "ast_hash": "b527227a6e466599d00c44ccdc85393e",
+    "semantic_hash": "b527227a6e466599d00c44ccdc85393e"
   },
   "lib/utils/specsFormatter.js": {
     "mtime": 1780834255.2124848,
@@ -1825,9 +1825,9 @@
     "semantic_hash": "3e29895fea8f01f63237beedb4700ab3"
   },
   "pages/home/HomeOld.jsx": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "84d0cfd7544a12be20cee6405c442a75",
-    "semantic_hash": "84d0cfd7544a12be20cee6405c442a75"
+    "mtime": 1780952192.092029,
+    "ast_hash": "a1e48b2299c28ae9deeea5366383739f",
+    "semantic_hash": "a1e48b2299c28ae9deeea5366383739f"
   },
   "pages/home/HomePage.config.js": {
     "mtime": 1780834255.2124848,
@@ -1953,5 +1953,10 @@
     "mtime": 1780834255.2164848,
     "ast_hash": "142137d39e65637870f9de7953d6896f",
     "semantic_hash": "142137d39e65637870f9de7953d6896f"
+  },
+  "config/taskConfig.js": {
+    "mtime": 1780952052.4827218,
+    "ast_hash": "82e9eb8f3feda328e9f538638a9e2b2f",
+    "semantic_hash": "82e9eb8f3feda328e9f538638a9e2b2f"
   }
 }
