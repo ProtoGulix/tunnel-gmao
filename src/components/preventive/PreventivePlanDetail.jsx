@@ -10,11 +10,8 @@ import { Link } from 'react-router-dom';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
 import DataTable from '@/components/ui/DataTable';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
-import { triggerLabel } from '@/config/preventiveConfig';
+import { triggerLabel, OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS } from '@/config/preventiveConfig';
 import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
-
-const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
-const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
@@ -38,7 +35,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
     },
     {
       key: 'status', header: 'Statut', width: 110,
-      render: (r) => <Badge color={STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{STATUS_LABELS[r.status] || r.status}</Badge>,
+      render: (r) => <Badge color={OCCURRENCE_STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{OCCURRENCE_STATUS_LABELS[r.status] || r.status}</Badge>,
     },
     {
       key: 'di', header: 'DI', width: 140,

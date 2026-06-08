@@ -9,7 +9,7 @@ import { Button, Flex, Text } from '@radix-ui/themes';
 import { Edit2 } from 'lucide-react';
 import StockSubFamiliesTable from '@/components/stock/StockSubFamiliesTable';
 import StockSubFamilyForm from '@/components/stock/StockSubFamilyForm';
-import { useStockFamilyDetail } from '@/hooks/stock/useStockFamilyDetail';
+import { useStockFamilyDetail } from '@/hooks/stock/useStockFamily';
 
 export default function StockFamilyDetail({ familyCode, onEdit }) {
   const { subFamilies, loading, stats, updateSubFamily, createSubFamily } =

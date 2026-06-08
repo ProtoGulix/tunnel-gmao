@@ -13,12 +13,10 @@ import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
 import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
-
-const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
-const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
-
-const STEP_STATUS_COLORS = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
-const STEP_STATUS_LABELS = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
+import {
+  OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS,
+  STEP_STATUS_COLORS, STEP_STATUS_LABELS,
+} from '@/config/preventiveConfig';
 
 const stepColumns = [
   { key: 'order', header: '#', width: 36, render: (s) => <Text size="1" color="gray">{s.sort_order}</Text> },
@@ -132,7 +130,7 @@ export default function PreventiveOccurrencesTab() {
     },
     {
       key: 'status', header: 'Statut', width: 110,
-      render: (r) => <Badge color={STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{STATUS_LABELS[r.status] || r.status}</Badge>,
+      render: (r) => <Badge color={OCCURRENCE_STATUS_COLORS[r.status] || 'gray'} variant="soft" size="1">{OCCURRENCE_STATUS_LABELS[r.status] || r.status}</Badge>,
     },
     {
       key: 'di', header: 'Demande (DI)', width: 160,

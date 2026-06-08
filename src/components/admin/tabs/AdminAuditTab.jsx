@@ -9,6 +9,7 @@ import {
 } from '@radix-ui/themes';
 import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import { useAdminAudit } from '@/hooks/admin/useAdminAudit';
+import { AUDIT_DECISION_LABELS } from '@/config/interventionTypes';
 
 /* ── Config ─────────────────────────────────────────────────────────────────── */
 
@@ -26,18 +27,6 @@ const ENTITY_COLORS = {
   purchase_request: 'orange',
   task:             'green',
   action:           'cyan',
-};
-
-// Libellés lisibles pour les decision_type renvoyés par l'API
-const DECISION_LABELS = {
-  status_actual_changed:  'Statut modifié',
-  priority_changed:       'Priorité modifiée',
-  assigned_to_changed:    'Affectation modifiée',
-  due_date_changed:       'Échéance modifiée',
-  sort_order_changed:     'Ordre modifié',
-  created:                'Créé',
-  deleted:                'Supprimé',
-  status_changed:         'Statut modifié',
 };
 
 /* ── Sous-composants ─────────────────────────────────────────────────────────── */
@@ -78,7 +67,7 @@ function FiltersBar({ filters, reasonCodes, onApply }) {
           <Select.Trigger style={{ minWidth: 170 }} />
           <Select.Content>
             <Select.Item value="__all__">Tous</Select.Item>
-            {Object.entries(DECISION_LABELS).map(([k, v]) => (
+            {Object.entries(AUDIT_DECISION_LABELS).map(([k, v]) => (
               <Select.Item key={k} value={k}>{v}</Select.Item>
             ))}
           </Select.Content>
@@ -258,7 +247,7 @@ export default function AdminAuditTab() {
                 const entityLabel = ENTITY_LABELS[log.entity_type] ?? log.entity_type ?? '—';
                 const entityColor = ENTITY_COLORS[log.entity_type] ?? 'gray';
 
-                const decisionLabel = DECISION_LABELS[log.decision_type] ?? log.decision_type ?? '—';
+                const decisionLabel = AUDIT_DECISION_LABELS[log.decision_type] ?? log.decision_type ?? '—';
 
                 // reason est un objet imbriqué { code, label, color, ... }
                 const { reason } = log;

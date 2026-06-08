@@ -16,7 +16,7 @@ import {
   Badge, Box, Button, Callout, Dialog, Flex, Separator, Text, TextField,
 } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
-import { useAuth } from '@/auth/useAuth';
+import { usePermissions } from '@/auth/usePermissions';
 import {
   fetchInterventionTasks,
   fetchInterventionTasksProgress,
@@ -99,8 +99,7 @@ TaskRow.propTypes = {
 /* ── Composant principal ────────────────────────────────────────────────────── */
 
 export default function TasksTab({ interventionId, isLocked = false }) {
-  const { user } = useAuth();
-  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role.toUpperCase()));
+  const { canSkipObligatory } = usePermissions();
 
   const [tasks, setTasks] = useState([]);
   const [progress, setProgress] = useState(null);

@@ -8,13 +8,7 @@ import PropTypes from 'prop-types';
 import { Badge, Button, Flex, Text, Select } from '@radix-ui/themes';
 import { Plus, Users, Pencil, Shield, Power, KeyRound } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
-
-const ROLE_COLORS = {
-  RESP: 'blue',
-  TECH: 'green',
-  OPE: 'gray',
-  ADMIN: 'orange',
-};
+import { ROLE_COLORS } from '@/config/adminConfig';
 
 const ROLE_OPTIONS = [
   { value: '__all__', label: 'Tous les rôles' },

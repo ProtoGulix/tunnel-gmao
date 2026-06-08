@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ExternalLink, MinusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/auth/useAuth';
+import { usePermissions } from '@/auth/usePermissions';
 import {
   fetchInterventionTasks,
   fetchInterventionTasksProgress,
@@ -131,9 +131,8 @@ function ProgressSummary({ progress }) {
 ProgressSummary.propTypes = { progress: PropTypes.object };
 
 export default function GammeProgressBlock({ mode, interventionId, occurrenceId, diId, onProgressUpdate, refreshKey = 0 }) {
-  const { user } = useAuth();
+  const { canSkipObligatory } = usePermissions();
   const readOnly = mode === 'occurrence';
-  const canSkipObligatory = !!(user?.role && ['RESP', 'ADMIN'].includes(user.role.toUpperCase()));
 
   const [tasks, setTasks] = useState([]);
   const [progress, setProgress] = useState(null);
