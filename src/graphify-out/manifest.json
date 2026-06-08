@@ -200,9 +200,9 @@
     "semantic_hash": "6aa0785d1fab3addea8ad3490cb4020b"
   },
   "components/admin/AdminRolePermissionsMatrix.jsx": {
-    "mtime": 1780834255.188485,
-    "ast_hash": "daaae345a41a527b49a6b6fe1f5e0c5a",
-    "semantic_hash": "daaae345a41a527b49a6b6fe1f5e0c5a"
+    "mtime": 1780957748.7290316,
+    "ast_hash": "12847f2a00041c038cc10b85bc73ed28",
+    "semantic_hash": "12847f2a00041c038cc10b85bc73ed28"
   },
   "components/admin/AdminSecurityApiKeys.jsx": {
     "mtime": 1780834255.188485,
@@ -240,14 +240,14 @@
     "semantic_hash": "45b9475ac0e7150c936d54e92c7f2270"
   },
   "components/admin/AdminUsersTable.jsx": {
-    "mtime": 1780834255.188485,
-    "ast_hash": "79520c63ca18bf05f89bcb67358f3f7b",
-    "semantic_hash": "79520c63ca18bf05f89bcb67358f3f7b"
+    "mtime": 1780957741.3769414,
+    "ast_hash": "a4a9a551435e16ba9c9ca009646a0202",
+    "semantic_hash": "a4a9a551435e16ba9c9ca009646a0202"
   },
   "components/admin/tabs/AdminAuditTab.jsx": {
     "mtime": 1780957530.7341669,
     "ast_hash": "dfde5520abf940818da76cac14079422",
-    "semantic_hash": ""
+    "semantic_hash": "dfde5520abf940818da76cac14079422"
   },
   "components/admin/tabs/AdminEndpointsTab.jsx": {
     "mtime": 1780834255.188485,
@@ -552,7 +552,7 @@
   "components/interventions/InterventionDetailView.jsx": {
     "mtime": 1780957497.5899186,
     "ast_hash": "876b20a49dc99b26cc0900781933e7d1",
-    "semantic_hash": ""
+    "semantic_hash": "876b20a49dc99b26cc0900781933e7d1"
   },
   "components/interventions/InterventionFormFields.jsx": {
     "mtime": 1780834255.196485,
@@ -612,7 +612,7 @@
   "components/interventions/tabs/TasksTab.jsx": {
     "mtime": 1780956830.8444557,
     "ast_hash": "a4dbf8cd5027543c3c63a53a41e7e474",
-    "semantic_hash": ""
+    "semantic_hash": "a4dbf8cd5027543c3c63a53a41e7e474"
   },
   "components/layout/BrandLogo.jsx": {
     "mtime": 1780863244.0091689,
@@ -737,7 +737,7 @@
   "components/preventive/GammeProgressBlock.jsx": {
     "mtime": 1780956816.5363147,
     "ast_hash": "4a7ee644b03a5b012c3bb24c62d9abdd",
-    "semantic_hash": ""
+    "semantic_hash": "4a7ee644b03a5b012c3bb24c62d9abdd"
   },
   "components/preventive/GammeStepsPanel.jsx": {
     "mtime": 1780834255.200485,
@@ -747,12 +747,12 @@
   "components/preventive/PreventiveOccurrencesTab.jsx": {
     "mtime": 1780957092.3867736,
     "ast_hash": "55115d2f773798c5c4d68ff2cdfba5eb",
-    "semantic_hash": ""
+    "semantic_hash": "55115d2f773798c5c4d68ff2cdfba5eb"
   },
   "components/preventive/PreventivePlanDetail.jsx": {
     "mtime": 1780957056.9144804,
     "ast_hash": "039b4fd7f6f2ea1f31e425aed905ad73",
-    "semantic_hash": ""
+    "semantic_hash": "039b4fd7f6f2ea1f31e425aed905ad73"
   },
   "components/preventive/PreventivePlanForm.jsx": {
     "mtime": 1780834255.200485,
@@ -917,7 +917,7 @@
   "components/stock/StockFamilyDetail.jsx": {
     "mtime": 1780956929.7453818,
     "ast_hash": "068e89cc6248b4e8fa151674d0d4ecd2",
-    "semantic_hash": ""
+    "semantic_hash": "068e89cc6248b4e8fa151674d0d4ecd2"
   },
   "components/stock/StockFamilyForm.jsx": {
     "mtime": 1780834255.200485,
@@ -1292,7 +1292,7 @@
   "config/interventionTypes.js": {
     "mtime": 1780957473.5457382,
     "ast_hash": "f028bd23e0c10291e63d113f5213ffbf",
-    "semantic_hash": ""
+    "semantic_hash": "f028bd23e0c10291e63d113f5213ffbf"
   },
   "config/layoutConfig.js": {
     "mtime": 1780834255.208485,
@@ -1619,11 +1619,6 @@
     "ast_hash": "31ca917e9a69d0cdcccbacdf925eeaa7",
     "semantic_hash": "31ca917e9a69d0cdcccbacdf925eeaa7"
   },
-  "lib/utils/stockReferenceGenerator.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "64efb2973a973144951876672df5871e",
-    "semantic_hash": "64efb2973a973144951876672df5871e"
-  },
   "lib/utils/templatePatternGenerator.js": {
     "mtime": 1780834255.2124848,
     "ast_hash": "fa1bd60c3b1bbc2c1cf9e70c47f59011",
@@ -1837,7 +1832,7 @@
   "config/preventiveConfig.js": {
     "mtime": 1780957030.0502548,
     "ast_hash": "d38ac65ab684bb35ee0d1d863d5240b7",
-    "semantic_hash": ""
+    "semantic_hash": "d38ac65ab684bb35ee0d1d863d5240b7"
   },
   "hooks/shared/useInterventionRequestStatuses.js": {
     "mtime": 1780956082.705389,
@@ -1847,11 +1842,16 @@
   "auth/usePermissions.js": {
     "mtime": 1780956796.432113,
     "ast_hash": "2fb4ee10b0a9a48376d218ea4566f4b4",
-    "semantic_hash": ""
+    "semantic_hash": "2fb4ee10b0a9a48376d218ea4566f4b4"
   },
   "hooks/stock/useStockFamily.js": {
     "mtime": 1780956914.3332424,
     "ast_hash": "03605153947a257104c6f8cf7be06ac5",
-    "semantic_hash": ""
+    "semantic_hash": "03605153947a257104c6f8cf7be06ac5"
+  },
+  "config/adminConfig.js": {
+    "mtime": 1780957733.6528463,
+    "ast_hash": "4c3207385d4a570f4617cd3be35ded0e",
+    "semantic_hash": "4c3207385d4a570f4617cd3be35ded0e"
   }
 }
