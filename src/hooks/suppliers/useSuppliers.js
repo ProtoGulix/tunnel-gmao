@@ -1,8 +1,3 @@
-/**
- * @fileoverview Hook liste des fournisseurs
- * @module hooks/suppliers/useSuppliers
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchSuppliers, createSupplier, updateSupplier } from '@/api/suppliers';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
@@ -12,47 +7,41 @@ export function useSuppliers({ initialSearch = '' } = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState(initialSearch);
-  const initialLoadRef = useRef(false);
+  const abortRef = useRef(null);
 
   const load = useCallback(async (searchTerm = '') => {
+    if (abortRef.current) abortRef.current.abort();
+    abortRef.current = new AbortController();
+    const ctrl = abortRef.current;
+
     setLoading(true);
     setError(null);
     try {
-      const params = {};
-      if (searchTerm) params.search = searchTerm;
+      const params = searchTerm ? { search: searchTerm } : {};
       const data = await fetchSuppliers(params);
-      setSuppliers(Array.isArray(data) ? data : []);
+      if (!ctrl.signal.aborted) setSuppliers(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fournisseurs'));
-      setSuppliers([]);
+      if (!ctrl.signal.aborted) setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fournisseurs'));
     } finally {
-      setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      load(initialSearch);
-    }
+    load(initialSearch);
+    return () => abortRef.current?.abort();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSearchChange = useCallback(
-    (value) => {
-      setSearch(value);
-      load(value);
-    },
-    [load]
-  );
+  const handleSearchChange = useCallback((value) => {
+    setSearch(value);
+    load(value);
+  }, [load]);
 
-  const addSupplier = useCallback(
-    async (payload) => {
-      const created = await createSupplier(payload);
-      await load(search);
-      return created;
-    },
-    [load, search]
-  );
+  const addSupplier = useCallback(async (payload) => {
+    const created = await createSupplier(payload);
+    await load(search);
+    return created;
+  }, [load, search]);
 
   const editSupplier = useCallback(async (id, payload) => {
     const updated = await updateSupplier(id, payload);
@@ -61,10 +50,7 @@ export function useSuppliers({ initialSearch = '' } = {}) {
   }, []);
 
   return {
-    suppliers,
-    loading,
-    error,
-    search,
+    suppliers, loading, error, search,
     setSearch: handleSearchChange,
     refresh: () => load(search),
     createSupplier: addSupplier,

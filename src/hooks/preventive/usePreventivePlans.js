@@ -1,9 +1,4 @@
-/**
- * @fileoverview Hook liste + CRUD des plans préventifs
- * @module hooks/preventive/usePreventivePlans
- */
-
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import {
   fetchPreventivePlans,
   createPreventivePlan,
@@ -11,68 +6,38 @@ import {
   deletePreventivePlan,
   patchPreventivePlanSteps,
 } from '@/api/preventivePlans';
-import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import { useFetchList } from '@/hooks/shared/useFetchList';
 
 export function usePreventivePlans({ active_only = true } = {}) {
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchPreventivePlans({ active_only });
-      setPlans(data);
-    } catch (err) {
-      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des plans préventifs'));
-      setPlans([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [active_only]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const createPlan = useCallback(
-    async (payload) => {
-      const created = await createPreventivePlan(payload);
-      await load();
-      return created;
-    },
-    [load]
+  const fetchFn = useCallback(() => fetchPreventivePlans({ active_only }), [active_only]);
+  const { items: plans, setItems: setPlans, loading, error, refresh } = useFetchList(
+    fetchFn,
+    'Erreur lors du chargement des plans préventifs',
+    [active_only]
   );
+
+  const createPlan = useCallback(async (payload) => {
+    const created = await createPreventivePlan(payload);
+    await refresh();
+    return created;
+  }, [refresh]);
 
   const updatePlan = useCallback(async (id, payload) => {
     const updated = await updatePreventivePlan(id, payload);
     setPlans((prev) => prev.map((p) => (p.id === id ? updated : p)));
     return updated;
-  }, []);
+  }, [setPlans]);
 
-  const deactivatePlan = useCallback(
-    async (id) => {
-      await deletePreventivePlan(id);
-      await load();
-    },
-    [load]
-  );
+  const deactivatePlan = useCallback(async (id) => {
+    await deletePreventivePlan(id);
+    await refresh();
+  }, [refresh]);
 
   const saveSteps = useCallback(async (id, steps) => {
     const updated = await patchPreventivePlanSteps(id, steps);
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, steps: updated } : p)));
     return updated;
-  }, []);
+  }, [setPlans]);
 
-  return {
-    plans,
-    loading,
-    error,
-    refresh: load,
-    createPlan,
-    updatePlan,
-    deactivatePlan,
-    saveSteps,
-  };
+  return { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps };
 }

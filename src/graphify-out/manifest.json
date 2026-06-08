@@ -1019,11 +1019,6 @@
     "ast_hash": "13ee9d8e9df55000c32e2f976b13f27e",
     "semantic_hash": "13ee9d8e9df55000c32e2f976b13f27e"
   },
-  "components/ui/AnalysisComponents.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "6c729f9d1af4dcafe81d40680efbeeec",
-    "semantic_hash": "6c729f9d1af4dcafe81d40680efbeeec"
-  },
   "components/ui/AsyncSearchSelect.jsx": {
     "mtime": 1780834255.204485,
     "ast_hash": "9bbd48b3bec5199472b4efc5ca34a2b9",
@@ -1069,11 +1064,6 @@
     "ast_hash": "d8768072221bc799df8986c726d96a83",
     "semantic_hash": "d8768072221bc799df8986c726d96a83"
   },
-  "components/ui/DistributionCards.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "eadf1d14266ec82a2f9bfa4234d763db",
-    "semantic_hash": "eadf1d14266ec82a2f9bfa4234d763db"
-  },
   "components/ui/DropdownButton.jsx": {
     "mtime": 1780834255.204485,
     "ast_hash": "5c5f6895e55a91a191448057a7ac9f89",
@@ -1103,11 +1093,6 @@
     "mtime": 1780834255.204485,
     "ast_hash": "b8f9d23c9779a6848657ef613782dd3c",
     "semantic_hash": "b8f9d23c9779a6848657ef613782dd3c"
-  },
-  "components/ui/FilterSelect.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "e4cea9fe503b1aa7e7449438a19593e7",
-    "semantic_hash": "e4cea9fe503b1aa7e7449438a19593e7"
   },
   "components/ui/GenericTabComponents.jsx": {
     "mtime": 1780834255.204485,
@@ -1139,11 +1124,6 @@
     "ast_hash": "3dbcacda86a001b9a4aaf133dbbc5926",
     "semantic_hash": "3dbcacda86a001b9a4aaf133dbbc5926"
   },
-  "components/ui/ManufacturerBadge.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "6a6b2ae90f7d6a0eec1574a38be05225",
-    "semantic_hash": "6a6b2ae90f7d6a0eec1574a38be05225"
-  },
   "components/ui/MasterDetailLayout.jsx": {
     "mtime": 1780864923.4583423,
     "ast_hash": "4a2c7666ba08eebb454e38818832fd53",
@@ -1168,11 +1148,6 @@
     "mtime": 1780834255.204485,
     "ast_hash": "5f53fa6bee1d36a2851881cff1fb2074",
     "semantic_hash": "5f53fa6bee1d36a2851881cff1fb2074"
-  },
-  "components/ui/QuickDateRangeSelector.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "17b89c2bc16a447df5464d98aec8542a",
-    "semantic_hash": "17b89c2bc16a447df5464d98aec8542a"
   },
   "components/ui/SearchField.jsx": {
     "mtime": 1780834255.204485,
@@ -1224,11 +1199,6 @@
     "ast_hash": "f3868bb7d83cb72fffeb8c715a19fd5a",
     "semantic_hash": "f3868bb7d83cb72fffeb8c715a19fd5a"
   },
-  "components/ui/SidebarMenuItem.jsx": {
-    "mtime": 1780834255.208485,
-    "ast_hash": "a1f9b5d52201a2e997e0f25131506e03",
-    "semantic_hash": "a1f9b5d52201a2e997e0f25131506e03"
-  },
   "components/ui/StatusBadgeRenderer/HistoryVariant.jsx": {
     "mtime": 1780834255.208485,
     "ast_hash": "ce361408a74f25128db06dc48816e73e",
@@ -1248,11 +1218,6 @@
     "mtime": 1780834255.208485,
     "ast_hash": "f9e40bf8b4079803a47c0beed68df9df",
     "semantic_hash": "f9e40bf8b4079803a47c0beed68df9df"
-  },
-  "components/ui/StatusButton.jsx": {
-    "mtime": 1780834255.208485,
-    "ast_hash": "f8eae5abe34a243fcee77d51b9e7534b",
-    "semantic_hash": "f8eae5abe34a243fcee77d51b9e7534b"
   },
   "components/ui/StatusCallout.jsx": {
     "mtime": 1780834255.208485,
@@ -1300,9 +1265,9 @@
     "semantic_hash": "8611fc6a21f0d8aff3f1b3d5601a2085"
   },
   "config/menuConfig.js": {
-    "mtime": 1780834255.208485,
-    "ast_hash": "6827b438d93e355439354d14e4cfd2b7",
-    "semantic_hash": "6827b438d93e355439354d14e4cfd2b7"
+    "mtime": 1780958684.790385,
+    "ast_hash": "00530fe73e6b5b3e679a1fd195214875",
+    "semantic_hash": "00530fe73e6b5b3e679a1fd195214875"
   },
   "config/purchaseConfig.js": {
     "mtime": 1780834255.208485,
@@ -1599,20 +1564,10 @@
     "ast_hash": "e2f72a29dbdd64b3b6df35e95ae0af80",
     "semantic_hash": "e2f72a29dbdd64b3b6df35e95ae0af80"
   },
-  "lib/utils/htmlUtils.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "84271e9dd7e6ad2f71ed8b377cdd4094",
-    "semantic_hash": "84271e9dd7e6ad2f71ed8b377cdd4094"
-  },
   "lib/utils/interventionUtils.jsx": {
     "mtime": 1780952183.2959485,
     "ast_hash": "b527227a6e466599d00c44ccdc85393e",
     "semantic_hash": "b527227a6e466599d00c44ccdc85393e"
-  },
-  "lib/utils/specsFormatter.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "0bea0f0af719fe8dde5f7e6bfbbd0d06",
-    "semantic_hash": "0bea0f0af719fe8dde5f7e6bfbbd0d06"
   },
   "lib/utils/stockItemPayload.js": {
     "mtime": 1780834255.2124848,
@@ -1644,50 +1599,25 @@
     "ast_hash": "ae697e667c05edb172366016e929eae4",
     "semantic_hash": "ae697e667c05edb172366016e929eae4"
   },
-  "pages/admin/AdminPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "97c2c8e0aea2a687166448fc98f38645",
-    "semantic_hash": "97c2c8e0aea2a687166448fc98f38645"
-  },
   "pages/admin/AdminPage.jsx": {
     "mtime": 1780952961.3825166,
     "ast_hash": "2a11a630e7ae2791c0fb0eee22570ee7",
     "semantic_hash": "2a11a630e7ae2791c0fb0eee22570ee7"
-  },
-  "pages/admin/AdminPreventiveOccurrencesPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "41985da0e73c81a8749cb33ae00d25e6",
-    "semantic_hash": "41985da0e73c81a8749cb33ae00d25e6"
   },
   "pages/admin/AdminPreventiveOccurrencesPage.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "ac13465c212be9ec32289ca4a1d652a7",
     "semantic_hash": "ac13465c212be9ec32289ca4a1d652a7"
   },
-  "pages/admin/AdminPreventivePlansPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "b9cc46b517d732d55acecc8e125dd32a",
-    "semantic_hash": "b9cc46b517d732d55acecc8e125dd32a"
-  },
   "pages/admin/AdminPreventivePlansPage.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "c7ce7b865f7b3cbd26161c7681e92094",
     "semantic_hash": "c7ce7b865f7b3cbd26161c7681e92094"
   },
-  "pages/auth/Login.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "505e2ee84b972a9782ff37b9c798cd93",
-    "semantic_hash": "505e2ee84b972a9782ff37b9c798cd93"
-  },
   "pages/auth/Login.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "5b3e81a8ac771d97e84261ae43083004",
     "semantic_hash": "5b3e81a8ac771d97e84261ae43083004"
-  },
-  "pages/briefing/BriefingPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "dce23fd168126f80a1ab8e7adc12e1aa",
-    "semantic_hash": "dce23fd168126f80a1ab8e7adc12e1aa"
   },
   "pages/briefing/BriefingPage.jsx": {
     "mtime": 1780834255.2124848,
@@ -1699,25 +1629,10 @@
     "ast_hash": "e7f10d461f5807b6e5bd6c6930332dcb",
     "semantic_hash": "e7f10d461f5807b6e5bd6c6930332dcb"
   },
-  "pages/equipements/EquipementsPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "c5733cf4c7be0e67ee52308fb3060d74",
-    "semantic_hash": "c5733cf4c7be0e67ee52308fb3060d74"
-  },
   "pages/equipements/EquipementsPage.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "3e29895fea8f01f63237beedb4700ab3",
     "semantic_hash": "3e29895fea8f01f63237beedb4700ab3"
-  },
-  "pages/home/HomePage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "dc71b603ae26e75aaff747cf39dcab5c",
-    "semantic_hash": "dc71b603ae26e75aaff747cf39dcab5c"
-  },
-  "pages/intervention-requests/InterventionRequestsPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "e33a43fbdeff74b7bd70575a6f5b9f5f",
-    "semantic_hash": "e33a43fbdeff74b7bd70575a6f5b9f5f"
   },
   "pages/intervention-requests/InterventionRequestsPage.jsx": {
     "mtime": 1780834255.2124848,
@@ -1734,20 +1649,10 @@
     "ast_hash": "f4b140df15b29a992545c51a7c310d84",
     "semantic_hash": "f4b140df15b29a992545c51a7c310d84"
   },
-  "pages/interventions/InterventionsListPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "d223b84be51f8fe4aeab126a61a34f1f",
-    "semantic_hash": "d223b84be51f8fe4aeab126a61a34f1f"
-  },
   "pages/interventions/InterventionsListPage.jsx": {
     "mtime": 1780952909.6421018,
     "ast_hash": "2a97bdf168c6fd191afc9fde3faf48ae",
     "semantic_hash": "2a97bdf168c6fd191afc9fde3faf48ae"
-  },
-  "pages/preventive/PreventivePage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "861dbe2a6af65251677dd228a1eed54c",
-    "semantic_hash": "861dbe2a6af65251677dd228a1eed54c"
   },
   "pages/preventive/PreventivePage.jsx": {
     "mtime": 1780955755.3302536,
@@ -1759,50 +1664,25 @@
     "ast_hash": "0f1b99c9a02597f14ebee72cd7f5163c",
     "semantic_hash": "0f1b99c9a02597f14ebee72cd7f5163c"
   },
-  "pages/purchase/PurchaseRequestsPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "27d28d06c15ca0fdb7c8b8526cb4b31b",
-    "semantic_hash": "27d28d06c15ca0fdb7c8b8526cb4b31b"
-  },
   "pages/purchase/PurchaseRequestsPage.jsx": {
     "mtime": 1780866147.8485923,
     "ast_hash": "a56640887198359539790d8ef16be583",
     "semantic_hash": "a56640887198359539790d8ef16be583"
-  },
-  "pages/quality-data/QualityDataPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "b33cf79113bebfea5052379596782939",
-    "semantic_hash": "b33cf79113bebfea5052379596782939"
   },
   "pages/quality-data/QualityDataPage.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "d3085e881f6ad03a216dd3eb2995b535",
     "semantic_hash": "d3085e881f6ad03a216dd3eb2995b535"
   },
-  "pages/service-status/ServiceStatusPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "5e6d573ea7ca9624a1c09dac309a8a4d",
-    "semantic_hash": "5e6d573ea7ca9624a1c09dac309a8a4d"
-  },
   "pages/service-status/ServiceStatusPage.jsx": {
     "mtime": 1780834255.2124848,
     "ast_hash": "7bf9d622df4f5cb9ab4ba7b7f4a868f5",
     "semantic_hash": "7bf9d622df4f5cb9ab4ba7b7f4a868f5"
   },
-  "pages/stock/StockPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "51e16cf7b870cf18080514a9746da096",
-    "semantic_hash": "51e16cf7b870cf18080514a9746da096"
-  },
   "pages/stock/StockPage.jsx": {
     "mtime": 1780952986.206715,
     "ast_hash": "a731ca8606afe227ee987b1c88aab16d",
     "semantic_hash": "a731ca8606afe227ee987b1c88aab16d"
-  },
-  "pages/suppliers/SuppliersPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "83b4e8c3da5591e157e41f60badef574",
-    "semantic_hash": "83b4e8c3da5591e157e41f60badef574"
   },
   "pages/suppliers/SuppliersPage.jsx": {
     "mtime": 1780834255.2124848,
@@ -1853,5 +1733,10 @@
     "mtime": 1780957733.6528463,
     "ast_hash": "4c3207385d4a570f4617cd3be35ded0e",
     "semantic_hash": "4c3207385d4a570f4617cd3be35ded0e"
+  },
+  "config/pagesConfig.js": {
+    "mtime": 1780958668.0782385,
+    "ast_hash": "7bff7d668381a5ecf12593b0b4e075bf",
+    "semantic_hash": "7bff7d668381a5ecf12593b0b4e075bf"
   }
 }

@@ -23,37 +23,41 @@ export function useManufacturers({ initialSearch = '' } = {}) {
   const [search, setSearchState] = useState(initialSearch);
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(DEFAULT_PAGE_SIZE);
-  const initialLoadRef = useRef(false);
+  const abortRef = useRef(null);
+  const mountedRef = useRef(false);
 
   const debouncedSearch = useDebounce(search, 600);
 
   const load = useCallback(async (term = '', pg = 1, pgSize = DEFAULT_PAGE_SIZE) => {
+    if (abortRef.current) abortRef.current.abort();
+    abortRef.current = new AbortController();
+    const ctrl = abortRef.current;
+
     setLoading(true);
     setError(null);
     try {
       const params = { limit: pgSize, skip: (pg - 1) * pgSize };
       if (term) params.search = term;
       const { items, pagination } = await fetchManufacturers(params);
-      setManufacturers(Array.isArray(items) ? items : []);
-      setTotal(pagination?.total ?? 0);
+      if (!ctrl.signal.aborted) {
+        setManufacturers(Array.isArray(items) ? items : []);
+        setTotal(pagination?.total ?? 0);
+      }
     } catch (err) {
-      setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fabricants'));
-      setManufacturers([]);
+      if (!ctrl.signal.aborted) setError(extractApiErrorMessage(err, 'Erreur lors du chargement des fabricants'));
     } finally {
-      setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
-      load(initialSearch, 1, DEFAULT_PAGE_SIZE);
-    }
+    load(initialSearch, 1, DEFAULT_PAGE_SIZE);
+    mountedRef.current = true;
+    return () => abortRef.current?.abort();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Déclenche le fetch après 600ms d'inactivité
   useEffect(() => {
-    if (!initialLoadRef.current) return;
+    if (!mountedRef.current) return;
     setPageState(1);
     load(debouncedSearch, 1, pageSize);
   }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps

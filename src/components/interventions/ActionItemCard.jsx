@@ -13,6 +13,7 @@ import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import * as stockApi from "@/api/stock";
 import { useAuth } from "@/auth/useAuth";
+import { sanitizeDescription } from "@/lib/utils/interventionUtils";
 
 function GammeStepList({ steps }) {
   if (!steps || steps.length === 0) return null;
@@ -76,7 +77,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, getCategoryColor, sanitizeDescription, onPurchaseRequestCreated, isLocked = false }) {
+export default function ActionItemCard({ action, interventionId, onPurchaseRequestCreated, isLocked = false }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -274,7 +275,6 @@ export default function ActionItemCard({ action, interventionId, getCategoryColo
           complexityFactorsList={complexityFactors}
           technician={technician}
           createdAt={createdAt}
-          getCategoryColor={getCategoryColor}
         />
 
         <ActionButtons
@@ -367,8 +367,6 @@ ActionItemCard.propTypes = {
     }),
   }),
   interventionId: PropTypes.string,
-  getCategoryColor: PropTypes.func.isRequired,
-  sanitizeDescription: PropTypes.func.isRequired,
   onPurchaseRequestCreated: PropTypes.func,
   isLocked: PropTypes.bool,
 };

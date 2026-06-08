@@ -17,16 +17,11 @@ import TableHeader from '@/components/ui/TableHeader';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { fetchPurchaseRequestsByIntervention, fetchPurchaseRequestDetail, updatePurchaseRequest, deletePurchaseRequest } from '@/api/purchaseRequests';
-import { PURCHASE_URGENCY, hexBadgeStyle } from '@/config/purchaseConfig';
+import { PURCHASE_URGENCY } from '@/config/purchaseConfig';
+import HexBadge from '@/components/ui/HexBadge';
 
 function StatusBadge({ derivedStatus }) {
-  if (!derivedStatus) return <Text size="1" color="gray">—</Text>;
-  const style = hexBadgeStyle(derivedStatus.color);
-  return (
-    <Badge size="1" {...(style ? { style } : { color: 'gray', variant: 'soft' })}>
-      {derivedStatus.label}
-    </Badge>
-  );
+  return <HexBadge color={derivedStatus?.color} label={derivedStatus?.label} />;
 }
 
 StatusBadge.propTypes = { derivedStatus: PropTypes.object };

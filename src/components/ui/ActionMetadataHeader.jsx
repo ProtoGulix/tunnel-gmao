@@ -1,6 +1,7 @@
 import { Flex, Text, Badge } from "@radix-ui/themes";
 import { Clock, User } from "lucide-react";
 import PropTypes from "prop-types";
+import { getCategoryColor } from "@/lib/utils/interventionUtils";
 
 /**
  * ActionMetadataHeader - Displays action metadata (category, time, complexity, technician, timestamp)
@@ -14,7 +15,6 @@ export default function ActionMetadataHeader({
   complexityFactorsList,
   technician,
   createdAt,
-  getCategoryColor,
 }) {
   return (
     <Flex align="center" gap="2" wrap="wrap" style={{ flex: 1, minWidth: 0 }}>
@@ -105,5 +105,4 @@ ActionMetadataHeader.propTypes = {
     last_name: PropTypes.string,
   }),
   createdAt: PropTypes.string,
-  getCategoryColor: PropTypes.func.isRequired,
 };
