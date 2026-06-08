@@ -12,12 +12,7 @@ import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
 import PreventivePlanForm from '@/components/preventive/PreventivePlanForm';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
-
-function triggerLabel(row) {
-  return row.trigger_type === 'periodicity'
-    ? `Périodicité ${row.periodicity_days}j`
-    : `Compteur ${row.hours_threshold}h`;
-}
+import { triggerLabel } from '@/config/preventiveConfig';
 
 export default function PreventivePlansTab() {
   const [activeOnly, setActiveOnly] = useState(true);

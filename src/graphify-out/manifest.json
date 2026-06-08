@@ -619,11 +619,6 @@
     "ast_hash": "8e9e4598d1ebaf44c78d43501294acad",
     "semantic_hash": "8e9e4598d1ebaf44c78d43501294acad"
   },
-  "components/layout/HeaderDateRangeFilter.jsx": {
-    "mtime": 1780834255.196485,
-    "ast_hash": "08e01b155b22d98fd621791138819de9",
-    "semantic_hash": "08e01b155b22d98fd621791138819de9"
-  },
   "components/layout/HierarchicalHeaderLayout.jsx": {
     "mtime": 1780834255.196485,
     "ast_hash": "97e7d164877afa5ce5f5ccaad0a24a77",
@@ -1099,11 +1094,6 @@
     "ast_hash": "d420122763f12ca695d8e6eb13f0cf9f",
     "semantic_hash": "d420122763f12ca695d8e6eb13f0cf9f"
   },
-  "components/ui/EquipementHierarchy.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "2fbf163bbaa32c67ca7156f20b0a0a3e",
-    "semantic_hash": "2fbf163bbaa32c67ca7156f20b0a0a3e"
-  },
   "components/ui/ErrorState.jsx": {
     "mtime": 1780834255.204485,
     "ast_hash": "947008904abee2bf19ed75727769543d",
@@ -1119,11 +1109,6 @@
     "ast_hash": "e4cea9fe503b1aa7e7449438a19593e7",
     "semantic_hash": "e4cea9fe503b1aa7e7449438a19593e7"
   },
-  "components/ui/FormPanel.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "17e7e284b9905532bc744061eac4bafe",
-    "semantic_hash": "17e7e284b9905532bc744061eac4bafe"
-  },
   "components/ui/GenericTabComponents.jsx": {
     "mtime": 1780834255.204485,
     "ast_hash": "420dd7f90354d5460011fc9291df14ca",
@@ -1133,11 +1118,6 @@
     "mtime": 1780834255.204485,
     "ast_hash": "24cf38c814feccf4c3ca3f8d4d23a451",
     "semantic_hash": "24cf38c814feccf4c3ca3f8d4d23a451"
-  },
-  "components/ui/ItemCard.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "8dd9d88edecfc8779ea187016989078b",
-    "semantic_hash": "8dd9d88edecfc8779ea187016989078b"
   },
   "components/ui/ItemForm.jsx": {
     "mtime": 1780834255.204485,
@@ -1173,11 +1153,6 @@
     "mtime": 1780863244.0091689,
     "ast_hash": "727788e0d0323d6ea342ae3069f54b55",
     "semantic_hash": "727788e0d0323d6ea342ae3069f54b55"
-  },
-  "components/ui/PaginatedList.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "766cf9262de708aa404bf93f15322866",
-    "semantic_hash": "766cf9262de708aa404bf93f15322866"
   },
   "components/ui/Pagination.jsx": {
     "mtime": 1780834255.204485,
@@ -1293,16 +1268,6 @@
     "mtime": 1780834255.208485,
     "ast_hash": "5b4841bc3d08f9b68dba559498f7b494",
     "semantic_hash": "5b4841bc3d08f9b68dba559498f7b494"
-  },
-  "components/ui/ToggleDetailsButton.jsx": {
-    "mtime": 1780834255.208485,
-    "ast_hash": "c940cc85f4487639c5fd2a4e9c674016",
-    "semantic_hash": "c940cc85f4487639c5fd2a4e9c674016"
-  },
-  "components/ui/TwoPanelLayout.jsx": {
-    "mtime": 1780834255.208485,
-    "ast_hash": "43061bab61d02720bf2e4136fbef2dab",
-    "semantic_hash": "43061bab61d02720bf2e4136fbef2dab"
   },
   "components/ui/useSidebarState.js": {
     "mtime": 1780834255.208485,
@@ -1644,11 +1609,6 @@
     "ast_hash": "84271e9dd7e6ad2f71ed8b377cdd4094",
     "semantic_hash": "84271e9dd7e6ad2f71ed8b377cdd4094"
   },
-  "lib/utils/interventionHelpers.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "53ca5d773afae946256a0fcdf1037df3",
-    "semantic_hash": "53ca5d773afae946256a0fcdf1037df3"
-  },
   "lib/utils/interventionUtils.jsx": {
     "mtime": 1780952183.2959485,
     "ast_hash": "b527227a6e466599d00c44ccdc85393e",
@@ -1678,11 +1638,6 @@
     "mtime": 1780834255.2124848,
     "ast_hash": "4ca42e5e53867ede23ad0b667a44df00",
     "semantic_hash": "4ca42e5e53867ede23ad0b667a44df00"
-  },
-  "lib/utils/timeFormatter.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "bf4ebce16950c734ca73afc191a55d3b",
-    "semantic_hash": "bf4ebce16950c734ca73afc191a55d3b"
   },
   "main.jsx": {
     "mtime": 1780863244.0091689,
@@ -1863,16 +1818,6 @@
     "mtime": 1780834255.2124848,
     "ast_hash": "367d8e74cb43b42845245f32d2ba7607",
     "semantic_hash": "367d8e74cb43b42845245f32d2ba7607"
-  },
-  "pages/tasks/TasksPage.config.js": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "f0f008876b25cf870a98365fac4d3003",
-    "semantic_hash": "f0f008876b25cf870a98365fac4d3003"
-  },
-  "pages/tasks/TasksPage.jsx": {
-    "mtime": 1780834255.2124848,
-    "ast_hash": "4cafda4dec4472dcf47e8dfd58556793",
-    "semantic_hash": "4cafda4dec4472dcf47e8dfd58556793"
   },
   "router/routes.jsx": {
     "mtime": 1780953273.3449867,

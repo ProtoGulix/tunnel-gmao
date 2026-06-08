@@ -126,6 +126,15 @@ export const PRIORITY_COLORS = {
   },
 };
 
+/** Map priority → couleur Radix pour les Badge/dot simples */
+export const PRIORITY_BADGE_COLORS = {
+  urgent: 'red',
+  important: 'orange',
+  normale: 'blue',
+  normal: 'blue',
+  faible: 'gray',
+};
+
 export const KANBAN_COLUMNS = [
   { id: 'ouvert', title: 'Ouvert' },
   { id: 'attente_prod', title: 'Attente production' },

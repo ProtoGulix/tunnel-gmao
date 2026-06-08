@@ -10,13 +10,7 @@ import { Box, Text, Button, Badge } from '@radix-ui/themes';
 import { Eye, Wrench } from 'lucide-react';
 import PropTypes from 'prop-types';
 import DataTable from '@/components/ui/DataTable';
-
-const PRIORITY_COLORS = {
-  urgent: 'red',
-  important: 'orange',
-  normal: 'blue',
-  faible: 'gray',
-};
+import { PRIORITY_BADGE_COLORS } from '@/config/interventionTypes';
 
 const STATUS_COLORS = {
   ouvert: 'orange',
@@ -26,7 +20,7 @@ const STATUS_COLORS = {
 };
 
 function getPriorityColor(priority) {
-  return PRIORITY_COLORS[priority] || 'gray';
+  return PRIORITY_BADGE_COLORS[priority] ?? 'gray';
 }
 
 function getStatusColor(status) {

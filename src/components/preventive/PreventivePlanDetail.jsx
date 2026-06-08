@@ -10,23 +10,17 @@ import { Link } from 'react-router-dom';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
 import DataTable from '@/components/ui/DataTable';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
+import { triggerLabel } from '@/config/preventiveConfig';
+import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
 
 const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
 const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
-
-const DI_STATUT_COLORS = { nouvelle: 'blue', en_attente: 'amber', acceptee: 'green', rejetee: 'red', cloturee: 'gray' };
-const DI_STATUT_LABELS = { nouvelle: 'Nouvelle', en_attente: 'En attente', acceptee: 'Acceptée', rejetee: 'Rejetée', cloturee: 'Clôturée' };
-
-function triggerLabel(plan) {
-  return plan.trigger_type === 'periodicity'
-    ? `Périodicité ${plan.periodicity_days}j`
-    : `Compteur ${plan.hours_threshold}h`;
-}
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSaveSteps, saving }) {
   const { items, loading } = usePreventiveOccurrences({ plan_id: plan.id });
+  const { labelMap: diLabelMap, colorMap: diColorMap } = useInterventionRequestStatuses();
 
   const occurrenceColumns = [
     {
@@ -59,8 +53,8 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
               </Link>
             </Button>
             {r.di_statut && (
-              <Badge color={DI_STATUT_COLORS[r.di_statut] ?? 'gray'} variant="soft" size="1">
-                {DI_STATUT_LABELS[r.di_statut] ?? r.di_statut}
+              <Badge color={diColorMap[r.di_statut] ?? 'gray'} variant="soft" size="1">
+                {diLabelMap[r.di_statut] ?? r.di_statut}
               </Badge>
             )}
           </Flex>

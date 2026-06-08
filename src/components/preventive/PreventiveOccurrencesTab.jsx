@@ -12,12 +12,10 @@ import { fetchPreventivePlans } from '@/api/preventivePlans';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
+import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
 
 const STATUS_COLORS = { pending: 'gray', generated: 'blue', skipped: 'orange', done: 'green' };
 const STATUS_LABELS = { pending: 'En attente', generated: 'Générée', skipped: 'Ignorée', done: 'Clôturée' };
-
-const DI_STATUT_COLORS = { nouvelle: 'blue', en_attente: 'amber', acceptee: 'green', rejetee: 'red', cloturee: 'gray' };
-const DI_STATUT_LABELS = { nouvelle: 'Nouvelle', en_attente: 'En attente', acceptee: 'Acceptée', rejetee: 'Rejetée', cloturee: 'Clôturée' };
 
 const STEP_STATUS_COLORS = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
 const STEP_STATUS_LABELS = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
@@ -40,6 +38,7 @@ const stepColumns = [
 ];
 
 export default function PreventiveOccurrencesTab() {
+  const { labelMap: diLabelMap, colorMap: diColorMap } = useInterventionRequestStatuses();
   const [planId, setPlanId] = useState('');
   const [status, setStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -150,8 +149,8 @@ export default function PreventiveOccurrencesTab() {
               </Button>
             </Flex>
             {r.di_statut && (
-              <Badge color={DI_STATUT_COLORS[r.di_statut] ?? 'gray'} variant="soft" size="1">
-                {DI_STATUT_LABELS[r.di_statut] ?? r.di_statut}
+              <Badge color={diColorMap[r.di_statut] ?? 'gray'} variant="soft" size="1">
+                {diLabelMap[r.di_statut] ?? r.di_statut}
               </Badge>
             )}
           </Flex>

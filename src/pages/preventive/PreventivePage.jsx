@@ -12,12 +12,7 @@ import ErrorState from '@/components/ui/ErrorState';
 import { usePreventivePlans } from '@/hooks/preventive/usePreventivePlans';
 import PreventivePlanForm from '@/components/preventive/PreventivePlanForm';
 import PreventivePlanDetail from '@/components/preventive/PreventivePlanDetail';
-
-function triggerLabel(r) {
-  return r.trigger_type === 'periodicity'
-    ? `Périodicité ${r.periodicity_days}j`
-    : `Compteur ${r.hours_threshold}h`;
-}
+import { triggerLabel } from '@/config/preventiveConfig';
 
 function PlanItem({ plan, isSelected, onClick }) {
   return (
