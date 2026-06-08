@@ -13,7 +13,6 @@ import RequireRole from '@/auth/RequireRole';
 const Login = lazy(() => import('@/pages/auth/Login'));
 const HomeSplit = lazy(() => import('@/pages/HomeSplit'));
 const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
-const HomeOld = lazy(() => import('@/pages/home/HomeOld'));
 const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
 const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
 const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
@@ -105,17 +104,6 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <HomeBriefing />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/home-old"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <HomeOld />
             </Layout>
           </ProtectedRoute>
         }

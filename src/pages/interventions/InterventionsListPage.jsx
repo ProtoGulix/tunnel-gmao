@@ -3,17 +3,19 @@
  * Query param ?tab=planning|liste
  */
 
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Box, Container, Flex, Tabs, Text, TextField } from '@radix-ui/themes';
 import { CalendarDays, ClipboardList, List, Search, Wrench } from 'lucide-react';
 import { CheckSquare } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import InterventionsListTab from '@/components/interventions/tabs/InterventionsListTab';
-import InterventionPlanningTab from '@/components/interventions/tabs/InterventionPlanningTab';
-import InterventionRequestsTab from '@/components/intervention-requests/tabs/InterventionRequestsTab';
-import GlobalTasksTab from '@/components/tasks/tabs/TasksTab';
+import LoadingState from '@/components/ui/LoadingState';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+
+const InterventionPlanningTab = lazy(() => import('@/components/interventions/tabs/InterventionPlanningTab'));
+const InterventionsListTab = lazy(() => import('@/components/interventions/tabs/InterventionsListTab'));
+const InterventionRequestsTab = lazy(() => import('@/components/intervention-requests/tabs/InterventionRequestsTab'));
+const GlobalTasksTab = lazy(() => import('@/components/tasks/tabs/TasksTab'));
 
 const TABS = [
   { id: 'planning', label: 'Planning', icon: CalendarDays },
@@ -50,33 +52,35 @@ export default function InterventionsListPage() {
             ))}
           </Tabs.List>
 
-          <Tabs.Content value="planning">
-            <InterventionPlanningTab />
-          </Tabs.Content>
+          <Suspense fallback={<LoadingState />}>
+            <Tabs.Content value="planning">
+              <InterventionPlanningTab />
+            </Tabs.Content>
 
-          <Tabs.Content value="liste">
-            <Box mb="4">
-              <TextField.Root
-                placeholder="Rechercher par code machine, code intervention ou mot-clé..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                size="3"
-              >
-                <TextField.Slot side="left">
-                  <Search size={16} />
-                </TextField.Slot>
-              </TextField.Root>
-            </Box>
-            <InterventionsListTab searchTerm={searchTerm} />
-          </Tabs.Content>
+            <Tabs.Content value="liste">
+              <Box mb="4">
+                <TextField.Root
+                  placeholder="Rechercher par code machine, code intervention ou mot-clé..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  size="3"
+                >
+                  <TextField.Slot side="left">
+                    <Search size={16} />
+                  </TextField.Slot>
+                </TextField.Root>
+              </Box>
+              <InterventionsListTab searchTerm={searchTerm} />
+            </Tabs.Content>
 
-          <Tabs.Content value="demandes">
-            <InterventionRequestsTab />
-          </Tabs.Content>
+            <Tabs.Content value="demandes">
+              <InterventionRequestsTab />
+            </Tabs.Content>
 
-          <Tabs.Content value="taches">
-            <GlobalTasksTab />
-          </Tabs.Content>
+            <Tabs.Content value="taches">
+              <GlobalTasksTab />
+            </Tabs.Content>
+          </Suspense>
         </Tabs.Root>
       </Container>
     </Box>

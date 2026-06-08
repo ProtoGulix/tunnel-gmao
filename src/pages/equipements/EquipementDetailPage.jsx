@@ -3,13 +3,15 @@
  * @module pages/equipements/EquipementDetailPage
  */
 
+import { lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import BriefingPage from '@/pages/briefing/BriefingPage';
 import EquipementInfoHeader from '@/components/equipements/EquipementInfoHeader';
 import { useEquipementDetail } from '@/hooks/equipements/useEquipementDetail';
+
+const BriefingPage = lazy(() => import('@/pages/briefing/BriefingPage'));
 
 export default function EquipementDetailPage() {
   const { id } = useParams();
@@ -42,10 +44,12 @@ export default function EquipementDetailPage() {
         noMargin
       />
       <div style={{ flex: 1, minHeight: 0, height: '100%' }}>
-        <BriefingPage
-          equipementId={id}
-          leftHeader={<EquipementInfoHeader equipement={equipement} health={health} />}
-        />
+        <Suspense fallback={<LoadingState />}>
+          <BriefingPage
+            equipementId={id}
+            leftHeader={<EquipementInfoHeader equipement={equipement} health={health} />}
+          />
+        </Suspense>
       </div>
     </div>
   );

@@ -3,15 +3,18 @@
  * @module pages/admin/AdminPage
  */
 
+import { lazy, Suspense } from 'react';
 import { Container, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Users, Shield, Database, Lock, ScrollText } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import AdminUsersTab from '@/components/admin/tabs/AdminUsersTab';
-import AdminRolesTab from '@/components/admin/tabs/AdminRolesTab';
-import AdminReferentielTab from '@/components/admin/tabs/AdminReferentielTab';
-import AdminSecurityTab from '@/components/admin/tabs/AdminSecurityTab';
-import AdminAuditTab from '@/components/admin/tabs/AdminAuditTab';
+import LoadingState from '@/components/ui/LoadingState';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+
+const AdminUsersTab = lazy(() => import('@/components/admin/tabs/AdminUsersTab'));
+const AdminRolesTab = lazy(() => import('@/components/admin/tabs/AdminRolesTab'));
+const AdminReferentielTab = lazy(() => import('@/components/admin/tabs/AdminReferentielTab'));
+const AdminSecurityTab = lazy(() => import('@/components/admin/tabs/AdminSecurityTab'));
+const AdminAuditTab = lazy(() => import('@/components/admin/tabs/AdminAuditTab'));
 
 export default function AdminPage() {
   const { activeTab, setActiveTab } = useTabNavigation('users', 'tab');
@@ -58,21 +61,23 @@ export default function AdminPage() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="users">
-          {activeTab === 'users' && <AdminUsersTab />}
-        </Tabs.Content>
-        <Tabs.Content value="roles">
-          {activeTab === 'roles' && <AdminRolesTab />}
-        </Tabs.Content>
-        <Tabs.Content value="referentiel">
-          {activeTab === 'referentiel' && <AdminReferentielTab />}
-        </Tabs.Content>
-        <Tabs.Content value="security">
-          {activeTab === 'security' && <AdminSecurityTab />}
-        </Tabs.Content>
-        <Tabs.Content value="audit">
-          {activeTab === 'audit' && <AdminAuditTab />}
-        </Tabs.Content>
+        <Suspense fallback={<LoadingState />}>
+          <Tabs.Content value="users">
+            {activeTab === 'users' && <AdminUsersTab />}
+          </Tabs.Content>
+          <Tabs.Content value="roles">
+            {activeTab === 'roles' && <AdminRolesTab />}
+          </Tabs.Content>
+          <Tabs.Content value="referentiel">
+            {activeTab === 'referentiel' && <AdminReferentielTab />}
+          </Tabs.Content>
+          <Tabs.Content value="security">
+            {activeTab === 'security' && <AdminSecurityTab />}
+          </Tabs.Content>
+          <Tabs.Content value="audit">
+            {activeTab === 'audit' && <AdminAuditTab />}
+          </Tabs.Content>
+        </Suspense>
       </Tabs.Root>
       </Container>
     </>
