@@ -1,25 +1,18 @@
 /**
  * @fileoverview Onglet archives des demandes d'achat (Reçues et Refusées)
- *
- * Version lecture seule : pas de création, pas d'édition, pas de dispatch.
- * Filtre statut limité à RECEIVED / REJECTED.
- *
  * @module components/purchase/tabs/PurchaseRequestsArchiveTab
  */
 
-import { useCallback, useEffect, useState } from 'react';
-import { Box, Badge, Flex, Select, Text } from '@radix-ui/themes';
+import { useCallback, useState } from 'react';
+import { Flex, Select, Text } from '@radix-ui/themes';
 import { Archive, ShoppingCart } from 'lucide-react';
-import TableHeader from '@/components/ui/TableHeader';
-import DataTable from '@/components/ui/DataTable';
-import LoadingState from '@/components/ui/LoadingState';
+import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail } from '@/api/purchaseRequests';
-import { COLUMNS } from './PurchaseRequestsTabParts';
+import { PurchaseRequestListItem } from './PurchaseRequestsTabParts';
 
-// Statuts actifs exclus pour afficher uniquement les archives
 const ACTIVE_STATUSES = 'TO_QUALIFY,NO_SUPPLIER_REF,PENDING_DISPATCH,OPEN,CONSULTATION,QUOTED,ORDERED,PARTIAL';
 
 const ARCHIVE_STATUSES = [
@@ -27,17 +20,15 @@ const ARCHIVE_STATUSES = [
   { code: 'REJECTED', label: 'Refusé', color: '#EF4444' },
 ];
 
+// ─── Filtre statut ────────────────────────────────────────────────────────────
+
 function ArchiveFilters({ status, setStatus }) {
   return (
     <Select.Root
       value={status || '__all__'}
       onValueChange={(v) => setStatus(v === '__all__' ? '' : v)}
     >
-      <Select.Trigger
-        placeholder="Tous les archivés"
-        variant={status ? 'soft' : 'surface'}
-        color={status ? 'gray' : undefined}
-      />
+      <Select.Trigger placeholder="Tous les archivés" variant={status ? 'soft' : 'surface'} color={status ? 'gray' : undefined} />
       <Select.Content>
         <Select.Item value="__all__">Tous les archivés</Select.Item>
         {ARCHIVE_STATUSES.map((s) => (
@@ -48,6 +39,8 @@ function ArchiveFilters({ status, setStatus }) {
   );
 }
 
+// ─── Onglet principal ─────────────────────────────────────────────────────────
+
 export default function PurchaseRequestsArchiveTab() {
   const {
     items, loading, error,
@@ -57,70 +50,63 @@ export default function PurchaseRequestsArchiveTab() {
   } = usePurchaseRequests({ excludeStatuses: ACTIVE_STATUSES });
 
   const [selected, setSelected] = useState(null);
-  const [expandedRowId, setExpandedRowId] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const handleSelect = useCallback(async (row) => {
-    if (row.id === expandedRowId) {
-      setSelected(null);
-      setExpandedRowId(null);
-      return;
-    }
+    if (row.id === selected?.id) { setSelected(null); return; }
     setSelected(null);
-    setExpandedRowId(row.id);
     setDetailLoading(true);
     try {
-      const detail = await fetchPurchaseRequestDetail(row.id);
-      setSelected(detail);
+      setSelected(await fetchPurchaseRequestDetail(row.id));
     } catch {
-      setExpandedRowId(null);
+      // laisse le détail vide
     } finally {
       setDetailLoading(false);
     }
-  }, [expandedRowId]);
-
-  const renderDetail = () => {
-    if (detailLoading) return <LoadingState fullscreen={false} message="Chargement..." />;
-    if (!selected) return null;
-    return <PurchaseRequestDetail item={selected} />;
-  };
+  }, [selected]);
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
-  return (
-    <Box>
-      <TableHeader
-        icon={Archive}
-        title="Archives"
-        count={items.length}
-        searchValue={search}
-        onSearchChange={setSearch}
-        loading={loading}
-        showRefreshButton={false}
-        actions={<ArchiveFilters status={status} setStatus={setStatus} />}
-      />
+  const masterList = items.length === 0 && !loading ? (
+    <Flex direction="column" align="center" justify="center" gap="2" style={{ height: 200, padding: 24 }}>
+      <Archive size={28} color="var(--gray-7)" />
+      <Text size="2" color="gray">Aucune demande archivée</Text>
+    </Flex>
+  ) : (
+    <div style={{ padding: '8px 10px' }}>
+      {items.map((item) => (
+        <PurchaseRequestListItem key={item.id} item={item} isSelected={item.id === selected?.id} onClick={handleSelect} />
+      ))}
+    </div>
+  );
 
-      <DataTable
-        columns={COLUMNS}
-        data={items}
-        loading={loading}
-        getRowKey={(row) => row.id}
-        onRowClick={handleSelect}
-        rowHover
-        rowStyles={(row) =>
-          expandedRowId === row.id
-            ? { background: 'var(--accent-3)', boxShadow: 'inset 3px 0 0 var(--accent-9)' }
-            : {}
-        }
-        isRowExpanded={(row) => row.id === expandedRowId}
-        renderExpandedRow={renderDetail}
-        emptyState={
-          <Flex direction="column" align="center" gap="2" py="6">
-            <Archive size={32} color="var(--gray-8)" />
-            <Text color="gray" size="2">Aucune demande archivée</Text>
-          </Flex>
-        }
+  const detailContent = selected
+    ? <PurchaseRequestDetail item={selected} />
+    : (
+      <Flex direction="column" align="center" justify="center" gap="3" style={{ height: '100%', padding: 32, opacity: 0.6 }}>
+        <ShoppingCart size={36} color="var(--gray-7)" />
+        <Text size="2" weight="medium" color="gray">Sélectionnez une demande pour voir son détail</Text>
+      </Flex>
+    );
+
+  return (
+    <div style={{ height: 'calc(100vh - 200px)', minHeight: 400 }}>
+      <MasterDetailLayout
+        freeDetail
+        ratio="38% 1fr"
+        masterProps={{
+          icon: Archive,
+          title: 'Archives',
+          count: items.length,
+          search,
+          onSearchChange: setSearch,
+          loading,
+          children: masterList,
+          headerExtra: <ArchiveFilters status={status} setStatus={setStatus} />,
+        }}
+        detailChildren={detailContent}
+        detailLoading={detailLoading}
       />
-    </Box>
+    </div>
   );
 }

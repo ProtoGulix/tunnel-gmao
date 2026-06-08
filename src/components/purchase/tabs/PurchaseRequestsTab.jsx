@@ -1,90 +1,89 @@
 /**
- * @fileoverview Onglet liste des demandes d'achat
- *
- * Liste toutes les DA avec filtre statut + urgence (Select).
- * Inline expand → détail complet via GET /purchase-requests/detail/{id}
- *
+ * @fileoverview Onglet demandes d'achat — layout master-detail
+ * Gère les demandes actives (variant='active') et les archives (variant='archive').
  * @module components/purchase/tabs/PurchaseRequestsTab
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Box, Button, Flex, Text } from '@radix-ui/themes';
-import { Plus, ShoppingCart } from 'lucide-react';
-import TableHeader from '@/components/ui/TableHeader';
-import DataTable from '@/components/ui/DataTable';
-import LoadingState from '@/components/ui/LoadingState';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Archive, MousePointerClick, ShoppingCart } from 'lucide-react';
+import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import DispatchBanner from '@/components/purchase/DispatchBanner';
-import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
 import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses, updatePurchaseRequest } from '@/api/purchaseRequests';
-import { COLUMNS, PrFilters } from './PurchaseRequestsTabParts';
+import { ArchiveFilters, PrFilters, PurchaseRequestListItem } from './PurchaseRequestsTabParts';
 
-export default function PurchaseRequestsTab() {
+const ACTIVE_STATUSES = 'TO_QUALIFY,NO_SUPPLIER_REF,PENDING_DISPATCH,OPEN,CONSULTATION,QUOTED,ORDERED,PARTIAL';
+
+// ─── Empty state détail ───────────────────────────────────────────────────────
+
+function DetailEmptyState({ label }) {
+  return (
+    <Flex direction="column" align="center" justify="center" gap="3" style={{ height: '100%', padding: 32, opacity: 0.6 }}>
+      <ShoppingCart size={36} color="var(--gray-7)" />
+      <Flex direction="column" align="center" gap="1">
+        <Text size="2" weight="medium" color="gray">{label}</Text>
+        <Flex align="center" gap="1">
+          <MousePointerClick size={12} color="var(--gray-8)" />
+          <Text size="1" color="gray">Cliquez sur une demande pour voir son détail</Text>
+        </Flex>
+      </Flex>
+    </Flex>
+  );
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
+
+export default function PurchaseRequestsTab({ variant = 'active', refreshSignal }) {
+  const isArchive = variant === 'archive';
+
   const [statuses, setStatuses] = useState([]);
   useEffect(() => {
-    fetchPurchaseRequestStatuses()
-      .then(setStatuses)
-      .catch(() => setStatuses([]));
-  }, []);
+    if (!isArchive) fetchPurchaseRequestStatuses().then(setStatuses).catch(() => setStatuses([]));
+  }, [isArchive]);
 
   const {
     items, loading, error,
     search, setSearch,
     status, setStatus,
     urgency, setUrgency,
-    refresh,
-    createItem, removeItem,
+    refresh, removeItem,
     dispatching, dispatchResult, setDispatchResult, dispatch,
     readyToDispatch,
-  } = usePurchaseRequests({ excludeStatuses: 'RECEIVED,REJECTED' });
+  } = usePurchaseRequests(
+    isArchive ? { excludeStatuses: ACTIVE_STATUSES } : { initialStatus: 'TO_QUALIFY' }
+  );
+
+  useEffect(() => { if (refreshSignal) refresh(); }, [refreshSignal, refresh]);
 
   const [selected, setSelected] = useState(null);
-  const [expandedRowId, setExpandedRowId] = useState(null);
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState(null); // 'edit' | null
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleSelect = useCallback(async (row) => {
-    if (row.id === expandedRowId && mode !== 'edit') {
-      setSelected(null);
-      setExpandedRowId(null);
-      setMode(null);
-      return;
-    }
+    if (row.id === selected?.id && mode !== 'edit') { setSelected(null); setMode(null); return; }
     setMode(null);
     setSelected(null);
-    setExpandedRowId(row.id);
     setDetailLoading(true);
     try {
-      const detail = await fetchPurchaseRequestDetail(row.id);
-      setSelected(detail);
+      setSelected(await fetchPurchaseRequestDetail(row.id));
     } catch {
-      setExpandedRowId(null);
+      // laisse le détail vide
     } finally {
       setDetailLoading(false);
     }
-  }, [expandedRowId, mode]);
-
-  const handleCreate = async (data) => {
-    setSaving(true);
-    try {
-      await createItem(data);
-      setMode(null);
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [selected, mode]);
 
   const handleUpdate = async (data) => {
     if (!selected) return;
     setSaving(true);
     try {
       await updatePurchaseRequest(selected.id, data);
-      const detail = await fetchPurchaseRequestDetail(selected.id);
-      setSelected(detail);
+      setSelected(await fetchPurchaseRequestDetail(selected.id));
       setMode(null);
       refresh();
     } finally {
@@ -96,14 +95,12 @@ export default function PurchaseRequestsTab() {
     if (!selected) return;
     await removeItem(selected.id);
     setSelected(null);
-    setExpandedRowId(null);
     setMode(null);
   };
 
-  const renderDetail = () => {
-    if (detailLoading) return <LoadingState fullscreen={false} message="Chargement..." />;
+  const detailContent = () => {
     if (!selected) return null;
-    if (mode === 'edit') {
+    if (!isArchive && mode === 'edit') {
       return (
         <PurchaseRequestEditForm
           item={selected}
@@ -116,80 +113,61 @@ export default function PurchaseRequestsTab() {
     return (
       <PurchaseRequestDetail
         item={selected}
-        onEdit={() => setMode('edit')}
-        onDelete={handleDelete}
+        onEdit={!isArchive ? () => setMode('edit') : undefined}
+        onDelete={!isArchive ? handleDelete : undefined}
       />
     );
   };
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
+  const masterList = items.length === 0 && !loading ? (
+    <Flex direction="column" align="center" justify="center" gap="2" style={{ height: 200, padding: 24 }}>
+      {isArchive ? <Archive size={28} color="var(--gray-7)" /> : <ShoppingCart size={28} color="var(--gray-7)" />}
+      <Text size="2" color="gray">{isArchive ? 'Aucune demande archivée' : "Aucune demande d'achat"}</Text>
+    </Flex>
+  ) : (
+    <div style={{ padding: '8px 10px' }}>
+      {items.map((item) => (
+        <PurchaseRequestListItem key={item.id} item={item} isSelected={item.id === selected?.id} onClick={handleSelect} />
+      ))}
+    </div>
+  );
+
+  const headerExtra = isArchive
+    ? <ArchiveFilters status={status} setStatus={setStatus} />
+    : <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />;
+
   return (
     <Box>
-      <DispatchBanner
-        readyCount={readyToDispatch}
-        dispatching={dispatching}
-        dispatchResult={dispatchResult}
-        onDispatch={dispatch}
-        onClearResult={() => setDispatchResult(null)}
-      />
-
-      <TableHeader
-        icon={ShoppingCart}
-        title="Demandes d'achat"
-        count={items.length}
-        searchValue={search}
-        onSearchChange={setSearch}
-        loading={loading}
-        showRefreshButton={false}
-        actions={
-          <PrFilters
-            status={status}
-            setStatus={setStatus}
-            statuses={statuses}
-            urgency={urgency}
-            setUrgency={setUrgency}
-          />
-        }
-        rightActions={
-          <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-            <Plus size={14} /> Nouvelle demande
-          </Button>
-        }
-      />
-
-      {mode === 'create' && (
-        <Box mb="3">
-          <PurchaseRequestForm
-            onSubmit={handleCreate}
-            loading={saving}
-            onCancel={() => setMode(null)}
-            submitLabel="Créer"
-          />
-        </Box>
+      {!isArchive && (
+        <DispatchBanner
+          readyCount={readyToDispatch}
+          dispatching={dispatching}
+          dispatchResult={dispatchResult}
+          onDispatch={dispatch}
+          onClearResult={() => setDispatchResult(null)}
+        />
       )}
 
-      <DataTable
-        columns={COLUMNS}
-        data={items}
-        loading={loading}
-        getRowKey={(row) => row.id}
-        onRowClick={handleSelect}
-        rowHover
-        rowStyles={(row) =>
-          expandedRowId === row.id && mode !== 'create'
-            ? { background: 'var(--accent-3)', boxShadow: 'inset 3px 0 0 var(--accent-9)' }
-            : {}
-        }
-        isRowExpanded={(row) => row.id === expandedRowId && mode !== 'create'}
-        renderExpandedRow={renderDetail}
-        emptyState={
-          <Flex direction="column" align="center" gap="2" py="6">
-            <ShoppingCart size={32} color="var(--gray-8)" />
-            <Text color="gray" size="2">Aucune demande d&apos;achat</Text>
-          </Flex>
-        }
-      />
+      <div style={{ height: 'calc(100vh - 200px)', minHeight: 400 }}>
+        <MasterDetailLayout
+          freeDetail
+          ratio="38% 1fr"
+          masterProps={{
+            icon: isArchive ? Archive : ShoppingCart,
+            title: isArchive ? 'Archives' : "Demandes d'achat",
+            count: items.length,
+            search,
+            onSearchChange: setSearch,
+            loading,
+            children: masterList,
+            headerExtra,
+          }}
+          detailChildren={detailContent() ?? <DetailEmptyState label={isArchive ? 'Sélectionnez une demande pour voir son détail' : 'Aucune demande sélectionnée'} />}
+          detailLoading={detailLoading}
+        />
+      </div>
     </Box>
   );
 }

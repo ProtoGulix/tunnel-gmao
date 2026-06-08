@@ -7,7 +7,7 @@ import { ShoppingCart, Trash2, AlertTriangle, X, Check, Package } from "lucide-r
 import PropTypes from "prop-types";
 import { useState } from "react";
 import StockRefLink from "@/components/ui/StockRefLink";
-import { hexBadgeStyle } from "@/config/purchaseConfig";
+import HexBadge from "@/components/ui/HexBadge";
 
 const getSelectedBasketNumber = (pr) => {
   const selected = (pr.order_lines || []).find(l => l.is_selected === true);
@@ -27,12 +27,7 @@ function UrgencyBadge({ urgency }) {
 UrgencyBadge.propTypes = { urgency: PropTypes.string };
 
 function StatusBadge({ derivedStatus }) {
-  const style = hexBadgeStyle(derivedStatus?.color);
-  return (
-    <Badge size="1" {...(style ? { style } : { color: 'gray', variant: 'soft' })}>
-      {derivedStatus?.label || '—'}
-    </Badge>
-  );
+  return <HexBadge color={derivedStatus?.color} label={derivedStatus?.label} />;
 }
 
 StatusBadge.propTypes = { derivedStatus: PropTypes.object };

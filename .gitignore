@@ -1,3 +1,6 @@
+# Graphify
+src/graphify-out/cache/
+
 # Logs
 logs
 *.log
@@ -144,3 +147,4 @@ vite.config.ts.timestamp-*
 
 .copilot-conventions.md
 .cursorrules
+graphify-out/

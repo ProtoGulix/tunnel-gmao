@@ -9,13 +9,7 @@ import {
   Box, Flex, Text, Badge, Switch, Table, Spinner, ScrollArea, Button,
 } from '@radix-ui/themes';
 import { Shield, History } from 'lucide-react';
-
-const ROLE_COLORS = {
-  ADMIN: 'orange',
-  RESP: 'blue',
-  TECH: 'green',
-  OPE: 'gray',
-};
+import { ROLE_COLORS } from '@/config/adminConfig';
 
 export default function AdminRolePermissionsMatrix({ matrix, onToggle, onShowAudit }) {
   const [toggling, setToggling] = useState(null);

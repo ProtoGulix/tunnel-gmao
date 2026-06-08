@@ -3,13 +3,16 @@
  * @module pages/stock/StockPage
  */
 
+import { lazy, Suspense } from 'react';
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Factory, Package, Truck } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
-import StockItemsTab from '@/components/stock/tabs/StockItemsTab';
-import SuppliersTab from '@/components/suppliers/tabs/SuppliersTab';
-import ManufacturersTab from '@/components/manufacturers/ManufacturersTab';
+import LoadingState from '@/components/ui/LoadingState';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+
+const StockItemsTab = lazy(() => import('@/components/stock/tabs/StockItemsTab'));
+const SuppliersTab = lazy(() => import('@/components/suppliers/tabs/SuppliersTab'));
+const ManufacturersTab = lazy(() => import('@/components/manufacturers/ManufacturersTab'));
 
 export default function StockPage() {
   const { activeTab, setActiveTab } = useTabNavigation('items', 'tab');
@@ -41,15 +44,17 @@ export default function StockPage() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="items">
-          {activeTab === 'items' && <StockItemsTab />}
-        </Tabs.Content>
-        <Tabs.Content value="suppliers">
-          {activeTab === 'suppliers' && <SuppliersTab />}
-        </Tabs.Content>
-        <Tabs.Content value="manufacturers">
-          {activeTab === 'manufacturers' && <ManufacturersTab />}
-        </Tabs.Content>
+        <Suspense fallback={<LoadingState />}>
+          <Tabs.Content value="items">
+            {activeTab === 'items' && <StockItemsTab />}
+          </Tabs.Content>
+          <Tabs.Content value="suppliers">
+            {activeTab === 'suppliers' && <SuppliersTab />}
+          </Tabs.Content>
+          <Tabs.Content value="manufacturers">
+            {activeTab === 'manufacturers' && <ManufacturersTab />}
+          </Tabs.Content>
+        </Suspense>
       </Tabs.Root>
       </Box>
     </>

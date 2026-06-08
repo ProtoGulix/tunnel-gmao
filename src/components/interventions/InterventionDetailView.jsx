@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { fetchIntervention } from '@/api/interventions';
 import { patchInterventionTask } from '@/api/interventionTasks';
 import { fetchAuditLogs } from '@/api/auditLogs';
-import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import { STATUS_CONFIG, TYPE_INTER_LABELS, AUDIT_DECISION_LABELS } from '@/config/interventionTypes';
 import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
@@ -37,16 +37,6 @@ const PRIORITY_CFG = {
   faible:    { color: 'gray',   label: 'Faible' },
 };
 
-const DECISION_LABELS = {
-  status_actual_changed: 'Statut modifié',
-  priority_changed:      'Priorité modifiée',
-  assigned_to_changed:   'Technicien modifié',
-  due_date_changed:      'Échéance modifiée',
-  status_changed:        'Statut modifié',
-  created:               'Créé',
-  deleted:               'Supprimé',
-  sort_order_changed:    'Ordre modifié',
-};
 
 const STATUS_LEGEND = [
   { key: 'ouvert',          label: 'ouvert',          color: 'var(--blue-9)',   desc: 'Intervention créée, aucune action liée' },
@@ -67,7 +57,7 @@ function TaskStatusIcon({ status }) {
 /* ── Ligne d'audit ────────────────────────────────────────────────────────── */
 function AuditLogLine({ log, isHovered, onHover }) {
   const reasonColor = log.reason?.color ?? 'var(--gray-7)';
-  const decisionLabel = DECISION_LABELS[log.decision_type] ?? log.decision_type;
+  const decisionLabel = AUDIT_DECISION_LABELS[log.decision_type] ?? log.decision_type;
   const who = log.changed_by?.initials ?? log.changed_by?.first_name ?? '?';
   const when = log.logged_at
     ? new Date(log.logged_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -228,7 +218,7 @@ function TaskTimeline({ taskActions, taskAuditLogs, reportedDate, hoveredNum, on
         {enrichedLogs.map((l) => {
           const color = l.reason?.color ?? 'var(--gray-7)';
           const isHovered = hoveredLogId === l.id;
-          const decisionLabel = DECISION_LABELS[l.decision_type] ?? l.decision_type;
+          const decisionLabel = AUDIT_DECISION_LABELS[l.decision_type] ?? l.decision_type;
           return (
             <div key={l.id}
               onMouseEnter={() => onHoverLog?.(l.id)}

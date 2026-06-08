@@ -7,7 +7,7 @@
  * - Auto-refresh toutes les 30s
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
 import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo } from 'lucide-react';
@@ -17,15 +17,16 @@ import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import DropdownButton from '@/components/ui/DropdownButton';
-import ActionsTab from '@/components/interventions/tabs/ActionsTab';
-import SummaryTab from '@/components/interventions/tabs/SummaryTab';
-import SheetTab from '@/components/interventions/tabs/SheetTab';
-import HistoryTab from '@/components/interventions/tabs/HistoryTab';
-import InterventionPurchaseTab from '@/components/interventions/tabs/InterventionPurchaseTab';
-import InterventionRequestCard from '@/components/intervention-requests/InterventionRequestCard';
-import TasksTab from '@/components/interventions/tabs/TasksTab';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+
+const ActionsTab = lazy(() => import('@/components/interventions/tabs/ActionsTab'));
+const SummaryTab = lazy(() => import('@/components/interventions/tabs/SummaryTab'));
+const SheetTab = lazy(() => import('@/components/interventions/tabs/SheetTab'));
+const HistoryTab = lazy(() => import('@/components/interventions/tabs/HistoryTab'));
+const InterventionPurchaseTab = lazy(() => import('@/components/interventions/tabs/InterventionPurchaseTab'));
+const InterventionRequestCard = lazy(() => import('@/components/intervention-requests/InterventionRequestCard'));
+const TasksTab = lazy(() => import('@/components/interventions/tabs/TasksTab'));
 
 // Configuration de base des onglets
 const BASE_TABS = [
@@ -310,7 +311,9 @@ export default function InterventionDetailPage() {
 
       {/* Demande liée */}
       <Box mt="4">
-        <InterventionRequestCard request={intervention.request ?? null} />
+        <Suspense fallback={null}>
+          <InterventionRequestCard request={intervention.request ?? null} />
+        </Suspense>
       </Box>
 
       {/* TABS */}
@@ -330,7 +333,7 @@ export default function InterventionDetailPage() {
         <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const badgeValue = tab.badgeCount 
+            const badgeValue = tab.badgeCount
               ? tab.badgeCount(actions, statusLog)
               : null;
 
@@ -350,45 +353,47 @@ export default function InterventionDetailPage() {
           })}
         </Tabs.List>
 
-        <Tabs.Content value="actions">
-          <ActionsTab
-            actions={actions}
-            statusLog={statusLog}
-            searchTerm={searchActions}
-            onSearchChange={setSearchActions}
-            onAddAction={isLocked ? null : addAction}
-            interventionId={id}
-            onPurchaseRequestCreated={handlePurchaseRequestCreated}
-            planId={intervention.plan_id ?? null}
-            isLocked={isLocked}
-          />
-        </Tabs.Content>
+        <Suspense fallback={<LoadingState />}>
+          <Tabs.Content value="actions">
+            <ActionsTab
+              actions={actions}
+              statusLog={statusLog}
+              searchTerm={searchActions}
+              onSearchChange={setSearchActions}
+              onAddAction={isLocked ? null : addAction}
+              interventionId={id}
+              onPurchaseRequestCreated={handlePurchaseRequestCreated}
+              planId={intervention.plan_id ?? null}
+              isLocked={isLocked}
+            />
+          </Tabs.Content>
 
-        <Tabs.Content value="taches">
-          <TasksTab interventionId={id} isLocked={isLocked} />
-        </Tabs.Content>
+          <Tabs.Content value="taches">
+            <TasksTab interventionId={id} isLocked={isLocked} />
+          </Tabs.Content>
 
-        <Tabs.Content value="achats">
-          <InterventionPurchaseTab interventionId={id} isLocked={isLocked} />
-        </Tabs.Content>
+          <Tabs.Content value="achats">
+            <InterventionPurchaseTab interventionId={id} isLocked={isLocked} />
+          </Tabs.Content>
 
-        <Tabs.Content value="summary">
-          <SummaryTab intervention={intervention} loading={loading} />
-        </Tabs.Content>
+          <Tabs.Content value="summary">
+            <SummaryTab intervention={intervention} loading={loading} />
+          </Tabs.Content>
 
-        <Tabs.Content value="fiche">
-          <SheetTab
-            pdfUrl={pdfUrl}
-            pdfLoading={pdfLoading}
-            printedFiche={intervention.printedFiche}
-            fileName={ficheFileName}
-            onMarkPrinted={isLocked ? null : handleMarkPrinted}
-          />
-        </Tabs.Content>
+          <Tabs.Content value="fiche">
+            <SheetTab
+              pdfUrl={pdfUrl}
+              pdfLoading={pdfLoading}
+              printedFiche={intervention.printedFiche}
+              fileName={ficheFileName}
+              onMarkPrinted={isLocked ? null : handleMarkPrinted}
+            />
+          </Tabs.Content>
 
-        <Tabs.Content value="history">
-          <HistoryTab actions={actions} statusLog={statusLog} />
-        </Tabs.Content>
+          <Tabs.Content value="history">
+            <HistoryTab actions={actions} statusLog={statusLog} />
+          </Tabs.Content>
+        </Suspense>
       </Tabs.Root>
     </PageContainer>
   );

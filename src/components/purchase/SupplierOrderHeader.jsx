@@ -6,22 +6,18 @@
 import PropTypes from 'prop-types';
 import { Badge, Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
 import { ChevronDown, Clock, Download, Mail, ShoppingCart, Trash2 } from 'lucide-react';
-import { hexBadgeStyle } from '@/config/purchaseConfig';
+import HexBadge from '@/components/ui/HexBadge';
 
 const AGE_COLOR = { gray: 'gray', orange: 'orange', red: 'red' };
 
 export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onExportEmail, onDelete }) {
-  const badgeStyle = hexBadgeStyle(statusInfo.color);
-
   return (
     <Flex align="center" justify="between" gap="2">
       <Flex direction="column" gap="1">
         <Flex align="center" gap="2">
           <ShoppingCart size={16} color="var(--blue-9)" />
           <Text size="3" weight="bold">{detail.order_number}</Text>
-          <Badge size="1" {...(badgeStyle ? { style: badgeStyle } : { color: statusInfo.color, variant: 'soft' })}>
-            {statusInfo.label}
-          </Badge>
+          <HexBadge color={statusInfo.color} label={statusInfo.label} fallbackColor={statusInfo.color || 'gray'} />
           {detail.edit_lines && (
             <Badge color="orange" variant="soft" size="1">Négociation</Badge>
           )}

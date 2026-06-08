@@ -126,6 +126,15 @@ export const PRIORITY_COLORS = {
   },
 };
 
+/** Map priority → couleur Radix pour les Badge/dot simples */
+export const PRIORITY_BADGE_COLORS = {
+  urgent: 'red',
+  important: 'orange',
+  normale: 'blue',
+  normal: 'blue',
+  faible: 'gray',
+};
+
 export const KANBAN_COLUMNS = [
   { id: 'ouvert', title: 'Ouvert' },
   { id: 'attente_prod', title: 'Attente production' },
@@ -134,3 +143,14 @@ export const KANBAN_COLUMNS = [
 
 // Note: Les couleurs des catégories d'actions proviennent maintenant du backend
 // via le champ category.color dans action_subcategory
+
+export const AUDIT_DECISION_LABELS = {
+  status_actual_changed: 'Statut modifié',
+  priority_changed:      'Priorité modifiée',
+  assigned_to_changed:   'Affectation modifiée',
+  due_date_changed:      'Échéance modifiée',
+  sort_order_changed:    'Ordre modifié',
+  created:               'Créé',
+  deleted:               'Supprimé',
+  status_changed:        'Statut modifié',
+};

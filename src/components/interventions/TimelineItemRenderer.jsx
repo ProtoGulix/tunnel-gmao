@@ -1,7 +1,6 @@
 import PropTypes from "prop-types";
 import ActionItemCard from "@/components/interventions/ActionItemCard";
 import StatusBadgeRenderer from "@/components/ui/StatusBadgeRenderer";
-import { getCategoryColor, sanitizeDescription } from "@/lib/utils/interventionUtils";
 import { STATE_COLORS } from "@/config/interventionTypes";
 
 /**
@@ -30,11 +29,9 @@ export default function TimelineItemRenderer({ item, interventionId, onPurchaseR
 
   // Rendu action
   return (
-    <ActionItemCard 
+    <ActionItemCard
       action={item.data}
       interventionId={interventionId}
-      getCategoryColor={getCategoryColor}
-      sanitizeDescription={sanitizeDescription}
       onPurchaseRequestCreated={onPurchaseRequestCreated}
       isLocked={isLocked}
     />

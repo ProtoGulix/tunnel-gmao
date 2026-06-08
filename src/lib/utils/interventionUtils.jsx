@@ -216,9 +216,8 @@ export const getSelectionButtonStyle = (config, isActive, isHovered) => {
  * @param {object} subcategory - Subcategory object avec category.color ou category_id.color
  * @returns {string} - Couleur Radix UI (ex: 'blue', 'red', 'gray')
  */
-export const getCategoryColor = (subcategory) => {
-  return subcategory?.category?.color || subcategory?.category_id?.color || 'gray';
-};
+export const getCategoryColor = (subcategory) =>
+  subcategory?.category?.color ?? subcategory?.category_id?.color ?? 'gray';
 
 /**
  * Nettoyer les balises HTML des descriptions et rendre les liens et emails cliquables

@@ -9,7 +9,8 @@ import { Badge, Box, Button, Card, Flex, Table, Text, Separator } from '@radix-u
 import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
-import { hexBadgeStyle, PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
+import { PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
+import HexBadge from '@/components/ui/HexBadge';
 
 function DetailRow({ label, children }) {
   return (
@@ -245,12 +246,9 @@ PriceCell.propTypes = { value: PropTypes.number, bold: PropTypes.bool };
 
 function OrderStatusBadge({ statusObj }) {
   if (!statusObj) return <Text size="1" color="gray">—</Text>;
-  const style = hexBadgeStyle(statusObj.color);
   return (
     <Flex direction="column" gap="1">
-      <Badge size="1" {...(style ? { style } : { color: 'gray', variant: 'soft' })}>
-        {statusObj.label || statusObj.code}
-      </Badge>
+      <HexBadge color={statusObj.color} label={statusObj.label || statusObj.code} />
       {statusObj.description && (
         <Text size="1" color="gray" style={{ maxWidth: 180 }}>{statusObj.description}</Text>
       )}

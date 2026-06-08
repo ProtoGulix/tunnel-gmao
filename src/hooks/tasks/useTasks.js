@@ -1,21 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchTasksWorkspace } from '@/api/tasks';
 import { createInterventionTask, updateInterventionTask } from '@/api/interventionTasks';
+import { TASK_STATUS_LABEL, TASK_ORIGIN_LABEL } from '@/config/taskConfig';
 
 const GROUPING_KEY = 'tunnel_tasks_grouping';
-
-const STATUS_LABEL = {
-  todo: 'En attente',
-  in_progress: 'En cours',
-  done: 'Validee',
-  skipped: 'Ignoree',
-};
-
-const ORIGIN_LABEL = {
-  plan: 'Gamme',
-  resp: 'Resp',
-  tech: 'Tech',
-};
 
 function deriveInitials(assignedTo) {
   if (!assignedTo) return '';
@@ -38,9 +26,9 @@ function mapTask(raw) {
   return {
     id: String(raw.id ?? ''),
     origin: originCode,
-    originLabel: ORIGIN_LABEL[originCode] || originCode,
+    originLabel: TASK_ORIGIN_LABEL[originCode] || originCode,
     status: statusCode,
-    statusLabel: STATUS_LABEL[statusCode] || statusCode,
+    statusLabel: TASK_STATUS_LABEL[statusCode] || statusCode,
     label: raw.label || 'Sans libelle',
     interventionId: String(intervention?.id || ''),
     interventionCode: intervention?.code || '—',
