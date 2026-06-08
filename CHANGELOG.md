@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.44.1] — 2026-06-09
+
+### Amélioration interne — aucun impact visible
+
+Cette version consolide la base de code sans modifier le comportement de l'application.
+
+- **Performance** : les requêtes réseau annulées proprement quand on navigue rapidement entre pages — plus de réponses qui arrivent en retard et écrasent l'affichage en cours
+- **Stabilité du menu** : la configuration du menu est désormais centralisée en un seul endroit, ce qui élimine le risque qu'une page disparaisse silencieusement du menu suite à un fichier mal nommé
+- **Cohérence des statuts DI** : les couleurs et libellés des statuts de demandes d'intervention sont désormais chargés depuis l'API au lieu d'être codés en dur — ils suivront automatiquement les évolutions backend
+- **Nettoyage** : suppression de 20 fichiers inutilisés qui s'étaient accumulés sans être branchés sur aucune fonctionnalité
+
+---
+
 ## [3.44.0] — 2026-06-07
 
 ### Briefing — tuile d'intervention synthétisée
