@@ -23,9 +23,7 @@ import {
 } from '@/api/interventionTasks';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-
-const STATUS_LABEL = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
-const STATUS_COLOR = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
+import { TASK_STATUS_LABEL, TASK_STATUS_COLOR } from '@/config/taskConfig';
 
 function ProgressBar({ done, total }) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
@@ -72,8 +70,8 @@ function StepRow({ task, onSkipOpen, saving, readOnly, canSkipObligatory }) {
         )}
         {task.skip_reason && <Text size="1" color="orange">{task.skip_reason}</Text>}
       </Box>
-      <Badge color={STATUS_COLOR[task.status] || 'gray'} variant="soft" size="1">
-        {STATUS_LABEL[task.status] || task.status}
+      <Badge color={TASK_STATUS_COLOR[task.status] || 'gray'} variant="soft" size="1">
+        {TASK_STATUS_LABEL[task.status] || task.status}
       </Badge>
       {!readOnly && isPending && (
         <Flex gap="1">

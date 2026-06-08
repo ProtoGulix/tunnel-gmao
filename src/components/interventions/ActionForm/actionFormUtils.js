@@ -7,8 +7,7 @@ export const getCategoryCode = (subcategory) =>
 export const getCategoryName = (subcategory) =>
   subcategory?.name ?? subcategory?.category_name ?? '—';
 
-export const getCategoryColor = (subcategory) =>
-  subcategory?.category?.color ?? subcategory?.category_id?.color ?? 'gray';
+export { getCategoryColor } from '@/lib/utils/interventionUtils';
 
 export const isComplexityValid = (complexity) =>
   Number(complexity) >= 1 && Number(complexity) <= 10;

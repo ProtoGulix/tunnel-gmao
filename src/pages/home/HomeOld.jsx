@@ -5,11 +5,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import InteractiveTable from '@/components/ui/InteractiveTable';
 import { useHomeData } from '@/hooks/useHomeData';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
-
-// ── Helpers tâches ─────────────────────────────────────────────────────────
-
-const TASK_STATUS_LABEL = { todo: 'En attente', in_progress: 'En cours' };
-const TASK_STATUS_COLOR = { todo: 'gray', in_progress: 'blue' };
+import { TASK_STATUS_LABEL, TASK_STATUS_COLOR } from '@/config/taskConfig';
 
 function getDueDateColor(dueDate) {
   if (!dueDate) return 'gray';

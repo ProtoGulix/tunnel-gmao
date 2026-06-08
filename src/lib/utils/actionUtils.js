@@ -795,15 +795,6 @@ export function getRecurrenceBadge(rank) {
 }
 
 /**
- * Retourne la couleur de catégorie d'action depuis les données backend
- * @param {object} subcategory - Subcategory object avec category.color
- * @returns {string} - Couleur Radix UI (ex: 'blue', 'red', 'gray')
- */
-export function getCategoryColor(subcategory) {
-  return subcategory?.category?.color || 'gray';
-}
-
-/**
  * Calcule le taux de productivité d'un technicien
  * @param {array} actions - Actions du technicien
  * @returns {object} - { rate, color, label }

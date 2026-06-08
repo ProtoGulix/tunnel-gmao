@@ -1,31 +1,6 @@
 import { Avatar, Badge, Flex, Select, Tabs, Text } from '@radix-ui/themes';
 import PropTypes from 'prop-types';
-
-const ORIGIN_LABEL = {
-  plan: 'Gamme',
-  resp: 'Resp',
-  tech: 'Tech',
-};
-
-const ORIGIN_COLOR = {
-  plan: 'green',
-  resp: 'blue',
-  tech: 'orange',
-};
-
-const STATUS_LABEL = {
-  todo: 'En attente',
-  in_progress: 'En cours',
-  done: 'Validee',
-  skipped: 'Ignoree',
-};
-
-const STATUS_COLOR = {
-  todo: 'gray',
-  in_progress: 'blue',
-  done: 'green',
-  skipped: 'orange',
-};
+import { TASK_STATUS_LABEL, TASK_STATUS_COLOR, TASK_ORIGIN_LABEL, TASK_ORIGIN_COLOR } from '@/config/taskConfig';
 
 function renderTime(value) {
   const number = Number(value || 0);
@@ -57,8 +32,8 @@ export const COLUMNS = [
     header: 'Origine',
     width: 100,
     accessor: (row) => (
-      <Badge size="1" variant="soft" color={ORIGIN_COLOR[row.origin] || 'gray'}>
-        {ORIGIN_LABEL[row.origin] || row.origin || '—'}
+      <Badge size="1" variant="soft" color={TASK_ORIGIN_COLOR[row.origin] || 'gray'}>
+        {TASK_ORIGIN_LABEL[row.origin] || row.origin || '—'}
       </Badge>
     ),
   },
@@ -66,8 +41,8 @@ export const COLUMNS = [
     header: 'Statut',
     width: 120,
     accessor: (row) => (
-      <Badge size="1" variant="soft" color={STATUS_COLOR[row.status] || 'gray'}>
-        {STATUS_LABEL[row.status] || row.status || '—'}
+      <Badge size="1" variant="soft" color={TASK_STATUS_COLOR[row.status] || 'gray'}>
+        {TASK_STATUS_LABEL[row.status] || row.status || '—'}
       </Badge>
     ),
   },

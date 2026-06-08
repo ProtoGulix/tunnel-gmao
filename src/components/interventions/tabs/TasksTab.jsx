@@ -26,11 +26,7 @@ import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
-
-/* ── Constantes ─────────────────────────────────────────────────────────────── */
-
-const STATUS_LABEL = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
-const STATUS_COLOR = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
+import { TASK_STATUS_LABEL, TASK_STATUS_COLOR } from '@/config/taskConfig';
 
 /* ── Sous-composants ────────────────────────────────────────────────────────── */
 
@@ -81,8 +77,8 @@ function TaskRow({ task, onSkipOpen, saving, canSkipObligatory, isLocked }) {
           <Text size="1" color="gray">{new Date(task.updated_at).toLocaleDateString('fr-FR')}</Text>
         )}
       </Box>
-      <Badge color={STATUS_COLOR[task.status] || 'gray'} variant="soft" size="1">
-        {STATUS_LABEL[task.status] || task.status}
+      <Badge color={TASK_STATUS_COLOR[task.status] || 'gray'} variant="soft" size="1">
+        {TASK_STATUS_LABEL[task.status] || task.status}
       </Badge>
       {showSkip && (
         <Button size="1" color="orange" variant="ghost" disabled={isSaving} onClick={() => onSkipOpen(task)}>
