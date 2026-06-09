@@ -12,11 +12,13 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
 import { Plus, ShieldCheck, Wrench } from 'lucide-react';
 import { fetchOpenInterventionsByEquipement, fetchActiveUsers } from '@/api/planning';
+import { fetchInterventionTasks } from '@/api/interventionTasks';
 import { createIntervention } from '@/api/interventions';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
 import { fetchEquipements } from '@/api/equipements';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
+import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 
 /* ── Constantes d'affichage ───────────────────────────────────────────────── */
 
@@ -275,6 +277,76 @@ InterventionCreatorFlow.propTypes = {
   initialRequest: PropTypes.object,
 };
 
+/* ── Liste des tâches d'une intervention + ghost row ─────────────────────── */
+
+const TASK_STATUS_COLORS = { todo: 'gray', in_progress: 'orange', done: 'green', skipped: 'red' };
+const TASK_STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminé', skipped: 'Ignoré' };
+
+function InterventionTaskList({ interventionId }) {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const users = useUsers();
+
+  useEffect(() => {
+    if (!interventionId) return;
+    setLoading(true);
+    fetchInterventionTasks(interventionId)
+      .then(setTasks)
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false));
+  }, [interventionId]);
+
+  const handleCreated = useCallback((task) => {
+    setTasks((prev) => [...prev, task]);
+  }, []);
+
+  if (loading) {
+    return <Flex justify="center" p="3"><Spinner size="1" /></Flex>;
+  }
+
+  return (
+    <Box style={{ borderTop: '1px solid var(--gray-4)', background: 'var(--gray-1)' }}>
+      <Flex align="center" gap="2" px="3" py="2" style={{ borderBottom: '1px solid var(--gray-3)' }}>
+        <Text size="1" weight="bold" color="gray">Tâches</Text>
+        <Badge color="gray" variant="soft" size="1">{tasks.length}</Badge>
+      </Flex>
+      {tasks.length === 0 && (
+        <Text size="1" color="gray" style={{ display: 'block', padding: '8px 12px', fontStyle: 'italic' }}>
+          Aucune tâche
+        </Text>
+      )}
+      {tasks.map((task) => (
+        <Flex
+          key={task.id}
+          gap="2" px="3" py="2" align="center"
+          style={{ borderBottom: '1px solid var(--gray-3)' }}
+        >
+          <Badge size="1" color={TASK_STATUS_COLORS[task.status] ?? 'gray'} variant="soft" style={{ flexShrink: 0 }}>
+            {TASK_STATUS_LABELS[task.status] ?? task.status}
+          </Badge>
+          <Text size="1" style={{ flex: 1, color: task.status === 'done' || task.status === 'skipped' ? 'var(--gray-8)' : undefined }}>
+            {task.label}
+          </Text>
+          {task.assigned_to && (
+            <Text size="1" color="gray" style={{ flexShrink: 0 }}>
+              {(task.assigned_to.initials || task.assigned_to.initial || '').toUpperCase()}
+            </Text>
+          )}
+        </Flex>
+      ))}
+      <GhostCreateRow
+        interventionId={interventionId}
+        users={users}
+        onCreated={handleCreated}
+      />
+    </Box>
+  );
+}
+
+InterventionTaskList.propTypes = {
+  interventionId: PropTypes.string.isRequired,
+};
+
 /* ── Sélecteur principal ──────────────────────────────────────────────────── */
 
 export default function InterventionSelector({
@@ -348,12 +420,17 @@ export default function InterventionSelector({
         </Text>
       )}
       {!loading && interventions.length > 0 && (
-        <Box style={{ maxHeight: 480, overflowY: 'auto' }}>
+        <Box style={{ maxHeight: value ? 320 : 480, overflowY: 'auto' }}>
           <GroupedInterventionList
             items={interventions}
             selectedId={value?.id ?? ''}
             onSelect={onChange}
           />
+        </Box>
+      )}
+      {value?.id && (
+        <Box style={{ maxHeight: 320, overflowY: 'auto' }}>
+          <InterventionTaskList interventionId={String(value.id)} />
         </Box>
       )}
     </Card>

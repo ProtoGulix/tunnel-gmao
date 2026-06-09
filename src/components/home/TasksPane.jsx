@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge, IconButton, Button } from '@radix-ui/themes';
 import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Clock, User, UserCog, Wrench } from 'lucide-react';
+import GhostCreateRow from '@/components/tasks/GhostCreateRow';
 import { patchInterventionTask } from '@/api/interventionTasks';
 
 const ORIGIN_CONFIG = {
@@ -22,7 +23,26 @@ const formatDue = (iso) => {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
 };
 
-const SORT_ORDER = { in_progress: 0, todo: 1, done: 2 };
+const STATUS_BUCKET = { in_progress: 0, todo: 0, done: 1, skipped: 1 };
+
+// Retourne un timestamp numérique pour le tri : passé < futur < Infinity (sans date)
+const dueSortKey = (iso) => (iso ? new Date(iso).getTime() : Infinity);
+
+function sortTasks(tasks) {
+  return [...tasks].sort((a, b) => {
+    const ba = STATUS_BUCKET[a.status] ?? 0;
+    const bb = STATUS_BUCKET[b.status] ?? 0;
+    if (ba !== bb) return ba - bb;
+    return dueSortKey(a.due_date) - dueSortKey(b.due_date);
+  });
+}
+
+// Clé de tri d'un groupe = due_date la plus urgente parmi ses tâches actives
+function groupSortKey(group) {
+  const activeTasks = (group.tasks ?? []).filter((t) => STATUS_BUCKET[t.status] === 0);
+  if (activeTasks.length === 0) return Infinity;
+  return Math.min(...activeTasks.map((t) => dueSortKey(t.due_date)));
+}
 
 function deriveInitials(assignedTo) {
   if (!assignedTo) return null;
@@ -40,7 +60,7 @@ function userFullName(u) {
   return `${f} ${l}`.trim() || u.email || u.initials || u.initial || String(u.id);
 }
 
-export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAction, users, onTaskUpdate }) {
+export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAction, users = [], onTaskUpdate }) {
   const [editCell, setEditCell] = useState(null); // { taskId, field: 'due_date' | 'assigned_to' }
   const [saving, setSaving] = useState(null);     // taskId being saved
 
@@ -97,12 +117,10 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
           </Text>
         )}
 
-        {taskGroups.map((group) => {
+        {[...taskGroups].sort((a, b) => groupSortKey(a) - groupSortKey(b)).map((group) => {
           const interventionCode = group.code ?? null;
           const interventionTitle = group.title ?? null;
-          const sortedTasks = [...group.tasks].sort(
-            (a, b) => (SORT_ORDER[a.status] ?? 9) - (SORT_ORDER[b.status] ?? 9),
-          );
+          const sortedTasks = sortTasks(group.tasks);
 
           return (
             <div
@@ -140,7 +158,7 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
               </Flex>
 
               {/* ── Tâches ── */}
-              <div style={{ background: 'var(--color-panel-solid)' }}>
+              <div style={{ background: 'var(--color-panel-solid)', borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden' }}>
                 {sortedTasks.map((task, idx) => {
                   const due = formatDue(task.due_date);
                   const overdue = due && new Date(task.due_date) < today;
@@ -329,6 +347,11 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                     </Flex>
                   );
                 })}
+                <GhostCreateRow
+                  interventionId={String(group.id)}
+                  users={users}
+                  onCreated={() => onTaskUpdate?.()}
+                />
               </div>
             </div>
           );

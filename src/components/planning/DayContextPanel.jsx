@@ -3,14 +3,12 @@ import PropTypes from 'prop-types';
 import { Box } from '@radix-ui/themes';
 import { fetchActionCategories } from '@/api/actionCategories';
 import { fetchComplexityFactors } from '@/api/complexityFactors';
-import DayContextLeftColumn from './DayContextLeftColumn';
+import TaskSearchColumn from './TaskSearchColumn';
 import DayContextRightColumn from './DayContextRightColumn';
-
 
 export default function DayContextPanel({
   date,
   techId,
-  weekActionsForDay = [],
   preselectedAction = null,
   onActionCreated,
   onClose,
@@ -23,44 +21,40 @@ export default function DayContextPanel({
       .catch(() => {});
   }, []);
 
-  const preselectedEquipement = useMemo(() => {
-    const iv = preselectedAction?.intervention;
-    if (iv?.machine) {
-      const m = iv.machine;
-      return { id: m.id, code: m.code ?? '', name: m.name ?? '' };
-    }
-    if (iv?.equipement_id) {
-      return { id: iv.equipement_id, code: iv.equipement_code ?? '', name: iv.equipement_name ?? '' };
-    }
-    return null;
+  const preselectedTasks = useMemo(() => {
+    const task = preselectedAction?.task ?? preselectedAction?.tasks?.[0] ?? null;
+    const iv = preselectedAction?.intervention ?? null;
+    if (!task || !iv) return [];
+    return [{
+      ...task,
+      _intervention: {
+        id: iv.id, code: iv.code ?? '', title: iv.title ?? '',
+        status_actual: iv.status_actual ?? null,
+        type_inter: iv.type_inter ?? null, plan_id: iv.plan_id ?? null,
+      },
+    }];
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const preselectedIntervention = useMemo(() => {
-    if (!preselectedAction?.intervention) return null;
-    const iv = preselectedAction.intervention;
-    return { id: iv.id, code: iv.code ?? '', title: iv.title ?? '', status_actual: iv.status_actual ?? null, plan_id: iv.plan_id ?? null, machine: iv.machine ?? null };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Tâches cochées (portent ._intervention)
+  const [selectedTasks, setSelectedTasks] = useState(preselectedTasks);
+
+  // Intervention créée à la volée via DI
+  const [createdIntervention, setCreatedIntervention] = useState(null);
+
+  const handleTasksChange = useCallback((tasks) => {
+    setSelectedTasks(tasks ?? []);
+    if (tasks?.length > 0) setCreatedIntervention(null);
   }, []);
 
-  const [pickedEquipement, setPickedEquipement] = useState(preselectedEquipement);
-  const [selectedIntervention, setSelectedIntervention] = useState(preselectedIntervention);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-
-  const equipementId = pickedEquipement?.id ?? null;
-  const equipementLabel = pickedEquipement
-    ? `${pickedEquipement.code ? pickedEquipement.code + ' — ' : ''}${pickedEquipement.name ?? ''}`
-    : '';
-
-  const handleEquipementChange = useCallback((eq) => {
-    setPickedEquipement(eq);
-    setSelectedIntervention(null);
-    setSelectedRequest(null);
+  const handleInterventionCreated = useCallback((created) => {
+    setCreatedIntervention(created);
+    setSelectedTasks([]);
   }, []);
 
   const handleSuccess = useCallback(() => {
-    setSelectedIntervention(null);
-    setSelectedRequest(null);
+    setSelectedTasks([]);
+    setCreatedIntervention(null);
     onActionCreated?.();
   }, [onActionCreated]);
 
@@ -72,27 +66,19 @@ export default function DayContextPanel({
 
   return (
     <Box style={{ display: 'grid', gridTemplateColumns: '45fr 55fr', gap: 'var(--space-5)', alignItems: 'start' }}>
-      <DayContextLeftColumn
+      <TaskSearchColumn
         formattedDate={formattedDate}
-        pickedEquipement={pickedEquipement}
-        onEquipementChange={handleEquipementChange}
-        preselectedEquipement={preselectedEquipement}
-        equipementId={equipementId}
-        equipementLabel={equipementLabel}
-        selectedIntervention={selectedIntervention}
-        onSelectIntervention={setSelectedIntervention}
-        selectedRequest={selectedRequest}
-        onSelectRequest={setSelectedRequest}
+        selectedTasks={selectedTasks}
+        onTasksChange={handleTasksChange}
+        onInterventionCreated={handleInterventionCreated}
       />
 
       <Box style={{ position: 'sticky', top: '1rem', alignSelf: 'start' }}>
         <DayContextRightColumn
           date={date}
           techId={techId}
-          equipementId={equipementId}
-          equipementLabel={equipementLabel}
-          selectedIntervention={selectedIntervention}
-          selectedRequest={selectedRequest}
+          selectedTasks={selectedTasks}
+          createdIntervention={createdIntervention}
           onSuccess={handleSuccess}
           onCancel={onClose}
           metadata={metadata}
@@ -105,7 +91,6 @@ export default function DayContextPanel({
 DayContextPanel.propTypes = {
   date: PropTypes.string,
   techId: PropTypes.string,
-  techInitials: PropTypes.string,
   weekActionsForDay: PropTypes.arrayOf(PropTypes.object),
   preselectedAction: PropTypes.object,
   onActionCreated: PropTypes.func,

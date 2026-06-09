@@ -322,6 +322,39 @@
       "ui_pagination_pagination"
     ],
     "7": [
+      "api_interventiontasks",
+      "api_interventiontasks_createinterventionactionfortask",
+      "api_interventiontasks_fetchinterventiontaskactions",
+      "api_interventiontasks_fetchinterventiontasksprogressbyoccurrence",
+      "api_interventiontasks_fetchtasksprogress",
+      "briefing_dibriefingitem",
+      "briefing_dibriefingitem_agingcolor",
+      "briefing_dibriefingitem_bar_color",
+      "briefing_dibriefingitem_getdayswaiting",
+      "briefing_dibriefingitem_priority_color",
+      "briefing_dibriefingitem_priority_label",
+      "briefing_dibriefingitem_today",
+      "config_interventiontypes_kanban_columns",
+      "config_interventiontypes_priority_badge_colors",
+      "config_interventiontypes_priority_config",
+      "config_interventiontypes_status_config",
+      "interventions_interventionlistcomponents",
+      "interventions_interventionlistcomponents_agebadge",
+      "interventions_interventionlistcomponents_interventionblock",
+      "layout_sidebar_status_color_map",
+      "tabs_equipementinterventionstab",
+      "tabs_equipementinterventionstab_buildcolumns",
+      "tabs_equipementinterventionstab_buildpaginationprops",
+      "tabs_equipementinterventionstab_getprioritycolor",
+      "tabs_equipementinterventionstab_getstatuscolor",
+      "tasks_taskdetail",
+      "tasks_taskdetail_cardheader",
+      "tasks_taskdetail_detaildate",
+      "tasks_taskdetail_formatduration",
+      "tasks_taskdetail_readonlyrow",
+      "tasks_taskdetail_taskdetail"
+    ],
+    "8": [
       "api_purchaserequests",
       "api_purchaserequests_createpurchaserequest",
       "api_purchaserequests_deletepurchaserequest",
@@ -352,7 +385,7 @@
       "ui_purchaserequestitem_urgencybadge",
       "ui_stockreflink"
     ],
-    "8": [
+    "9": [
       "service_status_config",
       "service_status_config_service_time_type_categories",
       "service_status_config_thresholds",
@@ -381,7 +414,7 @@
       "ui_kpicard_determinecolor",
       "ui_kpicard_kpicard"
     ],
-    "9": [
+    "10": [
       "api_auth",
       "api_auth_changemypassword",
       "api_auth_extractauthdata",
@@ -408,34 +441,6 @@
       "ui_sidebaractionbutton_getvariantstyle",
       "ui_sidebaractionbutton_variant_styles",
       "ui_sidebarfooter"
-    ],
-    "10": [
-      "briefing_dibriefingitem",
-      "briefing_dibriefingitem_agingcolor",
-      "briefing_dibriefingitem_bar_color",
-      "briefing_dibriefingitem_getdayswaiting",
-      "briefing_dibriefingitem_priority_color",
-      "briefing_dibriefingitem_priority_label",
-      "briefing_dibriefingitem_today",
-      "config_interventiontypes_priority_badge_colors",
-      "layout_sidebar_status_color_map",
-      "planning_daycontextrightcolumn",
-      "planning_interventionselector",
-      "planning_interventionselector_getdefaultdatetimelocal",
-      "planning_interventionselector_group_labels",
-      "planning_interventionselector_groupedinterventionlist",
-      "planning_interventionselector_interventioncreatorflow",
-      "planning_interventionselector_priority_sort",
-      "planning_interventionselector_sortbypriority",
-      "planning_interventionselector_status_labels",
-      "tabs_equipementinterventionstab",
-      "tabs_equipementinterventionstab_buildcolumns",
-      "tabs_equipementinterventionstab_buildpaginationprops",
-      "tabs_equipementinterventionstab_getprioritycolor",
-      "tabs_equipementinterventionstab_getstatuscolor",
-      "ui_entityselectorcard",
-      "ui_lockedbadge",
-      "ui_lockedbadge_lockedbadge"
     ],
     "11": [
       "home_planningpane",
@@ -492,28 +497,29 @@
       "components_ivheaderblocks_tileheader"
     ],
     "13": [
-      "api_interventions_fetchintervention",
-      "api_interventiontasks",
-      "api_interventiontasks_fetchinterventiontasksbyoccurrence",
-      "api_interventiontasks_fetchinterventiontasksprogress",
-      "api_interventiontasks_fetchinterventiontasksprogressbyoccurrence",
-      "api_interventiontasks_fetchtasksprogress",
-      "config_interventiontypes_kanban_columns",
-      "config_interventiontypes_priority_config",
-      "config_interventiontypes_status_config",
-      "interventions_interventionlistcomponents",
-      "interventions_interventionlistcomponents_agebadge",
-      "interventions_interventionlistcomponents_interventionblock",
-      "interventions_useinterventionslist",
-      "preventive_gammeprogressblock",
-      "preventive_gammeprogressblock_progressbar",
-      "preventive_gammeprogressblock_progresssummary",
-      "preventive_gammeprogressblock_stepicon",
-      "preventive_gammeprogressblock_steprow",
-      "tabs_actionstab",
-      "tabs_actionstab_gammeprogressbanner",
-      "tabs_actionstab_grouptimelinebyday",
-      "ui_generictabcomponents_timeline"
+      "actionform_actionformcontext",
+      "actionform_actionformcontext_buildformdata",
+      "actionform_actionformcontext_getdefaultdatetimelocal",
+      "api_planning",
+      "api_planning_fetchactiveusers",
+      "api_planning_fetchopeninterventions",
+      "api_planning_fetchopeninterventionsbyequipement",
+      "api_planning_fetchweekactions",
+      "briefing_dirightpanel_dionlypanel",
+      "interventions_useinterventioncreate",
+      "interventions_useinterventioncreate_getdefaultdatetimelocal",
+      "planning_daycontextrightcolumn",
+      "planning_interventionselector",
+      "planning_interventionselector_getdefaultdatetimelocal",
+      "planning_interventionselector_group_labels",
+      "planning_interventionselector_groupedinterventionlist",
+      "planning_interventionselector_interventioncreatorflow",
+      "planning_interventionselector_priority_sort",
+      "planning_interventionselector_sortbypriority",
+      "planning_interventionselector_status_labels",
+      "ui_entityselectorcard",
+      "ui_lockedbadge",
+      "ui_lockedbadge_lockedbadge"
     ],
     "14": [
       "api_stock_fetchstockitemdetail",
@@ -585,6 +591,28 @@
       "tabs_interventionrequeststab_formatday"
     ],
     "17": [
+      "api_interventiontasks_patchinterventiontask",
+      "auth_usepermissions",
+      "auth_usepermissions_elevated_roles",
+      "components_interventions_tabs_taskstab_jsx_tabs_taskstab",
+      "components_interventions_tabs_taskstab_jsx_tabs_taskstab_taskstab",
+      "home_taskspane",
+      "home_taskspane_deriveinitials",
+      "home_taskspane_formatdue",
+      "home_taskspane_origin_config",
+      "home_taskspane_sort_order",
+      "home_taskspane_status_config",
+      "home_taskspane_userfullname",
+      "preventive_gammeprogressblock",
+      "preventive_gammeprogressblock_progressbar",
+      "preventive_gammeprogressblock_progresssummary",
+      "preventive_gammeprogressblock_stepicon",
+      "preventive_gammeprogressblock_steprow",
+      "tabs_taskstab_progressbar",
+      "tabs_taskstab_taskicon",
+      "tabs_taskstab_taskrow"
+    ],
+    "18": [
       "components_gantttimeline",
       "components_gantttimeline_buildticks",
       "components_gantttimeline_decision_labels",
@@ -604,7 +632,7 @@
       "interventions_interventiondetailview_useenrichedactions",
       "types_briefing_interventionaction"
     ],
-    "18": [
+    "19": [
       "config_menuconfig",
       "config_menuconfig_canaccesspage",
       "config_menuconfig_getmenuitems",
@@ -624,7 +652,7 @@
       "ui_brandlogo",
       "ui_mobileheader"
     ],
-    "19": [
+    "20": [
       "admin_adminpreventiveoccurrencespage",
       "admin_adminpreventiveplanspage",
       "interventions_interventionslistpage",
@@ -643,7 +671,7 @@
       "router_routes_servicestatuspage",
       "router_routes_stockpage"
     ],
-    "20": [
+    "21": [
       "admin_useadminaudit",
       "api_auditlogs",
       "api_auditlogs_fetchallauditreasoncodes",
@@ -661,7 +689,7 @@
       "components_ivbody_unlinkedactions",
       "components_ivheader_ivheader"
     ],
-    "21": [
+    "22": [
       "api_supplierorders",
       "api_supplierorders_createsupplierorder",
       "api_supplierorders_exportsupplierorderemail",
@@ -679,7 +707,7 @@
       "purchase_usesupplierorders_usesupplierorderfacets",
       "purchase_usesupplierorders_usesupplierorderstatuses"
     ],
-    "22": [
+    "23": [
       "searchableselect_index",
       "searchableselect_index_searchableselect",
       "searchableselect_statusbox",
@@ -697,7 +725,41 @@
       "utils_textutils_normalizetext",
       "utils_textutils_searchintext"
     ],
-    "23": [
+    "24": [
+      "actionform_closeinterventionoverlay",
+      "api_interventionmappers",
+      "api_interventionmappers_mapaction",
+      "api_interventionmappers_mapinterventiondetailresponse",
+      "api_interventionmappers_mapinterventionresponse",
+      "api_interventionmappers_mapstatuslog",
+      "api_interventions",
+      "api_interventions_createintervention",
+      "api_interventions_deleteintervention",
+      "api_interventions_fetchintervention",
+      "api_interventions_updateintervention",
+      "api_interventions_updateinterventionstatus",
+      "api_interventiontasks_fetchinterventiontasksbyoccurrence",
+      "interventions_useinterventiondetail",
+      "interventions_useinterventionslist"
+    ],
+    "25": [
+      "admin_adminendpointstable_endpointeditmodal",
+      "admin_adminendpointstable_method_colors",
+      "admin_useadminsecurity",
+      "admin_useadminsecurity_useapikeys",
+      "admin_useadminsecurity_useemaildomainrules",
+      "admin_useadminsecurity_useipblocklist",
+      "admin_useadminsecurity_usesecuritylogs",
+      "api_errormessage",
+      "api_errormessage_extractapierrormessage",
+      "equipements_useequipementclasses",
+      "equipements_useequipements",
+      "home_spontaneousinterventionrequestmodal",
+      "shared_usenotification",
+      "tabs_adminendpointstab",
+      "tabs_adminsecuritytab"
+    ],
+    "26": [
       "admin_adminrolepermissionsmatrix",
       "admin_adminuserconfirmmodals",
       "admin_adminuserconfirmmodals_adminchangerolemodal",
@@ -714,24 +776,7 @@
       "config_adminconfig_role_colors",
       "tabs_adminuserstab"
     ],
-    "24": [
-      "api_interventiontasks_patchinterventiontask",
-      "auth_usepermissions",
-      "auth_usepermissions_elevated_roles",
-      "components_interventions_tabs_taskstab_jsx_tabs_taskstab",
-      "components_interventions_tabs_taskstab_jsx_tabs_taskstab_taskstab",
-      "home_taskspane",
-      "home_taskspane_deriveinitials",
-      "home_taskspane_formatdue",
-      "home_taskspane_origin_config",
-      "home_taskspane_sort_order",
-      "home_taskspane_status_config",
-      "home_taskspane_userfullname",
-      "tabs_taskstab_progressbar",
-      "tabs_taskstab_taskicon",
-      "tabs_taskstab_taskrow"
-    ],
-    "25": [
+    "27": [
       "purchase_purchaserequestdetail",
       "purchase_purchaserequestdetail_cardheader",
       "purchase_purchaserequestdetail_dainfocard",
@@ -748,7 +793,7 @@
       "purchase_purchaserequestdetail_stockitemcard",
       "purchase_purchaserequestdetail_suppliercell"
     ],
-    "26": [
+    "28": [
       "actionform_actiontasksection",
       "actionform_actiontasksection_actiontasksection",
       "actionform_actiontasksection_deriveinitials",
@@ -763,38 +808,6 @@
       "tasks_usetaskcreate",
       "tasks_usetaskcreate_d_usetaskcreateoptions",
       "tasks_usetaskcreate_empty_form"
-    ],
-    "27": [
-      "admin_adminendpointstable_endpointeditmodal",
-      "admin_adminendpointstable_method_colors",
-      "api_errormessage",
-      "api_errormessage_extractapierrormessage",
-      "equipements_useequipementclasses",
-      "equipements_useequipements",
-      "home_spontaneousinterventionrequestmodal",
-      "tabs_adminendpointstab",
-      "ui_errorstate",
-      "ui_errorstate_backbutton",
-      "ui_errorstate_errorheader",
-      "ui_errorstate_errorstate",
-      "ui_errorstate_link_style",
-      "ui_errorstate_retrybutton"
-    ],
-    "28": [
-      "admin_adminpage",
-      "admin_adminpermissionauditpanel",
-      "admin_useadminroles",
-      "admin_useadminroles_usepermissionaudit",
-      "admin_useadminroles_userolepermissions",
-      "admin_useadminroles_userolesmatrix",
-      "api_adminroles",
-      "api_adminroles_fetchadminroles",
-      "api_adminroles_fetchpermissionaudit",
-      "api_adminroles_fetchrolepermissions",
-      "api_adminroles_fetchrolesmatrix",
-      "api_adminroles_updatepermission",
-      "shared_usenotification",
-      "tabs_adminrolestab"
     ],
     "29": [
       "app",
@@ -829,19 +842,19 @@
       "ui_selectionsummary_getcolors"
     ],
     "31": [
-      "api_actions",
-      "api_actions_createaction",
-      "api_actions_fetchaction",
-      "api_actions_mapactionresponse",
-      "api_actions_updateaction",
-      "api_planning",
-      "api_planning_fetchactiveusers",
-      "api_planning_fetchopeninterventions",
-      "api_planning_fetchopeninterventionsbyequipement",
-      "api_planning_fetchweekactions",
-      "briefing_dirightpanel_dionlypanel",
-      "interventions_useinterventioncreate",
-      "interventions_useinterventioncreate_getdefaultdatetimelocal"
+      "admin_adminpage",
+      "admin_adminpermissionauditpanel",
+      "admin_useadminroles",
+      "admin_useadminroles_usepermissionaudit",
+      "admin_useadminroles_userolepermissions",
+      "admin_useadminroles_userolesmatrix",
+      "api_adminroles",
+      "api_adminroles_fetchadminroles",
+      "api_adminroles_fetchpermissionaudit",
+      "api_adminroles_fetchrolepermissions",
+      "api_adminroles_fetchrolesmatrix",
+      "api_adminroles_updatepermission",
+      "tabs_adminrolestab"
     ],
     "32": [
       "api_purchaserequests_fetchpurchaserequestsbyintervention",
@@ -874,20 +887,6 @@
       "ui_generictabcomponents_timelineseparator"
     ],
     "34": [
-      "actionform_closeinterventionoverlay",
-      "api_interventionmappers",
-      "api_interventionmappers_mapaction",
-      "api_interventionmappers_mapinterventiondetailresponse",
-      "api_interventionmappers_mapinterventionresponse",
-      "api_interventionmappers_mapstatuslog",
-      "api_interventions",
-      "api_interventions_createintervention",
-      "api_interventions_deleteintervention",
-      "api_interventions_updateintervention",
-      "api_interventions_updateinterventionstatus",
-      "interventions_useinterventiondetail"
-    ],
-    "35": [
       "api_adminsecurity",
       "api_adminsecurity_createapikey",
       "api_adminsecurity_createemaildomainrule",
@@ -901,7 +900,7 @@
       "api_adminsecurity_fetchsecuritylogs",
       "api_adminsecurity_updateapikey"
     ],
-    "36": [
+    "35": [
       "api_auditguard",
       "api_auditguard_auditconfigcache",
       "api_auditguard_cacheauditfromresponse",
@@ -915,7 +914,7 @@
       "api_auditguard_urlkind",
       "hooks_useauditguard"
     ],
-    "37": [
+    "36": [
       "briefing_briefingcounters",
       "briefing_briefingcounters_chip_config",
       "briefing_briefingpage",
@@ -929,7 +928,7 @@
       "pages_homebriefing_formatbriefingdate",
       "pages_homebriefing_skeletonitem"
     ],
-    "38": [
+    "37": [
       "briefing_briefingtilenormalize",
       "briefing_briefingtilenormalize_daysopen",
       "briefing_briefingtilenormalize_di_section_ids",
@@ -943,7 +942,7 @@
       "briefing_briefingtilenormalize_type_color",
       "briefing_briefingtilenormalize_typefields"
     ],
-    "39": [
+    "38": [
       "equipements_equipementdetailpage",
       "equipements_equipementinfobanner",
       "equipements_equipementinfobanner_equipementlink",
@@ -957,7 +956,7 @@
       "ui_loadingstate",
       "ui_loadingstate_getminheight"
     ],
-    "40": [
+    "39": [
       "intervention_requests_interventionrequestdetail",
       "intervention_requests_interventionrequestdetail_acceptanceform",
       "intervention_requests_interventionrequestdetail_equipementlabel",
@@ -971,7 +970,7 @@
       "intervention_requests_interventionrequestdetail_transitions",
       "intervention_requests_interventionrequestdetail_transitionzone"
     ],
-    "41": [
+    "40": [
       "quality_data_config",
       "quality_data_config_entity_labels",
       "quality_data_config_rule_descriptions",
@@ -984,6 +983,19 @@
       "quality_data_qualitydatacomponents_synthesiscards",
       "quality_data_qualitydatapage",
       "tabs_qualitydatatab"
+    ],
+    "41": [
+      "actionform_actionformcomplexity",
+      "actionform_actionformcontext_contextsection",
+      "actionform_actionformdescription",
+      "actionform_index",
+      "actionform_index_actionform",
+      "actionform_useactionsubmit",
+      "api_interventiontasks_fetchinterventiontasksprogress",
+      "tabs_actionstab",
+      "tabs_actionstab_gammeprogressbanner",
+      "tabs_actionstab_grouptimelinebyday",
+      "ui_generictabcomponents_timeline"
     ],
     "42": [
       "actionform_actionformpurchaserequest",
@@ -1136,17 +1148,6 @@
       "ui_dropdownbutton"
     ],
     "54": [
-      "actionform_actionformcomplexity",
-      "actionform_actionformcontext",
-      "actionform_actionformcontext_buildformdata",
-      "actionform_actionformcontext_contextsection",
-      "actionform_actionformcontext_getdefaultdatetimelocal",
-      "actionform_actionformdescription",
-      "actionform_index",
-      "actionform_index_actionform",
-      "actionform_useactionsubmit"
-    ],
-    "55": [
       "api_suppliers",
       "api_suppliers_createsupplieritemlink",
       "api_suppliers_deletesupplier",
@@ -1157,7 +1158,7 @@
       "stock_stockitemsuppliers",
       "suppliers_usesupplierdetail"
     ],
-    "56": [
+    "55": [
       "api_suppliers_createsupplier",
       "api_suppliers_fetchsuppliers",
       "stock_stockitemsuppliers_supplierssection",
@@ -1168,7 +1169,7 @@
       "suppliers_supplieritemform_usesupplierslist",
       "suppliers_usesuppliers"
     ],
-    "57": [
+    "56": [
       "intervention_requests_interventionrequestcard",
       "intervention_requests_interventionrequestcard_formatdate",
       "ui_emptystate",
@@ -1179,7 +1180,7 @@
       "ui_emptystate_text_center_style",
       "ui_emptystate_textcontent"
     ],
-    "58": [
+    "57": [
       "api_client",
       "api_client_api",
       "api_client_onrefreshdone",
@@ -1189,7 +1190,7 @@
       "api_services",
       "api_services_fetchservices"
     ],
-    "59": [
+    "58": [
       "api_dashboard",
       "api_dashboard_fetchdashboardsummary",
       "lib_serverstatus_checkserverstatus",
@@ -1199,17 +1200,7 @@
       "ui_serverstatus",
       "ui_usesidebarstate"
     ],
-    "60": [
-      "api_interventiontasks_createinterventionactionfortask",
-      "api_interventiontasks_fetchinterventiontaskactions",
-      "tasks_taskdetail",
-      "tasks_taskdetail_cardheader",
-      "tasks_taskdetail_detaildate",
-      "tasks_taskdetail_formatduration",
-      "tasks_taskdetail_readonlyrow",
-      "tasks_taskdetail_taskdetail"
-    ],
-    "61": [
+    "59": [
       "api_manufacturers",
       "api_manufacturers_createmanufacturer",
       "api_manufacturers_deletemanufacturer",
@@ -1219,7 +1210,7 @@
       "suppliers_usemanufacturerdetail",
       "suppliers_usemanufacturers"
     ],
-    "62": [
+    "60": [
       "api_purchaserequests_fetchpurchaserequestdetail",
       "tabs_purchaserequestsarchivetab",
       "tabs_purchaserequestsarchivetab_archive_statuses",
@@ -1229,7 +1220,7 @@
       "tabs_purchaserequeststabparts_archivefilters",
       "tabs_purchaserequeststabparts_prfilters"
     ],
-    "63": [
+    "61": [
       "api_suppliers_fetchstockitemsupplierlinks",
       "stock_stockdetailpanel",
       "stock_stockdetailpanel_alternativessection",
@@ -1239,7 +1230,7 @@
       "stock_stockdetailpanel_metarow",
       "stock_stockdetailpanel_stockqtycard"
     ],
-    "64": [
+    "62": [
       "components_ivheaderblocks_duebanner",
       "hooks_useinterventionurgency",
       "hooks_useinterventionurgency_daysago",
@@ -1249,7 +1240,7 @@
       "hooks_useinterventionurgency_startofday",
       "interventions_interventioncellrenderers_duedatecell"
     ],
-    "65": [
+    "63": [
       "config_colorpalette",
       "config_colorpalette_color_scales",
       "config_colorpalette_color_tones",
@@ -1259,7 +1250,7 @@
       "utils_colorutils_getcolor",
       "utils_colorutils_hextoradixcolor"
     ],
-    "66": [
+    "64": [
       "purchase_orderlineroweditable",
       "purchase_orderlineroweditable_hasdraft",
       "purchase_supplierorderlines",
@@ -1269,7 +1260,7 @@
       "ui_statuscallout_notification_types",
       "ui_statuscallout_type_config"
     ],
-    "67": [
+    "65": [
       "api_intervention_requests_fetchinterventionrequest",
       "config_layoutconfig",
       "config_layoutconfig_default_container_props",
@@ -1278,7 +1269,7 @@
       "layout_pagecontainer",
       "layout_pagecontainer_pagecontainer"
     ],
-    "68": [
+    "66": [
       "api_service_status",
       "api_service_status_fetchservicestatus",
       "api_service_status_mapservicestatusresponse",
@@ -1287,7 +1278,7 @@
       "api_service_status_tonumber",
       "service_status_useservicedata"
     ],
-    "69": [
+    "67": [
       "briefing_useinterventioncard",
       "briefing_useinterventioncard_completionfromprogress",
       "briefing_useinterventioncard_fmtdate",
@@ -1296,7 +1287,7 @@
       "briefing_useinterventioncard_usecardactions",
       "briefing_useinterventioncard_usecarddisplay"
     ],
-    "70": [
+    "68": [
       "admin_adminsecurityapikeys",
       "admin_adminsecurityapikeys_adminsecurityapikeys",
       "admin_adminsecurityapikeys_confirmrevokemodal",
@@ -1304,15 +1295,7 @@
       "tabs_equipementinfotab",
       "tabs_equipementinfotab_formatdate"
     ],
-    "71": [
-      "admin_useadminsecurity",
-      "admin_useadminsecurity_useapikeys",
-      "admin_useadminsecurity_useemaildomainrules",
-      "admin_useadminsecurity_useipblocklist",
-      "admin_useadminsecurity_usesecuritylogs",
-      "tabs_adminsecuritytab"
-    ],
-    "72": [
+    "69": [
       "hooks_useauditguard_useauditguard",
       "layout_layout",
       "layout_layout_layout",
@@ -1320,7 +1303,7 @@
       "ui_auditguarddialog",
       "ui_auditreasondialog"
     ],
-    "73": [
+    "70": [
       "layout_pageheader_pageheader",
       "layout_timeselectioncontrol",
       "layout_timeselectioncontrol_default_options",
@@ -1328,55 +1311,70 @@
       "shared_usetimeselection_default_options",
       "ui_daterangefilter"
     ],
-    "74": [
+    "71": [
+      "ui_errorstate",
+      "ui_errorstate_backbutton",
+      "ui_errorstate_errorheader",
+      "ui_errorstate_errorstate",
+      "ui_errorstate_link_style",
+      "ui_errorstate_retrybutton"
+    ],
+    "72": [
       "admin_useadminendpoints",
       "api_adminendpoints",
       "api_adminendpoints_fetchadminendpoints",
       "api_adminendpoints_syncadminendpoints",
       "api_adminendpoints_updateadminendpoint"
     ],
-    "75": [
+    "73": [
+      "api_actions",
+      "api_actions_createaction",
+      "api_actions_fetchaction",
+      "api_actions_mapactionresponse",
+      "api_actions_updateaction"
+    ],
+    "74": [
       "api_auditreasons",
       "api_auditreasons_cache",
       "api_auditreasons_clearauditreasonscache",
       "api_auditreasons_fetchauditreasons",
       "ui_auditreasonpicker"
     ],
-    "76": [
+    "75": [
       "api_quality_data",
       "api_quality_data_fetchqualitydata",
       "api_quality_data_mapproblem",
       "api_quality_data_mapqualitydataresponse",
       "quality_data_usequalitydata"
     ],
-    "77": [
+    "76": [
       "config_interventiontypes_state_colors",
       "interventions_historyitem",
       "interventions_historyitem_builduserlabel",
       "interventions_historyitem_renderactionbadge",
       "interventions_historyitem_renderstatustransition"
     ],
-    "78": [
+    "77": [
       "suppliers_supplierdetail",
       "suppliers_supplierdetail_linkrow",
       "suppliers_supplierdetail_linkstable",
       "suppliers_supplierinfo",
       "suppliers_supplierinfo_supplierinfo"
     ],
-    "79": [
+    "78": [
       "ui_asyncsearchselect",
       "ui_asyncsearchselect_state_box",
       "ui_asyncsearchselect_statebox",
       "ui_itemform",
       "ui_itemform_itemform"
     ],
-    "80": [
+    "79": [
       "tabs_equipementpreventiftab",
       "tabs_equipementpreventiftab_formatdate",
       "tabs_equipementpreventiftab_occurrencessummary",
       "tabs_equipementpreventiftab_planitem"
     ],
-    "81": [
+    "80": [
       "vite_env_d",
       "vite_env_d_importmeta"
     ]
@@ -1389,41 +1387,41 @@
     "4": 0.07827260458839407,
     "5": 0.07936507936507936,
     "6": 0.08522727272727272,
-    "7": 0.08374384236453201,
-    "8": 0.12535612535612536,
-    "9": 0.11076923076923077,
-    "10": 0.08923076923076922,
+    "7": 0.08387096774193549,
+    "8": 0.08374384236453201,
+    "9": 0.12535612535612536,
+    "10": 0.11076923076923077,
     "11": 0.18153846153846154,
     "12": 0.11956521739130435,
-    "13": 0.14285714285714285,
+    "13": 0.13043478260869565,
     "14": 0.12987012987012986,
     "15": 0.1523809523809524,
     "16": 0.13157894736842105,
-    "17": 0.16339869281045752,
+    "17": 0.11052631578947368,
     "18": 0.16339869281045752,
-    "19": 0.14705882352941177,
-    "20": 0.175,
-    "21": 0.225,
-    "22": 0.19166666666666668,
-    "23": 0.18095238095238095,
-    "24": 0.14285714285714285,
-    "25": 0.13333333333333333,
-    "26": 0.2087912087912088,
-    "27": 0.21978021978021978,
-    "28": 0.21978021978021978,
+    "19": 0.16339869281045752,
+    "20": 0.14705882352941177,
+    "21": 0.175,
+    "22": 0.225,
+    "23": 0.19166666666666668,
+    "24": 0.2571428571428571,
+    "25": 0.24761904761904763,
+    "26": 0.18095238095238095,
+    "27": 0.13333333333333333,
+    "28": 0.2087912087912088,
     "29": 0.2087912087912088,
     "30": 0.18681318681318682,
-    "31": 0.21794871794871795,
+    "31": 0.24358974358974358,
     "32": 0.23076923076923078,
     "33": 0.1794871794871795,
-    "34": 0.3181818181818182,
-    "35": 0.16666666666666666,
-    "36": 0.22727272727272727,
-    "37": 0.19696969696969696,
-    "38": 0.2878787878787879,
-    "39": 0.19696969696969696,
-    "40": 0.18181818181818182,
-    "41": 0.2878787878787879,
+    "34": 0.16666666666666666,
+    "35": 0.22727272727272727,
+    "36": 0.19696969696969696,
+    "37": 0.2878787878787879,
+    "38": 0.19696969696969696,
+    "39": 0.18181818181818182,
+    "40": 0.2878787878787879,
+    "41": 0.21818181818181817,
     "42": 0.23636363636363636,
     "43": 0.3090909090909091,
     "44": 0.21818181818181817,
@@ -1436,34 +1434,33 @@
     "51": 0.2222222222222222,
     "52": 0.2222222222222222,
     "53": 0.2,
-    "54": 0.3055555555555556,
-    "55": 0.5,
-    "56": 0.2777777777777778,
-    "57": 0.2222222222222222,
-    "58": 0.2857142857142857,
-    "59": 0.42857142857142855,
-    "60": 0.2857142857142857,
-    "61": 0.5357142857142857,
-    "62": 0.25,
+    "54": 0.5,
+    "55": 0.2777777777777778,
+    "56": 0.2222222222222222,
+    "57": 0.2857142857142857,
+    "58": 0.42857142857142855,
+    "59": 0.5357142857142857,
+    "60": 0.25,
+    "61": 0.25,
+    "62": 0.42857142857142855,
     "63": 0.25,
-    "64": 0.42857142857142855,
-    "65": 0.25,
-    "66": 0.32142857142857145,
-    "67": 0.3333333333333333,
-    "68": 0.5238095238095238,
-    "69": 0.38095238095238093,
+    "64": 0.32142857142857145,
+    "65": 0.3333333333333333,
+    "66": 0.5238095238095238,
+    "67": 0.38095238095238093,
+    "68": 0.3333333333333333,
+    "69": 0.4666666666666667,
     "70": 0.3333333333333333,
-    "71": 0.6,
-    "72": 0.4666666666666667,
-    "73": 0.3333333333333333,
-    "74": 0.7,
-    "75": 0.5,
-    "76": 0.6,
+    "71": 0.3333333333333333,
+    "72": 0.7,
+    "73": 0.7,
+    "74": 0.5,
+    "75": 0.6,
+    "76": 0.4,
     "77": 0.4,
     "78": 0.4,
-    "79": 0.4,
-    "80": 0.8333333333333334,
-    "81": 1.0
+    "79": 0.8333333333333334,
+    "80": 1.0
   },
   "gods": [
     {
@@ -1541,6 +1538,17 @@
       "why": "connects across different repos/directories; bridges separate communities; peripheral node `UrgencyLabel()` unexpectedly reaches hub `getInterventionUrgency()`"
     },
     {
+      "source": "ErrorState()",
+      "target": "extractApiErrorMessage()",
+      "source_files": [
+        "components/ui/ErrorState.jsx",
+        "lib/api/errorMessage.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities; peripheral node `ErrorState()` unexpectedly reaches hub `extractApiErrorMessage()`"
+    },
+    {
       "source": "makeSimpleListHook()",
       "target": "extractApiErrorMessage()",
       "source_files": [
@@ -1561,17 +1569,6 @@
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "connects across different repos/directories; peripheral node `collectAuditLogs()` unexpectedly reaches hub `fetchAuditLogs()`"
-    },
-    {
-      "source": "searchEquipements()",
-      "target": "fetchEquipements()",
-      "source_files": [
-        "components/planning/EquipementSearch.jsx",
-        "api/equipements.js"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; peripheral node `searchEquipements()` unexpectedly reaches hub `fetchEquipements()`"
     }
   ],
   "tokens": {

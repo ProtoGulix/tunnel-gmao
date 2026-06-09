@@ -59,7 +59,7 @@
       "source_file": "api/actions.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 73,
       "norm_label": "actions.js",
       "id": "api_actions"
     },
@@ -69,7 +69,7 @@
       "source_file": "api/actions.js",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 31,
+      "community": 73,
       "norm_label": "createaction()",
       "id": "api_actions_createaction"
     },
@@ -79,7 +79,7 @@
       "source_file": "api/actions.js",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 31,
+      "community": 73,
       "norm_label": "fetchaction()",
       "id": "api_actions_fetchaction"
     },
@@ -89,7 +89,7 @@
       "source_file": "api/actions.js",
       "source_location": "L78",
       "_origin": "ast",
-      "community": 31,
+      "community": 73,
       "norm_label": "updateaction()",
       "id": "api_actions_updateaction"
     },
@@ -99,7 +99,7 @@
       "source_file": "api/actions.js",
       "source_location": "L135",
       "_origin": "ast",
-      "community": 31,
+      "community": 73,
       "norm_label": "mapactionresponse()",
       "id": "api_actions_mapactionresponse"
     },
@@ -109,7 +109,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 74,
+      "community": 72,
       "norm_label": "adminendpoints.js",
       "id": "api_adminendpoints"
     },
@@ -119,7 +119,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 74,
+      "community": 72,
       "norm_label": "fetchadminendpoints()",
       "id": "api_adminendpoints_fetchadminendpoints"
     },
@@ -129,7 +129,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 74,
+      "community": 72,
       "norm_label": "updateadminendpoint()",
       "id": "api_adminendpoints_updateadminendpoint"
     },
@@ -139,7 +139,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 74,
+      "community": 72,
       "norm_label": "syncadminendpoints()",
       "id": "api_adminendpoints_syncadminendpoints"
     },
@@ -249,7 +249,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "adminroles.js",
       "id": "api_adminroles"
     },
@@ -259,7 +259,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "fetchadminroles()",
       "id": "api_adminroles_fetchadminroles"
     },
@@ -269,7 +269,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "fetchrolesmatrix()",
       "id": "api_adminroles_fetchrolesmatrix"
     },
@@ -279,7 +279,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "fetchrolepermissions()",
       "id": "api_adminroles_fetchrolepermissions"
     },
@@ -289,7 +289,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "updatepermission()",
       "id": "api_adminroles_updatepermission"
     },
@@ -299,7 +299,7 @@
       "source_file": "api/adminRoles.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "fetchpermissionaudit()",
       "id": "api_adminroles_fetchpermissionaudit"
     },
@@ -309,7 +309,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "adminsecurity.js",
       "id": "api_adminsecurity"
     },
@@ -319,7 +319,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "fetchsecuritylogs()",
       "id": "api_adminsecurity_fetchsecuritylogs"
     },
@@ -329,7 +329,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "fetchipblocklist()",
       "id": "api_adminsecurity_fetchipblocklist"
     },
@@ -339,7 +339,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "createipblock()",
       "id": "api_adminsecurity_createipblock"
     },
@@ -349,7 +349,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "deleteipblock()",
       "id": "api_adminsecurity_deleteipblock"
     },
@@ -359,7 +359,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "fetchemaildomainrules()",
       "id": "api_adminsecurity_fetchemaildomainrules"
     },
@@ -369,7 +369,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "createemaildomainrule()",
       "id": "api_adminsecurity_createemaildomainrule"
     },
@@ -379,7 +379,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "deleteemaildomainrule()",
       "id": "api_adminsecurity_deleteemaildomainrule"
     },
@@ -389,7 +389,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "fetchapikeys()",
       "id": "api_adminsecurity_fetchapikeys"
     },
@@ -399,7 +399,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "createapikey()",
       "id": "api_adminsecurity_createapikey"
     },
@@ -409,7 +409,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "updateapikey()",
       "id": "api_adminsecurity_updateapikey"
     },
@@ -419,7 +419,7 @@
       "source_file": "api/adminSecurity.js",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 35,
+      "community": 34,
       "norm_label": "deleteapikey()",
       "id": "api_adminsecurity_deleteapikey"
     },
@@ -499,7 +499,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "auditlogs.js",
       "id": "api_auditlogs"
     },
@@ -509,7 +509,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "fetchauditlogs()",
       "id": "api_auditlogs_fetchauditlogs"
     },
@@ -519,7 +519,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "fetchallauditreasoncodes()",
       "id": "api_auditlogs_fetchallauditreasoncodes"
     },
@@ -529,7 +529,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 75,
+      "community": 74,
       "norm_label": "auditreasons.js",
       "id": "api_auditreasons"
     },
@@ -539,7 +539,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 75,
+      "community": 74,
       "norm_label": "_cache",
       "id": "api_auditreasons_cache"
     },
@@ -549,7 +549,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 75,
+      "community": 74,
       "norm_label": "fetchauditreasons()",
       "id": "api_auditreasons_fetchauditreasons"
     },
@@ -559,7 +559,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 75,
+      "community": 74,
       "norm_label": "clearauditreasonscache()",
       "id": "api_auditreasons_clearauditreasonscache"
     },
@@ -569,7 +569,7 @@
       "source_file": "api/auth.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "auth.js",
       "id": "api_auth"
     },
@@ -579,7 +579,7 @@
       "source_file": "api/auth.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "extractauthdata()",
       "id": "api_auth_extractauthdata"
     },
@@ -589,7 +589,7 @@
       "source_file": "api/auth.js",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "login()",
       "id": "api_auth_login"
     },
@@ -599,7 +599,7 @@
       "source_file": "api/auth.js",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "refreshtoken()",
       "id": "api_auth_refreshtoken"
     },
@@ -609,7 +609,7 @@
       "source_file": "api/auth.js",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "logout()",
       "id": "api_auth_logout"
     },
@@ -619,7 +619,7 @@
       "source_file": "api/auth.js",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "isauthenticated()",
       "id": "api_auth_isauthenticated"
     },
@@ -629,7 +629,7 @@
       "source_file": "api/auth.js",
       "source_location": "L56",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "getme()",
       "id": "api_auth_getme"
     },
@@ -639,7 +639,7 @@
       "source_file": "api/auth.js",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "updatemyprofile()",
       "id": "api_auth_updatemyprofile"
     },
@@ -649,7 +649,7 @@
       "source_file": "api/auth.js",
       "source_location": "L72",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "changemypassword()",
       "id": "api_auth_changemypassword"
     },
@@ -679,7 +679,7 @@
       "source_file": "api/dashboard.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "dashboard.js",
       "id": "api_dashboard"
     },
@@ -689,7 +689,7 @@
       "source_file": "api/dashboard.js",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "fetchdashboardsummary()",
       "id": "api_dashboard_fetchdashboardsummary"
     },
@@ -819,7 +819,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "fetchinterventionrequest()",
       "id": "api_intervention_requests_fetchinterventionrequest"
     },
@@ -859,7 +859,7 @@
       "source_file": "api/interventionMappers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "interventionmappers.js",
       "id": "api_interventionmappers"
     },
@@ -869,7 +869,7 @@
       "source_file": "api/interventionMappers.js",
       "source_location": "L2",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "mapinterventionresponse()",
       "id": "api_interventionmappers_mapinterventionresponse"
     },
@@ -879,7 +879,7 @@
       "source_file": "api/interventionMappers.js",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "mapaction()",
       "id": "api_interventionmappers_mapaction"
     },
@@ -889,7 +889,7 @@
       "source_file": "api/interventionMappers.js",
       "source_location": "L86",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "mapstatuslog()",
       "id": "api_interventionmappers_mapstatuslog"
     },
@@ -899,7 +899,7 @@
       "source_file": "api/interventionMappers.js",
       "source_location": "L99",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "mapinterventiondetailresponse()",
       "id": "api_interventionmappers_mapinterventiondetailresponse"
     },
@@ -909,7 +909,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "interventiontasks.js",
       "id": "api_interventiontasks"
     },
@@ -919,7 +919,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 13,
+      "community": 24,
       "norm_label": "fetchinterventiontasksbyoccurrence()",
       "id": "api_interventiontasks_fetchinterventiontasksbyoccurrence"
     },
@@ -929,7 +929,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "fetchtasksprogress()",
       "id": "api_interventiontasks_fetchtasksprogress"
     },
@@ -939,7 +939,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 13,
+      "community": 41,
       "norm_label": "fetchinterventiontasksprogress()",
       "id": "api_interventiontasks_fetchinterventiontasksprogress"
     },
@@ -949,7 +949,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "fetchinterventiontasksprogressbyoccurrence()",
       "id": "api_interventiontasks_fetchinterventiontasksprogressbyoccurrence"
     },
@@ -959,7 +959,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "patchinterventiontask()",
       "id": "api_interventiontasks_patchinterventiontask"
     },
@@ -969,7 +969,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "fetchinterventiontaskactions()",
       "id": "api_interventiontasks_fetchinterventiontaskactions"
     },
@@ -979,7 +979,7 @@
       "source_file": "api/interventionTasks.js",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "createinterventionactionfortask()",
       "id": "api_interventiontasks_createinterventionactionfortask"
     },
@@ -989,7 +989,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "interventions.js",
       "id": "api_interventions"
     },
@@ -999,7 +999,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 13,
+      "community": 24,
       "norm_label": "fetchintervention()",
       "id": "api_interventions_fetchintervention"
     },
@@ -1009,7 +1009,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "createintervention()",
       "id": "api_interventions_createintervention"
     },
@@ -1019,7 +1019,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "updateintervention()",
       "id": "api_interventions_updateintervention"
     },
@@ -1029,7 +1029,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L66",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "updateinterventionstatus()",
       "id": "api_interventions_updateinterventionstatus"
     },
@@ -1039,7 +1039,7 @@
       "source_file": "api/interventions.js",
       "source_location": "L70",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "deleteintervention()",
       "id": "api_interventions_deleteintervention"
     },
@@ -1049,7 +1049,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "manufacturers.js",
       "id": "api_manufacturers"
     },
@@ -1059,7 +1059,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "fetchmanufacturers()",
       "id": "api_manufacturers_fetchmanufacturers"
     },
@@ -1069,7 +1069,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "createmanufacturer()",
       "id": "api_manufacturers_createmanufacturer"
     },
@@ -1079,7 +1079,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "updatemanufacturer()",
       "id": "api_manufacturers_updatemanufacturer"
     },
@@ -1089,7 +1089,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "deletemanufacturer()",
       "id": "api_manufacturers_deletemanufacturer"
     },
@@ -1139,7 +1139,7 @@
       "source_file": "api/planning.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "planning.js",
       "id": "api_planning"
     },
@@ -1149,7 +1149,7 @@
       "source_file": "api/planning.js",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "fetchweekactions()",
       "id": "api_planning_fetchweekactions"
     },
@@ -1159,7 +1159,7 @@
       "source_file": "api/planning.js",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "fetchopeninterventionsbyequipement()",
       "id": "api_planning_fetchopeninterventionsbyequipement"
     },
@@ -1169,7 +1169,7 @@
       "source_file": "api/planning.js",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "fetchopeninterventions()",
       "id": "api_planning_fetchopeninterventions"
     },
@@ -1179,7 +1179,7 @@
       "source_file": "api/planning.js",
       "source_location": "L67",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "fetchactiveusers()",
       "id": "api_planning_fetchactiveusers"
     },
@@ -1299,7 +1299,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "purchaserequests.js",
       "id": "api_purchaserequests"
     },
@@ -1309,7 +1309,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "fetchpurchaserequestdetail()",
       "id": "api_purchaserequests_fetchpurchaserequestdetail"
     },
@@ -1329,7 +1329,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "createpurchaserequest()",
       "id": "api_purchaserequests_createpurchaserequest"
     },
@@ -1339,7 +1339,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "updatepurchaserequest()",
       "id": "api_purchaserequests_updatepurchaserequest"
     },
@@ -1349,7 +1349,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L84",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "deletepurchaserequest()",
       "id": "api_purchaserequests_deletepurchaserequest"
     },
@@ -1359,7 +1359,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L101",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "dispatchpurchaserequests()",
       "id": "api_purchaserequests_dispatchpurchaserequests"
     },
@@ -1369,7 +1369,7 @@
       "source_file": "api/quality-data.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 76,
+      "community": 75,
       "norm_label": "quality-data.js",
       "id": "api_quality_data"
     },
@@ -1379,7 +1379,7 @@
       "source_file": "api/quality-data.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 76,
+      "community": 75,
       "norm_label": "fetchqualitydata()",
       "id": "api_quality_data_fetchqualitydata"
     },
@@ -1389,7 +1389,7 @@
       "source_file": "api/quality-data.js",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 76,
+      "community": 75,
       "norm_label": "mapqualitydataresponse()",
       "id": "api_quality_data_mapqualitydataresponse"
     },
@@ -1399,7 +1399,7 @@
       "source_file": "api/quality-data.js",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 76,
+      "community": 75,
       "norm_label": "mapproblem()",
       "id": "api_quality_data_mapproblem"
     },
@@ -1409,7 +1409,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "service-status.js",
       "id": "api_service_status"
     },
@@ -1419,7 +1419,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "tonumber()",
       "id": "api_service_status_tonumber"
     },
@@ -1429,7 +1429,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "maptopcauses()",
       "id": "api_service_status_maptopcauses"
     },
@@ -1439,7 +1439,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "mapsiteconsumption()",
       "id": "api_service_status_mapsiteconsumption"
     },
@@ -1449,7 +1449,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "mapservicestatusresponse()",
       "id": "api_service_status_mapservicestatusresponse"
     },
@@ -1459,7 +1459,7 @@
       "source_file": "api/service-status.js",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "fetchservicestatus()",
       "id": "api_service_status_fetchservicestatus"
     },
@@ -1469,7 +1469,7 @@
       "source_file": "api/services.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "services.js",
       "id": "api_services"
     },
@@ -1479,7 +1479,7 @@
       "source_file": "api/services.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "fetchservices()",
       "id": "api_services_fetchservices"
     },
@@ -1519,7 +1519,7 @@
       "source_file": "api/stock.js",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "fetchpurchaserequests()",
       "id": "api_stock_fetchpurchaserequests"
     },
@@ -1649,7 +1649,7 @@
       "source_file": "api/supplierOrders.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "supplierorders.js",
       "id": "api_supplierorders"
     },
@@ -1659,7 +1659,7 @@
       "source_file": "api/supplierOrders.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "fetchsupplierorderstatuses()",
       "id": "api_supplierorders_fetchsupplierorderstatuses"
     },
@@ -1669,7 +1669,7 @@
       "source_file": "api/supplierOrders.js",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "createsupplierorder()",
       "id": "api_supplierorders_createsupplierorder"
     },
@@ -1679,7 +1679,7 @@
       "source_file": "api/supplierOrders.js",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "exportsupplierorderemail()",
       "id": "api_supplierorders_exportsupplierorderemail"
     },
@@ -1699,7 +1699,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "suppliers.js",
       "id": "api_suppliers"
     },
@@ -1709,7 +1709,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "fetchsuppliers()",
       "id": "api_suppliers_fetchsuppliers"
     },
@@ -1719,7 +1719,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "fetchsupplierdetail()",
       "id": "api_suppliers_fetchsupplierdetail"
     },
@@ -1729,7 +1729,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "createsupplier()",
       "id": "api_suppliers_createsupplier"
     },
@@ -1739,7 +1739,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "updatesupplier()",
       "id": "api_suppliers_updatesupplier"
     },
@@ -1749,7 +1749,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "deletesupplier()",
       "id": "api_suppliers_deletesupplier"
     },
@@ -1759,7 +1759,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "fetchsupplieritemlinks()",
       "id": "api_suppliers_fetchsupplieritemlinks"
     },
@@ -1769,7 +1769,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "fetchstockitemsupplierlinks()",
       "id": "api_suppliers_fetchstockitemsupplierlinks"
     },
@@ -1779,7 +1779,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "createsupplieritemlink()",
       "id": "api_suppliers_createsupplieritemlink"
     },
@@ -1789,7 +1789,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "updatesupplieritemlink()",
       "id": "api_suppliers_updatesupplieritemlink"
     },
@@ -1799,7 +1799,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "deletesupplieritemlink()",
       "id": "api_suppliers_deletesupplieritemlink"
     },
@@ -1809,7 +1809,7 @@
       "source_file": "api/suppliers.js",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "setpreferredsupplieritemlink()",
       "id": "api_suppliers_setpreferredsupplieritemlink"
     },
@@ -1819,7 +1819,7 @@
       "source_file": "api/tasks.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "tasks.js",
       "id": "api_tasks"
     },
@@ -1829,7 +1829,7 @@
       "source_file": "api/tasks.js",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "fetchtasksworkspace()",
       "id": "api_tasks_fetchtasksworkspace"
     },
@@ -1909,7 +1909,7 @@
       "source_file": "auth/usePermissions.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "usepermissions.js",
       "id": "auth_usepermissions"
     },
@@ -1919,7 +1919,7 @@
       "source_file": "auth/usePermissions.js",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "elevated_roles",
       "id": "auth_usepermissions_elevated_roles"
     },
@@ -1929,7 +1929,7 @@
       "source_file": "components/admin/AdminEndpointsTable.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "method_colors",
       "id": "admin_adminendpointstable_method_colors"
     },
@@ -1939,7 +1939,7 @@
       "source_file": "components/admin/AdminEndpointsTable.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "endpointeditmodal()",
       "id": "admin_adminendpointstable_endpointeditmodal"
     },
@@ -1949,7 +1949,7 @@
       "source_file": "components/admin/AdminPermissionAuditPanel.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "adminpermissionauditpanel.jsx",
       "id": "admin_adminpermissionauditpanel"
     },
@@ -2069,7 +2069,7 @@
       "source_file": "components/admin/AdminRolePermissionsMatrix.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminrolepermissionsmatrix.jsx",
       "id": "admin_adminrolepermissionsmatrix"
     },
@@ -2079,7 +2079,7 @@
       "source_file": "components/admin/AdminSecurityApiKeys.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "adminsecurityapikeys.jsx",
       "id": "admin_adminsecurityapikeys"
     },
@@ -2089,7 +2089,7 @@
       "source_file": "components/admin/AdminSecurityApiKeys.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "createapikeymodal()",
       "id": "admin_adminsecurityapikeys_createapikeymodal"
     },
@@ -2099,7 +2099,7 @@
       "source_file": "components/admin/AdminSecurityApiKeys.jsx",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "confirmrevokemodal()",
       "id": "admin_adminsecurityapikeys_confirmrevokemodal"
     },
@@ -2109,7 +2109,7 @@
       "source_file": "components/admin/AdminSecurityApiKeys.jsx",
       "source_location": "L105",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "adminsecurityapikeys()",
       "id": "admin_adminsecurityapikeys_adminsecurityapikeys"
     },
@@ -2229,7 +2229,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminuserconfirmmodals.jsx",
       "id": "admin_adminuserconfirmmodals"
     },
@@ -2239,7 +2239,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "roles",
       "id": "admin_adminuserconfirmmodals_roles"
     },
@@ -2249,7 +2249,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminchangerolemodal()",
       "id": "admin_adminuserconfirmmodals_adminchangerolemodal"
     },
@@ -2259,7 +2259,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L82",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "admintoggleactivemodal()",
       "id": "admin_adminuserconfirmmodals_admintoggleactivemodal"
     },
@@ -2269,7 +2269,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L138",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminresetpasswordmodal()",
       "id": "admin_adminuserconfirmmodals_adminresetpasswordmodal"
     },
@@ -2279,7 +2279,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminusercreatemodal.jsx",
       "id": "admin_adminusercreatemodal"
     },
@@ -2289,7 +2289,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "empty_form",
       "id": "admin_adminusercreatemodal_empty_form"
     },
@@ -2299,7 +2299,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "roles",
       "id": "admin_adminusercreatemodal_roles"
     },
@@ -2309,7 +2309,7 @@
       "source_file": "components/admin/AdminUserEditModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminusereditmodal.jsx",
       "id": "admin_adminusereditmodal"
     },
@@ -2319,7 +2319,7 @@
       "source_file": "components/admin/AdminUsersTable.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "role_options",
       "id": "admin_adminuserstable_role_options"
     },
@@ -2329,7 +2329,7 @@
       "source_file": "components/admin/AdminUsersTable.jsx",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "active_options",
       "id": "admin_adminuserstable_active_options"
     },
@@ -2429,7 +2429,7 @@
       "source_file": "components/admin/tabs/AdminEndpointsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "adminendpointstab.jsx",
       "id": "tabs_adminendpointstab"
     },
@@ -2439,7 +2439,7 @@
       "source_file": "components/admin/tabs/AdminRolesTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "adminrolestab.jsx",
       "id": "tabs_adminrolestab"
     },
@@ -2449,7 +2449,7 @@
       "source_file": "components/admin/tabs/AdminSecurityTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "adminsecuritytab.jsx",
       "id": "tabs_adminsecuritytab"
     },
@@ -2459,7 +2459,7 @@
       "source_file": "components/admin/tabs/AdminUsersTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminuserstab.jsx",
       "id": "tabs_adminuserstab"
     },
@@ -2469,7 +2469,7 @@
       "source_file": "components/briefing/BriefingCounters.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "briefingcounters.jsx",
       "id": "briefing_briefingcounters"
     },
@@ -2479,7 +2479,7 @@
       "source_file": "components/briefing/BriefingCounters.jsx",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "chip_config",
       "id": "briefing_briefingcounters_chip_config"
     },
@@ -2559,7 +2559,7 @@
       "source_file": "components/briefing/BriefingSection.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "briefingsection.jsx",
       "id": "briefing_briefingsection"
     },
@@ -2669,7 +2669,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "dibriefingitem.jsx",
       "id": "briefing_dibriefingitem"
     },
@@ -2679,7 +2679,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "today",
       "id": "briefing_dibriefingitem_today"
     },
@@ -2689,7 +2689,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "getdayswaiting()",
       "id": "briefing_dibriefingitem_getdayswaiting"
     },
@@ -2699,7 +2699,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "bar_color",
       "id": "briefing_dibriefingitem_bar_color"
     },
@@ -2709,7 +2709,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "agingcolor()",
       "id": "briefing_dibriefingitem_agingcolor"
     },
@@ -2719,7 +2719,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "priority_color",
       "id": "briefing_dibriefingitem_priority_color"
     },
@@ -2729,7 +2729,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "priority_label",
       "id": "briefing_dibriefingitem_priority_label"
     },
@@ -2789,7 +2789,7 @@
       "source_file": "components/briefing/DIRightPanel.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "dionlypanel()",
       "id": "briefing_dirightpanel_dionlypanel"
     },
@@ -2799,7 +2799,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "interventioncard.tsx",
       "id": "briefing_interventioncard"
     },
@@ -2809,7 +2809,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "collectauditlogs()",
       "id": "briefing_interventioncard_collectauditlogs"
     },
@@ -2819,7 +2819,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "useivdetail()",
       "id": "briefing_interventioncard_useivdetail"
     },
@@ -2829,7 +2829,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "briefingtilenormalize.js",
       "id": "briefing_briefingtilenormalize"
     },
@@ -2839,7 +2839,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "_today",
       "id": "briefing_briefingtilenormalize_today"
     },
@@ -2849,7 +2849,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "daysopen()",
       "id": "briefing_briefingtilenormalize_daysopen"
     },
@@ -2859,7 +2859,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "type_color",
       "id": "briefing_briefingtilenormalize_type_color"
     },
@@ -2869,7 +2869,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "section_bar_color",
       "id": "briefing_briefingtilenormalize_section_bar_color"
     },
@@ -2879,7 +2879,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "di_section_ids",
       "id": "briefing_briefingtilenormalize_di_section_ids"
     },
@@ -2889,7 +2889,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "typefields()",
       "id": "briefing_briefingtilenormalize_typefields"
     },
@@ -2899,7 +2899,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "disituationtype()",
       "id": "briefing_briefingtilenormalize_disituationtype"
     },
@@ -2909,7 +2909,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "orphansituationtype()",
       "id": "briefing_briefingtilenormalize_orphansituationtype"
     },
@@ -2919,7 +2919,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "normalizerequest()",
       "id": "briefing_briefingtilenormalize_normalizerequest"
     },
@@ -2929,7 +2929,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L76",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "normalizeorphan()",
       "id": "briefing_briefingtilenormalize_normalizeorphan"
     },
@@ -2939,7 +2939,7 @@
       "source_file": "components/briefing/briefingTileNormalize.js",
       "source_location": "L105",
       "_origin": "ast",
-      "community": 38,
+      "community": 37,
       "norm_label": "normalizetiledata()",
       "id": "briefing_briefingtilenormalize_normalizetiledata"
     },
@@ -2949,7 +2949,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "gantttimeline.tsx",
       "id": "components_gantttimeline"
     },
@@ -2959,7 +2959,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "gantttimelineprops",
       "id": "components_gantttimeline_gantttimelineprops"
     },
@@ -2969,7 +2969,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "enrichedaction",
       "id": "components_gantttimeline_enrichedaction"
     },
@@ -2979,7 +2979,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "enrichedlog",
       "id": "components_gantttimeline_enrichedlog"
     },
@@ -2989,7 +2989,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "today()",
       "id": "components_gantttimeline_today"
     },
@@ -2999,7 +2999,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "pct()",
       "id": "components_gantttimeline_pct"
     },
@@ -3009,7 +3009,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "buildticks()",
       "id": "components_gantttimeline_buildticks"
     },
@@ -3019,7 +3019,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "decision_labels",
       "id": "components_gantttimeline_decision_labels"
     },
@@ -3029,7 +3029,7 @@
       "source_file": "components/briefing/components/GanttTimeline.tsx",
       "source_location": "L76",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "gantttimeline()",
       "id": "components_gantttimeline_gantttimeline"
     },
@@ -3039,7 +3039,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "ivbody.tsx",
       "id": "components_ivbody"
     },
@@ -3049,7 +3049,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "status_group_cfg",
       "id": "components_ivbody_status_group_cfg"
     },
@@ -3059,7 +3059,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "decision_labels",
       "id": "components_ivbody_decision_labels"
     },
@@ -3069,7 +3069,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "ivauditlogline()",
       "id": "components_ivbody_ivauditlogline"
     },
@@ -3079,7 +3079,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L81",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "unlinkedactions()",
       "id": "components_ivbody_unlinkedactions"
     },
@@ -3089,7 +3089,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L107",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "emptystate()",
       "id": "components_ivbody_emptystate"
     },
@@ -3099,7 +3099,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L117",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "ivbodyprops",
       "id": "components_ivbody_ivbodyprops"
     },
@@ -3109,7 +3109,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L136",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "ivbody()",
       "id": "components_ivbody_ivbody"
     },
@@ -3189,7 +3189,7 @@
       "source_file": "components/briefing/components/IvHeader.tsx",
       "source_location": "L99",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "ivheader()",
       "id": "components_ivheader_ivheader"
     },
@@ -3309,7 +3309,7 @@
       "source_file": "components/briefing/components/IvHeaderBlocks.tsx",
       "source_location": "L174",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "duebanner()",
       "id": "components_ivheaderblocks_duebanner"
     },
@@ -3389,7 +3389,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "taskcard.tsx",
       "id": "components_taskcard"
     },
@@ -3399,7 +3399,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "task_status_cfg",
       "id": "components_taskcard_task_status_cfg"
     },
@@ -3409,7 +3409,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "origin_cfg",
       "id": "components_taskcard_origin_cfg"
     },
@@ -3419,7 +3419,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "decision_labels",
       "id": "components_taskcard_decision_labels"
     },
@@ -3429,7 +3429,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "taskcardprops",
       "id": "components_taskcard_taskcardprops"
     },
@@ -3439,7 +3439,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L59",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "auditlogline()",
       "id": "components_taskcard_auditlogline"
     },
@@ -3449,7 +3449,7 @@
       "source_file": "components/briefing/components/TaskCard.tsx",
       "source_location": "L135",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "actioncontextline()",
       "id": "components_taskcard_actioncontextline"
     },
@@ -3459,7 +3459,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "useinterventioncard.ts",
       "id": "briefing_useinterventioncard"
     },
@@ -3469,7 +3469,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "priority_cfg",
       "id": "briefing_useinterventioncard_priority_cfg"
     },
@@ -3479,7 +3479,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "status_cfg_map",
       "id": "briefing_useinterventioncard_status_cfg_map"
     },
@@ -3489,7 +3489,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "fmtdate()",
       "id": "briefing_useinterventioncard_fmtdate"
     },
@@ -3499,7 +3499,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "completionfromprogress()",
       "id": "briefing_useinterventioncard_completionfromprogress"
     },
@@ -3509,7 +3509,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "usecarddisplay()",
       "id": "briefing_useinterventioncard_usecarddisplay"
     },
@@ -3519,7 +3519,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 69,
+      "community": 67,
       "norm_label": "usecardactions()",
       "id": "briefing_useinterventioncard_usecardactions"
     },
@@ -3569,7 +3569,7 @@
       "source_file": "components/equipements/EquipementInfoBanner.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "equipementinfobanner.jsx",
       "id": "equipements_equipementinfobanner"
     },
@@ -3579,7 +3579,7 @@
       "source_file": "components/equipements/EquipementInfoBanner.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "infofield()",
       "id": "equipements_equipementinfobanner_infofield"
     },
@@ -3589,7 +3589,7 @@
       "source_file": "components/equipements/EquipementInfoBanner.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "equipementlink()",
       "id": "equipements_equipementinfobanner_equipementlink"
     },
@@ -3599,7 +3599,7 @@
       "source_file": "components/equipements/EquipementInfoHeader.jsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "row()",
       "id": "equipements_equipementinfoheader_row"
     },
@@ -3609,7 +3609,7 @@
       "source_file": "components/equipements/EquipementInfoHeader.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "formatdate()",
       "id": "equipements_equipementinfoheader_formatdate"
     },
@@ -3649,7 +3649,7 @@
       "source_file": "components/equipements/tabs/EquipementDetailTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "equipementdetailtab.jsx",
       "id": "tabs_equipementdetailtab"
     },
@@ -3659,7 +3659,7 @@
       "source_file": "components/equipements/tabs/EquipementDetailTab.jsx",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "buildtabs()",
       "id": "tabs_equipementdetailtab_buildtabs"
     },
@@ -3669,7 +3669,7 @@
       "source_file": "components/equipements/tabs/EquipementInfoTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "equipementinfotab.jsx",
       "id": "tabs_equipementinfotab"
     },
@@ -3679,7 +3679,7 @@
       "source_file": "components/equipements/tabs/EquipementInfoTab.jsx",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "norm_label": "formatdate()",
       "id": "tabs_equipementinfotab_formatdate"
     },
@@ -3689,7 +3689,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "equipementinterventionstab.jsx",
       "id": "tabs_equipementinterventionstab"
     },
@@ -3699,7 +3699,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "getprioritycolor()",
       "id": "tabs_equipementinterventionstab_getprioritycolor"
     },
@@ -3709,7 +3709,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "getstatuscolor()",
       "id": "tabs_equipementinterventionstab_getstatuscolor"
     },
@@ -3719,7 +3719,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "buildcolumns()",
       "id": "tabs_equipementinterventionstab_buildcolumns"
     },
@@ -3729,7 +3729,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L98",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "buildpaginationprops()",
       "id": "tabs_equipementinterventionstab_buildpaginationprops"
     },
@@ -3739,7 +3739,7 @@
       "source_file": "components/equipements/tabs/EquipementPreventifTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "equipementpreventiftab.jsx",
       "id": "tabs_equipementpreventiftab"
     },
@@ -3749,7 +3749,7 @@
       "source_file": "components/equipements/tabs/EquipementPreventifTab.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "formatdate()",
       "id": "tabs_equipementpreventiftab_formatdate"
     },
@@ -3759,7 +3759,7 @@
       "source_file": "components/equipements/tabs/EquipementPreventifTab.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "occurrencessummary()",
       "id": "tabs_equipementpreventiftab_occurrencessummary"
     },
@@ -3769,7 +3769,7 @@
       "source_file": "components/equipements/tabs/EquipementPreventifTab.jsx",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "planitem()",
       "id": "tabs_equipementpreventiftab_planitem"
     },
@@ -3779,7 +3779,7 @@
       "source_file": "components/equipements/tabs/EquipementStatsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "equipementstatstab.jsx",
       "id": "tabs_equipementstatstab"
     },
@@ -3799,7 +3799,7 @@
       "source_file": "components/home/BriefingPane.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "briefingpane.jsx",
       "id": "home_briefingpane"
     },
@@ -3809,7 +3809,7 @@
       "source_file": "components/home/BriefingPane.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "skeletonitem()",
       "id": "home_briefingpane_skeletonitem"
     },
@@ -3839,7 +3839,7 @@
       "source_file": "components/home/SpontaneousInterventionRequestModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "spontaneousinterventionrequestmodal.jsx",
       "id": "home_spontaneousinterventionrequestmodal"
     },
@@ -3859,7 +3859,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "taskspane.jsx",
       "id": "home_taskspane"
     },
@@ -3869,7 +3869,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "origin_config",
       "id": "home_taskspane_origin_config"
     },
@@ -3879,7 +3879,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "status_config",
       "id": "home_taskspane_status_config"
     },
@@ -3889,7 +3889,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "formatdue()",
       "id": "home_taskspane_formatdue"
     },
@@ -3899,7 +3899,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "sort_order",
       "id": "home_taskspane_sort_order"
     },
@@ -3909,7 +3909,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "deriveinitials()",
       "id": "home_taskspane_deriveinitials"
     },
@@ -3919,7 +3919,7 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "userfullname()",
       "id": "home_taskspane_userfullname"
     },
@@ -3929,7 +3929,7 @@
       "source_file": "components/intervention-requests/InterventionRequestCard.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "interventionrequestcard.jsx",
       "id": "intervention_requests_interventionrequestcard"
     },
@@ -3939,7 +3939,7 @@
       "source_file": "components/intervention-requests/InterventionRequestCard.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "formatdate()",
       "id": "intervention_requests_interventionrequestcard_formatdate"
     },
@@ -3949,7 +3949,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "interventionrequestdetail.jsx",
       "id": "intervention_requests_interventionrequestdetail"
     },
@@ -3959,7 +3959,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "transitions",
       "id": "intervention_requests_interventionrequestdetail_transitions"
     },
@@ -3969,7 +3969,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "priority_options",
       "id": "intervention_requests_interventionrequestdetail_priority_options"
     },
@@ -3979,7 +3979,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "formatdate()",
       "id": "intervention_requests_interventionrequestdetail_formatdate"
     },
@@ -3989,7 +3989,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "statuslogentry()",
       "id": "intervention_requests_interventionrequestdetail_statuslogentry"
     },
@@ -3999,7 +3999,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L78",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "rejectionform()",
       "id": "intervention_requests_interventionrequestdetail_rejectionform"
     },
@@ -4009,7 +4009,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "acceptanceform()",
       "id": "intervention_requests_interventionrequestdetail_acceptanceform"
     },
@@ -4019,7 +4019,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L185",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "transitionzone()",
       "id": "intervention_requests_interventionrequestdetail_transitionzone"
     },
@@ -4029,7 +4029,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L238",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "priority_label",
       "id": "intervention_requests_interventionrequestdetail_priority_label"
     },
@@ -4039,7 +4039,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L239",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "priority_color",
       "id": "intervention_requests_interventionrequestdetail_priority_color"
     },
@@ -4049,7 +4049,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L241",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "interventionprogress()",
       "id": "intervention_requests_interventionrequestdetail_interventionprogress"
     },
@@ -4059,7 +4059,7 @@
       "source_file": "components/intervention-requests/InterventionRequestDetail.jsx",
       "source_location": "L349",
       "_origin": "ast",
-      "community": 40,
+      "community": 39,
       "norm_label": "equipementlabel()",
       "id": "intervention_requests_interventionrequestdetail_equipementlabel"
     },
@@ -4159,7 +4159,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormComplexity.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "actionformcomplexity.jsx",
       "id": "actionform_actionformcomplexity"
     },
@@ -4169,7 +4169,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormContext.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 54,
+      "community": 13,
       "norm_label": "actionformcontext.jsx",
       "id": "actionform_actionformcontext"
     },
@@ -4179,7 +4179,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormContext.jsx",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 54,
+      "community": 13,
       "norm_label": "getdefaultdatetimelocal()",
       "id": "actionform_actionformcontext_getdefaultdatetimelocal"
     },
@@ -4189,7 +4189,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormContext.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 54,
+      "community": 13,
       "norm_label": "buildformdata()",
       "id": "actionform_actionformcontext_buildformdata"
     },
@@ -4199,7 +4199,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormContext.jsx",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "contextsection()",
       "id": "actionform_actionformcontext_contextsection"
     },
@@ -4209,7 +4209,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormDescription.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "actionformdescription.jsx",
       "id": "actionform_actionformdescription"
     },
@@ -4249,7 +4249,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "actiontasksection.jsx",
       "id": "actionform_actiontasksection"
     },
@@ -4259,7 +4259,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "deriveinitials()",
       "id": "actionform_actiontasksection_deriveinitials"
     },
@@ -4269,7 +4269,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "getassigneelabel()",
       "id": "actionform_actiontasksection_getassigneelabel"
     },
@@ -4279,7 +4279,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "getduedatecolor()",
       "id": "actionform_actiontasksection_getduedatecolor"
     },
@@ -4289,7 +4289,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L60",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "normalizeselectedtask()",
       "id": "actionform_actiontasksection_normalizeselectedtask"
     },
@@ -4299,7 +4299,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "taskrow()",
       "id": "actionform_actiontasksection_taskrow"
     },
@@ -4309,7 +4309,7 @@
       "source_file": "components/interventions/ActionForm/ActionTaskSection.jsx",
       "source_location": "L176",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "actiontasksection()",
       "id": "actionform_actiontasksection_actiontasksection"
     },
@@ -4319,7 +4319,7 @@
       "source_file": "components/interventions/ActionForm/CloseInterventionOverlay.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "closeinterventionoverlay.jsx",
       "id": "actionform_closeinterventionoverlay"
     },
@@ -4399,7 +4399,7 @@
       "source_file": "components/interventions/ActionForm/index.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "index.jsx",
       "id": "actionform_index"
     },
@@ -4409,7 +4409,7 @@
       "source_file": "components/interventions/ActionForm/index.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "actionform()",
       "id": "actionform_index_actionform"
     },
@@ -4429,7 +4429,7 @@
       "source_file": "components/interventions/ActionForm/useActionSubmit.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 54,
+      "community": 41,
       "norm_label": "useactionsubmit.js",
       "id": "actionform_useactionsubmit"
     },
@@ -4569,7 +4569,7 @@
       "source_file": "components/interventions/HistoryItem.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 77,
+      "community": 76,
       "norm_label": "historyitem.jsx",
       "id": "interventions_historyitem"
     },
@@ -4579,7 +4579,7 @@
       "source_file": "components/interventions/HistoryItem.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 77,
+      "community": 76,
       "norm_label": "builduserlabel()",
       "id": "interventions_historyitem_builduserlabel"
     },
@@ -4589,7 +4589,7 @@
       "source_file": "components/interventions/HistoryItem.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 77,
+      "community": 76,
       "norm_label": "renderactionbadge()",
       "id": "interventions_historyitem_renderactionbadge"
     },
@@ -4599,7 +4599,7 @@
       "source_file": "components/interventions/HistoryItem.jsx",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 77,
+      "community": 76,
       "norm_label": "renderstatustransition()",
       "id": "interventions_historyitem_renderstatustransition"
     },
@@ -4729,7 +4729,7 @@
       "source_file": "components/interventions/InterventionDetailView.jsx",
       "source_location": "L249",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "useenrichedactions()",
       "id": "interventions_interventiondetailview_useenrichedactions"
     },
@@ -4809,7 +4809,7 @@
       "source_file": "components/interventions/InterventionListComponents.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "interventionlistcomponents.jsx",
       "id": "interventions_interventionlistcomponents"
     },
@@ -4819,7 +4819,7 @@
       "source_file": "components/interventions/InterventionListComponents.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "agebadge()",
       "id": "interventions_interventionlistcomponents_agebadge"
     },
@@ -4829,7 +4829,7 @@
       "source_file": "components/interventions/InterventionListComponents.jsx",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "interventionblock()",
       "id": "interventions_interventionlistcomponents_interventionblock"
     },
@@ -4859,7 +4859,7 @@
       "source_file": "components/interventions/interventionCellRenderers.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "duedatecell()",
       "id": "interventions_interventioncellrenderers_duedatecell"
     },
@@ -4959,7 +4959,7 @@
       "source_file": "components/interventions/tabs/ActionsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 13,
+      "community": 41,
       "norm_label": "actionstab.jsx",
       "id": "tabs_actionstab"
     },
@@ -4969,7 +4969,7 @@
       "source_file": "components/interventions/tabs/ActionsTab.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 13,
+      "community": 41,
       "norm_label": "gammeprogressbanner()",
       "id": "tabs_actionstab_gammeprogressbanner"
     },
@@ -4979,7 +4979,7 @@
       "source_file": "components/interventions/tabs/ActionsTab.jsx",
       "source_location": "L77",
       "_origin": "ast",
-      "community": 13,
+      "community": 41,
       "norm_label": "grouptimelinebyday()",
       "id": "tabs_actionstab_grouptimelinebyday"
     },
@@ -5049,7 +5049,7 @@
       "source_file": "components/interventions/tabs/SheetTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "sheettab.jsx",
       "id": "tabs_sheettab"
     },
@@ -5079,7 +5079,7 @@
       "source_file": "components/interventions/tabs/TasksTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "taskstab.jsx",
       "id": "components_interventions_tabs_taskstab_jsx_tabs_taskstab"
     },
@@ -5089,7 +5089,7 @@
       "source_file": "components/interventions/tabs/TasksTab.jsx",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "progressbar()",
       "id": "tabs_taskstab_progressbar"
     },
@@ -5099,7 +5099,7 @@
       "source_file": "components/interventions/tabs/TasksTab.jsx",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "taskicon()",
       "id": "tabs_taskstab_taskicon"
     },
@@ -5109,7 +5109,7 @@
       "source_file": "components/interventions/tabs/TasksTab.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "taskrow()",
       "id": "tabs_taskstab_taskrow"
     },
@@ -5119,7 +5119,7 @@
       "source_file": "components/interventions/tabs/TasksTab.jsx",
       "source_location": "L101",
       "_origin": "ast",
-      "community": 24,
+      "community": 17,
       "norm_label": "taskstab()",
       "id": "components_interventions_tabs_taskstab_jsx_tabs_taskstab_taskstab"
     },
@@ -5129,7 +5129,7 @@
       "source_file": "components/layout/BrandLogo.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "env_badge",
       "id": "layout_brandlogo_env_badge"
     },
@@ -5139,7 +5139,7 @@
       "source_file": "components/layout/HierarchicalHeaderLayout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "hierarchicalheaderlayout.jsx",
       "id": "layout_hierarchicalheaderlayout"
     },
@@ -5149,7 +5149,7 @@
       "source_file": "components/layout/Layout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "layout.jsx",
       "id": "layout_layout"
     },
@@ -5159,7 +5159,7 @@
       "source_file": "components/layout/Layout.jsx",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "layout()",
       "id": "layout_layout_layout"
     },
@@ -5169,7 +5169,7 @@
       "source_file": "components/layout/PageContainer.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "pagecontainer.jsx",
       "id": "layout_pagecontainer"
     },
@@ -5179,7 +5179,7 @@
       "source_file": "components/layout/PageContainer.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "pagecontainer()",
       "id": "layout_pagecontainer_pagecontainer"
     },
@@ -5189,7 +5189,7 @@
       "source_file": "components/layout/PageHeader.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "pageheader.jsx",
       "id": "layout_pageheader"
     },
@@ -5199,7 +5199,7 @@
       "source_file": "components/layout/PageHeader.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "pageheader()",
       "id": "layout_pageheader_pageheader"
     },
@@ -5209,7 +5209,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "sidebar.jsx",
       "id": "layout_sidebar"
     },
@@ -5219,7 +5219,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "colors",
       "id": "layout_sidebar_colors"
     },
@@ -5229,7 +5229,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "status_color_map",
       "id": "layout_sidebar_status_color_map"
     },
@@ -5239,7 +5239,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L71",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "rendermobileheader()",
       "id": "layout_sidebar_rendermobileheader"
     },
@@ -5249,7 +5249,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L101",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "renderdesktopheader()",
       "id": "layout_sidebar_renderdesktopheader"
     },
@@ -5259,7 +5259,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L124",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "renderpublicseparator()",
       "id": "layout_sidebar_renderpublicseparator"
     },
@@ -5269,7 +5269,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L166",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "sidebar()",
       "id": "layout_sidebar_sidebar"
     },
@@ -5279,7 +5279,7 @@
       "source_file": "components/layout/SidebarActionButton.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "base_button_style",
       "id": "layout_sidebaractionbutton_base_button_style"
     },
@@ -5289,7 +5289,7 @@
       "source_file": "components/layout/SidebarActionButton.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "variant_styles",
       "id": "layout_sidebaractionbutton_variant_styles"
     },
@@ -5299,7 +5299,7 @@
       "source_file": "components/layout/SidebarActionButton.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "getvariantstyle()",
       "id": "layout_sidebaractionbutton_getvariantstyle"
     },
@@ -5309,7 +5309,7 @@
       "source_file": "components/layout/SidebarMenuItem.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "sidebarmenuitem.jsx",
       "id": "layout_sidebarmenuitem"
     },
@@ -5319,7 +5319,7 @@
       "source_file": "components/layout/SidebarMenuItem.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "sidebarmenuitem()",
       "id": "layout_sidebarmenuitem_sidebarmenuitem"
     },
@@ -5329,7 +5329,7 @@
       "source_file": "components/layout/StandardHeaderLayout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "standardheaderlayout.jsx",
       "id": "layout_standardheaderlayout"
     },
@@ -5369,7 +5369,7 @@
       "source_file": "components/layout/TimeSelectionControl.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "timeselectioncontrol.jsx",
       "id": "layout_timeselectioncontrol"
     },
@@ -5379,7 +5379,7 @@
       "source_file": "components/layout/TimeSelectionControl.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "default_options",
       "id": "layout_timeselectioncontrol_default_options"
     },
@@ -5389,7 +5389,7 @@
       "source_file": "components/manufacturers/ManufacturerCreateForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "manufacturercreateform.jsx",
       "id": "manufacturers_manufacturercreateform"
     },
@@ -5479,7 +5479,7 @@
       "source_file": "components/planning/DayContextLeftColumn.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "daycontextleftcolumn.jsx",
       "id": "planning_daycontextleftcolumn"
     },
@@ -5489,7 +5489,7 @@
       "source_file": "components/planning/DayContextLeftColumn.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "equipementrequired()",
       "id": "planning_daycontextleftcolumn_equipementrequired"
     },
@@ -5519,7 +5519,7 @@
       "source_file": "components/planning/DayContextRightColumn.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "daycontextrightcolumn.jsx",
       "id": "planning_daycontextrightcolumn"
     },
@@ -5589,7 +5589,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "interventionselector.jsx",
       "id": "planning_interventionselector"
     },
@@ -5599,7 +5599,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "status_labels",
       "id": "planning_interventionselector_status_labels"
     },
@@ -5609,7 +5609,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "priority_sort",
       "id": "planning_interventionselector_priority_sort"
     },
@@ -5619,7 +5619,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "sortbypriority()",
       "id": "planning_interventionselector_sortbypriority"
     },
@@ -5629,7 +5629,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "group_labels",
       "id": "planning_interventionselector_group_labels"
     },
@@ -5639,7 +5639,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "groupedinterventionlist()",
       "id": "planning_interventionselector_groupedinterventionlist"
     },
@@ -5649,7 +5649,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L111",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "getdefaultdatetimelocal()",
       "id": "planning_interventionselector_getdefaultdatetimelocal"
     },
@@ -5659,7 +5659,7 @@
       "source_file": "components/planning/InterventionSelector.jsx",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "interventioncreatorflow()",
       "id": "planning_interventionselector_interventioncreatorflow"
     },
@@ -5909,7 +5909,7 @@
       "source_file": "components/preventive/GammeProgressBlock.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 13,
+      "community": 17,
       "norm_label": "gammeprogressblock.jsx",
       "id": "preventive_gammeprogressblock"
     },
@@ -5919,7 +5919,7 @@
       "source_file": "components/preventive/GammeProgressBlock.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 13,
+      "community": 17,
       "norm_label": "progressbar()",
       "id": "preventive_gammeprogressblock_progressbar"
     },
@@ -5929,7 +5929,7 @@
       "source_file": "components/preventive/GammeProgressBlock.jsx",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 13,
+      "community": 17,
       "norm_label": "stepicon()",
       "id": "preventive_gammeprogressblock_stepicon"
     },
@@ -5939,7 +5939,7 @@
       "source_file": "components/preventive/GammeProgressBlock.jsx",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 13,
+      "community": 17,
       "norm_label": "steprow()",
       "id": "preventive_gammeprogressblock_steprow"
     },
@@ -5949,7 +5949,7 @@
       "source_file": "components/preventive/GammeProgressBlock.jsx",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 13,
+      "community": 17,
       "norm_label": "progresssummary()",
       "id": "preventive_gammeprogressblock_progresssummary"
     },
@@ -6069,7 +6069,7 @@
       "source_file": "components/profile/UserProfileModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "userprofilemodal.jsx",
       "id": "profile_userprofilemodal"
     },
@@ -6079,7 +6079,7 @@
       "source_file": "components/profile/UserProfileModal.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "profiletab()",
       "id": "profile_userprofilemodal_profiletab"
     },
@@ -6089,7 +6089,7 @@
       "source_file": "components/profile/UserProfileModal.jsx",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "passwordtab()",
       "id": "profile_userprofilemodal_passwordtab"
     },
@@ -6099,7 +6099,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "inputstyle",
       "id": "purchase_requests_purchaserequesteditform_inputstyle"
     },
@@ -6109,7 +6109,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "f()",
       "id": "purchase_requests_purchaserequesteditform_f"
     },
@@ -6119,7 +6119,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "finput()",
       "id": "purchase_requests_purchaserequesteditform_finput"
     },
@@ -6129,7 +6129,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "ftextarea()",
       "id": "purchase_requests_purchaserequesteditform_ftextarea"
     },
@@ -6139,7 +6139,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "sectionheader()",
       "id": "purchase_requests_purchaserequesteditform_sectionheader"
     },
@@ -6149,7 +6149,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L75",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "urgency_options",
       "id": "purchase_requests_purchaserequesteditform_urgency_options"
     },
@@ -6159,7 +6159,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L81",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "dafieldssection()",
       "id": "purchase_requests_purchaserequesteditform_dafieldssection"
     },
@@ -6169,7 +6169,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L198",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "currentstocktab()",
       "id": "purchase_requests_purchaserequesteditform_currentstocktab"
     },
@@ -6189,7 +6189,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L303",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "createstocktab()",
       "id": "purchase_requests_purchaserequesteditform_createstocktab"
     },
@@ -6199,7 +6199,7 @@
       "source_file": "components/purchase-requests/PurchaseRequestEditForm.jsx",
       "source_location": "L322",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "stockitemcard()",
       "id": "purchase_requests_purchaserequesteditform_stockitemcard"
     },
@@ -6249,7 +6249,7 @@
       "source_file": "components/purchase/DispatchBanner.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "dispatchbanner.jsx",
       "id": "purchase_dispatchbanner"
     },
@@ -6259,7 +6259,7 @@
       "source_file": "components/purchase/OrderLineRowEditable.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "orderlineroweditable.jsx",
       "id": "purchase_orderlineroweditable"
     },
@@ -6269,7 +6269,7 @@
       "source_file": "components/purchase/OrderLineRowEditable.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "hasdraft()",
       "id": "purchase_orderlineroweditable_hasdraft"
     },
@@ -6279,7 +6279,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "purchaserequestdetail.jsx",
       "id": "purchase_purchaserequestdetail"
     },
@@ -6289,7 +6289,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "detailrow()",
       "id": "purchase_purchaserequestdetail_detailrow"
     },
@@ -6299,7 +6299,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "cardheader()",
       "id": "purchase_purchaserequestdetail_cardheader"
     },
@@ -6309,7 +6309,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "dainfocard()",
       "id": "purchase_purchaserequestdetail_dainfocard"
     },
@@ -6319,7 +6319,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "nostockitemempty()",
       "id": "purchase_purchaserequestdetail_nostockitemempty"
     },
@@ -6329,7 +6329,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L152",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "stockitemcard()",
       "id": "purchase_purchaserequestdetail_stockitemcard"
     },
@@ -6339,7 +6339,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L191",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "linestatebadge()",
       "id": "purchase_purchaserequestdetail_linestatebadge"
     },
@@ -6349,7 +6349,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L199",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "ordernumbercell()",
       "id": "purchase_purchaserequestdetail_ordernumbercell"
     },
@@ -6359,7 +6359,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L206",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "suppliercell()",
       "id": "purchase_purchaserequestdetail_suppliercell"
     },
@@ -6369,7 +6369,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L217",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "manufacturercell()",
       "id": "purchase_purchaserequestdetail_manufacturercell"
     },
@@ -6379,7 +6379,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L232",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "receivedcell()",
       "id": "purchase_purchaserequestdetail_receivedcell"
     },
@@ -6389,7 +6389,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L239",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "pricecell()",
       "id": "purchase_purchaserequestdetail_pricecell"
     },
@@ -6409,7 +6409,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L291",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "orderlinessection()",
       "id": "purchase_purchaserequestdetail_orderlinessection"
     },
@@ -6419,7 +6419,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L348",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "detailheader()",
       "id": "purchase_purchaserequestdetail_detailheader"
     },
@@ -6429,7 +6429,7 @@
       "source_file": "components/purchase/SupplierOrderDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "supplierorderdetail.jsx",
       "id": "purchase_supplierorderdetail"
     },
@@ -6439,7 +6439,7 @@
       "source_file": "components/purchase/SupplierOrderDetail.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "detailrow()",
       "id": "purchase_supplierorderdetail_detailrow"
     },
@@ -6449,7 +6449,7 @@
       "source_file": "components/purchase/SupplierOrderDetail.jsx",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "deliverydatefield()",
       "id": "purchase_supplierorderdetail_deliverydatefield"
     },
@@ -6479,7 +6479,7 @@
       "source_file": "components/purchase/SupplierOrderLines.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "supplierorderlines.jsx",
       "id": "purchase_supplierorderlines"
     },
@@ -6489,7 +6489,7 @@
       "source_file": "components/purchase/SupplierOrderLines.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "linerefs()",
       "id": "purchase_supplierorderlines_linerefs"
     },
@@ -6499,7 +6499,7 @@
       "source_file": "components/purchase/SupplierOrderLines.jsx",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "linebadges()",
       "id": "purchase_supplierorderlines_linebadges"
     },
@@ -6509,7 +6509,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "purchaserequestsarchivetab.jsx",
       "id": "tabs_purchaserequestsarchivetab"
     },
@@ -6519,7 +6519,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "archive_statuses",
       "id": "tabs_purchaserequestsarchivetab_archive_statuses"
     },
@@ -6529,7 +6529,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "archivefilters()",
       "id": "tabs_purchaserequestsarchivetab_archivefilters"
     },
@@ -6539,7 +6539,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTab.jsx",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "detailemptystate()",
       "id": "tabs_purchaserequeststab_detailemptystate"
     },
@@ -6549,7 +6549,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "purchaserequeststabparts.jsx",
       "id": "tabs_purchaserequeststabparts"
     },
@@ -6559,7 +6559,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L70",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "prfilters()",
       "id": "tabs_purchaserequeststabparts_prfilters"
     },
@@ -6569,7 +6569,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L118",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "archive_statuses",
       "id": "tabs_purchaserequeststabparts_archive_statuses"
     },
@@ -6579,7 +6579,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L123",
       "_origin": "ast",
-      "community": 62,
+      "community": 60,
       "norm_label": "archivefilters()",
       "id": "tabs_purchaserequeststabparts_archivefilters"
     },
@@ -6619,7 +6619,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "qualitydatacomponents.jsx",
       "id": "quality_data_qualitydatacomponents"
     },
@@ -6629,7 +6629,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "kpicard()",
       "id": "quality_data_qualitydatacomponents_kpicard"
     },
@@ -6639,7 +6639,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "synthesiscards()",
       "id": "quality_data_qualitydatacomponents_synthesiscards"
     },
@@ -6649,7 +6649,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L85",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "noproblemsmessage()",
       "id": "quality_data_qualitydatacomponents_noproblemsmessage"
     },
@@ -6659,7 +6659,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "problemcard()",
       "id": "quality_data_qualitydatacomponents_problemcard"
     },
@@ -6669,7 +6669,7 @@
       "source_file": "components/quality-data/QualityDataComponents.jsx",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "entitysection()",
       "id": "quality_data_qualitydatacomponents_entitysection"
     },
@@ -6679,7 +6679,7 @@
       "source_file": "components/quality-data/config.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "config.js",
       "id": "quality_data_config"
     },
@@ -6689,7 +6689,7 @@
       "source_file": "components/quality-data/config.js",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "entity_labels",
       "id": "quality_data_config_entity_labels"
     },
@@ -6699,7 +6699,7 @@
       "source_file": "components/quality-data/config.js",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "severity_config",
       "id": "quality_data_config_severity_config"
     },
@@ -6709,7 +6709,7 @@
       "source_file": "components/quality-data/config.js",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "rule_descriptions",
       "id": "quality_data_config_rule_descriptions"
     },
@@ -6719,7 +6719,7 @@
       "source_file": "components/quality-data/tabs/QualityDataTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "qualitydatatab.jsx",
       "id": "tabs_qualitydatatab"
     },
@@ -6759,7 +6759,7 @@
       "source_file": "components/service-status/ServiceStatusComponents.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "servicestatuscomponents.jsx",
       "id": "service_status_servicestatuscomponents"
     },
@@ -6769,7 +6769,7 @@
       "source_file": "components/service-status/ServiceStatusComponents.jsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "synthesiscards()",
       "id": "service_status_servicestatuscomponents_synthesiscards"
     },
@@ -6779,7 +6779,7 @@
       "source_file": "components/service-status/ServiceStatusComponents.jsx",
       "source_location": "L56",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "timebreakdownsection()",
       "id": "service_status_servicestatuscomponents_timebreakdownsection"
     },
@@ -6789,7 +6789,7 @@
       "source_file": "components/service-status/ServiceStatusDetails.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "servicestatusdetails.jsx",
       "id": "service_status_servicestatusdetails"
     },
@@ -6799,7 +6799,7 @@
       "source_file": "components/service-status/ServiceStatusDetails.jsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "decisionguide()",
       "id": "service_status_servicestatusdetails_decisionguide"
     },
@@ -6829,7 +6829,7 @@
       "source_file": "components/service-status/config.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "config.js",
       "id": "service_status_config"
     },
@@ -6839,7 +6839,7 @@
       "source_file": "components/service-status/config.js",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "service_time_type_categories",
       "id": "service_status_config_service_time_type_categories"
     },
@@ -6849,7 +6849,7 @@
       "source_file": "components/service-status/config.js",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "thresholds",
       "id": "service_status_config_thresholds"
     },
@@ -6859,7 +6859,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "servicestatustab.jsx",
       "id": "tabs_servicestatustab"
     },
@@ -6869,7 +6869,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getchargecolor()",
       "id": "tabs_servicestatustab_getchargecolor"
     },
@@ -6879,7 +6879,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getfragmentationcolor()",
       "id": "tabs_servicestatustab_getfragmentationcolor"
     },
@@ -6889,7 +6889,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getpilotagecolor()",
       "id": "tabs_servicestatustab_getpilotagecolor"
     },
@@ -6899,7 +6899,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L59",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getfragmentationinterpretation()",
       "id": "tabs_servicestatustab_getfragmentationinterpretation"
     },
@@ -6909,7 +6909,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L69",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getchargeinterpretation()",
       "id": "tabs_servicestatustab_getchargeinterpretation"
     },
@@ -6919,7 +6919,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L82",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getpilotageinterpretation()",
       "id": "tabs_servicestatustab_getpilotageinterpretation"
     },
@@ -6929,7 +6929,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L95",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "extractcolors()",
       "id": "tabs_servicestatustab_extractcolors"
     },
@@ -6939,7 +6939,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "extracttexts()",
       "id": "tabs_servicestatustab_extracttexts"
     },
@@ -6949,7 +6949,7 @@
       "source_file": "components/service-status/tabs/ServiceStatusTab.jsx",
       "source_location": "L113",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "calculatemetrics()",
       "id": "tabs_servicestatustab_calculatemetrics"
     },
@@ -7089,7 +7089,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "stockdetailpanel.jsx",
       "id": "stock_stockdetailpanel"
     },
@@ -7099,7 +7099,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "charvalue()",
       "id": "stock_stockdetailpanel_charvalue"
     },
@@ -7109,7 +7109,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "manufacturerheader()",
       "id": "stock_stockdetailpanel_manufacturerheader"
     },
@@ -7119,7 +7119,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "metarow()",
       "id": "stock_stockdetailpanel_metarow"
     },
@@ -7129,7 +7129,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "itemmeta()",
       "id": "stock_stockdetailpanel_itemmeta"
     },
@@ -7139,7 +7139,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L92",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "stockqtycard()",
       "id": "stock_stockdetailpanel_stockqtycard"
     },
@@ -7149,7 +7149,7 @@
       "source_file": "components/stock/StockDetailPanel.jsx",
       "source_location": "L107",
       "_origin": "ast",
-      "community": 63,
+      "community": 61,
       "norm_label": "alternativessection()",
       "id": "stock_stockdetailpanel_alternativessection"
     },
@@ -7219,7 +7219,7 @@
       "source_file": "components/stock/StockItemSuppliers.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "stockitemsuppliers.jsx",
       "id": "stock_stockitemsuppliers"
     },
@@ -7229,7 +7229,7 @@
       "source_file": "components/stock/StockItemSuppliers.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "supplierssection()",
       "id": "stock_stockitemsuppliers_supplierssection"
     },
@@ -7329,7 +7329,7 @@
       "source_file": "components/suppliers/SupplierDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "supplierdetail.jsx",
       "id": "suppliers_supplierdetail"
     },
@@ -7339,7 +7339,7 @@
       "source_file": "components/suppliers/SupplierDetail.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "linkrow()",
       "id": "suppliers_supplierdetail_linkrow"
     },
@@ -7349,7 +7349,7 @@
       "source_file": "components/suppliers/SupplierDetail.jsx",
       "source_location": "L90",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "linkstable()",
       "id": "suppliers_supplierdetail_linkstable"
     },
@@ -7409,7 +7409,7 @@
       "source_file": "components/suppliers/SupplierInfo.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "supplierinfo.jsx",
       "id": "suppliers_supplierinfo"
     },
@@ -7419,7 +7419,7 @@
       "source_file": "components/suppliers/SupplierInfo.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "supplierinfo()",
       "id": "suppliers_supplierinfo_supplierinfo"
     },
@@ -7429,7 +7429,7 @@
       "source_file": "components/suppliers/SupplierItemForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "supplieritemform.jsx",
       "id": "suppliers_supplieritemform"
     },
@@ -7439,7 +7439,7 @@
       "source_file": "components/suppliers/SupplierItemForm.jsx",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "usesupplierslist()",
       "id": "suppliers_supplieritemform_usesupplierslist"
     },
@@ -7449,7 +7449,7 @@
       "source_file": "components/suppliers/SupplierItemForm.jsx",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "initform()",
       "id": "suppliers_supplieritemform_initform"
     },
@@ -7459,7 +7459,7 @@
       "source_file": "components/suppliers/SupplierItemForm.jsx",
       "source_location": "L117",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "stockcreatetabcontent()",
       "id": "suppliers_supplieritemform_stockcreatetabcontent"
     },
@@ -7469,7 +7469,7 @@
       "source_file": "components/suppliers/SupplierItemForm.jsx",
       "source_location": "L129",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "reffields()",
       "id": "suppliers_supplieritemform_reffields"
     },
@@ -7489,7 +7489,7 @@
       "source_file": "components/tasks/TaskCreateDialog.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "taskcreatedialog.jsx",
       "id": "tasks_taskcreatedialog"
     },
@@ -7499,7 +7499,7 @@
       "source_file": "components/tasks/TaskCreateForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "taskcreateform.jsx",
       "id": "tasks_taskcreateform"
     },
@@ -7509,7 +7509,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "taskdetail.jsx",
       "id": "tasks_taskdetail"
     },
@@ -7519,7 +7519,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "detaildate()",
       "id": "tasks_taskdetail_detaildate"
     },
@@ -7529,7 +7529,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "formatduration()",
       "id": "tasks_taskdetail_formatduration"
     },
@@ -7539,7 +7539,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "cardheader()",
       "id": "tasks_taskdetail_cardheader"
     },
@@ -7549,7 +7549,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "readonlyrow()",
       "id": "tasks_taskdetail_readonlyrow"
     },
@@ -7559,7 +7559,7 @@
       "source_file": "components/tasks/TaskDetail.jsx",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 60,
+      "community": 7,
       "norm_label": "taskdetail()",
       "id": "tasks_taskdetail_taskdetail"
     },
@@ -7649,7 +7649,7 @@
       "source_file": "components/ui/ActionButtons.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "actionbuttons.jsx",
       "id": "ui_actionbuttons"
     },
@@ -7669,7 +7669,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "asyncsearchselect.jsx",
       "id": "ui_asyncsearchselect"
     },
@@ -7679,7 +7679,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "state_box",
       "id": "ui_asyncsearchselect_state_box"
     },
@@ -7689,7 +7689,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "statebox()",
       "id": "ui_asyncsearchselect_statebox"
     },
@@ -7699,7 +7699,7 @@
       "source_file": "components/ui/AuditGuardDialog.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "auditguarddialog.jsx",
       "id": "ui_auditguarddialog"
     },
@@ -7709,7 +7709,7 @@
       "source_file": "components/ui/AuditReasonDialog.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "auditreasondialog.jsx",
       "id": "ui_auditreasondialog"
     },
@@ -7719,7 +7719,7 @@
       "source_file": "components/ui/AuditReasonPicker.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 75,
+      "community": 74,
       "norm_label": "auditreasonpicker.jsx",
       "id": "ui_auditreasonpicker"
     },
@@ -7729,7 +7729,7 @@
       "source_file": "components/ui/BrandLogo.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "brandlogo.jsx",
       "id": "ui_brandlogo"
     },
@@ -7739,7 +7739,7 @@
       "source_file": "components/ui/CriticalAlert.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "criticalalert.jsx",
       "id": "ui_criticalalert"
     },
@@ -7749,7 +7749,7 @@
       "source_file": "components/ui/CriticalAlert.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "severity_colors",
       "id": "ui_criticalalert_severity_colors"
     },
@@ -7759,7 +7759,7 @@
       "source_file": "components/ui/CriticalAlert.jsx",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "getseveritycolor()",
       "id": "ui_criticalalert_getseveritycolor"
     },
@@ -7769,7 +7769,7 @@
       "source_file": "components/ui/CriticalAlert.jsx",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "urgencycount()",
       "id": "ui_criticalalert_urgencycount"
     },
@@ -7819,7 +7819,7 @@
       "source_file": "components/ui/DateRangeFilter.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "daterangefilter.jsx",
       "id": "ui_daterangefilter"
     },
@@ -7849,7 +7849,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "emptystate.jsx",
       "id": "ui_emptystate"
     },
@@ -7859,7 +7859,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "icon_style",
       "id": "ui_emptystate_icon_style"
     },
@@ -7869,7 +7869,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "text_center_style",
       "id": "ui_emptystate_text_center_style"
     },
@@ -7879,7 +7879,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "icondisplay()",
       "id": "ui_emptystate_icondisplay"
     },
@@ -7889,7 +7889,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L81",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "textcontent()",
       "id": "ui_emptystate_textcontent"
     },
@@ -7899,7 +7899,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L100",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "actionsbar()",
       "id": "ui_emptystate_actionsbar"
     },
@@ -7909,7 +7909,7 @@
       "source_file": "components/ui/EmptyState.jsx",
       "source_location": "L155",
       "_origin": "ast",
-      "community": 57,
+      "community": 56,
       "norm_label": "emptystate()",
       "id": "ui_emptystate_emptystate"
     },
@@ -7919,7 +7919,7 @@
       "source_file": "components/ui/EntitySelectorCard.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "entityselectorcard.jsx",
       "id": "ui_entityselectorcard"
     },
@@ -7949,7 +7949,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "errorstate.jsx",
       "id": "ui_errorstate"
     },
@@ -7959,7 +7959,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "link_style",
       "id": "ui_errorstate_link_style"
     },
@@ -7969,7 +7969,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "errorheader()",
       "id": "ui_errorstate_errorheader"
     },
@@ -7979,7 +7979,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L78",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "retrybutton()",
       "id": "ui_errorstate_retrybutton"
     },
@@ -7989,7 +7989,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L98",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "backbutton()",
       "id": "ui_errorstate_backbutton"
     },
@@ -7999,7 +7999,7 @@
       "source_file": "components/ui/ErrorState.jsx",
       "source_location": "L156",
       "_origin": "ast",
-      "community": 27,
+      "community": 71,
       "norm_label": "errorstate()",
       "id": "ui_errorstate_errorstate"
     },
@@ -8119,7 +8119,7 @@
       "source_file": "components/ui/GenericTabComponents.jsx",
       "source_location": "L172",
       "_origin": "ast",
-      "community": 13,
+      "community": 41,
       "norm_label": "timeline()",
       "id": "ui_generictabcomponents_timeline"
     },
@@ -8169,7 +8169,7 @@
       "source_file": "components/ui/InteractiveTable.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "interactivetable.jsx",
       "id": "ui_interactivetable"
     },
@@ -8179,7 +8179,7 @@
       "source_file": "components/ui/ItemForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "itemform.jsx",
       "id": "ui_itemform"
     },
@@ -8189,7 +8189,7 @@
       "source_file": "components/ui/ItemForm.jsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "itemform()",
       "id": "ui_itemform_itemform"
     },
@@ -8199,7 +8199,7 @@
       "source_file": "components/ui/KPICard.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "kpicard.jsx",
       "id": "ui_kpicard"
     },
@@ -8209,7 +8209,7 @@
       "source_file": "components/ui/KPICard.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "availability_thresholds",
       "id": "ui_kpicard_availability_thresholds"
     },
@@ -8219,7 +8219,7 @@
       "source_file": "components/ui/KPICard.jsx",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "determinecolor()",
       "id": "ui_kpicard_determinecolor"
     },
@@ -8229,7 +8229,7 @@
       "source_file": "components/ui/KPICard.jsx",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 8,
+      "community": 9,
       "norm_label": "kpicard()",
       "id": "ui_kpicard_kpicard"
     },
@@ -8239,7 +8239,7 @@
       "source_file": "components/ui/LoadingState.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "loadingstate.jsx",
       "id": "ui_loadingstate"
     },
@@ -8249,7 +8249,7 @@
       "source_file": "components/ui/LoadingState.jsx",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "getminheight()",
       "id": "ui_loadingstate_getminheight"
     },
@@ -8259,7 +8259,7 @@
       "source_file": "components/ui/LockedBadge.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "lockedbadge.jsx",
       "id": "ui_lockedbadge"
     },
@@ -8269,7 +8269,7 @@
       "source_file": "components/ui/LockedBadge.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 10,
+      "community": 13,
       "norm_label": "lockedbadge()",
       "id": "ui_lockedbadge_lockedbadge"
     },
@@ -8309,7 +8309,7 @@
       "source_file": "components/ui/MobileHeader.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "mobileheader.jsx",
       "id": "ui_mobileheader"
     },
@@ -8339,7 +8339,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "getselectedbasketnumber()",
       "id": "ui_purchaserequestitem_getselectedbasketnumber"
     },
@@ -8349,7 +8349,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "deriveprstyle()",
       "id": "ui_purchaserequestitem_deriveprstyle"
     },
@@ -8359,7 +8359,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "urgencybadge()",
       "id": "ui_purchaserequestitem_urgencybadge"
     },
@@ -8369,7 +8369,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "deletebutton()",
       "id": "ui_purchaserequestitem_deletebutton"
     },
@@ -8379,7 +8379,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "deleteconfirm()",
       "id": "ui_purchaserequestitem_deleteconfirm"
     },
@@ -8389,7 +8389,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "consultationhint()",
       "id": "ui_purchaserequestitem_consultationhint"
     },
@@ -8399,7 +8399,7 @@
       "source_file": "components/ui/PurchaseRequestItem.jsx",
       "source_location": "L85",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "prbadges()",
       "id": "ui_purchaserequestitem_prbadges"
     },
@@ -8409,7 +8409,7 @@
       "source_file": "components/ui/SearchField.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "searchfield.jsx",
       "id": "ui_searchfield"
     },
@@ -8419,7 +8419,7 @@
       "source_file": "components/ui/SearchField.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "searchfield()",
       "id": "ui_searchfield_searchfield"
     },
@@ -8429,7 +8429,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBox.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "statusbox.jsx",
       "id": "searchableselect_statusbox"
     },
@@ -8439,7 +8439,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "statusboxstates.jsx",
       "id": "searchableselect_statusboxstates"
     },
@@ -8449,7 +8449,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "emptystate()",
       "id": "searchableselect_statusboxstates_emptystate"
     },
@@ -8459,7 +8459,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "selectedstate()",
       "id": "searchableselect_statusboxstates_selectedstate"
     },
@@ -8469,7 +8469,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "noresultsstate()",
       "id": "searchableselect_statusboxstates_noresultsstate"
     },
@@ -8479,7 +8479,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "specialrequestoption()",
       "id": "searchableselect_statusboxstates_specialrequestoption"
     },
@@ -8489,7 +8489,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "createnewsupplieroption()",
       "id": "searchableselect_statusboxstates_createnewsupplieroption"
     },
@@ -8499,7 +8499,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L130",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "suggestionslist()",
       "id": "searchableselect_statusboxstates_suggestionslist"
     },
@@ -8509,7 +8509,7 @@
       "source_file": "components/ui/SearchableSelect/index.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "index.jsx",
       "id": "searchableselect_index"
     },
@@ -8519,7 +8519,7 @@
       "source_file": "components/ui/SearchableSelect/index.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "searchableselect()",
       "id": "searchableselect_index_searchableselect"
     },
@@ -8529,7 +8529,7 @@
       "source_file": "components/ui/SearchableSelect/useSearchableSelect.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "usesearchableselect.js",
       "id": "searchableselect_usesearchableselect"
     },
@@ -8559,7 +8559,7 @@
       "source_file": "components/ui/ServerStatus.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "serverstatus.jsx",
       "id": "ui_serverstatus"
     },
@@ -8569,7 +8569,7 @@
       "source_file": "components/ui/SidebarActionButton.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "sidebaractionbutton.jsx",
       "id": "ui_sidebaractionbutton"
     },
@@ -8579,7 +8579,7 @@
       "source_file": "components/ui/SidebarActionButton.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "base_button_style",
       "id": "ui_sidebaractionbutton_base_button_style"
     },
@@ -8589,7 +8589,7 @@
       "source_file": "components/ui/SidebarActionButton.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "variant_styles",
       "id": "ui_sidebaractionbutton_variant_styles"
     },
@@ -8599,7 +8599,7 @@
       "source_file": "components/ui/SidebarActionButton.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "getvariantstyle()",
       "id": "ui_sidebaractionbutton_getvariantstyle"
     },
@@ -8609,7 +8609,7 @@
       "source_file": "components/ui/SidebarFooter.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "sidebarfooter.jsx",
       "id": "ui_sidebarfooter"
     },
@@ -8729,7 +8729,7 @@
       "source_file": "components/ui/StatusCallout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "statuscallout.jsx",
       "id": "ui_statuscallout"
     },
@@ -8739,7 +8739,7 @@
       "source_file": "components/ui/StatusCallout.jsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "type_config",
       "id": "ui_statuscallout_type_config"
     },
@@ -8749,7 +8749,7 @@
       "source_file": "components/ui/StatusCallout.jsx",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 66,
+      "community": 64,
       "norm_label": "notification_types",
       "id": "ui_statuscallout_notification_types"
     },
@@ -8759,7 +8759,7 @@
       "source_file": "components/ui/StockRefLink.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "stockreflink.jsx",
       "id": "ui_stockreflink"
     },
@@ -8799,7 +8799,7 @@
       "source_file": "components/ui/TableHeader.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "searchinput()",
       "id": "ui_tableheader_searchinput"
     },
@@ -8819,7 +8819,7 @@
       "source_file": "components/ui/useSidebarState.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "usesidebarstate.js",
       "id": "ui_usesidebarstate"
     },
@@ -8829,7 +8829,7 @@
       "source_file": "config/adminConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "adminconfig.js",
       "id": "config_adminconfig"
     },
@@ -8839,7 +8839,7 @@
       "source_file": "config/adminConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 26,
       "norm_label": "role_colors",
       "id": "config_adminconfig_role_colors"
     },
@@ -9019,7 +9019,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "colorpalette.js",
       "id": "config_colorpalette"
     },
@@ -9029,7 +9029,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L101",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "radix_color_map",
       "id": "config_colorpalette_radix_color_map"
     },
@@ -9039,7 +9039,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L118",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "color_usage",
       "id": "config_colorpalette_color_usage"
     },
@@ -9049,7 +9049,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L169",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "color_scales",
       "id": "config_colorpalette_color_scales"
     },
@@ -9059,7 +9059,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L241",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "color_tones",
       "id": "config_colorpalette_color_tones"
     },
@@ -9079,7 +9079,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "status_config",
       "id": "config_interventiontypes_status_config"
     },
@@ -9089,7 +9089,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "priority_config",
       "id": "config_interventiontypes_priority_config"
     },
@@ -9099,7 +9099,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 77,
+      "community": 76,
       "norm_label": "state_colors",
       "id": "config_interventiontypes_state_colors"
     },
@@ -9109,7 +9109,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L130",
       "_origin": "ast",
-      "community": 10,
+      "community": 7,
       "norm_label": "priority_badge_colors",
       "id": "config_interventiontypes_priority_badge_colors"
     },
@@ -9119,7 +9119,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L138",
       "_origin": "ast",
-      "community": 13,
+      "community": 7,
       "norm_label": "kanban_columns",
       "id": "config_interventiontypes_kanban_columns"
     },
@@ -9139,7 +9139,7 @@
       "source_file": "config/layoutConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "layoutconfig.js",
       "id": "config_layoutconfig"
     },
@@ -9149,7 +9149,7 @@
       "source_file": "config/layoutConfig.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "default_container_props",
       "id": "config_layoutconfig_default_container_props"
     },
@@ -9159,7 +9159,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "menuconfig.js",
       "id": "config_menuconfig"
     },
@@ -9169,7 +9169,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "section_labels",
       "id": "config_menuconfig_section_labels"
     },
@@ -9179,7 +9179,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "section_order",
       "id": "config_menuconfig_section_order"
     },
@@ -9189,7 +9189,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "getmenuitems()",
       "id": "config_menuconfig_getmenuitems"
     },
@@ -9199,7 +9199,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "getmenusections()",
       "id": "config_menuconfig_getmenusections"
     },
@@ -9219,7 +9219,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L89",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "canaccesspage()",
       "id": "config_menuconfig_canaccesspage"
     },
@@ -9229,7 +9229,7 @@
       "source_file": "config/pagesConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 19,
       "norm_label": "pagesconfig.js",
       "id": "config_pagesconfig"
     },
@@ -9449,7 +9449,7 @@
       "source_file": "hooks/admin/useAdminAudit.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 20,
+      "community": 21,
       "norm_label": "useadminaudit.js",
       "id": "admin_useadminaudit"
     },
@@ -9459,7 +9459,7 @@
       "source_file": "hooks/admin/useAdminEndpoints.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 74,
+      "community": 72,
       "norm_label": "useadminendpoints.js",
       "id": "admin_useadminendpoints"
     },
@@ -9529,7 +9529,7 @@
       "source_file": "hooks/admin/useAdminRoles.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "useadminroles.js",
       "id": "admin_useadminroles"
     },
@@ -9539,7 +9539,7 @@
       "source_file": "hooks/admin/useAdminRoles.js",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "userolepermissions()",
       "id": "admin_useadminroles_userolepermissions"
     },
@@ -9549,7 +9549,7 @@
       "source_file": "hooks/admin/useAdminRoles.js",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "userolesmatrix()",
       "id": "admin_useadminroles_userolesmatrix"
     },
@@ -9559,7 +9559,7 @@
       "source_file": "hooks/admin/useAdminRoles.js",
       "source_location": "L137",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "usepermissionaudit()",
       "id": "admin_useadminroles_usepermissionaudit"
     },
@@ -9569,7 +9569,7 @@
       "source_file": "hooks/admin/useAdminSecurity.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "useadminsecurity.js",
       "id": "admin_useadminsecurity"
     },
@@ -9579,7 +9579,7 @@
       "source_file": "hooks/admin/useAdminSecurity.js",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "usesecuritylogs()",
       "id": "admin_useadminsecurity_usesecuritylogs"
     },
@@ -9589,7 +9589,7 @@
       "source_file": "hooks/admin/useAdminSecurity.js",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "useipblocklist()",
       "id": "admin_useadminsecurity_useipblocklist"
     },
@@ -9599,7 +9599,7 @@
       "source_file": "hooks/admin/useAdminSecurity.js",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "useemaildomainrules()",
       "id": "admin_useadminsecurity_useemaildomainrules"
     },
@@ -9609,7 +9609,7 @@
       "source_file": "hooks/admin/useAdminSecurity.js",
       "source_location": "L138",
       "_origin": "ast",
-      "community": 71,
+      "community": 25,
       "norm_label": "useapikeys()",
       "id": "admin_useadminsecurity_useapikeys"
     },
@@ -9639,7 +9639,7 @@
       "source_file": "hooks/equipements/useEquipementClasses.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "useequipementclasses.js",
       "id": "equipements_useequipementclasses"
     },
@@ -9659,7 +9659,7 @@
       "source_file": "hooks/equipements/useEquipements.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "useequipements.js",
       "id": "equipements_useequipements"
     },
@@ -9689,7 +9689,7 @@
       "source_file": "hooks/interventions/useInterventionCreate.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "useinterventioncreate.js",
       "id": "interventions_useinterventioncreate"
     },
@@ -9699,7 +9699,7 @@
       "source_file": "hooks/interventions/useInterventionCreate.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 31,
+      "community": 13,
       "norm_label": "getdefaultdatetimelocal()",
       "id": "interventions_useinterventioncreate_getdefaultdatetimelocal"
     },
@@ -9709,7 +9709,7 @@
       "source_file": "hooks/interventions/useInterventionDetail.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 34,
+      "community": 24,
       "norm_label": "useinterventiondetail.js",
       "id": "interventions_useinterventiondetail"
     },
@@ -9719,7 +9719,7 @@
       "source_file": "hooks/interventions/useInterventionsList.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 13,
+      "community": 24,
       "norm_label": "useinterventionslist.js",
       "id": "interventions_useinterventionslist"
     },
@@ -9749,7 +9749,7 @@
       "source_file": "hooks/purchase/useNegotiationLines.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usenegotiationlines.js",
       "id": "purchase_usenegotiationlines"
     },
@@ -9759,7 +9759,7 @@
       "source_file": "hooks/purchase/useNegotiationLines.js",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usedeliverydate()",
       "id": "purchase_usenegotiationlines_usedeliverydate"
     },
@@ -9769,7 +9769,7 @@
       "source_file": "hooks/purchase/usePurchaseRequests.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 8,
       "norm_label": "usepurchaserequests.js",
       "id": "purchase_usepurchaserequests"
     },
@@ -9779,7 +9779,7 @@
       "source_file": "hooks/purchase/useSupplierOrderDetail.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usesupplierorderdetail.js",
       "id": "purchase_usesupplierorderdetail"
     },
@@ -9789,7 +9789,7 @@
       "source_file": "hooks/purchase/useSupplierOrders.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usesupplierorders.js",
       "id": "purchase_usesupplierorders"
     },
@@ -9799,7 +9799,7 @@
       "source_file": "hooks/purchase/useSupplierOrders.js",
       "source_location": "L94",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "hex_to_radix",
       "id": "purchase_usesupplierorders_hex_to_radix"
     },
@@ -9809,7 +9809,7 @@
       "source_file": "hooks/purchase/useSupplierOrders.js",
       "source_location": "L107",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usesupplierorderstatuses()",
       "id": "purchase_usesupplierorders_usesupplierorderstatuses"
     },
@@ -9819,7 +9819,7 @@
       "source_file": "hooks/purchase/useSupplierOrders.js",
       "source_location": "L131",
       "_origin": "ast",
-      "community": 21,
+      "community": 22,
       "norm_label": "usesupplierorderfacets()",
       "id": "purchase_usesupplierorders_usesupplierorderfacets"
     },
@@ -9829,7 +9829,7 @@
       "source_file": "hooks/quality-data/useQualityData.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 76,
+      "community": 75,
       "norm_label": "usequalitydata.js",
       "id": "quality_data_usequalitydata"
     },
@@ -9839,7 +9839,7 @@
       "source_file": "hooks/service-status/useServiceData.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 66,
       "norm_label": "useservicedata.js",
       "id": "service_status_useservicedata"
     },
@@ -9879,7 +9879,7 @@
       "source_file": "hooks/shared/useMediaQuery.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "usemediaquery.js",
       "id": "shared_usemediaquery"
     },
@@ -9889,7 +9889,7 @@
       "source_file": "hooks/shared/useNotification.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 25,
       "norm_label": "usenotification.js",
       "id": "shared_usenotification"
     },
@@ -9899,7 +9899,7 @@
       "source_file": "hooks/shared/useSidebarState.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "usesidebarstate.js",
       "id": "shared_usesidebarstate"
     },
@@ -9919,7 +9919,7 @@
       "source_file": "hooks/shared/useTimeSelection.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "usetimeselection.jsx",
       "id": "shared_usetimeselection"
     },
@@ -9929,7 +9929,7 @@
       "source_file": "hooks/shared/useTimeSelection.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 73,
+      "community": 70,
       "norm_label": "default_options",
       "id": "shared_usetimeselection_default_options"
     },
@@ -10039,7 +10039,7 @@
       "source_file": "hooks/suppliers/useManufacturerDetail.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "usemanufacturerdetail.js",
       "id": "suppliers_usemanufacturerdetail"
     },
@@ -10049,7 +10049,7 @@
       "source_file": "hooks/suppliers/useManufacturers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 59,
       "norm_label": "usemanufacturers.js",
       "id": "suppliers_usemanufacturers"
     },
@@ -10059,7 +10059,7 @@
       "source_file": "hooks/suppliers/useSupplierDetail.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 55,
+      "community": 54,
       "norm_label": "usesupplierdetail.js",
       "id": "suppliers_usesupplierdetail"
     },
@@ -10069,7 +10069,7 @@
       "source_file": "hooks/suppliers/useSuppliers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 56,
+      "community": 55,
       "norm_label": "usesuppliers.js",
       "id": "suppliers_usesuppliers"
     },
@@ -10079,7 +10079,7 @@
       "source_file": "hooks/tasks/useTaskCreate.d.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "usetaskcreateoptions",
       "id": "tasks_usetaskcreate_d_usetaskcreateoptions"
     },
@@ -10089,7 +10089,7 @@
       "source_file": "hooks/tasks/useTaskCreate.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "usetaskcreate.js",
       "id": "tasks_usetaskcreate"
     },
@@ -10099,7 +10099,7 @@
       "source_file": "hooks/tasks/useTaskCreate.js",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 26,
+      "community": 28,
       "norm_label": "empty_form",
       "id": "tasks_usetaskcreate_empty_form"
     },
@@ -10189,7 +10189,7 @@
       "source_file": "hooks/useAuditGuard.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "useauditguard.js",
       "id": "hooks_useauditguard"
     },
@@ -10199,7 +10199,7 @@
       "source_file": "hooks/useAuditGuard.js",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 72,
+      "community": 69,
       "norm_label": "useauditguard()",
       "id": "hooks_useauditguard_useauditguard"
     },
@@ -10319,7 +10319,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "useinterventionurgency.js",
       "id": "hooks_useinterventionurgency"
     },
@@ -10329,7 +10329,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "startofday()",
       "id": "hooks_useinterventionurgency_startofday"
     },
@@ -10339,7 +10339,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "daysbetween()",
       "id": "hooks_useinterventionurgency_daysbetween"
     },
@@ -10349,7 +10349,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "daysago()",
       "id": "hooks_useinterventionurgency_daysago"
     },
@@ -10359,7 +10359,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "getinterventionurgency()",
       "id": "hooks_useinterventionurgency_getinterventionurgency"
     },
@@ -10369,7 +10369,7 @@
       "source_file": "hooks/useInterventionUrgency.js",
       "source_location": "L75",
       "_origin": "ast",
-      "community": 64,
+      "community": 62,
       "norm_label": "formatduedate()",
       "id": "hooks_useinterventionurgency_formatduedate"
     },
@@ -10409,7 +10409,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "auditguard.js",
       "id": "api_auditguard"
     },
@@ -10419,7 +10419,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "_url_entity_map",
       "id": "api_auditguard_url_entity_map"
     },
@@ -10429,7 +10429,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "_auditconfigcache",
       "id": "api_auditguard_auditconfigcache"
     },
@@ -10439,7 +10439,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "_urlkind()",
       "id": "api_auditguard_urlkind"
     },
@@ -10449,7 +10449,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L56",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "cacheauditfromresponse()",
       "id": "api_auditguard_cacheauditfromresponse"
     },
@@ -10459,7 +10459,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "_subscribers",
       "id": "api_auditguard_subscribers"
     },
@@ -10469,7 +10469,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L81",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "onauditrequired()",
       "id": "api_auditguard_onauditrequired"
     },
@@ -10479,7 +10479,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L97",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "isauditrequirederror()",
       "id": "api_auditguard_isauditrequirederror"
     },
@@ -10489,7 +10489,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L113",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "getauditentitytype()",
       "id": "api_auditguard_getauditentitytype"
     },
@@ -10499,7 +10499,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L121",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "handleauditerror()",
       "id": "api_auditguard_handleauditerror"
     },
@@ -10509,7 +10509,7 @@
       "source_file": "lib/api/auditGuard.js",
       "source_location": "L190",
       "_origin": "ast",
-      "community": 36,
+      "community": 35,
       "norm_label": "_retrywithreason()",
       "id": "api_auditguard_retrywithreason"
     },
@@ -10519,7 +10519,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "client.js",
       "id": "api_client"
     },
@@ -10529,7 +10529,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "api",
       "id": "api_client_api"
     },
@@ -10539,7 +10539,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "refreshsubscribers",
       "id": "api_client_refreshsubscribers"
     },
@@ -10549,7 +10549,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "subscribetokenrefresh()",
       "id": "api_client_subscribetokenrefresh"
     },
@@ -10559,7 +10559,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "onrefreshdone()",
       "id": "api_client_onrefreshdone"
     },
@@ -10569,7 +10569,7 @@
       "source_file": "lib/api/client.js",
       "source_location": "L48",
       "_origin": "ast",
-      "community": 58,
+      "community": 57,
       "norm_label": "redirecttologin()",
       "id": "api_client_redirecttologin"
     },
@@ -10579,7 +10579,7 @@
       "source_file": "lib/api/errorMessage.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "errormessage.js",
       "id": "api_errormessage"
     },
@@ -10589,7 +10589,7 @@
       "source_file": "lib/api/errorMessage.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 25,
       "norm_label": "extractapierrormessage()",
       "id": "api_errormessage_extractapierrormessage"
     },
@@ -10799,7 +10799,7 @@
       "source_file": "lib/api/facade.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "facade.js",
       "id": "api_facade"
     },
@@ -10809,7 +10809,7 @@
       "source_file": "lib/api/facade.js",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "auth",
       "id": "api_facade_auth"
     },
@@ -10869,7 +10869,7 @@
       "source_file": "lib/icons.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 9,
+      "community": 10,
       "norm_label": "icons.js",
       "id": "lib_icons"
     },
@@ -10879,7 +10879,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "gethealthurl()",
       "id": "lib_serverstatus_gethealthurl"
     },
@@ -10889,7 +10889,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "checkserverstatus()",
       "id": "lib_serverstatus_checkserverstatus"
     },
@@ -10899,7 +10899,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L70",
       "_origin": "ast",
-      "community": 59,
+      "community": 58,
       "norm_label": "getserverurl()",
       "id": "lib_serverstatus_getserverurl"
     },
@@ -11209,7 +11209,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "colorutils.js",
       "id": "utils_colorutils"
     },
@@ -11219,7 +11219,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "hextoradixcolor()",
       "id": "utils_colorutils_hextoradixcolor"
     },
@@ -11229,7 +11229,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 65,
+      "community": 63,
       "norm_label": "getcolor()",
       "id": "utils_colorutils_getcolor"
     },
@@ -11499,7 +11499,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "textutils.js",
       "id": "utils_textutils"
     },
@@ -11509,7 +11509,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "normalizetext()",
       "id": "utils_textutils_normalizetext"
     },
@@ -11519,7 +11519,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "searchintext()",
       "id": "utils_textutils_searchintext"
     },
@@ -11529,7 +11529,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 22,
+      "community": 23,
       "norm_label": "filterbysearch()",
       "id": "utils_textutils_filterbysearch"
     },
@@ -11559,7 +11559,7 @@
       "source_file": "pages/HomeBriefing.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "homebriefing.jsx",
       "id": "pages_homebriefing"
     },
@@ -11569,7 +11569,7 @@
       "source_file": "pages/HomeBriefing.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "formatbriefingdate()",
       "id": "pages_homebriefing_formatbriefingdate"
     },
@@ -11579,7 +11579,7 @@
       "source_file": "pages/HomeBriefing.jsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "skeletonitem()",
       "id": "pages_homebriefing_skeletonitem"
     },
@@ -11609,7 +11609,7 @@
       "source_file": "pages/admin/AdminPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 31,
       "norm_label": "adminpage.jsx",
       "id": "admin_adminpage"
     },
@@ -11619,7 +11619,7 @@
       "source_file": "pages/admin/AdminPreventiveOccurrencesPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "adminpreventiveoccurrencespage.jsx",
       "id": "admin_adminpreventiveoccurrencespage"
     },
@@ -11629,7 +11629,7 @@
       "source_file": "pages/admin/AdminPreventivePlansPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "adminpreventiveplanspage.jsx",
       "id": "admin_adminpreventiveplanspage"
     },
@@ -11659,7 +11659,7 @@
       "source_file": "pages/briefing/BriefingPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "briefingpage.jsx",
       "id": "briefing_briefingpage"
     },
@@ -11669,7 +11669,7 @@
       "source_file": "pages/briefing/BriefingPage.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "sectionseparator()",
       "id": "briefing_briefingpage_sectionseparator"
     },
@@ -11679,7 +11679,7 @@
       "source_file": "pages/briefing/BriefingPage.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "sectionitemlist()",
       "id": "briefing_briefingpage_sectionitemlist"
     },
@@ -11689,7 +11689,7 @@
       "source_file": "pages/briefing/BriefingPage.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 37,
+      "community": 36,
       "norm_label": "rightpanel()",
       "id": "briefing_briefingpage_rightpanel"
     },
@@ -11699,7 +11699,7 @@
       "source_file": "pages/equipements/EquipementDetailPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 39,
+      "community": 38,
       "norm_label": "equipementdetailpage.jsx",
       "id": "equipements_equipementdetailpage"
     },
@@ -11709,7 +11709,7 @@
       "source_file": "pages/interventions/InterventionCreatePage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "interventioncreatepage.jsx",
       "id": "interventions_interventioncreatepage"
     },
@@ -11719,7 +11719,7 @@
       "source_file": "pages/interventions/InterventionCreatePage.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 67,
+      "community": 65,
       "norm_label": "userequestlinking()",
       "id": "interventions_interventioncreatepage_userequestlinking"
     },
@@ -11799,7 +11799,7 @@
       "source_file": "pages/interventions/InterventionsListPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "interventionslistpage.jsx",
       "id": "interventions_interventionslistpage"
     },
@@ -11809,7 +11809,7 @@
       "source_file": "pages/interventions/InterventionsListPage.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "globaltaskstab",
       "id": "interventions_interventionslistpage_globaltaskstab"
     },
@@ -11819,7 +11819,7 @@
       "source_file": "pages/interventions/InterventionsListPage.jsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "tabs",
       "id": "interventions_interventionslistpage_tabs"
     },
@@ -11859,7 +11859,7 @@
       "source_file": "pages/quality-data/QualityDataPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 41,
+      "community": 40,
       "norm_label": "qualitydatapage.jsx",
       "id": "quality_data_qualitydatapage"
     },
@@ -11899,7 +11899,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "routes.jsx",
       "id": "router_routes"
     },
@@ -11909,7 +11909,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "login",
       "id": "router_routes_login"
     },
@@ -11919,7 +11919,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "homesplit",
       "id": "router_routes_homesplit"
     },
@@ -11929,7 +11929,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "servicestatuspage",
       "id": "router_routes_servicestatuspage"
     },
@@ -11939,7 +11939,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "equipementspage",
       "id": "router_routes_equipementspage"
     },
@@ -11949,7 +11949,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "stockpage",
       "id": "router_routes_stockpage"
     },
@@ -11959,7 +11959,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "preventivepage",
       "id": "router_routes_preventivepage"
     },
@@ -11979,7 +11979,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "interventionaliasredirect()",
       "id": "router_routes_interventionaliasredirect"
     },
@@ -11989,7 +11989,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L72",
       "_origin": "ast",
-      "community": 19,
+      "community": 20,
       "norm_label": "approutes()",
       "id": "router_routes_approutes"
     },
@@ -12049,7 +12049,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 17,
+      "community": 18,
       "norm_label": "interventionaction",
       "id": "types_briefing_interventionaction"
     },
@@ -12099,7 +12099,7 @@
       "source_file": "vite-env.d.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "vite-env.d.ts",
       "id": "vite_env_d"
     },
@@ -12109,7 +12109,7 @@
       "source_file": "vite-env.d.ts",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "importmeta",
       "id": "vite_env_d_importmeta"
     },
@@ -12119,7 +12119,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L261",
       "_origin": "ast",
-      "community": 25,
+      "community": 27,
       "norm_label": "orderlinerow()",
       "id": "purchase_purchaserequestdetail_orderlinerow"
     },
@@ -15945,7 +15945,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "api/interventions.js",
-      "source_location": "L4",
+      "source_location": "L74",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "api_interventions",
@@ -28843,7 +28843,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/preventive/PreventivePage.jsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "preventive_preventivepage",
@@ -28897,7 +28897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/preventive/PreventivePlanDetail.jsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "preventive_preventiveplandetail",
@@ -34022,7 +34022,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "pages/preventive/PreventivePage.jsx",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "preventive_preventivepage",
@@ -36022,7 +36022,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "lib/api/auditGuard.js",
-      "source_location": "L190",
+      "source_location": "L194",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "api_auditguard",
@@ -37650,7 +37650,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/preventive/PreventivePage.jsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "preventive_preventivepage",
@@ -37660,7 +37660,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/preventive/PreventivePage.jsx",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "preventive_preventivepage",
@@ -37933,5 +37933,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d08dbde86f06178cf281e509da5f62bd2eec3261"
+  "built_at_commit": "fffa6f259269f2fc6f6f8d6610ebe12fc764c5a9"
 }

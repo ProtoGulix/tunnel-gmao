@@ -1,12 +1,24 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { Flex, Text, Badge, Button, Spinner } from '@radix-ui/themes';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { usePlanningWeek } from '@/hooks/usePlanningWeek';
 import { DayColumn } from '@/components/planning/WeekCalendar';
 import DayContextPanel from '@/components/planning/DayContextPanel';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import { getWeekDays, todayIso, formatWeekLabel } from '@/components/planning/planningUtils';
+import { fetchPlanningSemainePdf } from '@/api/planning';
+
+function toIsoWeek(mondayStr) {
+  // Calcul semaine ISO 8601 : jeudi de la semaine détermine l'année
+  const d = new Date(mondayStr);
+  const thursday = new Date(d);
+  thursday.setDate(d.getDate() + 3);
+  const year = thursday.getFullYear();
+  const jan4 = new Date(year, 0, 4);
+  const weekNum = 1 + Math.round((thursday - jan4) / 604800000);
+  return `${year}-W${String(weekNum).padStart(2, '0')}`;
+}
 
 const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'teal'];
 
@@ -82,6 +94,17 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook }) {
           <Button size="2" variant="ghost" color="blue" onClick={goToday}>
             Auj.
           </Button>
+          {selectedTechId && (
+            <Button
+              size="2"
+              variant="soft"
+              color="gray"
+              title="Télécharger la fiche semaine PDF"
+              onClick={() => fetchPlanningSemainePdf(selectedTechId, toIsoWeek(weekStart))}
+            >
+              <FileDown size={15} />
+            </Button>
+          )}
         </Flex>
 
         {/* Sélecteur tech — pills */}
