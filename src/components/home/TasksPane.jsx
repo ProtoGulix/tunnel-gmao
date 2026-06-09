@@ -46,7 +46,6 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayIso = today.toISOString().slice(0, 10);
 
   const inProgressCount = taskGroups.reduce((sum, g) => sum + g.tasks.filter((t) => t.status === 'in_progress').length, 0);
   const todoCount = taskGroups.reduce((sum, g) => sum + g.tasks.filter((t) => t.status === 'todo').length, 0);
@@ -321,7 +320,7 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                           variant="soft"
                           color="blue"
                           title="Logger du temps"
-                          onClick={() => onAddAction({ date: todayIso, group, task })}
+                          onClick={() => onAddAction({ date: null, group, task })}
                           style={{ flexShrink: 0 }}
                         >
                           <Clock size={12} />

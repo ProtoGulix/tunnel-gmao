@@ -6,20 +6,6 @@ import { fetchComplexityFactors } from '@/api/complexityFactors';
 import DayContextLeftColumn from './DayContextLeftColumn';
 import DayContextRightColumn from './DayContextRightColumn';
 
-function detectUniqueEquipement(actions) {
-  if (!actions?.length) return null;
-  const equipements = actions.map((a) => {
-    const iv = a.intervention;
-    if (!iv) return null;
-    if (iv.machine) return { id: iv.machine.id, code: iv.machine.code ?? '', name: iv.machine.name ?? '' };
-    if (iv.equipement_id) return { id: iv.equipement_id, code: iv.equipement_code ?? '', name: iv.equipement_name ?? '' };
-    return null;
-  }).filter(Boolean);
-  if (!equipements.length) return null;
-  const firstId = equipements[0].id;
-  if (!equipements.every((m) => m.id === firstId)) return null;
-  return equipements[0];
-}
 
 export default function DayContextPanel({
   date,
@@ -46,7 +32,7 @@ export default function DayContextPanel({
     if (iv?.equipement_id) {
       return { id: iv.equipement_id, code: iv.equipement_code ?? '', name: iv.equipement_name ?? '' };
     }
-    return detectUniqueEquipement(weekActionsForDay);
+    return null;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

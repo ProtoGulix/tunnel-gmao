@@ -47,7 +47,7 @@ export async function createIntervention(data) {
   if (data.requestId) payload.request_id = data.requestId;
   if (data.reasonCode) payload.reason_code = data.reasonCode;
   const response = await api.post('/interventions', payload);
-  return mapInterventionResponse(response.data.data);
+  return mapInterventionResponse(response.data?.data ?? response.data);
 }
 
 export async function updateIntervention(id, updates) {
