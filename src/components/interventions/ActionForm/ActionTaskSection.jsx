@@ -12,8 +12,8 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Badge, Button, Flex, IconButton, Select, Spinner, Text, TextField } from '@radix-ui/themes';
-import { CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
+import { Box, Badge, Button, Flex, IconButton, Spinner, Text, TextField } from '@radix-ui/themes';
+import { Ban, CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
 import { fetchInterventionTasks, fetchOpenTasksByMachine } from '@/api/interventionTasks';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
@@ -57,19 +57,11 @@ function getDueDateColor(dueDate) {
   return 'gray';
 }
 
-function normalizeSelectedTask(task, preserveExistingStatus = true) {
+function normalizeSelectedTask(task) {
   if (!task) return null;
-  const taskActionStatus =
-    task.taskActionStatus
-    ?? (preserveExistingStatus
-      ? (task.status === 'done'
-        ? 'done'
-        : task.status === 'skipped'
-          ? 'skipped'
-          : task.status === 'in_progress'
-            ? 'in_progress'
-            : '')
-      : '');
+  // taskActionStatus explicite uniquement si 'skipped' (choix volontaire du tech)
+  // 'in_progress' est implicite au backend pour toute tâche liée sans close_task/skip
+  const taskActionStatus = task.taskActionStatus === 'skipped' ? 'skipped' : 'in_progress';
 
   return {
     ...task,
@@ -83,6 +75,7 @@ function normalizeSelectedTask(task, preserveExistingStatus = true) {
 function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskActionStatusChange, onSkipReasonChange, accentColor }) {
   const dueDate = item.dueDate || item.due_date || null;
   const assigneeLabel = getAssigneeLabel(item);
+  const isSkipped = isSelected && selectedTask?.taskActionStatus === 'skipped';
 
   return (
     <Flex
@@ -95,15 +88,19 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
       style={{
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled ? 0.4 : 1,
-        background: isSelected ? `var(--${accentColor}-3)` : 'transparent',
-        borderLeft: isSelected ? `3px solid var(--${accentColor}-9)` : '3px solid transparent',
+        background: isSkipped ? 'var(--orange-2)' : isSelected ? `var(--${accentColor}-3)` : 'transparent',
+        borderLeft: isSkipped
+          ? '3px solid var(--orange-7)'
+          : isSelected
+            ? `3px solid var(--${accentColor}-9)`
+            : '3px solid transparent',
         transition: 'background 0.1s',
         userSelect: 'none',
       }}
     >
-      <CheckSquare size={13} color={isSelected ? `var(--${accentColor}-9)` : 'var(--gray-7)'} />
+      <CheckSquare size={13} color={isSkipped ? 'var(--orange-9)' : isSelected ? `var(--${accentColor}-9)` : 'var(--gray-7)'} />
       <Flex direction="column" gap="1" style={{ flex: '1 1 240px', minWidth: 0 }}>
-        <Text size="2" style={{ minWidth: 0 }}>{item.label}</Text>
+        <Text size="2" style={{ minWidth: 0, textDecoration: isSkipped ? 'line-through' : 'none', color: isSkipped ? 'var(--gray-10)' : undefined }}>{item.label}</Text>
         <Flex gap="2" wrap="wrap" align="center">
           <Flex gap="1" align="center">
             <User size={11} color="var(--gray-9)" />
@@ -122,41 +119,49 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
       {item.origin === 'plan' && (
         <Badge size="1" color="green" variant="soft">Gamme</Badge>
       )}
-      {item.status === 'in_progress' && (
-        <Badge size="1" color="orange" variant="soft">En cours</Badge>
+      {item.status === 'in_progress' && !isSelected && (
+        <Badge size="1" color="blue" variant="soft">En cours</Badge>
       )}
-      {isSelected && selectedTask && (
-        <>
-          <Box onClick={(e) => e.stopPropagation()}>
-            <Select.Root
-              value={selectedTask.taskActionStatus || '__unset__'}
-              onValueChange={(value) => onTaskActionStatusChange(item.id, value === '__unset__' ? '' : value)}
+      {isSelected && !isSkipped && (
+        <Badge size="1" color={accentColor} variant="soft">En cours</Badge>
+      )}
+      {isSelected && (
+        <Box onClick={(e) => e.stopPropagation()}>
+          {isSkipped ? (
+            <Button
+              size="1"
+              variant="soft"
+              color="orange"
+              type="button"
+              onClick={() => onTaskActionStatusChange(item.id, 'in_progress')}
             >
-              <Select.Trigger placeholder="Etat" style={{ minWidth: 140 }} />
-              <Select.Content>
-                <Select.Item value="__unset__">Etat...</Select.Item>
-                <Select.Item value="in_progress">En cours</Select.Item>
-                <Select.Item value="done">Validée</Select.Item>
-                <Select.Item value="skipped">Ignorée</Select.Item>
-              </Select.Content>
-            </Select.Root>
-          </Box>
-          {!selectedTask.taskActionStatus && (
-            <Text size="1" color="red">Etat requis</Text>
+              <Ban size={11} /> Ignorée — annuler
+            </Button>
+          ) : (
+            <Button
+              size="1"
+              variant="ghost"
+              color="gray"
+              type="button"
+              onClick={() => onTaskActionStatusChange(item.id, 'skipped')}
+            >
+              <Ban size={11} /> Ignorer
+            </Button>
           )}
-          {selectedTask.taskActionStatus === 'skipped' && (
-            <Box style={{ flex: '1 1 220px', minWidth: 220 }} onClick={(e) => e.stopPropagation()}>
-              <TextField.Root
-                placeholder="Motif de l'exclusion…"
-                value={selectedTask.skipReason ?? ''}
-                onChange={(e) => onSkipReasonChange(item.id, e.target.value)}
-              />
-            </Box>
+        </Box>
+      )}
+      {isSkipped && (
+        <Box style={{ flex: '1 1 220px', minWidth: 220 }} onClick={(e) => e.stopPropagation()}>
+          <TextField.Root
+            size="1"
+            placeholder="Motif de l'exclusion…"
+            value={selectedTask.skipReason ?? ''}
+            onChange={(e) => onSkipReasonChange(item.id, e.target.value)}
+          />
+          {!selectedTask.skipReason?.trim() && (
+            <Text size="1" color="orange">Motif requis</Text>
           )}
-          {selectedTask.taskActionStatus === 'skipped' && !selectedTask.skipReason?.trim() && (
-            <Text size="1" color="red">Motif requis</Text>
-          )}
-        </>
+        </Box>
       )}
     </Flex>
   );
@@ -372,7 +377,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
         : null;
       const enriched = ivForTask ? { ...createdTask, _intervention: ivForTask } : createdTask;
       setTasks((prev) => [...prev, enriched]);
-      onChange([...selectedTasks, normalizeSelectedTask(enriched, false)]);
+      onChange([...selectedTasks, normalizeSelectedTask(enriched)]);
       // Reset le libellé mais garder l'intervention pour enchaîner (seulement en mode machineId)
       if (machineId) {
         reset();
@@ -388,7 +393,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
     if (machineId) {
       setLoading(true);
       fetchOpenTasksByMachine(machineId)
-        .then((all) => setTasks(all.filter((t) => t.status !== 'done')))
+        .then((all) => setTasks(all.filter((t) => t.status !== 'done' && t.status !== 'skipped')))
         .catch(() => setTasks([]))
         .finally(() => setLoading(false));
       return;
@@ -396,14 +401,14 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
     if (!interventionId) return;
     setLoading(true);
     fetchInterventionTasks(String(interventionId))
-      .then((all) => setTasks(all.filter((t) => t.status !== 'done')))
+      .then((all) => setTasks(all.filter((t) => t.status !== 'done' && t.status !== 'skipped')))
       .catch(() => setTasks([]))
       .finally(() => setLoading(false));
   }, [interventionId, machineId]);
 
   const selectedTasks = useMemo(() => {
-    if (Array.isArray(value)) return value.map((task) => normalizeSelectedTask(task, true)).filter(Boolean);
-    return value ? [normalizeSelectedTask(value, true)].filter(Boolean) : [];
+    if (Array.isArray(value)) return value.map((task) => normalizeSelectedTask(task)).filter(Boolean);
+    return value ? [normalizeSelectedTask(value)].filter(Boolean) : [];
   }, [value]);
 
   const isSelectedTask = useCallback(
@@ -417,7 +422,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
       onChange(selectedTasks.filter((t) => String(t.id) !== String(task.id)));
       return;
     }
-    onChange([...selectedTasks, normalizeSelectedTask(task, true)]);
+    onChange([...selectedTasks, normalizeSelectedTask(task)]);
   }, [selectedTasks, onChange]);
 
   const handleTaskActionStatusChange = useCallback((taskId, taskActionStatus) => {

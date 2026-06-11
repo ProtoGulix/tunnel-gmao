@@ -1,0 +1,139 @@
+/**
+ * GroupCard — card réutilisable avec header code/titre/badge et liste de lignes.
+ *
+ * Utilisé dans : TasksPane (home), InterventionTasksBlock (coordination),
+ *               panneau équipements (coordination).
+ *
+ * Structure :
+ *   <GroupCard code="IV-001" title="Graissage BROYEUR" count={3}>
+ *     <GroupCard.Row accentColor="var(--blue-9)">...</GroupCard.Row>
+ *   </GroupCard>
+ */
+
+import PropTypes from 'prop-types';
+import { Badge, Flex, Text } from '@radix-ui/themes';
+
+/* ── GroupCard ────────────────────────────────────────────────────────────── */
+
+export function GroupCard({ code, title, titleItalic = true, badge, count, countLabel, headerRight, children, style }) {
+  const rowCount = count ?? null;
+  const label = countLabel ?? (rowCount === 1 ? 'élément' : 'éléments');
+
+  return (
+    <div
+      style={{
+        marginBottom: 12,
+        borderRadius: 8,
+        border: '1px solid var(--gray-4)',
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      {/* ── Header ── */}
+      <Flex
+        align="center"
+        gap="2"
+        style={{
+          padding: '7px 10px',
+          background: 'var(--gray-2)',
+          borderBottom: '1px solid var(--gray-4)',
+        }}
+      >
+        {code && (
+          <Badge
+            variant="outline"
+            color="gray"
+            size="2"
+            style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, flexShrink: 0 }}
+          >
+            {code}
+          </Badge>
+        )}
+        {title && (
+          <Text
+            size="2"
+            style={{
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: 'var(--gray-12)',
+              fontStyle: titleItalic ? 'italic' : 'normal',
+            }}
+          >
+            {title}
+          </Text>
+        )}
+        {badge}
+        {headerRight}
+        {rowCount !== null && (
+          <Text size="1" color="gray" style={{ flexShrink: 0 }}>
+            {rowCount} {label}
+          </Text>
+        )}
+      </Flex>
+
+      {/* ── Body ── */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--color-panel-solid)',
+          borderBottomLeftRadius: 8,
+          borderBottomRightRadius: 8,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+GroupCard.propTypes = {
+  code: PropTypes.string,
+  title: PropTypes.string,
+  titleItalic: PropTypes.bool,
+  badge: PropTypes.node,
+  count: PropTypes.number,
+  countLabel: PropTypes.string,
+  headerRight: PropTypes.node,
+  children: PropTypes.node,
+  style: PropTypes.object,
+};
+
+/* ── GroupCard.Row ────────────────────────────────────────────────────────── */
+
+function GroupCardRow({ accentColor, isLast, background, children, onClick, style }) {
+  return (
+    <Flex
+      align="center"
+      gap="2"
+      onClick={onClick}
+      style={{
+        padding: '7px 10px',
+        borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
+        borderLeft: `3px solid ${accentColor ?? 'var(--gray-5)'}`,
+        background: background ?? 'transparent',
+        cursor: onClick ? 'pointer' : undefined,
+        minWidth: 0,
+        ...style,
+      }}
+    >
+      {children}
+    </Flex>
+  );
+}
+
+GroupCardRow.propTypes = {
+  accentColor: PropTypes.string,
+  isLast: PropTypes.bool,
+  background: PropTypes.string,
+  children: PropTypes.node,
+  onClick: PropTypes.func,
+  style: PropTypes.object,
+};
+
+GroupCard.Row = GroupCardRow;

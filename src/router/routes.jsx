@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/auth/useAuth';
-import { ClipboardList } from 'lucide-react';
+import { CalendarDays, ClipboardList } from 'lucide-react';
 
 // Layout (toujours présent, pas de lazy)
 import Layout from '@/components/layout/Layout';
@@ -23,6 +23,7 @@ const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage')
 const EquipementDetailPage = lazy(() => import('@/pages/equipements/EquipementDetailPage'));
 const StockPage = lazy(() => import('@/pages/stock/StockPage'));
 const BriefingPage = lazy(() => import('@/pages/briefing/BriefingPage'));
+const CoordinationPage = lazy(() => import('@/pages/coordination/CoordinationPage'));
 const PurchaseRequestsPage = lazy(() => import('@/pages/purchase/PurchaseRequestsPage'));
 const AdminPreventivePlansPage = lazy(() => import('@/pages/admin/AdminPreventivePlansPage'));
 const AdminPreventiveOccurrencesPage = lazy(() => import('@/pages/admin/AdminPreventiveOccurrencesPage'));
@@ -190,6 +191,19 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <EquipementDetailPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/coordination"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+                <CoordinationPage />
+              </div>
             </Layout>
           </ProtectedRoute>
         }
