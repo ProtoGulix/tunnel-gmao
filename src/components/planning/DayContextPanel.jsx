@@ -78,6 +78,7 @@ export default function DayContextPanel({
           date={date}
           techId={techId}
           selectedTasks={selectedTasks}
+          onTasksChange={handleTasksChange}
           createdIntervention={createdIntervention}
           onSuccess={handleSuccess}
           onCancel={onClose}

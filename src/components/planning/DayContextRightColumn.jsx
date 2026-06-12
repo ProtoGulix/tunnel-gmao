@@ -9,13 +9,13 @@ import LockedBadge from '@/components/ui/LockedBadge';
 export default function DayContextRightColumn({
   date,
   techId,
-  selectedTasks,       // array de tâches cochées (portent ._intervention)
-  createdIntervention, // intervention créée via DI
+  selectedTasks,
+  onTasksChange,
+  createdIntervention,
   onSuccess,
   onCancel,
   metadata,
 }) {
-  // Intervention résolue depuis les tâches ou la création DI
   const taskIv = selectedTasks?.[0]?._intervention ?? null;
   const resolvedIv = taskIv ?? createdIntervention ?? null;
   const interventionId = resolvedIv?.id?.toString() ?? null;
@@ -31,16 +31,11 @@ export default function DayContextRightColumn({
       }
     : null;
 
-  // Pré-cocher les tâches sélectionnées dans ActionForm
-  const initialTasks = (selectedTasks ?? [])
-    .filter((t) => !t._pendingCreate)
-    .map((t) => ({ id: t.id, label: t.label, status: t.status, origin: t.origin ?? 'tech' }));
-
   const handleSubmit = useCallback((payload) => createActionDirect(payload), []);
 
   const isLocked = !interventionId;
   const headerIcon = createdIntervention ? Wrench : ClipboardList;
-  const formKey = `${interventionId ?? 'none'}-${(selectedTasks ?? []).map((t) => t.id).join(',')}-${date}`;
+  const formKey = `${interventionId ?? 'none'}-${date}`;
 
   return (
     <Flex direction="column" gap="2">
@@ -68,7 +63,7 @@ export default function DayContextRightColumn({
           <Box mt="1">
             <ActionForm
               key={formKey}
-              initialState={{ date: date ?? '', tasks: initialTasks }}
+              initialState={{ date: date ?? '' }}
               metadata={metadata}
               onCancel={onCancel ?? (() => {})}
               onSubmit={handleSubmit}
@@ -78,6 +73,8 @@ export default function DayContextRightColumn({
               techId={techId}
               showContext={false}
               showTasks={false}
+              selectedTasks={selectedTasks}
+              onTasksChange={onTasksChange}
             />
           </Box>
         </Flex>
@@ -90,6 +87,7 @@ DayContextRightColumn.propTypes = {
   date: PropTypes.string,
   techId: PropTypes.string,
   selectedTasks: PropTypes.array,
+  onTasksChange: PropTypes.func,
   createdIntervention: PropTypes.object,
   onSuccess: PropTypes.func.isRequired,
   onCancel: PropTypes.func,

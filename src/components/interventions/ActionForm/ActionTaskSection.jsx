@@ -13,7 +13,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Badge, Button, Flex, IconButton, Spinner, Text, TextField } from '@radix-ui/themes';
-import { Ban, CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
+import { Ban, CalendarClock, Check, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
 import { fetchInterventionTasks, fetchOpenTasksByMachine } from '@/api/interventionTasks';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
@@ -61,7 +61,9 @@ function normalizeSelectedTask(task) {
   if (!task) return null;
   // taskActionStatus explicite uniquement si 'skipped' (choix volontaire du tech)
   // 'in_progress' est implicite au backend pour toute tâche liée sans close_task/skip
-  const taskActionStatus = task.taskActionStatus === 'skipped' ? 'skipped' : 'in_progress';
+  const taskActionStatus = task.taskActionStatus === 'skipped' ? 'skipped'
+    : task.taskActionStatus === 'done' ? 'done'
+    : 'in_progress';
 
   return {
     ...task,
@@ -76,6 +78,7 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
   const dueDate = item.dueDate || item.due_date || null;
   const assigneeLabel = getAssigneeLabel(item);
   const isSkipped = isSelected && selectedTask?.taskActionStatus === 'skipped';
+  const isDone = isSelected && selectedTask?.taskActionStatus === 'done';
 
   return (
     <Flex
@@ -88,19 +91,21 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
       style={{
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled ? 0.4 : 1,
-        background: isSkipped ? 'var(--orange-2)' : isSelected ? `var(--${accentColor}-3)` : 'transparent',
+        background: isSkipped ? 'var(--orange-2)' : isDone ? 'var(--green-2)' : isSelected ? `var(--${accentColor}-3)` : 'transparent',
         borderLeft: isSkipped
           ? '3px solid var(--orange-7)'
-          : isSelected
-            ? `3px solid var(--${accentColor}-9)`
-            : '3px solid transparent',
+          : isDone
+            ? '3px solid var(--green-7)'
+            : isSelected
+              ? `3px solid var(--${accentColor}-9)`
+              : '3px solid transparent',
         transition: 'background 0.1s',
         userSelect: 'none',
       }}
     >
       <CheckSquare size={13} color={isSkipped ? 'var(--orange-9)' : isSelected ? `var(--${accentColor}-9)` : 'var(--gray-7)'} />
       <Flex direction="column" gap="1" style={{ flex: '1 1 240px', minWidth: 0 }}>
-        <Text size="2" style={{ minWidth: 0, textDecoration: isSkipped ? 'line-through' : 'none', color: isSkipped ? 'var(--gray-10)' : undefined }}>{item.label}</Text>
+        <Text size="2" style={{ minWidth: 0, textDecoration: isSkipped ? 'line-through' : 'none', color: isSkipped ? 'var(--gray-10)' : isDone ? 'var(--green-11)' : undefined }}>{item.label}</Text>
         <Flex gap="2" wrap="wrap" align="center">
           <Flex gap="1" align="center">
             <User size={11} color="var(--gray-9)" />
@@ -122,31 +127,39 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
       {item.status === 'in_progress' && !isSelected && (
         <Badge size="1" color="blue" variant="soft">En cours</Badge>
       )}
-      {isSelected && !isSkipped && (
+      {isSelected && !isSkipped && !isDone && (
         <Badge size="1" color={accentColor} variant="soft">En cours</Badge>
+      )}
+      {isDone && (
+        <Badge size="1" color="green" variant="soft">Terminée</Badge>
       )}
       {isSelected && (
         <Box onClick={(e) => e.stopPropagation()}>
           {isSkipped ? (
-            <Button
-              size="1"
-              variant="soft"
-              color="orange"
-              type="button"
+            <Button size="1" variant="soft" color="orange" type="button"
               onClick={() => onTaskActionStatusChange(item.id, 'in_progress')}
             >
               <Ban size={11} /> Ignorée — annuler
             </Button>
-          ) : (
-            <Button
-              size="1"
-              variant="ghost"
-              color="gray"
-              type="button"
-              onClick={() => onTaskActionStatusChange(item.id, 'skipped')}
+          ) : isDone ? (
+            <Button size="1" variant="soft" color="green" type="button"
+              onClick={() => onTaskActionStatusChange(item.id, 'in_progress')}
             >
-              <Ban size={11} /> Ignorer
+              <Check size={11} /> Terminée — annuler
             </Button>
+          ) : (
+            <Flex gap="1">
+              <Button size="1" variant="soft" color="green" type="button"
+                onClick={() => onTaskActionStatusChange(item.id, 'done')}
+              >
+                <Check size={11} /> Terminée
+              </Button>
+              <Button size="1" variant="ghost" color="gray" type="button"
+                onClick={() => onTaskActionStatusChange(item.id, 'skipped')}
+              >
+                <Ban size={11} /> Ignorer
+              </Button>
+            </Flex>
           )}
         </Box>
       )}

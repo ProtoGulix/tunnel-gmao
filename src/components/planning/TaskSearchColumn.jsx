@@ -5,7 +5,7 @@ import {
   Select, Spinner, Text, TextField,
 } from '@radix-ui/themes';
 import {
-  Calendar, Check, CheckSquare, ChevronRight, Minus, Plus,
+  Calendar, CheckSquare, ChevronRight, Minus, Plus,
   RotateCcw, Search, Square, Trash2, User, Wrench, X,
 } from 'lucide-react';
 import {
@@ -16,6 +16,7 @@ import {
 import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 import EquipementSearch from '@/components/planning/EquipementSearch';
+import ActionTaskSection from '@/components/interventions/ActionForm/ActionTaskSection';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
@@ -98,8 +99,6 @@ function TaskRow({ task, isSelected, isDisabled, onToggle, onStatusChange, onDel
     }
   }, [task.id, onStatusChange]);
 
-  const handleDone = useCallback(() => patch({ status: 'done' }), [patch]);
-
   const handleReopen = useCallback(() => patch({ status: 'todo' }), [patch]);
 
   const handleSkipClick = useCallback(() => setShowSkipReason(true), []);
@@ -154,14 +153,9 @@ function TaskRow({ task, isSelected, isDisabled, onToggle, onStatusChange, onDel
         {isSelected && !mutating && (
           <Flex gap="1" align="center" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
             {isOpen && (
-              <>
-                <Button size="1" color="green" variant="soft" type="button" onClick={handleDone}>
-                  <Check size={11} /> Terminé
-                </Button>
-                <Button size="1" color="gray" variant="soft" type="button" onClick={handleSkipClick}>
-                  <Minus size={11} /> Ignorer
-                </Button>
-              </>
+              <Button size="1" color="gray" variant="soft" type="button" onClick={handleSkipClick}>
+                <Minus size={11} /> Ignorer
+              </Button>
             )}
             {isClosed && (
               <Button size="1" color="gray" variant="soft" type="button" onClick={handleReopen}>
@@ -435,75 +429,66 @@ export default function TaskSearchColumn({
         <Text size="3" weight="bold" style={{ textTransform: 'capitalize' }}>{formattedDate}</Text>
       </Flex>
 
-      <TextField.Root
-        size="2"
-        placeholder="Chercher une tâche, équipement, intervention…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoComplete="off"
-      >
-        <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
-        {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
-      </TextField.Root>
+      {/* Quand des tâches sont sélectionnées : section tâches de l'action */}
+      {selectedTasks.length > 0 ? (
+        <ActionTaskSection
+          interventionId={lockedIvId}
+          value={selectedTasks}
+          onChange={onTasksChange}
+        />
+      ) : (
+        <>
+          <TextField.Root
+            size="2"
+            placeholder="Chercher une tâche, équipement, intervention…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+          >
+            <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
+            {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
+          </TextField.Root>
 
-      {/* Bandeau de sélection */}
-      {selectedTasks.length > 0 && (
-        <Flex align="center" gap="2" px="2" py="1"
-          style={{ background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}
-        >
-          <CheckSquare size={13} color="var(--blue-9)" />
-          <Text size="1" color="blue" style={{ flex: 1 }}>
-            {selectedTasks.length} tâche{selectedTasks.length > 1 ? 's' : ''} sélectionnée{selectedTasks.length > 1 ? 's' : ''}
-            {lockedIvId && (
-              <> · <Badge size="1" color="blue" variant="soft" style={{ fontFamily: 'monospace' }}>
-                {selectedTasks[0]._intervention?.code}
-              </Badge></>
-            )}
-          </Text>
-          <IconButton size="1" variant="ghost" color="gray" type="button" onClick={() => onTasksChange([])}>
-            <X size={11} />
-          </IconButton>
-        </Flex>
-      )}
+          {/* État vide avant frappe */}
+          {query.trim().length < 2 && (
+            <Flex direction="column" align="center" justify="center" gap="2"
+              style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
+            >
+              <Search size={18} color="var(--gray-7)" />
+              <Text size="2" color="gray" align="center">
+                Tapez le nom d'une tâche, d'un équipement ou d'une intervention
+              </Text>
+            </Flex>
+          )}
 
-      {/* État vide avant frappe */}
-      {query.trim().length < 2 && (
-        <Flex direction="column" align="center" justify="center" gap="2"
-          style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
-        >
-          <Search size={18} color="var(--gray-7)" />
-          <Text size="2" color="gray" align="center">
-            Tapez le nom d'une tâche, d'un équipement ou d'une intervention
-          </Text>
-        </Flex>
-      )}
+          {/* Aucun résultat */}
+          {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
+            <Flex direction="column" align="center" gap="2"
+              style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
+            >
+              <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
+            </Flex>
+          )}
 
-      {/* Aucun résultat */}
-      {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
-        <Flex direction="column" align="center" gap="2"
-          style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
-        >
-          <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
-        </Flex>
-      )}
-
-      {/* Résultats */}
-      {localGroups.length > 0 && (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {localGroups.map((iv) => (
-            <InterventionGroup
-              key={iv.id}
-              iv={iv}
-              selectedIds={selectedIds}
-              lockedIvId={lockedIvId}
-              users={users}
-              onToggle={handleToggle}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-              onTaskCreated={handleTaskCreated}
-            />
-          ))}
-        </Card>
+          {/* Résultats */}
+          {localGroups.length > 0 && (
+            <Card style={{ padding: 0, overflow: 'hidden' }}>
+              {localGroups.map((iv) => (
+                <InterventionGroup
+                  key={iv.id}
+                  iv={iv}
+                  selectedIds={selectedIds}
+                  lockedIvId={lockedIvId}
+                  users={users}
+                  onToggle={handleToggle}
+                  onStatusChange={handleStatusChange}
+                  onDelete={handleDelete}
+                  onTaskCreated={handleTaskCreated}
+                />
+              ))}
+            </Card>
+          )}
+        </>
       )}
 
       {/* Nouvelle intervention via DI */}
