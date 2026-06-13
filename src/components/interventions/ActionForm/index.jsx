@@ -42,6 +42,12 @@ function ActionForm({
   // Si contrôlé depuis l'extérieur, utiliser les props ; sinon état interne
   const selectedTasks = selectedTasksProp ?? selectedTasksInternal;
   const setSelectedTasks = onTasksChange ?? setSelectedTasksInternal;
+
+  const handleInterventionChange = (intervention) => {
+    setPickedIntervention(intervention);
+    // Réinitialiser la sélection de tâches quand l'intervention change
+    setSelectedTasks([]);
+  };
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -99,7 +105,7 @@ function ActionForm({
             pickedEquipement={pickedEquipement}
             onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
             pickedIntervention={pickedIntervention}
-            onInterventionChange={setPickedIntervention}
+            onInterventionChange={handleInterventionChange}
           />
         )}
 
@@ -117,7 +123,9 @@ function ActionForm({
             />
             {showTasks && (
               <ActionTaskSection
+                key={pickedEquipement?.id ?? resolvedInterventionId ?? 'no-context'}
                 interventionId={resolvedInterventionId}
+                machineId={pickedEquipement?.id ?? null}
                 value={selectedTasks}
                 onChange={setSelectedTasks}
                 accentColor={isPreventif ? 'green' : 'blue'}

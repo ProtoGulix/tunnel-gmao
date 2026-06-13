@@ -384,6 +384,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
     interventionId: createInterventionId,
     onSuccess: (createdTask) => {
       // En mode machineId : attacher ._intervention pour le verrouillage
+      // interventionId prop a la priorité sur createIv (sélecteur interne)
       const ivSource = createIv ?? null;
       const ivForTask = ivSource
         ? { id: ivSource.id, code: ivSource.code, title: ivSource.title ?? '', status_actual: ivSource.status_actual, type_inter: ivSource.type_inter ?? null, plan_id: ivSource.plan_id ?? null }
@@ -494,7 +495,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
         renderInlineCreate={showCreate ? () => (
           <InlineCreateRow
             machineId={machineId}
-            lockedInterventionId={lockedInterventionId}
+            lockedInterventionId={lockedInterventionId ?? interventionId ?? null}
             createIv={createIv}
             setCreateIv={setCreateIv}
             formData={formData}

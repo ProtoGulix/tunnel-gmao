@@ -2,21 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Badge, Box, Button, Card, Flex, IconButton,
-  Select, Spinner, Text, TextField,
+  Spinner, Text, TextField,
 } from '@radix-ui/themes';
 import {
-  Calendar, CheckSquare, ChevronRight, Minus, Plus,
-  RotateCcw, Search, Square, Trash2, User, Wrench, X,
+  Ban, Calendar, Check, CheckSquare, ChevronRight,
+  Search, Square, Trash2, Wrench, X,
 } from 'lucide-react';
 import {
   fetchInterventionTasksList,
-  patchInterventionTask,
   deleteInterventionTask,
 } from '@/api/interventionTasks';
+import { searchOpenInterventions } from '@/api/interventions';
 import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 import EquipementSearch from '@/components/planning/EquipementSearch';
-import ActionTaskSection from '@/components/interventions/ActionForm/ActionTaskSection';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
@@ -25,6 +24,13 @@ const STATUS_COLORS = { todo: 'gray', in_progress: 'orange', done: 'green', skip
 const STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminé', skipped: 'Ignoré' };
 
 /* ── Hook recherche debounced ───────────────────────────────────────────── */
+
+function sortTasks(tasks) {
+  return [...tasks].sort((a, b) => {
+    if (a.status === b.status) return 0;
+    return a.status === 'in_progress' ? -1 : 1;
+  });
+}
 
 function useTaskSearch(query) {
   const [groups, setGroups] = useState([]);
@@ -43,21 +49,45 @@ function useTaskSearch(query) {
     setLoading(true);
     timerRef.current = setTimeout(async () => {
       try {
-        const items = await fetchInterventionTasksList({
-          q: query.trim(),
-          status: 'todo,in_progress',
-          limit: 20,
-        });
-        const sorted = items
-          .map((iv) => ({
-            ...iv,
-            tasks: [...(iv.tasks ?? [])].sort((a, b) => {
-              if (a.status === b.status) return 0;
-              return a.status === 'in_progress' ? -1 : 1;
-            }),
-          }))
-          .filter((iv) => iv.tasks?.length > 0);
-        if (!cancelledRef.current) setGroups(sorted);
+        const q = query.trim();
+        // Chercher les interventions ouvertes + leurs tâches ouvertes en parallèle
+        const [interventions, taskItems] = await Promise.all([
+          searchOpenInterventions(q, { limit: 20 }),
+          fetchInterventionTasksList({ q, status: 'todo,in_progress', limit: 100 }),
+        ]);
+
+        // Indexer les tâches par intervention_id
+        const tasksByIv = new Map();
+        for (const iv of taskItems) {
+          if (Array.isArray(iv.tasks)) {
+            tasksByIv.set(String(iv.id), sortTasks(iv.tasks));
+          }
+        }
+
+        // Fusionner : toutes les interventions trouvées, avec leurs tâches si elles existent
+        const merged = interventions.map((iv) => ({
+          ...iv,
+          tasks: tasksByIv.get(String(iv.id)) ?? [],
+        }));
+
+        // Ajouter les interventions qui ont des tâches mais n'ont pas été trouvées par la recherche inter
+        for (const iv of taskItems) {
+          if (!merged.some((m) => String(m.id) === String(iv.id)) && iv.tasks?.length > 0) {
+            merged.push({
+              id: String(iv.id),
+              code: iv.code ?? '',
+              title: iv.title ?? '',
+              status_actual: iv.status_actual ?? iv.status ?? '',
+              type_inter: iv.type_inter ?? 'CUR',
+              priority: iv.priority ?? 'normale',
+              plan_id: iv.plan_id ?? null,
+              equipement: iv.equipement ?? null,
+              tasks: sortTasks(iv.tasks),
+            });
+          }
+        }
+
+        if (!cancelledRef.current) setGroups(merged);
       } catch {
         if (!cancelledRef.current) setGroups([]);
       } finally {
@@ -72,55 +102,31 @@ function useTaskSearch(query) {
 
 /* ── Ligne de tâche avec actions inline ─────────────────────────────────── */
 
-function TaskRow({ task, isSelected, isDisabled, onToggle, onStatusChange, onDelete }) {
-  const [mutating, setMutating] = useState(false);
-  const [showSkipReason, setShowSkipReason] = useState(false);
-  const [skipReason, setSkipReason] = useState('');
-  const [rowError, setRowError] = useState(null);
+function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelete, onTaskActionStatusChange, onSkipReasonChange }) {
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
-  const isOpen = task.status === 'todo' || task.status === 'in_progress';
-  const isClosed = task.status === 'done' || task.status === 'skipped';
 
-  const patch = useCallback(async (payload) => {
-    setMutating(true);
-    setRowError(null);
-    try {
-      const updated = await patchInterventionTask(task.id, payload);
-      onStatusChange(task.id, updated?.data ?? updated);
-      return true;
-    } catch (err) {
-      if (!err?.isAuditCancelled) {
-        setRowError(extractApiErrorMessage(err, 'Erreur'));
-      }
-      return false;
-    } finally {
-      setMutating(false);
-    }
-  }, [task.id, onStatusChange]);
-
-  const handleReopen = useCallback(() => patch({ status: 'todo' }), [patch]);
-
-  const handleSkipClick = useCallback(() => setShowSkipReason(true), []);
-
-  const handleSkipConfirm = useCallback(async () => {
-    if (!skipReason.trim()) return;
-    const ok = await patch({ status: 'skipped', skip_reason: skipReason.trim() });
-    if (ok) { setShowSkipReason(false); setSkipReason(''); }
-  }, [patch, skipReason]);
+  const taskActionStatus = selectedTask?.taskActionStatus ?? 'in_progress';
+  const isSkipped = isSelected && taskActionStatus === 'skipped';
+  const isDone = isSelected && taskActionStatus === 'done';
 
   const handleDelete = useCallback(async () => {
-    setMutating(true);
-    setRowError(null);
+    setDeleting(true);
+    setDeleteError(null);
     try {
       await deleteInterventionTask(task.id);
       onDelete(task.id);
     } catch (err) {
-      if (!err?.isAuditCancelled) setRowError(extractApiErrorMessage(err, 'Suppression impossible'));
+      if (!err?.isAuditCancelled) setDeleteError(extractApiErrorMessage(err, 'Suppression impossible'));
     } finally {
-      setMutating(false);
+      setDeleting(false);
     }
   }, [task.id, onDelete]);
+
+  const bgColor = isSkipped ? 'var(--amber-2)' : isDone ? 'var(--green-2)' : isSelected ? 'var(--blue-3)' : 'transparent';
+  const borderColor = isSkipped ? 'var(--amber-7)' : isDone ? 'var(--green-7)' : isSelected ? 'var(--blue-9)' : 'transparent';
 
   return (
     <Box style={{ borderTop: '1px solid var(--gray-3)' }}>
@@ -130,84 +136,94 @@ function TaskRow({ task, isSelected, isDisabled, onToggle, onStatusChange, onDel
         style={{
           cursor: isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.4 : 1,
-          background: isSelected ? 'var(--blue-3)' : 'transparent',
-          borderLeft: isSelected ? '3px solid var(--blue-9)' : '3px solid transparent',
+          background: bgColor,
+          borderLeft: `3px solid ${borderColor}`,
           transition: 'background 0.1s',
           userSelect: 'none',
         }}
       >
-        <Box style={{ flexShrink: 0, color: isSelected ? 'var(--blue-9)' : 'var(--gray-7)' }}>
+        <Box style={{ flexShrink: 0, color: isSkipped ? 'var(--amber-9)' : isSelected ? 'var(--blue-9)' : 'var(--gray-7)' }}>
           {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
         </Box>
 
-        <Text size="2" style={{ flex: 1 }}>{task.label}</Text>
+        <Text size="2" style={{ flex: 1, textDecoration: isSkipped ? 'line-through' : 'none', color: isSkipped ? 'var(--gray-10)' : isDone ? 'var(--green-11)' : undefined }}>
+          {task.label}
+        </Text>
 
-        {/* Badge statut — affiché seulement quand non sélectionné ou fermé */}
-        {(!isSelected || isClosed) && (
+        {/* Badge statut tâche réelle — quand non sélectionné */}
+        {!isSelected && (
           <Badge size="1" color={STATUS_COLORS[task.status] ?? 'gray'} variant="soft" style={{ flexShrink: 0 }}>
             {STATUS_LABELS[task.status] ?? task.status}
           </Badge>
         )}
 
-        {/* Actions contextuelles selon statut */}
-        {isSelected && !mutating && (
+        {/* Boutons taskActionStatus — état local formulaire, pas d'appel API */}
+        {isSelected && (
           <Flex gap="1" align="center" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
-            {isOpen && (
-              <Button size="1" color="gray" variant="soft" type="button" onClick={handleSkipClick}>
-                <Minus size={11} /> Ignorer
+            {isSkipped ? (
+              <Button size="1" color="amber" variant="soft" type="button"
+                onClick={() => onTaskActionStatusChange(task.id, 'in_progress')}
+              >
+                <Ban size={11} /> Ignorée — annuler
               </Button>
-            )}
-            {isClosed && (
-              <Button size="1" color="gray" variant="soft" type="button" onClick={handleReopen}>
-                <RotateCcw size={11} /> Réouvrir
+            ) : isDone ? (
+              <Button size="1" color="green" variant="soft" type="button"
+                onClick={() => onTaskActionStatusChange(task.id, 'in_progress')}
+              >
+                <Check size={11} /> Terminée — annuler
               </Button>
+            ) : (
+              <Flex gap="1" align="center">
+                <Button size="1" color="green" variant="soft" type="button"
+                  onClick={() => onTaskActionStatusChange(task.id, 'done')}
+                >
+                  <Check size={11} /> Terminée
+                </Button>
+                <Button size="1" color="gray" variant="ghost" type="button"
+                  onClick={() => onTaskActionStatusChange(task.id, 'skipped')}
+                >
+                  <Ban size={11} /> Ignorer
+                </Button>
+              </Flex>
             )}
-            {canDelete && (
+            {canDelete && !deleting && (
               <IconButton size="1" variant="ghost" color="red" type="button" title="Supprimer" onClick={handleDelete}>
                 <Trash2 size={12} />
               </IconButton>
             )}
+            {deleting && <Spinner size="1" />}
           </Flex>
         )}
-        {mutating && <Spinner size="1" style={{ flexShrink: 0 }} />}
       </Flex>
 
-      {/* Erreur inline */}
-      {rowError && (
+      {/* Motif d'exclusion inline quand ignorée */}
+      {isSkipped && (
+        <Box px="3" pb="2" style={{ background: 'var(--amber-2)', borderTop: '1px solid var(--amber-4)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <TextField.Root
+            size="1"
+            placeholder="Motif de l'exclusion…"
+            value={selectedTask?.skipReason ?? ''}
+            onChange={(e) => onSkipReasonChange(task.id, e.target.value)}
+            style={{ marginTop: 4 }}
+          />
+          {!selectedTask?.skipReason?.trim() && (
+            <Text size="1" color="amber" style={{ display: 'block', marginTop: 2 }}>Motif requis</Text>
+          )}
+        </Box>
+      )}
+
+      {/* Erreur suppression */}
+      {deleteError && (
         <Flex align="center" gap="2" px="3" py="1"
           style={{ background: 'var(--red-2)', borderTop: '1px solid var(--red-4)' }}
         >
-          <Text size="1" color="red" style={{ flex: 1 }}>{rowError}</Text>
-          <IconButton size="1" variant="ghost" color="red" type="button" onClick={() => setRowError(null)}>
+          <Text size="1" color="red" style={{ flex: 1 }}>{deleteError}</Text>
+          <IconButton size="1" variant="ghost" color="red" type="button" onClick={() => setDeleteError(null)}>
             <X size={10} />
           </IconButton>
         </Flex>
-      )}
-
-      {/* Motif d'exclusion inline */}
-      {showSkipReason && (
-        <Box px="3" pb="2" style={{ background: 'var(--amber-2)', borderTop: '1px solid var(--amber-5)' }}>
-          <Flex gap="2" align="center" mt="1">
-            <TextField.Root
-              size="1"
-              placeholder="Motif de l'exclusion…"
-              value={skipReason}
-              onChange={(e) => setSkipReason(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && skipReason.trim()) handleSkipConfirm();
-                if (e.key === 'Escape') { setShowSkipReason(false); setSkipReason(''); }
-              }}
-              style={{ flex: 1 }}
-              autoFocus
-            />
-            <Button size="1" color="orange" type="button" disabled={!skipReason.trim() || mutating} onClick={handleSkipConfirm}>
-              Confirmer
-            </Button>
-            <IconButton size="1" variant="ghost" color="gray" type="button" onClick={() => { setShowSkipReason(false); setSkipReason(''); }}>
-              <X size={11} />
-            </IconButton>
-          </Flex>
-        </Box>
       )}
     </Box>
   );
@@ -216,10 +232,12 @@ function TaskRow({ task, isSelected, isDisabled, onToggle, onStatusChange, onDel
 TaskRow.propTypes = {
   task: PropTypes.object.isRequired,
   isSelected: PropTypes.bool.isRequired,
+  selectedTask: PropTypes.object,
   isDisabled: PropTypes.bool.isRequired,
   onToggle: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onTaskActionStatusChange: PropTypes.func.isRequired,
+  onSkipReasonChange: PropTypes.func.isRequired,
 };
 
 /* ── Header d'intervention ──────────────────────────────────────────────── */
@@ -250,7 +268,7 @@ InterventionHeader.propTypes = { iv: PropTypes.object.isRequired };
 
 /* ── Groupe d'intervention ──────────────────────────────────────────────── */
 
-function InterventionGroup({ iv, selectedIds, lockedIvId, users, onToggle, onStatusChange, onDelete, onTaskCreated }) {
+function InterventionGroup({ iv, selectedIds, selectedTasksMap, lockedIvId, users, onToggle, onDelete, onTaskCreated, onTaskActionStatusChange, onSkipReasonChange }) {
   return (
     <Box style={{ borderBottom: '1px solid var(--gray-4)' }}>
       <InterventionHeader iv={iv} />
@@ -259,10 +277,12 @@ function InterventionGroup({ iv, selectedIds, lockedIvId, users, onToggle, onSta
           key={task.id}
           task={task}
           isSelected={selectedIds.has(task.id)}
+          selectedTask={selectedTasksMap.get(task.id) ?? null}
           isDisabled={lockedIvId !== null && String(iv.id) !== String(lockedIvId)}
           onToggle={() => onToggle(task, iv)}
-          onStatusChange={onStatusChange}
           onDelete={onDelete}
+          onTaskActionStatusChange={onTaskActionStatusChange}
+          onSkipReasonChange={onSkipReasonChange}
         />
       ))}
       <GhostCreateRow
@@ -277,12 +297,14 @@ function InterventionGroup({ iv, selectedIds, lockedIvId, users, onToggle, onSta
 InterventionGroup.propTypes = {
   iv: PropTypes.object.isRequired,
   selectedIds: PropTypes.instanceOf(Set).isRequired,
+  selectedTasksMap: PropTypes.instanceOf(Map).isRequired,
   lockedIvId: PropTypes.string,
   users: PropTypes.array.isRequired,
   onToggle: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onTaskCreated: PropTypes.func.isRequired,
+  onTaskActionStatusChange: PropTypes.func.isRequired,
+  onSkipReasonChange: PropTypes.func.isRequired,
 };
 
 /* ── Composant principal ─────────────────────────────────────────────────── */
@@ -293,7 +315,11 @@ export default function TaskSearchColumn({
   onTasksChange,
   onInterventionCreated,
 }) {
-  const [query, setQuery] = useState('');
+  // Pré-remplir la recherche avec le code équipement si des tâches sont déjà sélectionnées
+  const initialQuery = selectedTasks[0]?._intervention?.equipement?.code
+    ?? selectedTasks[0]?._intervention?.code
+    ?? '';
+  const [query, setQuery] = useState(initialQuery);
   const [showNewIv, setShowNewIv] = useState(false);
   const [newIvEquipement, setNewIvEquipement] = useState(null);
   // Tâches affichées localement (résultats + insertions en cache)
@@ -327,6 +353,7 @@ export default function TaskSearchColumn({
 
   // IDs sélectionnés + intervention verrouillée
   const selectedIds = new Set(selectedTasks.map((t) => t.id));
+  const selectedTasksMap = new Map(selectedTasks.map((t) => [t.id, t]));
   const lockedIvId = selectedTasks.length > 0
     ? String(selectedTasks[0]._intervention?.id ?? '')
     : null;
@@ -353,19 +380,6 @@ export default function TaskSearchColumn({
     }
   }, [selectedTasks, selectedIds, onTasksChange]);
 
-  /* Mise à jour statut depuis les mutations inline */
-  const handleStatusChange = useCallback((taskId, updated) => {
-    // Mettre à jour localGroups
-    setLocalGroups((prev) => prev.map((iv) => ({
-      ...iv,
-      tasks: iv.tasks.map((t) => t.id === taskId ? { ...t, ...updated } : t),
-    })));
-    // Mettre à jour selectedTasks si la tâche y est
-    if (selectedIds.has(taskId)) {
-      onTasksChange(selectedTasks.map((t) => t.id === taskId ? { ...t, ...updated } : t));
-    }
-  }, [selectedTasks, selectedIds, onTasksChange]);
-
   /* Suppression */
   const handleDelete = useCallback((taskId) => {
     setLocalGroups((prev) => prev.map((iv) => ({
@@ -376,6 +390,20 @@ export default function TaskSearchColumn({
       onTasksChange(selectedTasks.filter((t) => t.id !== taskId));
     }
   }, [selectedTasks, selectedIds, onTasksChange]);
+
+  /* Changement de taskActionStatus (état local formulaire, sans appel API) */
+  const handleTaskActionStatusChange = useCallback((taskId, taskActionStatus) => {
+    onTasksChange(selectedTasks.map((t) =>
+      t.id === taskId
+        ? { ...t, taskActionStatus, ...(taskActionStatus !== 'skipped' ? { skipReason: '' } : {}) }
+        : t
+    ));
+  }, [selectedTasks, onTasksChange]);
+
+  /* Changement de motif d'exclusion */
+  const handleSkipReasonChange = useCallback((taskId, skipReason) => {
+    onTasksChange(selectedTasks.map((t) => t.id === taskId ? { ...t, skipReason } : t));
+  }, [selectedTasks, onTasksChange]);
 
   /* Tâche créée via ghost row */
   const handleTaskCreated = useCallback((created, intervention) => {
@@ -429,66 +457,57 @@ export default function TaskSearchColumn({
         <Text size="3" weight="bold" style={{ textTransform: 'capitalize' }}>{formattedDate}</Text>
       </Flex>
 
-      {/* Quand des tâches sont sélectionnées : section tâches de l'action */}
-      {selectedTasks.length > 0 ? (
-        <ActionTaskSection
-          interventionId={lockedIvId}
-          value={selectedTasks}
-          onChange={onTasksChange}
-        />
-      ) : (
-        <>
-          <TextField.Root
-            size="2"
-            placeholder="Chercher une tâche, équipement, intervention…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-          >
-            <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
-            {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
-          </TextField.Root>
+      <TextField.Root
+        size="2"
+        placeholder="Chercher une tâche, équipement, intervention…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        autoComplete="off"
+      >
+        <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
+        {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
+      </TextField.Root>
 
-          {/* État vide avant frappe */}
-          {query.trim().length < 2 && (
-            <Flex direction="column" align="center" justify="center" gap="2"
-              style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
-            >
-              <Search size={18} color="var(--gray-7)" />
-              <Text size="2" color="gray" align="center">
-                Tapez le nom d'une tâche, d'un équipement ou d'une intervention
-              </Text>
-            </Flex>
-          )}
+      {/* État vide avant frappe */}
+      {query.trim().length < 2 && localGroups.length === 0 && (
+        <Flex direction="column" align="center" justify="center" gap="2"
+          style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
+        >
+          <Search size={18} color="var(--gray-7)" />
+          <Text size="2" color="gray" align="center">
+            Tapez le nom d'une tâche, d'un équipement ou d'une intervention
+          </Text>
+        </Flex>
+      )}
 
-          {/* Aucun résultat */}
-          {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
-            <Flex direction="column" align="center" gap="2"
-              style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
-            >
-              <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
-            </Flex>
-          )}
+      {/* Aucun résultat */}
+      {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
+        <Flex direction="column" align="center" gap="2"
+          style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
+        >
+          <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
+        </Flex>
+      )}
 
-          {/* Résultats */}
-          {localGroups.length > 0 && (
-            <Card style={{ padding: 0, overflow: 'hidden' }}>
-              {localGroups.map((iv) => (
-                <InterventionGroup
-                  key={iv.id}
-                  iv={iv}
-                  selectedIds={selectedIds}
-                  lockedIvId={lockedIvId}
-                  users={users}
-                  onToggle={handleToggle}
-                  onStatusChange={handleStatusChange}
-                  onDelete={handleDelete}
-                  onTaskCreated={handleTaskCreated}
-                />
-              ))}
-            </Card>
-          )}
-        </>
+      {/* Résultats */}
+      {localGroups.length > 0 && (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          {localGroups.map((iv) => (
+            <InterventionGroup
+              key={iv.id}
+              iv={iv}
+              selectedIds={selectedIds}
+              selectedTasksMap={selectedTasksMap}
+              lockedIvId={lockedIvId}
+              users={users}
+              onToggle={handleToggle}
+              onDelete={handleDelete}
+              onTaskCreated={handleTaskCreated}
+              onTaskActionStatusChange={handleTaskActionStatusChange}
+              onSkipReasonChange={handleSkipReasonChange}
+            />
+          ))}
+        </Card>
       )}
 
       {/* Nouvelle intervention via DI */}

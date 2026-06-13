@@ -11,10 +11,34 @@ export async function fetchInterventions(filters = {}) {
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;
   if (filters.include) params.include = filters.include;
+  if (filters.search) params.search = filters.search;
 
   const response = await api.get('/interventions', { params });
   const items = response.data.items ?? [];
   return items.map(mapInterventionResponse);
+}
+
+export async function searchOpenInterventions(search, { limit = 20 } = {}) {
+  const response = await api.get('/interventions', {
+    params: {
+      search,
+      status: 'ouvert,en_cours,attente_pieces,attente_prod',
+      limit,
+    },
+  });
+  return (response.data.items ?? []).map((raw) => ({
+    id: raw.id?.toString() ?? '',
+    code: raw.code ?? '',
+    title: raw.title ?? '',
+    status_actual: raw.status_actual ?? raw.status ?? '',
+    type_inter: typeof raw.type_inter === 'string' ? raw.type_inter : (raw.type_inter?.code ?? 'CUR'),
+    priority: raw.priority ?? 'normale',
+    plan_id: raw.plan_id ?? null,
+    equipement: raw.equipements
+      ? { id: raw.equipements.id?.toString() ?? '', code: raw.equipements.code ?? '', name: raw.equipements.name ?? '' }
+      : null,
+    tasks: [],
+  }));
 }
 
 export async function fetchIntervention(id) {

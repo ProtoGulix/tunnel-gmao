@@ -31,7 +31,7 @@
 import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
-import { HelpCircle, Info, Loader2, Plus, Search, SearchX } from 'lucide-react';
+import { AlertCircle, HelpCircle, Info, Loader2, Plus, Search, SearchX } from 'lucide-react';
 
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -91,6 +91,7 @@ export default function AsyncSearchSelect({
   const [results, setResults] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   const debouncedSearch = useDebounce(search, debounceMs);
 
@@ -102,12 +103,13 @@ export default function AsyncSearchSelect({
   }, [search, debouncedSearch]);
 
   useEffect(() => {
-    if (debouncedSearch.length < minChars) { setResults([]); return; }
+    if (debouncedSearch.length < minChars) { setResults([]); setFetchError(false); return; }
     let cancelled = false;
     setFetching(true);
+    setFetchError(false);
     fetchFnRef.current(debouncedSearch)
       .then((items) => { if (!cancelled) setResults(Array.isArray(items) ? items : []); })
-      .catch(() => { if (!cancelled) setResults([]); })
+      .catch(() => { if (!cancelled) { setResults([]); setFetchError(true); } })
       .finally(() => { if (!cancelled) setFetching(false); });
     return () => { cancelled = true; };
   }, [debouncedSearch, minChars]);
@@ -122,9 +124,10 @@ export default function AsyncSearchSelect({
   const busy = isTyping || fetching;
 
   // ─── État courant ─────────────────────────────────────────────────────────
-  // Priorité : busy > results > noResults > hint > idle
+  // Priorité : busy > error > results > empty > hint > idle
   let state = 'idle';
   if (busy)                                                          state = 'busy';
+  else if (fetchError)                                               state = 'error';
   else if (results.length > 0)                                       state = 'results';
   else if (debouncedSearch.length >= minChars && !busy)              state = 'empty';
   else if (search.length > 0 && search.length < minChars)           state = 'hint';
@@ -135,7 +138,7 @@ export default function AsyncSearchSelect({
       <Box style={{ position: 'relative' }}>
         <input
           value={search}
-          onChange={(e) => { setSearch(e.target.value); onSearchChange?.(e.target.value); }}
+          onChange={(e) => { setSearch(e.target.value); setFetchError(false); onSearchChange?.(e.target.value); }}
           placeholder={placeholder}
           style={{
             width: '100%', padding: '8px 12px 8px 36px',
@@ -212,6 +215,18 @@ export default function AsyncSearchSelect({
             </button>
           ))}
         </Box>
+      )}
+
+      {state === 'error' && (
+        <StateBox>
+          <AlertCircle size={22} color="var(--red-9)" strokeWidth={1.5} />
+          <Text size="2" color="red" weight="bold" align="center">
+            Erreur de chargement
+          </Text>
+          <Text size="1" color="gray" align="center">
+            Vérifiez votre connexion ou réessayez
+          </Text>
+        </StateBox>
       )}
 
       {state === 'empty' && (

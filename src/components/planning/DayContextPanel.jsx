@@ -25,12 +25,14 @@ export default function DayContextPanel({
     const task = preselectedAction?.task ?? preselectedAction?.tasks?.[0] ?? null;
     const iv = preselectedAction?.intervention ?? null;
     if (!task || !iv) return [];
+    const eq = iv.equipement ?? iv.machine ?? null;
     return [{
       ...task,
       _intervention: {
         id: iv.id, code: iv.code ?? '', title: iv.title ?? '',
         status_actual: iv.status_actual ?? null,
         type_inter: iv.type_inter ?? null, plan_id: iv.plan_id ?? null,
+        equipement: eq ? { id: eq.id, code: eq.code ?? '', name: eq.name ?? '' } : null,
       },
     }];
   // eslint-disable-next-line react-hooks/exhaustive-deps
