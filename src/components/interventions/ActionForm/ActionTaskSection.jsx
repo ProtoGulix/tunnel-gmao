@@ -12,8 +12,9 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Badge, Button, Flex, IconButton, Spinner, Text, TextField } from '@radix-ui/themes';
-import { Ban, CalendarClock, Check, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
+import { Box, Badge, Button, Flex, Spinner, Text, TextField } from '@radix-ui/themes';
+import { CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
+import TaskActionButtons from '@/components/tasks/TaskActionButtons';
 import { fetchInterventionTasks, fetchOpenTasksByMachine } from '@/api/interventionTasks';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
@@ -75,6 +76,7 @@ function normalizeSelectedTask(task) {
 /* ── Ligne de tâche ─────────────────────────────────────────────────────────── */
 
 function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskActionStatusChange, onSkipReasonChange, accentColor }) {
+  const [hovered, setHovered] = useState(false);
   const dueDate = item.dueDate || item.due_date || null;
   const assigneeLabel = getAssigneeLabel(item);
   const isSkipped = isSelected && selectedTask?.taskActionStatus === 'skipped';
@@ -88,6 +90,8 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
       align="center"
       wrap="wrap"
       onClick={isDisabled ? undefined : () => onSelect(item)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         cursor: isDisabled ? 'not-allowed' : 'pointer',
         opacity: isDisabled ? 0.4 : 1,
@@ -134,34 +138,13 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
         <Badge size="1" color="green" variant="soft">Terminée</Badge>
       )}
       {isSelected && (
-        <Box onClick={(e) => e.stopPropagation()}>
-          {isSkipped ? (
-            <Button size="1" variant="soft" color="orange" type="button"
-              onClick={() => onTaskActionStatusChange(item.id, 'in_progress')}
-            >
-              <Ban size={11} /> Ignorée — annuler
-            </Button>
-          ) : isDone ? (
-            <Button size="1" variant="soft" color="green" type="button"
-              onClick={() => onTaskActionStatusChange(item.id, 'in_progress')}
-            >
-              <Check size={11} /> Terminée — annuler
-            </Button>
-          ) : (
-            <Flex gap="1">
-              <Button size="1" variant="soft" color="green" type="button"
-                onClick={() => onTaskActionStatusChange(item.id, 'done')}
-              >
-                <Check size={11} /> Terminée
-              </Button>
-              <Button size="1" variant="ghost" color="gray" type="button"
-                onClick={() => onTaskActionStatusChange(item.id, 'skipped')}
-              >
-                <Ban size={11} /> Ignorer
-              </Button>
-            </Flex>
-          )}
-        </Box>
+        <TaskActionButtons
+          taskId={item.id}
+          status={selectedTask?.taskActionStatus ?? 'in_progress'}
+          visible={hovered}
+          mode="form"
+          onStatusChange={onTaskActionStatusChange}
+        />
       )}
       {isSkipped && (
         <Box style={{ flex: '1 1 220px', minWidth: 220 }} onClick={(e) => e.stopPropagation()}>

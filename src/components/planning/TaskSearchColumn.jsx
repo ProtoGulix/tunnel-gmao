@@ -1,22 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Badge, Box, Button, Card, Flex, IconButton,
+  Badge, Box, Button, Card, Flex,
   Spinner, Text, TextField,
 } from '@radix-ui/themes';
 import {
-  Ban, Calendar, Check, CheckSquare, ChevronRight,
-  Search, Square, Trash2, Wrench, X,
+  Calendar, CheckSquare, ChevronRight,
+  Search, Square, Wrench, X,
 } from 'lucide-react';
-import {
-  fetchInterventionTasksList,
-  deleteInterventionTask,
-} from '@/api/interventionTasks';
+import { fetchInterventionTasksList } from '@/api/interventionTasks';
 import { searchOpenInterventions } from '@/api/interventions';
 import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
+import TaskActionButtons from '@/components/tasks/TaskActionButtons';
 import EquipementSearch from '@/components/planning/EquipementSearch';
-import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
@@ -103,27 +100,13 @@ function useTaskSearch(query) {
 /* ── Ligne de tâche avec actions inline ─────────────────────────────────── */
 
 function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelete, onTaskActionStatusChange, onSkipReasonChange }) {
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
+  const [hovered, setHovered] = useState(false);
 
   const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
 
   const taskActionStatus = selectedTask?.taskActionStatus ?? 'in_progress';
   const isSkipped = isSelected && taskActionStatus === 'skipped';
   const isDone = isSelected && taskActionStatus === 'done';
-
-  const handleDelete = useCallback(async () => {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await deleteInterventionTask(task.id);
-      onDelete(task.id);
-    } catch (err) {
-      if (!err?.isAuditCancelled) setDeleteError(extractApiErrorMessage(err, 'Suppression impossible'));
-    } finally {
-      setDeleting(false);
-    }
-  }, [task.id, onDelete]);
 
   const bgColor = isSkipped ? 'var(--amber-2)' : isDone ? 'var(--green-2)' : isSelected ? 'var(--blue-3)' : 'transparent';
   const borderColor = isSkipped ? 'var(--amber-7)' : isDone ? 'var(--green-7)' : isSelected ? 'var(--blue-9)' : 'transparent';
@@ -133,6 +116,8 @@ function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelet
       <Flex
         gap="2" px="3" py="2" align="center"
         onClick={isDisabled ? undefined : onToggle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           cursor: isDisabled ? 'not-allowed' : 'pointer',
           opacity: isDisabled ? 0.4 : 1,
@@ -157,42 +142,16 @@ function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelet
           </Badge>
         )}
 
-        {/* Boutons taskActionStatus — état local formulaire, pas d'appel API */}
         {isSelected && (
-          <Flex gap="1" align="center" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
-            {isSkipped ? (
-              <Button size="1" color="amber" variant="soft" type="button"
-                onClick={() => onTaskActionStatusChange(task.id, 'in_progress')}
-              >
-                <Ban size={11} /> Ignorée — annuler
-              </Button>
-            ) : isDone ? (
-              <Button size="1" color="green" variant="soft" type="button"
-                onClick={() => onTaskActionStatusChange(task.id, 'in_progress')}
-              >
-                <Check size={11} /> Terminée — annuler
-              </Button>
-            ) : (
-              <Flex gap="1" align="center">
-                <Button size="1" color="green" variant="soft" type="button"
-                  onClick={() => onTaskActionStatusChange(task.id, 'done')}
-                >
-                  <Check size={11} /> Terminée
-                </Button>
-                <Button size="1" color="gray" variant="ghost" type="button"
-                  onClick={() => onTaskActionStatusChange(task.id, 'skipped')}
-                >
-                  <Ban size={11} /> Ignorer
-                </Button>
-              </Flex>
-            )}
-            {canDelete && !deleting && (
-              <IconButton size="1" variant="ghost" color="red" type="button" title="Supprimer" onClick={handleDelete}>
-                <Trash2 size={12} />
-              </IconButton>
-            )}
-            {deleting && <Spinner size="1" />}
-          </Flex>
+          <TaskActionButtons
+            taskId={task.id}
+            status={taskActionStatus}
+            visible={hovered}
+            mode="form"
+            canDelete={canDelete}
+            onStatusChange={onTaskActionStatusChange}
+            onDeleted={onDelete}
+          />
         )}
       </Flex>
 
@@ -214,17 +173,6 @@ function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelet
         </Box>
       )}
 
-      {/* Erreur suppression */}
-      {deleteError && (
-        <Flex align="center" gap="2" px="3" py="1"
-          style={{ background: 'var(--red-2)', borderTop: '1px solid var(--red-4)' }}
-        >
-          <Text size="1" color="red" style={{ flex: 1 }}>{deleteError}</Text>
-          <IconButton size="1" variant="ghost" color="red" type="button" onClick={() => setDeleteError(null)}>
-            <X size={10} />
-          </IconButton>
-        </Flex>
-      )}
     </Box>
   );
 }

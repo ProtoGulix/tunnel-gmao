@@ -106,12 +106,14 @@ GroupCard.propTypes = {
 
 /* ── GroupCard.Row ────────────────────────────────────────────────────────── */
 
-function GroupCardRow({ accentColor, isLast, background, children, onClick, style }) {
+function GroupCardRow({ accentColor, isLast, background, children, onClick, onMouseEnter, onMouseLeave, style }) {
   return (
     <Flex
       align="center"
       gap="2"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={{
         padding: '7px 10px',
         borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
@@ -133,6 +135,8 @@ GroupCardRow.propTypes = {
   background: PropTypes.string,
   children: PropTypes.node,
   onClick: PropTypes.func,
+  onMouseEnter: PropTypes.func,
+  onMouseLeave: PropTypes.func,
   style: PropTypes.object,
 };
 

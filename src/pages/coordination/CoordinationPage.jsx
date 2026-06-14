@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Badge, Button, Flex, Select, Spinner, Tabs, Text } from '@radix-ui/themes';
-import { ChevronLeft, ChevronRight, MousePointerClick, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointerClick, CalendarDays, CalendarX2 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import { fetchInterventionTasksList, patchInterventionTask } from '@/api/interventionTasks';
 import { fetchInterventions, updateIntervention } from '@/api/interventions';
@@ -10,6 +10,7 @@ import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { INTERVENTION_TYPES, STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { GroupCard } from '@/components/shared/GroupCard';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
+import TaskActionButtons from '@/components/tasks/TaskActionButtons';
 import {
   getMondayOf,
   addDays,
@@ -181,7 +182,10 @@ function TaskDayColumn({ dateStr, tasks, isToday }) {
 
       {/* Tâches */}
       {dayTasks.length === 0 ? (
-        <Text size="1" color="gray">Aucune tâche</Text>
+        <Flex direction="column" align="center" gap="1" style={{ padding: '16px 0', opacity: 0.4 }}>
+          <CalendarX2 size={22} color="var(--gray-9)" strokeWidth={1.5} />
+          <Text size="1" color="gray">Aucune tâche</Text>
+        </Flex>
       ) : (
         <>
           {visible.map((t) => <TaskRow key={t.id} task={t} />)}
@@ -398,7 +402,7 @@ function InlineTaskStatus({ taskId, status, onSaved }) {
   async function handleClick() {
     if (saving) return;
     setSaving(true);
-    try { await patchInterventionTask(taskId, { status: next }); onSaved(); }
+    try { await patchInterventionTask(taskId, { status: next }); onSaved(next); }
     catch { /* silencieux */ }
     finally { setSaving(false); }
   }
@@ -489,7 +493,7 @@ function InlineIvPriority({ ivId, priority, onSaved }) {
 
 // ── InterventionTasksBlock ────────────────────────────────────────────────────
 
-function InterventionTasksBlock({ intervention, users, onTaskCreated, onIvChanged }) {
+function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStatusChanged, onTaskDeleted, onIvChanged }) {
   const typeColor = INTERVENTION_TYPES.find((t) => t.id === intervention.type)?.color ?? 'gray';
   const tasks     = intervention.tasks ?? null;
   const planned   = tasks ? tasks.filter((t) => t.due_date)  : null;
@@ -497,12 +501,31 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onIvChange
   const totalCount = tasks?.length ?? null;
 
   function TaskLine({ task, isLast = false }) {
+    const [hovered, setHovered] = useState(false);
+    const isDone    = task.status === 'done';
+    const isSkipped = task.status === 'skipped';
+    const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
+
     return (
-      <GroupCard.Row accentColor={TASK_ACCENT[task.status] ?? 'var(--gray-6)'} isLast={isLast}>
-        <InlineTaskStatus taskId={task.id} status={task.status} onSaved={onTaskCreated} />
-        <Text size="1" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <GroupCard.Row
+        accentColor={TASK_ACCENT[task.status] ?? 'var(--gray-6)'}
+        isLast={isLast}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <InlineTaskStatus taskId={task.id} status={task.status} onSaved={(newStatus) => onTaskStatusChanged(intervention.id, task.id, newStatus)} />
+        <Text size="1" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: (isDone || isSkipped) ? 'line-through' : 'none', color: (isDone || isSkipped) ? 'var(--gray-9)' : undefined }}>
           {task.label}
         </Text>
+        <TaskActionButtons
+          taskId={task.id}
+          status={task.status}
+          visible={hovered}
+          mode="live"
+          canDelete={canDelete}
+          onStatusChange={(taskId, newStatus) => onTaskStatusChanged(intervention.id, taskId, newStatus)}
+          onDeleted={(taskId) => onTaskDeleted(intervention.id, taskId)}
+        />
         <InlineAssignCell taskId={task.id} assignedTo={task.assigned_to ?? null} users={users} onSaved={onTaskCreated} />
         <InlineDateCell   taskId={task.id} value={task.due_date} onSaved={onTaskCreated} />
       </GroupCard.Row>
@@ -637,7 +660,7 @@ export default function CoordinationPage() {
       const raw = await fetchInterventionTasksList({
         due_date_after: monday,
         due_date_before: friday,
-        status: 'todo,in_progress',
+        include_done: true,
         limit: 200,
       });
       const flat = raw.flatMap((item) =>
@@ -727,7 +750,7 @@ export default function CoordinationPage() {
 
       const taskResults = await Promise.allSettled(
         ivs.map(async (iv) => {
-          const raw = await fetchInterventionTasksList({ intervention_id: iv.id, status: 'todo,in_progress', limit: 100 });
+          const raw = await fetchInterventionTasksList({ intervention_id: iv.id, include_done: true, limit: 100 });
           const tasks = raw.flatMap((item) => Array.isArray(item.tasks) ? item.tasks : []);
           return { id: iv.id, tasks };
         })
@@ -756,6 +779,22 @@ export default function CoordinationPage() {
     loadIvTasks(selectedEquipId);
     loadWeekTasks();
   }, [loadIvTasks, loadWeekTasks, selectedEquipId]);
+
+  const handleTaskStatusChanged = useCallback((ivId, taskId, newStatus) => {
+    setIvTasksMap((prev) => ({
+      ...prev,
+      [ivId]: (prev[ivId] ?? []).map((t) =>
+        String(t.id) === String(taskId) ? { ...t, status: newStatus } : t
+      ),
+    }));
+  }, []);
+
+  const handleTaskDeleted = useCallback((ivId, taskId) => {
+    setIvTasksMap((prev) => ({
+      ...prev,
+      [ivId]: (prev[ivId] ?? []).filter((t) => String(t.id) !== String(taskId)),
+    }));
+  }, []);
 
   const handleIvChanged = useCallback(() => {
     loadIvTasks(selectedEquipId);
@@ -868,6 +907,8 @@ export default function CoordinationPage() {
                     intervention={{ ...iv, tasks: ivTasksMap[iv.id] ?? null }}
                     users={users}
                     onTaskCreated={handleTaskCreated}
+                    onTaskStatusChanged={handleTaskStatusChanged}
+                    onTaskDeleted={handleTaskDeleted}
                     onIvChanged={handleIvChanged}
                   />
                 ))}
