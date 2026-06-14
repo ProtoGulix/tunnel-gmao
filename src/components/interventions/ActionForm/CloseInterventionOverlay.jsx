@@ -7,7 +7,7 @@
  * Séquence : enregistre l'action → demande si l'intervention est terminée →
  * clôture optionnellement via updateInterventionStatus.
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
@@ -34,13 +34,16 @@ export default function CloseInterventionOverlay({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [gammeBlocked, setGammeBlocked] = useState(false);
+  const actionSubmittedRef = useRef(false);
+  const actionResultRef = useRef(null);
 
   const tryClose = useCallback(async () => {
     try {
       await updateInterventionStatus(String(interventionId), 'ferme', 'ROUTINE');
-      return false;
+      return null;
     } catch (err) {
-      return err?.response?.status === 409;
+      if (err?.response?.status === 409) return 'GAMME_BLOCKED';
+      return extractApiErrorMessage(err, "Impossible de clôturer l'intervention");
     }
   }, [interventionId]);
 
@@ -48,20 +51,31 @@ export default function CloseInterventionOverlay({
     setSubmitting(true);
     setError(null);
 
-    let result;
-    try {
-      result = await onSubmitAction();
-    } catch (err) {
-      setError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
-      setSubmitting(false);
-      return;
+    // Si l'action a déjà été soumise (après un échec de clôture), ne pas la resoumettre
+    let result = actionResultRef.current;
+    if (!actionSubmittedRef.current) {
+      try {
+        result = await onSubmitAction();
+        actionSubmittedRef.current = true;
+        actionResultRef.current = result;
+      } catch (err) {
+        setError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
+        setSubmitting(false);
+        return;
+      }
     }
 
     if (choice === 'close') {
-      const blocked = await tryClose();
-      if (blocked) {
+      const closeError = await tryClose();
+      if (closeError === 'GAMME_BLOCKED') {
         setGammeBlocked(true);
-        setError('Des etapes de gamme sont encore en attente.');
+        setError('Des étapes de gamme sont encore en attente.');
+        setSubmitting(false);
+        return;
+      } else if (closeError) {
+        setError(closeError);
+        setSubmitting(false);
+        return;
       }
     }
 

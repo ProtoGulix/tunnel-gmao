@@ -152,7 +152,11 @@ export function handleAuditError(error) {
       if (mutatedFields.every((f) => silentFields.includes(f))) {
         return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
       }
-      // Au moins un champ hors silent_fields → dialog obligatoire
+      // Au moins un champ hors silent_fields → dialog si des raisons existent,
+      // sinon retry silencieux avec le code par défaut (dialog vide = bloquant)
+      if (!auditConfig.reasons?.length && auditConfig.default_reason_code) {
+        return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
+      }
     } else {
       // Pas de silent_fields → tout passe silencieusement (rétrocompat)
       return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });

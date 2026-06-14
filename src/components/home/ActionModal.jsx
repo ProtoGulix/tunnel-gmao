@@ -29,7 +29,7 @@ export default function ActionModal({
         }}
       >
         <VisuallyHidden><Dialog.Title>Planification</Dialog.Title></VisuallyHidden>
-        {open && date && (
+        {open && (
           <DayContextPanel
             date={date}
             techId={techId}

@@ -5,39 +5,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Checkbox, Flex, Separator, Text, TextField } from '@radix-ui/themes';
-import { ArrowDown, ArrowUp, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { Badge, Button, Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
+import { ArrowDown, ArrowUp, CheckCircle, Plus, Save, Trash2 } from 'lucide-react';
+import DataTable from '@/components/ui/DataTable';
 
-function StepRow({ step, index, total, onMoveUp, onMoveDown, onRemove }) {
-  return (
-    <Flex align="center" gap="2" py="2" style={{ borderBottom: '1px solid var(--gray-4)' }}>
-      <Text size="1" color="gray" style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{step.sort_order}</Text>
-      <Text size="2" style={{ flex: 1 }}>{step.label}</Text>
-      {step.optional && <Badge color="amber" variant="soft" size="1">Optionnelle</Badge>}
-      <Flex gap="1">
-        <Button size="1" variant="ghost" color="gray" disabled={index === 0} onClick={() => onMoveUp(index)}>
-          <ArrowUp size={12} />
-        </Button>
-        <Button size="1" variant="ghost" color="gray" disabled={index === total - 1} onClick={() => onMoveDown(index)}>
-          <ArrowDown size={12} />
-        </Button>
-        <Button size="1" variant="ghost" color="red" onClick={() => onRemove(index)}>
-          <Trash2 size={12} />
-        </Button>
-      </Flex>
-    </Flex>
-  );
-}
-StepRow.propTypes = {
-  step: PropTypes.object.isRequired,
-  index: PropTypes.number.isRequired,
-  total: PropTypes.number.isRequired,
-  onMoveUp: PropTypes.func.isRequired,
-  onMoveDown: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
-};
-
-export default function GammeStepsPanel({ plan, onSave, onClose, saving }) {
+export default function GammeStepsPanel({ plan, onSave, saving }) {
   const [steps, setSteps] = useState([]);
   const [dirty, setDirty] = useState(false);
   const [newLabel, setNewLabel] = useState('');
@@ -46,6 +18,7 @@ export default function GammeStepsPanel({ plan, onSave, onClose, saving }) {
   useEffect(() => {
     const sorted = [...(plan.steps ?? [])].sort((a, b) => a.sort_order - b.sort_order);
     setSteps(sorted.map((s, i) => ({ ...s, sort_order: i + 1 })));
+    setDirty(false);
   }, [plan.steps]);
 
   const reorder = useCallback((newList) => {
@@ -66,90 +39,97 @@ export default function GammeStepsPanel({ plan, onSave, onClose, saving }) {
   }, [steps, reorder]);
 
   const remove = useCallback((i) => {
-    const list = steps.filter((_, idx) => idx !== i);
-    reorder(list);
+    reorder(steps.filter((_, idx) => idx !== i));
   }, [steps, reorder]);
 
   const addStep = useCallback(() => {
     if (!newLabel.trim()) return;
-    const next = steps.length + 1;
-    setSteps((prev) => [...prev, { id: null, label: newLabel.trim(), sort_order: next, optional: newOptional }]);
+    setSteps((prev) => [...prev, { id: null, label: newLabel.trim(), sort_order: prev.length + 1, optional: newOptional }]);
     setNewLabel('');
     setNewOptional(false);
     setDirty(true);
-  }, [newLabel, newOptional, steps.length]);
+  }, [newLabel, newOptional]);
 
   const handleSave = async () => {
-    const payload = steps.map(({ label, sort_order, optional }) => ({ label, sort_order, optional }));
-    await onSave(plan.id, payload);
+    await onSave(plan.id, steps.map(({ label, sort_order, optional }) => ({ label, sort_order, optional })));
     setDirty(false);
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
-    <Card style={{ border: '1px solid var(--gray-6)' }}>
-      <Flex direction="column" gap="3">
-        <Flex align="center" justify="between">
-          <Flex align="center" gap="2">
-            <CheckCircle size={18} color="var(--blue-9)" />
-            <Text size="3" weight="bold">Étapes — {plan.label}</Text>
-            <Badge color="blue" variant="soft" size="1">{steps.length} étape{steps.length !== 1 ? 's' : ''}</Badge>
-          </Flex>
-          <Button size="1" variant="ghost" color="gray" onClick={handleClose}>✕</Button>
-        </Flex>
-
-        <Separator size="4" />
-
-        {steps.length === 0 ? (
-          <Text size="2" color="gray" style={{ textAlign: 'center', padding: '24px 0' }}>Aucune étape — ajoutez-en ci-dessous</Text>
-        ) : (
-          <Box>
-            {steps.map((s, i) => (
-              <StepRow key={i} step={s} index={i} total={steps.length} onMoveUp={moveUp} onMoveDown={moveDown} onRemove={remove} />
-            ))}
-          </Box>
+    <Flex direction="column" gap="3">
+      <DataTable
+        size="1"
+        variant="ghost"
+        stickyHeader={false}
+        data={steps}
+        getRowKey={(_, i) => i}
+        emptyState={{ icon: CheckCircle, title: 'Aucune étape', description: 'Ajoutez des étapes ci-dessous' }}
+        columns={[
+          { key: 'n', header: 'N°', width: 36 },
+          { key: 'label', header: 'Libellé' },
+          { key: 'optional', header: '', width: 90 },
+          { key: 'actions', header: '', width: 88 },
+        ]}
+        rowRenderer={(s, i) => (
+          <Table.Row>
+            <Table.Cell style={{ width: 36 }}>
+              <Text size="1" color="gray" style={{ fontVariantNumeric: 'tabular-nums' }}>{i + 1}</Text>
+            </Table.Cell>
+            <Table.Cell>
+              <Text size="2">{s.label}</Text>
+            </Table.Cell>
+            <Table.Cell style={{ width: 90 }}>
+              {s.optional && <Badge color="amber" variant="soft" size="1">Optionnelle</Badge>}
+            </Table.Cell>
+            <Table.Cell style={{ width: 88 }}>
+              <Flex gap="1" justify="end">
+                <Button size="1" variant="ghost" color="gray" disabled={i === 0} onClick={() => moveUp(i)}>
+                  <ArrowUp size={12} />
+                </Button>
+                <Button size="1" variant="ghost" color="gray" disabled={i === steps.length - 1} onClick={() => moveDown(i)}>
+                  <ArrowDown size={12} />
+                </Button>
+                <Button size="1" variant="ghost" color="red" onClick={() => remove(i)}>
+                  <Trash2 size={12} />
+                </Button>
+              </Flex>
+            </Table.Cell>
+          </Table.Row>
         )}
+      />
 
-        <Separator size="4" />
-
-        {/* Ajout inline */}
-        <Flex gap="2" align="end" wrap="wrap">
-          <Box style={{ flex: 1, minWidth: 200 }}>
-            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 4 }}>Label de l'étape</Text>
-            <TextField.Root
-              value={newLabel}
-              onChange={(e) => setNewLabel(e.target.value)}
-              placeholder="Ex : Contrôle de la tension de la lame"
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addStep(); } }}
-            />
-          </Box>
-          <Flex align="center" gap="2" style={{ paddingBottom: 2 }}>
-            <Checkbox checked={newOptional} onCheckedChange={(v) => setNewOptional(!!v)} size="2" />
-            <Text size="2">Optionnelle</Text>
-          </Flex>
-          <Button size="2" color="gray" variant="soft" onClick={addStep} disabled={!newLabel.trim()}>
-            <Plus size={14} />Ajouter
-          </Button>
+      {/* Ligne d'ajout */}
+      <Flex gap="2" align="center" style={{ borderTop: '1px solid var(--gray-4)', paddingTop: 10 }}>
+        <TextField.Root
+          style={{ flex: 1 }}
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+          placeholder="Nouvelle étape…"
+          size="2"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addStep(); } }}
+        />
+        <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
+          <Checkbox checked={newOptional} onCheckedChange={(v) => setNewOptional(!!v)} size="1" />
+          <Text size="1" color="gray">Optionnelle</Text>
         </Flex>
-
-        <Flex justify="end" gap="2" mt="1">
-          <Button size="2" variant="soft" color="gray" onClick={handleClose} disabled={saving}>Fermer</Button>
-          <Button size="2" color="blue" onClick={handleSave} disabled={saving || !dirty}>
-            <CheckCircle size={14} />
-            {saving ? 'Enregistrement…' : 'Enregistrer les étapes'}
-          </Button>
-        </Flex>
+        <Button size="2" variant="soft" color="gray" onClick={addStep} disabled={!newLabel.trim()} style={{ flexShrink: 0 }}>
+          <Plus size={13} />
+        </Button>
       </Flex>
-    </Card>
+
+      {/* Enregistrer */}
+      <Flex justify="end">
+        <Button size="2" color="blue" onClick={handleSave} disabled={saving || !dirty}>
+          <Save size={13} />
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
+        </Button>
+      </Flex>
+    </Flex>
   );
 }
 
 GammeStepsPanel.propTypes = {
   plan: PropTypes.shape({ id: PropTypes.string.isRequired, label: PropTypes.string.isRequired, steps: PropTypes.array }).isRequired,
   onSave: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired,
   saving: PropTypes.bool,
 };

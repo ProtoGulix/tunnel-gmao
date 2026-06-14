@@ -87,3 +87,25 @@ export async function createActionDirect(payload) {
   const res = await api.post('/intervention-actions', payload);
   return res.data.data;
 }
+
+/**
+ * Télécharge la fiche de semaine PDF pour un technicien.
+ * @param {string} techId  - UUID du technicien
+ * @param {string} weekIso - Semaine ISO YYYY-Www (ex: 2026-W24)
+ * @returns {Promise<void>} Déclenche le téléchargement du fichier
+ */
+export async function fetchPlanningSemainePdf(techId, weekIso) {
+  const res = await api.get('/exports/planning/semaine', {
+    params: { tech_id: techId, week: weekIso },
+    responseType: 'blob',
+  });
+  const blob = new Blob([res.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `planning_${weekIso}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}

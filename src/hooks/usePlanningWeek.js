@@ -79,6 +79,11 @@ export function usePlanningWeek() {
     }
   }, [fetchData, selectedTechId]);
 
+  const handleSetSelectedTechId = useCallback((id) => {
+    setLoading(true);
+    setSelectedTechId(id);
+  }, []);
+
   return {
     actionsByDay,
     taskGroups,
@@ -89,10 +94,10 @@ export function usePlanningWeek() {
     weekStart,
     weekEnd: addDays(weekStart, 6),
     selectedTechId,
-    setSelectedTechId,
-    prevWeek: () => setWeekStart((w) => addDays(w, -7)),
-    nextWeek: () => setWeekStart((w) => addDays(w, 7)),
-    goToday: () => setWeekStart(getMondayOf(today)),
+    setSelectedTechId: handleSetSelectedTechId,
+    prevWeek: () => { setLoading(true); setWeekStart((w) => addDays(w, -7)); },
+    nextWeek: () => { setLoading(true); setWeekStart((w) => addDays(w, 7)); },
+    goToday:  () => { setLoading(true); setWeekStart(getMondayOf(today)); },
     loading,
     error,
     retry: fetchData,

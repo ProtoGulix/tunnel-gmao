@@ -28,6 +28,7 @@ export default function EntitySelectorCard({
   lockedLabel,
   lockedIcon,
   lockedSublabel,
+  renderInlineCreate,
 }) {
   if (locked) {
     return (
@@ -64,19 +65,20 @@ export default function EntitySelectorCard({
         </Flex>
       )}
 
-      {!loading && items.length === 0 && (
+      {!loading && items.length === 0 && !renderInlineCreate && (
         <Text size="2" color="gray" style={{ display: 'block', padding: '1.5rem', textAlign: 'center' }}>
           {emptyMessage}
         </Text>
       )}
 
-      {!loading && items.length > 0 && (
+      {!loading && (items.length > 0 || renderInlineCreate) && (
         <Box style={{ maxHeight, overflowY: 'auto' }}>
           {items.map((item) => (
             <React.Fragment key={item.id}>
               {renderRow(item, item.id === selectedId, onSelect)}
             </React.Fragment>
           ))}
+          {renderInlineCreate && renderInlineCreate()}
         </Box>
       )}
     </Card>
@@ -99,4 +101,5 @@ EntitySelectorCard.propTypes = {
   lockedLabel: PropTypes.string,
   lockedIcon: PropTypes.elementType,
   lockedSublabel: PropTypes.string,
+  renderInlineCreate: PropTypes.func,
 };

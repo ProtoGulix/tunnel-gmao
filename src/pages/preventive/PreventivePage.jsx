@@ -3,8 +3,9 @@
  * @module pages/preventive/PreventivePage
  */
 
-import { useCallback, useState } from 'react';
-import { AlertDialog, Badge, Box, Button, Container, Flex, Switch, Text } from '@radix-ui/themes';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AlertDialog, Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
 import { ClipboardCheck, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
@@ -41,6 +42,7 @@ function PlanItem({ plan, isSelected, onClick }) {
 }
 
 export default function PreventivePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeOnly, setActiveOnly] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -50,6 +52,26 @@ export default function PreventivePage() {
 
   const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
+
+  // Sélectionner le plan depuis l'URL une fois les données chargées
+  useEffect(() => {
+    if (loading || plans.length === 0) return;
+    const planId = searchParams.get('plan');
+    if (!planId) return;
+    const found = plans.find((p) => p.id === planId);
+    if (found && selectedPlan?.id !== found.id) setSelectedPlan(found);
+  }, [plans, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectPlan = useCallback((plan) => {
+    setSelectedPlan(plan);
+    setMode(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (plan) next.set('plan', plan.id);
+      else next.delete('plan');
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const handleCreate = async (data) => {
     try { setSaving(true); await createPlan(data); setMode(null); } finally { setSaving(false); }
@@ -67,9 +89,9 @@ export default function PreventivePage() {
   const handleDeactivate = useCallback(async () => {
     if (!toDeactivate) return;
     await deactivatePlan(toDeactivate.id);
-    if (selectedPlan?.id === toDeactivate.id) setSelectedPlan(null);
+    if (selectedPlan?.id === toDeactivate.id) selectPlan(null);
     setToDeactivate(null);
-  }, [toDeactivate, deactivatePlan, selectedPlan]);
+  }, [toDeactivate, deactivatePlan, selectedPlan, selectPlan]);
 
   const handleSaveSteps = useCallback(async (id, steps) => {
     try {
@@ -90,7 +112,7 @@ export default function PreventivePage() {
       key={p.id}
       plan={p}
       isSelected={selectedPlan?.id === p.id && !mode}
-      onClick={() => { setSelectedPlan(p); setMode(null); }}
+      onClick={() => selectPlan(p)}
     />
   ));
 
@@ -111,7 +133,7 @@ export default function PreventivePage() {
     detailContent = (
       <PreventivePlanDetail
         plan={selectedPlan}
-        onEdit={(p) => { setSelectedPlan(p); setMode('edit'); }}
+        onEdit={(p) => { setSelectedPlan(p); setMode('edit'); setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('plan', p.id); return n; }, { replace: true }); }}
         onDeactivate={setToDeactivate}
         onSaveSteps={handleSaveSteps}
         saving={saving}
@@ -127,40 +149,38 @@ export default function PreventivePage() {
         title="Préventif"
         subtitle="Plans de maintenance préventive et suivi des occurrences"
       />
-      <Container size="4">
-        <div style={{ height: 'calc(100vh - 180px)', minHeight: 500 }}>
-          <MasterDetailLayout
-            freeDetail
-            ratio="35% 1fr"
-            masterProps={{
-              icon: ClipboardCheck,
-              title: 'Plans préventifs',
-              count: filtered.length,
-              search,
-              onSearchChange: setSearch,
-              loading,
-              children: masterList,
-              headerExtra: (
-                <Flex align="center" justify="between" mt="2">
-                  <Flex align="center" gap="1">
-                    <Switch
-                      checked={activeOnly}
-                      onCheckedChange={(v) => { setActiveOnly(v); setSelectedPlan(null); }}
-                      size="1"
-                    />
-                    <Text size="1" color="gray">Actifs seulement</Text>
-                  </Flex>
-                  <Button size="1" color="blue" onClick={() => { setSelectedPlan(null); setMode('create'); }}>
-                    <Plus size={12} />Nouveau
-                  </Button>
+      <Box px="4" style={{ height: 'calc(100vh - 180px)', minHeight: 500 }}>
+        <MasterDetailLayout
+          freeDetail
+          ratio="35% 1fr"
+          masterProps={{
+            icon: ClipboardCheck,
+            title: 'Plans préventifs',
+            count: filtered.length,
+            search,
+            onSearchChange: setSearch,
+            loading,
+            children: masterList,
+            headerExtra: (
+              <Flex align="center" justify="between" mt="2">
+                <Flex align="center" gap="1">
+                  <Switch
+                    checked={activeOnly}
+                    onCheckedChange={(v) => { setActiveOnly(v); setSelectedPlan(null); }}
+                    size="1"
+                  />
+                  <Text size="1" color="gray">Actifs seulement</Text>
                 </Flex>
-              ),
-            }}
-            detailChildren={detailContent}
-            emptyLabel="Sélectionnez un plan pour voir sa gamme et ses occurrences"
-          />
-        </div>
-      </Container>
+                <Button size="1" color="blue" onClick={() => { selectPlan(null); setMode('create'); }}>
+                  <Plus size={12} />Nouveau
+                </Button>
+              </Flex>
+            ),
+          }}
+          detailChildren={detailContent}
+          emptyLabel="Sélectionnez un plan pour voir sa gamme et ses occurrences"
+        />
+      </Box>
 
       <AlertDialog.Root open={!!toDeactivate} onOpenChange={(open) => !open && setToDeactivate(null)}>
         <AlertDialog.Content maxWidth="420px">

@@ -26,16 +26,28 @@ function ActionForm({
   lockedDate = false,
   gammeValidations = [],
   showContext = true,
+  showTasks = true,
+  selectedTasks: selectedTasksProp,
+  onTasksChange,
 }) {
   const { user } = useAuth();
   const form = useActionForm(initialState);
 
   const [pickedEquipement, setPickedEquipement] = useState(null);
   const [pickedIntervention, setPickedIntervention] = useState(null);
-  const [selectedTasks, setSelectedTasks] = useState(
+  const [selectedTasksInternal, setSelectedTasksInternal] = useState(
     Array.isArray(initialState?.tasks) ? initialState.tasks
       : (initialState?.task ? [initialState.task] : [])
   );
+  // Si contrôlé depuis l'extérieur, utiliser les props ; sinon état interne
+  const selectedTasks = selectedTasksProp ?? selectedTasksInternal;
+  const setSelectedTasks = onTasksChange ?? setSelectedTasksInternal;
+
+  const handleInterventionChange = (intervention) => {
+    setPickedIntervention(intervention);
+    // Réinitialiser la sélection de tâches quand l'intervention change
+    setSelectedTasks([]);
+  };
   const [timeRange, setTimeRange] = useState({
     start: initialState?.actionStart ?? null,
     end: initialState?.actionEnd ?? null,
@@ -93,7 +105,7 @@ function ActionForm({
             pickedEquipement={pickedEquipement}
             onEquipementChange={(eq) => { setPickedEquipement(eq); setPickedIntervention(null); }}
             pickedIntervention={pickedIntervention}
-            onInterventionChange={setPickedIntervention}
+            onInterventionChange={handleInterventionChange}
           />
         )}
 
@@ -109,12 +121,16 @@ function ActionForm({
               onManualTimeSpentChange={setManualTimeSpent}
               lockedDate={lockedDate}
             />
-            <ActionTaskSection
-              interventionId={resolvedInterventionId}
-              value={selectedTasks}
-              onChange={setSelectedTasks}
-              accentColor={isPreventif ? 'green' : 'blue'}
-            />
+            {showTasks && (
+              <ActionTaskSection
+                key={pickedEquipement?.id ?? resolvedInterventionId ?? 'no-context'}
+                interventionId={resolvedInterventionId}
+                machineId={pickedEquipement?.id ?? null}
+                value={selectedTasks}
+                onChange={setSelectedTasks}
+                accentColor={isPreventif ? 'green' : 'blue'}
+              />
+            )}
             <ActionFormComplexity
               formState={form.formState}
               handlers={form.handlers}
@@ -180,6 +196,9 @@ ActionForm.propTypes = {
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,
   showContext: PropTypes.bool,
+  showTasks: PropTypes.bool,
+  selectedTasks: PropTypes.array,
+  onTasksChange: PropTypes.func,
   gammeValidations: PropTypes.array,
 };
 

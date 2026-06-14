@@ -44,12 +44,12 @@ export const PAGES_CONFIG = [
 
   // ── Maintenance ───────────────────────────────────────────────────────────
   {
-    id: 'briefing',
-    path: '/briefing',
-    label: 'Briefing',
+    id: 'coordination',
+    path: '/coordination',
+    label: 'Coordination',
     icon: ClipboardList,
-    pageTitle: 'Briefing',
-    pageSubtitle: 'Situations actives et décisions en attente',
+    pageTitle: 'Coordination',
+    pageSubtitle: 'Planning de la semaine · charge, équipements, demandes',
     section: 'maintenance',
     requiresAuth: true,
     order: 15,
