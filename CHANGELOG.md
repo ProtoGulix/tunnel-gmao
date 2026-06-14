@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.45.0] — 2026-06-14
+
+### Page Coordination
+
+Nouvelle page dédiée à la coordination opérationnelle, accessible depuis le menu principal.
+
+- **Planning semaine** : vue en 5 colonnes (lun.–ven.) affichant les tâches planifiées avec navigation par semaine
+- **Panel équipements** : liste de tous les équipements triée par état de santé, avec compteurs d'interventions ouvertes et de demandes en attente
+- **Détail par équipement** : sélectionner un équipement affiche ses interventions actives avec leurs tâches (statut, assignation, date d'échéance éditables inline) et ses demandes d'intervention ouvertes
+- Actions inline directement depuis la page : changement de statut tâche, assignation technicien, date d'échéance, statut et priorité intervention, création de tâche
+
+---
+
 ## [3.44.1] — 2026-06-09
 
 ### Amélioration interne — aucun impact visible

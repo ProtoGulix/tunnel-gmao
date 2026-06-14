@@ -536,6 +536,7 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
     <GroupCard
       code={intervention.code}
       title={intervention.title}
+      priority={intervention.priority ?? 'normal'}
       badge={<Badge size="1" color={typeColor} variant="soft" style={{ flexShrink: 0 }}>{intervention.type}</Badge>}
       headerRight={
         <Flex gap="1" style={{ flexShrink: 0 }}>

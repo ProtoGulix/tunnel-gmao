@@ -12,19 +12,21 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text } from '@radix-ui/themes';
+import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 
 /* ── GroupCard ────────────────────────────────────────────────────────────── */
 
-export function GroupCard({ code, title, titleItalic = true, badge, count, countLabel, headerRight, children, style }) {
+export function GroupCard({ code, title, titleItalic = true, badge, count, countLabel, headerRight, children, style, priority }) {
   const rowCount = count ?? null;
   const label = countLabel ?? (rowCount === 1 ? 'élément' : 'éléments');
+  const pCfg = priority ? (PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.normal) : null;
 
   return (
     <div
       style={{
         marginBottom: 12,
         borderRadius: 8,
-        border: '1px solid var(--gray-4)',
+        border: `1px solid ${pCfg ? pCfg.border : 'var(--gray-4)'}`,
         overflow: 'hidden',
         ...style,
       }}
@@ -35,8 +37,8 @@ export function GroupCard({ code, title, titleItalic = true, badge, count, count
         gap="2"
         style={{
           padding: '7px 10px',
-          background: 'var(--gray-2)',
-          borderBottom: '1px solid var(--gray-4)',
+          background: pCfg ? pCfg.bg : 'var(--gray-2)',
+          borderBottom: `1px solid ${pCfg ? pCfg.border : 'var(--gray-4)'}`,
         }}
       >
         {code && (
@@ -65,6 +67,11 @@ export function GroupCard({ code, title, titleItalic = true, badge, count, count
           </Text>
         )}
         {badge}
+        {pCfg && priority && priority !== 'normal' && priority !== 'faible' && (
+          <Badge color={pCfg.color} variant="solid" size="1" style={{ flexShrink: 0 }}>
+            {pCfg.label}
+          </Badge>
+        )}
         {headerRight}
         {rowCount !== null && (
           <Text size="1" color="gray" style={{ flexShrink: 0 }}>
@@ -102,6 +109,7 @@ GroupCard.propTypes = {
   headerRight: PropTypes.node,
   children: PropTypes.node,
   style: PropTypes.object,
+  priority: PropTypes.string,
 };
 
 /* ── GroupCard.Row ────────────────────────────────────────────────────────── */

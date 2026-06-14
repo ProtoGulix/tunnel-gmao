@@ -425,9 +425,9 @@
     "semantic_hash": "1b147c82a2ffc9bf69e18f3ff823a997"
   },
   "components/home/PlanningPane.jsx": {
-    "mtime": 1781039916.9207993,
-    "ast_hash": "8e67f6e34ca0812cfc661c9186e9ba00",
-    "semantic_hash": "8e67f6e34ca0812cfc661c9186e9ba00"
+    "mtime": 1781468466.1065137,
+    "ast_hash": "0e90edc225828b42457e9efe1f4ec913",
+    "semantic_hash": "0e90edc225828b42457e9efe1f4ec913"
   },
   "components/home/SpontaneousInterventionRequestModal.jsx": {
     "mtime": 1780834255.192485,
@@ -440,9 +440,9 @@
     "semantic_hash": "a41ff06347e2acb0132b94239e0bdacd"
   },
   "components/home/TasksPane.jsx": {
-    "mtime": 1781040113.0109866,
-    "ast_hash": "6a53168ca519d7cd1141a3fcfaeb484c",
-    "semantic_hash": "6a53168ca519d7cd1141a3fcfaeb484c"
+    "mtime": 1781469555.863018,
+    "ast_hash": "c7842891f4593e10a5f5abfebf53cc93",
+    "semantic_hash": "c7842891f4593e10a5f5abfebf53cc93"
   },
   "components/intervention-requests/InterventionRequestCard.jsx": {
     "mtime": 1780834255.192485,
@@ -500,9 +500,9 @@
     "semantic_hash": "914b0dcf7a967aae7533f5ff0c2cae27"
   },
   "components/interventions/ActionForm/ActionTaskSection.jsx": {
-    "mtime": 1781336904.1134489,
-    "ast_hash": "fdcb276f04cc2007b30c9de7a305f637",
-    "semantic_hash": "fdcb276f04cc2007b30c9de7a305f637"
+    "mtime": 1781454264.738956,
+    "ast_hash": "4331734d38fc45dc36fba07c23c8de00",
+    "semantic_hash": "4331734d38fc45dc36fba07c23c8de00"
   },
   "components/interventions/ActionForm/CloseInterventionOverlay.jsx": {
     "mtime": 1781019682.7757747,
@@ -1255,9 +1255,9 @@
     "semantic_hash": "244fb5aec9c3e73c93883463a9f5653e"
   },
   "config/interventionTypes.js": {
-    "mtime": 1780959861.729979,
-    "ast_hash": "f028bd23e0c10291e63d113f5213ffbf",
-    "semantic_hash": "f028bd23e0c10291e63d113f5213ffbf"
+    "mtime": 1781469463.962308,
+    "ast_hash": "77a471247fc06a26c4764a8e82391383",
+    "semantic_hash": "77a471247fc06a26c4764a8e82391383"
   },
   "config/layoutConfig.js": {
     "mtime": 1780834255.208485,
@@ -1595,9 +1595,9 @@
     "semantic_hash": "3ac115657c5d8b713db7392c8b156870"
   },
   "pages/HomeSplit.jsx": {
-    "mtime": 1781095205.6318676,
-    "ast_hash": "e16fc183e6309513e4f51938708c29ff",
-    "semantic_hash": "e16fc183e6309513e4f51938708c29ff"
+    "mtime": 1781468942.002309,
+    "ast_hash": "acd47966c2afdc40e30829f480d3b903",
+    "semantic_hash": "acd47966c2afdc40e30829f480d3b903"
   },
   "pages/admin/AdminPage.jsx": {
     "mtime": 1780959861.7739794,
@@ -1750,14 +1750,14 @@
     "semantic_hash": "37e088093b9fffb3f96e775e53770f07"
   },
   "components/planning/TaskSearchColumn.jsx": {
-    "mtime": 1781337802.0404122,
-    "ast_hash": "ef15dd12f8807849a4408c3ef59d611a",
-    "semantic_hash": "ef15dd12f8807849a4408c3ef59d611a"
+    "mtime": 1781454237.3907475,
+    "ast_hash": "af76663ebf2a048669c9c817ca494468",
+    "semantic_hash": "af76663ebf2a048669c9c817ca494468"
   },
   "components/shared/GroupCard.jsx": {
-    "mtime": 1781121810.9876707,
-    "ast_hash": "06741017b003399c10e680ee6b6f450c",
-    "semantic_hash": "06741017b003399c10e680ee6b6f450c"
+    "mtime": 1781469487.3584883,
+    "ast_hash": "658fcf391218c09f328cf5d73e06629f",
+    "semantic_hash": "658fcf391218c09f328cf5d73e06629f"
   },
   "components/tasks/GhostCreateRow.jsx": {
     "mtime": 1781038760.52805,
@@ -1765,8 +1765,13 @@
     "semantic_hash": "cba79f3e6fcc68608f4034fd06350c69"
   },
   "pages/coordination/CoordinationPage.jsx": {
-    "mtime": 1781124130.3454545,
-    "ast_hash": "065ff56603da71486a9b6c35692f5421",
-    "semantic_hash": "065ff56603da71486a9b6c35692f5421"
+    "mtime": 1781469494.398543,
+    "ast_hash": "087ea4bf33de23307044b8c9900dd797",
+    "semantic_hash": "087ea4bf33de23307044b8c9900dd797"
+  },
+  "components/tasks/TaskActionButtons.jsx": {
+    "mtime": 1781467962.3064775,
+    "ast_hash": "98d555bbff99e65c684f39356101b959",
+    "semantic_hash": "98d555bbff99e65c684f39356101b959"
   }
 }

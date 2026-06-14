@@ -4,6 +4,7 @@ import { Flex, Text, Badge, IconButton, Button } from '@radix-ui/themes';
 import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Clock, User, UserCog, Wrench } from 'lucide-react';
 import GhostCreateRow from '@/components/tasks/GhostCreateRow';
 import { patchInterventionTask } from '@/api/interventionTasks';
+import { GroupCard } from '@/components/shared/GroupCard';
 
 const ORIGIN_CONFIG = {
   plan: { Icon: CalendarClock, color: 'var(--violet-9)', title: 'Préventif' },
@@ -121,45 +122,16 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
           const interventionCode = group.code ?? null;
           const interventionTitle = group.title ?? null;
           const sortedTasks = sortTasks(group.tasks);
-
           return (
-            <div
+            <GroupCard
               key={group.id}
-              style={{
-                marginBottom: 12,
-                borderRadius: 8,
-                border: '1px solid var(--gray-4)',
-                overflow: 'hidden',
-              }}
+              code={interventionCode}
+              title={interventionTitle}
+              priority={group.priority ?? 'normal'}
+              count={sortedTasks.length}
+              countLabel="tâche"
             >
-              {/* ── En-tête carte intervention ── */}
-              <Flex
-                align="center"
-                gap="2"
-                style={{
-                  padding: '7px 10px',
-                  background: 'var(--gray-3)',
-                  borderBottom: '1px solid var(--gray-4)',
-                }}
-              >
-                {interventionCode && (
-                  <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                    {interventionCode}
-                  </Badge>
-                )}
-                {interventionTitle && (
-                  <Text size="2" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray-12)', fontStyle: 'italic' }}>
-                    {interventionTitle}
-                  </Text>
-                )}
-                <Text size="1" color="gray" style={{ flexShrink: 0 }}>
-                  {sortedTasks.length} tâche{sortedTasks.length > 1 ? 's' : ''}
-                </Text>
-              </Flex>
-
-              {/* ── Tâches ── */}
-              <div style={{ background: 'var(--color-panel-solid)', borderBottomLeftRadius: 8, borderBottomRightRadius: 8, overflow: 'hidden' }}>
-                {sortedTasks.map((task, idx) => {
+              {sortedTasks.map((task, idx) => {
                   const due = formatDue(task.due_date);
                   const overdue = due && new Date(task.due_date) < today;
                   const cfg = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.todo;
@@ -176,18 +148,12 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                   const currentAssigneeId = String(assignedTo?.id ?? '');
 
                   return (
-                    <Flex
+                    <GroupCard.Row
                       key={task.id}
-                      align="center"
-                      gap="2"
-                      style={{
-                        padding: '7px 10px',
-                        borderBottom: isLast ? 'none' : '1px solid var(--gray-3)',
-                        background: cfg.bg,
-                        borderLeft: `3px solid ${cfg.color}`,
-                        opacity: isSaving ? 0.6 : 1,
-                        transition: 'opacity 0.15s',
-                      }}
+                      accentColor={cfg.color}
+                      background={cfg.bg}
+                      isLast={isLast}
+                      style={{ opacity: isSaving ? 0.6 : 1, transition: 'opacity 0.15s' }}
                     >
                       {/* Icône origine */}
                       {originCfg && (
@@ -344,7 +310,7 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                           <Clock size={12} />
                         </IconButton>
                       )}
-                    </Flex>
+                    </GroupCard.Row>
                   );
                 })}
                 <GhostCreateRow
@@ -352,8 +318,7 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                   users={users}
                   onCreated={() => onTaskUpdate?.()}
                 />
-              </div>
-            </div>
+            </GroupCard>
           );
         })}
 

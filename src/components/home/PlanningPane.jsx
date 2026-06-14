@@ -26,7 +26,7 @@ const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'te
  * @param {Function} [props.onAddAction] - Called with { date, actionsByDay } to open action modal
  * @param {Function} [props.onDataRefreshed] - Called after action created (to refresh tasks)
  */
-export function PlanningPane({ onAddAction, onDataRefreshed, planningHook }) {
+export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideControls = false }) {
   const ownHook = usePlanningWeek();
   const {
     actionsByDay,
@@ -74,61 +74,63 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook }) {
   return (
     <Flex direction="column" gap="4" p="4">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <Flex direction="column" gap="2">
-        <Flex justify="between" align="center">
-          <Text size="4" weight="bold">Planning</Text>
-          {loading && <Spinner size="1" />}
-        </Flex>
+      {!hideControls && (
+        <Flex direction="column" gap="2">
+          <Flex justify="between" align="center">
+            <Text size="4" weight="bold">Planning</Text>
+            {loading && <Spinner size="1" />}
+          </Flex>
 
-        {/* Navigation semaine */}
-        <Flex align="center" gap="2">
-          <Button size="2" variant="soft" color="gray" onClick={prevWeek}>
-            <ChevronLeft size={16} />
-          </Button>
-          <Text size="3" weight="medium" style={{ flex: 1, textAlign: 'center' }}>
-            {formatWeekLabel(weekStart)}
-          </Text>
-          <Button size="2" variant="soft" color="gray" onClick={nextWeek}>
-            <ChevronRight size={16} />
-          </Button>
-          <Button size="2" variant="ghost" color="blue" onClick={goToday}>
-            Auj.
-          </Button>
-          {selectedTechId && (
-            <Button
-              size="2"
-              variant="soft"
-              color="gray"
-              title="Télécharger la fiche semaine PDF"
-              onClick={() => fetchPlanningSemainePdf(selectedTechId, toIsoWeek(weekStart))}
-            >
-              <FileDown size={15} />
+          {/* Navigation semaine */}
+          <Flex align="center" gap="2">
+            <Button size="2" variant="soft" color="gray" onClick={prevWeek}>
+              <ChevronLeft size={16} />
             </Button>
-          )}
-        </Flex>
-
-        {/* Sélecteur tech — pills */}
-        <Flex gap="1" wrap="wrap">
-          {users.map((u, i) => {
-            const initials = `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase();
-            const color = PILL_COLORS[i % PILL_COLORS.length];
-            const isSelected = u.id === selectedTechId;
-            return (
-              <Badge
-                key={u.id}
-                color={isSelected ? color : 'gray'}
-                variant={isSelected ? 'solid' : 'soft'}
-                radius="full"
-                style={{ cursor: 'pointer', userSelect: 'none' }}
-                onClick={() => setSelectedTechId(u.id)}
-                title={`${u.first_name ?? ''} ${u.last_name ?? ''}`}
+            <Text size="3" weight="medium" style={{ flex: 1, textAlign: 'center' }}>
+              {formatWeekLabel(weekStart)}
+            </Text>
+            <Button size="2" variant="soft" color="gray" onClick={nextWeek}>
+              <ChevronRight size={16} />
+            </Button>
+            <Button size="2" variant="ghost" color="blue" onClick={goToday}>
+              Auj.
+            </Button>
+            {selectedTechId && (
+              <Button
+                size="2"
+                variant="soft"
+                color="gray"
+                title="Télécharger la fiche semaine PDF"
+                onClick={() => fetchPlanningSemainePdf(selectedTechId, toIsoWeek(weekStart))}
               >
-                {initials}
-              </Badge>
-            );
-          })}
+                <FileDown size={15} />
+              </Button>
+            )}
+          </Flex>
+
+          {/* Sélecteur tech — pills */}
+          <Flex gap="1" wrap="wrap">
+            {users.map((u, i) => {
+              const initials = `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase();
+              const color = PILL_COLORS[i % PILL_COLORS.length];
+              const isSelected = u.id === selectedTechId;
+              return (
+                <Badge
+                  key={u.id}
+                  color={isSelected ? color : 'gray'}
+                  variant={isSelected ? 'solid' : 'soft'}
+                  radius="full"
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                  onClick={() => setSelectedTechId(u.id)}
+                  title={`${u.first_name ?? ''} ${u.last_name ?? ''}`}
+                >
+                  {initials}
+                </Badge>
+              );
+            })}
+          </Flex>
         </Flex>
-      </Flex>
+      )}
 
       {/* ── Jours ──────────────────────────────────────────────────────────── */}
       <Flex direction="column" gap="3">
@@ -172,4 +174,5 @@ PlanningPane.propTypes = {
   onAddAction: PropTypes.func,
   onDataRefreshed: PropTypes.func,
   planningHook: PropTypes.object,
+  hideControls: PropTypes.bool,
 };
