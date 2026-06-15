@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.45.1] — 2026-06-15
+
+### Correctifs — Page Coordination
+
+- **Statut et priorité intervention** : la modification inline (statut + niveau d'urgence) depuis le détail équipement ne déclenchait pas la requête API — causé par un conflit entre les props `open` et `defaultOpen` sur le composant `Select` de Radix UI qui bloquait l'événement de sélection
+- **Priorité en double** : le badge priorité n'apparaît plus en double dans l'en-tête de l'intervention (le `GroupCard` l'affichait automatiquement en plus du sélecteur inline)
+- **Mise à jour sans rechargement** : après modification du statut ou de la priorité, la liste se met à jour immédiatement sans spinner de rechargement
+
+---
+
 ## [3.45.0] — 2026-06-14
 
 ### Page Coordination

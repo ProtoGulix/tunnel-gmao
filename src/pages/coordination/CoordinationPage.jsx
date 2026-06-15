@@ -427,14 +427,14 @@ function InlineIvStatus({ ivId, status, onSaved }) {
   async function handleSelect(val) {
     if (!val || val === status) { setEditing(false); return; }
     setSaving(true);
-    try { await updateIntervention(ivId, { status: val }); onSaved(); }
-    catch { /* silencieux */ }
+    try { await updateIntervention(ivId, { status: val }); onSaved({ status: val }); }
+    catch (e) { console.error('[InlineIvStatus]', e); }
     finally { setSaving(false); setEditing(false); }
   }
 
   if (editing) {
     return (
-      <Select.Root onValueChange={handleSelect} open defaultOpen onOpenChange={(o) => { if (!o) setEditing(false); }}>
+      <Select.Root onValueChange={handleSelect} defaultOpen onOpenChange={(o) => { if (!o) setEditing(false); }}>
         <Select.Trigger size="1" style={{ fontSize: 11 }} />
         <Select.Content>
           {IV_STATUS_ORDER.map((s) => (
@@ -463,14 +463,14 @@ function InlineIvPriority({ ivId, priority, onSaved }) {
   async function handleSelect(val) {
     if (!val || val === priority) { setEditing(false); return; }
     setSaving(true);
-    try { await updateIntervention(ivId, { priority: val }); onSaved(); }
-    catch { /* silencieux */ }
+    try { await updateIntervention(ivId, { priority: val }); onSaved({ priority: val }); }
+    catch (e) { console.error('[InlineIvPriority]', e); }
     finally { setSaving(false); setEditing(false); }
   }
 
   if (editing) {
     return (
-      <Select.Root onValueChange={handleSelect} open defaultOpen onOpenChange={(o) => { if (!o) setEditing(false); }}>
+      <Select.Root onValueChange={handleSelect} defaultOpen onOpenChange={(o) => { if (!o) setEditing(false); }}>
         <Select.Trigger size="1" style={{ fontSize: 11 }} />
         <Select.Content>
           {PRIORITY_ORDER.map((p) => (
@@ -536,12 +536,11 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
     <GroupCard
       code={intervention.code}
       title={intervention.title}
-      priority={intervention.priority ?? 'normal'}
       badge={<Badge size="1" color={typeColor} variant="soft" style={{ flexShrink: 0 }}>{intervention.type}</Badge>}
       headerRight={
         <Flex gap="1" style={{ flexShrink: 0 }}>
-          <InlineIvStatus   ivId={intervention.id} status={intervention.status}           onSaved={onIvChanged} />
-          <InlineIvPriority ivId={intervention.id} priority={intervention.priority ?? 'normal'} onSaved={onIvChanged} />
+          <InlineIvStatus   ivId={intervention.id} status={intervention.status}           onSaved={(updates) => onIvChanged(intervention.id, updates)} />
+          <InlineIvPriority ivId={intervention.id} priority={intervention.priority ?? 'normal'} onSaved={(updates) => onIvChanged(intervention.id, updates)} />
         </Flex>
       }
       count={totalCount}
@@ -797,9 +796,11 @@ export default function CoordinationPage() {
     }));
   }, []);
 
-  const handleIvChanged = useCallback(() => {
-    loadIvTasks(selectedEquipId);
-  }, [loadIvTasks, selectedEquipId]);
+  const handleIvChanged = useCallback((ivId, updates) => {
+    setIvList((prev) => prev.map((iv) =>
+      String(iv.id) === String(ivId) ? { ...iv, ...updates } : iv
+    ));
+  }, []);
 
   // ── Subtitle ───────────────────────────────────────────────────────────────
   const subtitle = formatSubtitle(monday, friday);
