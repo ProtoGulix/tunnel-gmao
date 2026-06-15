@@ -28,30 +28,39 @@ function MasterPanel({
     }}>
       {/* Header */}
       <Box style={{ padding: '10px 12px', borderBottom: '1px solid var(--gray-5)', background: 'var(--gray-2)', flexShrink: 0 }}>
-        <Flex align="center" gap="2" mb="2">
-          {Icon && <Icon size={14} color="var(--gray-11)" />}
-          <Text size="2" weight="bold" color="gray">{title}</Text>
-          {count > 0 && <Badge color="gray" variant="soft" size="1">{count}</Badge>}
-        </Flex>
-
-        {onSearchChange && (
-          <TextField.Root
-            value={search ?? ''}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={`Rechercher…`}
-            size="2"
-            mb={headerExtra ? '2' : undefined}
-          >
-            <TextField.Slot><Search size={13} color="var(--gray-9)" /></TextField.Slot>
-            {search && (
-              <TextField.Slot side="right" style={{ cursor: 'pointer' }} onClick={() => onSearchChange('')}>
-                <X size={13} color="var(--gray-9)" />
-              </TextField.Slot>
-            )}
-          </TextField.Root>
+        {(Icon || title) && (
+          <Flex align="center" gap="2" mb="2">
+            {Icon && <Icon size={14} color="var(--gray-11)" />}
+            {title && <Text size="2" weight="bold" color="gray">{title}</Text>}
+          </Flex>
         )}
 
-        {headerExtra}
+        {onSearchChange && (
+          <Flex align="center" gap="2">
+            <Box style={{ flex: 1 }}>
+              <TextField.Root
+                value={search ?? ''}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Rechercher…"
+                size="2"
+              >
+                <TextField.Slot><Search size={13} color="var(--gray-9)" /></TextField.Slot>
+                {search && (
+                  <TextField.Slot side="right" style={{ cursor: 'pointer' }} onClick={() => onSearchChange('')}>
+                    <X size={13} color="var(--gray-9)" />
+                  </TextField.Slot>
+                )}
+              </TextField.Root>
+            </Box>
+            {count > 0 && (
+              <Text size="1" color="gray" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {count} ligne{count > 1 ? 's' : ''}
+              </Text>
+            )}
+          </Flex>
+        )}
+
+        {headerExtra && <Flex align="center" gap="2" style={{ paddingTop: 10 }}>{headerExtra}</Flex>}
       </Box>
 
       {/* Liste */}
@@ -92,7 +101,7 @@ function MasterPanel({
 
 MasterPanel.propTypes = {
   icon: PropTypes.elementType,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.string,
   count: PropTypes.number,
   search: PropTypes.string,
   onSearchChange: PropTypes.func,
@@ -206,7 +215,7 @@ export default function MasterDetailLayout({
 MasterDetailLayout.propTypes = {
   masterProps: PropTypes.shape({
     icon: PropTypes.elementType,
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
     count: PropTypes.number,
     search: PropTypes.string,
     onSearchChange: PropTypes.func,

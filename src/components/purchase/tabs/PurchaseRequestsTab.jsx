@@ -10,7 +10,6 @@ import { Archive, MousePointerClick, ShoppingCart } from 'lucide-react';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
-import DispatchBanner from '@/components/purchase/DispatchBanner';
 import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses, updatePurchaseRequest } from '@/api/purchaseRequests';
@@ -37,7 +36,7 @@ function DetailEmptyState({ label }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-export default function PurchaseRequestsTab({ variant = 'active', refreshSignal }) {
+export default function PurchaseRequestsTab({ variant = 'active', refreshSignal, onDispatchStateChange }) {
   const isArchive = variant === 'archive';
 
   const [statuses, setStatuses] = useState([]);
@@ -58,6 +57,12 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal 
   );
 
   useEffect(() => { if (refreshSignal) refresh(); }, [refreshSignal, refresh]);
+
+  useEffect(() => {
+    if (!isArchive) {
+      onDispatchStateChange?.({ onDispatch: dispatch, dispatching, dispatchResult });
+    }
+  }, [isArchive, dispatching, dispatch, dispatchResult, onDispatchStateChange]);
 
   const [selected, setSelected] = useState(null);
   const [mode, setMode] = useState(null); // 'edit' | null
@@ -139,24 +144,12 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal 
     : <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />;
 
   return (
-    <Box>
-      {!isArchive && (
-        <DispatchBanner
-          readyCount={readyToDispatch}
-          dispatching={dispatching}
-          dispatchResult={dispatchResult}
-          onDispatch={dispatch}
-          onClearResult={() => setDispatchResult(null)}
-        />
-      )}
-
+    <Box pt="3">
       <div style={{ height: 'calc(100vh - 200px)', minHeight: 400 }}>
         <MasterDetailLayout
           freeDetail
           ratio="38% 1fr"
           masterProps={{
-            icon: isArchive ? Archive : ShoppingCart,
-            title: isArchive ? 'Archives' : "Demandes d'achat",
             count: items.length,
             search,
             onSearchChange: setSearch,

@@ -3,25 +3,89 @@
  * @module pages/purchase/PurchaseRequestsPage
  */
 
-import { useState } from 'react';
-import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Archive, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { AlertDialog, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
+import { Archive, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
 import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
+import DispatchBanner from '@/components/purchase/DispatchBanner';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { fetchPurchaseRequestFacets } from '@/api/purchaseRequests';
 
 export default function PurchaseRequestsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab');
   const [modalOpen, setModalOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
 
-  const headerActions = [{
-    label: 'Nouvelle demande',
-    icon: ShoppingCart,
-    onClick: () => setModalOpen(true),
-  }];
+  // Compteur PENDING_DISPATCH en temps réel, indépendant du filtre actif
+  const [pendingDispatchCount, setPendingDispatchCount] = useState(0);
+  const loadPendingCount = useCallback(async () => {
+    try {
+      const data = await fetchPurchaseRequestFacets();
+      setPendingDispatchCount(data.pending_dispatch_count ?? 0);
+    } catch {
+      // non-bloquant
+    }
+  }, []);
+
+  useEffect(() => { loadPendingCount(); }, [loadPendingCount]);
+
+  // Fonctions dispatch exposées par le tab actif
+  const [dispatchFn, setDispatchFn] = useState(null);
+  const [dispatching, setDispatchingState] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
+
+  const handleDispatchStateChange = useCallback((state) => {
+    setDispatchFn(() => state.onDispatch);
+    setDispatchingState(state.dispatching);
+    setDispatchResult(state.dispatchResult);
+  }, []);
+
+  const handleDispatch = useCallback(async () => {
+    if (!dispatchFn) return;
+    await dispatchFn();
+    await loadPendingCount();
+  }, [dispatchFn, loadPendingCount]);
+
+  const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 ? {
+    label: (
+      <AlertDialog.Root>
+        <AlertDialog.Trigger>
+          <Button color="blue" size="2" disabled={dispatching}>
+            <Zap size={16} />
+            {dispatching ? 'Dispatch en cours...' : `Dispatcher (${pendingDispatchCount})`}
+          </Button>
+        </AlertDialog.Trigger>
+        <AlertDialog.Content maxWidth="420px">
+          <AlertDialog.Title>Confirmer le dispatch</AlertDialog.Title>
+          <AlertDialog.Description>
+            {pendingDispatchCount} demande{pendingDispatchCount > 1 ? 's' : ''} d&apos;achat {pendingDispatchCount > 1 ? 'vont être dispatchées' : 'va être dispatchée'} vers les paniers fournisseurs.
+          </AlertDialog.Description>
+          <Flex gap="2" justify="end" mt="4">
+            <AlertDialog.Cancel>
+              <Button variant="soft" color="gray">Annuler</Button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action>
+              <Button color="blue" onClick={handleDispatch}>
+                <Zap size={14} /> Confirmer
+              </Button>
+            </AlertDialog.Action>
+          </Flex>
+        </AlertDialog.Content>
+      </AlertDialog.Root>
+    ),
+  } : null;
+
+  const headerActions = [
+    ...(dispatchAction ? [dispatchAction] : []),
+    {
+      label: 'Nouvelle demande',
+      icon: ShoppingCart,
+      onClick: () => setModalOpen(true),
+    },
+  ];
 
   return (
     <>
@@ -32,6 +96,15 @@ export default function PurchaseRequestsPage() {
       />
 
       <Box px="4">
+        {activeTab === 'requests' && dispatchResult && (
+          <DispatchBanner
+            readyCount={0}
+            dispatching={false}
+            dispatchResult={dispatchResult}
+            onClearResult={() => setDispatchResult(null)}
+          />
+        )}
+
         <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
             <Tabs.Trigger value="requests">
@@ -55,7 +128,12 @@ export default function PurchaseRequestsPage() {
           </Tabs.List>
 
           <Tabs.Content value="requests">
-            {activeTab === 'requests' && <PurchaseRequestsTab refreshSignal={refreshSignal} />}
+            {activeTab === 'requests' && (
+              <PurchaseRequestsTab
+                refreshSignal={refreshSignal}
+                onDispatchStateChange={handleDispatchStateChange}
+              />
+            )}
           </Tabs.Content>
 
           <Tabs.Content value="orders">

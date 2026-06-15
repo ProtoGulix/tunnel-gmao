@@ -39,7 +39,16 @@ export async function fetchPurchaseRequestDetail(id) {
  */
 export async function fetchPurchaseRequestStats(params = {}) {
   const response = await api.get('/purchase-requests/stats', { params });
-  return response.data.data;
+  return response.data;
+}
+
+/**
+ * Fetch real-time status facets (no date filter)
+ * @returns {Promise<{ by_status: Array, pending_dispatch_count: number }>}
+ */
+export async function fetchPurchaseRequestFacets() {
+  const response = await api.get('/purchase-requests/facets');
+  return response.data;
 }
 
 /**
