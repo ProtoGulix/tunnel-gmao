@@ -9,7 +9,7 @@
       "source_file": "App.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "app.jsx",
       "id": "app"
     },
@@ -19,7 +19,7 @@
       "source_file": "App.jsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "app()",
       "id": "app_app"
     },
@@ -29,7 +29,7 @@
       "source_file": "api/actionCategories.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "actioncategories.js",
       "id": "api_actioncategories"
     },
@@ -39,7 +39,7 @@
       "source_file": "api/actionCategories.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "fetchactioncategory()",
       "id": "api_actioncategories_fetchactioncategory"
     },
@@ -49,7 +49,7 @@
       "source_file": "api/actionCategories.js",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "fetchcategorysubcategories()",
       "id": "api_actioncategories_fetchcategorysubcategories"
     },
@@ -59,7 +59,7 @@
       "source_file": "api/actions.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "actions.js",
       "id": "api_actions"
     },
@@ -69,7 +69,7 @@
       "source_file": "api/actions.js",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "createaction()",
       "id": "api_actions_createaction"
     },
@@ -79,7 +79,7 @@
       "source_file": "api/actions.js",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "fetchaction()",
       "id": "api_actions_fetchaction"
     },
@@ -89,7 +89,7 @@
       "source_file": "api/actions.js",
       "source_location": "L78",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "updateaction()",
       "id": "api_actions_updateaction"
     },
@@ -99,7 +99,7 @@
       "source_file": "api/actions.js",
       "source_location": "L135",
       "_origin": "ast",
-      "community": 79,
+      "community": 78,
       "norm_label": "mapactionresponse()",
       "id": "api_actions_mapactionresponse"
     },
@@ -109,7 +109,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "adminendpoints.js",
       "id": "api_adminendpoints"
     },
@@ -119,7 +119,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "fetchadminendpoints()",
       "id": "api_adminendpoints_fetchadminendpoints"
     },
@@ -129,7 +129,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "updateadminendpoint()",
       "id": "api_adminendpoints_updateadminendpoint"
     },
@@ -139,7 +139,7 @@
       "source_file": "api/adminEndpoints.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "syncadminendpoints()",
       "id": "api_adminendpoints_syncadminendpoints"
     },
@@ -189,7 +189,7 @@
       "source_file": "api/adminReferentiel.js",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "fetchcomplexityfactors()",
       "id": "api_adminreferentiel_fetchcomplexityfactors"
     },
@@ -499,7 +499,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 77,
+      "community": 23,
       "norm_label": "auditlogs.js",
       "id": "api_auditlogs"
     },
@@ -509,7 +509,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 77,
+      "community": 23,
       "norm_label": "fetchauditlogs()",
       "id": "api_auditlogs_fetchauditlogs"
     },
@@ -519,7 +519,7 @@
       "source_file": "api/auditLogs.js",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 77,
+      "community": 23,
       "norm_label": "fetchallauditreasoncodes()",
       "id": "api_auditlogs_fetchallauditreasoncodes"
     },
@@ -529,7 +529,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "auditreasons.js",
       "id": "api_auditreasons"
     },
@@ -539,7 +539,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "_cache",
       "id": "api_auditreasons_cache"
     },
@@ -549,7 +549,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "fetchauditreasons()",
       "id": "api_auditreasons_fetchauditreasons"
     },
@@ -559,7 +559,7 @@
       "source_file": "api/auditReasons.js",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "clearauditreasonscache()",
       "id": "api_auditreasons_clearauditreasonscache"
     },
@@ -659,7 +659,7 @@
       "source_file": "api/complexityFactors.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "complexityfactors.js",
       "id": "api_complexityfactors"
     },
@@ -669,7 +669,7 @@
       "source_file": "api/complexityFactors.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "fetchcomplexityfactors()",
       "id": "api_complexityfactors_fetchcomplexityfactors"
     },
@@ -679,7 +679,7 @@
       "source_file": "api/dashboard.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "dashboard.js",
       "id": "api_dashboard"
     },
@@ -689,7 +689,7 @@
       "source_file": "api/dashboard.js",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "fetchdashboardsummary()",
       "id": "api_dashboard_fetchdashboardsummary"
     },
@@ -799,7 +799,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "intervention-requests.js",
       "id": "api_intervention_requests"
     },
@@ -809,7 +809,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "fetchinterventionrequeststatuses()",
       "id": "api_intervention_requests_fetchinterventionrequeststatuses"
     },
@@ -819,7 +819,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "fetchinterventionrequest()",
       "id": "api_intervention_requests_fetchinterventionrequest"
     },
@@ -829,7 +829,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "createinterventionrequest()",
       "id": "api_intervention_requests_createinterventionrequest"
     },
@@ -839,7 +839,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L97",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "transitioninterventionrequest()",
       "id": "api_intervention_requests_transitioninterventionrequest"
     },
@@ -849,7 +849,7 @@
       "source_file": "api/intervention-requests.js",
       "source_location": "L119",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "repairinterventionrequests()",
       "id": "api_intervention_requests_repairinterventionrequests"
     },
@@ -1049,7 +1049,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "manufacturers.js",
       "id": "api_manufacturers"
     },
@@ -1059,7 +1059,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "fetchmanufacturers()",
       "id": "api_manufacturers_fetchmanufacturers"
     },
@@ -1069,7 +1069,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "createmanufacturer()",
       "id": "api_manufacturers_createmanufacturer"
     },
@@ -1079,7 +1079,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "updatemanufacturer()",
       "id": "api_manufacturers_updatemanufacturer"
     },
@@ -1089,7 +1089,7 @@
       "source_file": "api/manufacturers.js",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "deletemanufacturer()",
       "id": "api_manufacturers_deletemanufacturer"
     },
@@ -1239,7 +1239,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "preventiveplans.js",
       "id": "api_preventiveplans"
     },
@@ -1249,7 +1249,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "fetchpreventiveplan()",
       "id": "api_preventiveplans_fetchpreventiveplan"
     },
@@ -1259,7 +1259,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "createpreventiveplan()",
       "id": "api_preventiveplans_createpreventiveplan"
     },
@@ -1269,7 +1269,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "updatepreventiveplan()",
       "id": "api_preventiveplans_updatepreventiveplan"
     },
@@ -1279,7 +1279,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "deletepreventiveplan()",
       "id": "api_preventiveplans_deletepreventiveplan"
     },
@@ -1289,7 +1289,7 @@
       "source_file": "api/preventivePlans.js",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "patchpreventiveplansteps()",
       "id": "api_preventiveplans_patchpreventiveplansteps"
     },
@@ -1309,7 +1309,7 @@
       "source_file": "api/purchaseRequests.js",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "fetchpurchaserequestdetail()",
       "id": "api_purchaserequests_fetchpurchaserequestdetail"
     },
@@ -1469,7 +1469,7 @@
       "source_file": "api/services.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "services.js",
       "id": "api_services"
     },
@@ -1479,7 +1479,7 @@
       "source_file": "api/services.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "fetchservices()",
       "id": "api_services_fetchservices"
     },
@@ -1589,7 +1589,7 @@
       "source_file": "api/stock.js",
       "source_location": "L123",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "fetchstockitemdetail()",
       "id": "api_stock_fetchstockitemdetail"
     },
@@ -1839,7 +1839,7 @@
       "source_file": "auth/AuthContext.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "authcontext.jsx",
       "id": "auth_authcontext"
     },
@@ -1849,7 +1849,7 @@
       "source_file": "auth/AuthContext.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "authcontext",
       "id": "auth_authcontext_authcontext"
     },
@@ -1859,7 +1859,7 @@
       "source_file": "auth/AuthContext.jsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "authprovider()",
       "id": "auth_authcontext_authprovider"
     },
@@ -1869,7 +1869,7 @@
       "source_file": "auth/RequireRole.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "requirerole.jsx",
       "id": "auth_requirerole"
     },
@@ -1879,7 +1879,7 @@
       "source_file": "auth/RequireRole.jsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "requirerole()",
       "id": "auth_requirerole_requirerole"
     },
@@ -1889,7 +1889,7 @@
       "source_file": "auth/useAuth.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "useauth.js",
       "id": "auth_useauth"
     },
@@ -1899,7 +1899,7 @@
       "source_file": "auth/useAuth.js",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "useauth()",
       "id": "auth_useauth_useauth"
     },
@@ -2069,7 +2069,7 @@
       "source_file": "components/admin/AdminRolePermissionsMatrix.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminrolepermissionsmatrix.jsx",
       "id": "admin_adminrolepermissionsmatrix"
     },
@@ -2229,7 +2229,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminuserconfirmmodals.jsx",
       "id": "admin_adminuserconfirmmodals"
     },
@@ -2239,7 +2239,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "roles",
       "id": "admin_adminuserconfirmmodals_roles"
     },
@@ -2249,7 +2249,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminchangerolemodal()",
       "id": "admin_adminuserconfirmmodals_adminchangerolemodal"
     },
@@ -2259,7 +2259,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L82",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "admintoggleactivemodal()",
       "id": "admin_adminuserconfirmmodals_admintoggleactivemodal"
     },
@@ -2269,7 +2269,7 @@
       "source_file": "components/admin/AdminUserConfirmModals.jsx",
       "source_location": "L138",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminresetpasswordmodal()",
       "id": "admin_adminuserconfirmmodals_adminresetpasswordmodal"
     },
@@ -2279,7 +2279,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminusercreatemodal.jsx",
       "id": "admin_adminusercreatemodal"
     },
@@ -2289,7 +2289,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "empty_form",
       "id": "admin_adminusercreatemodal_empty_form"
     },
@@ -2299,7 +2299,7 @@
       "source_file": "components/admin/AdminUserCreateModal.jsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "roles",
       "id": "admin_adminusercreatemodal_roles"
     },
@@ -2309,7 +2309,7 @@
       "source_file": "components/admin/AdminUserEditModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminusereditmodal.jsx",
       "id": "admin_adminusereditmodal"
     },
@@ -2319,7 +2319,7 @@
       "source_file": "components/admin/AdminUsersTable.jsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "role_options",
       "id": "admin_adminuserstable_role_options"
     },
@@ -2329,7 +2329,7 @@
       "source_file": "components/admin/AdminUsersTable.jsx",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "active_options",
       "id": "admin_adminuserstable_active_options"
     },
@@ -2339,7 +2339,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "adminaudittab.jsx",
       "id": "tabs_adminaudittab"
     },
@@ -2349,7 +2349,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "entity_labels",
       "id": "tabs_adminaudittab_entity_labels"
     },
@@ -2359,7 +2359,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "entity_colors",
       "id": "tabs_adminaudittab_entity_colors"
     },
@@ -2369,7 +2369,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "empty_filters",
       "id": "tabs_adminaudittab_empty_filters"
     },
@@ -2379,7 +2379,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "filtersbar()",
       "id": "tabs_adminaudittab_filtersbar"
     },
@@ -2389,7 +2389,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L130",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "_serializediffentry()",
       "id": "tabs_adminaudittab_serializediffentry"
     },
@@ -2399,7 +2399,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "_serializediff()",
       "id": "tabs_adminaudittab_serializediff"
     },
@@ -2409,7 +2409,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L148",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "valuediff()",
       "id": "tabs_adminaudittab_valuediff"
     },
@@ -2419,7 +2419,7 @@
       "source_file": "components/admin/tabs/AdminAuditTab.jsx",
       "source_location": "L166",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "pagination()",
       "id": "tabs_adminaudittab_pagination"
     },
@@ -2459,7 +2459,7 @@
       "source_file": "components/admin/tabs/AdminUsersTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminuserstab.jsx",
       "id": "tabs_adminuserstab"
     },
@@ -2669,7 +2669,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "dibriefingitem.jsx",
       "id": "briefing_dibriefingitem"
     },
@@ -2679,7 +2679,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "today",
       "id": "briefing_dibriefingitem_today"
     },
@@ -2689,7 +2689,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "getdayswaiting()",
       "id": "briefing_dibriefingitem_getdayswaiting"
     },
@@ -2699,7 +2699,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "bar_color",
       "id": "briefing_dibriefingitem_bar_color"
     },
@@ -2709,7 +2709,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "agingcolor()",
       "id": "briefing_dibriefingitem_agingcolor"
     },
@@ -2719,7 +2719,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "priority_color",
       "id": "briefing_dibriefingitem_priority_color"
     },
@@ -2729,7 +2729,7 @@
       "source_file": "components/briefing/DIBriefingItem.jsx",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "priority_label",
       "id": "briefing_dibriefingitem_priority_label"
     },
@@ -2799,7 +2799,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "interventioncard.tsx",
       "id": "briefing_interventioncard"
     },
@@ -2809,7 +2809,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 77,
+      "community": 23,
       "norm_label": "collectauditlogs()",
       "id": "briefing_interventioncard_collectauditlogs"
     },
@@ -2819,7 +2819,7 @@
       "source_file": "components/briefing/InterventionCard.tsx",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "useivdetail()",
       "id": "briefing_interventioncard_useivdetail"
     },
@@ -3039,7 +3039,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "ivbody.tsx",
       "id": "components_ivbody"
     },
@@ -3049,7 +3049,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "status_group_cfg",
       "id": "components_ivbody_status_group_cfg"
     },
@@ -3059,7 +3059,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "decision_labels",
       "id": "components_ivbody_decision_labels"
     },
@@ -3069,7 +3069,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "ivauditlogline()",
       "id": "components_ivbody_ivauditlogline"
     },
@@ -3079,7 +3079,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L81",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "unlinkedactions()",
       "id": "components_ivbody_unlinkedactions"
     },
@@ -3089,7 +3089,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L107",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "emptystate()",
       "id": "components_ivbody_emptystate"
     },
@@ -3099,7 +3099,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L117",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "ivbodyprops",
       "id": "components_ivbody_ivbodyprops"
     },
@@ -3109,7 +3109,7 @@
       "source_file": "components/briefing/components/IvBody.tsx",
       "source_location": "L136",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "ivbody()",
       "id": "components_ivbody_ivbody"
     },
@@ -3149,7 +3149,7 @@
       "source_file": "components/briefing/components/IvHeader.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 33,
+      "community": 56,
       "norm_label": "ivheaderprops",
       "id": "components_ivheader_ivheaderprops"
     },
@@ -3189,7 +3189,7 @@
       "source_file": "components/briefing/components/IvHeader.tsx",
       "source_location": "L99",
       "_origin": "ast",
-      "community": 33,
+      "community": 23,
       "norm_label": "ivheader()",
       "id": "components_ivheader_ivheader"
     },
@@ -3459,7 +3459,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "useinterventioncard.ts",
       "id": "briefing_useinterventioncard"
     },
@@ -3469,7 +3469,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "priority_cfg",
       "id": "briefing_useinterventioncard_priority_cfg"
     },
@@ -3479,7 +3479,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "status_cfg_map",
       "id": "briefing_useinterventioncard_status_cfg_map"
     },
@@ -3489,7 +3489,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "fmtdate()",
       "id": "briefing_useinterventioncard_fmtdate"
     },
@@ -3499,7 +3499,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "completionfromprogress()",
       "id": "briefing_useinterventioncard_completionfromprogress"
     },
@@ -3509,7 +3509,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "usecarddisplay()",
       "id": "briefing_useinterventioncard_usecarddisplay"
     },
@@ -3519,7 +3519,7 @@
       "source_file": "components/briefing/useInterventionCard.ts",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 69,
+      "community": 70,
       "norm_label": "usecardactions()",
       "id": "briefing_useinterventioncard_usecardactions"
     },
@@ -3679,7 +3679,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "equipementinterventionstab.jsx",
       "id": "tabs_equipementinterventionstab"
     },
@@ -3689,7 +3689,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "getprioritycolor()",
       "id": "tabs_equipementinterventionstab_getprioritycolor"
     },
@@ -3699,7 +3699,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "getstatuscolor()",
       "id": "tabs_equipementinterventionstab_getstatuscolor"
     },
@@ -3709,7 +3709,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "buildcolumns()",
       "id": "tabs_equipementinterventionstab_buildcolumns"
     },
@@ -3719,7 +3719,7 @@
       "source_file": "components/equipements/tabs/EquipementInterventionsTab.jsx",
       "source_location": "L98",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "buildpaginationprops()",
       "id": "tabs_equipementinterventionstab_buildpaginationprops"
     },
@@ -3779,7 +3779,7 @@
       "source_file": "components/home/ActionModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "actionmodal.jsx",
       "id": "home_actionmodal"
     },
@@ -3829,7 +3829,7 @@
       "source_file": "components/home/SpontaneousInterventionRequestModal.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "spontaneousinterventionrequestmodal.jsx",
       "id": "home_spontaneousinterventionrequestmodal"
     },
@@ -4059,7 +4059,7 @@
       "source_file": "components/intervention-requests/InterventionRequestForm.jsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "initial_form",
       "id": "intervention_requests_interventionrequestform_initial_form"
     },
@@ -4069,7 +4069,7 @@
       "source_file": "components/intervention-requests/InterventionRequestForm.jsx",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "validate()",
       "id": "intervention_requests_interventionrequestform_validate"
     },
@@ -4079,7 +4079,7 @@
       "source_file": "components/intervention-requests/InterventionRequestSelector.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "requestrow()",
       "id": "intervention_requests_interventionrequestselector_requestrow"
     },
@@ -4089,7 +4089,7 @@
       "source_file": "components/intervention-requests/StatutTabs.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "statuttabs.jsx",
       "id": "intervention_requests_statuttabs"
     },
@@ -4099,7 +4099,7 @@
       "source_file": "components/intervention-requests/StatutTabs.jsx",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "statuttabs()",
       "id": "intervention_requests_statuttabs_statuttabs"
     },
@@ -4109,7 +4109,7 @@
       "source_file": "components/intervention-requests/tabs/InterventionRequestsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "interventionrequeststab.jsx",
       "id": "tabs_interventionrequeststab"
     },
@@ -4119,7 +4119,7 @@
       "source_file": "components/intervention-requests/tabs/InterventionRequestsTab.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "ellipsis",
       "id": "tabs_interventionrequeststab_ellipsis"
     },
@@ -4129,7 +4129,7 @@
       "source_file": "components/intervention-requests/tabs/InterventionRequestsTab.jsx",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "formatday()",
       "id": "tabs_interventionrequeststab_formatday"
     },
@@ -4139,7 +4139,7 @@
       "source_file": "components/intervention-requests/tabs/InterventionRequestsTab.jsx",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 63,
+      "community": 64,
       "norm_label": "columns",
       "id": "tabs_interventionrequeststab_columns"
     },
@@ -4149,7 +4149,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormComplexity.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "actionformcomplexity.jsx",
       "id": "actionform_actionformcomplexity"
     },
@@ -4199,7 +4199,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormDescription.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "actionformdescription.jsx",
       "id": "actionform_actionformdescription"
     },
@@ -4209,7 +4209,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormFields.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "actionformfields.jsx",
       "id": "actionform_actionformfields"
     },
@@ -4219,7 +4219,7 @@
       "source_file": "components/interventions/ActionForm/ActionFormFields.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "computeduration()",
       "id": "actionform_actionformfields_computeduration"
     },
@@ -4319,7 +4319,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "actionformutils.js",
       "id": "actionform_actionformutils"
     },
@@ -4329,7 +4329,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "getcategoryid()",
       "id": "actionform_actionformutils_getcategoryid"
     },
@@ -4339,7 +4339,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "getcategorycode()",
       "id": "actionform_actionformutils_getcategorycode"
     },
@@ -4349,7 +4349,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "getcategoryname()",
       "id": "actionform_actionformutils_getcategoryname"
     },
@@ -4359,7 +4359,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "iscomplexityvalid()",
       "id": "actionform_actionformutils_iscomplexityvalid"
     },
@@ -4369,7 +4369,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "arecomplexityfactorsrequired()",
       "id": "actionform_actionformutils_arecomplexityfactorsrequired"
     },
@@ -4379,7 +4379,7 @@
       "source_file": "components/interventions/ActionForm/actionFormUtils.js",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "validateformstate()",
       "id": "actionform_actionformutils_validateformstate"
     },
@@ -4389,7 +4389,7 @@
       "source_file": "components/interventions/ActionForm/index.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "index.jsx",
       "id": "actionform_index"
     },
@@ -4399,7 +4399,7 @@
       "source_file": "components/interventions/ActionForm/index.jsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "actionform()",
       "id": "actionform_index_actionform"
     },
@@ -4409,7 +4409,7 @@
       "source_file": "components/interventions/ActionForm/useActionForm.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "useactionform.js",
       "id": "actionform_useactionform"
     },
@@ -4419,7 +4419,7 @@
       "source_file": "components/interventions/ActionForm/useActionSubmit.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 24,
+      "community": 25,
       "norm_label": "useactionsubmit.js",
       "id": "actionform_useactionsubmit"
     },
@@ -5049,7 +5049,7 @@
       "source_file": "components/interventions/tabs/SummaryTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "summarytab.jsx",
       "id": "tabs_summarytab"
     },
@@ -5059,7 +5059,7 @@
       "source_file": "components/interventions/tabs/SummaryTab.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "summarytab()",
       "id": "tabs_summarytab_summarytab"
     },
@@ -5139,7 +5139,7 @@
       "source_file": "components/layout/Layout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "layout.jsx",
       "id": "layout_layout"
     },
@@ -5149,7 +5149,7 @@
       "source_file": "components/layout/Layout.jsx",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "layout()",
       "id": "layout_layout_layout"
     },
@@ -5159,7 +5159,7 @@
       "source_file": "components/layout/PageContainer.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "pagecontainer.jsx",
       "id": "layout_pagecontainer"
     },
@@ -5169,7 +5169,7 @@
       "source_file": "components/layout/PageContainer.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "pagecontainer()",
       "id": "layout_pagecontainer_pagecontainer"
     },
@@ -5219,7 +5219,7 @@
       "source_file": "components/layout/Sidebar.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "status_color_map",
       "id": "layout_sidebar_status_color_map"
     },
@@ -5379,7 +5379,7 @@
       "source_file": "components/manufacturers/ManufacturerCreateForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "manufacturercreateform.jsx",
       "id": "manufacturers_manufacturercreateform"
     },
@@ -5429,7 +5429,7 @@
       "source_file": "components/manufacturers/ManufacturersTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "manufacturerstab.jsx",
       "id": "manufacturers_manufacturerstab"
     },
@@ -5439,7 +5439,7 @@
       "source_file": "components/manufacturers/ManufacturersTab.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "manufactureritem()",
       "id": "manufacturers_manufacturerstab_manufactureritem"
     },
@@ -5449,7 +5449,7 @@
       "source_file": "components/manufacturers/ManufacturersTab.jsx",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "linkstable()",
       "id": "manufacturers_manufacturerstab_linkstable"
     },
@@ -5459,7 +5459,7 @@
       "source_file": "components/manufacturers/ManufacturersTab.jsx",
       "source_location": "L90",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "manufacturerdetailview()",
       "id": "manufacturers_manufacturerstab_manufacturerdetailview"
     },
@@ -5489,7 +5489,7 @@
       "source_file": "components/planning/DayContextPanel.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "daycontextpanel.jsx",
       "id": "planning_daycontextpanel"
     },
@@ -5499,7 +5499,7 @@
       "source_file": "components/planning/DayContextPanel.jsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 60,
+      "community": 61,
       "norm_label": "detectuniqueequipement()",
       "id": "planning_daycontextpanel_detectuniqueequipement"
     },
@@ -5949,7 +5949,7 @@
       "source_file": "components/preventive/GammeStepsPanel.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "gammestepspanel.jsx",
       "id": "preventive_gammestepspanel"
     },
@@ -5959,7 +5959,7 @@
       "source_file": "components/preventive/GammeStepsPanel.jsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "steprow()",
       "id": "preventive_gammestepspanel_steprow"
     },
@@ -6269,7 +6269,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "purchaserequestdetail.jsx",
       "id": "purchase_purchaserequestdetail"
     },
@@ -6279,7 +6279,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "detailrow()",
       "id": "purchase_purchaserequestdetail_detailrow"
     },
@@ -6289,7 +6289,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "cardheader()",
       "id": "purchase_purchaserequestdetail_cardheader"
     },
@@ -6299,7 +6299,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "dainfocard()",
       "id": "purchase_purchaserequestdetail_dainfocard"
     },
@@ -6309,7 +6309,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "nostockitemempty()",
       "id": "purchase_purchaserequestdetail_nostockitemempty"
     },
@@ -6319,7 +6319,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L152",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "stockitemcard()",
       "id": "purchase_purchaserequestdetail_stockitemcard"
     },
@@ -6329,7 +6329,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L191",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "linestatebadge()",
       "id": "purchase_purchaserequestdetail_linestatebadge"
     },
@@ -6339,7 +6339,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L199",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "ordernumbercell()",
       "id": "purchase_purchaserequestdetail_ordernumbercell"
     },
@@ -6349,7 +6349,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L206",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "suppliercell()",
       "id": "purchase_purchaserequestdetail_suppliercell"
     },
@@ -6359,7 +6359,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L217",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "manufacturercell()",
       "id": "purchase_purchaserequestdetail_manufacturercell"
     },
@@ -6369,7 +6369,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L232",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "receivedcell()",
       "id": "purchase_purchaserequestdetail_receivedcell"
     },
@@ -6379,7 +6379,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L239",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "pricecell()",
       "id": "purchase_purchaserequestdetail_pricecell"
     },
@@ -6399,7 +6399,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L291",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "orderlinessection()",
       "id": "purchase_purchaserequestdetail_orderlinessection"
     },
@@ -6409,7 +6409,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L348",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "detailheader()",
       "id": "purchase_purchaserequestdetail_detailheader"
     },
@@ -6499,7 +6499,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "purchaserequestsarchivetab.jsx",
       "id": "tabs_purchaserequestsarchivetab"
     },
@@ -6509,7 +6509,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "archive_statuses",
       "id": "tabs_purchaserequestsarchivetab_archive_statuses"
     },
@@ -6519,7 +6519,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsArchiveTab.jsx",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "archivefilters()",
       "id": "tabs_purchaserequestsarchivetab_archivefilters"
     },
@@ -6539,7 +6539,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "purchaserequeststabparts.jsx",
       "id": "tabs_purchaserequeststabparts"
     },
@@ -6549,7 +6549,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L70",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "prfilters()",
       "id": "tabs_purchaserequeststabparts_prfilters"
     },
@@ -6559,7 +6559,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L118",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "archive_statuses",
       "id": "tabs_purchaserequeststabparts_archive_statuses"
     },
@@ -6569,7 +6569,7 @@
       "source_file": "components/purchase/tabs/PurchaseRequestsTabParts.jsx",
       "source_location": "L123",
       "_origin": "ast",
-      "community": 65,
+      "community": 66,
       "norm_label": "archivefilters()",
       "id": "tabs_purchaserequeststabparts_archivefilters"
     },
@@ -7269,7 +7269,7 @@
       "source_file": "components/stock/tabs/StockItemsTab.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "stockitemstab.jsx",
       "id": "tabs_stockitemstab"
     },
@@ -7279,7 +7279,7 @@
       "source_file": "components/stock/tabs/StockItemsTab.jsx",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "familyfilters()",
       "id": "tabs_stockitemstab_familyfilters"
     },
@@ -7289,7 +7289,7 @@
       "source_file": "components/stock/tabs/StockItemsTab.jsx",
       "source_location": "L60",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "stockbadge()",
       "id": "tabs_stockitemstab_stockbadge"
     },
@@ -7659,7 +7659,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "asyncsearchselect.jsx",
       "id": "ui_asyncsearchselect"
     },
@@ -7669,7 +7669,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "state_box",
       "id": "ui_asyncsearchselect_state_box"
     },
@@ -7679,7 +7679,7 @@
       "source_file": "components/ui/AsyncSearchSelect.jsx",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "statebox()",
       "id": "ui_asyncsearchselect_statebox"
     },
@@ -7689,7 +7689,7 @@
       "source_file": "components/ui/AuditGuardDialog.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "auditguarddialog.jsx",
       "id": "ui_auditguarddialog"
     },
@@ -7699,7 +7699,7 @@
       "source_file": "components/ui/AuditReasonDialog.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "auditreasondialog.jsx",
       "id": "ui_auditreasondialog"
     },
@@ -7709,7 +7709,7 @@
       "source_file": "components/ui/AuditReasonPicker.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 68,
+      "community": 69,
       "norm_label": "auditreasonpicker.jsx",
       "id": "ui_auditreasonpicker"
     },
@@ -7819,7 +7819,7 @@
       "source_file": "components/ui/DetailPanel.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "detailpanel.jsx",
       "id": "ui_detailpanel"
     },
@@ -7829,7 +7829,7 @@
       "source_file": "components/ui/DropdownButton.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "dropdownbutton.jsx",
       "id": "ui_dropdownbutton"
     },
@@ -7999,7 +7999,7 @@
       "source_file": "components/ui/ExpandableDetailsRow.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "expandabledetailsrow.jsx",
       "id": "ui_expandabledetailsrow"
     },
@@ -8009,7 +8009,7 @@
       "source_file": "components/ui/ExpandableDetailsRow.jsx",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "buildcellstyle()",
       "id": "ui_expandabledetailsrow_buildcellstyle"
     },
@@ -8019,7 +8019,7 @@
       "source_file": "components/ui/ExpandableDetailsRow.jsx",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "buildboxstyle()",
       "id": "ui_expandabledetailsrow_buildboxstyle"
     },
@@ -8029,7 +8029,7 @@
       "source_file": "components/ui/ExpandableDetailsRow.jsx",
       "source_location": "L77",
       "_origin": "ast",
-      "community": 81,
+      "community": 80,
       "norm_label": "contentwrapper()",
       "id": "ui_expandabledetailsrow_contentwrapper"
     },
@@ -8169,7 +8169,7 @@
       "source_file": "components/ui/ItemForm.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "itemform.jsx",
       "id": "ui_itemform"
     },
@@ -8179,7 +8179,7 @@
       "source_file": "components/ui/ItemForm.jsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 80,
+      "community": 79,
       "norm_label": "itemform()",
       "id": "ui_itemform_itemform"
     },
@@ -8269,7 +8269,7 @@
       "source_file": "components/ui/MasterDetailLayout.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "masterdetaillayout.jsx",
       "id": "ui_masterdetaillayout"
     },
@@ -8279,7 +8279,7 @@
       "source_file": "components/ui/MasterDetailLayout.jsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "masterpanel()",
       "id": "ui_masterdetaillayout_masterpanel"
     },
@@ -8289,7 +8289,7 @@
       "source_file": "components/ui/MasterDetailLayout.jsx",
       "source_location": "L165",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "freemasterpanel()",
       "id": "ui_masterdetaillayout_freemasterpanel"
     },
@@ -8419,7 +8419,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBox.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "statusbox.jsx",
       "id": "searchableselect_statusbox"
     },
@@ -8429,7 +8429,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "statusboxstates.jsx",
       "id": "searchableselect_statusboxstates"
     },
@@ -8439,7 +8439,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "emptystate()",
       "id": "searchableselect_statusboxstates_emptystate"
     },
@@ -8449,7 +8449,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "selectedstate()",
       "id": "searchableselect_statusboxstates_selectedstate"
     },
@@ -8459,7 +8459,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "noresultsstate()",
       "id": "searchableselect_statusboxstates_noresultsstate"
     },
@@ -8469,7 +8469,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "specialrequestoption()",
       "id": "searchableselect_statusboxstates_specialrequestoption"
     },
@@ -8479,7 +8479,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "createnewsupplieroption()",
       "id": "searchableselect_statusboxstates_createnewsupplieroption"
     },
@@ -8489,7 +8489,7 @@
       "source_file": "components/ui/SearchableSelect/StatusBoxStates.jsx",
       "source_location": "L130",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "suggestionslist()",
       "id": "searchableselect_statusboxstates_suggestionslist"
     },
@@ -8499,7 +8499,7 @@
       "source_file": "components/ui/SearchableSelect/index.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "index.jsx",
       "id": "searchableselect_index"
     },
@@ -8509,7 +8509,7 @@
       "source_file": "components/ui/SearchableSelect/index.jsx",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "searchableselect()",
       "id": "searchableselect_index_searchableselect"
     },
@@ -8519,7 +8519,7 @@
       "source_file": "components/ui/SearchableSelect/useSearchableSelect.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "usesearchableselect.js",
       "id": "searchableselect_usesearchableselect"
     },
@@ -8549,7 +8549,7 @@
       "source_file": "components/ui/ServerStatus.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "serverstatus.jsx",
       "id": "ui_serverstatus"
     },
@@ -8789,7 +8789,7 @@
       "source_file": "components/ui/TableHeader.jsx",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "searchinput()",
       "id": "ui_tableheader_searchinput"
     },
@@ -8809,7 +8809,7 @@
       "source_file": "components/ui/useSidebarState.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "usesidebarstate.js",
       "id": "ui_usesidebarstate"
     },
@@ -8819,7 +8819,7 @@
       "source_file": "config/adminConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "adminconfig.js",
       "id": "config_adminconfig"
     },
@@ -8829,7 +8829,7 @@
       "source_file": "config/adminConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "role_colors",
       "id": "config_adminconfig_role_colors"
     },
@@ -9009,7 +9009,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "colorpalette.js",
       "id": "config_colorpalette"
     },
@@ -9019,7 +9019,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L101",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "radix_color_map",
       "id": "config_colorpalette_radix_color_map"
     },
@@ -9029,7 +9029,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L118",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "color_usage",
       "id": "config_colorpalette_color_usage"
     },
@@ -9039,7 +9039,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L169",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "color_scales",
       "id": "config_colorpalette_color_scales"
     },
@@ -9049,7 +9049,7 @@
       "source_file": "config/colorPalette.js",
       "source_location": "L241",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "color_tones",
       "id": "config_colorpalette_color_tones"
     },
@@ -9099,7 +9099,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L130",
       "_origin": "ast",
-      "community": 32,
+      "community": 33,
       "norm_label": "priority_badge_colors",
       "id": "config_interventiontypes_priority_badge_colors"
     },
@@ -9119,7 +9119,7 @@
       "source_file": "config/interventionTypes.js",
       "source_location": "L147",
       "_origin": "ast",
-      "community": 56,
+      "community": 57,
       "norm_label": "audit_decision_labels",
       "id": "config_interventiontypes_audit_decision_labels"
     },
@@ -9129,7 +9129,7 @@
       "source_file": "config/layoutConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "layoutconfig.js",
       "id": "config_layoutconfig"
     },
@@ -9139,7 +9139,7 @@
       "source_file": "config/layoutConfig.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "default_container_props",
       "id": "config_layoutconfig_default_container_props"
     },
@@ -9149,7 +9149,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "menuconfig.js",
       "id": "config_menuconfig"
     },
@@ -9159,7 +9159,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "section_labels",
       "id": "config_menuconfig_section_labels"
     },
@@ -9169,7 +9169,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "section_order",
       "id": "config_menuconfig_section_order"
     },
@@ -9179,7 +9179,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "getmenuitems()",
       "id": "config_menuconfig_getmenuitems"
     },
@@ -9189,7 +9189,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "getmenusections()",
       "id": "config_menuconfig_getmenusections"
     },
@@ -9199,7 +9199,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "getpageconfig()",
       "id": "config_menuconfig_getpageconfig"
     },
@@ -9209,7 +9209,7 @@
       "source_file": "config/menuConfig.js",
       "source_location": "L89",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "canaccesspage()",
       "id": "config_menuconfig_canaccesspage"
     },
@@ -9219,7 +9219,7 @@
       "source_file": "config/pagesConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "pagesconfig.js",
       "id": "config_pagesconfig"
     },
@@ -9439,7 +9439,7 @@
       "source_file": "hooks/admin/useAdminAudit.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 77,
+      "community": 23,
       "norm_label": "useadminaudit.js",
       "id": "admin_useadminaudit"
     },
@@ -9449,7 +9449,7 @@
       "source_file": "hooks/admin/useAdminEndpoints.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 78,
+      "community": 77,
       "norm_label": "useadminendpoints.js",
       "id": "admin_useadminendpoints"
     },
@@ -9459,7 +9459,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useadminreferentiel.js",
       "id": "admin_useadminreferentiel"
     },
@@ -9469,7 +9469,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "makesimplelisthook()",
       "id": "admin_useadminreferentiel_makesimplelisthook"
     },
@@ -9479,7 +9479,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useactioncategories",
       "id": "admin_useadminreferentiel_useactioncategories"
     },
@@ -9489,7 +9489,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "usecomplexityfactors",
       "id": "admin_useadminreferentiel_usecomplexityfactors"
     },
@@ -9499,7 +9499,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L59",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useinterventiontypes",
       "id": "admin_useadminreferentiel_useinterventiontypes"
     },
@@ -9509,7 +9509,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useinterventionstatuses",
       "id": "admin_useadminreferentiel_useinterventionstatuses"
     },
@@ -9629,7 +9629,7 @@
       "source_file": "hooks/equipements/useEquipementClasses.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useequipementclasses.js",
       "id": "equipements_useequipementclasses"
     },
@@ -9649,7 +9649,7 @@
       "source_file": "hooks/equipements/useEquipements.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "useequipements.js",
       "id": "equipements_useequipements"
     },
@@ -9659,7 +9659,7 @@
       "source_file": "hooks/intervention-requests/useInterventionRequests.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "useinterventionrequests.js",
       "id": "intervention_requests_useinterventionrequests"
     },
@@ -9669,7 +9669,7 @@
       "source_file": "hooks/intervention-requests/useInterventionRequests.js",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "buildparams()",
       "id": "intervention_requests_useinterventionrequests_buildparams"
     },
@@ -9729,7 +9729,7 @@
       "source_file": "hooks/preventive/usePreventivePlans.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 61,
+      "community": 62,
       "norm_label": "usepreventiveplans.js",
       "id": "preventive_usepreventiveplans"
     },
@@ -9859,7 +9859,7 @@
       "source_file": "hooks/shared/useInterventionRequestStatuses.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "useinterventionrequeststatuses.js",
       "id": "shared_useinterventionrequeststatuses"
     },
@@ -9869,7 +9869,7 @@
       "source_file": "hooks/shared/useMediaQuery.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "usemediaquery.js",
       "id": "shared_usemediaquery"
     },
@@ -9889,7 +9889,7 @@
       "source_file": "hooks/shared/useSidebarState.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "usesidebarstate.js",
       "id": "shared_usesidebarstate"
     },
@@ -9929,7 +9929,7 @@
       "source_file": "hooks/shared/useUrlSearch.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "useurlsearch.js",
       "id": "shared_useurlsearch"
     },
@@ -10019,7 +10019,7 @@
       "source_file": "hooks/stock/useStockSubFamilies.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "usestocksubfamilies.js",
       "id": "stock_usestocksubfamilies"
     },
@@ -10029,7 +10029,7 @@
       "source_file": "hooks/suppliers/useManufacturerDetail.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "usemanufacturerdetail.js",
       "id": "suppliers_usemanufacturerdetail"
     },
@@ -10039,7 +10039,7 @@
       "source_file": "hooks/suppliers/useManufacturers.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 64,
+      "community": 65,
       "norm_label": "usemanufacturers.js",
       "id": "suppliers_usemanufacturers"
     },
@@ -10189,7 +10189,7 @@
       "source_file": "hooks/useAuditGuard.js",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 67,
+      "community": 68,
       "norm_label": "useauditguard()",
       "id": "hooks_useauditguard_useauditguard"
     },
@@ -10199,7 +10199,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "usebriefingdata.js",
       "id": "hooks_usebriefingdata"
     },
@@ -10209,7 +10209,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "today",
       "id": "hooks_usebriefingdata_today"
     },
@@ -10219,7 +10219,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "getdaysopen()",
       "id": "hooks_usebriefingdata_getdaysopen"
     },
@@ -10229,7 +10229,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "priority_order",
       "id": "hooks_usebriefingdata_priority_order"
     },
@@ -10239,7 +10239,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "sorttileitems()",
       "id": "hooks_usebriefingdata_sorttileitems"
     },
@@ -10249,7 +10249,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "enrichsituation()",
       "id": "hooks_usebriefingdata_enrichsituation"
     },
@@ -10259,7 +10259,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L65",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "builddisections()",
       "id": "hooks_usebriefingdata_builddisections"
     },
@@ -10269,7 +10269,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L91",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "classifyorphansections()",
       "id": "hooks_usebriefingdata_classifyorphansections"
     },
@@ -10279,7 +10279,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L161",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "classifysections()",
       "id": "hooks_usebriefingdata_classifysections"
     },
@@ -10289,7 +10289,7 @@
       "source_file": "hooks/useBriefingData.js",
       "source_location": "L245",
       "_origin": "ast",
-      "community": 58,
+      "community": 59,
       "norm_label": "computecounters()",
       "id": "hooks_usebriefingdata_computecounters"
     },
@@ -10369,7 +10369,7 @@
       "source_file": "hooks/usePageConfig.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "usepageconfig.js",
       "id": "hooks_usepageconfig"
     },
@@ -10379,7 +10379,7 @@
       "source_file": "hooks/usePageConfig.js",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 57,
+      "community": 58,
       "norm_label": "usepageheaderprops()",
       "id": "hooks_usepageconfig_usepageheaderprops"
     },
@@ -10569,7 +10569,7 @@
       "source_file": "lib/api/errorMessage.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "errormessage.js",
       "id": "api_errormessage"
     },
@@ -10579,7 +10579,7 @@
       "source_file": "lib/api/errorMessage.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "extractapierrormessage()",
       "id": "api_errormessage_extractapierrormessage"
     },
@@ -10869,7 +10869,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "gethealthurl()",
       "id": "lib_serverstatus_gethealthurl"
     },
@@ -10879,7 +10879,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "checkserverstatus()",
       "id": "lib_serverstatus_checkserverstatus"
     },
@@ -10889,7 +10889,7 @@
       "source_file": "lib/serverStatus.js",
       "source_location": "L70",
       "_origin": "ast",
-      "community": 62,
+      "community": 63,
       "norm_label": "getserverurl()",
       "id": "lib_serverstatus_getserverurl"
     },
@@ -11199,7 +11199,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "colorutils.js",
       "id": "utils_colorutils"
     },
@@ -11209,7 +11209,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "hextoradixcolor()",
       "id": "utils_colorutils_hextoradixcolor"
     },
@@ -11219,7 +11219,7 @@
       "source_file": "lib/utils/colorUtils.js",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 66,
+      "community": 67,
       "norm_label": "getcolor()",
       "id": "utils_colorutils_getcolor"
     },
@@ -11229,7 +11229,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "interventionutils.jsx",
       "id": "utils_interventionutils"
     },
@@ -11239,7 +11239,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getstatusbadge()",
       "id": "utils_interventionutils_getstatusbadge"
     },
@@ -11249,7 +11249,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getprioritybadge()",
       "id": "utils_interventionutils_getprioritybadge"
     },
@@ -11259,7 +11259,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L56",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "gettypebadge()",
       "id": "utils_interventionutils_gettypebadge"
     },
@@ -11269,7 +11269,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "formatinterventiondate()",
       "id": "utils_interventionutils_formatinterventiondate"
     },
@@ -11279,7 +11279,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "isinterventionopen()",
       "id": "utils_interventionutils_isinterventionopen"
     },
@@ -11289,7 +11289,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "calculateinterventionstats()",
       "id": "utils_interventionutils_calculateinterventionstats"
     },
@@ -11299,7 +11299,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "filterinterventions()",
       "id": "utils_interventionutils_filterinterventions"
     },
@@ -11309,7 +11309,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L180",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getselectionbuttonstyle()",
       "id": "utils_interventionutils_getselectionbuttonstyle"
     },
@@ -11339,7 +11339,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L283",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "calculatetotaltime()",
       "id": "utils_interventionutils_calculatetotaltime"
     },
@@ -11349,7 +11349,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L294",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getuniquetechs()",
       "id": "utils_interventionutils_getuniquetechs"
     },
@@ -11359,7 +11359,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L324",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getlastupdatedate()",
       "id": "utils_interventionutils_getlastupdatedate"
     },
@@ -11369,7 +11369,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L337",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "grouptimelinebyday()",
       "id": "utils_interventionutils_grouptimelinebyday"
     },
@@ -11379,7 +11379,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L406",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "gettimediff()",
       "id": "utils_interventionutils_gettimediff"
     },
@@ -11389,7 +11389,7 @@
       "source_file": "lib/utils/interventionUtils.jsx",
       "source_location": "L424",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "getstatuscoloratdate()",
       "id": "utils_interventionutils_getstatuscoloratdate"
     },
@@ -11489,7 +11489,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "textutils.js",
       "id": "utils_textutils"
     },
@@ -11499,7 +11499,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "normalizetext()",
       "id": "utils_textutils_normalizetext"
     },
@@ -11509,7 +11509,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L22",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "searchintext()",
       "id": "utils_textutils_searchintext"
     },
@@ -11519,7 +11519,7 @@
       "source_file": "lib/utils/textUtils.js",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 23,
+      "community": 24,
       "norm_label": "filterbysearch()",
       "id": "utils_textutils_filterbysearch"
     },
@@ -11529,7 +11529,7 @@
       "source_file": "main.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "main.jsx",
       "id": "main"
     },
@@ -11539,7 +11539,7 @@
       "source_file": "main.jsx",
       "source_location": "L31",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "onregisteredsw()",
       "id": "main_onregisteredsw"
     },
@@ -11629,7 +11629,7 @@
       "source_file": "pages/auth/Login.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "login.jsx",
       "id": "auth_login"
     },
@@ -11639,7 +11639,7 @@
       "source_file": "pages/auth/Login.jsx",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "login()",
       "id": "auth_login_login"
     },
@@ -11699,7 +11699,7 @@
       "source_file": "pages/interventions/InterventionCreatePage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "interventioncreatepage.jsx",
       "id": "interventions_interventioncreatepage"
     },
@@ -11709,7 +11709,7 @@
       "source_file": "pages/interventions/InterventionCreatePage.jsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 29,
+      "community": 30,
       "norm_label": "userequestlinking()",
       "id": "interventions_interventioncreatepage_userequestlinking"
     },
@@ -11719,7 +11719,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "interventiondetailpage.jsx",
       "id": "interventions_interventiondetailpage"
     },
@@ -11729,7 +11729,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "summarytab",
       "id": "interventions_interventiondetailpage_summarytab"
     },
@@ -11739,7 +11739,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "historytab",
       "id": "interventions_interventiondetailpage_historytab"
     },
@@ -11749,7 +11749,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "taskstab",
       "id": "interventions_interventiondetailpage_taskstab"
     },
@@ -11759,7 +11759,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "base_tabs",
       "id": "interventions_interventiondetailpage_base_tabs"
     },
@@ -11769,7 +11769,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "mapprioritytoconfigkey()",
       "id": "interventions_interventiondetailpage_mapprioritytoconfigkey"
     },
@@ -11779,7 +11779,7 @@
       "source_file": "pages/interventions/InterventionDetailPage.jsx",
       "source_location": "L56",
       "_origin": "ast",
-      "community": 59,
+      "community": 60,
       "norm_label": "mapdtostatustoconfigkey()",
       "id": "interventions_interventiondetailpage_mapdtostatustoconfigkey"
     },
@@ -11879,7 +11879,7 @@
       "source_file": "pages/suppliers/SuppliersPage.jsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 31,
       "norm_label": "supplierspage.jsx",
       "id": "suppliers_supplierspage"
     },
@@ -11959,7 +11959,7 @@
       "source_file": "router/routes.jsx",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 31,
+      "community": 32,
       "norm_label": "protectedroute()",
       "id": "router_routes_protectedroute"
     },
@@ -11989,7 +11989,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "briefing.ts",
       "id": "types_briefing"
     },
@@ -11999,7 +11999,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "interventionmachine",
       "id": "types_briefing_interventionmachine"
     },
@@ -12009,7 +12009,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "interventionstats",
       "id": "types_briefing_interventionstats"
     },
@@ -12019,7 +12019,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "taskassignedto",
       "id": "types_briefing_taskassignedto"
     },
@@ -12029,7 +12029,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L69",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "actiontechnician",
       "id": "types_briefing_actiontechnician"
     },
@@ -12049,7 +12049,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "statuslog",
       "id": "types_briefing_statuslog"
     },
@@ -12059,7 +12059,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L103",
       "_origin": "ast",
-      "community": 70,
+      "community": 56,
       "norm_label": "interventionurgency",
       "id": "types_briefing_interventionurgency"
     },
@@ -12069,7 +12069,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L110",
       "_origin": "ast",
-      "community": 33,
+      "community": 56,
       "norm_label": "briefingsituation",
       "id": "types_briefing_briefingsituation"
     },
@@ -12079,7 +12079,7 @@
       "source_file": "types/briefing.ts",
       "source_location": "L131",
       "_origin": "ast",
-      "community": 33,
+      "community": 56,
       "norm_label": "interventiondetail",
       "id": "types_briefing_interventiondetail"
     },
@@ -12089,7 +12089,7 @@
       "source_file": "vite-env.d.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 82,
+      "community": 81,
       "norm_label": "vite-env.d.ts",
       "id": "vite_env_d"
     },
@@ -12099,7 +12099,7 @@
       "source_file": "vite-env.d.ts",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 82,
+      "community": 81,
       "norm_label": "importmeta",
       "id": "vite_env_d_importmeta"
     },
@@ -12109,7 +12109,7 @@
       "source_file": "components/purchase/PurchaseRequestDetail.jsx",
       "source_location": "L261",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "orderlinerow()",
       "id": "purchase_purchaserequestdetail_orderlinerow"
     },
@@ -12139,7 +12139,7 @@
       "source_file": "hooks/admin/useAdminReferentiel.js",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "make()",
       "id": "admin_useadminreferentiel_make"
     },
@@ -12149,7 +12149,7 @@
       "source_file": "hooks/shared/useFetchList.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "usefetchlist.js",
       "id": "shared_usefetchlist"
     },
@@ -16153,9 +16153,9 @@
       "source_file": "components/shared/GroupCard.jsx",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "shared_groupcard",
-      "target": "api_interventiontasks",
-      "confidence_score": 1.0
+      "target": "api_interventiontasks"
     },
     {
       "relation": "imports_from",
@@ -25076,9 +25076,9 @@
       "source_file": "components/home/TasksPane.jsx",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "home_taskspane",
-      "target": "shared_groupcard",
-      "confidence_score": 1.0
+      "target": "shared_groupcard"
     },
     {
       "relation": "imports_from",
@@ -29740,9 +29740,9 @@
       "source_file": "pages/HomeSplit.jsx",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "pages_homesplit",
-      "target": "planning_planningutils_formatweeklabel",
-      "confidence_score": 1.0
+      "target": "planning_planningutils_formatweeklabel"
     },
     {
       "relation": "calls",
@@ -35013,9 +35013,9 @@
       "source_file": "components/shared/GroupCard.jsx",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "shared_groupcard",
-      "target": "config_interventiontypes_priority_config",
-      "confidence_score": 1.0
+      "target": "config_interventiontypes_priority_config"
     },
     {
       "relation": "imports",
@@ -38608,9 +38608,9 @@
       "source_file": "pages/HomeSplit.jsx",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "pages_homesplit",
-      "target": "api_planning_fetchplanningsemainepdf",
-      "confidence_score": 1.0
+      "target": "api_planning_fetchplanningsemainepdf"
     },
     {
       "relation": "contains",
@@ -39355,7 +39355,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "pages/coordination/CoordinationPage.jsx",
-      "source_location": "L578",
+      "source_location": "L577",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "coordination_coordinationpage",
@@ -39598,7 +39598,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "pages/coordination/CoordinationPage.jsx",
-      "source_location": "L579",
+      "source_location": "L578",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "coordination_coordinationpage_dirow",
@@ -39639,5 +39639,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "41e47fdd418fd56943f79770e2c7a06e152e4d66"
+  "built_at_commit": "d5d521fec46af12f69ff67735cb3f178cf540fa4"
 }

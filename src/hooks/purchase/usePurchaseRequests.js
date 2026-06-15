@@ -65,7 +65,7 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
       const data = await fetchPurchaseRequestStats();
       setStats(data);
     } catch {
-      // Stats are non-blocking
+      // non-blocking
     } finally {
       setStatsLoading(false);
     }
@@ -130,11 +130,6 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
     }
   }, [loadItems, loadStats]);
 
-  // Count from stats (global, not affected by current tab filter)
-  const readyToDispatch = stats?.by_status?.find(
-    (s) => s.status === 'PENDING_DISPATCH'
-  )?.count ?? items.filter((item) => item.derived_status?.code === 'PENDING_DISPATCH').length;
-
   return {
     items,
     stats,
@@ -155,6 +150,5 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
     dispatchResult,
     setDispatchResult,
     dispatch,
-    readyToDispatch,
   };
 }

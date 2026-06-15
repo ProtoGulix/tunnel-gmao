@@ -707,6 +707,24 @@
       "ui_lockedbadge_lockedbadge"
     ],
     "23": [
+      "admin_useadminaudit",
+      "api_auditlogs",
+      "api_auditlogs_fetchallauditreasoncodes",
+      "api_auditlogs_fetchauditlogs",
+      "briefing_interventioncard",
+      "briefing_interventioncard_collectauditlogs",
+      "briefing_interventioncard_useivdetail",
+      "components_ivbody",
+      "components_ivbody_decision_labels",
+      "components_ivbody_emptystate",
+      "components_ivbody_ivauditlogline",
+      "components_ivbody_ivbody",
+      "components_ivbody_ivbodyprops",
+      "components_ivbody_status_group_cfg",
+      "components_ivbody_unlinkedactions",
+      "components_ivheader_ivheader"
+    ],
+    "24": [
       "searchableselect_index",
       "searchableselect_index_searchableselect",
       "searchableselect_statusbox",
@@ -724,7 +742,7 @@
       "utils_textutils_normalizetext",
       "utils_textutils_searchintext"
     ],
-    "24": [
+    "25": [
       "actionform_actionformcomplexity",
       "actionform_actionformdescription",
       "actionform_actionformfields",
@@ -741,7 +759,7 @@
       "actionform_useactionform",
       "actionform_useactionsubmit"
     ],
-    "25": [
+    "26": [
       "admin_adminrolepermissionsmatrix",
       "admin_adminuserconfirmmodals",
       "admin_adminuserconfirmmodals_adminchangerolemodal",
@@ -758,7 +776,7 @@
       "config_adminconfig_role_colors",
       "tabs_adminuserstab"
     ],
-    "26": [
+    "27": [
       "purchase_purchaserequestdetail",
       "purchase_purchaserequestdetail_cardheader",
       "purchase_purchaserequestdetail_dainfocard",
@@ -775,7 +793,7 @@
       "purchase_purchaserequestdetail_stockitemcard",
       "purchase_purchaserequestdetail_suppliercell"
     ],
-    "27": [
+    "28": [
       "utils_interventionutils",
       "utils_interventionutils_calculateinterventionstats",
       "utils_interventionutils_calculatetotaltime",
@@ -792,7 +810,7 @@
       "utils_interventionutils_grouptimelinebyday",
       "utils_interventionutils_isinterventionopen"
     ],
-    "28": [
+    "29": [
       "admin_useadminreferentiel",
       "admin_useadminreferentiel_make",
       "admin_useadminreferentiel_makesimplelisthook",
@@ -808,7 +826,7 @@
       "shared_usefetchlist",
       "stock_usestocksubfamilies"
     ],
-    "29": [
+    "30": [
       "api_intervention_requests",
       "api_intervention_requests_fetchinterventionrequest",
       "api_intervention_requests_fetchinterventionrequeststatuses",
@@ -824,7 +842,7 @@
       "interventions_interventioncreatepage_userequestlinking",
       "shared_useinterventionrequeststatuses"
     ],
-    "30": [
+    "31": [
       "api_stock_fetchstockitemdetail",
       "manufacturers_manufacturerstab",
       "manufacturers_manufacturerstab_linkstable",
@@ -840,7 +858,7 @@
       "ui_masterdetaillayout_freemasterpanel",
       "ui_masterdetaillayout_masterpanel"
     ],
-    "31": [
+    "32": [
       "app",
       "app_app",
       "auth_authcontext",
@@ -856,7 +874,7 @@
       "main_onregisteredsw",
       "router_routes_protectedroute"
     ],
-    "32": [
+    "33": [
       "briefing_dibriefingitem",
       "briefing_dibriefingitem_agingcolor",
       "briefing_dibriefingitem_bar_color",
@@ -871,22 +889,6 @@
       "tabs_equipementinterventionstab_buildpaginationprops",
       "tabs_equipementinterventionstab_getprioritycolor",
       "tabs_equipementinterventionstab_getstatuscolor"
-    ],
-    "33": [
-      "briefing_interventioncard",
-      "briefing_interventioncard_useivdetail",
-      "components_ivbody",
-      "components_ivbody_decision_labels",
-      "components_ivbody_emptystate",
-      "components_ivbody_ivauditlogline",
-      "components_ivbody_ivbody",
-      "components_ivbody_ivbodyprops",
-      "components_ivbody_status_group_cfg",
-      "components_ivbody_unlinkedactions",
-      "components_ivheader_ivheader",
-      "components_ivheader_ivheaderprops",
-      "types_briefing_briefingsituation",
-      "types_briefing_interventiondetail"
     ],
     "34": [
       "actionform_actiontasksection_actiontasksection",
@@ -1190,6 +1192,18 @@
       "shared_useapistatus_issystemerror"
     ],
     "56": [
+      "components_ivheader_ivheaderprops",
+      "types_briefing",
+      "types_briefing_actiontechnician",
+      "types_briefing_briefingsituation",
+      "types_briefing_interventiondetail",
+      "types_briefing_interventionmachine",
+      "types_briefing_interventionstats",
+      "types_briefing_interventionurgency",
+      "types_briefing_statuslog",
+      "types_briefing_taskassignedto"
+    ],
+    "57": [
       "config_interventiontypes_audit_decision_labels",
       "tabs_adminaudittab",
       "tabs_adminaudittab_empty_filters",
@@ -1201,7 +1215,7 @@
       "tabs_adminaudittab_serializediffentry",
       "tabs_adminaudittab_valuediff"
     ],
-    "57": [
+    "58": [
       "config_menuconfig",
       "config_menuconfig_canaccesspage",
       "config_menuconfig_getmenuitems",
@@ -1213,7 +1227,7 @@
       "hooks_usepageconfig",
       "hooks_usepageconfig_usepageheaderprops"
     ],
-    "58": [
+    "59": [
       "hooks_usebriefingdata",
       "hooks_usebriefingdata_builddisections",
       "hooks_usebriefingdata_classifyorphansections",
@@ -1225,7 +1239,7 @@
       "hooks_usebriefingdata_sorttileitems",
       "hooks_usebriefingdata_today"
     ],
-    "59": [
+    "60": [
       "interventions_interventiondetailpage",
       "interventions_interventiondetailpage_base_tabs",
       "interventions_interventiondetailpage_historytab",
@@ -1237,7 +1251,7 @@
       "tabs_summarytab_summarytab",
       "ui_dropdownbutton"
     ],
-    "60": [
+    "61": [
       "api_actioncategories",
       "api_actioncategories_fetchactioncategory",
       "api_actioncategories_fetchcategorysubcategories",
@@ -1248,7 +1262,7 @@
       "planning_daycontextpanel",
       "planning_daycontextpanel_detectuniqueequipement"
     ],
-    "61": [
+    "62": [
       "api_preventiveplans",
       "api_preventiveplans_createpreventiveplan",
       "api_preventiveplans_deletepreventiveplan",
@@ -1259,7 +1273,7 @@
       "preventive_gammestepspanel_steprow",
       "preventive_usepreventiveplans"
     ],
-    "62": [
+    "63": [
       "api_dashboard",
       "api_dashboard_fetchdashboardsummary",
       "lib_serverstatus_checkserverstatus",
@@ -1269,7 +1283,7 @@
       "ui_serverstatus",
       "ui_usesidebarstate"
     ],
-    "63": [
+    "64": [
       "api_intervention_requests_createinterventionrequest",
       "api_intervention_requests_repairinterventionrequests",
       "intervention_requests_statuttabs",
@@ -1279,7 +1293,7 @@
       "tabs_interventionrequeststab_ellipsis",
       "tabs_interventionrequeststab_formatday"
     ],
-    "64": [
+    "65": [
       "api_manufacturers",
       "api_manufacturers_createmanufacturer",
       "api_manufacturers_deletemanufacturer",
@@ -1289,7 +1303,7 @@
       "suppliers_usemanufacturerdetail",
       "suppliers_usemanufacturers"
     ],
-    "65": [
+    "66": [
       "api_purchaserequests_fetchpurchaserequestdetail",
       "tabs_purchaserequestsarchivetab",
       "tabs_purchaserequestsarchivetab_archive_statuses",
@@ -1299,7 +1313,7 @@
       "tabs_purchaserequeststabparts_archivefilters",
       "tabs_purchaserequeststabparts_prfilters"
     ],
-    "66": [
+    "67": [
       "config_colorpalette",
       "config_colorpalette_color_scales",
       "config_colorpalette_color_tones",
@@ -1309,7 +1323,7 @@
       "utils_colorutils_getcolor",
       "utils_colorutils_hextoradixcolor"
     ],
-    "67": [
+    "68": [
       "config_layoutconfig",
       "config_layoutconfig_default_container_props",
       "hooks_useauditguard_useauditguard",
@@ -1319,7 +1333,7 @@
       "layout_pagecontainer_pagecontainer",
       "shared_usemediaquery"
     ],
-    "68": [
+    "69": [
       "api_auditreasons",
       "api_auditreasons_cache",
       "api_auditreasons_clearauditreasonscache",
@@ -1328,7 +1342,7 @@
       "ui_auditreasondialog",
       "ui_auditreasonpicker"
     ],
-    "69": [
+    "70": [
       "briefing_useinterventioncard",
       "briefing_useinterventioncard_completionfromprogress",
       "briefing_useinterventioncard_fmtdate",
@@ -1336,15 +1350,6 @@
       "briefing_useinterventioncard_status_cfg_map",
       "briefing_useinterventioncard_usecardactions",
       "briefing_useinterventioncard_usecarddisplay"
-    ],
-    "70": [
-      "types_briefing",
-      "types_briefing_actiontechnician",
-      "types_briefing_interventionmachine",
-      "types_briefing_interventionstats",
-      "types_briefing_interventionurgency",
-      "types_briefing_statuslog",
-      "types_briefing_taskassignedto"
     ],
     "71": [
       "admin_adminsecurityapikeys",
@@ -1394,40 +1399,33 @@
       "admin_adminsecurityblocklist_unblockconfirmmodal"
     ],
     "77": [
-      "admin_useadminaudit",
-      "api_auditlogs",
-      "api_auditlogs_fetchallauditreasoncodes",
-      "api_auditlogs_fetchauditlogs",
-      "briefing_interventioncard_collectauditlogs"
-    ],
-    "78": [
       "admin_useadminendpoints",
       "api_adminendpoints",
       "api_adminendpoints_fetchadminendpoints",
       "api_adminendpoints_syncadminendpoints",
       "api_adminendpoints_updateadminendpoint"
     ],
-    "79": [
+    "78": [
       "api_actions",
       "api_actions_createaction",
       "api_actions_fetchaction",
       "api_actions_mapactionresponse",
       "api_actions_updateaction"
     ],
-    "80": [
+    "79": [
       "ui_asyncsearchselect",
       "ui_asyncsearchselect_state_box",
       "ui_asyncsearchselect_statebox",
       "ui_itemform",
       "ui_itemform_itemform"
     ],
-    "81": [
+    "80": [
       "ui_expandabledetailsrow",
       "ui_expandabledetailsrow_buildboxstyle",
       "ui_expandabledetailsrow_buildcellstyle",
       "ui_expandabledetailsrow_contentwrapper"
     ],
-    "82": [
+    "81": [
       "vite_env_d",
       "vite_env_d_importmeta"
     ]
@@ -1456,17 +1454,17 @@
     "20": 0.14705882352941177,
     "21": 0.19117647058823528,
     "22": 0.15833333333333333,
-    "23": 0.19166666666666668,
-    "24": 0.21904761904761905,
-    "25": 0.18095238095238095,
-    "26": 0.13333333333333333,
+    "23": 0.175,
+    "24": 0.19166666666666668,
+    "25": 0.21904761904761905,
+    "26": 0.18095238095238095,
     "27": 0.13333333333333333,
-    "28": 0.25274725274725274,
-    "29": 0.2087912087912088,
-    "30": 0.15384615384615385,
-    "31": 0.2087912087912088,
-    "32": 0.14285714285714285,
-    "33": 0.2087912087912088,
+    "28": 0.13333333333333333,
+    "29": 0.25274725274725274,
+    "30": 0.2087912087912088,
+    "31": 0.15384615384615385,
+    "32": 0.2087912087912088,
+    "33": 0.14285714285714285,
     "34": 0.19230769230769232,
     "35": 0.23076923076923078,
     "36": 0.28205128205128205,
@@ -1489,33 +1487,32 @@
     "53": 0.2,
     "54": 0.28888888888888886,
     "55": 0.26666666666666666,
-    "56": 0.2222222222222222,
-    "57": 0.24444444444444444,
-    "58": 0.2222222222222222,
-    "59": 0.2,
-    "60": 0.2777777777777778,
-    "61": 0.3611111111111111,
-    "62": 0.42857142857142855,
-    "63": 0.25,
-    "64": 0.5357142857142857,
-    "65": 0.25,
+    "56": 0.24444444444444444,
+    "57": 0.2222222222222222,
+    "58": 0.24444444444444444,
+    "59": 0.2222222222222222,
+    "60": 0.2,
+    "61": 0.2777777777777778,
+    "62": 0.3611111111111111,
+    "63": 0.42857142857142855,
+    "64": 0.25,
+    "65": 0.5357142857142857,
     "66": 0.25,
-    "67": 0.32142857142857145,
-    "68": 0.3333333333333333,
-    "69": 0.38095238095238093,
-    "70": 0.2857142857142857,
+    "67": 0.25,
+    "68": 0.32142857142857145,
+    "69": 0.3333333333333333,
+    "70": 0.38095238095238093,
     "71": 0.3333333333333333,
     "72": 0.6,
     "73": 0.3333333333333333,
     "74": 0.3333333333333333,
     "75": 0.5333333333333333,
     "76": 0.4,
-    "77": 0.6,
+    "77": 0.7,
     "78": 0.7,
-    "79": 0.7,
-    "80": 0.4,
-    "81": 0.6666666666666666,
-    "82": 1.0
+    "79": 0.4,
+    "80": 0.6666666666666666,
+    "81": 1.0
   },
   "gods": [
     {

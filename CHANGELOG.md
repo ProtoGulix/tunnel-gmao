@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.46.0] — 2026-06-15
+
+### Demandes d'achat — Bouton dispatch dans l'en-tête de page
+
+- **Bouton "Dispatcher (N)"** déplacé depuis le bandeau de la liste vers le header de page — visible en permanence quel que soit le filtre actif sur les demandes
+- **Compteur temps réel** : le nombre de demandes prêtes à dispatcher est lu directement depuis l'endpoint `/purchase-requests/facets`, sans dépendre du filtre courant ni de la fenêtre de date des statistiques
+- **Dialog de confirmation** intégré dans le bouton header avec le détail du nombre de demandes concernées
+- **Résultat du dispatch** affiché en bannière au-dessus des onglets après l'opération
+
+### Interface — Colonne liste des demandes d'achat
+
+- **Titre redondant supprimé** dans la colonne liste (le titre de l'onglet suffit)
+- **Compteur et recherche** désormais sur la même ligne : `N lignes` aligné à droite du champ de recherche
+- **Marge** ajoutée entre la zone de recherche et les filtres pour aérer l'interface
+
+---
+
 ## [3.45.1] — 2026-06-15
 
 ### Correctifs — Page Coordination
