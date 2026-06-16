@@ -30,7 +30,12 @@ export default function PurchaseRequestsPage() {
     }
   }, []);
 
-  useEffect(() => { loadPendingCount(); }, [loadPendingCount]);
+  // Chargement initial + polling 30s + rechargement après création de DA ou changement d'onglet
+  useEffect(() => {
+    loadPendingCount();
+    const id = setInterval(loadPendingCount, 30_000);
+    return () => clearInterval(id);
+  }, [loadPendingCount, refreshSignal, activeTab]);
 
   // Fonctions dispatch exposées par le tab actif
   const [dispatchFn, setDispatchFn] = useState(null);
@@ -98,8 +103,6 @@ export default function PurchaseRequestsPage() {
       <Box px="4">
         {activeTab === 'requests' && dispatchResult && (
           <DispatchBanner
-            readyCount={0}
-            dispatching={false}
             dispatchResult={dispatchResult}
             onClearResult={() => setDispatchResult(null)}
           />

@@ -30,7 +30,7 @@ export default function PurchaseRequestPage() {
         item_label: formData.item_label,
         quantity: formData.quantity,
         unit: formData.unit,
-        stock_item_id: formData.stock_item_id || null
+        part_id: formData.part_id || null,
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
@@ -49,8 +49,8 @@ export default function PurchaseRequestPage() {
       <Box p="6" maxWidth="800px" mx="auto">
         {success && lastRequestSummary && (
           <SelectionSummary
-            variant={lastRequestSummary.stock_item_id ? 'stock' : 'special'}
-            badgeText={lastRequestSummary.stock_item_id ? undefined : 'Demande spéciale'}
+            variant={lastRequestSummary.part_id ? 'stock' : 'special'}
+            badgeText={lastRequestSummary.part_id ? undefined : 'Demande spéciale'}
             mainText={lastRequestSummary.item_label}
             rightText={`${lastRequestSummary.quantity || 0} ${lastRequestSummary.unit || ''}`}
           />

@@ -107,13 +107,14 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
       const hasErrors = result.errors?.length > 0;
       const dispatched = result.dispatched_count ?? 0;
       setDispatchResult({
-        type: dispatched > 0 ? (hasErrors ? 'warning' : 'success') : 'error',
+        type: dispatched > 0 ? (hasErrors ? 'warning' : 'success') : (hasErrors ? 'error' : 'warning'),
         message: dispatched > 0
           ? `${dispatched} demande${dispatched > 1 ? 's' : ''} dispatchée${dispatched > 1 ? 's' : ''}`
           : 'Aucune demande dispatchée',
         dispatched,
         createdOrders: result.created_orders ?? 0,
-        errors: result.errors?.length ?? 0,
+        errorCount: result.errors?.length ?? 0,
+        errorDetails: result.errors ?? [],
       });
       await loadItems();
       await loadStats();
@@ -123,7 +124,8 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
         message: err?.message || 'Erreur lors du dispatch',
         dispatched: 0,
         createdOrders: 0,
-        errors: 0,
+        errorCount: 0,
+        errorDetails: [],
       });
     } finally {
       setDispatching(false);

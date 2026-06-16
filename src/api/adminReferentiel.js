@@ -78,3 +78,21 @@ export async function updateInterventionStatus(id, data) {
   const r = await api.patch(`/admin/intervention-statuses/${id}`, data);
   return r.data?.data || r.data;
 }
+
+// --- Classes d'équipement ---
+export async function fetchEquipementClasses() {
+  const r = await api.get('/equipement-class');
+  return r.data?.data || r.data;
+}
+export async function createEquipementClass(data) {
+  const r = await api.post('/equipement-class', data);
+  return r.data?.data || r.data;
+}
+export async function updateEquipementClass(id, data) {
+  const r = await api.patch(`/equipement-class/${id}`, data);
+  return r.data?.data || r.data;
+}
+export async function deleteEquipementClass(id) {
+  const r = await api.delete(`/equipement-class/${id}`);
+  return r.data?.data || r.data;
+}

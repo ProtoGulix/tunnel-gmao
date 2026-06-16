@@ -60,13 +60,20 @@ export function LineBadges({ line }) {
 LineBadges.propTypes = { line: PropTypes.object.isRequired };
 
 function OrderLineRow({ line }) {
+  const isV4 = !!line.part_id;
   return (
     <Table.Row>
       <Table.Cell>
         <Flex direction="column" gap="1">
           <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
           {line.stock_item_ref && (
-            <Badge color="blue" variant="soft" size="1" style={{ width: 'fit-content' }}>{line.stock_item_ref}</Badge>
+            <Badge
+              color={isV4 ? 'blue' : 'gray'}
+              variant="soft" size="1"
+              style={{ width: 'fit-content', fontFamily: 'monospace' }}
+            >
+              {line.stock_item_ref}
+            </Badge>
           )}
         </Flex>
       </Table.Cell>
