@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
-import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench } from 'lucide-react';
+import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench, Cpu } from 'lucide-react';
 import {
   ActionCategoriesSection,
   ComplexityFactorsSection,
@@ -14,11 +14,13 @@ import {
   InterventionTypesSection,
   InterventionStatusesSection,
 } from '@/components/admin/AdminRefInterventionsSection';
+import { EquipementClassesSection } from '@/components/admin/AdminRefEquipementClassesSection';
 import {
   useActionCategories,
   useComplexityFactors,
   useInterventionTypes,
   useInterventionStatuses,
+  useEquipementClasses,
 } from '@/hooks/admin/useAdminReferentiel';
 import * as refApi from '@/api/adminReferentiel';
 import { useNotification } from '@/hooks/shared/useNotification';
@@ -35,6 +37,7 @@ export default function AdminReferentielTab() {
   const factors = useComplexityFactors();
   const intTypes = useInterventionTypes();
   const intStatuses = useInterventionStatuses();
+  const equipClasses = useEquipementClasses();
 
   const wrap = useCallback(async (fn, successMsg) => {
     try {
@@ -97,6 +100,25 @@ export default function AdminReferentielTab() {
       intStatuses.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Statut modifié'), [intStatuses, wrap]);
 
+  // Classes d'équipement
+  const handleCreateEquipClass = useCallback((payload) =>
+    wrap(async () => {
+      await refApi.createEquipementClass(payload);
+      equipClasses.refresh();
+    }, 'Classe créée'), [equipClasses, wrap]);
+
+  const handleUpdateEquipClass = useCallback((id, payload) =>
+    wrap(async () => {
+      const updated = await refApi.updateEquipementClass(id, payload);
+      equipClasses.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
+    }, 'Classe modifiée'), [equipClasses, wrap]);
+
+  const handleDeleteEquipClass = useCallback((id) =>
+    wrap(async () => {
+      await refApi.deleteEquipementClass(id);
+      equipClasses.setItems((prev) => prev.filter((i) => i.id !== id));
+    }, 'Classe supprimée'), [equipClasses, wrap]);
+
   return (
     <Box pt="4">
       {notification && (
@@ -115,6 +137,9 @@ export default function AdminReferentielTab() {
           </Tabs.Trigger>
           <Tabs.Trigger value="interventions">
             <Flex align="center" gap="2"><Wrench size={13} /><Text>Interventions</Text></Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="equipement-classes">
+            <Flex align="center" gap="2"><Cpu size={13} /><Text>Classes d'équipement</Text></Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="families">
             <Flex align="center" gap="2"><Package size={13} /><Text>Familles de pièces</Text></Flex>
@@ -160,6 +185,18 @@ export default function AdminReferentielTab() {
                 onUpdate={handleUpdateIntStatus}
               />
             </>
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="equipement-classes">
+          {activeTab === 'equipement-classes' && (
+            <EquipementClassesSection
+              items={equipClasses.items}
+              loading={equipClasses.loading}
+              onCreate={handleCreateEquipClass}
+              onUpdate={handleUpdateEquipClass}
+              onDelete={handleDeleteEquipClass}
+            />
           )}
         </Tabs.Content>
 

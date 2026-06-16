@@ -42,7 +42,8 @@ export function PurchaseRequestListItem({ item, isSelected, onClick }) {
       </Flex>
 
       <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--color-panel-solid)', borderLeft: `3px solid ${accentColor}` }}>
-        {item.stock_item_ref && <Badge color="blue" variant="soft" size="1">{item.stock_item_ref}</Badge>}
+        {item.part_internal_ref && <Badge color="blue" variant="soft" size="1">{item.part_internal_ref}</Badge>}
+        {!item.part_internal_ref && item.stock_item_ref && <Badge color="gray" variant="soft" size="1">{item.stock_item_ref}</Badge>}
         <Badge color={urgency.color} variant="soft" size="1">{urgency.label}</Badge>
         {statusLabel && (
           <Badge size="1" style={statusColor ? { background: statusColor + '22', color: statusColor, border: `1px solid ${statusColor}44` } : {}}>

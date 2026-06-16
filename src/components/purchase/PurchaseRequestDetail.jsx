@@ -139,7 +139,7 @@ function InterventionCard({ intervention }) {
 
 InterventionCard.propTypes = { intervention: PropTypes.object };
 
-function NoStockItemEmpty() {
+function NoPieceLinked() {
   return (
     <Flex direction="column" align="center" justify="center" gap="2" py="4">
       <Package size={22} color="var(--amber-7)" />
@@ -150,44 +150,76 @@ function NoStockItemEmpty() {
   );
 }
 
-function StockItemCard({ stockItem, unit }) {
+function PartCard({ part, unit }) {
+  return (
+    <Flex direction="column" gap="1">
+      <Flex align="center" gap="2" mb="1">
+        <Link to={`/stock?q=${encodeURIComponent(part.internal_ref)}`} style={{ display: 'contents' }}>
+          <Badge color="blue" variant="soft" size="1" style={{ cursor: 'pointer', fontFamily: 'monospace' }}>
+            {part.internal_ref}
+          </Badge>
+        </Link>
+        <Link to={`/stock?q=${encodeURIComponent(part.internal_ref)}`} style={{ display: 'flex', alignItems: 'center' }}>
+          <ExternalLink size={12} color="var(--blue-9)" />
+        </Link>
+      </Flex>
+      <Text size="2" weight="medium" mb="1">{part.display_name}</Text>
+      {part.family_code && (
+        <DetailRow label="Famille">
+          <Text size="2">{part.family_code}{part.sub_family_code ? ` / ${part.sub_family_code}` : ''}</Text>
+        </DetailRow>
+      )}
+      {part.location && <DetailRow label="Emplacement"><Text size="2">{part.location}</Text></DetailRow>}
+      <DetailRow label="Stock">
+        <Text size="2">{part.qty_in_stock ?? '—'} {part.unit || unit || 'pcs'}</Text>
+      </DetailRow>
+      {part.supplier_refs_count != null && (
+        <DetailRow label="Fournisseurs">
+          <Text size="2">{part.supplier_refs_count} référencé{part.supplier_refs_count > 1 ? 's' : ''}</Text>
+        </DetailRow>
+      )}
+    </Flex>
+  );
+}
+PartCard.propTypes = { part: PropTypes.object.isRequired, unit: PropTypes.string };
+
+function LegacyStockItemCard({ stockItem, unit }) {
+  return (
+    <Flex direction="column" gap="1">
+      <Flex align="center" gap="2" mb="1">
+        <Badge color="gray" variant="soft" size="1">{stockItem.ref}</Badge>
+        <Text size="1" color="gray">(legacy)</Text>
+      </Flex>
+      <Text size="2" weight="medium" mb="1">{stockItem.name}</Text>
+      {stockItem.family_code && (
+        <DetailRow label="Famille">
+          <Text size="2">{stockItem.family_code}{stockItem.sub_family_code ? ` / ${stockItem.sub_family_code}` : ''}</Text>
+        </DetailRow>
+      )}
+      <DetailRow label="Stock">
+        <Text size="2">{stockItem.quantity ?? '—'} {stockItem.unit || unit || 'pcs'}</Text>
+      </DetailRow>
+    </Flex>
+  );
+}
+LegacyStockItemCard.propTypes = { stockItem: PropTypes.object.isRequired, unit: PropTypes.string };
+
+function StockItemCard({ part, stockItem, unit }) {
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
       <CardHeader icon={Package} title="Pièce catalogue" />
-      {stockItem ? (
-        <Flex direction="column" gap="1">
-          <Flex align="center" gap="2" mb="1">
-            <Link to={`/stock?q=${encodeURIComponent(stockItem.ref)}`} style={{ display: 'contents' }}>
-              <Badge color="blue" variant="soft" size="1" style={{ cursor: 'pointer' }}>{stockItem.ref}</Badge>
-            </Link>
-            <Link to={`/stock?q=${encodeURIComponent(stockItem.ref)}`} style={{ display: 'flex', alignItems: 'center' }}>
-              <ExternalLink size={12} color="var(--blue-9)" />
-            </Link>
-          </Flex>
-          <Text size="2" weight="medium" mb="1">{stockItem.name}</Text>
-          {stockItem.family_code && (
-            <DetailRow label="Famille">
-              <Text size="2">{stockItem.family_code}{stockItem.sub_family_code ? ` / ${stockItem.sub_family_code}` : ''}</Text>
-            </DetailRow>
-          )}
-          {stockItem.location && <DetailRow label="Emplacement"><Text size="2">{stockItem.location}</Text></DetailRow>}
-          <DetailRow label="Stock">
-            <Text size="2">{stockItem.quantity ?? '—'} {stockItem.unit || unit || 'pcs'}</Text>
-          </DetailRow>
-          {stockItem.supplier_refs_count != null && (
-            <DetailRow label="Fournisseurs">
-              <Text size="2">{stockItem.supplier_refs_count} référencé{stockItem.supplier_refs_count > 1 ? 's' : ''}</Text>
-            </DetailRow>
-          )}
-        </Flex>
+      {part ? (
+        <PartCard part={part} unit={unit} />
+      ) : stockItem ? (
+        <LegacyStockItemCard stockItem={stockItem} unit={unit} />
       ) : (
-        <NoStockItemEmpty />
+        <NoPieceLinked />
       )}
     </Card>
   );
 }
 
-StockItemCard.propTypes = { stockItem: PropTypes.object, unit: PropTypes.string };
+StockItemCard.propTypes = { part: PropTypes.object, stockItem: PropTypes.object, unit: PropTypes.string };
 
 function LineStateBadge({ line }) {
   if (line.is_selected) return <Badge variant="solid" size="1" color="green">Sélectionné</Badge>;
@@ -345,7 +377,7 @@ OrderLinesSection.propTypes = {
 
 function DetailHeader({ item, onEdit, onDelete }) {
   const isLocked = !item.is_editable;
-  const isToQualify = !item.stock_item;
+  const isToQualify = !item.part && !item.stock_item;
 
   return (
     <Flex align="center" justify="between" gap="2">
@@ -394,7 +426,7 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
         <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
           <DaInfoCard item={item} urgency={urgency} statusColor={statusColor} statusLabel={statusLabel} />
           <InterventionCard intervention={item.intervention} />
-          <StockItemCard stockItem={item.stock_item} unit={item.unit} />
+          <StockItemCard part={item.part} stockItem={item.stock_item} unit={item.unit} />
         </Box>
         <Separator size="4" />
         <OrderLinesSection

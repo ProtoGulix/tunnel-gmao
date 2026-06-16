@@ -30,3 +30,8 @@ export const useInterventionStatuses = make(
   refApi.fetchInterventionStatuses,
   'Erreur chargement statuts'
 );
+
+export const useEquipementClasses = make(
+  refApi.fetchEquipementClasses,
+  "Erreur chargement classes d'équipement"
+);

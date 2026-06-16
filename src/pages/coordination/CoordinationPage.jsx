@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Badge, Button, Flex, Select, Spinner, Tabs, Text } from '@radix-ui/themes';
-import { ChevronLeft, ChevronRight, MousePointerClick, CalendarDays, CalendarX2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointerClick, CalendarDays, CalendarX2, Plus } from 'lucide-react';
+import InterventionCreateModal from '@/components/interventions/InterventionCreateModal';
 import PageHeader from '@/components/layout/PageHeader';
 import { fetchInterventionTasksList, patchInterventionTask } from '@/api/interventionTasks';
 import { fetchInterventions, updateIntervention } from '@/api/interventions';
@@ -574,7 +575,7 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
 
 // ── DI panel ─────────────────────────────────────────────────────────────────
 
-function DIRow({ di, onClick }) {
+function DIRow({ di, onClick, onCreateIntervention }) {
   const age = getDaysOpen(di.created_at);
   const eq = di.equipement ?? null;
 
@@ -582,15 +583,11 @@ function DIRow({ di, onClick }) {
     <Flex
       gap="2"
       direction="column"
-      onClick={onClick}
       style={{
         padding: '8px 10px',
         borderBottom: '1px solid var(--gray-4)',
-        cursor: 'pointer',
         borderRadius: 4,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-2)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = ''; }}
     >
       <Flex align="center" gap="2">
         <Text size="1" style={{ fontFamily: 'monospace', color: 'var(--gray-9)', flexShrink: 0 }}>
@@ -605,13 +602,28 @@ function DIRow({ di, onClick }) {
           {age}j
         </Badge>
       </Flex>
-      <Text size="2" style={{ color: 'var(--gray-12)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+      <Text
+        size="2"
+        onClick={onClick}
+        style={{ color: 'var(--gray-12)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', cursor: 'pointer' }}
+      >
         {di.description ?? '—'}
       </Text>
-      <Text size="1" color="gray">
-        {di.demandeur_nom ?? '—'}
-        {di.service?.label ? ` · ${di.service.label}` : ''}
-      </Text>
+      <Flex align="center" justify="between">
+        <Text size="1" color="gray">
+          {di.demandeur_nom ?? '—'}
+          {di.service?.label ? ` · ${di.service.label}` : ''}
+        </Text>
+        <Button
+          size="1"
+          variant="soft"
+          color="blue"
+          onClick={(e) => { e.stopPropagation(); onCreateIntervention(di); }}
+        >
+          <Plus size={11} />
+          Créer inter
+        </Button>
+      </Flex>
     </Flex>
   );
 }
@@ -622,6 +634,8 @@ export default function CoordinationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const users = useUsers();
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const today = todayIso();
   const currentMonday = getMondayOf(today);
@@ -802,6 +816,15 @@ export default function CoordinationPage() {
     ));
   }, []);
 
+  const handleCreateFromDI = useCallback(() => {
+    setCreateModalOpen(true);
+  }, []);
+
+  const handleCreateSuccess = useCallback(() => {
+    loadWeekTasks();
+    if (selectedEquipId) loadIvTasks(selectedEquipId);
+  }, [loadWeekTasks, loadIvTasks, selectedEquipId]);
+
   // ── Subtitle ───────────────────────────────────────────────────────────────
   const subtitle = formatSubtitle(monday, friday);
 
@@ -820,17 +843,27 @@ export default function CoordinationPage() {
         subtitle={subtitle}
         icon={CalendarDays}
         noMargin
-        actions={[{
-          label: (
-            <Flex align="center" gap="1">
-              <Button size="1" variant="soft" color="gray" onClick={prevWeek}><ChevronLeft size={14} /></Button>
-              <Button size="1" variant={isCurrentWeek ? 'solid' : 'soft'} color="blue" onClick={goToday} disabled={isCurrentWeek}>
-                Auj.
+        actions={[
+          {
+            label: (
+              <Flex align="center" gap="1">
+                <Button size="1" variant="soft" color="gray" onClick={prevWeek}><ChevronLeft size={14} /></Button>
+                <Button size="1" variant={isCurrentWeek ? 'solid' : 'soft'} color="blue" onClick={goToday} disabled={isCurrentWeek}>
+                  Auj.
+                </Button>
+                <Button size="1" variant="soft" color="gray" onClick={nextWeek}><ChevronRight size={14} /></Button>
+              </Flex>
+            ),
+          },
+          {
+            label: (
+              <Button size="1" variant="solid" color="blue" onClick={() => setCreateModalOpen(true)}>
+                <Plus size={13} />
+                Nouvelle inter
               </Button>
-              <Button size="1" variant="soft" color="gray" onClick={nextWeek}><ChevronRight size={14} /></Button>
-            </Flex>
-          ),
-        }]}
+            ),
+          },
+        ]}
       />
 
       {/* ── Planning semaine ─────────────────────────────────────────────────── */}
@@ -924,13 +957,21 @@ export default function CoordinationPage() {
                   </Flex>
                 )}
                 {!ivLoading && equipDIs.map((di) => (
-                  <DIRow key={di.id} di={di} onClick={() => navigate(`/briefing/di/${di.id}`)} />
+                  <DIRow key={di.id} di={di} onClick={() => navigate(`/briefing/di/${di.id}`)} onCreateIntervention={handleCreateFromDI} />
                 ))}
               </Tabs.Content>
             </Tabs.Root>
           )}
         </div>
       </div>
+
+      {/* ── Modal création intervention ───────────────────────────────────────── */}
+      <InterventionCreateModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={handleCreateSuccess}
+      />
+
     </div>
   );
 }
