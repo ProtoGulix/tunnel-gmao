@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.47.0] — 2026-06-16
+
+### Demandes d'achat — Catalogue pièces V4
+
+- **Formulaire DA** : la sélection d'article utilise désormais le catalogue V4 (`/parts`) avec références internes `P000xxx`, refs fabricant et stock en temps réel
+- **Qualification** : l'édition d'une DA associe un `part_id` V4 (plus de `stock_item_id`)
+- **Paniers fournisseurs** : les lignes de commande affichent les refs V4 (badge bleu monospace `P000xxx`) au lieu des refs legacy
+- **Bannière dispatch** simplifiée — la confirmation est dans le bouton header (AlertDialog), la bannière n'affiche que le résultat
+- **Erreurs de dispatch** détaillées : nom de l'article + message lisible, expandables au clic
+- **Compteur dispatch** : polling automatique 30 secondes + rafraîchissement à la création de DA et au changement d'onglet
+
+---
+
 ## [3.46.0] — 2026-06-15
 
 ### Demandes d'achat — Bouton dispatch dans l'en-tête de page
