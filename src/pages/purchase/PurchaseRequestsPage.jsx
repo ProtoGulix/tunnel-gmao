@@ -5,18 +5,20 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertDialog, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Archive, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
+import { Archive, FileUp, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
 import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
 import DispatchBanner from '@/components/purchase/DispatchBanner';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
+import CsvImportWizard from '@/components/purchase/CsvImportWizard';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { fetchPurchaseRequestFacets } from '@/api/purchaseRequests';
 
 export default function PurchaseRequestsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab');
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
 
   // Compteur PENDING_DISPATCH en temps réel, indépendant du filtre actif
@@ -86,6 +88,11 @@ export default function PurchaseRequestsPage() {
   const headerActions = [
     ...(dispatchAction ? [dispatchAction] : []),
     {
+      label: 'Import CSV',
+      icon: FileUp,
+      onClick: () => setImportOpen(true),
+    },
+    {
       label: 'Nouvelle demande',
       icon: ShoppingCart,
       onClick: () => setModalOpen(true),
@@ -152,6 +159,12 @@ export default function PurchaseRequestsPage() {
       <SpontaneousPurchaseRequestModal
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onSuccess={() => setRefreshSignal((n) => n + 1)}
+      />
+
+      <CsvImportWizard
+        open={importOpen}
+        onOpenChange={setImportOpen}
         onSuccess={() => setRefreshSignal((n) => n + 1)}
       />
     </>

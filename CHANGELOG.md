@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.48.0] — 2026-06-17
+
+### Stock — Correctif affichage liste pièces
+
+- **`PartRow`** : la liste utilisait `part.manufacturer_refs` (champ absent de `PartListItem`) — remplacé par les champs plats `preferred_manufacturer_name`, `preferred_manufacturer_ref`, `preferred_label` retournés par l'endpoint `/parts`
+- Les noms fabricant, références et désignations s'affichent correctement dans la liste
+
+### Demandes d'achat — Import CSV
+
+- **Nouvel assistant d'import CSV** (`CsvImportWizard`) pour créer des demandes d'achat en masse depuis un fichier CSV
+- Détection automatique des colonnes (référence article, quantité, fournisseur, commentaire)
+- Validation ligne par ligne avec aperçu des erreurs avant import
+- Intégré dans la page Demandes d'achat
+
+---
+
 ## [3.47.0] — 2026-06-16
 
 ### Demandes d'achat — Catalogue pièces V4

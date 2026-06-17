@@ -84,9 +84,7 @@ StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
 // ─── Ligne de la liste ────────────────────────────────────────────────────────
 
 function PartRow({ part, isSelected, onClick }) {
-  const preferred = (part.manufacturer_refs || []).find((r) => r.is_preferred) || part.manufacturer_refs?.[0];
-  const otherCount = (part.manufacturer_refs || []).length - 1;
-  const supplierCount = part.preferred_supplier ? 1 : 0;
+  const hasPreferred = part.preferred_manufacturer_ref || part.preferred_manufacturer_name;
 
   return (
     <Box
@@ -103,23 +101,20 @@ function PartRow({ part, isSelected, onClick }) {
     >
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px', alignItems: 'start' }}>
 
-        {/* Colonne gauche — identité fabricant */}
+        {/* Colonne gauche — identité fabricant (champs plats PartListItem) */}
         <Flex direction="column" gap="1">
-          {preferred ? (
+          {hasPreferred ? (
             <>
               <Flex align="center" gap="1">
                 <Factory size={11} color="var(--violet-9)" />
-                <Text size="1" color="gray">{preferred.manufacturer_name}</Text>
-                {preferred.is_preferred && <Star size={9} fill="var(--amber-9)" color="var(--amber-9)" />}
+                <Text size="1" color="gray">{part.preferred_manufacturer_name}</Text>
+                <Star size={9} fill="var(--amber-9)" color="var(--amber-9)" />
               </Flex>
               <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>
-                {preferred.manufacturer_ref}
+                {part.preferred_manufacturer_ref}
               </Text>
-              {preferred.label && (
-                <Text size="1" color="gray" style={{ lineHeight: 1.2 }}>{preferred.label}</Text>
-              )}
-              {otherCount > 0 && (
-                <Text size="1" color="gray">+{otherCount} autre{otherCount > 1 ? 's' : ''}</Text>
+              {part.preferred_label && (
+                <Text size="1" color="gray" style={{ lineHeight: 1.2 }}>{part.preferred_label}</Text>
               )}
             </>
           ) : (
@@ -136,11 +131,6 @@ function PartRow({ part, isSelected, onClick }) {
             {part.internal_ref}
           </Badge>
           <StockBadge quantity={part.qty_in_stock} unit={part.unit} />
-          {part.preferred_supplier ? (
-            <Badge color="blue" variant="soft" size="1">{part.preferred_supplier.supplier_name || 'Fourn.'}</Badge>
-          ) : (
-            <Badge color="orange" variant="soft" size="1">À qualifier</Badge>
-          )}
           {part.family_code && (
             <Badge variant="outline" color="gray" size="1">{part.family_code}/{part.sub_family_code}</Badge>
           )}
