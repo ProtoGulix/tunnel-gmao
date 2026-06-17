@@ -1810,9 +1810,9 @@
     "semantic_hash": "79eec8a2fc97992b7bc5c56de1799b61"
   },
   "components/stock/tabs/PartsTab.jsx": {
-    "mtime": 1781640774.4854233,
-    "ast_hash": "c11b580e2b64d58d078576fe5ef47aba",
-    "semantic_hash": "c11b580e2b64d58d078576fe5ef47aba"
+    "mtime": 1781681597.6474662,
+    "ast_hash": "35e9d559f4deebef1f273ae605e0feaa",
+    "semantic_hash": "35e9d559f4deebef1f273ae605e0feaa"
   },
   "hooks/stock/useParts.js": {
     "mtime": 1781640774.4894235,
