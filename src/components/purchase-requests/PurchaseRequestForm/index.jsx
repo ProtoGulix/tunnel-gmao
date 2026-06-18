@@ -52,7 +52,9 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
     e.preventDefault();
     setFormError('');
 
-    const finalLabel = selectedItem ? (selectedItem.display_name || selectedItem.name) : searchTerm.trim();
+    const finalLabel = selectedItem
+      ? (selectedItem.preferred_label || selectedItem.preferred_manufacturer_ref || selectedItem.internal_ref)
+      : searchTerm.trim();
     if (!finalLabel) {
       setFormError("Entrez un nom d'article");
       return;
@@ -120,21 +122,23 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                     )
                   }
                   renderSearchItem={(item) => {
-                    const pref = (item.manufacturer_refs || []).find(r => r.is_preferred) || item.manufacturer_refs?.[0];
+                    const mfrRef = item.preferred_manufacturer_ref;
+                    const mfrName = item.preferred_manufacturer_name;
+                    const label = item.preferred_label;
                     return (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0 12px', alignItems: 'start', width: '100%' }}>
                         <Flex direction="column" gap="1">
                           <Flex align="center" gap="1">
                             <Badge color="blue" variant="soft" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.internal_ref}</Badge>
-                            {pref && (
+                            {mfrRef && (
                               <>
                                 <Factory size={11} color="var(--violet-9)" />
-                                <Text size="1" color="violet" weight="medium">{pref.manufacturer_ref}</Text>
-                                <Text size="1" color="gray">{pref.manufacturer_name}</Text>
+                                <Text size="1" color="violet" weight="medium">{mfrRef}</Text>
+                                {mfrName && <Text size="1" color="gray">{mfrName}</Text>}
                               </>
                             )}
                           </Flex>
-                          <Text size="1" color="gray">{item.display_name}</Text>
+                          {label && <Text size="1" color="gray">{label}</Text>}
                         </Flex>
                         <Flex direction="column" gap="1" align="end">
                           <Badge variant="soft" color="gray" size="1">{item.family_code}/{item.sub_family_code}</Badge>
@@ -149,20 +153,21 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                     );
                   }}
                   renderSelected={(item, onClear) => {
-                    const pref = (item.manufacturer_refs || []).find(r => r.is_preferred) || item.manufacturer_refs?.[0];
+                    const mfrRef = item.preferred_manufacturer_ref;
+                    const label = item.preferred_label || item.preferred_manufacturer_ref || item.internal_ref;
                     return (
                       <Flex
                         align="center" gap="2"
                         style={{ padding: '6px 10px', background: 'var(--blue-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}
                       >
                         <Badge color="blue" variant="soft" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{item.internal_ref}</Badge>
-                        {pref && (
+                        {mfrRef && (
                           <>
                             <Factory size={12} color="var(--violet-9)" />
-                            <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>{pref.manufacturer_ref}</Text>
+                            <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--violet-11)' }}>{mfrRef}</Text>
                           </>
                         )}
-                        <Text size="1" color="gray" style={{ flex: 1 }}>{item.display_name}</Text>
+                        <Text size="1" color="gray" style={{ flex: 1 }}>{label}</Text>
                         <IconButton size="1" variant="ghost" color="gray" type="button" onClick={onClear}>
                           <X size={12} />
                         </IconButton>
