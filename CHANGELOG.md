@@ -2,25 +2,20 @@
 
 ## [3.49.0] — 2026-06-19
 
-### Planning — Refonte du flow "Nouvelle intervention"
+### Planning — Création d'intervention depuis le planning journalier
 
-- **Architecture split gauche/droite** : le mode "Nouvelle intervention" ne remplace plus la colonne gauche — le champ de recherche reste visible en haut, la liste des DI s'affiche dessous, et le formulaire de création s'ouvre à droite dans `DayContextRightColumn`
-- **`TaskSearchColumn`** : bouton "Nouvelle intervention" affiché en permanence (carte verte active / carte grise inactive) ; en mode actif, le champ de recherche se transforme en `EquipementSearch` et la liste filtre les DI ouvertes sur l'équipement sélectionné
-- **`DayContextRightColumn`** — nouveau composant `IvCreationPanel` : formulaire complet (type, priorité, technicien, date) avec section DI inline (création à la volée si aucune DI sélectionnée, ou résumé `DiSummaryBlock` si une DI est choisie depuis la liste gauche)
-- **`InterventionSelector`** : export de `InterventionCreatorLeft` (liste des DI) et `InterventionCreatorRight` (formulaire) comme composants séparés, réutilisables indépendamment du flow complet `InterventionCreatorFlow`
-- **`DayContextPanel`** : propagation du contexte `ivCreationCtx` (équipement + DI sélectionnée) entre les deux colonnes via `onIvCreationChange` ; après création, la query de recherche est injectée dans la colonne gauche avec le code équipement de la nouvelle intervention
-- **`EquipementSearch` / `AsyncSearchSelect`** : nouveau prop `initialQuery` / `initialSearch` pour pré-remplir la recherche depuis un contexte externe
+- La création d'une nouvelle intervention se fait maintenant sans quitter la vue planning : la colonne gauche passe en mode recherche d'équipement et affiche les demandes d'intervention ouvertes, pendant que le formulaire de création s'affiche à droite en temps réel
+- Il est possible de sélectionner une DI existante depuis la liste ou d'en créer une à la volée directement dans le formulaire
+- Après création, la recherche se recale automatiquement sur l'équipement de la nouvelle intervention pour retrouver les tâches immédiatement
 
-### Demandes d'achat — Alignement références fabricant V4
+### Demandes d'achat — Affichage des références pièces
 
-- **`PurchaseRequestForm`** et **`PurchaseRequestEditForm`** : remplacement de la recherche manuelle dans `manufacturer_refs[]` (`find(r => r.is_preferred)`) par les champs plats retournés par l'API : `preferred_manufacturer_ref`, `preferred_manufacturer_name`, `preferred_label`
-- Fallback d'affichage unifié : `preferred_label → preferred_manufacturer_ref → internal_ref`
+- Les désignations, références fabricant et noms fabricant s'affichent correctement dans les formulaires de demande d'achat lors de la sélection d'une pièce du catalogue V4
 
 ### Correctifs
 
-- **`ActionItemCard`** : les appels `createPurchaseRequest` / `deletePurchaseRequest` passent désormais par `@/api/purchaseRequests` (et non plus `@/api/stock`) ; le champ `stock_item_id` est remplacé par `part_id` pour s'aligner avec le schéma V4
-- **`DIRightPanel`** : correction de la priorité pour résoudre `intervention` — `detail?.intervention` est maintenant prioritaire sur `initialItem?.intervention` (l'endpoint de détail peut ne pas retourner l'intervention, mais le fallback sur la donnée de liste était à l'envers)
-- **`InterventionCreateForm`** : ajout du prop `diSection` (slot React) pour injecter une section DI personnalisée ; simplification du composant (suppression de `TitleField` autonome)
+- Le détail d'une demande d'intervention dans le briefing affiche à nouveau l'intervention liée sans clignoter ni disparaître
+- La création et la suppression de demandes d'achat depuis une action d'intervention fonctionnent correctement avec les pièces du catalogue V4
 
 ---
 
