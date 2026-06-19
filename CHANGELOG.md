@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.49.1] — 2026-06-19
+
+### Correctifs
+
+- Le bouton d'annulation dans le formulaire de création de tâche s'affiche à nouveau correctement
+
+---
+
 ## [3.49.0] — 2026-06-19
 
 ### Planning — Création d'intervention depuis le planning journalier
