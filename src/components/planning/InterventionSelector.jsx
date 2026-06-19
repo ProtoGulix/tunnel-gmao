@@ -172,6 +172,86 @@ InterventionRow.propTypes = {
 
 /* ── Flow inline : demande → intervention ─────────────────────────────────── */
 
+/**
+ * Colonne gauche du flow création d'intervention :
+ * affiche la liste des demandes ouvertes. La sélection d'une demande
+ * remonte via onRequestSelected pour que le formulaire s'affiche à droite.
+ */
+export function InterventionCreatorLeft({ equipementId, equipementLabel, selectedRequest, onRequestSelected, onCancel }) {
+  return (
+    <Flex direction="column" gap="3">
+      {onCancel && (
+        <Button size="1" variant="ghost" color="gray" type="button" onClick={onCancel}>
+          ← Retour
+        </Button>
+      )}
+      <InterventionRequestSelector
+        selectedId={selectedRequest?.id}
+        onSelect={onRequestSelected}
+        machineId={equipementId}
+        machineName={equipementLabel}
+      />
+    </Flex>
+  );
+}
+
+InterventionCreatorLeft.propTypes = {
+  equipementId: PropTypes.string.isRequired,
+  equipementLabel: PropTypes.string,
+  selectedRequest: PropTypes.object,
+  onRequestSelected: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
+};
+
+/**
+ * Colonne droite du flow création d'intervention :
+ * affiche le formulaire InterventionCreateForm.
+ */
+export function InterventionCreatorRight({ equipementId, selectedRequest, formData, set, saving, error, onSubmit, onCancel }) {
+  const [users, setUsers] = useState([]);
+  useEffect(() => { fetchActiveUsers().then(setUsers).catch(() => {}); }, []);
+
+  if (!selectedRequest) {
+    return (
+      <Flex align="center" justify="center" direction="column" gap="2"
+        style={{ minHeight: 160, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
+      >
+        <Wrench size={20} color="var(--gray-7)" />
+        <Text size="2" color="gray" align="center">
+          Sélectionnez une demande pour créer l&apos;intervention
+        </Text>
+      </Flex>
+    );
+  }
+
+  return (
+    <InterventionCreateForm
+      formData={formData}
+      set={set}
+      locked={!!selectedRequest}
+      lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
+      diDetail={selectedRequest}
+      fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
+      users={users}
+      saving={saving}
+      error={error}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+    />
+  );
+}
+
+InterventionCreatorRight.propTypes = {
+  equipementId: PropTypes.string.isRequired,
+  selectedRequest: PropTypes.object,
+  formData: PropTypes.object.isRequired,
+  set: PropTypes.func.isRequired,
+  saving: PropTypes.bool,
+  error: PropTypes.string,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func,
+};
+
 export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel, initialRequest = null }) {
   const [selectedRequest, setSelectedRequest] = useState(initialRequest);
   const [formData, setFormData] = useState(() => ({

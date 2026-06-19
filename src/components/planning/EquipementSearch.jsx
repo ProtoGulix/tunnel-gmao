@@ -63,7 +63,7 @@ async function searchEquipements(query) {
   return Array.isArray(res) ? res : (res.items ?? []);
 }
 
-export default function EquipementSearch({ value, onChange, disabled, placeholder = 'Rechercher un équipement…' }) {
+export default function EquipementSearch({ value, onChange, disabled, placeholder = 'Rechercher un équipement…', initialQuery = '' }) {
   const [selected, setSelected] = useState(value ?? null);
 
   const handleSelect = (item) => {
@@ -98,6 +98,7 @@ export default function EquipementSearch({ value, onChange, disabled, placeholde
       fetchFn={searchEquipements}
       onSelect={handleSelect}
       placeholder={placeholder}
+      initialSearch={initialQuery}
       renderItem={(item) => (
         <Flex align="center" gap="2">
           <Badge color="gray" variant="soft" size="1">{item.code}</Badge>
@@ -116,4 +117,5 @@ EquipementSearch.propTypes = {
   onChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   placeholder: PropTypes.string,
+  initialQuery: PropTypes.string,
 };

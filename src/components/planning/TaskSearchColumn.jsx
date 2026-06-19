@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { fetchInterventionTasksList } from '@/api/interventionTasks';
 import { searchOpenInterventions } from '@/api/interventions';
-import { InterventionCreatorFlow } from '@/components/planning/InterventionSelector';
+import { InterventionCreatorLeft } from '@/components/planning/InterventionSelector';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 import TaskActionButtons from '@/components/tasks/TaskActionButtons';
 import EquipementSearch from '@/components/planning/EquipementSearch';
@@ -262,12 +262,22 @@ export default function TaskSearchColumn({
   selectedTasks,
   onTasksChange,
   onInterventionCreated,
+  onIvCreationChange,
+  injectedQuery,
+  onInjectedQueryConsumed,
 }) {
   // Pré-remplir la recherche avec le code équipement si des tâches sont déjà sélectionnées
   const initialQuery = selectedTasks[0]?._intervention?.equipement?.code
     ?? selectedTasks[0]?._intervention?.code
     ?? '';
   const [query, setQuery] = useState(initialQuery);
+
+  // Injecter une query externe (ex: code d'une intervention nouvellement créée)
+  useEffect(() => {
+    if (!injectedQuery) return;
+    setQuery(injectedQuery);
+    onInjectedQueryConsumed?.();
+  }, [injectedQuery, onInjectedQueryConsumed]);
   const [showNewIv, setShowNewIv] = useState(false);
   const [newIvEquipement, setNewIvEquipement] = useState(null);
   // Tâches affichées localement (résultats + insertions en cache)
@@ -365,39 +375,26 @@ export default function TaskSearchColumn({
     handleToggle(withMeta, intervention);
   }, [handleToggle]);
 
-  /* ── Vue "Nouvelle intervention" ── */
-  if (showNewIv) {
-    const equipementLabel = newIvEquipement
-      ? `${newIvEquipement.code ?? ''} — ${newIvEquipement.name ?? ''}`.trim()
-      : '';
-    return (
-      <Flex direction="column" gap="3">
-        <Flex align="center" gap="2">
-          <Calendar size={16} color="var(--blue-9)" />
-          <Text size="3" weight="bold" style={{ textTransform: 'capitalize' }}>{formattedDate}</Text>
-        </Flex>
-        <Button size="1" variant="ghost" color="gray" type="button"
-          onClick={() => { setShowNewIv(false); setNewIvEquipement(null); }}>
-          ← Retour
-        </Button>
-        {!newIvEquipement ? (
-          <Flex direction="column" gap="2">
-            <Text size="2" color="gray">Quel équipement est concerné ?</Text>
-            <EquipementSearch value={null} onChange={setNewIvEquipement} placeholder="Équipement concerné…" />
-          </Flex>
-        ) : (
-          <InterventionCreatorFlow
-            equipementId={newIvEquipement.id}
-            equipementLabel={equipementLabel}
-            onCreated={(created) => { setShowNewIv(false); setNewIvEquipement(null); onInterventionCreated(created); }}
-            onCancel={() => setShowNewIv(false)}
-          />
-        )}
-      </Flex>
-    );
-  }
+  const handleCancelNewIv = () => {
+    setShowNewIv(false);
+    setNewIvEquipement(null);
+    onTasksChange([]);
+    onIvCreationChange?.(null);
+  };
 
-  /* ── Vue principale ── */
+  const buildCtx = (eq, r) => {
+    const label = eq ? `${eq.code ?? ''} — ${eq.name ?? ''}`.trim() : '';
+    return {
+      equipementId: eq?.id,
+      equipementLabel: label,
+      selectedRequest: r,
+      onCreated: (created) => { setShowNewIv(false); setNewIvEquipement(null); onIvCreationChange?.(null); onInterventionCreated(created); },
+      onCancel: handleCancelNewIv,
+      onRequestSelected: (next) => onIvCreationChange?.(buildCtx(eq, next)),
+    };
+  };
+
+  /* ── Vue unique (champ de recherche toujours en haut) ── */
   return (
     <Flex direction="column" gap="3">
       <Flex align="center" gap="2">
@@ -405,70 +402,103 @@ export default function TaskSearchColumn({
         <Text size="3" weight="bold" style={{ textTransform: 'capitalize' }}>{formattedDate}</Text>
       </Flex>
 
-      <TextField.Root
-        size="2"
-        placeholder="Chercher une tâche, équipement, intervention…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoComplete="off"
-      >
-        <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
-        {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
-      </TextField.Root>
-
-      {/* État vide avant frappe */}
-      {query.trim().length < 2 && localGroups.length === 0 && (
-        <Flex direction="column" align="center" justify="center" gap="2"
-          style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
-        >
-          <Search size={18} color="var(--gray-7)" />
-          <Text size="2" color="gray" align="center">
-            Tapez le nom d'une tâche, d'un équipement ou d'une intervention
-          </Text>
-        </Flex>
-      )}
-
-      {/* Aucun résultat */}
-      {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
-        <Flex direction="column" align="center" gap="2"
-          style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
-        >
-          <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
-        </Flex>
-      )}
-
-      {/* Résultats */}
-      {localGroups.length > 0 && (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          {localGroups.map((iv) => (
-            <InterventionGroup
-              key={iv.id}
-              iv={iv}
-              selectedIds={selectedIds}
-              selectedTasksMap={selectedTasksMap}
-              lockedIvId={lockedIvId}
-              users={users}
-              onToggle={handleToggle}
-              onDelete={handleDelete}
-              onTaskCreated={handleTaskCreated}
-              onTaskActionStatusChange={handleTaskActionStatusChange}
-              onSkipReasonChange={handleSkipReasonChange}
-            />
-          ))}
+      {/* Bouton Nouvelle intervention / carte annuler — toujours au-dessus du champ */}
+      {showNewIv ? (
+        <Card style={{ padding: '10px 14px', background: 'var(--green-3)', border: '1px solid var(--green-7)', cursor: 'pointer' }} onClick={handleCancelNewIv}>
+          <Flex align="center" gap="2">
+            <Wrench size={15} color="var(--green-9)" />
+            <Flex direction="column" gap="0" style={{ flex: 1 }}>
+              <Text size="2" weight="bold" style={{ color: 'var(--green-11)' }}>Nouvelle intervention</Text>
+            </Flex>
+            <X size={13} color="var(--green-9)" />
+          </Flex>
+        </Card>
+      ) : (
+        <Card style={{ cursor: 'pointer', padding: '10px 14px' }} onClick={() => { setShowNewIv(true); onTasksChange([]); }}>
+          <Flex align="center" gap="2">
+            <Wrench size={15} color="var(--green-9)" />
+            <Flex direction="column" gap="0" style={{ flex: 1 }}>
+              <Text size="2" weight="bold">Nouvelle intervention</Text>
+            </Flex>
+            <ChevronRight size={13} color="var(--gray-8)" />
+          </Flex>
         </Card>
       )}
 
-      {/* Nouvelle intervention via DI */}
-      <Card style={{ cursor: 'pointer', padding: '10px 14px' }} onClick={() => setShowNewIv(true)}>
-        <Flex align="center" gap="2">
-          <Wrench size={15} color="var(--green-9)" />
-          <Flex direction="column" gap="0" style={{ flex: 1 }}>
-            <Text size="2" weight="bold">Nouvelle intervention</Text>
-            <Text size="1" color="gray">Créer via DI (flow complet)</Text>
-          </Flex>
-          <ChevronRight size={13} color="var(--gray-8)" />
-        </Flex>
-      </Card>
+      {/* Champ de recherche — se transforme selon le mode */}
+      {showNewIv ? (
+        <EquipementSearch
+          value={newIvEquipement}
+          onChange={(eq) => {
+            setNewIvEquipement(eq);
+            onIvCreationChange?.(eq ? buildCtx(eq, null) : null);
+          }}
+          placeholder="Rechercher un équipement…"
+          initialQuery={query}
+        />
+      ) : (
+        <TextField.Root
+          size="2"
+          placeholder="Chercher une tâche, équipement, intervention…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoComplete="off"
+        >
+          <TextField.Slot><Search size={14} color="var(--gray-9)" /></TextField.Slot>
+          {loading && <TextField.Slot side="right"><Spinner size="1" /></TextField.Slot>}
+        </TextField.Root>
+      )}
+
+      {showNewIv ? (
+        /* ── Mode création : liste des DI ── */
+        newIvEquipement && (
+          <InterventionCreatorLeft
+            equipementId={newIvEquipement.id}
+            equipementLabel={`${newIvEquipement.code ?? ''} — ${newIvEquipement.name ?? ''}`.trim()}
+            onRequestSelected={(req) => onIvCreationChange?.(buildCtx(newIvEquipement, req))}
+          />
+        )
+      ) : (
+        /* ── Mode recherche de tâches ── */
+        <>
+          {query.trim().length < 2 && localGroups.length === 0 && (
+            <Flex direction="column" align="center" justify="center" gap="2"
+              style={{ minHeight: 100, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
+            >
+              <Search size={18} color="var(--gray-7)" />
+              <Text size="2" color="gray" align="center">
+                Tapez le nom d'une tâche, d'un équipement ou d'une intervention
+              </Text>
+            </Flex>
+          )}
+          {query.trim().length >= 2 && !loading && localGroups.length === 0 && (
+            <Flex direction="column" align="center" gap="2"
+              style={{ padding: '1.5rem', border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)' }}
+            >
+              <Text size="2" color="gray" align="center">Aucune tâche trouvée</Text>
+            </Flex>
+          )}
+          {localGroups.length > 0 && (
+            <Card style={{ padding: 0, overflow: 'hidden' }}>
+              {localGroups.map((iv) => (
+                <InterventionGroup
+                  key={iv.id}
+                  iv={iv}
+                  selectedIds={selectedIds}
+                  selectedTasksMap={selectedTasksMap}
+                  lockedIvId={lockedIvId}
+                  users={users}
+                  onToggle={handleToggle}
+                  onDelete={handleDelete}
+                  onTaskCreated={handleTaskCreated}
+                  onTaskActionStatusChange={handleTaskActionStatusChange}
+                  onSkipReasonChange={handleSkipReasonChange}
+                />
+              ))}
+            </Card>
+          )}
+        </>
+      )}
     </Flex>
   );
 }
@@ -478,4 +508,7 @@ TaskSearchColumn.propTypes = {
   selectedTasks: PropTypes.array.isRequired,
   onTasksChange: PropTypes.func.isRequired,
   onInterventionCreated: PropTypes.func.isRequired,
+  onIvCreationChange: PropTypes.func,
+  injectedQuery: PropTypes.string,
+  onInjectedQueryConsumed: PropTypes.func,
 };
