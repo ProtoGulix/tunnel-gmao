@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.49.0] — 2026-06-19
+
+### Planning — Refonte du flow "Nouvelle intervention"
+
+- **Architecture split gauche/droite** : le mode "Nouvelle intervention" ne remplace plus la colonne gauche — le champ de recherche reste visible en haut, la liste des DI s'affiche dessous, et le formulaire de création s'ouvre à droite dans `DayContextRightColumn`
+- **`TaskSearchColumn`** : bouton "Nouvelle intervention" affiché en permanence (carte verte active / carte grise inactive) ; en mode actif, le champ de recherche se transforme en `EquipementSearch` et la liste filtre les DI ouvertes sur l'équipement sélectionné
+- **`DayContextRightColumn`** — nouveau composant `IvCreationPanel` : formulaire complet (type, priorité, technicien, date) avec section DI inline (création à la volée si aucune DI sélectionnée, ou résumé `DiSummaryBlock` si une DI est choisie depuis la liste gauche)
+- **`InterventionSelector`** : export de `InterventionCreatorLeft` (liste des DI) et `InterventionCreatorRight` (formulaire) comme composants séparés, réutilisables indépendamment du flow complet `InterventionCreatorFlow`
+- **`DayContextPanel`** : propagation du contexte `ivCreationCtx` (équipement + DI sélectionnée) entre les deux colonnes via `onIvCreationChange` ; après création, la query de recherche est injectée dans la colonne gauche avec le code équipement de la nouvelle intervention
+- **`EquipementSearch` / `AsyncSearchSelect`** : nouveau prop `initialQuery` / `initialSearch` pour pré-remplir la recherche depuis un contexte externe
+
+### Demandes d'achat — Alignement références fabricant V4
+
+- **`PurchaseRequestForm`** et **`PurchaseRequestEditForm`** : remplacement de la recherche manuelle dans `manufacturer_refs[]` (`find(r => r.is_preferred)`) par les champs plats retournés par l'API : `preferred_manufacturer_ref`, `preferred_manufacturer_name`, `preferred_label`
+- Fallback d'affichage unifié : `preferred_label → preferred_manufacturer_ref → internal_ref`
+
+### Correctifs
+
+- **`ActionItemCard`** : les appels `createPurchaseRequest` / `deletePurchaseRequest` passent désormais par `@/api/purchaseRequests` (et non plus `@/api/stock`) ; le champ `stock_item_id` est remplacé par `part_id` pour s'aligner avec le schéma V4
+- **`DIRightPanel`** : correction de la priorité pour résoudre `intervention` — `detail?.intervention` est maintenant prioritaire sur `initialItem?.intervention` (l'endpoint de détail peut ne pas retourner l'intervention, mais le fallback sur la donnée de liste était à l'envers)
+- **`InterventionCreateForm`** : ajout du prop `diSection` (slot React) pour injecter une section DI personnalisée ; simplification du composant (suppression de `TitleField` autonome)
+
+---
+
 ## [3.48.0] — 2026-06-17
 
 ### Stock — Correctif affichage liste pièces
