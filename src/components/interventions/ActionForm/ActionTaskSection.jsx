@@ -12,7 +12,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Badge, Button, Flex, Spinner, Text, TextField } from '@radix-ui/themes';
+import { Box, Badge, Button, Flex, IconButton, Spinner, Text, TextField } from '@radix-ui/themes';
 import { CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
 import TaskActionButtons from '@/components/tasks/TaskActionButtons';
 import { fetchInterventionTasks, fetchOpenTasksByMachine } from '@/api/interventionTasks';
