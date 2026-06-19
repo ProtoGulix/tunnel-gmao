@@ -11,7 +11,7 @@ import PurchaseRequestList from "@/components/ui/PurchaseRequestList";
 import * as actionsApi from "@/api/actions";
 import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
-import * as stockApi from "@/api/stock";
+import { createPurchaseRequest as createPurchaseRequestApi, deletePurchaseRequest as deletePurchaseRequestApi } from "@/api/purchaseRequests";
 import { useAuth } from "@/auth/useAuth";
 import { sanitizeDescription } from "@/lib/utils/interventionUtils";
 
@@ -197,13 +197,13 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
   const handleSubmitPurchaseRequest = useCallback(async (requestData) => {
     try {
       setPurchaseFormLoading(true);
-      const created = await stockApi.createPurchaseRequest({
+      const created = await createPurchaseRequestApi({
         item_label: requestData.item_label,
         quantity: requestData.quantity,
         unit: requestData.unit,
         urgency: requestData.urgency,
         requested_by: requestData.requested_by,
-        stock_item_id: requestData.stock_item_id || null,
+        part_id: requestData.part_id ?? null,
         intervention_action_id: localAction.id,
       });
 
@@ -222,7 +222,7 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
 
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
-      await stockApi.deletePurchaseRequest(purchaseRequestId);
+      await deletePurchaseRequestApi(purchaseRequestId);
       setPurchaseRequests(prev => prev.filter(pr => pr.id !== purchaseRequestId));
     } catch (error) {
       console.error('Error deleting purchase request:', error);

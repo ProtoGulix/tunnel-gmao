@@ -44,6 +44,12 @@ export default function DayContextPanel({
   // Intervention créée à la volée via DI
   const [createdIntervention, setCreatedIntervention] = useState(null);
 
+  // Contexte de création d'intervention en cours (équipement + demande sélectionnée)
+  const [ivCreationCtx, setIvCreationCtx] = useState(null);
+
+  // Query à injecter dans la colonne gauche après création d'une intervention
+  const [injectedQuery, setInjectedQuery] = useState(null);
+
   const handleTasksChange = useCallback((tasks) => {
     setSelectedTasks(tasks ?? []);
     if (tasks?.length > 0) setCreatedIntervention(null);
@@ -52,11 +58,15 @@ export default function DayContextPanel({
   const handleInterventionCreated = useCallback((created) => {
     setCreatedIntervention(created);
     setSelectedTasks([]);
+    setIvCreationCtx(null);
+    // Recharger la liste gauche avec le code équipement de la nouvelle intervention
+    setInjectedQuery(created?.equipement?.code ?? created?.code ?? null);
   }, []);
 
   const handleSuccess = useCallback(() => {
     setSelectedTasks([]);
     setCreatedIntervention(null);
+    setIvCreationCtx(null);
     onActionCreated?.();
   }, [onActionCreated]);
 
@@ -73,6 +83,9 @@ export default function DayContextPanel({
         selectedTasks={selectedTasks}
         onTasksChange={handleTasksChange}
         onInterventionCreated={handleInterventionCreated}
+        onIvCreationChange={setIvCreationCtx}
+        injectedQuery={injectedQuery}
+        onInjectedQueryConsumed={() => setInjectedQuery(null)}
       />
 
       <Box style={{ position: 'sticky', top: '1rem', alignSelf: 'start' }}>
@@ -82,6 +95,7 @@ export default function DayContextPanel({
           selectedTasks={selectedTasks}
           onTasksChange={handleTasksChange}
           createdIntervention={createdIntervention}
+          ivCreationCtx={ivCreationCtx}
           onSuccess={handleSuccess}
           onCancel={onClose}
           metadata={metadata}

@@ -86,8 +86,9 @@ export default function AsyncSearchSelect({
   onCreateClick,
   createLabel = 'Créer',
   onSearchChange,
+  initialSearch = '',
 }) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [results, setResults] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [fetching, setFetching] = useState(false);

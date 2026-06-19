@@ -262,7 +262,9 @@ function SearchPartTab({ onSelect }) {
       {results.length > 0 && !selected && (
         <Flex direction="column" gap="1" style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid var(--gray-4)', borderRadius: 'var(--radius-2)' }}>
           {results.map(item => {
-            const pref = (item.manufacturer_refs || []).find(r => r.is_preferred) || item.manufacturer_refs?.[0];
+            const mfrRef = item.preferred_manufacturer_ref;
+            const mfrName = item.preferred_manufacturer_name;
+            const label = item.preferred_label;
             return (
               <Box
                 key={item.id}
@@ -279,20 +281,20 @@ function SearchPartTab({ onSelect }) {
                   <Badge color="blue" variant="soft" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>
                     {item.internal_ref}
                   </Badge>
-                  {pref && (
+                  {mfrRef && (
                     <>
                       <Factory size={11} color="var(--violet-9)" />
-                      <Text size="1" color="violet">{pref.manufacturer_ref}</Text>
-                      <Text size="1" color="gray">{pref.manufacturer_name}</Text>
+                      <Text size="1" color="violet">{mfrRef}</Text>
+                      {mfrName && <Text size="1" color="gray">{mfrName}</Text>}
                     </>
                   )}
                   <Text size="1" color="gray" style={{ marginLeft: 'auto' }}>
                     {item.family_code}/{item.sub_family_code}
                   </Text>
                 </Flex>
-                {item.display_name && (
+                {label && (
                   <Text size="1" color="gray" style={{ marginLeft: 20, marginTop: 2, display: 'block' }}>
-                    {item.display_name}
+                    {label}
                   </Text>
                 )}
               </Box>
@@ -310,7 +312,7 @@ function SearchPartTab({ onSelect }) {
           <Flex align="center" gap="2" mb="2">
             <Package size={14} color="var(--blue-9)" />
             <Badge color="blue" variant="soft" size="1" style={{ fontFamily: 'monospace' }}>{selected.internal_ref}</Badge>
-            <Text size="2" weight="medium" style={{ flex: 1 }}>{selected.display_name}</Text>
+            <Text size="2" weight="medium" style={{ flex: 1 }}>{selected.preferred_label || selected.preferred_manufacturer_ref || selected.internal_ref}</Text>
             <Button size="1" variant="ghost" color="gray" onClick={() => setSelected(null)}><X size={12} /></Button>
           </Flex>
           <Button size="2" color="blue" onClick={() => onSelect(selected)}>
@@ -568,7 +570,8 @@ export default function PurchaseRequestEditForm({ item, onSubmit, loading = fals
 
   const handleLinkPart = useCallback((part) => {
     setLinkedPart(part);
-    if (part?.display_name) setState(s => ({ ...s, item_label: part.display_name }));
+    const label = part?.preferred_label || part?.preferred_manufacturer_ref || part?.display_name;
+    if (label) setState(s => ({ ...s, item_label: label }));
   }, []);
 
   const handleSubmit = async () => {

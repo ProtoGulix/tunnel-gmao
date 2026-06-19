@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types';
-import { Badge, Box, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
-import { MapPin, Plus, Wrench } from 'lucide-react';
+import { Badge, Box, Card, Flex, Select, Text } from '@radix-ui/themes';
+import { MapPin, Plus } from 'lucide-react';
 import { TechDateRow, InterventionRow } from './InterventionFormFields';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import SelectionSummary from '@/components/ui/SelectionSummary';
 import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
-import { DiSummaryBlock } from './DiSummaryBlock';
 
+/* ── Sous-composants ───────────────────────────────────────────────────────── */
 
 function LockedField({ icon: Icon, label }) {
   return (
@@ -17,12 +17,6 @@ function LockedField({ icon: Icon, label }) {
   );
 }
 LockedField.propTypes = { icon: PropTypes.elementType.isRequired, label: PropTypes.string };
-
-function TitleField({ locked, value, onChange }) {
-  if (locked) return <LockedField icon={Wrench} label={value} />;
-  return <TextField.Root placeholder="Titre de l'intervention" value={value} onChange={onChange} required />;
-}
-TitleField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func };
 
 function EquipementField({ locked, equipementId, equipementLabel, fetchEquipementsFn, onSelect, onClear }) {
   if (!equipementId) {
@@ -71,33 +65,36 @@ function TypeField({ locked: lockedType, value, onChange }) {
 }
 TypeField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func };
 
-export default function InterventionCreateForm({ formData, set, locked, lockedType = false, embedded = false, diDetail = null, fetchEquipementsFn, users, saving, error, onSubmit, onCancel }) {
+/* ── Composant principal ───────────────────────────────────────────────────── */
+
+export default function InterventionCreateForm({
+  formData, set, locked = false, lockedType = false, embedded = false,
+  diDetail = null, diSection = null,
+  fetchEquipementsFn, users, saving, error, onSubmit, onCancel,
+}) {
   const handleSubmit = (event) => { event?.preventDefault?.(); onSubmit(event); };
   const preventParentSubmit = (event) => {
     if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') event.preventDefault();
   };
 
   const fields = (
-    <Flex direction="column" gap={diDetail ? '0' : '3'}>
-      {/* Bloc DI avec timeline ou champs standalone */}
-      {diDetail ? (
-        <DiSummaryBlock diDetail={diDetail} />
-      ) : (
-        <>
-          <Box>
-            <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Titre <Text color="red">*</Text></Text>
-            <TitleField locked={locked} value={formData.title} onChange={(e) => set('title', e.target.value)} />
-          </Box>
-          <Box>
-            <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Équipement <Text color="red">*</Text></Text>
-            <EquipementField
-              locked={locked} equipementId={formData.equipementId} equipementLabel={formData.equipementLabel}
-              fetchEquipementsFn={fetchEquipementsFn}
-              onSelect={(eq) => { set('equipementId', eq.id); set('equipementLabel', `${eq.code ? eq.code + ' — ' : ''}${eq.name}`); }}
-              onClear={() => { set('equipementId', null); set('equipementLabel', ''); }}
-            />
-          </Box>
-        </>
+    <Flex direction="column" gap="3">
+      {/* Section DI : soit le slot injecté (avec création inline), soit le DiSummaryBlock seul */}
+      {diSection ?? (diDetail ? null : null)}
+
+      {/* Équipement — uniquement si pas verrouillé et pas encore fixé */}
+      {!locked && !formData.equipementId && fetchEquipementsFn && (
+        <Box>
+          <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Équipement <Text color="red">*</Text></Text>
+          <EquipementField
+            locked={false}
+            equipementId={formData.equipementId}
+            equipementLabel={formData.equipementLabel}
+            fetchEquipementsFn={fetchEquipementsFn}
+            onSelect={(eq) => { set('equipementId', eq.id); set('equipementLabel', `${eq.code ? eq.code + ' — ' : ''}${eq.name}`); }}
+            onClear={() => { set('equipementId', null); set('equipementLabel', ''); }}
+          />
+        </Box>
       )}
 
       <TechDateRow formData={formData} set={set} users={users} />
@@ -137,11 +134,12 @@ export default function InterventionCreateForm({ formData, set, locked, lockedTy
 InterventionCreateForm.propTypes = {
   formData: PropTypes.object.isRequired,
   set: PropTypes.func.isRequired,
-  locked: PropTypes.bool.isRequired,
+  locked: PropTypes.bool,
   lockedType: PropTypes.bool,
   embedded: PropTypes.bool,
   diDetail: PropTypes.object,
-  fetchEquipementsFn: PropTypes.func.isRequired,
+  diSection: PropTypes.node,
+  fetchEquipementsFn: PropTypes.func,
   users: PropTypes.array,
   saving: PropTypes.bool,
   error: PropTypes.string,

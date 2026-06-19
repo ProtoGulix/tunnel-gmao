@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.49.0] — 2026-06-19
+
+### Planning — Création d'intervention depuis le planning journalier
+
+- La création d'une nouvelle intervention se fait maintenant sans quitter la vue planning : la colonne gauche passe en mode recherche d'équipement et affiche les demandes d'intervention ouvertes, pendant que le formulaire de création s'affiche à droite en temps réel
+- Il est possible de sélectionner une DI existante depuis la liste ou d'en créer une à la volée directement dans le formulaire
+- Après création, la recherche se recale automatiquement sur l'équipement de la nouvelle intervention pour retrouver les tâches immédiatement
+
+### Demandes d'achat — Affichage des références pièces
+
+- Les désignations, références fabricant et noms fabricant s'affichent correctement dans les formulaires de demande d'achat lors de la sélection d'une pièce du catalogue V4
+
+### Correctifs
+
+- Le détail d'une demande d'intervention dans le briefing affiche à nouveau l'intervention liée sans clignoter ni disparaître
+- La création et la suppression de demandes d'achat depuis une action d'intervention fonctionnent correctement avec les pièces du catalogue V4
+
+---
+
 ## [3.48.0] — 2026-06-17
 
 ### Stock — Correctif affichage liste pièces
