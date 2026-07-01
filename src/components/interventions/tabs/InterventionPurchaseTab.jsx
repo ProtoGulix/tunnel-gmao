@@ -144,11 +144,21 @@ export default function InterventionPurchaseTab({ interventionId, isLocked = fal
         />
       );
     }
+    const handleRefresh = async () => {
+      setDetailLoading(true);
+      try {
+        setSelected(await fetchPurchaseRequestDetail(selected.id));
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
     return (
       <PurchaseRequestDetail
         item={selected}
         onEdit={isLocked ? null : () => setMode('edit')}
         onDelete={isLocked ? null : handleDelete}
+        onRefresh={handleRefresh}
       />
     );
   };

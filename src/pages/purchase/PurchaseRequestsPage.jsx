@@ -5,10 +5,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertDialog, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Archive, FileUp, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
+import { Archive, FileUp, Scale, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
 import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
+import SupplierOrderComparatorTab from '@/components/purchase/tabs/SupplierOrderComparatorTab';
 import DispatchBanner from '@/components/purchase/DispatchBanner';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import CsvImportWizard from '@/components/purchase/CsvImportWizard';
@@ -135,6 +136,12 @@ export default function PurchaseRequestsPage() {
                 <Text>Archives</Text>
               </Flex>
             </Tabs.Trigger>
+            <Tabs.Trigger value="comparateur">
+              <Flex align="center" gap="2">
+                <Scale size={14} />
+                <Text>Comparateur</Text>
+              </Flex>
+            </Tabs.Trigger>
           </Tabs.List>
 
           <Tabs.Content value="requests">
@@ -152,6 +159,10 @@ export default function PurchaseRequestsPage() {
 
           <Tabs.Content value="archives">
             {activeTab === 'archives' && <PurchaseRequestsTab variant="archive" />}
+          </Tabs.Content>
+
+          <Tabs.Content value="comparateur">
+            {activeTab === 'comparateur' && <SupplierOrderComparatorTab />}
           </Tabs.Content>
         </Tabs.Root>
       </Box>

@@ -115,11 +115,22 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
         />
       );
     }
+    const handleRefresh = async () => {
+      if (!selected) return;
+      setDetailLoading(true);
+      try {
+        setSelected(await fetchPurchaseRequestDetail(selected.id));
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
     return (
       <PurchaseRequestDetail
         item={selected}
         onEdit={!isArchive ? () => setMode('edit') : undefined}
         onDelete={!isArchive ? handleDelete : undefined}
+        onRefresh={handleRefresh}
       />
     );
   };
