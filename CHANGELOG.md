@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.50.0] — 2026-07-08
+
+### Interventions — Suppression d'une action
+
+- Une action peut désormais être supprimée depuis le planning de la page d'accueil et depuis la vue détail d'intervention
+- Confirmation inline avant suppression définitive
+- Suppression bloquée si une demande d'achat liée à l'action a déjà été dispatchée (mutualisée dans un panier fournisseur) — le bouton est alors désactivé avec une explication au survol
+
+### Interventions — Vue détail et liste en mode « master-detail »
+
+- La page liste des interventions adopte un layout maître-détail avec recherche, et peut afficher le détail d'une intervention en mode intégré (embedded) sans changer de page
+- Rafraîchissement des données plus fiable dans le détail d'intervention (hook `useInterventionDetail`)
+
+### Demandes d'achat — Comparateur de paniers fournisseurs
+
+- Nouvel onglet comparateur : sélection de deux paniers fournisseurs, mise en correspondance automatique des lignes par article, prix et délais éditables en ligne avec mise en évidence du meilleur choix en temps réel
+- Création de tâche depuis la coordination : mise à jour immédiate de l'affichage sans recharger toute la liste
+
+### Correctifs
+
+- Stock : le bouton de création depuis l'onglet pièces fonctionne à nouveau correctement
+
+---
+
 ## [3.49.1] — 2026-06-19
 
 ### Correctifs
