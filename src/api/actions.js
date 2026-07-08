@@ -129,6 +129,18 @@ export async function updateAction(id, updates) {
 }
 
 /**
+ * Supprime une action d'intervention.
+ *
+ * Le backend refuse la suppression si l'intervention parente est fermée,
+ * ou si une demande d'achat liée a déjà été dispatchée.
+ *
+ * @param {string|number} id - Action ID
+ */
+export async function deleteAction(id) {
+  await api.delete(`/intervention-actions/${id}`);
+}
+
+/**
  * Mappe une action du backend vers le frontend
  */
 /* eslint-disable complexity */

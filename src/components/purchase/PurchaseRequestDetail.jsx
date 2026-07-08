@@ -6,8 +6,8 @@
 /* eslint-disable max-lines */
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Table, Text, Separator } from '@radix-ui/themes';
-import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle, Scale } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
 import HexBadge from '@/components/ui/HexBadge';
@@ -319,14 +319,37 @@ OrderLineRow.propTypes = {
 };
 
 function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
+  const navigate = useNavigate();
+  const canCompare = orderLines.length >= 2;
+
+  const handleOpenComparator = () => {
+    const [lineA, lineB] = orderLines;
+    const params = new URLSearchParams({ tab: 'comparateur' });
+    // supplier_order_id est le FK exposé par le backend sur chaque ligne
+    if (lineA.supplier_order_id) params.set('a', lineA.supplier_order_id);
+    if (lineB.supplier_order_id) params.set('b', lineB.supplier_order_id);
+    // Fallback sur le numéro de panier si l'id n'est pas exposé
+    if (!lineA.supplier_order_id) params.set('a_num', lineA.supplier_order_number || '');
+    if (!lineB.supplier_order_id) params.set('b_num', lineB.supplier_order_number || '');
+    navigate(`/achats?${params.toString()}`);
+  };
+
   return (
     <Box>
-      <Flex align="center" gap="2" mb="2">
-        <ShoppingCart size={14} color="var(--gray-9)" />
-        <Text size="2" weight="bold" color="gray">
-          Paniers fournisseurs {orderLines.length > 0 && `(${orderLines.length})`}
-        </Text>
+      <Flex align="center" justify="between" mb="2">
+        <Flex align="center" gap="2">
+          <ShoppingCart size={14} color="var(--gray-9)" />
+          <Text size="2" weight="bold" color="gray">
+            Paniers fournisseurs {orderLines.length > 0 && `(${orderLines.length})`}
+          </Text>
+        </Flex>
+        {canCompare && (
+          <Button size="1" variant="soft" color="blue" onClick={handleOpenComparator}>
+            <Scale size={11} /> Voir dans le comparateur
+          </Button>
+        )}
       </Flex>
+
       {orderLines.length === 0 ? (
         <Card size="2" variant="surface">
           <Flex direction="column" align="center" justify="center" gap="2" py="5">
@@ -411,12 +434,11 @@ DetailHeader.propTypes = {
   onDelete: PropTypes.func,
 };
 
-export default function PurchaseRequestDetail({ item, onEdit, onDelete }) {
+export default function PurchaseRequestDetail({ item, onEdit, onDelete, onRefresh }) {
   if (!item) return null;
   const urgency = PURCHASE_URGENCY[item.urgency] || PURCHASE_URGENCY.normal;
   const statusColor = item.derived_status?.color;
   const statusLabel = item.derived_status?.label || item.derived_status?.code || '—';
-
 
   return (
     <Box p="4">
@@ -443,4 +465,5 @@ PurchaseRequestDetail.propTypes = {
   item: PropTypes.object,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  onRefresh: PropTypes.func,
 };

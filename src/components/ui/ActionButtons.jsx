@@ -2,6 +2,34 @@ import { Flex, Badge } from "@radix-ui/themes";
 import { Edit2, Copy, Trash2, ShoppingCart } from "lucide-react";
 import PropTypes from "prop-types";
 
+function DeleteActionButton({ onDelete, deleteDisabledReason }) {
+  if (!onDelete) return null;
+
+  return (
+    <button
+      title={deleteDisabledReason || "Supprimer cette action"}
+      disabled={!!deleteDisabledReason}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: 'var(--red-9)',
+        padding: '4px 6px',
+        cursor: deleteDisabledReason ? 'not-allowed' : 'pointer',
+        opacity: deleteDisabledReason ? 0.4 : 1,
+      }}
+      onClick={deleteDisabledReason ? undefined : onDelete}
+    >
+      <Trash2 size={14} />
+      <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Supprimer</span>
+    </button>
+  );
+}
+
+DeleteActionButton.propTypes = {
+  onDelete: PropTypes.func,
+  deleteDisabledReason: PropTypes.string,
+};
+
 /**
  * ActionButtons - Action buttons for editing, duplicating, purchasing, deleting
  */
@@ -10,6 +38,7 @@ export default function ActionButtons({
   onDuplicate,
   onPurchase,
   onDelete,
+  deleteDisabledReason = null,
   purchaseRequestCount = 0,
 }) {
   return (
@@ -52,16 +81,7 @@ export default function ActionButtons({
         </button>
       )}
       
-      {onDelete && (
-        <button 
-          title="Supprimer cette action"
-          style={{ background: 'none', border: 'none', color: 'var(--red-9)', padding: '4px 6px', cursor: 'pointer' }}
-          onClick={onDelete}
-        >
-          <Trash2 size={14} />
-          <span className="action-button-text" style={{ marginLeft: 4, fontSize: 12 }}>Supprimer</span>
-        </button>
-      )}
+      <DeleteActionButton onDelete={onDelete} deleteDisabledReason={deleteDisabledReason} />
     </Flex>
   );
 }
@@ -73,5 +93,6 @@ ActionButtons.propTypes = {
   onDuplicate: PropTypes.func,
   onPurchase: PropTypes.func,
   onDelete: PropTypes.func,
+  deleteDisabledReason: PropTypes.string,
   purchaseRequestCount: PropTypes.number,
 };

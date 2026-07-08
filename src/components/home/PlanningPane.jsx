@@ -8,6 +8,8 @@ import DayContextPanel from '@/components/planning/DayContextPanel';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import { getWeekDays, todayIso, formatWeekLabel } from '@/components/planning/planningUtils';
 import { fetchPlanningSemainePdf } from '@/api/planning';
+import { deleteAction } from '@/api/actions';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 function toIsoWeek(mondayStr) {
   // Calcul semaine ISO 8601 : jeudi de la semaine détermine l'année
@@ -21,6 +23,13 @@ function toIsoWeek(mondayStr) {
 }
 
 const PILL_COLORS = ['blue', 'green', 'orange', 'crimson', 'purple', 'pink', 'teal'];
+
+function DeleteErrorBanner({ error }) {
+  if (!error) return null;
+  return <Text size="2" color="red">{error}</Text>;
+}
+
+DeleteErrorBanner.propTypes = { error: PropTypes.string };
 
 /**
  * @param {Function} [props.onAddAction] - Called with { date, actionsByDay } to open action modal
@@ -43,6 +52,7 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideC
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [purchaseModalAction, setPurchaseModalAction] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
   const today = todayIso();
   const weekDays = getWeekDays(weekStart).slice(0, 5);
 
@@ -69,6 +79,18 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideC
     setSelectedDate(null);
     retry();
     onDataRefreshed?.();
+  }
+
+  async function handleDeleteAction(action) {
+    setDeleteError(null);
+    try {
+      await deleteAction(action.id);
+      retry();
+      onDataRefreshed?.();
+    } catch (err) {
+      setDeleteError(extractApiErrorMessage(err, "Erreur lors de la suppression de l'action"));
+      throw err;
+    }
   }
 
   return (
@@ -132,6 +154,8 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideC
         </Flex>
       )}
 
+      <DeleteErrorBanner error={deleteError} />
+
       {/* ── Jours ──────────────────────────────────────────────────────────── */}
       <Flex direction="column" gap="3">
         {weekDays.map((dateStr) => (
@@ -142,6 +166,7 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideC
             isToday={dateStr === today}
             onAddAction={handleAddActionForDay}
             onAddPurchaseRequest={(action) => setPurchaseModalAction(action)}
+            onDeleteAction={handleDeleteAction}
             isWeekend={false}
             inlineActions
           />

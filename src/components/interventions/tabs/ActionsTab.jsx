@@ -138,6 +138,7 @@ export default function ActionsTab({
   onAddAction,
   interventionId,
   onPurchaseRequestCreated,
+  onActionDeleted,
   planId = null,
   isLocked = false,
 }) {
@@ -314,6 +315,7 @@ export default function ActionsTab({
                 item={item}
                 interventionId={interventionId}
                 onPurchaseRequestCreated={onPurchaseRequestCreated}
+                onActionDeleted={onActionDeleted}
                 isLocked={isLocked}
               />
             )}
@@ -332,6 +334,7 @@ ActionsTab.propTypes = {
   onAddAction: PropTypes.func,
   interventionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onPurchaseRequestCreated: PropTypes.func,
+  onActionDeleted: PropTypes.func,
   planId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   isLocked: PropTypes.bool,
 };
@@ -340,4 +343,5 @@ ActionsTab.defaultProps = {
   statusLog: [],
   onAddAction: null,
   onPurchaseRequestCreated: null,
+  onActionDeleted: null,
 };

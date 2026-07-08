@@ -11,7 +11,7 @@ import { STATE_COLORS } from "@/config/interventionTypes";
  * - Pas de callbacks inline
  * - Complexité réduite par extraction
  */
-export default function TimelineItemRenderer({ item, interventionId, onPurchaseRequestCreated, isLocked }) {
+export default function TimelineItemRenderer({ item, interventionId, onPurchaseRequestCreated, onActionDeleted, isLocked }) {
   // Early return pour changement de statut
   if (item.type === "status") {
     // Le backend renvoie déjà les clés françaises dans status_to_detail.id (ouvert, ferme, etc.)
@@ -33,6 +33,7 @@ export default function TimelineItemRenderer({ item, interventionId, onPurchaseR
       action={item.data}
       interventionId={interventionId}
       onPurchaseRequestCreated={onPurchaseRequestCreated}
+      onActionDeleted={onActionDeleted}
       isLocked={isLocked}
     />
   );
@@ -48,5 +49,6 @@ TimelineItemRenderer.propTypes = {
   }).isRequired,
   interventionId: PropTypes.string,
   onPurchaseRequestCreated: PropTypes.func,
+  onActionDeleted: PropTypes.func,
   isLocked: PropTypes.bool,
 };

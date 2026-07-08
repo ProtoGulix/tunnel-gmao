@@ -568,7 +568,7 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
           ))}
         </>
       )}
-      <GhostCreateRow interventionId={intervention.id} users={users} onCreated={onTaskCreated} />
+      <GhostCreateRow interventionId={intervention.id} users={users} onCreated={(created) => onTaskCreated(created, intervention.id)} />
     </GroupCard>
   );
 }
@@ -789,10 +789,33 @@ export default function CoordinationPage() {
     }
   }, [selectedEquipId, loadIvTasks]);
 
-  const handleTaskCreated = useCallback(() => {
-    loadIvTasks(selectedEquipId);
-    loadWeekTasks();
-  }, [loadIvTasks, loadWeekTasks, selectedEquipId]);
+  const handleTaskCreated = useCallback((created, ivId) => {
+    if (created && ivId) {
+      setIvTasksMap((prev) => ({
+        ...prev,
+        [ivId]: [...(prev[ivId] ?? []), created],
+      }));
+      if (created.due_date && created.due_date >= monday && created.due_date <= friday) {
+        const iv = ivList.find((iv) => String(iv.id) === String(ivId));
+        setWeekTasks((prev) => [
+          ...prev,
+          {
+            ...created,
+            _initials: deriveInitials(created.assigned_to) ?? '',
+            _intervention: {
+              id: String(ivId),
+              code: iv?.code ?? '',
+              title: iv?.title ?? '',
+              equipement: iv?.equipement ?? null,
+            },
+          },
+        ]);
+      }
+    } else {
+      loadIvTasks(selectedEquipId);
+      loadWeekTasks();
+    }
+  }, [ivList, monday, friday, loadIvTasks, loadWeekTasks, selectedEquipId]);
 
   const handleTaskStatusChanged = useCallback((ivId, taskId, newStatus) => {
     setIvTasksMap((prev) => ({

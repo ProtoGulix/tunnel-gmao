@@ -10,6 +10,21 @@ import PropTypes from 'prop-types';
 import LoadingState from '@/components/ui/LoadingState';
 
 /**
+ * Calcule les styles du visualiseur selon le mode d'affichage
+ */
+function getViewerStyles(fillHeight) {
+  if (!fillHeight) {
+    return { root: undefined, list: undefined, viewer: { height: '70vh' } };
+  }
+  const flexFill = { flex: 1, minHeight: 0 };
+  return {
+    root: { ...flexFill, display: 'flex', flexDirection: 'column' },
+    list: flexFill,
+    viewer: flexFill,
+  };
+}
+
+/**
  * Composant SheetTab
  *
  * @param {Object} props
@@ -18,6 +33,7 @@ import LoadingState from '@/components/ui/LoadingState';
  * @param {boolean} props.printedFiche - Indique si la fiche a été imprimée
  * @param {string} props.fileName - Nom du fichier PDF
  * @param {Function} props.onMarkPrinted - Callback marquage imprimé
+ * @param {boolean} props.fillHeight - Si vrai, le visualiseur occupe toute la hauteur disponible du parent (au lieu d'une hauteur fixe en vh)
  */
 export default function SheetTab({
   pdfUrl,
@@ -25,6 +41,7 @@ export default function SheetTab({
   printedFiche,
   fileName,
   onMarkPrinted,
+  fillHeight,
 }) {
   const handleDownload = () => {
     if (!pdfUrl) return;
@@ -37,9 +54,11 @@ export default function SheetTab({
     document.body.removeChild(link);
   };
 
+  const viewerStyles = getViewerStyles(fillHeight);
+
   return (
-    <Box pt="4">
-      <Flex direction="column" gap="3">
+    <Box pt="4" style={viewerStyles.root}>
+      <Flex direction="column" gap="3" style={viewerStyles.list}>
         {/* Actions */}
         <Flex gap="2" align="center">
           <Button
@@ -80,7 +99,8 @@ export default function SheetTab({
         {/* Visualiseur PDF */}
         <Box
           style={{
-            height: '70vh',
+            ...viewerStyles.viewer,
+            position: 'relative',
             border: '1px solid var(--gray-6)',
             borderRadius: '8px',
             overflow: 'hidden',
@@ -88,7 +108,7 @@ export default function SheetTab({
           }}
         >
           {pdfLoading && (
-            <Box p="8">
+            <Box p="8" style={{ position: 'absolute', inset: 0 }}>
               <LoadingState message="Chargement du PDF..." />
             </Box>
           )}
@@ -99,7 +119,7 @@ export default function SheetTab({
               justify="center"
               direction="column"
               gap="2"
-              style={{ height: '100%', color: 'var(--gray-11)' }}
+              style={{ position: 'absolute', inset: 0, color: 'var(--gray-11)' }}
             >
               <FileText size={48} />
               <div>Impossible de charger la fiche PDF</div>
@@ -110,7 +130,7 @@ export default function SheetTab({
             <object
               data={pdfUrl}
               type="application/pdf"
-              style={{ width: '100%', height: '100%' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
             >
               <p>
                 Votre navigateur ne peut pas afficher le PDF.{' '}
@@ -132,6 +152,7 @@ SheetTab.propTypes = {
   printedFiche: PropTypes.bool,
   fileName: PropTypes.string.isRequired,
   onMarkPrinted: PropTypes.func,
+  fillHeight: PropTypes.bool,
 };
 
 SheetTab.defaultProps = {
@@ -139,4 +160,5 @@ SheetTab.defaultProps = {
   pdfLoading: false,
   printedFiche: false,
   onMarkPrinted: null,
+  fillHeight: false,
 };

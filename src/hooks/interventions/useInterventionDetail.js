@@ -59,13 +59,17 @@ export function useInterventionDetail(id) {
   // Ref stable pour l'auto-refresh
   fetchDataRef.current = fetchData;
 
-  // Chargement initial avec protection React StrictMode
+  // Chargement initial + rechargement si l'id change
+  useEffect(() => {
+    initialLoadRef.current = false;
+  }, [id]);
+
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;
       fetchData();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchData]);
 
   // Auto-refresh silencieux toutes les 30 secondes
   useEffect(() => {
