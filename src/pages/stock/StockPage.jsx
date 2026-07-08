@@ -3,7 +3,7 @@
  * @module pages/stock/StockPage
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
 import { Factory, Package, Truck } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
@@ -16,10 +16,16 @@ const ManufacturersTab = lazy(() => import('@/components/manufacturers/Manufactu
 
 export default function StockPage() {
   const { activeTab, setActiveTab } = useTabNavigation('items', 'tab');
+  const partsTabRef = useRef(null);
 
   return (
     <>
-      <PageHeader title="Stock" subtitle="Pièces, fournisseurs et fabricants" />
+      <PageHeader
+        title="Stock"
+        subtitle="Pièces, fournisseurs et fabricants"
+        onAdd={activeTab === 'items' ? () => partsTabRef.current?.openCreate() : undefined}
+        addLabel="Nouvelle pièce"
+      />
 
       <Box px="4">
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
@@ -46,7 +52,7 @@ export default function StockPage() {
 
         <Suspense fallback={<LoadingState />}>
           <Tabs.Content value="items">
-            {activeTab === 'items' && <PartsTab />}
+            {activeTab === 'items' && <PartsTab ref={partsTabRef} />}
           </Tabs.Content>
           <Tabs.Content value="suppliers">
             {activeTab === 'suppliers' && <SuppliersTab />}

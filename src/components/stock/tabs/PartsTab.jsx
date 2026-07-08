@@ -3,10 +3,10 @@
  * @module components/stock/tabs/PartsTab
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
-import { Factory, Package, Plus, Star } from 'lucide-react';
+import { Badge, Box, Select, Flex, Text } from '@radix-ui/themes';
+import { Factory, Package, Star } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import PartDetailPanel from '@/components/stock/PartDetailPanel';
@@ -149,7 +149,7 @@ PartRow.propTypes = {
 
 // ─── Onglet principal ─────────────────────────────────────────────────────────
 
-export default function PartsTab() {
+const PartsTab = forwardRef(function PartsTab(props, ref) {
   const [urlSearch, setUrlSearch] = useUrlSearch('q');
   const {
     items, loading, error,
@@ -210,6 +210,10 @@ export default function PartsTab() {
     setSelected(detail);
   }, [selected]);
 
+  useImperativeHandle(ref, () => ({
+    openCreate: () => { setSelected(null); setMode('create'); },
+  }), []);
+
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
   const totalPages = pagination.totalPages ?? 1;
@@ -241,12 +245,6 @@ export default function PartsTab() {
 
   return (
     <Box pt="3">
-      <Flex justify="end" mb="2">
-        <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-          <Plus size={14} /> Ajouter
-        </Button>
-      </Flex>
-
       {mode === 'create' && (
         <Box mb="3">
           <PartForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
@@ -280,4 +278,6 @@ export default function PartsTab() {
       />
     </Box>
   );
-}
+});
+
+export default PartsTab;
