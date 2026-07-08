@@ -1,8 +1,8 @@
 /* eslint-disable complexity, max-lines, react/prop-types */
-import { Badge, Card, Flex, Text } from "@radix-ui/themes";
+import { Badge, Button, Card, Flex, Text } from "@radix-ui/themes";
 import PropTypes from "prop-types";
 import { useCallback, useState, useEffect } from "react";
-import { CheckCircle2, MinusCircle } from "lucide-react";
+import { CheckCircle2, MinusCircle, Check, X } from "lucide-react";
 import ActionForm from "@/components/interventions/ActionForm";
 import PurchaseRequestForm from "@/components/purchase-requests/PurchaseRequestForm";
 import ActionMetadataHeader from "@/components/ui/ActionMetadataHeader";
@@ -14,6 +14,8 @@ import * as complexityFactorsApi from "@/api/complexityFactors";
 import { createPurchaseRequest as createPurchaseRequestApi, deletePurchaseRequest as deletePurchaseRequestApi } from "@/api/purchaseRequests";
 import { useAuth } from "@/auth/useAuth";
 import { sanitizeDescription } from "@/lib/utils/interventionUtils";
+import { canDeleteAction } from "@/lib/utils/actionUtils";
+import { extractApiErrorMessage } from "@/lib/api/errorMessage";
 
 function GammeStepList({ steps }) {
   if (!steps || steps.length === 0) return null;
@@ -77,7 +79,7 @@ const getComplexityColor = (score) => {
   return { color: 'red', label: 'Complexe' };
 };
 
-export default function ActionItemCard({ action, interventionId, onPurchaseRequestCreated, isLocked = false }) {
+export default function ActionItemCard({ action, interventionId, onPurchaseRequestCreated, onActionDeleted, isLocked = false }) {
   const { user } = useAuth();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -89,6 +91,9 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
   const [complexityFactors, setComplexityFactors] = useState([]);
   const [purchaseRequests, setPurchaseRequests] = useState([]);
   const [gammeSteps, setGammeSteps] = useState([]);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const complexityScore = getComplexityScore(localAction);
   const complexityInfo = getComplexityColor(complexityScore);
@@ -220,6 +225,19 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
     }
   }, [localAction.id, onPurchaseRequestCreated]);
 
+  const handleDeleteAction = useCallback(async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await actionsApi.deleteAction(localAction.id);
+      onActionDeleted?.(localAction.id);
+    } catch (error) {
+      setDeleteError(extractApiErrorMessage(error, "Erreur lors de la suppression de l'action"));
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
+  }, [localAction.id, onActionDeleted]);
+
   const handleDeletePurchaseRequest = useCallback(async (purchaseRequestId) => {
     try {
       await deletePurchaseRequestApi(purchaseRequestId);
@@ -229,6 +247,10 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
       throw error;
     }
   }, []);
+
+  const deleteDisabledReason = isLocked
+    ? undefined
+    : canDeleteAction({ purchaseRequests }) ? null : "Suppression impossible : une demande d'achat liée a déjà été dispatchée";
 
   // Couleur de bordure selon la complexité
   const borderColor = complexityScore > 5 ? 'var(--red-7)' : 'var(--gray-6)';
@@ -281,10 +303,27 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
           onEdit={isLocked ? undefined : handleOpenEdit}
           onDuplicate={undefined}
           onPurchase={isLocked ? undefined : () => setShowPurchaseForm(!showPurchaseForm)}
-          onDelete={undefined}
+          onDelete={isLocked ? undefined : () => setConfirmingDelete(true)}
+          deleteDisabledReason={deleteDisabledReason}
           purchaseRequestCount={purchaseRequests.length}
         />
       </Flex>
+
+      {/* CONFIRMATION SUPPRESSION */}
+      {confirmingDelete && (
+        <Flex align="center" gap="2" mb="3" style={{ background: 'var(--red-2)', border: '1px solid var(--red-6)', borderRadius: 6, padding: '8px 10px' }}>
+          <Text size="2" color="red" style={{ flex: 1 }}>Supprimer définitivement cette action ?</Text>
+          <Button size="1" variant="solid" color="red" onClick={handleDeleteAction} disabled={deleting}>
+            {deleting ? 'Suppression...' : <><Check size={12} /> Confirmer</>}
+          </Button>
+          <Button size="1" variant="soft" color="gray" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
+            <X size={12} /> Annuler
+          </Button>
+        </Flex>
+      )}
+      {deleteError && (
+        <Text size="2" color="red" style={{ display: 'block', marginBottom: '0.75rem' }}>{deleteError}</Text>
+      )}
 
       {/* LINKED TASKS */}
       <GammeStepList steps={gammeSteps} />
@@ -368,5 +407,6 @@ ActionItemCard.propTypes = {
   }),
   interventionId: PropTypes.string,
   onPurchaseRequestCreated: PropTypes.func,
+  onActionDeleted: PropTypes.func,
   isLocked: PropTypes.bool,
 };

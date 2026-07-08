@@ -20,6 +20,22 @@ import {
  * Utilitaires pour le traitement des actions
  */
 
+// Statuts dérivés DA considérés comme "non dispatchés" (miroir de
+// NON_DISPATCHED_PR_STATUSES côté backend, api/constants.py)
+const NON_DISPATCHED_PR_STATUSES = new Set(['TO_QUALIFY', 'NO_SUPPLIER_REF', 'PENDING_DISPATCH']);
+
+/**
+ * Détermine si une action peut être supprimée : uniquement si aucune des
+ * demandes d'achat liées n'a déjà été dispatchée.
+ * @param {Object} action - Action (camelCase `purchaseRequests` ou snake_case `purchase_requests`)
+ * @returns {boolean}
+ */
+export function canDeleteAction(action) {
+  const linkedPRs = action?.purchaseRequests ?? action?.purchase_requests ?? [];
+  if (!Array.isArray(linkedPRs) || linkedPRs.length === 0) return true;
+  return linkedPRs.every((pr) => NON_DISPATCHED_PR_STATUSES.has(pr?.derived_status?.code));
+}
+
 /**
  * Formate une date au format français
  * @param {string|Date} dateString - La date à formater

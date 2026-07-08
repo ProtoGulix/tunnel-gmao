@@ -4,7 +4,9 @@
  */
 
 import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
-import { CheckCircle2, ChevronLeft, ChevronRight, Clock, MinusCircle, Package, Plus, ShoppingCart } from 'lucide-react';
+import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, MinusCircle, Package, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import {
   actionDurationMinutes,
@@ -16,10 +18,67 @@ import {
   sortActions,
 } from './planningUtils';
 import { STATUS_CONFIG } from '@/config/interventionTypes';
+import { canDeleteAction } from '@/lib/utils/actionUtils';
+
+/* ── ActionDeleteControl ──────────────────────────────────────────────────── */
+
+/** Bouton de suppression d'action + confirmation inline, isolé pour garder ActionItem simple */
+function ActionDeleteControl({ action, onDeleteAction }) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  if (!onDeleteAction) return null;
+
+  const deleteDisabledReason = canDeleteAction(action)
+    ? null
+    : "Suppression impossible : une demande d'achat liée a déjà été dispatchée";
+
+  const handleConfirm = async (e) => {
+    e.stopPropagation();
+    setDeleting(true);
+    try {
+      await onDeleteAction(action);
+    } catch {
+      // Erreur déjà affichée par le parent (PlanningPane)
+    } finally {
+      setDeleting(false);
+      setConfirming(false);
+    }
+  };
+
+  if (confirming) {
+    return (
+      <Flex align="center" gap="1" style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+        <Button size="1" variant="solid" color="red" disabled={deleting} onClick={handleConfirm}>
+          {deleting ? '...' : <Check size={12} />}
+        </Button>
+        <Button size="1" variant="soft" color="gray" disabled={deleting} onClick={() => setConfirming(false)}>
+          <X size={12} />
+        </Button>
+      </Flex>
+    );
+  }
+
+  return (
+    <Button
+      size="1" variant="soft" color="red" style={{ flexShrink: 0, opacity: deleteDisabledReason ? 0.4 : 1 }}
+      title={deleteDisabledReason || 'Supprimer cette action'}
+      disabled={!!deleteDisabledReason}
+      onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+    >
+      <Trash2 size={12} />
+    </Button>
+  );
+}
+
+ActionDeleteControl.propTypes = {
+  action: PropTypes.object.isRequired,
+  onDeleteAction: PropTypes.func,
+};
 
 /* ── ActionItem ───────────────────────────────────────────────────────────── */
 
-export function ActionItem({ action, compact = false, inline = false, onAddPurchaseRequest, hideInterventionHeader = false }) {
+export function ActionItem({ action, compact = false, inline = false, onAddPurchaseRequest, onDeleteAction, hideInterventionHeader = false }) {
   const durationMin = actionDurationMinutes(action);
   const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
   const subcatCode = action.subcategory?.code ?? action.subcategory?.name ?? '—';
@@ -91,6 +150,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
               <ShoppingCart size={12} />
             </Button>
           )}
+          <ActionDeleteControl action={action} onDeleteAction={onDeleteAction} />
         </Flex>}
 
         {/* ── Corps : sous-catégorie · horaires · description ── */}
@@ -236,7 +296,7 @@ export function DayTotal({ actions, compact = false }) {
 
 /* ── DayColumn ────────────────────────────────────────────────────────────── */
 
-export function DayColumn({ dateStr, actions, isToday, onAddAction, onAddPurchaseRequest, isWeekend = false, inlineActions = false }) {
+export function DayColumn({ dateStr, actions, isToday, onAddAction, onAddPurchaseRequest, onDeleteAction, isWeekend = false, inlineActions = false }) {
   const sorted = sortActions(actions);
 
   return (
@@ -273,6 +333,7 @@ export function DayColumn({ dateStr, actions, isToday, onAddAction, onAddPurchas
             compact={isWeekend}
             inline={inlineActions && !isWeekend}
             onAddPurchaseRequest={onAddPurchaseRequest}
+            onDeleteAction={onDeleteAction}
           />
         ))
       )}

@@ -288,6 +288,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
               onAddAction={isLocked ? null : addAction}
               interventionId={id}
               onPurchaseRequestCreated={handlePurchaseRequestCreated}
+              onActionDeleted={refetch}
               planId={intervention.plan_id ?? null}
               isLocked={isLocked}
             />
