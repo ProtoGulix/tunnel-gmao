@@ -33,7 +33,7 @@ function TimelineIcon({ icon: Icon, done = false, last = false }) {
 }
 TimelineIcon.propTypes = { icon: PropTypes.elementType.isRequired, done: PropTypes.bool, last: PropTypes.bool };
 
-function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', initialData = null, bare = false, contextBanner = null }) {
+function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel = 'Créer', initialData = null, bare = false, contextBanner = null, showTitle = true }) {
   const { user } = useAuth();
   const userFullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
 
@@ -90,10 +90,12 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
 
   const content = (
     <Flex direction="column" gap="2">
-      <Flex align="center" gap="2" mb="1">
-        <ShoppingCart size={20} color="var(--blue-9)" />
-        <Text size="3" weight="bold" color="blue">Nouvelle demande d&apos;achat</Text>
-      </Flex>
+      {showTitle && (
+        <Flex align="center" gap="2" mb="1">
+          <ShoppingCart size={20} color="var(--blue-9)" />
+          <Text size="3" weight="bold" color="blue">Nouvelle demande d&apos;achat</Text>
+        </Flex>
+      )}
 
       {formError && (
         <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: 12 }}>
@@ -174,7 +176,6 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                       </Flex>
                     );
                   }}
-                  confirmLabel="Utiliser cette pièce"
                   onChange={(item) => { setSelectedItem(item); if (item?.unit) setUnit(item.unit); }}
                   onSearchChange={setSearchTerm}
                   disableCreate
@@ -272,6 +273,7 @@ PurchaseRequestForm.propTypes = {
   initialData: PropTypes.object,
   bare: PropTypes.bool,
   contextBanner: PropTypes.node,
+  showTitle: PropTypes.bool,
 };
 
 export default PurchaseRequestForm;

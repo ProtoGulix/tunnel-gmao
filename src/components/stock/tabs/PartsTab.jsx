@@ -244,38 +244,39 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
   };
 
   return (
-    <Box pt="3">
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
       {mode === 'create' && (
-        <Box mb="3">
+        <Box mb="3" style={{ flexShrink: 0 }}>
           <PartForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
 
-      <MasterDetailLayout
-        fullHeight={false}
-        masterProps={{
-          icon: Package,
-          title: 'Pièces référencées',
-          count: pagination.total,
-          search,
-          onSearchChange: handleSearch,
-          loading,
-          children: masterList,
-          headerExtra: (
-            <FamilyFilters
-              facets={facets}
-              familyCode={familyCode}
-              onFamilyChange={handleFamilyChange}
-              subFamilyCode={subFamilyCode}
-              onSubFamilyChange={handleSubFamilyChange}
-            />
-          ),
-          pagination: totalPages > 1 ? { currentPage: pagination.page, totalPages, onPageChange: goToPage } : undefined,
-        }}
-        detailChildren={detailContent()}
-        detailLoading={detailLoading}
-        emptyLabel="Sélectionnez une pièce pour voir son détail"
-      />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MasterDetailLayout
+          masterProps={{
+            icon: Package,
+            title: 'Pièces référencées',
+            count: pagination.total,
+            search,
+            onSearchChange: handleSearch,
+            loading,
+            children: masterList,
+            headerExtra: (
+              <FamilyFilters
+                facets={facets}
+                familyCode={familyCode}
+                onFamilyChange={handleFamilyChange}
+                subFamilyCode={subFamilyCode}
+                onSubFamilyChange={handleSubFamilyChange}
+              />
+            ),
+            pagination: totalPages > 1 ? { currentPage: pagination.page, totalPages, onPageChange: goToPage } : undefined,
+          }}
+          detailChildren={detailContent()}
+          detailLoading={detailLoading}
+          emptyLabel="Sélectionnez une pièce pour voir son détail"
+        />
+      </div>
     </Box>
   );
 });

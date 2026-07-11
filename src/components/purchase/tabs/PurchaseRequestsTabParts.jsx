@@ -116,26 +116,3 @@ PrFilters.propTypes = {
   setUrgency: PropTypes.func.isRequired,
 };
 
-const ARCHIVE_STATUSES = [
-  { code: 'RECEIVED', label: 'Reçu' },
-  { code: 'REJECTED', label: 'Refusé' },
-];
-
-export function ArchiveFilters({ status, setStatus }) {
-  return (
-    <Select.Root value={status || '__all__'} onValueChange={(v) => setStatus(v === '__all__' ? '' : v)}>
-      <Select.Trigger placeholder="Tous les archivés" variant={status ? 'soft' : 'surface'} color={status ? 'gray' : undefined} />
-      <Select.Content>
-        <Select.Item value="__all__">Tous les archivés</Select.Item>
-        {ARCHIVE_STATUSES.map((s) => (
-          <Select.Item key={s.code} value={s.code}>{s.label}</Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Root>
-  );
-}
-
-ArchiveFilters.propTypes = {
-  status: PropTypes.string,
-  setStatus: PropTypes.func.isRequired,
-};

@@ -6,13 +6,21 @@
  * @module hooks/purchase/useNegotiationLines
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { updateSupplierOrderLine } from '@/api/supplierOrders';
+
+const AUTOSAVE_DELAY_MS = 600;
 
 export function useNegotiationLines() {
   const [lineDrafts, setLineDrafts] = useState({});
   const [savingLines, setSavingLines] = useState({});
   const [lineErrors, setLineErrors] = useState({});
+  const debounceTimers = useRef({});
+
+  // Annule les sauvegardes différées en attente si le composant est démonté (changement de sélection)
+  useEffect(() => () => {
+    Object.values(debounceTimers.current).forEach(clearTimeout);
+  }, []);
 
   const initDrafts = useCallback((lines) => {
     const drafts = {};
@@ -26,18 +34,13 @@ export function useNegotiationLines() {
     setLineDrafts(drafts);
   }, []);
 
-  const changeDraft = useCallback((lineId, changes) => {
-    setLineDrafts((prev) => ({ ...prev, [lineId]: { ...prev[lineId], ...changes } }));
-  }, []);
-
   /**
-   * Envoie le PATCH et appelle onSuccess avec la ligne renvoyée par le backend.
+   * Envoie le PATCH et applique la ligne renvoyée par le backend (source de vérité pour total_price etc.).
    */
-  const saveLine = useCallback(async (lineId, onSuccess) => {
+  const saveLine = useCallback(async (lineId, draft, onSuccess) => {
     setSavingLines((prev) => ({ ...prev, [lineId]: true }));
     setLineErrors((prev) => ({ ...prev, [lineId]: null }));
     try {
-      const draft = lineDrafts[lineId];
       const payload = {
         is_selected: draft.is_selected,
         quantity: Number(draft.quantity),
@@ -60,9 +63,30 @@ export function useNegotiationLines() {
     } finally {
       setSavingLines((prev) => ({ ...prev, [lineId]: false }));
     }
-  }, [lineDrafts]);
+  }, []);
 
-  return { lineDrafts, savingLines, lineErrors, initDrafts, changeDraft, saveLine };
+  /**
+   * Met à jour le draft localement puis sauvegarde automatiquement (débouncée pour les champs
+   * texte/nombre, immédiate pour la sélection) — aucune validation manuelle requise.
+   */
+  const changeDraft = useCallback((lineId, changes, onSuccess) => {
+    setLineDrafts((prev) => {
+      const next = { ...prev, [lineId]: { ...prev[lineId], ...changes } };
+
+      clearTimeout(debounceTimers.current[lineId]);
+      if ('is_selected' in changes) {
+        saveLine(lineId, next[lineId], onSuccess);
+      } else {
+        debounceTimers.current[lineId] = setTimeout(() => {
+          saveLine(lineId, next[lineId], onSuccess);
+        }, AUTOSAVE_DELAY_MS);
+      }
+
+      return next;
+    });
+  }, [saveLine]);
+
+  return { lineDrafts, savingLines, lineErrors, initDrafts, changeDraft };
 }
 
 export function useDeliveryDate() {

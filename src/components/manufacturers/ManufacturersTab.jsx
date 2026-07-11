@@ -202,33 +202,34 @@ export default function ManufacturersTab() {
   };
 
   return (
-    <Box pt="3">
-      <Flex justify="end" mb="2">
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+      <Flex justify="end" mb="2" style={{ flexShrink: 0 }}>
         <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
           <Plus size={14} /> Ajouter
         </Button>
       </Flex>
       {mode === 'create' && (
-        <Box mb="3">
+        <Box mb="3" style={{ flexShrink: 0 }}>
           <ManufacturerForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
 
-      <MasterDetailLayout
-        fullHeight={false}
-        masterProps={{
-          icon: Factory,
-          title: 'Fabricants',
-          count: total,
-          search,
-          onSearchChange: handleSearch,
-          loading,
-          children: masterList,
-          pagination: totalPages > 1 ? { currentPage: page, totalPages, onPageChange: setPage } : undefined,
-        }}
-        detailChildren={detailContent()}
-        emptyLabel="Sélectionnez un fabricant pour voir ses liaisons"
-      />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MasterDetailLayout
+          masterProps={{
+            icon: Factory,
+            title: 'Fabricants',
+            count: total,
+            search,
+            onSearchChange: handleSearch,
+            loading,
+            children: masterList,
+            pagination: totalPages > 1 ? { currentPage: page, totalPages, onPageChange: setPage } : undefined,
+          }}
+          detailChildren={detailContent()}
+          emptyLabel="Sélectionnez un fabricant pour voir ses liaisons"
+        />
+      </div>
     </Box>
   );
 }

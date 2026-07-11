@@ -105,33 +105,34 @@ export default function SuppliersTab() {
   ));
 
   return (
-    <Box pt="3">
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
       {/* Bouton ajouter + formulaire de création */}
-      <Flex justify="end" mb="2">
+      <Flex justify="end" mb="2" style={{ flexShrink: 0 }}>
         <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
           <Plus size={14} /> Ajouter
         </Button>
       </Flex>
       {mode === 'create' && (
-        <Box mb="3">
+        <Box mb="3" style={{ flexShrink: 0 }}>
           <SupplierForm supplier={null} onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
 
-      <MasterDetailLayout
-        fullHeight={false}
-        masterProps={{
-          icon: Truck,
-          title: 'Fournisseurs',
-          count: suppliers.length,
-          search,
-          onSearchChange: handleSearch,
-          loading,
-          children: masterList,
-        }}
-        detailChildren={detailContent()}
-        emptyLabel="Sélectionnez un fournisseur pour voir son détail"
-      />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MasterDetailLayout
+          masterProps={{
+            icon: Truck,
+            title: 'Fournisseurs',
+            count: suppliers.length,
+            search,
+            onSearchChange: handleSearch,
+            loading,
+            children: masterList,
+          }}
+          detailChildren={detailContent()}
+          emptyLabel="Sélectionnez un fournisseur pour voir son détail"
+        />
+      </div>
     </Box>
   );
 }

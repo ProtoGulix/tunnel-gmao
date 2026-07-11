@@ -313,7 +313,6 @@ export default function SupplierItemForm({
                     <StockCreateTabContent registerSubmit={registerSubmit} />
                   )}
 
-                  confirmLabel="Utiliser cette pièce"
                   createSubmitLabel="Créer une pièce"
 
                   searchTabLabel="Rechercher"

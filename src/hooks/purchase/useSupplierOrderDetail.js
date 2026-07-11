@@ -16,7 +16,7 @@ export function useSupplierOrderDetail(orderId, onStatusChange) {
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [statusError, setStatusError] = useState(null);
 
-  const { lineDrafts, savingLines, lineErrors, initDrafts, changeDraft, saveLine } = useNegotiationLines();
+  const { lineDrafts, savingLines, lineErrors, initDrafts, changeDraft } = useNegotiationLines();
   const { deliveryDate, setDeliveryDate, saving: savingDelivery, save: saveDelivery } = useDeliveryDate();
 
   const reloadDetail = useCallback(async (id) => {
@@ -50,14 +50,14 @@ export function useSupplierOrderDetail(orderId, onStatusChange) {
     }
   }, [detail, reloadDetail, onStatusChange]);
 
-  const handleLineSave = useCallback((lineId) => {
-    saveLine(lineId, (id, updated) => {
+  const handleLineChange = useCallback((lineId, changes) => {
+    changeDraft(lineId, changes, (id, updated) => {
       setDetail((prev) => ({
         ...prev,
         lines: prev.lines.map((l) => (l.id === id ? { ...l, ...updated } : l)),
       }));
     });
-  }, [saveLine]);
+  }, [changeDraft]);
 
   const handleDeliverySave = useCallback(() => {
     saveDelivery(detail.id, (updated) => {
@@ -78,9 +78,8 @@ export function useSupplierOrderDetail(orderId, onStatusChange) {
     deliveryDate,
     setDeliveryDate,
     savingDelivery,
-    changeDraft,
     handleStatusChange,
-    handleLineSave,
+    handleLineChange,
     handleDeliverySave,
   };
 }

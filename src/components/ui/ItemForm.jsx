@@ -2,8 +2,7 @@
  * @fileoverview Composant générique de sélection d'item avec onglets Rechercher / Créer.
  *
  * Gère :
- *  - Sélection via AsyncSearchSelect (debounce, spinner, états vides centrés)
- *  - Étape de confirmation optionnelle avant sélection définitive (renderPending)
+ *  - Sélection directe via AsyncSearchSelect (debounce, spinner, états vides centrés)
  *  - Onglet de création optionnel (renderCreateForm)
  *  - Affichage du badge sélectionné + bouton de désélection (renderSelected)
  *  - Sync avec un item initial (mode édition) via ref interne
@@ -27,7 +26,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
-import { AlertCircle, Check, Plus, X } from 'lucide-react';
+import { AlertCircle, Plus, X } from 'lucide-react';
 
 import AsyncSearchSelect from './AsyncSearchSelect';
 
@@ -51,7 +50,6 @@ export default function ItemForm({
 
   // Labels
   label,
-  confirmLabel = 'Utiliser',
   createSubmitLabel = 'Créer',
   searchTabLabel = 'Rechercher',
   createTabLabel = 'Créer',
@@ -63,7 +61,6 @@ export default function ItemForm({
   onSearchChange,
 }) {
   const [selected, setSelected] = useState(initialItem);
-  const [pending, setPending] = useState(null);
   const [activeTab, setActiveTab] = useState('search');
   const [createError, setCreateError] = useState(null);
   const [creating, setCreating] = useState(false);
@@ -83,7 +80,6 @@ export default function ItemForm({
 
   const handleConfirm = (item) => {
     setSelected(item);
-    setPending(null);
     setActiveTab('search');
     onChange(item);
   };
@@ -94,26 +90,24 @@ export default function ItemForm({
   };
 
   const handleSearchSelect = (item) => {
-    setPending(item);
+    handleConfirm(item);
   };
 
   const handleTabChange = (tab) => {
-    if (tab !== 'search') setPending(null);
     if (tab !== 'create') setCreateError(null);
     setActiveTab(tab);
   };
 
-  // Après création : passe par l'étape de confirmation (même flow que la recherche)
+  // Après création : sélection directe (même comportement que la recherche)
   const handleCreated = (item) => {
     setCreateError(null);
-    setPending(item);
-    setActiveTab('search');
+    handleConfirm(item);
   };
 
   const hasCreateTab = !!renderCreateForm && !disableCreate;
   const hasSearchTab = !!fetchFn && !disableSearch;
 
-  // Après clic sur le bouton Créer de l'onglet : même étape de confirmation que la recherche
+  // Après clic sur le bouton Créer de l'onglet : sélection directe
   const handleCreate = async () => {
     if (!submitRef.current) return;
     setCreating(true);
@@ -140,36 +134,22 @@ export default function ItemForm({
     );
   }
 
-  // ── Search tab content (with built-in pending confirmation step) ────────────
-  const searchContent = pending
+  // ── Search tab content: sélection directe au clic sur un résultat ──────────
+  const searchContent = hasSearchTab
     ? (
-      <Box>
-        {renderSelected(pending, () => setPending(null))}
-        <Flex gap="2" mt="2">
-          <Button size="2" color="blue" type="button" onClick={() => handleConfirm(pending)}>
-            <Check size={14} /> {confirmLabel}
-          </Button>
-          <Button size="2" variant="ghost" color="gray" type="button" onClick={() => setPending(null)}>
-            <X size={14} /> Annuler
-          </Button>
-        </Flex>
-      </Box>
+      <AsyncSearchSelect
+        fetchFn={fetchFn}
+        onSelect={handleSearchSelect}
+        renderItem={renderSearchItem}
+        placeholder={placeholder}
+        debounceMs={debounceMs}
+        minChars={minChars}
+        onCreateClick={hasCreateTab ? () => handleTabChange('create') : undefined}
+        createLabel={createLabel}
+        onSearchChange={onSearchChange}
+      />
     )
-    : hasSearchTab
-      ? (
-        <AsyncSearchSelect
-          fetchFn={fetchFn}
-          onSelect={handleSearchSelect}
-          renderItem={renderSearchItem}
-          placeholder={placeholder}
-          debounceMs={debounceMs}
-          minChars={minChars}
-          onCreateClick={hasCreateTab ? () => handleTabChange('create') : undefined}
-          createLabel={createLabel}
-          onSearchChange={onSearchChange}
-        />
-      )
-      : null;
+    : null;
 
   // ── No selection yet ────────────────────────────────────────────────────────
   return (
@@ -238,7 +218,6 @@ ItemForm.propTypes = {
   renderSelected: PropTypes.func.isRequired,
   renderCreateForm: PropTypes.func,
   label: PropTypes.string,
-  confirmLabel: PropTypes.string,
   createSubmitLabel: PropTypes.string,
   searchTabLabel: PropTypes.string,
   createTabLabel: PropTypes.string,

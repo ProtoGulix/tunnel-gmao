@@ -120,13 +120,13 @@ StepIndicator.propTypes = { step: PropTypes.number.isRequired };
 
 // ─── Étape 1 : Upload ─────────────────────────────────────────────────────────
 
-function Step1Upload({ onNext }) {
+function Step1Upload({ onNext, initialIntervention = null }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [interventionSearch, setInterventionSearch] = useState('');
   const [interventions, setInterventions] = useState([]);
-  const [selectedIntervention, setSelectedIntervention] = useState(null);
+  const [selectedIntervention, setSelectedIntervention] = useState(initialIntervention);
   const [urgency, setUrgency] = useState('normal');
   const [error, setError] = useState(null);
   const [searching, setSearching] = useState(false);
@@ -388,7 +388,7 @@ function Step1Upload({ onNext }) {
     </Flex>
   );
 }
-Step1Upload.propTypes = { onNext: PropTypes.func.isRequired };
+Step1Upload.propTypes = { onNext: PropTypes.func.isRequired, initialIntervention: PropTypes.object };
 
 // ─── Étape 2 : Mapping ────────────────────────────────────────────────────────
 
@@ -935,25 +935,13 @@ Step4Report.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+// ─── Contenu du wizard (réutilisable, sans Dialog.Root) ───────────────────────
 
-export default function CsvImportWizard({ open, onOpenChange, onSuccess }) {
+export function CsvImportWizardContent({ onSuccess, onClose, initialIntervention = null }) {
   const [step, setStep] = useState(1);
   const [step1Data, setStep1Data] = useState(null);
   const [step2Data, setStep2Data] = useState(null);
   const [result, setResult] = useState(null);
-
-  const reset = () => {
-    setStep(1);
-    setStep1Data(null);
-    setStep2Data(null);
-    setResult(null);
-  };
-
-  const handleOpenChange = (v) => {
-    if (!v) reset();
-    onOpenChange(v);
-  };
 
   const handleStep1Next = (data) => {
     setStep1Data(data);
@@ -971,8 +959,59 @@ export default function CsvImportWizard({ open, onOpenChange, onSuccess }) {
     onSuccess?.();
   };
 
-  const handleClose = () => {
-    handleOpenChange(false);
+  return (
+    <Flex direction="column" gap="4">
+      <StepIndicator step={step} />
+
+      {step === 1 && <Step1Upload onNext={handleStep1Next} initialIntervention={initialIntervention} />}
+
+      {step === 2 && step1Data && (
+        <Step2Mapping
+          file={step1Data.file}
+          preview={step1Data.preview}
+          intervention={step1Data.intervention}
+          urgency={step1Data.urgency}
+          onBack={() => setStep(1)}
+          onNext={handleStep2Next}
+        />
+      )}
+
+      {step === 3 && step1Data && step2Data && (
+        <Step3Review
+          file={step1Data.file}
+          intervention={step1Data.intervention}
+          urgency={step1Data.urgency}
+          colRef={step2Data.colRef}
+          colQty={step2Data.colQty}
+          preview={step2Data.previewResult}
+          onBack={() => setStep(2)}
+          onDone={handleStep3Done}
+        />
+      )}
+
+      {step === 4 && result && (
+        <Step4Report result={result} onClose={onClose} />
+      )}
+    </Flex>
+  );
+}
+
+CsvImportWizardContent.propTypes = {
+  onSuccess: PropTypes.func,
+  onClose: PropTypes.func.isRequired,
+  initialIntervention: PropTypes.object,
+};
+
+// ─── Composant principal (modal autonome) ─────────────────────────────────────
+
+export default function CsvImportWizard({ open, onOpenChange, onSuccess }) {
+  // La clé forcée sur le contenu réinitialise tout son état interne à chaque
+  // (ré)ouverture, sans avoir à dupliquer un reset() explicite ici.
+  const [instanceKey, setInstanceKey] = useState(0);
+
+  const handleOpenChange = (v) => {
+    if (!v) setInstanceKey((k) => k + 1);
+    onOpenChange(v);
   };
 
   return (
@@ -985,37 +1024,11 @@ export default function CsvImportWizard({ open, onOpenChange, onSuccess }) {
           </Flex>
         </Dialog.Title>
 
-        <StepIndicator step={step} />
-
-        {step === 1 && <Step1Upload onNext={handleStep1Next} />}
-
-        {step === 2 && step1Data && (
-          <Step2Mapping
-            file={step1Data.file}
-            preview={step1Data.preview}
-            intervention={step1Data.intervention}
-            urgency={step1Data.urgency}
-            onBack={() => setStep(1)}
-            onNext={handleStep2Next}
-          />
-        )}
-
-        {step === 3 && step1Data && step2Data && (
-          <Step3Review
-            file={step1Data.file}
-            intervention={step1Data.intervention}
-            urgency={step1Data.urgency}
-            colRef={step2Data.colRef}
-            colQty={step2Data.colQty}
-            preview={step2Data.previewResult}
-            onBack={() => setStep(2)}
-            onDone={handleStep3Done}
-          />
-        )}
-
-        {step === 4 && result && (
-          <Step4Report result={result} onClose={handleClose} />
-        )}
+        <CsvImportWizardContent
+          key={instanceKey}
+          onSuccess={onSuccess}
+          onClose={() => handleOpenChange(false)}
+        />
       </Dialog.Content>
     </Dialog.Root>
   );

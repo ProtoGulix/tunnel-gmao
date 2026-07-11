@@ -9,9 +9,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Badge, Box, Button, Card, Flex, IconButton, Select, Separator, Table, Text } from '@radix-ui/themes';
-import { ArrowLeftRight, Clock, Package, Save, Scale, ThumbsUp, Trophy } from 'lucide-react';
+import { ArrowLeftRight, Clock, ExternalLink, Package, Save, Scale, ThumbsUp, Trophy } from 'lucide-react';
 import {
   fetchSupplierOrders,
   fetchSupplierOrderDetail,
@@ -104,6 +104,7 @@ function PanierSelector({ label, value, onChange, orders, excludeId, loading }) 
 }
 
 function OrderBadge({ order, statusMap }) {
+  const navigate = useNavigate();
   if (!order) return null;
   const statusInfo = statusMap[order.status] ?? { label: order.status, color: '#6b7280' };
   return (
@@ -113,6 +114,15 @@ function OrderBadge({ order, statusMap }) {
       {order.total_amount != null && (
         <Text size="1" color="gray">{Number(order.total_amount).toFixed(2)} €</Text>
       )}
+      <Button
+        size="1"
+        variant="ghost"
+        color="gray"
+        onClick={() => navigate(`/achats?tab=orders&order_id=${order.id}`)}
+        style={{ height: 'auto', padding: '0 2px' }}
+      >
+        <ExternalLink size={11} /> Voir le panier
+      </Button>
     </Flex>
   );
 }

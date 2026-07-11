@@ -26,6 +26,7 @@ export function useSupplierOrders({ status = '' } = {}) {
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -33,6 +34,7 @@ export function useSupplierOrders({ status = '' } = {}) {
     try {
       const params = {};
       if (status) params.status = status;
+      if (search) params.search = search;
       const {
         items: data,
         facets: facetData,
@@ -46,11 +48,13 @@ export function useSupplierOrders({ status = '' } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, search]);
 
+  // Debounce la recherche pour éviter un appel API à chaque frappe
   useEffect(() => {
-    loadItems();
-  }, [loadItems]);
+    const id = setTimeout(loadItems, search ? 300 : 0);
+    return () => clearTimeout(id);
+  }, [loadItems, search]);
 
   const loadDetail = useCallback(async (id) => {
     return fetchSupplierOrderDetail(id);
@@ -81,6 +85,8 @@ export function useSupplierOrders({ status = '' } = {}) {
     pagination,
     loading,
     error,
+    search,
+    setSearch,
     refresh: loadItems,
     loadDetail,
     loadLines,

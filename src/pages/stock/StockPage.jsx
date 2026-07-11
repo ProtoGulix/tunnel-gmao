@@ -19,7 +19,7 @@ export default function StockPage() {
   const partsTabRef = useRef(null);
 
   return (
-    <>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Stock"
         subtitle="Pièces, fournisseurs et fabricants"
@@ -27,42 +27,46 @@ export default function StockPage() {
         addLabel="Nouvelle pièce"
       />
 
-      <Box px="4">
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
-        <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
-          <Tabs.Trigger value="items">
-            <Flex align="center" gap="2">
-              <Package size={14} />
-              <Text>Pièces référencées</Text>
-            </Flex>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="suppliers">
-            <Flex align="center" gap="2">
-              <Truck size={14} />
-              <Text>Fournisseurs</Text>
-            </Flex>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="manufacturers">
-            <Flex align="center" gap="2">
-              <Factory size={14} />
-              <Text>Fabricants</Text>
-            </Flex>
-          </Tabs.Trigger>
-        </Tabs.List>
+      <Box px="4" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={setActiveTab}
+          style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        >
+          <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)', flexShrink: 0 }}>
+            <Tabs.Trigger value="items">
+              <Flex align="center" gap="2">
+                <Package size={14} />
+                <Text>Pièces référencées</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="suppliers">
+              <Flex align="center" gap="2">
+                <Truck size={14} />
+                <Text>Fournisseurs</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="manufacturers">
+              <Flex align="center" gap="2">
+                <Factory size={14} />
+                <Text>Fabricants</Text>
+              </Flex>
+            </Tabs.Trigger>
+          </Tabs.List>
 
-        <Suspense fallback={<LoadingState />}>
-          <Tabs.Content value="items">
-            {activeTab === 'items' && <PartsTab ref={partsTabRef} />}
-          </Tabs.Content>
-          <Tabs.Content value="suppliers">
-            {activeTab === 'suppliers' && <SuppliersTab />}
-          </Tabs.Content>
-          <Tabs.Content value="manufacturers">
-            {activeTab === 'manufacturers' && <ManufacturersTab />}
-          </Tabs.Content>
-        </Suspense>
-      </Tabs.Root>
+          <Suspense fallback={<LoadingState />}>
+            <Tabs.Content value="items" style={{ flex: 1, minHeight: 0 }}>
+              {activeTab === 'items' && <PartsTab ref={partsTabRef} />}
+            </Tabs.Content>
+            <Tabs.Content value="suppliers" style={{ flex: 1, minHeight: 0 }}>
+              {activeTab === 'suppliers' && <SuppliersTab />}
+            </Tabs.Content>
+            <Tabs.Content value="manufacturers" style={{ flex: 1, minHeight: 0 }}>
+              {activeTab === 'manufacturers' && <ManufacturersTab />}
+            </Tabs.Content>
+          </Suspense>
+        </Tabs.Root>
       </Box>
-    </>
+    </Flex>
   );
 }
