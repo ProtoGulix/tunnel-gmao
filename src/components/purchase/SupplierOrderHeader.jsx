@@ -4,11 +4,9 @@
  */
 
 import PropTypes from 'prop-types';
-import { Badge, Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
-import { Building2, ChevronDown, Clock, Download, Mail, Trash2 } from 'lucide-react';
+import { Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
+import { Building2, ChevronDown, Download, Mail, Trash2 } from 'lucide-react';
 import HexBadge from '@/components/ui/HexBadge';
-
-const AGE_COLOR = { gray: 'gray', orange: 'orange', red: 'red' };
 
 export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onExportEmail, onDelete }) {
   return (
@@ -18,14 +16,6 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
           <Building2 size={16} color="var(--blue-9)" />
           <Text size="3" weight="bold">{detail.supplier?.name || '—'}</Text>
           <HexBadge color={statusInfo.color} label={statusInfo.label} fallbackColor={statusInfo.color || 'gray'} />
-          {detail.edit_lines && !statusInfo.label?.toLowerCase().includes('négociation') && (
-            <Badge color="orange" variant="soft" size="1">Lignes éditables</Badge>
-          )}
-          {detail.is_blocking && (
-            <Badge color={AGE_COLOR[detail.age_color] || 'gray'} variant="soft" size="1">
-              <Clock size={10} /> {detail.age_days}j
-            </Badge>
-          )}
         </Flex>
         <Flex align="center" gap="2" style={{ paddingLeft: 24 }}>
           <Text size="1" color="gray">{detail.order_number}</Text>

@@ -5,9 +5,9 @@
  */
 
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Badge, Box, Button, Flex, Table, Text } from '@radix-ui/themes';
-import { AlertCircle, Package, ShoppingCart } from 'lucide-react';
+import { AlertCircle, ExternalLink, Package, Pencil, ShoppingCart } from 'lucide-react';
 import StatusCallout from '@/components/ui/StatusCallout';
 import OrderLineRowEditable from '@/components/purchase/OrderLineRowEditable';
 
@@ -34,8 +34,10 @@ export function LineRefs({ line }) {
         </Badge>
       )}
       {mfrRef && mfrRef !== supplierRef && (
-        <Badge color="gray" variant="soft" size="1" style={{ width: 'fit-content' }}>
-          {mfrName ? `${mfrName} : ${mfrRef}` : mfrRef}
+        <Badge color="gray" variant="soft" size="1" style={{ width: 'fit-content' }} asChild>
+          <Link to={`/stock?tab=items&q=${encodeURIComponent(line.stock_item_ref || mfrRef)}`} title="Voir la pièce dans le stock">
+            {mfrName ? `${mfrName} : ${mfrRef}` : mfrRef} <ExternalLink size={10} />
+          </Link>
         </Badge>
       )}
     </Flex>
@@ -102,24 +104,12 @@ export function CompetingOrders({ line }) {
 CompetingOrders.propTypes = { line: PropTypes.object.isRequired };
 
 function OrderLineRow({ line }) {
-  const isV4 = !!line.part_id;
   const lost = isConsultationLost(line, line.is_selected);
   const fade = lost ? { opacity: 0.45 } : undefined;
   return (
     <Table.Row>
       <Table.Cell style={fade}>
-        <Flex direction="column" gap="1">
-          <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
-          {line.stock_item_ref && (
-            <Badge
-              color={isV4 ? 'blue' : 'gray'}
-              variant="soft" size="1"
-              style={{ width: 'fit-content', fontFamily: 'monospace' }}
-            >
-              {line.stock_item_ref}
-            </Badge>
-          )}
-        </Flex>
+        <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
       </Table.Cell>
       <Table.Cell style={fade}><LineRefs line={line} /></Table.Cell>
       <Table.Cell style={fade}><Text size="2">{line.quantity} {line.stock_item_unit || 'pcs'}</Text></Table.Cell>
@@ -178,7 +168,11 @@ export default function SupplierOrderLines({ lines, isNegotiating, lineDrafts, s
       <Flex align="center" gap="2" mb="2">
         <Package size={14} color="var(--gray-9)" />
         <Text size="2" weight="bold" color="gray">Lignes ({lines.length})</Text>
-        {isNegotiating && <Badge color="orange" variant="soft" size="1">Édition activée — enregistrement automatique</Badge>}
+        {isNegotiating && (
+          <Badge color="orange" variant="soft" size="1">
+            <Pencil size={10} /> Édition activée
+          </Badge>
+        )}
         {pendingConsultations > 0 && (
           <Badge color="red" variant="soft" size="1">
             <AlertCircle size={10} /> {pendingConsultations} consultation{pendingConsultations > 1 ? 's' : ''} à résoudre

@@ -5,7 +5,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { Badge, Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
+import { Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
 import { CompetingOrders, isConsultationLost, LineRefs } from '@/components/purchase/SupplierOrderLines';
 
@@ -23,14 +23,7 @@ export default function OrderLineRowEditable({ line, draft, onChange, saving }) 
             checked={!!draft.is_selected}
             onCheckedChange={(checked) => onChange({ is_selected: !!checked })}
           />
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
-            {line.stock_item_ref && (
-              <Badge color="blue" variant="soft" size="1" style={{ width: 'fit-content' }}>
-                {line.stock_item_ref}
-              </Badge>
-            )}
-          </Flex>
+          <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
         </Flex>
       </Table.Cell>
 

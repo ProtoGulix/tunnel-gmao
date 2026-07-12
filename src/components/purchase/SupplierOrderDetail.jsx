@@ -8,8 +8,8 @@
  */
 
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
-import { Building2, Save } from 'lucide-react';
+import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
+import { Building2, Clock, Save } from 'lucide-react';
 import { useState } from 'react';
 import { exportSupplierOrderEmail } from '@/api/supplierOrders';
 import LoadingState from '@/components/ui/LoadingState';
@@ -18,6 +18,8 @@ import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 import { useSupplierOrderDetail } from '@/hooks/purchase/useSupplierOrderDetail';
 import SupplierOrderHeader from '@/components/purchase/SupplierOrderHeader';
 import SupplierOrderLines from '@/components/purchase/SupplierOrderLines';
+
+const AGE_COLOR = { gray: 'gray', orange: 'orange', red: 'red' };
 
 function DetailRow({ label, children }) {
   return (
@@ -164,9 +166,16 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
               }
             </DetailRow>
             <DetailRow label="Créée le">
-              <Text size="2" color="gray">
-                {detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-              </Text>
+              <Flex align="center" gap="2">
+                <Text size="2" color="gray">
+                  {detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                </Text>
+                {detail.is_blocking && (
+                  <Badge color={AGE_COLOR[detail.age_color] || 'gray'} variant="soft" size="1">
+                    <Clock size={10} /> {detail.age_days}j
+                  </Badge>
+                )}
+              </Flex>
             </DetailRow>
           </Box>
         </Flex>

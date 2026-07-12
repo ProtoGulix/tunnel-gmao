@@ -8,7 +8,7 @@
  * @module components/purchase/tabs/SupplierOrdersTab
  */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge, Box, Flex, Select, Text } from '@radix-ui/themes';
 import { ShoppingBag } from 'lucide-react';
@@ -25,26 +25,29 @@ import { SupplierOrderListItem } from './SupplierOrdersTabParts';
 
 function StatusSelect({ statusList, facets, activeTab, onChange }) {
   return (
-    <Select.Root value={activeTab} onValueChange={onChange}>
-      <Select.Trigger variant="surface" style={{ width: '100%' }} />
-      <Select.Content>
-        {statusList.map((s) => (
-          <Select.Item key={s.code} value={s.code}>
-            <Flex align="center" gap="2">
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: s.color,
-                display: 'inline-block', flexShrink: 0,
-              }} />
-              <Text size="2">{s.label}</Text>
-              {facets[s.code] != null && (
-                <Badge color={s.radixColor} variant="soft" size="1">{facets[s.code]}</Badge>
-              )}
-            </Flex>
-          </Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Root>
+    <Flex direction="column" gap="1">
+      <Text size="1" color="gray">Filtrer par statut</Text>
+      <Select.Root value={activeTab} onValueChange={onChange}>
+        <Select.Trigger variant="surface" style={{ width: '100%' }} />
+        <Select.Content>
+          {statusList.map((s) => (
+            <Select.Item key={s.code} value={s.code}>
+              <Flex align="center" gap="2">
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: s.color,
+                  display: 'inline-block', flexShrink: 0,
+                }} />
+                <Text size="2">{s.label}</Text>
+                {facets[s.code] != null && (
+                  <Badge color={s.radixColor} variant="soft" size="1">{facets[s.code]}</Badge>
+                )}
+              </Flex>
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+    </Flex>
   );
 }
 
@@ -74,27 +77,33 @@ export default function SupplierOrdersTab() {
   // Arrivée via order_id dont le statut ne correspond pas au filtre actif (ex: lien
   // depuis le comparateur) : aligne panier_status sur le statut réel du panier pour
   // qu'il apparaisse aussi dans la liste de gauche.
+  // La ref de génération ignore les résolutions obsolètes : si l'utilisateur change
+  // le filtre manuellement pendant que ce fetch est en vol, on ne doit pas l'écraser
+  // (sinon le filtre choisi "flashe" puis revient en arrière).
+  const statusSyncGeneration = useRef(0);
   useEffect(() => {
     if (!selectedId) return;
-    let cancelled = false;
+    const generation = ++statusSyncGeneration.current;
     fetchSupplierOrderDetail(selectedId)
       .then((order) => {
-        if (!cancelled && order?.status && order.status !== activeTab) setActiveTab(order.status);
+        if (statusSyncGeneration.current !== generation) return;
+        if (order?.status && order.status !== activeTab) setActiveTab(order.status);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Changement manuel du filtre de statut : vide order_id pour éviter un détail
-  // fantôme d'un panier qui ne serait plus dans la liste filtrée.
+  // fantôme d'un panier qui ne serait plus dans la liste filtrée, et invalide toute
+  // synchronisation automatique de statut encore en vol.
   const handleStatusChange = useCallback((newStatus) => {
-    setActiveTab(newStatus);
+    statusSyncGeneration.current += 1;
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
+      next.set('panier_status', newStatus);
       next.delete('order_id');
       return next;
     }, { replace: true });
-  }, [setActiveTab, setSearchParams]);
+  }, [setSearchParams]);
 
   const handleSelect = useCallback((row) => {
     setSearchParams((prev) => {
