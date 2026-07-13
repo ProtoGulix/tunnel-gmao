@@ -23,6 +23,16 @@ export async function fetchPartByRef(internalRef) {
   return response.data || null;
 }
 
+export async function fetchSupplierPartRefs({ supplierId, search, limit, skip } = {}) {
+  const params = {};
+  if (supplierId) params.supplier_id = supplierId;
+  if (search) params.search = search;
+  if (limit != null) params.limit = limit;
+  if (skip != null) params.skip = skip;
+  const response = await api.get('/parts/supplier-refs', { params });
+  return response.data || { items: [], pagination: {} };
+}
+
 export async function createPart(payload) {
   const response = await api.post('/parts', payload);
   return response.data || null;

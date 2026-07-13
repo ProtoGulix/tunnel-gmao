@@ -795,9 +795,9 @@
     "semantic_hash": "f4fa2dd3c9464f6294142d0addd0792d"
   },
   "components/purchase/OrderLineRowEditable.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "213289a3dbae05ed56afdb65dd249ddf",
-    "semantic_hash": "213289a3dbae05ed56afdb65dd249ddf"
+    "mtime": 1783843890.0953856,
+    "ast_hash": "e97e89629e66b09c79cd2002bb79efa7",
+    "semantic_hash": "e97e89629e66b09c79cd2002bb79efa7"
   },
   "components/purchase/PurchaseRequestDetail.jsx": {
     "mtime": 1783527382.8405507,
@@ -805,19 +805,19 @@
     "semantic_hash": "4d14ac9872938e378ec60e8f596a6c55"
   },
   "components/purchase/SupplierOrderDetail.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "95725b27c58b1c97af5065b0238f158d",
-    "semantic_hash": "95725b27c58b1c97af5065b0238f158d"
+    "mtime": 1783843502.7122219,
+    "ast_hash": "fa5b9f3fb6aaf86c13db62dc8ecdbce1",
+    "semantic_hash": "fa5b9f3fb6aaf86c13db62dc8ecdbce1"
   },
   "components/purchase/SupplierOrderHeader.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "afe1de68d9f204d44a5298d9c7639176",
-    "semantic_hash": "afe1de68d9f204d44a5298d9c7639176"
+    "mtime": 1783843649.49342,
+    "ast_hash": "73855ef55c190abe9d6ab10de34af006",
+    "semantic_hash": "73855ef55c190abe9d6ab10de34af006"
   },
   "components/purchase/SupplierOrderLines.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "2f2e826d63bfe61a68d42150e2eba42e",
-    "semantic_hash": "2f2e826d63bfe61a68d42150e2eba42e"
+    "mtime": 1783844532.7088063,
+    "ast_hash": "16ab4844f4c09cf92d9c8ae50f8810a7",
+    "semantic_hash": "16ab4844f4c09cf92d9c8ae50f8810a7"
   },
   "components/purchase/tabs/PurchaseRequestsTab.jsx": {
     "mtime": 1783761138.9960122,
@@ -830,9 +830,9 @@
     "semantic_hash": "fc56e129a8354ddbf8a5e013c8369157"
   },
   "components/purchase/tabs/SupplierOrdersTab.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "812f665087ae0080117f99038b577a66",
-    "semantic_hash": "812f665087ae0080117f99038b577a66"
+    "mtime": 1783843325.0627737,
+    "ast_hash": "2d1b026bc0814063ccc76038ad4ff5a2",
+    "semantic_hash": "2d1b026bc0814063ccc76038ad4ff5a2"
   },
   "components/quality-data/QualityDataComponents.jsx": {
     "mtime": 1780834255.200485,

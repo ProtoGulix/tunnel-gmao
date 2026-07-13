@@ -19,7 +19,6 @@ function SupplierRefForm({ mfrRefId, initial, onSaved, onCancel }) {
   const [form, setForm] = useState({
     supplier_id: initial?.supplier_id || '',
     supplier_ref: initial?.supplier_ref || '',
-    unit_price: initial?.unit_price != null ? String(initial.unit_price) : '',
     min_order_quantity: initial?.min_order_quantity != null ? String(initial.min_order_quantity) : '1',
     delivery_time_days: initial?.delivery_time_days != null ? String(initial.delivery_time_days) : '',
     is_preferred: initial?.is_preferred || false,
@@ -43,7 +42,6 @@ function SupplierRefForm({ mfrRefId, initial, onSaved, onCancel }) {
     try {
       const payload = {
         supplier_ref: form.supplier_ref.trim(),
-        unit_price: form.unit_price !== '' ? parseFloat(form.unit_price) : null,
         min_order_quantity: form.min_order_quantity !== '' ? parseInt(form.min_order_quantity, 10) : 1,
         delivery_time_days: form.delivery_time_days !== '' ? parseInt(form.delivery_time_days, 10) : null,
         is_preferred: form.is_preferred,
@@ -89,10 +87,6 @@ function SupplierRefForm({ mfrRefId, initial, onSaved, onCancel }) {
               <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Référence fournisseur *</Text>
               <TextField.Root value={form.supplier_ref} onChange={set('supplier_ref')} placeholder="ex: P1115070" />
             </Box>
-            <Box style={{ flex: 1, minWidth: 80 }}>
-              <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Prix (€)</Text>
-              <TextField.Root value={form.unit_price} onChange={set('unit_price')} type="number" min="0" step="0.01" />
-            </Box>
             <Box style={{ flex: 1, minWidth: 70 }}>
               <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Qté min.</Text>
               <TextField.Root value={form.min_order_quantity} onChange={set('min_order_quantity')} type="number" min="1" />
@@ -107,6 +101,10 @@ function SupplierRefForm({ mfrRefId, initial, onSaved, onCancel }) {
             <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>URL fiche produit</Text>
             <TextField.Root value={form.product_url} onChange={set('product_url')} placeholder="https://…" type="url" />
           </Box>
+
+          <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>
+            Le prix unitaire est calculé automatiquement à partir de l&apos;historique des commandes — il ne se saisit pas ici.
+          </Text>
 
           <Flex align="center" gap="2">
             <input

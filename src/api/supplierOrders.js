@@ -110,6 +110,19 @@ export async function fetchSupplierOrderLines(supplierOrderId) {
 }
 
 /**
+ * Statistiques de prix obtenus pour une pièce chez un fournisseur (historique des commandes)
+ * @param {string} partId
+ * @param {string} supplierId
+ * @returns {Promise<Object>}
+ */
+export async function fetchSupplierPriceStats(partId, supplierId) {
+  const response = await api.get('/supplier-order-lines/price-stats', {
+    params: { part_id: partId, supplier_id: supplierId },
+  });
+  return response.data;
+}
+
+/**
  * Partially update a supplier order line (PATCH)
  * @param {string} id
  * @param {Object} updates
