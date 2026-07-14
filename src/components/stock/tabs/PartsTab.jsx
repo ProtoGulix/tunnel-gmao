@@ -10,7 +10,7 @@ import { Factory, Package, Star } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import PartDetailPanel from '@/components/stock/PartDetailPanel';
-import PartForm from '@/components/stock/PartForm';
+import PartFormModal from '@/components/stock/PartFormModal';
 import { useParts } from '@/hooks/stock/useParts';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
 import { fetchPartDetail } from '@/api/parts';
@@ -70,17 +70,6 @@ FamilyFilters.propTypes = {
   onSubFamilyChange: PropTypes.func.isRequired,
 };
 
-// ─── Badge stock ──────────────────────────────────────────────────────────────
-
-function StockBadge({ quantity, unit }) {
-  if (quantity == null) return <Badge color="gray" variant="soft" size="1">Non renseigné</Badge>;
-  if (quantity === 0) return <Badge color="red" variant="soft" size="1">Rupture</Badge>;
-  if (quantity <= 3) return <Badge color="orange" variant="soft" size="1">Stock bas · {quantity}{unit ? ` ${unit}` : ''}</Badge>;
-  return <Badge color="green" variant="soft" size="1">{quantity}{unit ? ` ${unit}` : ''}</Badge>;
-}
-
-StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
-
 // ─── Ligne de la liste ────────────────────────────────────────────────────────
 
 function PartRow({ part, isSelected, onClick }) {
@@ -130,7 +119,6 @@ function PartRow({ part, isSelected, onClick }) {
           <Badge variant="outline" color="blue" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>
             {part.internal_ref}
           </Badge>
-          <StockBadge quantity={part.qty_in_stock} unit={part.unit} />
           {part.family_code && (
             <Badge variant="outline" color="gray" size="1">{part.family_code}/{part.sub_family_code}</Badge>
           )}
@@ -228,9 +216,6 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
   ));
 
   const detailContent = () => {
-    if (mode === 'edit' && selected) return (
-      <PartForm part={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
-    );
     if (!selected) return null;
     return (
       <PartDetailPanel
@@ -245,11 +230,19 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
 
   return (
     <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
-      {mode === 'create' && (
-        <Box mb="3" style={{ flexShrink: 0 }}>
-          <PartForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
-        </Box>
-      )}
+      <PartFormModal
+        open={mode === 'create'}
+        onOpenChange={(v) => { if (!v) setMode(null); }}
+        onSubmit={handleCreate}
+        saving={saving}
+      />
+      <PartFormModal
+        open={mode === 'edit'}
+        onOpenChange={(v) => { if (!v) setMode(null); }}
+        part={selected}
+        onSubmit={handleEdit}
+        saving={saving}
+      />
 
       <div style={{ flex: 1, minHeight: 0 }}>
         <MasterDetailLayout

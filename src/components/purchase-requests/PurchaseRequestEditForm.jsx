@@ -16,11 +16,9 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Select, Separator, Tabs, Text, TextField } from '@radix-ui/themes';
 import { CheckCircle2, Edit2, Factory, Link2Off, Package, Plus, ShoppingCart, X } from 'lucide-react';
 import * as partsApi from '@/api/parts';
-import { fetchSuppliers } from '@/api/suppliers';
 import { UNIT_OPTIONS } from '@/config/units';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useStockFamilies } from '@/hooks/stock/useStockFamilies';
-import { useStockSubFamilies } from '@/hooks/stock/useStockSubFamilies';
+import PartForm from '@/components/stock/PartForm';
 import StatusCallout from '@/components/ui/StatusCallout';
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
@@ -215,7 +213,6 @@ function CurrentPartTab({ part, onUnlink }) {
       )}
       <Flex gap="4" mt="1">
         {part.location && <Text size="1" color="gray">📍 {part.location}</Text>}
-        <Text size="1" color="gray">Stock : {part.qty_in_stock ?? '—'} {part.unit || 'pcs'}</Text>
         {part.supplier_refs_count != null && (
           <Text size="1" color="gray">{part.supplier_refs_count} fournisseur{part.supplier_refs_count > 1 ? 's' : ''}</Text>
         )}
@@ -327,176 +324,32 @@ SearchPartTab.propTypes = { onSelect: PropTypes.func.isRequired };
 
 // ─── Onglet "Créer une pièce" ─────────────────────────────────────────────────
 
-function useSuppliersList() {
-  const [suppliers, setSuppliers] = useState([]);
-  useEffect(() => {
-    fetchSuppliers({}).then(d => setSuppliers(Array.isArray(d) ? d : [])).catch(() => {});
-  }, []);
-  return suppliers;
-}
-
-function CreatePartTab({ onCreated }) {
-  const { families, loading: familiesLoading } = useStockFamilies();
-  const { subFamilies: allSubFamilies } = useStockSubFamilies();
-  const suppliers = useSuppliersList();
-
-  const [form, setForm] = useState({
-    family_code: '',
-    sub_family_code: '',
-    manufacturer_name: '',
-    manufacturer_ref: '',
-    label: '',
-    supplier_id: '',
-    supplier_ref: '',
-  });
+function CreatePartTab({ onCreated, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const subFamilies = allSubFamilies.filter(s => s.family_code === form.family_code);
-  const set = field => e => setForm(f => ({ ...f, [field]: e.target.value }));
-  const setVal = (field, val) => setForm(f => ({ ...f, [field]: val }));
-
-  const handleCreate = async () => {
-    if (!form.family_code) { setError('La famille est obligatoire.'); return; }
-    if (!form.sub_family_code) { setError('La sous-famille est obligatoire.'); return; }
-    if (!form.manufacturer_name.trim()) { setError('Le nom du fabricant est obligatoire.'); return; }
-    if (!form.manufacturer_ref.trim()) { setError('La référence fabricant est obligatoire.'); return; }
-
+  const handleSubmit = async (payload) => {
     setSaving(true);
     setError(null);
     try {
-      const part = await partsApi.createPart({
-        family_code: form.family_code,
-        sub_family_code: form.sub_family_code,
-        manufacturer_refs: [{
-          manufacturer_name: form.manufacturer_name.trim(),
-          manufacturer_ref: form.manufacturer_ref.trim(),
-          label: form.label.trim() || null,
-          is_preferred: true,
-        }],
-      });
-
-      if (form.supplier_id && form.supplier_ref.trim()) {
-        const mfrRefId = part.manufacturer_refs?.[0]?.id;
-        if (mfrRefId) {
-          await partsApi.addSupplierRef(mfrRefId, {
-            supplier_id: form.supplier_id,
-            supplier_ref: form.supplier_ref.trim(),
-            is_preferred: true,
-          });
-          const refreshed = await partsApi.fetchPartDetail(part.id);
-          onCreated(refreshed);
-          return;
-        }
-      }
+      const part = await partsApi.createPartWithSupplierRef(payload);
       onCreated(part);
     } catch (err) {
       setError(err?.response?.data?.detail || 'Erreur lors de la création de la pièce.');
+      throw err;
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Flex direction="column" gap="3">
+    <Flex direction="column" gap="2">
       {error && <StatusCallout type="error">{error}</StatusCallout>}
-
-      {/* Famille / sous-famille */}
-      <Flex gap="2">
-        <Box style={{ flex: 1 }}>
-          <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Famille *</Text>
-          <Select.Root
-            value={form.family_code || '__none__'}
-            onValueChange={v => { setVal('family_code', v === '__none__' ? '' : v); setVal('sub_family_code', ''); }}
-            disabled={familiesLoading}
-          >
-            <Select.Trigger style={{ width: '100%', height: 34 }} />
-            <Select.Content>
-              <Select.Item value="__none__">Choisir…</Select.Item>
-              {families.map(f => (
-                <Select.Item key={f.family_code} value={f.family_code}>
-                  {f.family_code}{f.label ? ` — ${f.label}` : ''}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
-        </Box>
-        <Box style={{ flex: 1 }}>
-          <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Sous-famille *</Text>
-          <Select.Root
-            value={form.sub_family_code || '__none__'}
-            onValueChange={v => setVal('sub_family_code', v === '__none__' ? '' : v)}
-            disabled={!form.family_code}
-          >
-            <Select.Trigger style={{ width: '100%', height: 34 }} />
-            <Select.Content>
-              <Select.Item value="__none__">Choisir…</Select.Item>
-              {subFamilies.map(s => (
-                <Select.Item key={s.code} value={s.code}>
-                  {s.code}{s.label ? ` — ${s.label}` : ''}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
-        </Box>
-      </Flex>
-
-      {/* Ref fabricant */}
-      <Box style={{ padding: 10, background: 'var(--violet-2)', border: '1px solid var(--violet-4)', borderRadius: 'var(--radius-2)' }}>
-        <Flex align="center" gap="1" mb="2">
-          <Factory size={13} color="var(--violet-9)" />
-          <Text size="1" weight="bold" color="violet">Référence fabricant *</Text>
-        </Flex>
-        <Flex gap="2" wrap="wrap">
-          <Box style={{ flex: 1, minWidth: 130 }}>
-            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Fabricant *</Text>
-            <FInput value={form.manufacturer_name} onChange={set('manufacturer_name')} placeholder="ex : SKF" />
-          </Box>
-          <Box style={{ flex: 1, minWidth: 130 }}>
-            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Référence *</Text>
-            <FInput value={form.manufacturer_ref} onChange={set('manufacturer_ref')} placeholder="ex : 6205-2RS" />
-          </Box>
-        </Flex>
-        <Box mt="2">
-          <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Désignation</Text>
-          <FInput value={form.label} onChange={set('label')} placeholder="ex : Roulement à billes..." />
-        </Box>
-      </Box>
-
-      {/* Fournisseur optionnel */}
-      <Box style={{ padding: 10, background: 'var(--blue-2)', border: '1px solid var(--blue-4)', borderRadius: 'var(--radius-2)' }}>
-        <Text size="1" weight="bold" color="blue" style={{ display: 'block', marginBottom: 6 }}>Fournisseur (optionnel)</Text>
-        <Box mb="2">
-          <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Fournisseur</Text>
-          <select
-            value={form.supplier_id}
-            onChange={e => setVal('supplier_id', e.target.value)}
-            style={{ ...inputStyle }}
-          >
-            <option value="">Aucun pour l'instant</option>
-            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </Box>
-        {form.supplier_id && (
-          <Box>
-            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Référence fournisseur</Text>
-            <FInput
-              value={form.supplier_ref}
-              onChange={set('supplier_ref')}
-              placeholder="ex : P1115070"
-              disabled={!form.supplier_id}
-            />
-          </Box>
-        )}
-      </Box>
-
-      <Button size="2" color="blue" onClick={handleCreate} loading={saving}>
-        <Plus size={14} /> Créer et lier cette pièce
-      </Button>
+      <PartForm onSubmit={handleSubmit} onCancel={onCancel} saving={saving} />
     </Flex>
   );
 }
-CreatePartTab.propTypes = { onCreated: PropTypes.func.isRequired };
+CreatePartTab.propTypes = { onCreated: PropTypes.func.isRequired, onCancel: PropTypes.func.isRequired };
 
 // ─── Card pièce catalogue (3 onglets) ────────────────────────────────────────
 
@@ -533,7 +386,7 @@ function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
           <SearchPartTab onSelect={handleLink} />
         </Tabs.Content>
         <Tabs.Content value="create">
-          <CreatePartTab onCreated={handleLink} />
+          <CreatePartTab onCreated={handleLink} onCancel={() => setActiveTab('search')} />
         </Tabs.Content>
       </Tabs.Root>
     </Card>

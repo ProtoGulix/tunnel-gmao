@@ -57,15 +57,6 @@ FamilyFilters.propTypes = {
   onSubFamilyChange: PropTypes.func.isRequired,
 };
 
-function StockBadge({ quantity, unit }) {
-  if (quantity == null) return <Badge color="gray" variant="soft" size="1">Non renseigné</Badge>;
-  if (quantity === 0) return <Badge color="red" variant="soft" size="1">Rupture</Badge>;
-  if (quantity <= 3) return <Badge color="orange" variant="soft" size="1">Stock bas · {quantity}{unit ? ` ${unit}` : ''}</Badge>;
-  return <Badge color="green" variant="soft" size="1">{quantity}{unit ? ` ${unit}` : ''}</Badge>;
-}
-
-StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
-
 function StockItem({ item, isSelected, onClick }) {
   const manufacturers = item.manufacturer_refs ?? [];
   const primaryMfr = manufacturers[0];
@@ -112,7 +103,6 @@ function StockItem({ item, isSelected, onClick }) {
         {/* Colonne droite — infos stock */}
         <Flex direction="column" gap="1" align="end">
           <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.ref}</Badge>
-          <StockBadge quantity={item.quantity} unit={item.unit} />
           {item.supplier_refs_count > 0
             ? <Badge color="blue" variant="soft" size="1">{item.supplier_refs_count} fourn.</Badge>
             : <Badge color="orange" variant="soft" size="1">À qualifier</Badge>

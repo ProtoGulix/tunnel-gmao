@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Flex, Radio, Table, Text } from '@radix-ui/themes';
+import { Badge, Box, Flex, Table, Text } from '@radix-ui/themes';
 import { Link2, Truck } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
@@ -22,22 +22,19 @@ function RefRow({ item, isSelected, onSelect }) {
       style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-3)' : undefined }}
     >
       <Table.Cell>
-        <Radio checked={isSelected} onCheckedChange={() => onSelect(item)} />
-      </Table.Cell>
-      <Table.Cell>
         <Badge variant="soft" color="gray">{item.supplier_name}</Badge>
       </Table.Cell>
       <Table.Cell>
+        <Badge variant="soft" color="blue">{item.internal_ref}</Badge>
+      </Table.Cell>
+      <Table.Cell>
         <Flex direction="column" gap="1">
-          <Text size="2">{item.internal_ref}</Text>
-          <Text size="1" color="gray">{item.manufacturer_name} — {item.manufacturer_ref}</Text>
+          <Text size="2" weight="medium">{item.manufacturer_name}</Text>
+          <Badge variant="soft" color="violet" style={{ alignSelf: 'flex-start' }}>{item.manufacturer_ref}</Badge>
         </Flex>
       </Table.Cell>
       <Table.Cell>
         <Badge variant="soft" color="indigo">{item.supplier_ref}</Badge>
-      </Table.Cell>
-      <Table.Cell>
-        <Text size="2">{item.unit_price != null ? `${item.unit_price} €` : '-'}</Text>
       </Table.Cell>
     </Table.Row>
   );
@@ -62,11 +59,10 @@ function RefsTable({ refs, selectedId, onSelect }) {
     <Table.Root variant="surface" size="1">
       <Table.Header>
         <Table.Row>
-          <Table.ColumnHeaderCell style={{ width: 36 }} />
           <Table.ColumnHeaderCell>Fournisseur</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell>Pièce / fabricant</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Réf. interne</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Fabricant</Table.ColumnHeaderCell>
           <Table.ColumnHeaderCell>Réf. fournisseur</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell>Prix</Table.ColumnHeaderCell>
         </Table.Row>
       </Table.Header>
       <Table.Body>

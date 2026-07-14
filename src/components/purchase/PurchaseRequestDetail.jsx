@@ -150,7 +150,7 @@ function NoPieceLinked() {
   );
 }
 
-function PartCard({ part, unit }) {
+function PartCard({ part }) {
   return (
     <Flex direction="column" gap="1">
       <Flex align="center" gap="2" mb="1">
@@ -170,9 +170,6 @@ function PartCard({ part, unit }) {
         </DetailRow>
       )}
       {part.location && <DetailRow label="Emplacement"><Text size="2">{part.location}</Text></DetailRow>}
-      <DetailRow label="Stock">
-        <Text size="2">{part.qty_in_stock ?? '—'} {part.unit || unit || 'pcs'}</Text>
-      </DetailRow>
       {part.supplier_refs_count != null && (
         <DetailRow label="Fournisseurs">
           <Text size="2">{part.supplier_refs_count} référencé{part.supplier_refs_count > 1 ? 's' : ''}</Text>
@@ -181,9 +178,9 @@ function PartCard({ part, unit }) {
     </Flex>
   );
 }
-PartCard.propTypes = { part: PropTypes.object.isRequired, unit: PropTypes.string };
+PartCard.propTypes = { part: PropTypes.object.isRequired };
 
-function LegacyStockItemCard({ stockItem, unit }) {
+function LegacyStockItemCard({ stockItem }) {
   return (
     <Flex direction="column" gap="1">
       <Flex align="center" gap="2" mb="1">
@@ -196,22 +193,19 @@ function LegacyStockItemCard({ stockItem, unit }) {
           <Text size="2">{stockItem.family_code}{stockItem.sub_family_code ? ` / ${stockItem.sub_family_code}` : ''}</Text>
         </DetailRow>
       )}
-      <DetailRow label="Stock">
-        <Text size="2">{stockItem.quantity ?? '—'} {stockItem.unit || unit || 'pcs'}</Text>
-      </DetailRow>
     </Flex>
   );
 }
-LegacyStockItemCard.propTypes = { stockItem: PropTypes.object.isRequired, unit: PropTypes.string };
+LegacyStockItemCard.propTypes = { stockItem: PropTypes.object.isRequired };
 
-function StockItemCard({ part, stockItem, unit }) {
+function StockItemCard({ part, stockItem }) {
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
       <CardHeader icon={Package} title="Pièce catalogue" />
       {part ? (
-        <PartCard part={part} unit={unit} />
+        <PartCard part={part} />
       ) : stockItem ? (
-        <LegacyStockItemCard stockItem={stockItem} unit={unit} />
+        <LegacyStockItemCard stockItem={stockItem} />
       ) : (
         <NoPieceLinked />
       )}
@@ -219,7 +213,7 @@ function StockItemCard({ part, stockItem, unit }) {
   );
 }
 
-StockItemCard.propTypes = { part: PropTypes.object, stockItem: PropTypes.object, unit: PropTypes.string };
+StockItemCard.propTypes = { part: PropTypes.object, stockItem: PropTypes.object };
 
 function LineStateBadge({ line }) {
   if (line.is_selected) return <Badge variant="solid" size="1" color="green">Sélectionné</Badge>;
@@ -448,7 +442,7 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete, onRefres
         <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
           <DaInfoCard item={item} urgency={urgency} statusColor={statusColor} statusLabel={statusLabel} />
           <InterventionCard intervention={item.intervention} />
-          <StockItemCard part={item.part} stockItem={item.stock_item} unit={item.unit} />
+          <StockItemCard part={item.part} stockItem={item.stock_item} />
         </Box>
         <Separator size="4" />
         <OrderLinesSection

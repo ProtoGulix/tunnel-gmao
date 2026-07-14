@@ -102,7 +102,7 @@ export default function SupplierPartRefDetail({ item, onManageSupplier }) {
             <Flex align="center" gap="1">
               <Badge variant="soft" color="blue" size="2">{item.internal_ref}</Badge>
               <IconButton size="1" variant="ghost" color="gray" title="Voir la pièce" asChild>
-                <RouterLink to={`/stock?tab=parts&q=${encodeURIComponent(item.internal_ref)}`}>
+                <RouterLink to={`/stock?tab=items&q=${encodeURIComponent(item.internal_ref)}`}>
                   <ExternalLink size={12} />
                 </RouterLink>
               </IconButton>

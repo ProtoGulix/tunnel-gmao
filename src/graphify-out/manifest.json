@@ -150,9 +150,9 @@
     "semantic_hash": "16bf6766d0478f41764faaf62b5536b1"
   },
   "api/supplierOrders.js": {
-    "mtime": 1783761138.992012,
-    "ast_hash": "b95fe4a568e5c43542e5db608b052883",
-    "semantic_hash": "b95fe4a568e5c43542e5db608b052883"
+    "mtime": 1783848929.3777313,
+    "ast_hash": "77d7b246f62ec42d24f893a1d73fedf7",
+    "semantic_hash": "77d7b246f62ec42d24f893a1d73fedf7"
   },
   "api/suppliers.js": {
     "mtime": 1780834255.188485,
@@ -954,11 +954,6 @@
     "ast_hash": "860b8fd42e53529ddceedb3703c68dc1",
     "semantic_hash": "860b8fd42e53529ddceedb3703c68dc1"
   },
-  "components/suppliers/SupplierDetail.jsx": {
-    "mtime": 1780834255.204485,
-    "ast_hash": "d856b28e6b926dbd66a93038489c181e",
-    "semantic_hash": "d856b28e6b926dbd66a93038489c181e"
-  },
   "components/suppliers/SupplierForm.jsx": {
     "mtime": 1780834255.204485,
     "ast_hash": "a6133b9cf7f7e38001b78067c6fb0d7d",
@@ -975,9 +970,9 @@
     "semantic_hash": "f9d7301c24dcecd9269ea1cbf4591f3d"
   },
   "components/suppliers/tabs/SuppliersTab.jsx": {
-    "mtime": 1783761138.9960122,
-    "ast_hash": "4968dacc3deddf90d83a2e56e9ff260d",
-    "semantic_hash": "4968dacc3deddf90d83a2e56e9ff260d"
+    "mtime": 1783848454.5258071,
+    "ast_hash": "05419d1c1619125476c831e78f4f06c9",
+    "semantic_hash": "05419d1c1619125476c831e78f4f06c9"
   },
   "components/tasks/TaskCreateDialog.jsx": {
     "mtime": 1780834255.204485,
@@ -1770,9 +1765,9 @@
     "semantic_hash": "98d555bbff99e65c684f39356101b959"
   },
   "api/parts.js": {
-    "mtime": 1781640774.4814234,
-    "ast_hash": "126c9540678dbb9c4f8a626603362607",
-    "semantic_hash": "126c9540678dbb9c4f8a626603362607"
+    "mtime": 1783847290.5041285,
+    "ast_hash": "393d87de486d806a6a242c73b95e2db8",
+    "semantic_hash": "393d87de486d806a6a242c73b95e2db8"
   },
   "components/admin/AdminRefEquipementClassesSection.jsx": {
     "mtime": 1781640774.4814234,
@@ -1800,9 +1795,9 @@
     "semantic_hash": "47e42c44f44e3fd843073cde8772bf44"
   },
   "components/stock/PartSupplierRefsPanel.jsx": {
-    "mtime": 1781640774.4854233,
-    "ast_hash": "79eec8a2fc97992b7bc5c56de1799b61",
-    "semantic_hash": "79eec8a2fc97992b7bc5c56de1799b61"
+    "mtime": 1783956616.415391,
+    "ast_hash": "bd0de84f42e83a7ef9430cf9582da9cc",
+    "semantic_hash": "bd0de84f42e83a7ef9430cf9582da9cc"
   },
   "components/stock/tabs/PartsTab.jsx": {
     "mtime": 1783761138.9960122,
@@ -1848,5 +1843,25 @@
     "mtime": 1783715872.233096,
     "ast_hash": "9cebb1c527281297fc11cf2311a96482",
     "semantic_hash": "9cebb1c527281297fc11cf2311a96482"
+  },
+  "components/suppliers/SupplierManageModal.jsx": {
+    "mtime": 1783847426.4812715,
+    "ast_hash": "89b779a91862d6e4d7e6c85c7dee19be",
+    "semantic_hash": "89b779a91862d6e4d7e6c85c7dee19be"
+  },
+  "components/suppliers/SupplierPartRefDetail.jsx": {
+    "mtime": 1783849077.3869584,
+    "ast_hash": "f934d6a3592e29636895ca28104e889b",
+    "semantic_hash": "f934d6a3592e29636895ca28104e889b"
+  },
+  "hooks/suppliers/useSupplierPartRefs.js": {
+    "mtime": 1783847284.8360808,
+    "ast_hash": "d1ded87dd4ee5cc277dd695b302ef649",
+    "semantic_hash": "d1ded87dd4ee5cc277dd695b302ef649"
+  },
+  "hooks/suppliers/useSupplierPriceStats.js": {
+    "mtime": 1783848936.1417873,
+    "ast_hash": "079a97eb9ff2001dc6da40c1caa6ccaf",
+    "semantic_hash": "079a97eb9ff2001dc6da40c1caa6ccaf"
   }
 }

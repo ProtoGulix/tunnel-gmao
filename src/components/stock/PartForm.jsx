@@ -1,7 +1,8 @@
 /**
  * @fileoverview Formulaire création/édition d'une pièce V4
  *
- * En création  : pièce + au moins une ref fabricant obligatoire.
+ * En création  : pièce + au moins une ref fabricant obligatoire, chacune pouvant
+ *                être liée à un fournisseur optionnel (sans ambiguïté de rattachement).
  * En édition   : champs scalaires seulement (familles, qty, loc, unité).
  *                Les refs fabricant se gèrent depuis PartManufacturerRefsPanel.
  *
@@ -9,20 +10,150 @@
  */
 
 import PropTypes from 'prop-types';
-import { useState } from 'react';
-import { Badge, Box, Button, Card, Flex, Select, Text, TextField } from '@radix-ui/themes';
-import { Edit2, Factory, Package, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Badge, Box, Button, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { ChevronDown, ChevronRight, Edit2, Factory, Package, Plus, Trash2 } from 'lucide-react';
 import { UNIT_OPTIONS } from '@/config/units';
 import { useStockFamilies } from '@/hooks/stock/useStockFamilies';
 import { useStockSubFamilies } from '@/hooks/stock/useStockSubFamilies';
 import FormErrors from '@/components/shared/FormErrors';
 import { handleAPIError } from '@/lib/api/errors';
+import { fetchSuppliers } from '@/api/suppliers';
+import { buildSupplierRefPayload, initialSupplierRefFormState } from '@/components/stock/SupplierRefFormRow';
+
+// ─── Fournisseurs optionnels rattachés à une ref fabricant (0..N) ─────────────
+
+function GhostSupplierRow({ onClick }) {
+  return (
+    <Flex
+      align="center" gap="2"
+      onClick={onClick}
+      style={{ cursor: 'pointer', padding: '4px 2px' }}
+    >
+      <Plus size={11} color="var(--gray-9)" />
+      <Text size="1" color="gray">Lier un fournisseur à cette référence…</Text>
+    </Flex>
+  );
+}
+
+GhostSupplierRow.propTypes = { onClick: PropTypes.func.isRequired };
+
+function SupplierRefEntry({ id, suppliers, entry, onChange, onRemove }) {
+  const [expanded, setExpanded] = useState(false);
+  const set = (field) => (e) => onChange({ ...entry, [field]: e.target.value });
+
+  return (
+    <Box>
+      <Flex align="center" gap="2">
+        <Box
+          onClick={() => setExpanded((v) => !v)}
+          style={{ cursor: 'pointer', display: 'flex', flexShrink: 0 }}
+          title="Plus d'options"
+        >
+          {expanded ? <ChevronDown size={13} color="var(--gray-9)" /> : <ChevronRight size={13} color="var(--gray-9)" />}
+        </Box>
+        <select
+          value={entry.supplier_id}
+          onChange={set('supplier_id')}
+          style={{ flex: 1, minWidth: 0, height: 30, padding: '0 8px', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-7)', fontSize: 'var(--font-size-1)', background: 'var(--color-background)' }}
+        >
+          <option value="">Fournisseur…</option>
+          {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        <TextField.Root
+          size="1"
+          style={{ flex: 1, minWidth: 0 }}
+          value={entry.supplier_ref}
+          onChange={set('supplier_ref')}
+          placeholder="Réf. fournisseur"
+        />
+        <Button type="button" size="1" variant="ghost" color="red" onClick={onRemove} style={{ flexShrink: 0 }}>
+          <Trash2 size={11} />
+        </Button>
+      </Flex>
+
+      {expanded && (
+        <Flex gap="2" wrap="wrap" mt="2" pl="5">
+          <Box style={{ flex: 1, minWidth: 70 }}>
+            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Qté min.</Text>
+            <TextField.Root size="1" value={entry.min_order_quantity} onChange={set('min_order_quantity')} type="number" min="1" />
+          </Box>
+          <Box style={{ flex: 1, minWidth: 70 }}>
+            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Délai (j)</Text>
+            <TextField.Root size="1" value={entry.delivery_time_days} onChange={set('delivery_time_days')} type="number" min="0" />
+          </Box>
+          <Box style={{ flex: 2, minWidth: 140 }}>
+            <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>URL fiche produit</Text>
+            <TextField.Root size="1" value={entry.product_url} onChange={set('product_url')} placeholder="https://…" type="url" />
+          </Box>
+          <Flex align="center" gap="1" style={{ flexBasis: '100%' }}>
+            <input
+              type="checkbox"
+              id={`pref-${id}`}
+              checked={entry.is_preferred}
+              onChange={(e) => onChange({ ...entry, is_preferred: e.target.checked })}
+            />
+            <Text size="1" as="label" htmlFor={`pref-${id}`} color="gray">Préféré</Text>
+          </Flex>
+        </Flex>
+      )}
+    </Box>
+  );
+}
+
+SupplierRefEntry.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  suppliers: PropTypes.array.isRequired,
+  entry: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+};
+
+function SupplierRefSection({ mfrIndex, suppliers, supplierRefs, onAdd, onChange, onRemove }) {
+  return (
+    <Flex direction="column" gap="2">
+      {supplierRefs.map((entry, i) => (
+        <SupplierRefEntry
+          key={i}
+          id={`${mfrIndex}-${i}`}
+          suppliers={suppliers}
+          entry={entry}
+          onChange={(updated) => onChange(i, updated)}
+          onRemove={() => onRemove(i)}
+        />
+      ))}
+      <GhostSupplierRow onClick={onAdd} />
+    </Flex>
+  );
+}
+
+SupplierRefSection.propTypes = {
+  mfrIndex: PropTypes.number.isRequired,
+  suppliers: PropTypes.array.isRequired,
+  supplierRefs: PropTypes.array.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+};
 
 // ─── Formulaire inline d'une ref fabricant (en création seulement) ────────────
 
-function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove }) {
+function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove, suppliers }) {
   const set = (field) => (e) => onChange(index, { ...mfrRef, [field]: e.target.value });
   const toggle = (field) => (v) => onChange(index, { ...mfrRef, [field]: v });
+
+  const addSupplierRef = () => {
+    onChange(index, { ...mfrRef, supplierRefs: [...mfrRef.supplierRefs, initialSupplierRefFormState(null)] });
+  };
+  const changeSupplierRef = (supIdx, updated) => {
+    onChange(index, {
+      ...mfrRef,
+      supplierRefs: mfrRef.supplierRefs.map((s, i) => (i === supIdx ? updated : s)),
+    });
+  };
+  const removeSupplierRef = (supIdx) => {
+    onChange(index, { ...mfrRef, supplierRefs: mfrRef.supplierRefs.filter((_, i) => i !== supIdx) });
+  };
 
   return (
     <Box style={{ padding: 10, background: 'var(--violet-2)', border: '1px solid var(--violet-5)', borderRadius: 'var(--radius-2)' }}>
@@ -57,9 +188,20 @@ function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove }) {
           <TextField.Root value={mfrRef.manufacturer_ref} onChange={set('manufacturer_ref')} placeholder="ex: 6205-2RS" />
         </Box>
       </Flex>
-      <Box mt="2">
+      <Box mt="2" mb="2">
         <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Désignation</Text>
         <TextField.Root value={mfrRef.label} onChange={set('label')} placeholder="ex: Roulement à billes à gorge profonde" />
+      </Box>
+
+      <Box style={{ borderTop: '1px solid var(--violet-5)', paddingTop: 8 }}>
+        <SupplierRefSection
+          mfrIndex={index}
+          suppliers={suppliers}
+          supplierRefs={mfrRef.supplierRefs}
+          onAdd={addSupplierRef}
+          onChange={changeSupplierRef}
+          onRemove={removeSupplierRef}
+        />
       </Box>
     </Box>
   );
@@ -71,9 +213,13 @@ MfrRefFields.propTypes = {
   onChange: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
   canRemove: PropTypes.bool,
+  suppliers: PropTypes.array.isRequired,
 };
 
-const newMfrRef = (isPreferred = false) => ({ manufacturer_name: '', manufacturer_ref: '', label: '', is_preferred: isPreferred });
+const newMfrRef = (isPreferred = false) => ({
+  manufacturer_name: '', manufacturer_ref: '', label: '', is_preferred: isPreferred,
+  supplierRefs: [],
+});
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -88,11 +234,11 @@ function validate(form, mfrRefs, isEdit) {
     mfrRefs.forEach((r, i) => {
       if (!r.manufacturer_name.trim()) errs.push(`Ref. fabricant ${i + 1} : nom fabricant obligatoire.`);
       if (!r.manufacturer_ref.trim()) errs.push(`Ref. fabricant ${i + 1} : référence obligatoire.`);
+      r.supplierRefs.forEach((s, j) => {
+        if (!s.supplier_id) errs.push(`Ref. fabricant ${i + 1}, fournisseur ${j + 1} : sélectionnez un fournisseur.`);
+        if (!s.supplier_ref.trim()) errs.push(`Ref. fabricant ${i + 1}, fournisseur ${j + 1} : référence fournisseur obligatoire.`);
+      });
     });
-    const hasPreferred = mfrRefs.some((r) => r.is_preferred);
-    if (!hasPreferred && mfrRefs.length > 0) {
-      // Auto-sélectionne la première si aucune n'est cochée
-    }
   }
   return errs;
 }
@@ -114,6 +260,12 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
 
   const [mfrRefs, setMfrRefs] = useState([newMfrRef(true)]);
   const [errors, setErrors] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    fetchSuppliers({}).then((d) => setSuppliers(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [isEdit]);
 
   const subFamilies = allSubFamilies.filter((s) => s.family_code === form.family_code);
 
@@ -162,6 +314,14 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
           label: r.label.trim() || null,
           is_preferred: r.is_preferred,
         }));
+
+        // Fournisseurs à lier après création, groupés par référence fabricant (identifiée par son index)
+        const supplierRefsByMfrIndex = refs.flatMap((r, i) =>
+          r.supplierRefs.map((s) => ({ mfrIndex: i, ...buildSupplierRefPayload(s), supplier_id: s.supplier_id }))
+        );
+        if (supplierRefsByMfrIndex.length > 0) {
+          payload.supplier_refs_by_mfr_index = supplierRefsByMfrIndex;
+        }
       }
 
       await onSubmit(payload);
@@ -172,7 +332,7 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
   };
 
   return (
-    <Card>
+    <Box>
       <form onSubmit={handleSubmit}>
         <Flex direction="column" gap="3">
           <Flex align="center" gap="2">
@@ -244,7 +404,7 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
           <Flex gap="3" wrap="wrap">
             <Box style={{ flex: 1, minWidth: 100 }}>
               <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Quantité</Text>
-              <TextField.Root type="number" min="0" value={form.qty_in_stock} onChange={set('qty_in_stock')} />
+              <TextField.Root type="number" min="0" value={form.qty_in_stock} onChange={set('qty_in_stock')} disabled title="La gestion des quantités n'est pas encore disponible" />
             </Box>
             <Box style={{ flex: 1, minWidth: 120 }}>
               <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Unité</Text>
@@ -273,6 +433,7 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
                   onChange={updateMfrRef}
                   onRemove={removeMfrRef}
                   canRemove={mfrRefs.length > 1}
+                  suppliers={suppliers}
                 />
               ))}
               <Button type="button" size="1" variant="ghost" color="violet" onClick={addMfrRef} style={{ alignSelf: 'flex-start' }}>
@@ -289,7 +450,7 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
           </Flex>
         </Flex>
       </form>
-    </Card>
+    </Box>
   );
 }
 

@@ -38,6 +38,25 @@ export async function createPart(payload) {
   return response.data || null;
 }
 
+/**
+ * Crée une pièce, puis lie optionnellement des fournisseurs à ses références fabricant.
+ * `payload.supplier_refs_by_mfr_index` (optionnel) : [{ mfrIndex, supplier_id, supplier_ref, ... }] — voir PartForm.
+ * `mfrIndex` correspond à la position de la référence fabricant dans `payload.manufacturer_refs`.
+ */
+export async function createPartWithSupplierRef(payload) {
+  const { supplier_refs_by_mfr_index: supplierRefs, ...partPayload } = payload;
+  const part = await createPart(partPayload);
+  if (!supplierRefs?.length) return part;
+
+  for (const { mfrIndex, ...supplierRefPayload } of supplierRefs) {
+    const mfrRefId = part.manufacturer_refs?.[mfrIndex]?.id;
+    if (!mfrRefId) continue;
+    // Séquentiel pour éviter des courses sur is_preferred au sein d'une même référence fabricant
+    await addSupplierRef(mfrRefId, supplierRefPayload);
+  }
+  return fetchPartDetail(part.id);
+}
+
 export async function updatePart(id, updates) {
   const response = await api.patch(`/parts/${id}`, updates);
   return response.data || null;

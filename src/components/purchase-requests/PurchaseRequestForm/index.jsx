@@ -144,12 +144,6 @@ function PurchaseRequestForm({ onSubmit, loading = false, onCancel, submitLabel 
                         </Flex>
                         <Flex direction="column" gap="1" align="end">
                           <Badge variant="soft" color="gray" size="1">{item.family_code}/{item.sub_family_code}</Badge>
-                          {(item.qty_in_stock ?? 0) === 0
-                            ? <Badge color="red" variant="soft" size="1">Rupture</Badge>
-                            : (item.qty_in_stock ?? 0) <= 3
-                              ? <Badge color="orange" variant="soft" size="1">Stock bas · {item.qty_in_stock}</Badge>
-                              : <Badge color="green" variant="soft" size="1">{item.qty_in_stock} {item.unit || ''}</Badge>
-                          }
                         </Flex>
                       </div>
                     );

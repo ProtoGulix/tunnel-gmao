@@ -5,24 +5,25 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
-import { Edit2, Factory, ShoppingCart, Star, Trash2, X } from 'lucide-react';
+import { Edit2, Factory, PackageSearch, ShoppingCart, Star, Trash2, X } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 import PartManufacturerRefsPanel from '@/components/stock/PartManufacturerRefsPanel';
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
 
-function StockQtyCard({ quantity, unit }) {
-  const color = quantity == null ? 'gray' : quantity === 0 ? 'red' : quantity <= 3 ? 'orange' : 'green';
+function StockQtyCard() {
   return (
-    <Box style={{ padding: '10px 14px', background: 'var(--gray-2)', borderRadius: 'var(--radius-3)' }}>
-      <Text size="1" color="gray" style={{ display: 'block', marginBottom: 2 }}>Quantité en stock</Text>
-      <Flex align="baseline" gap="1">
-        <Text size="5" weight="bold" color={color}>{quantity ?? '—'}</Text>
-        {unit && <Text size="2" color="gray">{unit}</Text>}
-      </Flex>
+    <Box style={{ padding: '10px 14px', background: 'var(--gray-2)', borderRadius: 'var(--radius-3)', flex: 1 }}>
+      <Text size="1" color="gray" style={{ display: 'block', marginBottom: 6 }}>Quantité en stock</Text>
+      <EmptyState
+        compact
+        icon={<PackageSearch size={16} />}
+        title="Non suivie"
+        description="La gestion des quantités n'est pas encore disponible."
+      />
     </Box>
   );
 }
-StockQtyCard.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
 
 function MetaRow({ label, children }) {
   return (
@@ -66,7 +67,7 @@ PreferredMfrHeader.propTypes = { part: PropTypes.object.isRequired };
 
 function PartMeta({ part }) {
   return (
-    <Flex direction="column" gap="1">
+    <Flex direction="column" gap="1" style={{ flex: 1 }}>
       <Text size="1" weight="bold" color="gray" mb="1">Fiche pièce</Text>
       <MetaRow label="Réf. interne">
         <Badge variant="outline" color="blue" size="1" style={{ fontFamily: 'monospace' }}>
@@ -112,8 +113,10 @@ export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onC
         </Flex>
       </Flex>
 
-      <StockQtyCard quantity={part.qty_in_stock} unit={part.unit} />
-      <PartMeta part={part} />
+      <Flex gap="3" align="stretch">
+        <StockQtyCard />
+        <PartMeta part={part} />
+      </Flex>
 
       {/* Toutes les refs fabricant + leurs fournisseurs */}
       <PartManufacturerRefsPanel part={part} onRefresh={onRefresh} />
