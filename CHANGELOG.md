@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.51.0] — 2026-07-14
+
+### Fournisseurs — nouvel onglet « Références fournisseur »
+
+- L'onglet Fournisseurs affiche désormais toutes les références fournisseur du catalogue dans un même tableau, avec un filtre pour ne voir que celles d'un fournisseur précis
+- Le détail d'une référence sélectionnée montre la liaison complète : référence interne, fabricant et référence fabricant, conditions d'achat
+- Nouveau bloc « Historique des prix » : prix moyen, minimum, maximum et dernier prix obtenu, calculés à partir des commandes déjà passées
+- Le prix affiché sur une référence fournisseur n'est plus une valeur saisie à la main : il est désormais calculé automatiquement à partir de l'historique réel des commandes
+- Accès rapide à la fiche complète d'un fournisseur depuis le détail d'une référence, sans quitter l'écran
+
+### Stock — fiche pièce retravaillée
+
+- Les références fabricant et leurs fournisseurs s'affichent maintenant dans des tableaux clairs, chacune avec sa propre section toujours visible (plus besoin de déplier)
+- Ajout d'un fournisseur à une référence fabricant simplifié, avec la possibilité d'en lier plusieurs
+- La création et la modification d'une pièce se font maintenant dans une fenêtre dédiée, y compris depuis la qualification d'une demande d'achat (formulaire unique et plus complet à la création : plusieurs références fabricant et fournisseurs possibles dès la création)
+- Le bloc « Quantité en stock » indique clairement que le suivi des quantités n'est pas encore disponible, plutôt que d'afficher une valeur à zéro trompeuse ; les mentions « Rupture » / « Stock bas » ont été retirées des listes tant que cette fonctionnalité n'existe pas
+
+### Achats — commandes fournisseur et sessions de qualification
+
+- Nouveau composant de liste pour les commandes fournisseur, avec recherche
+- Nouveaux écrans pour regrouper les demandes d'achat par session et faciliter leur traitement en lot
+- Mise en évidence directe des demandes d'achat concernées par une action, depuis la page d'accueil
+- Sauvegarde automatique lors de la négociation des lignes de commande fournisseur
+
+### Interface — mise en page
+
+- Ajustements de mise en page sur les écrans Interventions, Préventif, Achats et Stock pour un meilleur rendu sur différentes tailles d'écran
+
 ## [3.50.0] — 2026-07-08
 
 ### Interventions — Suppression d'une action
