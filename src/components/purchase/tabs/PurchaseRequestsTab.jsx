@@ -1,21 +1,18 @@
 /**
  * @fileoverview Onglet demandes d'achat — layout master-detail
- * Gère les demandes actives (variant='active') et les archives (variant='archive').
  * @module components/purchase/tabs/PurchaseRequestsTab
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
-import { Archive, MousePointerClick, ShoppingCart } from 'lucide-react';
+import { MousePointerClick, ShoppingCart } from 'lucide-react';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { fetchPurchaseRequestDetail, fetchPurchaseRequestStatuses, updatePurchaseRequest } from '@/api/purchaseRequests';
-import { ArchiveFilters, PrFilters, PurchaseRequestListItem } from './PurchaseRequestsTabParts';
-
-const ACTIVE_STATUSES = 'TO_QUALIFY,NO_SUPPLIER_REF,PENDING_DISPATCH,OPEN,CONSULTATION,QUOTED,ORDERED,PARTIAL';
+import { PrFilters, PurchaseRequestListItem } from './PurchaseRequestsTabParts';
 
 // ─── Empty state détail ───────────────────────────────────────────────────────
 
@@ -36,13 +33,11 @@ function DetailEmptyState({ label }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-export default function PurchaseRequestsTab({ variant = 'active', refreshSignal, onDispatchStateChange }) {
-  const isArchive = variant === 'archive';
-
+export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChange }) {
   const [statuses, setStatuses] = useState([]);
   useEffect(() => {
-    if (!isArchive) fetchPurchaseRequestStatuses().then(setStatuses).catch(() => setStatuses([]));
-  }, [isArchive]);
+    fetchPurchaseRequestStatuses().then(setStatuses).catch(() => setStatuses([]));
+  }, []);
 
   const {
     items, loading, error,
@@ -52,17 +47,13 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
     refresh, removeItem,
     dispatching, dispatchResult, setDispatchResult, dispatch,
     readyToDispatch,
-  } = usePurchaseRequests(
-    isArchive ? { excludeStatuses: ACTIVE_STATUSES } : { initialStatus: 'TO_QUALIFY' }
-  );
+  } = usePurchaseRequests({ initialStatus: 'TO_QUALIFY' });
 
   useEffect(() => { if (refreshSignal) refresh(); }, [refreshSignal, refresh]);
 
   useEffect(() => {
-    if (!isArchive) {
-      onDispatchStateChange?.({ onDispatch: dispatch, dispatching, dispatchResult });
-    }
-  }, [isArchive, dispatching, dispatch, dispatchResult, onDispatchStateChange]);
+    onDispatchStateChange?.({ onDispatch: dispatch, dispatching, dispatchResult });
+  }, [dispatching, dispatch, dispatchResult, onDispatchStateChange]);
 
   const [selected, setSelected] = useState(null);
   const [mode, setMode] = useState(null); // 'edit' | null
@@ -105,7 +96,7 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
 
   const detailContent = () => {
     if (!selected) return null;
-    if (!isArchive && mode === 'edit') {
+    if (mode === 'edit') {
       return (
         <PurchaseRequestEditForm
           item={selected}
@@ -128,8 +119,8 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
     return (
       <PurchaseRequestDetail
         item={selected}
-        onEdit={!isArchive ? () => setMode('edit') : undefined}
-        onDelete={!isArchive ? handleDelete : undefined}
+        onEdit={() => setMode('edit')}
+        onDelete={handleDelete}
         onRefresh={handleRefresh}
       />
     );
@@ -139,8 +130,8 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
 
   const masterList = items.length === 0 && !loading ? (
     <Flex direction="column" align="center" justify="center" gap="2" style={{ height: 200, padding: 24 }}>
-      {isArchive ? <Archive size={28} color="var(--gray-7)" /> : <ShoppingCart size={28} color="var(--gray-7)" />}
-      <Text size="2" color="gray">{isArchive ? 'Aucune demande archivée' : "Aucune demande d'achat"}</Text>
+      <ShoppingCart size={28} color="var(--gray-7)" />
+      <Text size="2" color="gray">Aucune demande d&apos;achat</Text>
     </Flex>
   ) : (
     <div style={{ padding: '8px 10px' }}>
@@ -150,13 +141,13 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
     </div>
   );
 
-  const headerExtra = isArchive
-    ? <ArchiveFilters status={status} setStatus={setStatus} />
-    : <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />;
+  const headerExtra = (
+    <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />
+  );
 
   return (
-    <Box pt="3">
-      <div style={{ height: 'calc(100vh - 200px)', minHeight: 400 }}>
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
         <MasterDetailLayout
           freeDetail
           ratio="38% 1fr"
@@ -168,7 +159,7 @@ export default function PurchaseRequestsTab({ variant = 'active', refreshSignal,
             children: masterList,
             headerExtra,
           }}
-          detailChildren={detailContent() ?? <DetailEmptyState label={isArchive ? 'Sélectionnez une demande pour voir son détail' : 'Aucune demande sélectionnée'} />}
+          detailChildren={detailContent() ?? <DetailEmptyState label="Aucune demande sélectionnée" />}
           detailLoading={detailLoading}
         />
       </div>

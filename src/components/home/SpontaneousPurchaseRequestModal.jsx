@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Dialog, Flex, Text } from '@radix-ui/themes';
-import { Link } from 'lucide-react';
+import { Button, Dialog, Flex, Text } from '@radix-ui/themes';
+import { ShoppingCart, Upload } from 'lucide-react';
 import PurchaseRequestForm from '@/components/purchase-requests/PurchaseRequestForm';
+import PurchaseRequestSessionBatch from '@/components/purchase-requests/PurchaseRequestSessionBatch';
+import PurchaseRequestActionBanner from '@/components/home/PurchaseRequestActionBanner';
+import { CsvImportWizardContent } from '@/components/purchase/CsvImportWizard';
 
 import StatusCallout from '@/components/ui/StatusCallout';
 import { createPurchaseRequest } from '@/api/purchaseRequests';
@@ -10,20 +13,20 @@ import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export default function SpontaneousPurchaseRequestModal({ open, onOpenChange, action = null, onSuccess }) {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
+  const [mode, setMode] = useState('form'); // 'form' | 'csv'
+  const [batch, setBatch] = useState([]);
 
   const handleSubmit = async (formData) => {
     try {
       setLoading(true);
       setError(null);
-      await createPurchaseRequest({
+      const created = await createPurchaseRequest({
         ...formData,
         ...(action?.id && { intervention_action_id: action.id }),
       });
-      setSuccess(formData.item_label);
+      setBatch((b) => [...b, created]);
       onSuccess?.();
-      setTimeout(() => { setSuccess(null); onOpenChange(false); }, 1500);
     } catch (err) {
       setError(extractApiErrorMessage(err, 'Erreur lors de la création'));
     } finally {
@@ -31,72 +34,80 @@ export default function SpontaneousPurchaseRequestModal({ open, onOpenChange, ac
     }
   };
 
+  const handleRowDeleted = (id) => {
+    setBatch((b) => b.filter((item) => item.id !== id));
+  };
+
   const handleOpenChange = (v) => {
     if (loading) return;
-    if (!v) { setSuccess(null); setError(null); }
+    if (!v) { setError(null); setBatch([]); setMode('form'); }
     onOpenChange(v);
   };
 
-  const subcatColor = action?.subcategory?.category?.color ?? '#6b7280';
-
-  const contextBanner = action ? (
-    <Flex align="stretch" gap="4">
-      {/* Icône link dans la timeline */}
-      <Flex direction="column" align="center" style={{ flexShrink: 0, width: 18 }}>
-        <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-6)' }} />
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <Link size={18} strokeWidth={2.5} style={{ color: subcatColor, display: 'block' }} />
-        </div>
-        <div style={{ flex: 1, borderLeft: '2.5px dashed var(--gray-6)', marginTop: 5 }} />
-      </Flex>
-
-      {/* Contenu du bando */}
-      <Flex
-        align="center" gap="2"
-        style={{
-          flex: 1, minWidth: 0,
-          margin: '8px 0',
-          padding: '6px 10px',
-          background: `${subcatColor}12`,
-          borderLeft: `3px solid ${subcatColor}`,
-          borderRadius: 'var(--radius-2)',
-        }}
-      >
-        <Text size="2" weight="bold" style={{ fontFamily: 'monospace', color: subcatColor, flexShrink: 0 }}>
-          {action.intervention?.code ?? '—'}
-        </Text>
-        <Badge size="1" style={{ background: `${subcatColor}26`, color: subcatColor, border: 'none', flexShrink: 0 }}>
-          {action.subcategory?.code ?? action.subcategory?.name ?? '—'}
-        </Badge>
-        {action.description && (
-          <Text size="1" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {action.description}
-          </Text>
-        )}
-      </Flex>
-    </Flex>
-  ) : null;
+  const contextBanner = (
+    <>
+      {action && <PurchaseRequestActionBanner action={action} />}
+      <PurchaseRequestSessionBatch batch={batch} onRowDeleted={handleRowDeleted} />
+    </>
+  );
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Content style={{ maxWidth: 560 }}>
+      <Dialog.Content style={{ maxWidth: mode === 'csv' ? 720 : 560 }}>
         <Dialog.Title style={{ display: 'none' }}>Demande d&apos;achat</Dialog.Title>
 
-        {success && (
-          <StatusCallout type="success">
-            Demande créée — <strong>{success}</strong>
-          </StatusCallout>
-        )}
+        <Flex align="center" justify="between" mb="2">
+          <Flex align="center" gap="2">
+            {mode === 'csv' ? <Upload size={18} color="var(--blue-9)" /> : <ShoppingCart size={18} color="var(--blue-9)" />}
+            <Text size="3" weight="bold" color="blue">
+              {mode === 'csv' ? 'Import CSV — Demandes d’achat' : 'Nouvelle demande d’achat'}
+            </Text>
+          </Flex>
+          <Flex gap="1">
+            <Button
+              size="1" variant={mode === 'form' ? 'solid' : 'soft'} color="blue" type="button"
+              onClick={() => setMode('form')}
+            >
+              Formulaire
+            </Button>
+            <Button
+              size="1" variant={mode === 'csv' ? 'solid' : 'soft'} color="blue" type="button"
+              onClick={() => setMode('csv')}
+            >
+              <Upload size={12} /> Import CSV
+            </Button>
+          </Flex>
+        </Flex>
+
         {error && <StatusCallout type="error">{error}</StatusCallout>}
 
-        {!success && (
-          <PurchaseRequestForm
-            bare
-            onSubmit={handleSubmit}
-            loading={loading}
-            onCancel={() => onOpenChange(false)}
-            submitLabel="Créer la demande"
-            contextBanner={contextBanner}
+        {mode === 'form' && (
+          <>
+            <PurchaseRequestForm
+              bare
+              showTitle={false}
+              onSubmit={handleSubmit}
+              loading={loading}
+              onCancel={() => onOpenChange(false)}
+              submitLabel="Créer la demande"
+              contextBanner={contextBanner}
+            />
+            {batch.length > 0 && (
+              <Flex justify="end" mt="3">
+                <Button size="2" variant="soft" color="green" type="button" onClick={() => onOpenChange(false)}>
+                  Terminé
+                </Button>
+              </Flex>
+            )}
+          </>
+        )}
+
+        {mode === 'csv' && (
+          <CsvImportWizardContent
+            key={action?.id ?? 'no-action'}
+            initialIntervention={action?.intervention ?? null}
+            onSuccess={onSuccess}
+            onClose={() => onOpenChange(false)}
           />
         )}
       </Dialog.Content>

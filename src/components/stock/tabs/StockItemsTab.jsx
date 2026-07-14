@@ -57,15 +57,6 @@ FamilyFilters.propTypes = {
   onSubFamilyChange: PropTypes.func.isRequired,
 };
 
-function StockBadge({ quantity, unit }) {
-  if (quantity == null) return <Badge color="gray" variant="soft" size="1">Non renseigné</Badge>;
-  if (quantity === 0) return <Badge color="red" variant="soft" size="1">Rupture</Badge>;
-  if (quantity <= 3) return <Badge color="orange" variant="soft" size="1">Stock bas · {quantity}{unit ? ` ${unit}` : ''}</Badge>;
-  return <Badge color="green" variant="soft" size="1">{quantity}{unit ? ` ${unit}` : ''}</Badge>;
-}
-
-StockBadge.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
-
 function StockItem({ item, isSelected, onClick }) {
   const manufacturers = item.manufacturer_refs ?? [];
   const primaryMfr = manufacturers[0];
@@ -112,7 +103,6 @@ function StockItem({ item, isSelected, onClick }) {
         {/* Colonne droite — infos stock */}
         <Flex direction="column" gap="1" align="end">
           <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>{item.ref}</Badge>
-          <StockBadge quantity={item.quantity} unit={item.unit} />
           {item.supplier_refs_count > 0
             ? <Badge color="blue" variant="soft" size="1">{item.supplier_refs_count} fourn.</Badge>
             : <Badge color="orange" variant="soft" size="1">À qualifier</Badge>
@@ -221,43 +211,44 @@ export default function StockItemsTab() {
   };
 
   return (
-    <Box pt="3">
-      <Flex justify="end" mb="2">
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+      <Flex justify="end" mb="2" style={{ flexShrink: 0 }}>
         <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
           <Plus size={14} /> Ajouter
         </Button>
       </Flex>
       {mode === 'create' && (
-        <Box mb="3">
+        <Box mb="3" style={{ flexShrink: 0 }}>
           <StockItemForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
         </Box>
       )}
 
-      <MasterDetailLayout
-        fullHeight={false}
-        masterProps={{
-          icon: Package,
-          title: 'Pièces référencées',
-          count: pagination.total,
-          search,
-          onSearchChange: handleSearch,
-          loading,
-          children: masterList,
-          headerExtra: (
-            <FamilyFilters
-              facets={facets}
-              familyCode={familyCode}
-              onFamilyChange={handleFamilyChange}
-              subFamilyCode={subFamilyCode}
-              onSubFamilyChange={handleSubFamilyChange}
-            />
-          ),
-          pagination: totalPages > 1 ? { currentPage: pagination.page, totalPages, onPageChange: goToPage } : undefined,
-        }}
-        detailChildren={detailContent()}
-        detailLoading={detailLoading}
-        emptyLabel="Sélectionnez une pièce pour voir son détail"
-      />
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MasterDetailLayout
+          masterProps={{
+            icon: Package,
+            title: 'Pièces référencées',
+            count: pagination.total,
+            search,
+            onSearchChange: handleSearch,
+            loading,
+            children: masterList,
+            headerExtra: (
+              <FamilyFilters
+                facets={facets}
+                familyCode={familyCode}
+                onFamilyChange={handleFamilyChange}
+                subFamilyCode={subFamilyCode}
+                onSubFamilyChange={handleSubFamilyChange}
+              />
+            ),
+            pagination: totalPages > 1 ? { currentPage: pagination.page, totalPages, onPageChange: goToPage } : undefined,
+          }}
+          detailChildren={detailContent()}
+          detailLoading={detailLoading}
+          emptyLabel="Sélectionnez une pièce pour voir son détail"
+        />
+      </div>
     </Box>
   );
 }

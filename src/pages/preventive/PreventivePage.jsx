@@ -144,12 +144,12 @@ export default function PreventivePage() {
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
   return (
-    <>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Préventif"
         subtitle="Plans de maintenance préventive et suivi des occurrences"
       />
-      <Box px="4" style={{ height: 'calc(100vh - 180px)', minHeight: 500 }}>
+      <Box px="4" style={{ flex: 1, minHeight: 500, overflow: 'hidden' }}>
         <MasterDetailLayout
           freeDetail
           ratio="35% 1fr"
@@ -198,6 +198,6 @@ export default function PreventivePage() {
           </Flex>
         </AlertDialog.Content>
       </AlertDialog.Root>
-    </>
+    </Flex>
   );
 }

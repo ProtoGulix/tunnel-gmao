@@ -22,6 +22,7 @@ export async function fetchSupplierOrderStatuses() {
  * @param {Object} params
  * @param {string} [params.status] - OPEN | SENT | ACK | RECEIVED | CLOSED | CANCELLED
  * @param {string} [params.supplier_id]
+ * @param {string} [params.search] - Recherche texte (numéro de commande, nom fournisseur)
  * @param {number} [params.skip]
  * @param {number} [params.limit]
  * @returns {Promise<{items: Array, pagination: Object, facets: Array}>}
@@ -105,6 +106,19 @@ export async function exportSupplierOrderCsv(id) {
  */
 export async function fetchSupplierOrderLines(supplierOrderId) {
   const response = await api.get(`/supplier-order-lines/order/${supplierOrderId}`);
+  return response.data;
+}
+
+/**
+ * Statistiques de prix obtenus pour une pièce chez un fournisseur (historique des commandes)
+ * @param {string} partId
+ * @param {string} supplierId
+ * @returns {Promise<Object>}
+ */
+export async function fetchSupplierPriceStats(partId, supplierId) {
+  const response = await api.get('/supplier-order-lines/price-stats', {
+    params: { part_id: partId, supplier_id: supplierId },
+  });
   return response.data;
 }
 

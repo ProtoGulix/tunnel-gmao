@@ -6,16 +6,19 @@
 
 .container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   position: relative;
 }
 
 .main {
   flex: 1;
   background: var(--gray-1);
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
   overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   transition:
     margin-left 0.3s ease,
     margin-top 0.3s ease;

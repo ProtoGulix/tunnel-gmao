@@ -1,136 +1,143 @@
 /**
- * @fileoverview Onglet fournisseurs — master-detail
+ * @fileoverview Onglet fournisseurs — toutes les references fournisseur, filtrables par fournisseur
  * @module components/suppliers/tabs/SuppliersTab
  */
 
-import { useCallback, useState } from 'react';
-import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
-import { Plus, Truck } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Badge, Box, Flex, Table, Text } from '@radix-ui/themes';
+import { Link2, Truck } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
-import SupplierDetail from '@/components/suppliers/SupplierDetail';
-import SupplierForm from '@/components/suppliers/SupplierForm';
+import SupplierPartRefDetail from '@/components/suppliers/SupplierPartRefDetail';
+import SupplierManageModal from '@/components/suppliers/SupplierManageModal';
 import { useSuppliers } from '@/hooks/suppliers/useSuppliers';
+import { useSupplierPartRefs } from '@/hooks/suppliers/useSupplierPartRefs';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
 
-function SupplierItem({ supplier, isSelected, onClick }) {
+function RefRow({ item, isSelected, onSelect }) {
   return (
-    <Box
-      onClick={() => onClick(supplier)}
-      style={{
-        padding: '10px 14px',
-        cursor: 'pointer',
-        borderBottom: '1px solid var(--gray-4)',
-        background: isSelected ? 'var(--accent-3)' : 'var(--gray-1)',
-        boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
-      }}
-      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-3)'; }}
-      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--gray-1)'; }}
+    <Table.Row
+      onClick={() => onSelect(item)}
+      style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-3)' : undefined }}
     >
-      <Flex direction="column" gap="1">
-        <Flex align="center" gap="2">
-          <Text size="2" weight="medium">{supplier.name}</Text>
-          <Badge color={supplier.is_active ? 'green' : 'gray'} variant="soft" size="1">
-            {supplier.is_active ? 'Actif' : 'Inactif'}
-          </Badge>
+      <Table.Cell>
+        <Badge variant="soft" color="gray">{item.supplier_name}</Badge>
+      </Table.Cell>
+      <Table.Cell>
+        <Badge variant="soft" color="blue">{item.internal_ref}</Badge>
+      </Table.Cell>
+      <Table.Cell>
+        <Flex direction="column" gap="1">
+          <Text size="2" weight="medium">{item.manufacturer_name}</Text>
+          <Badge variant="soft" color="violet" style={{ alignSelf: 'flex-start' }}>{item.manufacturer_ref}</Badge>
         </Flex>
-        <Flex gap="2" align="center">
-          {supplier.code && (
-            <Badge variant="outline" color="gray" size="1" style={{ fontFamily: 'monospace', fontSize: 10 }}>
-              {supplier.code}
-            </Badge>
-          )}
-          {supplier.contact_name && (
-            <Text size="1" color="gray">{supplier.contact_name}</Text>
-          )}
-        </Flex>
-      </Flex>
-    </Box>
+      </Table.Cell>
+      <Table.Cell>
+        <Badge variant="soft" color="indigo">{item.supplier_ref}</Badge>
+      </Table.Cell>
+    </Table.Row>
   );
 }
 
+RefRow.propTypes = {
+  item: PropTypes.object.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
+
+function RefsTable({ refs, selectedId, onSelect }) {
+  if (refs.length === 0) {
+    return (
+      <Flex direction="column" align="center" justify="center" style={{ height: 200, padding: 24 }} gap="2">
+        <Link2 size={28} color="var(--gray-7)" />
+        <Text size="2" color="gray">Aucune référence fournisseur trouvée</Text>
+      </Flex>
+    );
+  }
+  return (
+    <Table.Root variant="surface" size="1">
+      <Table.Header>
+        <Table.Row>
+          <Table.ColumnHeaderCell>Fournisseur</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Réf. interne</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Fabricant</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Réf. fournisseur</Table.ColumnHeaderCell>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {refs.map((ref) => (
+          <RefRow key={ref.id} item={ref} isSelected={ref.id === selectedId} onSelect={onSelect} />
+        ))}
+      </Table.Body>
+    </Table.Root>
+  );
+}
+
+RefsTable.propTypes = {
+  refs: PropTypes.array.isRequired,
+  selectedId: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
+};
+
 export default function SuppliersTab() {
   const [urlSearch, setUrlSearch] = useUrlSearch('sq');
-  const { suppliers, loading, error, search, setSearch, refresh, createSupplier, updateSupplier } =
-    useSuppliers({ initialSearch: urlSearch });
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const { suppliers } = useSuppliers({});
+  const { refs, loading, error, refresh } = useSupplierPartRefs({ supplierId: supplierFilter, search: urlSearch });
   const [selected, setSelected] = useState(null);
-  const [mode, setMode] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [manageSupplierId, setManageSupplierId] = useState(null);
 
-  const handleSearch = useCallback((v) => { setSearch(v); setUrlSearch(v); }, [setSearch, setUrlSearch]);
+  const sortedSuppliers = useMemo(
+    () => [...suppliers].sort((a, b) => a.name.localeCompare(b.name)),
+    [suppliers]
+  );
 
-  const handleSelect = useCallback((row) => {
-    if (row.id === selected?.id && mode !== 'edit') { setSelected(null); setMode(null); return; }
-    setMode(null);
-    setSelected(row);
-  }, [selected, mode]);
-
-  const handleCreate = async (data) => {
-    try { setSaving(true); await createSupplier(data); setMode(null); }
-    finally { setSaving(false); }
-  };
-
-  const handleEdit = async (data) => {
-    try {
-      setSaving(true);
-      const updated = await updateSupplier(selected.id, data);
-      setSelected((prev) => ({ ...prev, ...updated }));
-      setMode(null);
-    } finally { setSaving(false); }
-  };
+  const handleSearch = (v) => { setUrlSearch(v); };
+  const handleSelect = (ref) => setSelected((prev) => (prev?.id === ref.id ? null : ref));
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
-  const detailContent = () => {
-    if (mode === 'edit' && selected) return (
-      <SupplierForm supplier={selected} onSubmit={handleEdit} onCancel={() => setMode(null)} saving={saving} />
-    );
-    if (!selected) return null;
-    return (
-      <SupplierDetail
-        supplierId={selected.id}
-        onEdit={() => setMode('edit')}
-        onDeleted={() => { setSelected(null); refresh(); }}
-      />
-    );
-  };
-
-  const masterList = suppliers.length === 0 && !loading ? (
-    <Flex direction="column" align="center" justify="center" style={{ height: 200, padding: 24 }} gap="2">
-      <Truck size={28} color="var(--gray-7)" />
-      <Text size="2" color="gray">Aucun fournisseur trouvé</Text>
-    </Flex>
-  ) : suppliers.map((s) => (
-    <SupplierItem key={s.id} supplier={s} isSelected={s.id === selected?.id} onClick={handleSelect} />
-  ));
+  const filterSelect = (
+    <select
+      value={supplierFilter}
+      onChange={(e) => setSupplierFilter(e.target.value)}
+      style={{
+        width: '100%', height: 32, padding: '0 8px',
+        borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-7)',
+        fontSize: 'var(--font-size-2)', background: 'var(--color-background)',
+      }}
+    >
+      <option value="">Tous les fournisseurs</option>
+      {sortedSuppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+    </select>
+  );
 
   return (
-    <Box pt="3">
-      {/* Bouton ajouter + formulaire de création */}
-      <Flex justify="end" mb="2">
-        <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-          <Plus size={14} /> Ajouter
-        </Button>
-      </Flex>
-      {mode === 'create' && (
-        <Box mb="3">
-          <SupplierForm supplier={null} onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
-        </Box>
-      )}
+    <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MasterDetailLayout
+          masterProps={{
+            icon: Truck,
+            title: 'Références fournisseur',
+            count: refs.length,
+            search: urlSearch,
+            onSearchChange: handleSearch,
+            loading,
+            headerExtra: filterSelect,
+            children: <RefsTable refs={refs} selectedId={selected?.id} onSelect={handleSelect} />,
+          }}
+          detailChildren={selected && (
+            <SupplierPartRefDetail item={selected} onManageSupplier={setManageSupplierId} />
+          )}
+          emptyLabel="Sélectionnez une référence pour voir son détail"
+        />
+      </div>
 
-      <MasterDetailLayout
-        fullHeight={false}
-        masterProps={{
-          icon: Truck,
-          title: 'Fournisseurs',
-          count: suppliers.length,
-          search,
-          onSearchChange: handleSearch,
-          loading,
-          children: masterList,
-        }}
-        detailChildren={detailContent()}
-        emptyLabel="Sélectionnez un fournisseur pour voir son détail"
+      <SupplierManageModal
+        open={!!manageSupplierId}
+        onOpenChange={(v) => { if (!v) setManageSupplierId(null); }}
+        supplierId={manageSupplierId}
       />
     </Box>
   );

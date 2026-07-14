@@ -6,9 +6,10 @@
 import PropTypes from 'prop-types';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
-import { Edit2, Factory, ShoppingCart, Trash2, X } from 'lucide-react';
+import { Edit2, Factory, PackageSearch, ShoppingCart, Trash2, X } from 'lucide-react';
 import { SuppliersSection } from '@/components/stock/StockItemSuppliers';
 import { fetchStockItemSupplierLinks } from '@/api/suppliers';
+import EmptyState from '@/components/ui/EmptyState';
 
 function charValue(c) {
   return c.value_number != null ? String(c.value_number) : (c.value_enum ?? c.value_text ?? '—');
@@ -89,20 +90,19 @@ function ItemMeta({ item }) {
 
 ItemMeta.propTypes = { item: PropTypes.object.isRequired };
 
-function StockQtyCard({ quantity, unit }) {
-  const color = quantity == null ? 'gray' : quantity === 0 ? 'red' : quantity <= 3 ? 'orange' : 'green';
+function StockQtyCard() {
   return (
     <Box style={{ padding: '10px 14px', background: 'var(--gray-2)', borderRadius: 'var(--radius-3)' }}>
-      <Text size="1" color="gray" style={{ display: 'block', marginBottom: 2 }}>Quantité en stock</Text>
-      <Flex align="baseline" gap="1">
-        <Text size="5" weight="bold" color={color}>{quantity ?? '—'}</Text>
-        {unit && <Text size="2" color="gray">{unit}</Text>}
-      </Flex>
+      <Text size="1" color="gray" style={{ display: 'block', marginBottom: 6 }}>Quantité en stock</Text>
+      <EmptyState
+        compact
+        icon={<PackageSearch size={16} />}
+        title="Non suivie"
+        description="La gestion des quantités n'est pas encore disponible."
+      />
     </Box>
   );
 }
-
-StockQtyCard.propTypes = { quantity: PropTypes.number, unit: PropTypes.string };
 
 function AlternativesSection({ suppliers }) {
   const manufacturers = [];
@@ -172,7 +172,7 @@ export default function StockDetailPanel({ item, onEdit, onDelete, onRefresh, on
         </Flex>
       </Flex>
 
-      <StockQtyCard quantity={item.quantity} unit={item.unit} />
+      <StockQtyCard />
       <ItemMeta item={item} />
       <Separator size="4" />
 

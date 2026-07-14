@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchParts, createPart, updatePart, deletePart } from '@/api/parts';
+import { fetchParts, createPartWithSupplierRef, updatePart, deletePart } from '@/api/parts';
 import { useDebounce } from '@/hooks/useDebounce';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
@@ -69,7 +69,7 @@ export function useParts({ initialSearch = '' } = {}) {
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   const createItem = useCallback(async (payload) => {
-    const created = await createPart(payload);
+    const created = await createPartWithSupplierRef(payload);
     setRefreshKey((k) => k + 1);
     return created;
   }, []);

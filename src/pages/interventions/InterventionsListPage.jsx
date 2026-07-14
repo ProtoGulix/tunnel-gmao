@@ -133,7 +133,7 @@ export default function InterventionsListPage() {
   if (error) return <ErrorState error={error} onRetry={refetch} />;
 
   return (
-    <>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Interventions"
         subtitle="Gestion des interventions de maintenance"
@@ -142,7 +142,7 @@ export default function InterventionsListPage() {
         addLabel="Nouvelle intervention"
       />
 
-      <Box px="4" style={{ height: 'calc(100vh - 180px)', minHeight: 500 }}>
+      <Box px="4" style={{ flex: 1, minHeight: 500, overflow: 'hidden' }}>
         <MasterDetailLayout
           freeDetail
           ratio="35% 1fr"
@@ -172,6 +172,6 @@ export default function InterventionsListPage() {
           emptyLabel="Sélectionnez une intervention pour voir son détail"
         />
       </Box>
-    </>
+    </Flex>
   );
 }

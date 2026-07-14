@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AlertDialog, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
-import { Archive, FileUp, Scale, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
+import { FileUp, Scale, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
 import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
@@ -101,14 +101,14 @@ export default function PurchaseRequestsPage() {
   ];
 
   return (
-    <>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Achats"
         subtitle="Demandes d'achat et paniers fournisseurs"
         actions={headerActions}
       />
 
-      <Box px="4">
+      <Box px="4" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {activeTab === 'requests' && dispatchResult && (
           <DispatchBanner
             dispatchResult={dispatchResult}
@@ -116,8 +116,12 @@ export default function PurchaseRequestsPage() {
           />
         )}
 
-        <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
-          <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)' }}>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={setActiveTab}
+          style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        >
+          <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)', flexShrink: 0 }}>
             <Tabs.Trigger value="requests">
               <Flex align="center" gap="2">
                 <ShoppingCart size={14} />
@@ -130,12 +134,6 @@ export default function PurchaseRequestsPage() {
                 <Text>Paniers fournisseurs</Text>
               </Flex>
             </Tabs.Trigger>
-            <Tabs.Trigger value="archives">
-              <Flex align="center" gap="2">
-                <Archive size={14} />
-                <Text>Archives</Text>
-              </Flex>
-            </Tabs.Trigger>
             <Tabs.Trigger value="comparateur">
               <Flex align="center" gap="2">
                 <Scale size={14} />
@@ -144,7 +142,7 @@ export default function PurchaseRequestsPage() {
             </Tabs.Trigger>
           </Tabs.List>
 
-          <Tabs.Content value="requests">
+          <Tabs.Content value="requests" style={{ flex: 1, minHeight: 0 }}>
             {activeTab === 'requests' && (
               <PurchaseRequestsTab
                 refreshSignal={refreshSignal}
@@ -153,15 +151,11 @@ export default function PurchaseRequestsPage() {
             )}
           </Tabs.Content>
 
-          <Tabs.Content value="orders">
+          <Tabs.Content value="orders" style={{ flex: 1, minHeight: 0 }}>
             {activeTab === 'orders' && <SupplierOrdersTab />}
           </Tabs.Content>
 
-          <Tabs.Content value="archives">
-            {activeTab === 'archives' && <PurchaseRequestsTab variant="archive" />}
-          </Tabs.Content>
-
-          <Tabs.Content value="comparateur">
+          <Tabs.Content value="comparateur" style={{ flex: 1, minHeight: 0 }}>
             {activeTab === 'comparateur' && <SupplierOrderComparatorTab />}
           </Tabs.Content>
         </Tabs.Root>
@@ -178,6 +172,6 @@ export default function PurchaseRequestsPage() {
         onOpenChange={setImportOpen}
         onSuccess={() => setRefreshSignal((n) => n + 1)}
       />
-    </>
+    </Flex>
   );
 }

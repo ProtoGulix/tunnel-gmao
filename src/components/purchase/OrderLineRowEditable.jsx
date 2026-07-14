@@ -5,45 +5,33 @@
  */
 
 import PropTypes from 'prop-types';
-import { Badge, Button, Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
-import { Save } from 'lucide-react';
-import { LineBadges, LineRefs } from '@/components/purchase/SupplierOrderLines';
+import { Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
+import { Loader2 } from 'lucide-react';
+import { CompetingOrders, isConsultationLost, LineRefs } from '@/components/purchase/SupplierOrderLines';
 
-function hasDraft(draft, line) {
+export default function OrderLineRowEditable({ line, draft, onChange, saving }) {
+  const lost = isConsultationLost(line, draft.is_selected);
+  const cellStyle = {
+    verticalAlign: 'middle',
+    ...(lost ? { opacity: 0.45 } : {}),
+  };
   return (
-    draft.is_selected !== !!line.is_selected ||
-    String(draft.quantity) !== String(line.quantity) ||
-    String(draft.unit_price ?? '') !== String(line.unit_price ?? '')
-  );
-}
-
-export default function OrderLineRowEditable({ line, draft, onChange, onSave, saving }) {
-  const dirty = hasDraft(draft, line);
-
-  return (
-    <Table.Row style={draft.is_selected ? { background: 'var(--blue-2)' } : {}}>
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
+    <Table.Row style={draft.is_selected ? { background: 'var(--blue-2)' } : undefined}>
+      <Table.Cell style={cellStyle}>
         <Flex align="center" gap="2">
           <Checkbox
             checked={!!draft.is_selected}
             onCheckedChange={(checked) => onChange({ is_selected: !!checked })}
           />
-          <Flex direction="column" gap="1">
-            <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
-            {line.stock_item_ref && (
-              <Badge color="blue" variant="soft" size="1" style={{ width: 'fit-content' }}>
-                {line.stock_item_ref}
-              </Badge>
-            )}
-          </Flex>
+          <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
         </Flex>
       </Table.Cell>
 
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
+      <Table.Cell style={cellStyle}>
         <LineRefs line={line} />
       </Table.Cell>
 
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
+      <Table.Cell style={cellStyle}>
         <Flex align="center" gap="1">
           <TextField.Root
             size="1"
@@ -58,7 +46,7 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
         </Flex>
       </Table.Cell>
 
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
+      <Table.Cell style={cellStyle}>
         <Flex align="center" gap="1">
           <TextField.Root
             size="1"
@@ -75,24 +63,16 @@ export default function OrderLineRowEditable({ line, draft, onChange, onSave, sa
       </Table.Cell>
 
       {/* Total calculé par le backend — affiché tel quel */}
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
+      <Table.Cell style={cellStyle}>
         {line.total_price != null
           ? <Text size="2" weight="medium" color="gray">{Number(line.total_price).toFixed(2)} €</Text>
           : <Text size="1" color="gray">—</Text>}
       </Table.Cell>
 
       <Table.Cell style={{ verticalAlign: 'middle' }}>
-        <LineBadges line={line} />
-      </Table.Cell>
-
-      <Table.Cell style={{ verticalAlign: 'middle' }}>
         <Flex align="center" gap="2">
-          <Text size="1" color="gray">{line.purchase_request_count ?? 0} DA</Text>
-          {dirty && (
-            <Button size="1" variant="soft" color="blue" loading={saving} onClick={onSave}>
-              <Save size={11} />
-            </Button>
-          )}
+          <CompetingOrders line={line} />
+          {saving && <Loader2 size={12} color="var(--gray-9)" style={{ animation: 'spin 0.6s linear infinite' }} />}
         </Flex>
       </Table.Cell>
     </Table.Row>
@@ -103,6 +83,5 @@ OrderLineRowEditable.propTypes = {
   line: PropTypes.object.isRequired,
   draft: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
   saving: PropTypes.bool,
 };

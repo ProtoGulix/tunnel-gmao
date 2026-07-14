@@ -23,9 +23,38 @@ export async function fetchPartByRef(internalRef) {
   return response.data || null;
 }
 
+export async function fetchSupplierPartRefs({ supplierId, search, limit, skip } = {}) {
+  const params = {};
+  if (supplierId) params.supplier_id = supplierId;
+  if (search) params.search = search;
+  if (limit != null) params.limit = limit;
+  if (skip != null) params.skip = skip;
+  const response = await api.get('/parts/supplier-refs', { params });
+  return response.data || { items: [], pagination: {} };
+}
+
 export async function createPart(payload) {
   const response = await api.post('/parts', payload);
   return response.data || null;
+}
+
+/**
+ * Crée une pièce, puis lie optionnellement des fournisseurs à ses références fabricant.
+ * `payload.supplier_refs_by_mfr_index` (optionnel) : [{ mfrIndex, supplier_id, supplier_ref, ... }] — voir PartForm.
+ * `mfrIndex` correspond à la position de la référence fabricant dans `payload.manufacturer_refs`.
+ */
+export async function createPartWithSupplierRef(payload) {
+  const { supplier_refs_by_mfr_index: supplierRefs, ...partPayload } = payload;
+  const part = await createPart(partPayload);
+  if (!supplierRefs?.length) return part;
+
+  for (const { mfrIndex, ...supplierRefPayload } of supplierRefs) {
+    const mfrRefId = part.manufacturer_refs?.[mfrIndex]?.id;
+    if (!mfrRefId) continue;
+    // Séquentiel pour éviter des courses sur is_preferred au sein d'une même référence fabricant
+    await addSupplierRef(mfrRefId, supplierRefPayload);
+  }
+  return fetchPartDetail(part.id);
 }
 
 export async function updatePart(id, updates) {
