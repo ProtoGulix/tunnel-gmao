@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.52.0] — 2026-07-17
+
+### Nouveautés — badge sur la version
+
+- Un badge « Nouveau » apparaît désormais à côté du numéro de version en bas de la barre latérale lorsqu'une mise à jour contient des changements pas encore consultés
+- Cliquer sur la version affiche le détail des nouveautés depuis votre dernière visite ; le badge disparaît une fois consulté
+
 ## [3.51.0] — 2026-07-14
 
 ### Fournisseurs — nouvel onglet « Références fournisseur »

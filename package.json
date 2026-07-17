@@ -1,6 +1,6 @@
 {
   "name": "tunnel-gmao",
-  "version": "3.51.0",
+  "version": "3.52.0",
   "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
   "author": "ProtoGulix",
   "license": "AGPL-3.0-or-later",
@@ -25,7 +25,9 @@
   ],
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-changelog.cjs",
     "dev": "vite",
+    "prebuild": "node scripts/copy-changelog.cjs",
     "build": "vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
