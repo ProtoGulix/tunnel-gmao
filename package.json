@@ -25,7 +25,9 @@
   ],
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-changelog.cjs",
     "dev": "vite",
+    "prebuild": "node scripts/copy-changelog.cjs",
     "build": "vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",

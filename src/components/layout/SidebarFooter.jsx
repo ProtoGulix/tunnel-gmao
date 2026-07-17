@@ -4,16 +4,14 @@
  * @module components/layout/SidebarFooter
  * @requires react
  * @requires prop-types
- * @requires lucide-react
  */
 
-import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { LogOut, LogIn, UserPen } from 'lucide-react';
-import SidebarActionButton from '@/components/layout/SidebarActionButton';
-import UserProfileModal from '@/components/profile/UserProfileModal';
-
-const CHANGELOG_URL = 'https://github.com/ProtoGulix/tunnel-gmao/blob/main/docs/CHANGELOG.md';
+import AuthSection from '@/components/layout/AuthSection';
+import VersionButton from '@/components/layout/VersionButton';
+import StatusDot from '@/components/layout/StatusDot';
+import ChangelogModal from '@/components/layout/ChangelogModal';
+import { useChangelog } from '@/hooks/useChangelog';
 
 /**
  * Footer de la sidebar avec connexion/déconnexion et infos
@@ -21,8 +19,6 @@ const CHANGELOG_URL = 'https://github.com/ProtoGulix/tunnel-gmao/blob/main/docs/
  * @param {Object} props
  * @param {boolean} props.isAuthenticated - État de connexion
  * @param {Object} [props.user] - Données utilisateur
- * @param {string} [props.user.first_name] - Prénom
- * @param {string} [props.user.last_name] - Nom
  * @param {boolean} props.logoutConfirm - État de confirmation déconnexion
  * @param {Function} props.onLogout - Callback déconnexion
  * @param {Function} props.onLogin - Callback connexion
@@ -46,89 +42,25 @@ export default function SidebarFooter(props) {
     statusColorMap,
   } = props;
 
-  const [profileOpen, setProfileOpen] = useState(false);
-
-  const latencyLabel = serverStatus.latencyMs !== null 
-    ? `${Math.round(serverStatus.latencyMs)} ms` 
-    : 'N/A';
-  const lastCheckedLabel = serverStatus.lastChecked 
-    ? new Date(serverStatus.lastChecked).toLocaleString() 
-    : 'N/A';
-  const statusColor = statusColorMap[serverStatus.health] || statusColorMap.unknown;
-  const statusHaloColor = statusColor.startsWith('rgba')
-    ? statusColor.replace(/0\.\d+\)$/, '0.08)')
-    : statusColor;
-  const statusTooltip = `Latence: ${latencyLabel} | API: ${serverStatus.online ? 'OK' : 'KO'} | Dernier check: ${lastCheckedLabel}`;
-  const firstName = user?.first_name ?? user?.firstName ?? '';
-  const lastName = user?.last_name ?? user?.lastName ?? '';
-  const rawRole = user?.role;
-  const roleLabel = rawRole?.name || rawRole?.label || rawRole?.code || (typeof rawRole === 'string' ? rawRole : '') || '';
-
-  const openChangelog = () => {
-    window.open(CHANGELOG_URL, '_blank', 'noopener,noreferrer');
-  };
+  const { hasNews, openChangelog, changelogProps } = useChangelog(isAuthenticated);
 
   return (
-    <div style={{ 
-      padding: '1rem', 
+    <div style={{
+      padding: '1rem',
       borderTop: `1px solid ${colors.border}`,
       fontSize: '0.85rem'
     }}>
-      {isAuthenticated ? (
-        <>
-          <div style={{
-            marginBottom: '0.5rem',
-            color: colors.text,
-            textAlign: 'center',
-            fontWeight: 600,
-            letterSpacing: '0.2px'
-          }}>
-            {firstName} {lastName}
-          </div>
-          {roleLabel && (
-            <div style={{
-              marginTop: '-0.35rem',
-              marginBottom: '0.75rem',
-              color: colors.textMuted,
-              fontSize: '0.8rem',
-              textAlign: 'center',
-              letterSpacing: '0.1px'
-            }}>
-              {roleLabel}
-            </div>
-          )}
-          <SidebarActionButton
-            label='Mon profil'
-            icon={UserPen}
-            onClick={() => setProfileOpen(true)}
-            variant='neutral'
-            colors={colors}
-          />
-          <SidebarActionButton
-            label={logoutConfirm ? 'Confirmer' : 'Déconnexion'}
-            icon={LogOut}
-            onClick={onLogout}
-            variant='neutral'
-            colors={colors}
-          />
-          <UserProfileModal
-            open={profileOpen}
-            onOpenChange={setProfileOpen}
-            user={user}
-            onProfileUpdated={onProfileUpdated}
-          />
-        </>
-      ) : (
-        <SidebarActionButton
-          label='Connexion'
-          icon={LogIn}
-          onClick={onLogin}
-          variant='primary'
-          colors={colors}
-        />
-      )}
+      <AuthSection
+        isAuthenticated={isAuthenticated}
+        user={user}
+        logoutConfirm={logoutConfirm}
+        onLogout={onLogout}
+        onLogin={onLogin}
+        onProfileUpdated={onProfileUpdated}
+        colors={colors}
+      />
 
-      <div style={{ 
+      <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -139,43 +71,13 @@ export default function SidebarFooter(props) {
         fontSize: '0.85rem',
         marginBottom: '0.5rem'
       }}>
-        <button
-          type='button'
-          onClick={openChangelog}
-          title='Voir le changelog'
-          aria-label='Voir le changelog'
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            margin: 0,
-            color: colors.textMuted,
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            letterSpacing: '0.2px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.15rem',
-            opacity: 0.8
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = colors.accentSoft}
-          onMouseLeave={(e) => e.currentTarget.style.color = colors.textMuted}
-        >
-          <span style={{ textDecoration: 'none' }}>v{appVersion}</span>
-        </button>
-        <span
-          title={statusTooltip}
-          aria-label={statusTooltip}
-          style={{
-            width: '9px',
-            height: '9px',
-            borderRadius: '50%',
-            background: statusColor,
-            boxShadow: `0 0 0 4px ${statusHaloColor}`,
-            opacity: 0.7
-          }}
+        <VersionButton
+          appVersion={appVersion}
+          colors={colors}
+          hasNews={hasNews}
+          onOpenChangelog={openChangelog}
         />
+        <StatusDot serverStatus={serverStatus} statusColorMap={statusColorMap} />
         <a
           href='https://github.com/ProtoGulix/tunnel-gmao'
           target='_blank'
@@ -199,7 +101,7 @@ export default function SidebarFooter(props) {
         </a>
       </div>
 
-      <div style={{ 
+      <div style={{
         textAlign: 'center',
         fontSize: '0.65rem',
         color: colors.textMuted,
@@ -208,6 +110,8 @@ export default function SidebarFooter(props) {
       }}>
         Fièrement développé en France 🇫🇷
       </div>
+
+      <ChangelogModal {...changelogProps} />
     </div>
   );
 }

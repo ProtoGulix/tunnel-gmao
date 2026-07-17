@@ -89,6 +89,9 @@ out
 .nuxt
 dist
 
+# Copie générée par scripts/copy-changelog.cjs (source unique de vérité : /CHANGELOG.md)
+public/CHANGELOG.md
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
