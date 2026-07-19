@@ -7,7 +7,7 @@
 import PropTypes from 'prop-types';
 import { Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
-import { CompetingOrders, isConsultationLost, LineRefs } from '@/components/purchase/SupplierOrderLines';
+import { CompetingOrders, isConsultationLost, LinkedPurchaseRequests, LineRefs } from '@/components/purchase/SupplierOrderLines';
 
 export default function OrderLineRowEditable({ line, draft, onChange, saving }) {
   const lost = isConsultationLost(line, draft.is_selected);
@@ -25,6 +25,7 @@ export default function OrderLineRowEditable({ line, draft, onChange, saving }) 
           />
           <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
         </Flex>
+        <LinkedPurchaseRequests line={line} />
       </Table.Cell>
 
       <Table.Cell style={cellStyle}>

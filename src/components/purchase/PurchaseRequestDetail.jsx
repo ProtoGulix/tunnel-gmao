@@ -5,12 +5,13 @@
 
 /* eslint-disable max-lines */
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Flex, Table, Text, Separator } from '@radix-ui/themes';
+import { Badge, Box, Button, Card, Checkbox, Flex, Table, Text, Separator, Tooltip } from '@radix-ui/themes';
 import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle, Scale } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
 import HexBadge from '@/components/ui/HexBadge';
+import { isConsultationLost } from '@/components/purchase/SupplierOrderLines';
 
 function DetailRow({ label, children }) {
   return (
@@ -215,20 +216,27 @@ function StockItemCard({ part, stockItem }) {
 
 StockItemCard.propTypes = { part: PropTypes.object, stockItem: PropTypes.object };
 
-function LineStateBadge({ line }) {
-  if (line.is_selected) return <Badge variant="solid" size="1" color="green">Sélectionné</Badge>;
-  if (line.quote_received) return <Badge variant="soft" size="1" color="orange">Devis reçu</Badge>;
-  return <Text size="1" color="gray">En attente</Text>;
+function LineSelectedCheckbox({ line }) {
+  return (
+    <Box style={{ pointerEvents: 'none' }}>
+      <Checkbox checked={!!line.is_selected} color={line.is_selected ? 'green' : 'gray'} />
+    </Box>
+  );
 }
 
-LineStateBadge.propTypes = { line: PropTypes.object.isRequired };
+LineSelectedCheckbox.propTypes = { line: PropTypes.object.isRequired };
 
-function OrderNumberCell({ number }) {
-  if (number) return <Badge variant="outline" size="1" color="blue">{number}</Badge>;
-  return <Text size="1" color="gray">—</Text>;
+function OrderNumberCell({ number, orderId }) {
+  if (!number) return <Text size="1" color="gray">—</Text>;
+  if (!orderId) return <Badge variant="outline" size="1" color="blue">{number}</Badge>;
+  return (
+    <Badge variant="outline" size="1" color="blue" asChild style={{ cursor: 'pointer' }}>
+      <Link to={`/achats?tab=orders&order_id=${orderId}`} title="Voir le panier fournisseur">{number}</Link>
+    </Badge>
+  );
 }
 
-OrderNumberCell.propTypes = { number: PropTypes.string };
+OrderNumberCell.propTypes = { number: PropTypes.string, orderId: PropTypes.string };
 
 function SupplierCell({ supplier }) {
   return (
@@ -256,13 +264,6 @@ function ManufacturerCell({ manufacturer, catalogRef }) {
 
 ManufacturerCell.propTypes = { manufacturer: PropTypes.object, catalogRef: PropTypes.string };
 
-function ReceivedCell({ received, total }) {
-  if (received > 0) return <Badge size="1" variant="soft" color="teal">{received} / {total}</Badge>;
-  return <Text size="1" color="gray">0</Text>;
-}
-
-ReceivedCell.propTypes = { received: PropTypes.number, total: PropTypes.number };
-
 function PriceCell({ value, bold }) {
   if (value == null) return <Text size="1" color="gray">—</Text>;
   return <Text size="2" weight={bold ? 'medium' : undefined}>{Number(value).toFixed(2)} €</Text>;
@@ -272,13 +273,12 @@ PriceCell.propTypes = { value: PropTypes.number, bold: PropTypes.bool };
 
 function OrderStatusBadge({ statusObj }) {
   if (!statusObj) return <Text size="1" color="gray">—</Text>;
+  const badge = <HexBadge color={statusObj.color} label={statusObj.label || statusObj.code} />;
+  if (!statusObj.description) return badge;
   return (
-    <Flex direction="column" gap="1">
-      <HexBadge color={statusObj.color} label={statusObj.label || statusObj.code} />
-      {statusObj.description && (
-        <Text size="1" color="gray" style={{ maxWidth: 180 }}>{statusObj.description}</Text>
-      )}
-    </Flex>
+    <Tooltip content={statusObj.description}>
+      <Box style={{ display: 'inline-block', cursor: 'help' }}>{badge}</Box>
+    </Tooltip>
   );
 }
 
@@ -288,20 +288,25 @@ function OrderLineRow({ line, itemQuantity, itemUnit }) {
   const price = line.unit_price ?? line.quote_price;
   const qty = line.quantity_allocated ?? itemQuantity;
   const total = line.total_price ?? (price != null ? price * qty : null);
+
+  // Même logique que le détail du panier fournisseur : vert si cette ligne a gagné la
+  // consultation, grisée si un panier concurrent a été sélectionné à sa place, neutre sinon.
+  const lost = isConsultationLost(line, line.is_selected);
+  const rowStyle = line.is_selected
+    ? { background: 'var(--green-2)' }
+    : undefined;
+  const fade = lost ? { opacity: 0.45 } : undefined;
+
   return (
-    <Table.Row style={line.is_selected ? { background: 'var(--green-2)' } : undefined}>
-      <Table.Cell><OrderNumberCell number={line.supplier_order_number} /></Table.Cell>
-      <Table.Cell><SupplierCell supplier={line.supplier} /></Table.Cell>
-      <Table.Cell><OrderStatusBadge statusObj={line.supplier_order_status} /></Table.Cell>
-      <Table.Cell><ManufacturerCell manufacturer={line.manufacturer} catalogRef={line.catalog_ref} /></Table.Cell>
-      <Table.Cell align="center"><Text size="2">{qty} {itemUnit || 'pcs'}</Text></Table.Cell>
-      <Table.Cell align="right"><PriceCell value={price} /></Table.Cell>
-      <Table.Cell align="right"><PriceCell value={total} bold /></Table.Cell>
-      <Table.Cell align="center">
-        <Text size="1" color="gray">{line.lead_time_days != null ? `${line.lead_time_days}j` : '—'}</Text>
-      </Table.Cell>
-      <Table.Cell align="center"><ReceivedCell received={line.quantity_received} total={qty} /></Table.Cell>
-      <Table.Cell><LineStateBadge line={line} /></Table.Cell>
+    <Table.Row style={rowStyle}>
+      <Table.Cell><LineSelectedCheckbox line={line} /></Table.Cell>
+      <Table.Cell style={fade}><OrderNumberCell number={line.supplier_order_number} orderId={line.supplier_order_id} /></Table.Cell>
+      <Table.Cell style={fade}><SupplierCell supplier={line.supplier} /></Table.Cell>
+      <Table.Cell style={fade}><OrderStatusBadge statusObj={line.supplier_order_status} /></Table.Cell>
+      <Table.Cell style={fade}><ManufacturerCell manufacturer={line.manufacturer} catalogRef={line.catalog_ref} /></Table.Cell>
+      <Table.Cell style={fade} align="center"><Text size="2">{qty} {itemUnit || 'pcs'}</Text></Table.Cell>
+      <Table.Cell style={fade} align="right"><PriceCell value={price} /></Table.Cell>
+      <Table.Cell style={fade} align="right"><PriceCell value={total} bold /></Table.Cell>
     </Table.Row>
   );
 }
@@ -357,16 +362,14 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
           <Table.Root size="1">
             <Table.Header>
               <Table.Row>
+                <Table.ColumnHeaderCell width="1" />
                 <Table.ColumnHeaderCell>N° panier</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Fournisseur</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell>Réf. catalogue / fab.</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell align="center">Qté allouée</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell align="center">Quantité</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell align="right">Prix u.</Table.ColumnHeaderCell>
                 <Table.ColumnHeaderCell align="right">Total</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell align="center">Délai</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell align="center">Reçu</Table.ColumnHeaderCell>
-                <Table.ColumnHeaderCell>État</Table.ColumnHeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>

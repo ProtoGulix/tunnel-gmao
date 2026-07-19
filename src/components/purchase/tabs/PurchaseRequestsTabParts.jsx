@@ -83,7 +83,9 @@ export function PrFilters({ status, setStatus, statuses, urgency, setUrgency }) 
         <Select.Content>
           <Select.Item value="__all__">Tous les statuts</Select.Item>
           {statuses.map((s) => (
-            <Select.Item key={s.code} value={s.code}>{s.label}</Select.Item>
+            <Select.Item key={s.code} value={s.code}>
+              {s.label}{s.count != null ? ` (${s.count})` : ''}
+            </Select.Item>
           ))}
         </Select.Content>
       </Select.Root>
