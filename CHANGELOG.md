@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.53.0] — 2026-07-19
+
+### Demandes d'achat — navigation et affichage
+
+- La demande d'achat sélectionnée reste maintenant visible dans l'adresse de la page : possible de partager le lien ou d'utiliser le bouton précédent du navigateur pour y revenir directement
+- Le détail d'une demande d'achat indique désormais, pour chaque panier fournisseur concurrent, celui qui a été retenu : une coche verte identifie la ligne choisie, les autres s'affichent grisées
+- Suppression des colonnes « Délai » et « Reçu », devenues redondantes, dans le tableau des paniers fournisseurs d'une demande d'achat ; la colonne « Qté allouée » est renommée « Quantité »
+- Le commentaire associé au statut d'une ligne de commande s'affiche désormais au survol, pour un tableau plus compact
+- Chargement des compteurs par statut optimisé (une seule requête au lieu de deux)
+
 ## [3.52.0] — 2026-07-17
 
 ### Nouveautés — badge sur la version
