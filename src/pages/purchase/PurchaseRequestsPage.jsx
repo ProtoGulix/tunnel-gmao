@@ -22,23 +22,25 @@ export default function PurchaseRequestsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
 
-  // Compteur PENDING_DISPATCH en temps réel, indépendant du filtre actif
-  const [pendingDispatchCount, setPendingDispatchCount] = useState(0);
-  const loadPendingCount = useCallback(async () => {
+  // Facets (compteurs par statut + pending_dispatch_count) chargés une seule fois ici et
+  // partagés avec PurchaseRequestsTab (dropdown de filtre) — évite un double appel /facets.
+  const [facets, setFacets] = useState(null);
+  const loadFacets = useCallback(async () => {
     try {
       const data = await fetchPurchaseRequestFacets();
-      setPendingDispatchCount(data.pending_dispatch_count ?? 0);
+      setFacets(data);
     } catch {
       // non-bloquant
     }
   }, []);
+  const pendingDispatchCount = facets?.pending_dispatch_count ?? 0;
 
   // Chargement initial + polling 30s + rechargement après création de DA ou changement d'onglet
   useEffect(() => {
-    loadPendingCount();
-    const id = setInterval(loadPendingCount, 30_000);
+    loadFacets();
+    const id = setInterval(loadFacets, 30_000);
     return () => clearInterval(id);
-  }, [loadPendingCount, refreshSignal, activeTab]);
+  }, [loadFacets, refreshSignal, activeTab]);
 
   // Fonctions dispatch exposées par le tab actif
   const [dispatchFn, setDispatchFn] = useState(null);
@@ -54,8 +56,8 @@ export default function PurchaseRequestsPage() {
   const handleDispatch = useCallback(async () => {
     if (!dispatchFn) return;
     await dispatchFn();
-    await loadPendingCount();
-  }, [dispatchFn, loadPendingCount]);
+    await loadFacets();
+  }, [dispatchFn, loadFacets]);
 
   const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 ? {
     label: (
@@ -147,6 +149,7 @@ export default function PurchaseRequestsPage() {
               <PurchaseRequestsTab
                 refreshSignal={refreshSignal}
                 onDispatchStateChange={handleDispatchStateChange}
+                facets={facets}
               />
             )}
           </Tabs.Content>

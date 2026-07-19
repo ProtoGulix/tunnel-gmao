@@ -46,6 +46,31 @@ export function LineRefs({ line }) {
 
 LineRefs.propTypes = { line: PropTypes.object.isRequired };
 
+/** Ligne compacte "DA liée : 1, 2, 3" — un numéro d'ordre par DA d'origine, chacun cliquable. */
+export function LinkedPurchaseRequests({ line }) {
+  const prs = line.linked_purchase_requests || [];
+  if (prs.length === 0) return null;
+  return (
+    <Flex align="baseline" gap="1" mt="1" wrap="wrap">
+      <Text size="1" color="gray">{prs.length > 1 ? 'DA liées :' : 'DA liée :'}</Text>
+      {prs.map((pr, i) => (
+        <span key={pr.purchase_request_id}>
+          <Link
+            to={`/achats?tab=requests&requestId=${pr.purchase_request_id}`}
+            title={pr.item_label || 'Voir la demande d’achat'}
+            style={{ fontSize: 'var(--font-size-1)', color: 'var(--accent-9)' }}
+          >
+            {i + 1}
+          </Link>
+          {i < prs.length - 1 && <Text size="1" color="gray">, </Text>}
+        </span>
+      ))}
+    </Flex>
+  );
+}
+
+LinkedPurchaseRequests.propTypes = { line: PropTypes.object.isRequired };
+
 /**
  * Liste des paniers fournisseur concurrents sur la même DA (consultation multi-fournisseurs).
  * Chaque panier concurrent est un bouton qui ouvre le comparateur (panier actuel vs ce concurrent).
@@ -110,6 +135,7 @@ function OrderLineRow({ line }) {
     <Table.Row>
       <Table.Cell style={fade}>
         <Text size="2" weight="medium">{line.stock_item_name || '—'}</Text>
+        <LinkedPurchaseRequests line={line} />
       </Table.Cell>
       <Table.Cell style={fade}><LineRefs line={line} /></Table.Cell>
       <Table.Cell style={fade}><Text size="2">{line.quantity} {line.stock_item_unit || 'pcs'}</Text></Table.Cell>

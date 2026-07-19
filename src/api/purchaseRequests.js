@@ -94,14 +94,6 @@ export async function deletePurchaseRequest(id) {
   await api.delete(`/purchase-requests/${id}`);
 }
 
-/**
- * Fetch all possible derived statuses with labels and colors
- * @returns {Promise<Array>} [{ code, label, color }]
- */
-export async function fetchPurchaseRequestStatuses() {
-  const response = await api.get('/purchase-requests/statuses');
-  return response.data;
-}
 
 /**
  * Dispatch all PENDING_DISPATCH purchase requests to supplier orders
