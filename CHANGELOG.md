@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.53.1] — 2026-07-21
+
+### Correctif
+
+- Correction du build Docker de production : `CHANGELOG.md` était exclu du contexte de build par `.dockerignore` (règle `*.md`), ce qui faisait échouer l'étape `npm run build` (script `copy-changelog.cjs`)
+
 ## [3.53.0] — 2026-07-19
 
 ### Demandes d'achat — navigation et affichage
