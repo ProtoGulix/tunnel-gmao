@@ -30,3 +30,25 @@ export async function fetchAuditKnownFields(entityType) {
   const data = r.data?.data || r.data;
   return data?.fields ?? [];
 }
+
+// ── Raisons d'audit (référentiel affiché dans le picker de raisons) ──────────
+
+export async function fetchAuditReasonsAdmin() {
+  const r = await api.get('/admin/audit-reasons');
+  return r.data?.data || r.data;
+}
+
+export async function createAuditReason(data) {
+  const r = await api.post('/admin/audit-reasons', data);
+  return r.data?.data || r.data;
+}
+
+export async function updateAuditReason(id, data) {
+  const r = await api.patch(`/admin/audit-reasons/${id}`, data);
+  return r.data?.data || r.data;
+}
+
+export async function toggleAuditReasonActive(id, is_active) {
+  const r = await api.patch(`/admin/audit-reasons/${id}/active`, { is_active });
+  return r.data?.data || r.data;
+}

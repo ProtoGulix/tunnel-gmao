@@ -19,6 +19,18 @@ export function useAuditReasons() {
 }
 
 /**
+ * Raisons d'audit — vue admin complète (actives + inactives), pour la gestion CRUD.
+ * Distinct de useAuditReasons() qui reflète GET /audit/reasons (picker, actives seulement).
+ */
+export function useAuditReasonsAdmin() {
+  const { items, setItems, loading, error, refresh } = useFetchList(
+    auditRulesApi.fetchAuditReasonsAdmin,
+    'Erreur chargement raisons d\'audit (admin)'
+  );
+  return { items, setItems, loading, error, refresh };
+}
+
+/**
  * Champs déjà observés pour une entité (règles existantes + historique des
  * modifications), rechargés à chaque changement d'entityType.
  */
