@@ -64,6 +64,19 @@ export function useInterventionDetail(id) {
     initialLoadRef.current = false;
   }, [id]);
 
+  // Réinitialise le PDF chargé quand l'intervention affichée change
+  useEffect(() => {
+    setPdfUrl(null);
+    if (pdfUrlRef.current) {
+      try {
+        window.URL.revokeObjectURL(pdfUrlRef.current);
+      } catch {
+        // Ignore revoke errors
+      }
+      pdfUrlRef.current = null;
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!initialLoadRef.current) {
       initialLoadRef.current = true;

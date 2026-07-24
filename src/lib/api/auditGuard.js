@@ -1,31 +1,21 @@
 /**
  * auditGuard — détection et relance automatique des erreurs d'audit manquantes.
  *
- * Le middleware backend renvoie HTTP 400 :
- *   { "detail": "reason_code obligatoire pour cette mutation", "error_type": "ValidationError" }
+ * Depuis l'introduction de la table audit_rule (backend), le middleware
+ * résout lui-même la règle routine/sensible à partir des champs présents
+ * dans le payload et injecte default_reason_code silencieusement quand la
+ * mutation est routine. Le front n'a donc plus besoin d'envoyer reason_code
+ * "à l'aveugle" ni de dupliquer une logique de champs silencieux : il ne
+ * réagit qu'aux 400 restants, qui signifient que la mutation touche un champ
+ * marqué sensible côté audit_rule et nécessite un choix explicite.
+ *
+ * Le middleware backend renvoie HTTP 400 sur ces cas :
+ *   { "detail": "reason_code obligatoire pour cette mutation", "error_type": "ValidationError",
+ *     "audit": { required, silent, default_reason_code, reasons } }
  *
  * L'intercepteur response de client.js appelle handleAuditError() sur ces erreurs.
  * handleAuditError suspend la requête et émet un événement auquel useAuditGuard réagit.
  * Une fois la raison collectée, la requête est relancée automatiquement.
- *
- * Tout le comportement vient du champ `audit` retourné par l'API dans les réponses GET :
- *   - "entity:list"   → GET /interventions      → contexte création  (POST)
- *   - "entity:detail" → GET /interventions/{id} → contexte update    (PATCH/PUT/DELETE)
- *
- * Format attendu du champ `audit` :
- *   {
- *     required:            boolean,
- *     silent:              boolean,          // true = retry auto sans dialog
- *     default_reason_code: string,           // raison utilisée pour le retry silencieux
- *     silent_fields?:      string[],         // si défini, seuls ces champs passent silencieusement
- *     reasons:             AuditReason[],    // choix proposés dans le dialog
- *   }
- *
- * Logique de décision pour silent=true :
- *   - Si silent_fields absent  → tout passe silencieusement (comportement original)
- *   - Si silent_fields présent → vérifier les champs du payload :
- *       · Tous dans silent_fields  → retry silencieux avec default_reason_code
- *       · Au moins un hors liste   → afficher le dialog (ex: status_actual, priority)
  */
 
 import { api } from '@/lib/api/client';
@@ -39,54 +29,15 @@ const _URL_ENTITY_MAP = {
   'purchase-requests':     'purchase_request',
 };
 
-// ── Cache dynamique ──────────────────────────────────────────────────────────
-
-// Clés : "intervention:list", "intervention:detail", "task:list", etc.
-const _auditConfigCache = new Map();
-
-function _urlKind(url) {
-  const parts = (url ?? '').replace(/^\//, '').split('/');
-  return parts.length > 1 && parts[1] ? 'detail' : 'list';
-}
-
-/**
- * Enregistre la config audit issue d'une réponse GET réussie.
- * Appelé par l'intercepteur success de client.js.
- */
-export function cacheAuditFromResponse(response) {
-  if (response.config?.method?.toLowerCase() !== 'get') return;
-  const auditRules = response.data?.audit;
-  if (!auditRules || typeof auditRules.silent !== 'boolean') return;
-  const url = response.config.url ?? '';
+export function getAuditEntityType(error) {
+  const url = error?.config?.url ?? '';
   const segment = url.replace(/^\//, '').split('/')[0];
-  const entityType = _URL_ENTITY_MAP[segment];
-  if (!entityType) return;
-  _auditConfigCache.set(`${entityType}:${_urlKind(url)}`, {
-    silent:              auditRules.silent,
-    default_reason_code: auditRules.default_reason_code,
-    reasons:             auditRules.reasons,
-    silent_fields:       Array.isArray(auditRules.silent_fields) ? auditRules.silent_fields : undefined,
-  });
+  return _URL_ENTITY_MAP[segment] ?? null;
 }
 
-// ── Observable interne ───────────────────────────────────────────────────────
-
-const _subscribers = new Set();
-
 /**
- * S'abonner aux demandes d'audit.
- * Le callback reçoit { entityType, reasons, resolve, reject }.
- * @returns {Function} unsubscribe
- */
-export function onAuditRequired(callback) {
-  _subscribers.add(callback);
-  return () => _subscribers.delete(callback);
-}
-
-// ── Détection ────────────────────────────────────────────────────────────────
-
-/**
- * Retourne true si l'erreur signifie que reason_code est manquant.
+ * Retourne true si l'erreur signifie que reason_code est manquant/invalide
+ * pour un champ sensible (pas de retry auto possible, dialog nécessaire).
  *
  * Deux formats :
  *   1. HTTP 400 (middleware AuditMiddleware) :
@@ -110,60 +61,30 @@ export function isAuditRequiredError(error) {
   return false;
 }
 
-export function getAuditEntityType(error) {
-  const url = error?.config?.url ?? '';
-  const segment = url.replace(/^\//, '').split('/')[0];
-  return _URL_ENTITY_MAP[segment] ?? null;
+// ── Observable interne ───────────────────────────────────────────────────────
+
+const _subscribers = new Set();
+
+/**
+ * S'abonner aux demandes d'audit.
+ * Le callback reçoit { entityType, reasons, resolve, reject }.
+ * @returns {Function} unsubscribe
+ */
+export function onAuditRequired(callback) {
+  _subscribers.add(callback);
+  return () => _subscribers.delete(callback);
 }
 
 // ── Interception & relance ───────────────────────────────────────────────────
 
 export function handleAuditError(error) {
   const entityType = getAuditEntityType(error);
-  const method = error?.config?.method?.toLowerCase() ?? '';
 
-  // Priorité 1 : config audit fournie directement par l'endpoint dans la réponse d'erreur.
-  // Le backend inclut le champ `audit` dans le corps du 400/422 pour que le client
-  // n'ait pas besoin d'un GET préalable pour connaître les règles.
-  const auditFromError = error?.response?.data?.audit;
-  if (auditFromError && typeof auditFromError.silent === 'boolean') {
-    const kind = method === 'post' ? 'list' : 'detail';
-    _auditConfigCache.set(`${entityType}:${kind}`, {
-      silent:              auditFromError.silent,
-      default_reason_code: auditFromError.default_reason_code,
-      reasons:             auditFromError.reasons,
-      silent_fields:       Array.isArray(auditFromError.silent_fields) ? auditFromError.silent_fields : undefined,
-    });
-  }
-
-  // Priorité 2 : cache alimenté par les GET précédents (fallback)
-  const auditConfig =
-    (auditFromError && typeof auditFromError.silent === 'boolean' ? auditFromError : null) ??
-    (method === 'post'
-      ? (_auditConfigCache.get(`${entityType}:list`) ?? null)
-      : (_auditConfigCache.get(`${entityType}:detail`) ?? _auditConfigCache.get(`${entityType}:list`) ?? null));
-
-  if (auditConfig?.silent) {
-    const silentFields = auditConfig.silent_fields;
-    if (Array.isArray(silentFields)) {
-      let payload = {};
-      try { payload = error.config?.data ? JSON.parse(error.config.data) : {}; } catch { payload = {}; }
-      const mutatedFields = Object.keys(payload).filter((k) => k !== 'reason_code' && k !== 'reason_text');
-      if (mutatedFields.every((f) => silentFields.includes(f))) {
-        return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
-      }
-      // Au moins un champ hors silent_fields → dialog si des raisons existent,
-      // sinon retry silencieux avec le code par défaut (dialog vide = bloquant)
-      if (!auditConfig.reasons?.length && auditConfig.default_reason_code) {
-        return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
-      }
-    } else {
-      // Pas de silent_fields → tout passe silencieusement (rétrocompat)
-      return _retryWithReason(error, { reason_code: auditConfig.default_reason_code });
-    }
-  }
-
-  const reasons = auditConfig?.reasons?.length ? auditConfig.reasons : undefined;
+  // Le backend inclut toujours le champ `audit` dans le corps du 400/422 :
+  // à ce stade la mutation est nécessairement sensible (sinon le backend
+  // aurait déjà auto-injecté default_reason_code et n'aurait pas renvoyé 400).
+  const auditRules = error?.response?.data?.audit;
+  const reasons = auditRules?.reasons?.length ? auditRules.reasons : undefined;
 
   return new Promise((resolve, reject) => {
     if (_subscribers.size === 0) {

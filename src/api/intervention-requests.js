@@ -94,18 +94,41 @@ export async function createInterventionRequest(data) {
  * @param {string} [data.reportedDate] - Date de signalement (YYYY-MM-DD)
  * @returns {Promise<Object>} Demande mise à jour avec status_log actualisé
  */
+// Champs optionnels du payload de transition : clé JS → clé API, avec normalisation éventuelle
+const _TRANSITION_OPTIONAL_FIELDS = [
+  ['notes', 'notes', (v) => v?.trim() || null],
+  ['changedBy', 'changed_by', (v) => v || null],
+  ['typeInter', 'type_inter', (v) => v || null],
+  ['techInitials', 'tech_initials', (v) => v?.trim() || null],
+  ['priority', 'priority', (v) => v || null],
+  ['reportedDate', 'reported_date', (v) => v || null],
+  // reason_code/reason_text : fournis explicitement pour éviter de rouvrir le popup d'audit
+  // quand on rejoue l'appel avec les notes après une 1ère découverte (voir doTransition).
+  ['reasonCode', 'reason_code', (v) => v || null],
+  ['reasonText', 'reason_text', (v) => v || null],
+];
+
 export async function transitionInterventionRequest(id, data) {
   const payload = { status_to: data.statusTo };
 
-  if (data.notes?.trim()) payload.notes = data.notes.trim();
-  if (data.changedBy) payload.changed_by = data.changedBy;
-  if (data.typeInter) payload.type_inter = data.typeInter;
-  if (data.techInitials?.trim()) payload.tech_initials = data.techInitials.trim();
-  if (data.priority) payload.priority = data.priority;
-  if (data.reportedDate) payload.reported_date = data.reportedDate;
+  for (const [srcKey, destKey, normalize] of _TRANSITION_OPTIONAL_FIELDS) {
+    const value = normalize(data[srcKey]);
+    if (value) payload[destKey] = value;
+  }
 
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
   return response.data?.data ?? response.data;
+}
+
+/**
+ * Supprime définitivement une demande d'intervention (erreur de saisie, doublon).
+ * Refusé par le backend si une intervention est déjà liée à la demande.
+ *
+ * @param {string} id - UUID de la demande
+ * @returns {Promise<void>}
+ */
+export async function deleteInterventionRequest(id) {
+  await api.delete(`/intervention-requests/${id}`);
 }
 
 /**

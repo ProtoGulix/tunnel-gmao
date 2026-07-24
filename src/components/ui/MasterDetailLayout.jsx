@@ -64,7 +64,7 @@ function MasterPanel({
       </Box>
 
       {/* Liste */}
-      <Box style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
         {loading ? (
           <LoadingState fullscreen={false} message="Chargement…" />
         ) : children}

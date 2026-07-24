@@ -192,7 +192,7 @@ export default function InterventionRequestsTab() {
         count={total}
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Rechercher par code, demandeur ou description…"
+        searchPlaceholder="Rechercher par code, demandeur, description, équipement ou service…"
         loading={loading}
         showRefreshButton
         onRefresh={refresh}
@@ -268,6 +268,7 @@ export default function InterventionRequestsTab() {
           <InterventionRequestDetail
             requestId={row.id}
             onTransitionDone={refresh}
+            onDeleted={() => { setSelectedId(null); refresh(); }}
           />
         )}
         emptyState={{

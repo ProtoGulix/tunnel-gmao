@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.54.0] — 2026-07-24
+
+### Admin — gestion de l'audit
+
+- Nouvel onglet Admin → Audit → Règles : gestion des règles routine/sensible par entité et champ (auparavant codées en dur côté serveur)
+- Nouvel onglet Admin → Audit → Raisons : création, modification et activation/désactivation des raisons affichées dans le picker de justification (audit)
+
+### Détail d'intervention
+
+- Le PDF affiché dans le détail d'une intervention se réinitialise correctement en changeant d'intervention (il restait affiché à tort)
+- Corrigé une collision de paramètre d'URL entre l'onglet actif de la liste des interventions et celui du détail affiché en mode embarqué
+
 ## [3.53.1] — 2026-07-21
 
 ### Correctif

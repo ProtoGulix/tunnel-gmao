@@ -10,7 +10,7 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ExternalLink } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ExternalLink, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
@@ -27,6 +27,7 @@ const SheetTab = lazy(() => import('@/components/interventions/tabs/SheetTab'));
 const HistoryTab = lazy(() => import('@/components/interventions/tabs/HistoryTab'));
 const InterventionPurchaseTab = lazy(() => import('@/components/interventions/tabs/InterventionPurchaseTab'));
 const InterventionRequestCard = lazy(() => import('@/components/intervention-requests/InterventionRequestCard'));
+const InterventionRequestDetail = lazy(() => import('@/components/intervention-requests/InterventionRequestDetail'));
 const TasksTab = lazy(() => import('@/components/interventions/tabs/TasksTab'));
 
 // Configuration de base des onglets
@@ -34,6 +35,7 @@ const BASE_TABS = [
   { id: 'actions', label: 'Actions', icon: Activity, badgeCount: (actions, statusLog) => actions.length + (statusLog?.length || 0) },
   { id: 'taches', label: 'Tâches', icon: ListTodo, badgeCount: null },
   { id: 'achats', label: 'Achats', icon: ShoppingCart },
+  { id: 'demande', label: 'Demande', icon: ClipboardList },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
   { id: 'fiche', label: 'Fiche', icon: FileText },
   { id: 'history', label: 'Historique', icon: History },
@@ -65,13 +67,16 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   const id = idProp ?? idParam;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(() => embedded ? 'actions' : (searchParams.get('tab') ?? 'actions'));
+  // En mode embarqué (master-detail), la page parente possède déjà `tab` pour ses propres
+  // onglets : on utilise `dtab` pour éviter toute collision.
+  const tabParamKey = embedded ? 'dtab' : 'tab';
+  const [activeTab, setActiveTab] = useState(() => searchParams.get(tabParamKey) ?? 'actions');
   const [mutationError, setMutationError] = useState('');
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
-    setSearchParams((prev) => { prev.set('tab', tab); return prev; }, { replace: true });
-  }, [setSearchParams]);
+    setSearchParams((prev) => { prev.set(tabParamKey, tab); return prev; }, { replace: true });
+  }, [tabParamKey, setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
 
   const {
@@ -91,7 +96,10 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     ficheFileName,
   } = useInterventionDetail(id);
 
-  const tabs = useMemo(() => BASE_TABS, []);
+  const tabs = useMemo(
+    () => (intervention?.request ? BASE_TABS : BASE_TABS.filter((tab) => tab.id !== 'demande')),
+    [intervention?.request]
+  );
 
   // Charger le PDF quand l'onglet fiche est ouvert
   useEffect(() => {
@@ -299,6 +307,11 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
           <Tabs.Content value="achats">
             <InterventionPurchaseTab interventionId={id} isLocked={isLocked} />
           </Tabs.Content>
+          {intervention.request && (
+            <Tabs.Content value="demande">
+              <InterventionRequestDetail requestId={intervention.request.id} onTransitionDone={refetch} />
+            </Tabs.Content>
+          )}
           <Tabs.Content value="summary">
             <SummaryTab intervention={intervention} loading={loading} />
           </Tabs.Content>
@@ -355,7 +368,12 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
 
         {/* Demande liée */}
         {intervention.request && (
-          <Box px="3" pt="2" style={{ flexShrink: 0 }}>
+          <Box
+            px="3"
+            pt="2"
+            style={{ flexShrink: 0, cursor: 'pointer' }}
+            onClick={() => handleTabChange('demande')}
+          >
             <Suspense fallback={null}>
               <InterventionRequestCard request={intervention.request} />
             </Suspense>
@@ -386,7 +404,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
       />
 
       {/* Demande liée */}
-      <Box mt="4">
+      <Box mt="4" style={intervention.request ? { cursor: 'pointer' } : undefined} onClick={intervention.request ? () => handleTabChange('demande') : undefined}>
         <Suspense fallback={null}>
           <InterventionRequestCard request={intervention.request ?? null} />
         </Suspense>
