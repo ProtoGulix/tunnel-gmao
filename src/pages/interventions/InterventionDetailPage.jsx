@@ -67,13 +67,16 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   const id = idProp ?? idParam;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(() => embedded ? 'actions' : (searchParams.get('tab') ?? 'actions'));
+  // En mode embarqué (master-detail), la page parente possède déjà `tab` pour ses propres
+  // onglets : on utilise `dtab` pour éviter toute collision.
+  const tabParamKey = embedded ? 'dtab' : 'tab';
+  const [activeTab, setActiveTab] = useState(() => searchParams.get(tabParamKey) ?? 'actions');
   const [mutationError, setMutationError] = useState('');
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
-    setSearchParams((prev) => { prev.set('tab', tab); return prev; }, { replace: true });
-  }, [setSearchParams]);
+    setSearchParams((prev) => { prev.set(tabParamKey, tab); return prev; }, { replace: true });
+  }, [tabParamKey, setSearchParams]);
   const [searchActions, setSearchActions] = useState('');
 
   const {

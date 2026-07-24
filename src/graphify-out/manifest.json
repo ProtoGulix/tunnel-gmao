@@ -80,9 +80,9 @@
     "semantic_hash": "1c771c06e7bf1e33be0328b4df8359bb"
   },
   "api/intervention-requests.js": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "7ddc7c03efff6fbc880f19ace756bff1",
-    "semantic_hash": "7ddc7c03efff6fbc880f19ace756bff1"
+    "mtime": 1784784665.1719291,
+    "ast_hash": "3d86e841d33fd6b61ad43a978c440336",
+    "semantic_hash": "3d86e841d33fd6b61ad43a978c440336"
   },
   "api/interventionMappers.js": {
     "mtime": 1780834255.188485,
@@ -245,9 +245,9 @@
     "semantic_hash": "a4a9a551435e16ba9c9ca009646a0202"
   },
   "components/admin/tabs/AdminAuditTab.jsx": {
-    "mtime": 1780959861.7139788,
-    "ast_hash": "dfde5520abf940818da76cac14079422",
-    "semantic_hash": "dfde5520abf940818da76cac14079422"
+    "mtime": 1784785028.8108962,
+    "ast_hash": "dd58e652aeaec06f2fd614a05776dd37",
+    "semantic_hash": "dd58e652aeaec06f2fd614a05776dd37"
   },
   "components/admin/tabs/AdminEndpointsTab.jsx": {
     "mtime": 1780834255.188485,
@@ -305,9 +305,9 @@
     "semantic_hash": "4bc9867bb9e03e40d2ba949035a3633f"
   },
   "components/briefing/DIRightPanel.jsx": {
-    "mtime": 1784648010.9278567,
-    "ast_hash": "febad4f29c906751844f2ed814919288",
-    "semantic_hash": "febad4f29c906751844f2ed814919288"
+    "mtime": 1784648042.1521297,
+    "ast_hash": "ebb2cb3e7aa80cdd947f21c9f497668d",
+    "semantic_hash": "ebb2cb3e7aa80cdd947f21c9f497668d"
   },
   "components/briefing/InterventionCard.tsx": {
     "mtime": 1780834255.192485,
@@ -450,9 +450,9 @@
     "semantic_hash": "a059f40c58a8a91602586a52e730c688"
   },
   "components/intervention-requests/InterventionRequestDetail.jsx": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "18cce6cfcaf84be5548bd17404c5a914",
-    "semantic_hash": "18cce6cfcaf84be5548bd17404c5a914"
+    "mtime": 1784784665.1719291,
+    "ast_hash": "f83f359a3cb0d0824eb6539630ca0c2f",
+    "semantic_hash": "f83f359a3cb0d0824eb6539630ca0c2f"
   },
   "components/intervention-requests/InterventionRequestForm.jsx": {
     "mtime": 1780834255.192485,
@@ -470,9 +470,9 @@
     "semantic_hash": "0153969c9700e01f0ea03ba2e8a2a96c"
   },
   "components/intervention-requests/tabs/InterventionRequestsTab.jsx": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "de1d29047bce13dbeb7c85f02157d006",
-    "semantic_hash": "de1d29047bce13dbeb7c85f02157d006"
+    "mtime": 1784784665.1719291,
+    "ast_hash": "cce82582ac512817a3657e82c0673ba0",
+    "semantic_hash": "cce82582ac512817a3657e82c0673ba0"
   },
   "components/interventions/ActionForm/ActionFormComplexity.jsx": {
     "mtime": 1780834255.196485,
@@ -1115,9 +1115,9 @@
     "semantic_hash": "3dbcacda86a001b9a4aaf133dbbc5926"
   },
   "components/ui/MasterDetailLayout.jsx": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "4f29d05212df337eeddfc99120835bf6",
-    "semantic_hash": "4f29d05212df337eeddfc99120835bf6"
+    "mtime": 1784784665.1719291,
+    "ast_hash": "9bf6a93f014c7e599ab99de7353e7348",
+    "semantic_hash": "9bf6a93f014c7e599ab99de7353e7348"
   },
   "components/ui/MobileHeader.jsx": {
     "mtime": 1780863244.0091689,
@@ -1315,14 +1315,14 @@
     "semantic_hash": "b5d72a4edd8ee01ff481e775517e1ea4"
   },
   "hooks/intervention-requests/useInterventionRequestDetail.js": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "6dd954497c37e82979aedc6b4dff9859",
-    "semantic_hash": "6dd954497c37e82979aedc6b4dff9859"
+    "mtime": 1784784665.175929,
+    "ast_hash": "1a64b1e7a03020d993d9365696c6034c",
+    "semantic_hash": "1a64b1e7a03020d993d9365696c6034c"
   },
   "hooks/intervention-requests/useInterventionRequests.js": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "c94822b9598143d7f0c8e2a1eea86b4a",
-    "semantic_hash": "c94822b9598143d7f0c8e2a1eea86b4a"
+    "mtime": 1784784665.175929,
+    "ast_hash": "a0f7659293f059c8f2a5399fc50278aa",
+    "semantic_hash": "a0f7659293f059c8f2a5399fc50278aa"
   },
   "hooks/interventions/useInterventionCreate.js": {
     "mtime": 1780834255.208485,
@@ -1505,14 +1505,14 @@
     "semantic_hash": "e791c5652cb77f4bf4b5662c96b5b101"
   },
   "lib/api/auditGuard.js": {
-    "mtime": 1784560392.8083465,
-    "ast_hash": "6a0c053ed4e34185164d8f340357a768",
-    "semantic_hash": "6a0c053ed4e34185164d8f340357a768"
+    "mtime": 1784784665.175929,
+    "ast_hash": "6cc0b3ad7701a6edc3b60840ab9a069f",
+    "semantic_hash": "6cc0b3ad7701a6edc3b60840ab9a069f"
   },
   "lib/api/client.js": {
-    "mtime": 1780863244.0091689,
-    "ast_hash": "cf4001d67a2dce14aa2b0db4c975ecb3",
-    "semantic_hash": "cf4001d67a2dce14aa2b0db4c975ecb3"
+    "mtime": 1784784665.175929,
+    "ast_hash": "1c9f2f379833118133d88bd0d65d7a5b",
+    "semantic_hash": "1c9f2f379833118133d88bd0d65d7a5b"
   },
   "lib/api/errorMessage.js": {
     "mtime": 1780834255.2124848,
@@ -1635,14 +1635,14 @@
     "semantic_hash": "fd9e27a5699aa976e2640fb21f31a6c8"
   },
   "pages/interventions/InterventionDetailPage.jsx": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "e08456c9a46a89d7d2bab7b36cfa9974",
-    "semantic_hash": "e08456c9a46a89d7d2bab7b36cfa9974"
+    "mtime": 1784784665.175929,
+    "ast_hash": "d3bf7c7b6db20054c22f1c0674da08d5",
+    "semantic_hash": "d3bf7c7b6db20054c22f1c0674da08d5"
   },
   "pages/interventions/InterventionsListPage.jsx": {
-    "mtime": 1784648010.9198568,
-    "ast_hash": "0907bf69ab8a7498c14d1f05c82d3a94",
-    "semantic_hash": "0907bf69ab8a7498c14d1f05c82d3a94"
+    "mtime": 1784784665.175929,
+    "ast_hash": "d33240d79d0e0210fe6ae019740e0e59",
+    "semantic_hash": "d33240d79d0e0210fe6ae019740e0e59"
   },
   "pages/preventive/PreventivePage.jsx": {
     "mtime": 1784065196.4662118,
@@ -1918,5 +1918,50 @@
     "mtime": 1784481527.8834527,
     "ast_hash": "b2f24f56d0c57ab93b0d4af54b2628e7",
     "semantic_hash": "b2f24f56d0c57ab93b0d4af54b2628e7"
+  },
+  "api/adminAuditRules.js": {
+    "mtime": 1784785459.6382668,
+    "ast_hash": "a890475a6ccc9fe800bb0257f9025aae",
+    "semantic_hash": "a890475a6ccc9fe800bb0257f9025aae"
+  },
+  "components/admin/AdminAuditLogSection.jsx": {
+    "mtime": 1784785019.7348266,
+    "ast_hash": "6789a48abd9fc48aebc52b194eb2d3b1",
+    "semantic_hash": "6789a48abd9fc48aebc52b194eb2d3b1"
+  },
+  "components/admin/AdminAuditRuleModals.jsx": {
+    "mtime": 1784785499.05458,
+    "ast_hash": "ef878f491985dad9b1538bb501cbfcd1",
+    "semantic_hash": "ef878f491985dad9b1538bb501cbfcd1"
+  },
+  "components/admin/AdminAuditRulesSection.jsx": {
+    "mtime": 1784784778.2328615,
+    "ast_hash": "2f8b68184bdc6bc40e73e94919b7ed43",
+    "semantic_hash": "2f8b68184bdc6bc40e73e94919b7ed43"
+  },
+  "components/intervention-requests/InterventionRequestListItem.jsx": {
+    "mtime": 1784648042.1601298,
+    "ast_hash": "5dfb88a6b99b1482af928506765e9236",
+    "semantic_hash": "5dfb88a6b99b1482af928506765e9236"
+  },
+  "components/intervention-requests/RequestsTabContent.jsx": {
+    "mtime": 1784648042.1601298,
+    "ast_hash": "274015e02b4188a1b9874a5803c17321",
+    "semantic_hash": "274015e02b4188a1b9874a5803c17321"
+  },
+  "components/interventions/InterventionsTabContent.jsx": {
+    "mtime": 1784648042.1601298,
+    "ast_hash": "7cbbd6e016a892fbc2cdd95130ab1879",
+    "semantic_hash": "7cbbd6e016a892fbc2cdd95130ab1879"
+  },
+  "config/auditRuleEntities.js": {
+    "mtime": 1784784759.5487075,
+    "ast_hash": "345d05077b18416b47be2e6ae6334329",
+    "semantic_hash": "345d05077b18416b47be2e6ae6334329"
+  },
+  "hooks/admin/useAuditRules.js": {
+    "mtime": 1784785472.0503652,
+    "ast_hash": "52f04e3767068eaa58e81bd8a03a43b2",
+    "semantic_hash": "52f04e3767068eaa58e81bd8a03a43b2"
   }
 }

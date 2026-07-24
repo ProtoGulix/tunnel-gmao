@@ -42,6 +42,7 @@ export default function InterventionsListPage() {
       const next = new URLSearchParams(prev);
       next.set('tab', tab);
       next.delete('id');
+      next.delete('dtab');
       return next;
     }, { replace: true });
   };
