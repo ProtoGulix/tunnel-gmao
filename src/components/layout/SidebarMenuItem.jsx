@@ -10,6 +10,17 @@
 import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 
+// Modules dont le badge affiche un volume total (pas une notion actionnable) —
+// style neutre pour ne pas laisser croire à une notification à traiter,
+// contrairement aux badges "ouvertes/en attente" (interventions, tâches, etc.).
+const NEUTRAL_COUNT_ITEMS = new Set(['equipements', 'stock', 'suppliers']);
+
+function getBadgeColors(isNeutralCount) {
+  return isNeutralCount
+    ? { background: 'var(--gray-6)', color: 'var(--gray-12)' }
+    : { background: 'var(--orange-9)', color: 'white' };
+}
+
 /**
  * Item de menu dans la sidebar avec état actif
  * @component
@@ -26,6 +37,7 @@ import { Link, useLocation } from 'react-router-dom';
 export default function SidebarMenuItem({ item, colors, isPublic = false, badgeCount = 0 }) {
   const location = useLocation();
   const isActive = location.pathname === item.path;
+  const isNeutralCount = NEUTRAL_COUNT_ITEMS.has(item.id);
 
   return (
     <Link
@@ -58,12 +70,12 @@ export default function SidebarMenuItem({ item, colors, isPublic = false, badgeC
       <span style={{ fontSize: '0.9rem', flex: 1 }}>{item.label}</span>
       {badgeCount > 0 && (
         <span
+          title={isNeutralCount ? `${badgeCount} au total` : undefined}
           style={{
             minWidth: '20px',
             height: '20px',
             borderRadius: '999px',
-            background: 'var(--orange-9)',
-            color: 'white',
+            ...getBadgeColors(isNeutralCount),
             fontSize: '0.75rem',
             fontWeight: 700,
             display: 'inline-flex',

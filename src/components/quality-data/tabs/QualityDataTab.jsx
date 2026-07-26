@@ -9,8 +9,9 @@ import ErrorState from '@/components/ui/ErrorState';
 import {
   SynthesisCards,
   NoProblemsMessage,
-  EntitySection,
+  AnomalyTypeSection,
 } from '../QualityDataComponents';
+import { ANOMALY_TYPE_BY_CODE } from '../config';
 import { useQualityData } from '@/hooks/quality-data/useQualityData';
 
 export default function QualityDataTab({ filters }) {
@@ -20,18 +21,19 @@ export default function QualityDataTab({ filters }) {
   if (error) return <ErrorState error={error} />;
   if (!data) return null;
 
-  // Grouper problèmes par entité
+  // Grouper problèmes par type d'anomalie plutôt que par entité technique
   const groupedProblems = {};
   if (data.problems) {
     data.problems.forEach((problem) => {
-      if (!groupedProblems[problem.entity]) {
-        groupedProblems[problem.entity] = [];
+      const type = ANOMALY_TYPE_BY_CODE[problem.code] || 'autre';
+      if (!groupedProblems[type]) {
+        groupedProblems[type] = [];
       }
-      groupedProblems[problem.entity].push(problem);
+      groupedProblems[type].push(problem);
     });
   }
 
-  const entityCount = Object.keys(groupedProblems).length;
+  const entityCount = new Set((data.problems || []).map((p) => p.entity)).size;
 
   return (
     <Box>
@@ -46,9 +48,9 @@ export default function QualityDataTab({ filters }) {
       {/* Message si pas de problèmes */}
       {data.total === 0 && <NoProblemsMessage />}
 
-      {/* Liste des problèmes par entité */}
-      {Object.entries(groupedProblems).map(([entity, problems]) => (
-        <EntitySection key={entity} entity={entity} problems={problems} />
+      {/* Liste des problèmes par type d'anomalie */}
+      {Object.entries(groupedProblems).map(([type, problems]) => (
+        <AnomalyTypeSection key={type} type={type} problems={problems} />
       ))}
     </Box>
   );

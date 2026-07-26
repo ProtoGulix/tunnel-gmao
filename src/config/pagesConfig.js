@@ -132,6 +132,7 @@ export const PAGES_CONFIG = [
     pageSubtitle: 'Répertoire et liaisons pièces',
     section: 'stock',
     requiresAuth: true,
+    order: 50,
     showInMenu: false,
   },
 

@@ -55,3 +55,32 @@ export const RULE_DESCRIPTIONS = {
   // Achats
   demande_sans_stock_item: 'Sans article stock lié',
 };
+
+/**
+ * Taxonomie des types d'anomalie — regroupement par nature du problème
+ * plutôt que par entité technique concernée.
+ */
+export const ANOMALY_TYPE_BY_CODE = {
+  action_time_null: 'champ_manquant',
+  action_subcategory_null: 'champ_manquant',
+  action_tech_null: 'champ_manquant',
+  action_description_vide: 'champ_manquant',
+  intervention_sans_type: 'champ_manquant',
+  stock_sans_seuil_min: 'champ_manquant',
+  stock_sans_fournisseur: 'champ_manquant',
+  demande_sans_stock_item: 'champ_manquant',
+
+  action_complexity_sans_facteur: 'valeur_suspecte',
+  action_time_suspect: 'valeur_suspecte',
+
+  action_sur_intervention_fermee: 'cycle_de_vie',
+  intervention_fermee_sans_action: 'cycle_de_vie',
+  intervention_en_cours_inactive: 'cycle_de_vie',
+};
+
+export const ANOMALY_TYPE_LABELS = {
+  champ_manquant: 'Champ obligatoire manquant',
+  valeur_suspecte: 'Valeur suspecte ou incohérente',
+  cycle_de_vie: 'Anomalie de cycle de vie',
+  autre: 'Autre',
+};

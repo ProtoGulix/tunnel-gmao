@@ -8,6 +8,7 @@ import { CalendarDays, ClipboardList } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PageHeader from '@/components/layout/PageHeader';
 import RequireRole from '@/auth/RequireRole';
+import LoadingState from '@/components/ui/LoadingState';
 
 // Pages — chargées à la demande
 const Login = lazy(() => import('@/pages/auth/Login'));
@@ -72,7 +73,7 @@ ProtectedRoute.propTypes = {
  */
 export default function AppRoutes() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingState fullscreen message="Chargement de la page…" />}>
     <Routes>
       {/* Route publique - sans layout */}
       <Route path="/login" element={<Login />} />

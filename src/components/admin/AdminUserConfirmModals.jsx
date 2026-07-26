@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Flex, Text, Button, Dialog, Select, Callout, Code } from '@radix-ui/themes';
+import { Flex, Text, Button, AlertDialog, Select, Callout, Code } from '@radix-ui/themes';
 import { Copy, AlertTriangle } from 'lucide-react';
 
 const ROLES = ['RESP', 'TECH', 'OPE', 'ADMIN'];
@@ -21,6 +21,7 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
     if (!newRole) return;
     await onSubmit(user.id, newRole);
     setNewRole('');
+    onOpenChange(false);
   };
 
   const handleOpenChange = (v) => {
@@ -31,9 +32,9 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
   if (!user) return null;
 
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Content style={{ maxWidth: 440 }}>
-        <Dialog.Title>Changer le rôle</Dialog.Title>
+    <AlertDialog.Root open={open} onOpenChange={handleOpenChange}>
+      <AlertDialog.Content style={{ maxWidth: 440 }}>
+        <AlertDialog.Title>Changer le rôle</AlertDialog.Title>
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3" mt="4">
             <Text size="2">
@@ -56,16 +57,16 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
             </label>
           </Flex>
           <Flex gap="3" mt="4" justify="end">
-            <Dialog.Close>
+            <AlertDialog.Cancel>
               <Button variant="soft" color="gray" type="button">Annuler</Button>
-            </Dialog.Close>
+            </AlertDialog.Cancel>
             <Button type="submit" disabled={submitting || !newRole} color="blue">
               {submitting ? 'Modification...' : 'Confirmer'}
             </Button>
           </Flex>
         </form>
-      </Dialog.Content>
-    </Dialog.Root>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   );
 }
 
@@ -85,33 +86,38 @@ export function AdminToggleActiveModal({ open, onOpenChange, user, onSubmit, sub
 
   const handleConfirm = async () => {
     await onSubmit(user.id, !user.is_active);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content style={{ maxWidth: 440 }}>
-        <Dialog.Title>{isDeactivating ? 'Désactiver' : 'Activer'} l'utilisateur</Dialog.Title>
+    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
+      <AlertDialog.Content style={{ maxWidth: 440 }}>
+        <AlertDialog.Title>{isDeactivating ? 'Désactiver' : 'Activer'} l'utilisateur</AlertDialog.Title>
         <Flex direction="column" gap="3" mt="4">
           {isDeactivating ? (
             <>
-              <Text size="2">
-                Désactiver <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
-              </Text>
+              <AlertDialog.Description asChild>
+                <Text size="2">
+                  Désactiver <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
+                </Text>
+              </AlertDialog.Description>
               <Callout.Root color="red" size="1">
                 <Callout.Icon><AlertTriangle size={14} /></Callout.Icon>
                 <Callout.Text>L'utilisateur sera déconnecté immédiatement.</Callout.Text>
               </Callout.Root>
             </>
           ) : (
-            <Text size="2">
-              Réactiver <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
-            </Text>
+            <AlertDialog.Description asChild>
+              <Text size="2">
+                Réactiver <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
+              </Text>
+            </AlertDialog.Description>
           )}
         </Flex>
         <Flex gap="3" mt="4" justify="end">
-          <Dialog.Close>
+          <AlertDialog.Cancel>
             <Button variant="soft" color="gray">Annuler</Button>
-          </Dialog.Close>
+          </AlertDialog.Cancel>
           <Button
             color={isDeactivating ? 'red' : 'green'}
             disabled={submitting}
@@ -120,8 +126,8 @@ export function AdminToggleActiveModal({ open, onOpenChange, user, onSubmit, sub
             {submitting ? 'En cours...' : isDeactivating ? 'Désactiver' : 'Activer'}
           </Button>
         </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   );
 }
 
@@ -147,20 +153,22 @@ export function AdminResetPasswordModal({ open, onOpenChange, user, onConfirm, s
   if (!user) return null;
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content style={{ maxWidth: 440 }}>
-        <Dialog.Title>Réinitialiser le mot de passe</Dialog.Title>
+    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
+      <AlertDialog.Content style={{ maxWidth: 440 }}>
+        <AlertDialog.Title>Réinitialiser le mot de passe</AlertDialog.Title>
 
         {!tempPassword ? (
           <>
-            <Text size="2" mt="4" as="p">
-              Réinitialiser le mot de passe de <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
-              Un mot de passe temporaire sera généré.
-            </Text>
+            <AlertDialog.Description asChild>
+              <Text size="2" mt="4" as="p">
+                Réinitialiser le mot de passe de <Text weight="bold">{user.first_name} {user.last_name}</Text> ?
+                Un mot de passe temporaire sera généré.
+              </Text>
+            </AlertDialog.Description>
             <Flex gap="3" mt="4" justify="end">
-              <Dialog.Close>
+              <AlertDialog.Cancel>
                 <Button variant="soft" color="gray">Annuler</Button>
-              </Dialog.Close>
+              </AlertDialog.Cancel>
               <Button color="orange" disabled={submitting} onClick={onConfirm}>
                 {submitting ? 'Génération...' : 'Réinitialiser'}
               </Button>
@@ -181,14 +189,14 @@ export function AdminResetPasswordModal({ open, onOpenChange, user, onConfirm, s
               </Button>
             </Flex>
             <Flex justify="end" mt="2">
-              <Dialog.Close>
+              <AlertDialog.Cancel>
                 <Button variant="soft" color="gray">Fermer</Button>
-              </Dialog.Close>
+              </AlertDialog.Cancel>
             </Flex>
           </Flex>
         )}
-      </Dialog.Content>
-    </Dialog.Root>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   );
 }
 

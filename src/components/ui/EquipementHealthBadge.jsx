@@ -19,7 +19,7 @@ const HEALTH_CONFIG = {
     label: 'Maintenance',
   },
   warning: {
-    color: 'yellow',
+    color: 'amber',
     icon: AlertCircle,
     label: 'Attention',
   },

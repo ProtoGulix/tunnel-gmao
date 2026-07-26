@@ -90,26 +90,27 @@ export default function AdminUsersTable({
       key: 'actions',
       header: '',
       align: 'end',
-      width: 200,
+      width: 220,
       render: (u) => (
         <Flex gap="1">
-          <Button size="1" variant="soft" onClick={() => onEditClick(u)} title="Modifier">
-            <Pencil size={12} />
+          <Button size="3" variant="soft" onClick={() => onEditClick(u)} title="Modifier" style={{ minWidth: 40, minHeight: 40 }}>
+            <Pencil size={16} />
           </Button>
-          <Button size="1" variant="soft" color="blue" onClick={() => onChangeRoleClick(u)} title="Changer le rôle">
-            <Shield size={12} />
+          <Button size="3" variant="soft" color="blue" onClick={() => onChangeRoleClick(u)} title="Changer le rôle" style={{ minWidth: 40, minHeight: 40 }}>
+            <Shield size={16} />
           </Button>
           <Button
-            size="1"
+            size="3"
             variant="soft"
             color={u.is_active ? 'red' : 'green'}
             onClick={() => onToggleActiveClick(u)}
             title={u.is_active ? 'Désactiver' : 'Activer'}
+            style={{ minWidth: 40, minHeight: 40 }}
           >
-            <Power size={12} />
+            <Power size={16} />
           </Button>
-          <Button size="1" variant="soft" color="orange" onClick={() => onResetPasswordClick(u)} title="Réinitialiser le mot de passe">
-            <KeyRound size={12} />
+          <Button size="3" variant="soft" color="orange" onClick={() => onResetPasswordClick(u)} title="Réinitialiser le mot de passe" style={{ minWidth: 40, minHeight: 40 }}>
+            <KeyRound size={16} />
           </Button>
         </Flex>
       ),

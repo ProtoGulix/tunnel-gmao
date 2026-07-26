@@ -15,7 +15,10 @@ export default function StatusBox({
   onSelectItem,
   allowSpecialRequest = true,
   allowCreateNew = false,
-  showEmptyState = true
+  showEmptyState = true,
+  activeIndex = -1,
+  listboxId,
+  getOptionId,
 }) {
   // Ne rien afficher si un item est sélectionné
   if (selectedItem) {
@@ -43,14 +46,18 @@ export default function StatusBox({
   };
 
   return (
-    <Box mt="2" style={{
-      border: getBorderStyle(),
-      background: getBackgroundStyle(),
-      borderRadius: '8px',
-      overflowY: 'auto',
-      position: 'relative',
-      zIndex: 1
-    }}>
+    <Box
+      id={listboxId}
+      role={hasResults ? 'listbox' : undefined}
+      mt="2"
+      style={{
+        border: getBorderStyle(),
+        background: getBackgroundStyle(),
+        borderRadius: '8px',
+        overflowY: 'auto',
+        position: 'relative',
+        zIndex: 1
+      }}>
       {!hasSearch ? (
         <EmptyState />
       ) : hasResults ? (
@@ -63,6 +70,8 @@ export default function StatusBox({
           showSpecialRequest={allowSpecialRequest && !allowCreateNew}
           showCreateNew={allowCreateNew}
           onCreateNew={allowCreateNew ? onSelectItem : undefined}
+          activeIndex={activeIndex}
+          getOptionId={getOptionId}
         />
       ) : allowCreateNew ? (
         <CreateNewSupplierOption search={search} onSelect={onSelectItem} />
@@ -85,5 +94,8 @@ StatusBox.propTypes = {
   onSelectItem: PropTypes.func.isRequired,
   allowSpecialRequest: PropTypes.bool,
   allowCreateNew: PropTypes.bool,
-  showEmptyState: PropTypes.bool
+  showEmptyState: PropTypes.bool,
+  activeIndex: PropTypes.number,
+  listboxId: PropTypes.string,
+  getOptionId: PropTypes.func,
 };

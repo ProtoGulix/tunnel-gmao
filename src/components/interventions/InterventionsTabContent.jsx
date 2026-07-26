@@ -13,6 +13,7 @@ import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage
 import { useInterventionsList } from '@/hooks/interventions/useInterventionsList';
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
+import { ROW_PADDING_X, ROW_PADDING_Y, ROW_MIN_HEIGHT } from '@/styles/tokens/density';
 
 /* ── Couleur de bord gauche selon bloc ─────────────────────────────────── */
 function getBlockColor(interv) {
@@ -57,10 +58,12 @@ function InterventionItem({ interv, isSelected, onClick }) {
 
   return (
     <Box
-      px="3" py="2"
       onClick={onClick}
       style={{
         cursor: 'pointer',
+        padding: `${ROW_PADDING_Y} ${ROW_PADDING_X}`,
+        minHeight: ROW_MIN_HEIGHT,
+        boxSizing: 'border-box',
         borderBottom: '1px solid var(--gray-4)',
         background: isSelected ? 'var(--blue-2)' : 'transparent',
         borderLeft: isSelected ? '3px solid var(--blue-9)' : `3px solid ${getBlockColor(interv)}`,
