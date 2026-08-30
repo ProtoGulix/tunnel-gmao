@@ -11,6 +11,10 @@ import { useSearchParams } from 'react-router-dom';
  *
  * @param {string} defaultTab - Onglet par défaut si aucun n'est spécifié dans l'URL
  * @param {string} [paramName='tab'] - Nom du query parameter (par défaut 'tab')
+ * @param {string[]} [clearParams=[]] - Noms des query params à supprimer à chaque
+ *   changement d'onglet (ex: sélection/sous-vue propre à l'onglet quitté, qui n'a
+ *   plus de sens une fois qu'on n'y est plus). Vide par défaut — comportement
+ *   inchangé pour les appelants existants qui ne le renseignent pas.
  * @returns {Object} - { activeTab, setActiveTab }
  *
  * @example
@@ -21,8 +25,12 @@ import { useSearchParams } from 'react-router-dom';
  * <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
  *   ...
  * </Tabs.Root>
+ *
+ * @example
+ * // Nettoie requestId en quittant l'onglet "requests"
+ * useTabNavigation('requests', 'tab', ['requestId']);
  */
-export function useTabNavigation(defaultTab, paramName = 'tab') {
+export function useTabNavigation(defaultTab, paramName = 'tab', clearParams = []) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Dériver activeTab directement depuis l'URL — pas de state local redondant
@@ -35,12 +43,14 @@ export function useTabNavigation(defaultTab, paramName = 'tab') {
         (prev) => {
           const newParams = new URLSearchParams(prev);
           newParams.set(paramName, newTab);
+          clearParams.forEach((p) => newParams.delete(p));
           return newParams;
         },
         { replace: true }
       );
     },
-    [setSearchParams, paramName]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setSearchParams, paramName, clearParams.join(',')]
   );
 
   return { activeTab, setActiveTab };

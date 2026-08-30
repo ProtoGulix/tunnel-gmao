@@ -42,6 +42,7 @@ function MasterPanel({
                 value={search ?? ''}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Rechercher…"
+                aria-label="Rechercher"
                 size="2"
               >
                 <TextField.Slot><Search size={13} color="var(--gray-9)" /></TextField.Slot>

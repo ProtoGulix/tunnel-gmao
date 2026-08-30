@@ -77,6 +77,16 @@ export default function Login() {
     }
   }, [handleRedirectAfterLogin, isAuthenticated, navigate]);
 
+  useEffect(() => {
+    // Message laissé par le client API après une déconnexion forcée
+    // (panne serveur détectée sur une requête ailleurs dans l'app, cf. lib/api/client.js)
+    const notice = sessionStorage.getItem('login_notice');
+    if (notice) {
+      sessionStorage.removeItem('login_notice');
+      setError(notice);
+    }
+  }, []);
+
   // ===== HANDLERS =====
   const handleSubmit = async (e) => {
     e.preventDefault();

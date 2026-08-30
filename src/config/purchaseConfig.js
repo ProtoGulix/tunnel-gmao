@@ -63,7 +63,7 @@ export const PURCHASE_URGENCY_LIST = [
   { value: 'critical', ...PURCHASE_URGENCY.critical },
 ];
 
-// Couleurs Radix des statuts d'intervention — affichés dans les fiches DA
+// Couleurs Radix des statuts d'intervention — affichées dans les fiches DA
 export const INTERVENTION_STATUS_COLORS = {
   ouvert: 'blue',
   en_cours: 'blue',

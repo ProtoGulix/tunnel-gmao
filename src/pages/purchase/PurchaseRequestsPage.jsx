@@ -4,20 +4,24 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { AlertDialog, Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
+import { Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
 import { FileUp, Scale, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
 import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
 import SupplierOrderComparatorTab from '@/components/purchase/tabs/SupplierOrderComparatorTab';
 import DispatchBanner from '@/components/purchase/DispatchBanner';
+import DispatchPreviewDialog from '@/components/purchase/DispatchPreviewDialog';
 import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
 import CsvImportWizard from '@/components/purchase/CsvImportWizard';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { fetchPurchaseRequestFacets } from '@/api/purchaseRequests';
 
+// Params propres à un onglet donné — obsolètes dès qu'on quitte cet onglet.
+const TAB_OWNED_PARAMS = ['requestId', 'panier_status', 'order_id', 'orders'];
+
 export default function PurchaseRequestsPage() {
-  const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab');
+  const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab', TAB_OWNED_PARAMS);
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
@@ -53,38 +57,21 @@ export default function PurchaseRequestsPage() {
     setDispatchResult(state.dispatchResult);
   }, []);
 
-  const handleDispatch = useCallback(async () => {
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const handleConfirmDispatch = useCallback(async (excludedIds) => {
     if (!dispatchFn) return;
-    await dispatchFn();
+    await dispatchFn(excludedIds);
     await loadFacets();
+    setPreviewOpen(false);
   }, [dispatchFn, loadFacets]);
 
   const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 ? {
     label: (
-      <AlertDialog.Root>
-        <AlertDialog.Trigger>
-          <Button color="blue" size="2" disabled={dispatching}>
-            <Zap size={16} />
-            {dispatching ? 'Dispatch en cours...' : `Dispatcher (${pendingDispatchCount})`}
-          </Button>
-        </AlertDialog.Trigger>
-        <AlertDialog.Content maxWidth="420px">
-          <AlertDialog.Title>Confirmer le dispatch</AlertDialog.Title>
-          <AlertDialog.Description>
-            {pendingDispatchCount} demande{pendingDispatchCount > 1 ? 's' : ''} d&apos;achat {pendingDispatchCount > 1 ? 'vont être dispatchées' : 'va être dispatchée'} vers les paniers fournisseurs.
-          </AlertDialog.Description>
-          <Flex gap="2" justify="end" mt="4">
-            <AlertDialog.Cancel>
-              <Button variant="soft" color="gray">Annuler</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="blue" onClick={handleDispatch}>
-                <Zap size={14} /> Confirmer
-              </Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+      <Button color="blue" size="2" disabled={dispatching} onClick={() => setPreviewOpen(true)}>
+        <Zap size={16} />
+        {dispatching ? 'Dispatch en cours...' : `Dispatcher (${pendingDispatchCount})`}
+      </Button>
     ),
   } : null;
 
@@ -163,6 +150,13 @@ export default function PurchaseRequestsPage() {
           </Tabs.Content>
         </Tabs.Root>
       </Box>
+
+      <DispatchPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        onConfirm={handleConfirmDispatch}
+        dispatching={dispatching}
+      />
 
       <SpontaneousPurchaseRequestModal
         open={modalOpen}

@@ -2,119 +2,207 @@
  * Sous-composants partagés pour les onglets demandes d'achat.
  * @module components/purchase/tabs/PurchaseRequestsTabParts
  */
-import { Badge, Flex, Select, Text } from '@radix-ui/themes';
-import { AlertTriangle } from 'lucide-react';
+import { Badge, Checkbox, Flex, Select, Table, Text } from '@radix-ui/themes';
+import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { PURCHASE_URGENCY, PURCHASE_URGENCY_LIST } from '@/config/purchaseConfig';
+import { PURCHASE_URGENCY } from '@/config/purchaseConfig';
+import HexBadge from '@/components/ui/HexBadge';
 
-// ─── Tuile liste ──────────────────────────────────────────────────────────────
+// ─── Tri ──────────────────────────────────────────────────────────────────────
 
-export function PurchaseRequestListItem({ item, isSelected, onClick }) {
+const URGENCY_RANK = { critical: 3, high: 2, normal: 1 };
+
+export const SORT_OPTIONS = [
+  { value: 'age_desc', label: 'Plus ancien d’abord' },
+  { value: 'age_asc', label: 'Plus récent d’abord' },
+  { value: 'urgency_desc', label: 'Urgence décroissante' },
+  { value: 'urgency_asc', label: 'Urgence croissante' },
+];
+
+export function sortItems(items, sort) {
+  const sorted = [...items];
+  switch (sort) {
+    case 'age_asc':
+      return sorted.sort((a, b) => new Date(b.created_at ?? 0) - new Date(a.created_at ?? 0));
+    case 'urgency_desc':
+      return sorted.sort((a, b) => (URGENCY_RANK[b.urgency] ?? 0) - (URGENCY_RANK[a.urgency] ?? 0));
+    case 'urgency_asc':
+      return sorted.sort((a, b) => (URGENCY_RANK[a.urgency] ?? 0) - (URGENCY_RANK[b.urgency] ?? 0));
+    case 'age_desc':
+    default:
+      return sorted.sort((a, b) => new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0));
+  }
+}
+
+export function SortSelect({ sort, setSort }) {
+  return (
+    <Select.Root value={sort} onValueChange={setSort}>
+      <Select.Trigger aria-label="Trier la liste" />
+      <Select.Content>
+        {SORT_OPTIONS.map((o) => (
+          <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+}
+SortSelect.propTypes = { sort: PropTypes.string.isRequired, setSort: PropTypes.func.isRequired };
+
+// ─── Tableau liste ────────────────────────────────────────────────────────────
+
+function SortableHeader({ label, sortKey, sort, setSort, ...props }) {
+  const isAsc = sort === `${sortKey}_asc`;
+  const isDesc = sort === `${sortKey}_desc`;
+  const isActive = isAsc || isDesc;
+  const nextSort = isDesc ? `${sortKey}_asc` : `${sortKey}_desc`;
+  return (
+    <Table.ColumnHeaderCell {...props}>
+      <Flex
+        align="center" gap="1"
+        role="button" tabIndex={0}
+        aria-label={`Trier par ${label}`}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        onClick={() => setSort(nextSort)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSort(nextSort); } }}
+      >
+        <Text size="1" weight="bold" color={isActive ? undefined : 'gray'}>{label}</Text>
+        {isActive && (isAsc ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+      </Flex>
+    </Table.ColumnHeaderCell>
+  );
+}
+SortableHeader.propTypes = {
+  label: PropTypes.string.isRequired,
+  sortKey: PropTypes.string.isRequired,
+  sort: PropTypes.string.isRequired,
+  setSort: PropTypes.func.isRequired,
+};
+
+function RowCheckboxCell({ item, isChecked, onToggleCheck }) {
+  return (
+    <Table.Cell onClick={(e) => e.stopPropagation()}>
+      <Checkbox
+        checked={isChecked}
+        onCheckedChange={() => onToggleCheck(item.id)}
+        aria-label={`Sélectionner ${item.code || item.item_label}`}
+      />
+    </Table.Cell>
+  );
+}
+RowCheckboxCell.propTypes = {
+  item: PropTypes.object.isRequired,
+  isChecked: PropTypes.bool,
+  onToggleCheck: PropTypes.func.isRequired,
+};
+
+function RowReferenceCell({ item }) {
+  return (
+    <Table.Cell>
+      <Flex align="center" gap="1">
+        {item.urgent && <AlertTriangle size={12} color="var(--red-9)" />}
+        <Text size="2" weight="bold">{item.code || '—'}</Text>
+      </Flex>
+    </Table.Cell>
+  );
+}
+RowReferenceCell.propTypes = { item: PropTypes.object.isRequired };
+
+function formatRowDate(createdAt) {
+  return createdAt
+    ? new Date(createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+}
+
+function PurchaseRequestTableRow({ item, isSelected, isChecked, onClick, onToggleCheck }) {
   const urgency = PURCHASE_URGENCY[item.urgency] ?? { label: 'Normal', color: 'gray' };
   const statusColor = item.derived_status?.color;
   const statusLabel = item.derived_status?.label;
-  const accentColor = statusColor ?? 'var(--gray-6)';
   const demandeur = item.requested_by || item.requester_name;
-  const dateStr = item.created_at
-    ? new Date(item.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-    : null;
+  const dateStr = formatRowDate(item.created_at);
 
   return (
-    <div
+    <Table.Row
+      role="button"
+      tabIndex={0}
+      aria-selected={isSelected}
       onClick={() => onClick(item)}
-      style={{
-        marginBottom: 8,
-        borderRadius: 8,
-        border: isSelected ? '1px solid var(--accent-8)' : '1px solid var(--gray-4)',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        boxShadow: isSelected ? '0 0 0 2px var(--accent-4)' : undefined,
-      }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(item); } }}
+      style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-3)' : undefined }}
     >
-      <Flex align="center" gap="2" style={{ padding: '6px 10px', background: isSelected ? 'var(--accent-3)' : 'var(--gray-3)', borderBottom: '1px solid var(--gray-4)' }}>
-        {item.urgent && <AlertTriangle size={12} color="var(--red-9)" />}
-        <Text size="2" weight="bold" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray-12)' }}>
-          {item.item_label}
-        </Text>
-        <Text size="1" color="gray" style={{ flexShrink: 0, fontFamily: 'monospace' }}>
-          {item.quantity} {item.unit || 'pcs'}
-        </Text>
-      </Flex>
-
-      <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--color-panel-solid)', borderLeft: `3px solid ${accentColor}` }}>
-        {item.part_internal_ref && <Badge color="blue" variant="soft" size="1">{item.part_internal_ref}</Badge>}
-        {!item.part_internal_ref && item.stock_item_ref && <Badge color="gray" variant="soft" size="1">{item.stock_item_ref}</Badge>}
-        <Badge color={urgency.color} variant="soft" size="1">{urgency.label}</Badge>
-        {statusLabel && (
-          <Badge size="1" style={statusColor ? { background: statusColor + '22', color: statusColor, border: `1px solid ${statusColor}44` } : {}}>
-            {statusLabel}
-          </Badge>
-        )}
-      </Flex>
-
-      <Flex align="center" justify="between" style={{ padding: '4px 10px', borderTop: '1px solid var(--gray-3)', background: 'var(--gray-2)' }}>
-        <Text size="1" color="gray">{demandeur ?? '—'}</Text>
-        {dateStr && <Text size="1" color="gray">{dateStr}</Text>}
-      </Flex>
-    </div>
+      <RowCheckboxCell item={item} isChecked={isChecked} onToggleCheck={onToggleCheck} />
+      <RowReferenceCell item={item} />
+      <Table.Cell style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Text size="2">{item.item_label}</Text>
+      </Table.Cell>
+      <Table.Cell>
+        <Text size="1" color="gray" style={{ fontFamily: 'monospace' }}>{item.quantity} {item.unit || 'pcs'}</Text>
+      </Table.Cell>
+      <Table.Cell><Badge color={urgency.color} variant="soft" size="1">{urgency.label}</Badge></Table.Cell>
+      <Table.Cell>{statusLabel && <HexBadge color={statusColor} label={statusLabel} />}</Table.Cell>
+      <Table.Cell><Text size="1" color="gray">{demandeur ?? '—'}</Text></Table.Cell>
+      <Table.Cell><Text size="1" color="gray">{dateStr ?? '—'}</Text></Table.Cell>
+    </Table.Row>
   );
 }
-
-PurchaseRequestListItem.propTypes = {
+PurchaseRequestTableRow.propTypes = {
   item: PropTypes.object.isRequired,
   isSelected: PropTypes.bool,
+  isChecked: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
+  onToggleCheck: PropTypes.func.isRequired,
 };
 
-// ─── Filtres ──────────────────────────────────────────────────────────────────
+export function PurchaseRequestsTable({
+  items, selectedId, onSelect,
+  checkedIds, onToggleCheck, onToggleCheckAll,
+  sort, setSort,
+}) {
+  const allChecked = items.length > 0 && items.every((item) => checkedIds.has(item.id));
+  const someChecked = items.some((item) => checkedIds.has(item.id));
 
-export function PrFilters({ status, setStatus, statuses, urgency, setUrgency }) {
   return (
-    <Flex gap="2" align="center">
-      <Select.Root
-        value={status || '__all__'}
-        onValueChange={(v) => setStatus(v === '__all__' ? '' : v)}
-      >
-        <Select.Trigger
-          placeholder="Tous les statuts"
-          variant={status ? 'soft' : 'surface'}
-          color={status ? 'blue' : undefined}
-        />
-        <Select.Content>
-          <Select.Item value="__all__">Tous les statuts</Select.Item>
-          {statuses.map((s) => (
-            <Select.Item key={s.code} value={s.code}>
-              {s.label}{s.count != null ? ` (${s.count})` : ''}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-
-      <Select.Root
-        value={urgency || '__all__'}
-        onValueChange={(v) => setUrgency(v === '__all__' ? '' : v)}
-      >
-        <Select.Trigger
-          placeholder="Toutes urgences"
-          variant={urgency ? 'soft' : 'surface'}
-          color={urgency ? 'orange' : undefined}
-        />
-        <Select.Content>
-          <Select.Item value="__all__">Toutes urgences</Select.Item>
-          {PURCHASE_URGENCY_LIST.map((u) => (
-            <Select.Item key={u.value} value={u.value}>{u.label}</Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-    </Flex>
+    <Table.Root size="1" variant="surface">
+      <Table.Header>
+        <Table.Row>
+          <Table.ColumnHeaderCell>
+            <Checkbox
+              checked={allChecked ? true : (someChecked ? 'indeterminate' : false)}
+              onCheckedChange={() => onToggleCheckAll(items)}
+              aria-label="Sélectionner toutes les demandes visibles"
+            />
+          </Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Référence</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Désignation</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Qté</Table.ColumnHeaderCell>
+          <SortableHeader label="Urgence" sortKey="urgency" sort={sort} setSort={setSort} />
+          <Table.ColumnHeaderCell>Statut</Table.ColumnHeaderCell>
+          <Table.ColumnHeaderCell>Demandeur</Table.ColumnHeaderCell>
+          <SortableHeader label="Créée le" sortKey="age" sort={sort} setSort={setSort} />
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {items.map((item) => (
+          <PurchaseRequestTableRow
+            key={item.id}
+            item={item}
+            isSelected={item.id === selectedId}
+            isChecked={checkedIds.has(item.id)}
+            onClick={onSelect}
+            onToggleCheck={onToggleCheck}
+          />
+        ))}
+      </Table.Body>
+    </Table.Root>
   );
 }
-
-PrFilters.propTypes = {
-  status: PropTypes.string,
-  setStatus: PropTypes.func.isRequired,
-  statuses: PropTypes.array.isRequired,
-  urgency: PropTypes.string,
-  setUrgency: PropTypes.func.isRequired,
+PurchaseRequestsTable.propTypes = {
+  items: PropTypes.array.isRequired,
+  selectedId: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
+  checkedIds: PropTypes.instanceOf(Set).isRequired,
+  onToggleCheck: PropTypes.func.isRequired,
+  onToggleCheckAll: PropTypes.func.isRequired,
+  sort: PropTypes.string.isRequired,
+  setSort: PropTypes.func.isRequired,
 };
 

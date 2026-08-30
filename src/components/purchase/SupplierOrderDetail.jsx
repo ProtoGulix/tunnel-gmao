@@ -8,7 +8,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
+import { Badge, Box, Button, Flex, Separator, Tabs, Text } from '@radix-ui/themes';
 import { Building2, Clock, Save } from 'lucide-react';
 import { useState } from 'react';
 import { exportSupplierOrderEmail } from '@/api/supplierOrders';
@@ -17,9 +17,21 @@ import StatusCallout from '@/components/ui/StatusCallout';
 import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 import { useSupplierOrderDetail } from '@/hooks/purchase/useSupplierOrderDetail';
 import SupplierOrderHeader from '@/components/purchase/SupplierOrderHeader';
+import { formatPrice } from '@/utils/formatPrice';
 import SupplierOrderLines from '@/components/purchase/SupplierOrderLines';
+import PurchaseEntityHistoryTab, { PURCHASE_ENTITY_TYPES } from '@/components/purchase/PurchaseEntityHistoryTab';
 
 const AGE_COLOR = { gray: 'gray', orange: 'orange', red: 'red' };
+
+function TotalAmountText({ value }) {
+  const isPriced = value != null;
+  return (
+    <Text size={isPriced ? '2' : '1'} weight={isPriced ? 'bold' : undefined} color={isPriced ? undefined : 'gray'}>
+      {formatPrice(value)}
+    </Text>
+  );
+}
+TotalAmountText.propTypes = { value: PropTypes.number };
 
 function DetailRow({ label, children }) {
   return (
@@ -134,65 +146,78 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
 
         <Separator size="4" />
 
-        <Flex gap="4" wrap="wrap">
-          {detail.supplier && (detail.supplier.contact_name || detail.supplier.email) && (
-            <Box style={{ flex: '1 1 240px' }}>
-              <Flex align="center" gap="2" mb="2">
-                <Building2 size={14} color="var(--gray-9)" />
-                <Text size="2" weight="bold" color="gray">Contact</Text>
-              </Flex>
-              <Flex direction="column" gap="1">
-                {detail.supplier.contact_name && <Text size="2">{detail.supplier.contact_name}</Text>}
-                {detail.supplier.email && <Text size="1" color="gray">{detail.supplier.email}</Text>}
-              </Flex>
-            </Box>
-          )}
+        <Tabs.Root defaultValue="detail">
+          <Tabs.List>
+            <Tabs.Trigger value="detail">Détail</Tabs.Trigger>
+            <Tabs.Trigger value="history">Historique</Tabs.Trigger>
+          </Tabs.List>
 
-          <Box style={{ flex: '1 1 240px' }}>
-            {detail.total_amount != null && (
-              <DetailRow label="Montant total">
-                <Text size="2" weight="bold">{Number(detail.total_amount).toFixed(2)} €</Text>
-              </DetailRow>
-            )}
-            {detail.ordered_at && (
-              <DetailRow label="Commandé le">
-                <Text size="2">{new Date(detail.ordered_at).toLocaleDateString('fr-FR')}</Text>
-              </DetailRow>
-            )}
-            <DetailRow label="Livraison prévue">
-              {detail.edit_lines
-                ? <DeliveryDateField value={deliveryDate} onChange={setDeliveryDate} dirty={deliveryDate !== currentDelivery} onSave={handleDeliverySave} saving={savingDelivery} />
-                : <Text size="2">{detail.expected_delivery_date ? new Date(detail.expected_delivery_date).toLocaleDateString('fr-FR') : '—'}</Text>
-              }
-            </DetailRow>
-            <DetailRow label="Créée le">
-              <Flex align="center" gap="2">
-                <Text size="2" color="gray">
-                  {detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                </Text>
-                {detail.is_blocking && (
-                  <Badge color={AGE_COLOR[detail.age_color] || 'gray'} variant="soft" size="1">
-                    <Clock size={10} /> {detail.age_days}j
-                  </Badge>
+          <Tabs.Content value="detail">
+            <Flex direction="column" gap="3" pt="3">
+              <Flex gap="4" wrap="wrap">
+                {detail.supplier && (detail.supplier.contact_name || detail.supplier.email) && (
+                  <Box style={{ flex: '1 1 240px' }}>
+                    <Flex align="center" gap="2" mb="2">
+                      <Building2 size={14} color="var(--gray-9)" />
+                      <Text size="2" weight="bold" color="gray">Contact</Text>
+                    </Flex>
+                    <Flex direction="column" gap="1">
+                      {detail.supplier.contact_name && <Text size="2">{detail.supplier.contact_name}</Text>}
+                      {detail.supplier.email && <Text size="1" color="gray">{detail.supplier.email}</Text>}
+                    </Flex>
+                  </Box>
                 )}
-              </Flex>
-            </DetailRow>
-          </Box>
-        </Flex>
 
-        {detail.lines?.length > 0 && (
-          <>
-            <Separator size="4" />
-            <SupplierOrderLines
-              lines={detail.lines}
-              isNegotiating={!!detail.edit_lines}
-              lineDrafts={lineDrafts}
-              savingLines={savingLines}
-              lineErrors={lineErrors}
-              onChangeDraft={handleLineChange}
-            />
-          </>
-        )}
+                <Box style={{ flex: '1 1 240px' }}>
+                  <DetailRow label="Montant total">
+                    <TotalAmountText value={detail.total_amount} />
+                  </DetailRow>
+                  {detail.ordered_at && (
+                    <DetailRow label="Commandé le">
+                      <Text size="2">{new Date(detail.ordered_at).toLocaleDateString('fr-FR')}</Text>
+                    </DetailRow>
+                  )}
+                  <DetailRow label="Livraison prévue">
+                    {detail.edit_lines
+                      ? <DeliveryDateField value={deliveryDate} onChange={setDeliveryDate} dirty={deliveryDate !== currentDelivery} onSave={handleDeliverySave} saving={savingDelivery} />
+                      : <Text size="2">{detail.expected_delivery_date ? new Date(detail.expected_delivery_date).toLocaleDateString('fr-FR') : '—'}</Text>
+                    }
+                  </DetailRow>
+                  <DetailRow label="Créée le">
+                    <Flex align="center" gap="2">
+                      <Text size="2" color="gray">
+                        {detail.created_at ? new Date(detail.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                      </Text>
+                      {detail.is_blocking && (
+                        <Badge color={AGE_COLOR[detail.age_color] || 'gray'} variant="soft" size="1">
+                          <Clock size={10} /> {detail.age_days}j
+                        </Badge>
+                      )}
+                    </Flex>
+                  </DetailRow>
+                </Box>
+              </Flex>
+
+              {detail.lines?.length > 0 && (
+                <>
+                  <Separator size="4" />
+                  <SupplierOrderLines
+                    lines={detail.lines}
+                    isNegotiating={!!detail.edit_lines}
+                    lineDrafts={lineDrafts}
+                    savingLines={savingLines}
+                    lineErrors={lineErrors}
+                    onChangeDraft={handleLineChange}
+                  />
+                </>
+              )}
+            </Flex>
+          </Tabs.Content>
+
+          <Tabs.Content value="history">
+            <PurchaseEntityHistoryTab entityType={PURCHASE_ENTITY_TYPES.SUPPLIER_ORDER} entityId={detail.id} />
+          </Tabs.Content>
+        </Tabs.Root>
 
       </Flex>
     </Box>

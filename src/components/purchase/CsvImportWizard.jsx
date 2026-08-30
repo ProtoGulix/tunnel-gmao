@@ -663,7 +663,7 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
         </Flex>
         <Flex align="center" gap="1">
           <Box style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--orange-4)' }} />
-          <Text size="1" color="gray">DA À qualifier existante</Text>
+          <Text size="1" color="gray">Demande d&apos;achat à qualifier existante</Text>
         </Flex>
       </Flex>
 
@@ -747,7 +747,7 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
                         <Flex align="center" gap="1">
                           <AlertTriangle size={11} color="var(--orange-9)" />
                           <Text size="1" color="orange">
-                            {line.existing_to_qualify} DA À qualifier existante{line.existing_to_qualify > 1 ? 's' : ''}
+                            {line.existing_to_qualify} demande{line.existing_to_qualify > 1 ? 's' : ''} d&apos;achat à qualifier existante{line.existing_to_qualify > 1 ? 's' : ''}
                           </Text>
                         </Flex>
                       )}
@@ -773,7 +773,7 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
               <Loader2 size={14} className="animate-spin" /> Import en cours…
             </>
           ) : (
-            <>Importer {selectedCount} DA <ChevronRight size={14} /></>
+            <>Importer {selectedCount} demande{selectedCount > 1 ? 's' : ''} d&apos;achat <ChevronRight size={14} /></>
           )}
         </Button>
       </Flex>
@@ -847,7 +847,7 @@ function Step4Report({ result, onClose }) {
               <Table.ColumnHeaderCell>Référence brute</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Qté</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Résolution</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell>Statut DA</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Statut demande d&apos;achat</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Alerte</Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>

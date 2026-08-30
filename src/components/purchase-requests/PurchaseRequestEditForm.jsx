@@ -20,6 +20,8 @@ import { UNIT_OPTIONS } from '@/config/units';
 import { useDebounce } from '@/hooks/useDebounce';
 import PartForm from '@/components/stock/PartForm';
 import StatusCallout from '@/components/ui/StatusCallout';
+import Drawer from '@/components/ui/Drawer';
+import { fetchActiveUsers } from '@/api/planning';
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
@@ -30,29 +32,47 @@ const inputStyle = {
   background: 'var(--color-background)',
 };
 
-function F({ label, required, children }) {
+function F({ label, htmlFor, required, error, children }) {
   return (
     <Box>
-      <Text size="1" weight="bold" mb="1" style={{ display: 'block', color: 'var(--gray-11)' }}>
+      <Text as="label" htmlFor={htmlFor} size="1" weight="bold" mb="1" style={{ display: 'block', color: 'var(--gray-11)' }}>
         {label}{required && <span style={{ color: 'var(--red-9)' }}> *</span>}
       </Text>
       {children}
+      {error && (
+        <Text size="1" color="red" mt="1" style={{ display: 'block' }} role="alert">
+          {error}
+        </Text>
+      )}
     </Box>
   );
 }
-F.propTypes = { label: PropTypes.string.isRequired, required: PropTypes.bool, children: PropTypes.node.isRequired };
+F.propTypes = {
+  label: PropTypes.string.isRequired,
+  htmlFor: PropTypes.string,
+  required: PropTypes.bool,
+  error: PropTypes.string,
+  children: PropTypes.node.isRequired,
+};
 
-function FInput(props) {
-  return <input {...props} style={{ ...inputStyle, ...props.style }} />;
-}
-FInput.propTypes = { style: PropTypes.object };
-
-function FTextarea({ rows = 2, ...props }) {
+function FInput({ id, invalid, ...props }) {
   return (
-    <textarea rows={rows} {...props} style={{ ...inputStyle, height: 'auto', resize: 'vertical', lineHeight: 1.5 }} />
+    <input
+      id={id}
+      aria-invalid={invalid || undefined}
+      {...props}
+      style={{ ...inputStyle, ...(invalid ? { borderColor: 'var(--red-8)' } : {}), ...props.style }}
+    />
   );
 }
-FTextarea.propTypes = { rows: PropTypes.number };
+FInput.propTypes = { id: PropTypes.string, invalid: PropTypes.bool, style: PropTypes.object };
+
+function FTextarea({ id, rows = 2, ...props }) {
+  return (
+    <textarea id={id} rows={rows} {...props} style={{ ...inputStyle, height: 'auto', resize: 'vertical', lineHeight: 1.5 }} />
+  );
+}
+FTextarea.propTypes = { id: PropTypes.string, rows: PropTypes.number };
 
 function SectionHeader({ icon: Icon, title, color = 'var(--gray-9)' }) {
   return (
@@ -64,6 +84,34 @@ function SectionHeader({ icon: Icon, title, color = 'var(--gray-9)' }) {
 }
 SectionHeader.propTypes = { icon: PropTypes.elementType.isRequired, title: PropTypes.string.isRequired, color: PropTypes.string };
 
+function userLabel(user) {
+  const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+  return user.initial ? `${user.initial} - ${name}` : name || user.id;
+}
+
+const NO_USER = '__none__';
+
+function UserSelect({ id, users, value, onChange, placeholder }) {
+  return (
+    <Select.Root value={value ?? NO_USER} onValueChange={(v) => onChange(v === NO_USER ? null : v)}>
+      <Select.Trigger id={id} placeholder={placeholder} style={{ width: '100%', height: '34px' }} />
+      <Select.Content>
+        <Select.Item value={NO_USER}>—</Select.Item>
+        {users.map((user) => (
+          <Select.Item key={user.id} value={String(user.id)}>{userLabel(user)}</Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+}
+UserSelect.propTypes = {
+  id: PropTypes.string,
+  users: PropTypes.array.isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+};
+
 // ─── Section champs DA ────────────────────────────────────────────────────────
 
 const URGENCY_OPTIONS = [
@@ -72,32 +120,38 @@ const URGENCY_OPTIONS = [
   { value: 'critical', label: 'Critique' },
 ];
 
-function DaFieldsSection({ state, set }) {
+function DaFieldsSection({ state, set, errors, touched, touch, users }) {
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
       <SectionHeader icon={ShoppingCart} title="Informations de la demande" color="var(--blue-9)" />
       <Flex direction="column" gap="3">
 
-        <F label="Désignation" required>
+        <F label="Désignation" htmlFor="pr-item-label" required error={touched.item_label ? errors.item_label : null}>
           <FInput
+            id="pr-item-label"
+            invalid={touched.item_label && !!errors.item_label}
             value={state.item_label}
             onChange={e => set(s => ({ ...s, item_label: e.target.value }))}
+            onBlur={() => touch('item_label')}
             placeholder="Nom de l'article ou de la pièce"
           />
         </F>
 
         <Flex gap="2">
-          <F label="Quantité" required>
+          <F label="Quantité" htmlFor="pr-quantity" required error={touched.quantity ? errors.quantity : null}>
             <FInput
+              id="pr-quantity"
+              invalid={touched.quantity && !!errors.quantity}
               type="number" min="1" style={{ width: 90 }}
               value={state.quantity}
               onChange={e => set(s => ({ ...s, quantity: e.target.value }))}
+              onBlur={() => touch('quantity')}
             />
           </F>
           <Box style={{ flex: 1 }}>
-            <F label="Unité">
+            <F label="Unité" htmlFor="pr-unit">
               <Select.Root value={state.unit} onValueChange={v => set(s => ({ ...s, unit: v }))}>
-                <Select.Trigger style={{ width: '100%', height: '34px' }} />
+                <Select.Trigger id="pr-unit" style={{ width: '100%', height: '34px' }} />
                 <Select.Content>
                   {UNIT_OPTIONS.map(({ value, label }) => (
                     <Select.Item key={value} value={value}>{label}</Select.Item>
@@ -107,9 +161,9 @@ function DaFieldsSection({ state, set }) {
             </F>
           </Box>
           <Box style={{ flex: 1 }}>
-            <F label="Urgence">
+            <F label="Urgence" htmlFor="pr-urgency">
               <Select.Root value={state.urgency} onValueChange={v => set(s => ({ ...s, urgency: v }))}>
-                <Select.Trigger style={{ width: '100%', height: '34px' }} />
+                <Select.Trigger id="pr-urgency" style={{ width: '100%', height: '34px' }} />
                 <Select.Content>
                   {URGENCY_OPTIONS.map(o => (
                     <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
@@ -122,17 +176,20 @@ function DaFieldsSection({ state, set }) {
 
         <Flex gap="2">
           <Box style={{ flex: 1 }}>
-            <F label="Demandeur">
-              <FInput
-                value={state.requested_by}
-                onChange={e => set(s => ({ ...s, requested_by: e.target.value }))}
-                placeholder="Nom du demandeur"
+            <F label="Demandeur" htmlFor="pr-requested-by" required error={touched.requested_by ? errors.requested_by : null}>
+              <UserSelect
+                id="pr-requested-by"
+                users={users}
+                value={state.requested_by_id}
+                onChange={(v) => { set(s => ({ ...s, requested_by_id: v })); touch('requested_by'); }}
+                placeholder="Sélectionner un demandeur"
               />
             </F>
           </Box>
           <Box style={{ flex: 1 }}>
-            <F label="Atelier">
+            <F label="Atelier" htmlFor="pr-workshop">
               <FInput
+                id="pr-workshop"
                 value={state.workshop}
                 onChange={e => set(s => ({ ...s, workshop: e.target.value }))}
                 placeholder="Atelier concerné"
@@ -141,16 +198,18 @@ function DaFieldsSection({ state, set }) {
           </Box>
         </Flex>
 
-        <F label="Motif">
+        <F label="Motif" htmlFor="pr-reason">
           <FTextarea
+            id="pr-reason"
             value={state.reason}
             onChange={e => set(s => ({ ...s, reason: e.target.value }))}
             placeholder="Raison de la demande..."
           />
         </F>
 
-        <F label="Notes">
+        <F label="Notes" htmlFor="pr-notes">
           <FTextarea
+            id="pr-notes"
             value={state.notes}
             onChange={e => set(s => ({ ...s, notes: e.target.value }))}
             placeholder="Informations complémentaires..."
@@ -161,8 +220,9 @@ function DaFieldsSection({ state, set }) {
         <Text size="1" color="gray" weight="medium">Approbation</Text>
 
         <Flex gap="2">
-          <F label="Qté approuvée">
+          <F label="Qté approuvée" htmlFor="pr-quantity-approved">
             <FInput
+              id="pr-quantity-approved"
               type="number" min="0" style={{ width: 110 }}
               value={state.quantity_approved ?? ''}
               onChange={e => set(s => ({ ...s, quantity_approved: e.target.value === '' ? null : Number(e.target.value) }))}
@@ -170,11 +230,13 @@ function DaFieldsSection({ state, set }) {
             />
           </F>
           <Box style={{ flex: 1 }}>
-            <F label="Approuveur">
-              <FInput
-                value={state.approver_name ?? ''}
-                onChange={e => set(s => ({ ...s, approver_name: e.target.value || null }))}
-                placeholder="Nom de l'approbateur"
+            <F label="Approuveur" htmlFor="pr-approver-id">
+              <UserSelect
+                id="pr-approver-id"
+                users={users}
+                value={state.approver_id}
+                onChange={(v) => set(s => ({ ...s, approver_id: v }))}
+                placeholder="Sélectionner un approbateur"
               />
             </F>
           </Box>
@@ -184,7 +246,14 @@ function DaFieldsSection({ state, set }) {
     </Card>
   );
 }
-DaFieldsSection.propTypes = { state: PropTypes.object.isRequired, set: PropTypes.func.isRequired };
+DaFieldsSection.propTypes = {
+  state: PropTypes.object.isRequired,
+  set: PropTypes.func.isRequired,
+  errors: PropTypes.object.isRequired,
+  touched: PropTypes.object.isRequired,
+  touch: PropTypes.func.isRequired,
+  users: PropTypes.array.isRequired,
+};
 
 // ─── Onglet "Pièce liée" (état actuel) ───────────────────────────────────────
 
@@ -322,9 +391,9 @@ function SearchPartTab({ onSelect }) {
 }
 SearchPartTab.propTypes = { onSelect: PropTypes.func.isRequired };
 
-// ─── Onglet "Créer une pièce" ─────────────────────────────────────────────────
+// ─── Drawer "Créer une pièce" ─────────────────────────────────────────────────
 
-function CreatePartTab({ onCreated, onCancel }) {
+function CreatePartDrawer({ open, onOpenChange, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -334,6 +403,7 @@ function CreatePartTab({ onCreated, onCancel }) {
     try {
       const part = await partsApi.createPartWithSupplierRef(payload);
       onCreated(part);
+      onOpenChange(false);
     } catch (err) {
       setError(err?.response?.data?.detail || 'Erreur lors de la création de la pièce.');
       throw err;
@@ -343,18 +413,25 @@ function CreatePartTab({ onCreated, onCancel }) {
   };
 
   return (
-    <Flex direction="column" gap="2">
-      {error && <StatusCallout type="error">{error}</StatusCallout>}
-      <PartForm onSubmit={handleSubmit} onCancel={onCancel} saving={saving} />
-    </Flex>
+    <Drawer open={open} onOpenChange={onOpenChange} title="Créer une pièce catalogue" width={520}>
+      <Flex direction="column" gap="2">
+        {error && <StatusCallout type="error">{error}</StatusCallout>}
+        <PartForm onSubmit={handleSubmit} onCancel={() => onOpenChange(false)} saving={saving} />
+      </Flex>
+    </Drawer>
   );
 }
-CreatePartTab.propTypes = { onCreated: PropTypes.func.isRequired, onCancel: PropTypes.func.isRequired };
+CreatePartDrawer.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onOpenChange: PropTypes.func.isRequired,
+  onCreated: PropTypes.func.isRequired,
+};
 
-// ─── Card pièce catalogue (3 onglets) ────────────────────────────────────────
+// ─── Card pièce catalogue (2 onglets + drawer de création) ───────────────────
 
 function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
   const [activeTab, setActiveTab] = useState(currentPart ? 'current' : 'search');
+  const [createOpen, setCreateOpen] = useState(false);
 
   const handleLink = (part) => {
     onLink(part);
@@ -363,7 +440,12 @@ function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
 
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
-      <SectionHeader icon={Package} title="Pièce catalogue" color="var(--amber-9)" />
+      <Flex align="center" justify="between">
+        <SectionHeader icon={Package} title="Pièce catalogue" color="var(--amber-9)" />
+        <Button size="1" variant="soft" onClick={() => setCreateOpen(true)} mb="2">
+          <Plus size={12} /> Créer une pièce
+        </Button>
+      </Flex>
 
       <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List mb="3">
@@ -374,9 +456,6 @@ function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
             </Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="search">Rechercher</Tabs.Trigger>
-          <Tabs.Trigger value="create">
-            <Flex align="center" gap="1"><Plus size={12} /> Créer</Flex>
-          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="current">
@@ -385,10 +464,9 @@ function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
         <Tabs.Content value="search">
           <SearchPartTab onSelect={handleLink} />
         </Tabs.Content>
-        <Tabs.Content value="create">
-          <CreatePartTab onCreated={handleLink} onCancel={() => setActiveTab('search')} />
-        </Tabs.Content>
       </Tabs.Root>
+
+      <CreatePartDrawer open={createOpen} onOpenChange={setCreateOpen} onCreated={handleLink} />
     </Card>
   );
 }
@@ -401,25 +479,54 @@ PartCatalogCard.propTypes = {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
-export default function PurchaseRequestEditForm({ item, onSubmit, loading = false, onCancel }) {
-  const [state, setState] = useState({
-    item_label: item.item_label || '',
+function validateState(state) {
+  const errors = {};
+  if (!state.item_label.trim()) errors.item_label = 'La désignation est obligatoire.';
+  if (!state.requested_by_id) errors.requested_by = 'Le demandeur est obligatoire.';
+  const qty = parseInt(state.quantity, 10);
+  if (!state.quantity || Number.isNaN(qty) || qty < 1) errors.quantity = 'La quantité doit être un nombre ≥ 1.';
+  return errors;
+}
+
+const orDefault = (value, fallback = '') => value || fallback;
+
+function buildInitialState(item) {
+  return {
+    item_label: orDefault(item.item_label),
     quantity: String(item.quantity ?? 1),
-    unit: item.unit || 'pcs',
-    urgency: item.urgency || 'normal',
-    requested_by: item.requester_name || item.requested_by || '',
-    workshop: item.workshop || '',
-    reason: item.reason || '',
-    notes: item.notes || '',
+    unit: orDefault(item.unit, 'pcs'),
+    urgency: orDefault(item.urgency, 'normal'),
+    requested_by_id: item.requested_by_user?.id ? String(item.requested_by_user.id) : null,
+    workshop: orDefault(item.workshop),
+    reason: orDefault(item.reason),
+    notes: orDefault(item.notes),
     quantity_approved: item.quantity_approved ?? null,
-    approver_name: item.approver_name ?? null,
-  });
+    approver_id: item.approver_user?.id ? String(item.approver_user.id) : null,
+  };
+}
+
+export default function PurchaseRequestEditForm({ item, onSubmit, loading = false, onCancel, onDirtyChange }) {
+  const [initialState] = useState(() => buildInitialState(item));
+  const [state, setState] = useState(initialState);
+  const [touched, setTouched] = useState({});
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => { fetchActiveUsers().then(setUsers).catch(() => setUsers([])); }, []);
 
   // Pièce liée : priorité à item.part (V4), fallback pour affichage legacy
   const [linkedPart, setLinkedPart] = useState(item.part || null);
   const [error, setError] = useState(null);
 
   const isToQualify = !item.part && !item.stock_item;
+  const errors = validateState(state);
+  const isValid = Object.keys(errors).length === 0;
+  const isDirty = JSON.stringify(state) !== JSON.stringify(initialState)
+    || (linkedPart?.id ?? null) !== (item.part?.id ?? null);
+
+  useEffect(() => { onDirtyChange?.(isDirty); }, [isDirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+
+  const touch = useCallback((field) => setTouched(t => ({ ...t, [field]: true })), []);
 
   const handleLinkPart = useCallback((part) => {
     setLinkedPart(part);
@@ -429,20 +536,20 @@ export default function PurchaseRequestEditForm({ item, onSubmit, loading = fals
 
   const handleSubmit = async () => {
     setError(null);
-    if (!state.item_label.trim()) { setError('La désignation est obligatoire.'); return; }
-    if (parseInt(state.quantity) < 1) { setError('La quantité doit être ≥ 1.'); return; }
+    setTouched({ item_label: true, quantity: true, requested_by: true });
+    if (!isValid) return;
     try {
       await onSubmit({
         item_label: state.item_label.trim(),
         quantity: parseInt(state.quantity, 10),
         unit: state.unit,
         urgency: state.urgency,
-        requested_by: state.requested_by.trim() || 'Système',
+        requested_by_id: state.requested_by_id,
         workshop: state.workshop.trim() || null,
         reason: state.reason.trim() || null,
         notes: state.notes.trim() || null,
         quantity_approved: state.quantity_approved,
-        approver_name: state.approver_name,
+        approver_id: state.approver_id,
         part_id: linkedPart?.id ?? null,
       });
     } catch (err) {
@@ -459,13 +566,13 @@ export default function PurchaseRequestEditForm({ item, onSubmit, loading = fals
           <Text size="3" weight="bold">
             {isToQualify ? 'Qualifier la demande' : 'Modifier la demande'}
           </Text>
-          <Text size="2" color="gray">{item.item_label}</Text>
+          <Text size="2" color="gray">{item.code || item.item_label}</Text>
         </Flex>
         <Flex gap="2">
           <Button size="2" variant="soft" color="gray" onClick={onCancel}>
             <X size={14} /> Annuler
           </Button>
-          <Button size="2" color="blue" onClick={handleSubmit} loading={loading}>
+          <Button size="2" color="blue" onClick={handleSubmit} loading={loading} disabled={!isValid}>
             <CheckCircle2 size={14} /> Enregistrer
           </Button>
         </Flex>
@@ -475,7 +582,7 @@ export default function PurchaseRequestEditForm({ item, onSubmit, loading = fals
 
       {/* Layout 2 colonnes */}
       <Box style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)', alignItems: 'start' }}>
-        <DaFieldsSection state={state} set={setState} />
+        <DaFieldsSection state={state} set={setState} errors={errors} touched={touched} touch={touch} users={users} />
         <PartCatalogCard
           currentPart={item.part}
           linkedPart={linkedPart}
@@ -492,4 +599,5 @@ PurchaseRequestEditForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   onCancel: PropTypes.func,
+  onDirtyChange: PropTypes.func,
 };

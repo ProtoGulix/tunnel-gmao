@@ -133,10 +133,17 @@ export default function PurchaseRequestItem({ pr, onDelete }) {
       style={{ padding: '8px', backgroundColor: bg, borderRadius: '4px', position: 'relative' }}>
       <ShoppingCart size={14} color={icon} style={{ flexShrink: 0 }} />
       {stockRef && <StockRefLink reference={stockRef} tab="stock" color="gray" variant="outline" size="1" />}
-      <Text size="2" weight="medium"
-        style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {itemLabel}
-      </Text>
+      <Flex direction="column" gap="0" style={{ flex: 1, minWidth: 0 }}>
+        <Text size="2" weight="medium"
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {pr.code || itemLabel}
+        </Text>
+        {pr.code && (
+          <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {itemLabel}
+          </Text>
+        )}
+      </Flex>
       {isToQualify && (
         <Flex align="center" gap="1" style={{ flexShrink: 0 }}>
           <AlertTriangle size={12} color="var(--amber-9)" />
@@ -160,6 +167,7 @@ export default function PurchaseRequestItem({ pr, onDelete }) {
 PurchaseRequestItem.propTypes = {
   pr: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    code: PropTypes.string,
     item_label: PropTypes.string,
     itemLabel: PropTypes.string,
     stock_item_id: PropTypes.string,

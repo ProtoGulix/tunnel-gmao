@@ -12,6 +12,17 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Text, TextField } from '@radix-ui/themes';
 import { CheckCircle2, Clock, Save, Trophy } from 'lucide-react';
 import { updateSupplierOrderLine } from '@/api/supplierOrders';
+import { formatPrice } from '@/utils/formatPrice';
+
+function PriceTotalText({ total, isBest }) {
+  const isPriced = total != null;
+  return (
+    <Text size={isPriced ? '3' : '1'} weight={isPriced ? 'bold' : undefined} color={isBest ? 'green' : 'gray'}>
+      {formatPrice(isPriced ? Number(total) : null)}
+    </Text>
+  );
+}
+PriceTotalText.propTypes = { total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), isBest: PropTypes.bool };
 
 function computeWinners(orderLines, drafts) {
   const prices = orderLines
@@ -203,9 +214,7 @@ export default function PurchaseComparisonSection({ orderLines, itemQuantity, it
                 style={{ borderTop: '1px solid var(--gray-3)' }}
               >
                 <Text size="1" color="gray">Total ({qty} {itemUnit || 'pcs'})</Text>
-                <Text size="3" weight="bold" color={isBestPrice ? 'green' : 'gray'}>
-                  {localTotal != null ? `${localTotal} €` : '—'}
-                </Text>
+                <PriceTotalText total={localTotal} isBest={isBestPrice} />
               </Flex>
             </Flex>
 
