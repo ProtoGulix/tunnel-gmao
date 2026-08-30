@@ -2,10 +2,12 @@
  * Composants pour la page Qualité des Données
  */
 
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Card, Flex, Text, Badge, Box, Heading, Grid } from '@radix-ui/themes';
-import { Database, CheckCircle2 } from 'lucide-react';
-import { ENTITY_LABELS, SEVERITY_CONFIG, RULE_DESCRIPTIONS } from './config';
+import { Card, Flex, Text, Badge, Box, Heading, Grid, Button } from '@radix-ui/themes';
+import { Database, CheckCircle2, Wrench } from 'lucide-react';
+import { SEVERITY_CONFIG, RULE_DESCRIPTIONS, ANOMALY_TYPE_LABELS } from './config';
+import { getEntityLink } from './entityLinks';
 
 /**
  * Carte KPI synthétique
@@ -107,6 +109,7 @@ export function ProblemCard({ problem }) {
   const config = SEVERITY_CONFIG[problem.severity];
   const Icon = config.icon;
   const description = RULE_DESCRIPTIONS[problem.code] || problem.code;
+  const correctionLink = getEntityLink(problem);
 
   return (
     <Card style={{ borderLeft: `4px solid var(--${config.color}-9)` }}>
@@ -115,22 +118,19 @@ export function ProblemCard({ problem }) {
           <Flex direction="column" gap="1" style={{ flex: 1 }}>
             <Flex align="center" gap="2">
               <Icon size={16} color={`var(--${config.color}-11)`} />
-              <Text size="3" weight="bold">
+              <Text size="3" weight="bold" title={problem.code}>
                 {description}
               </Text>
             </Flex>
             <Text size="2" color="gray">
               {problem.message}
             </Text>
-            <Text size="1" color="gray" style={{ fontFamily: 'monospace' }}>
-              {problem.code}
-            </Text>
           </Flex>
           <Badge color={config.color} size="2">
             {config.label}
           </Badge>
         </Flex>
-        
+
         {problem.context && (
           <Box>
             <Text size="1" color="gray">
@@ -154,6 +154,16 @@ export function ProblemCard({ problem }) {
               )}
             </Flex>
           </Box>
+        )}
+
+        {correctionLink && (
+          <Flex justify="end">
+            <Button size="1" variant="soft" color="blue" asChild>
+              <Link to={correctionLink}>
+                <Wrench size={12} /> Corriger
+              </Link>
+            </Button>
+          </Flex>
         )}
       </Flex>
     </Card>
@@ -179,16 +189,16 @@ ProblemCard.propTypes = {
 };
 
 /**
- * Section d'entité avec ses problèmes
+ * Section groupant les problèmes par type d'anomalie
  */
-export function EntitySection({ entity, problems }) {
+export function AnomalyTypeSection({ type, problems }) {
   if (!problems || problems.length === 0) return null;
 
   return (
     <Box mb="6">
       <Flex align="center" gap="2" mb="3">
         <Database size={20} />
-        <Heading size="5">{ENTITY_LABELS[entity] || entity}</Heading>
+        <Heading size="5">{ANOMALY_TYPE_LABELS[type] || type}</Heading>
         <Badge color="gray" size="2">
           {problems.length} problème{problems.length > 1 ? 's' : ''}
         </Badge>
@@ -202,7 +212,7 @@ export function EntitySection({ entity, problems }) {
   );
 }
 
-EntitySection.propTypes = {
-  entity: PropTypes.string.isRequired,
+AnomalyTypeSection.propTypes = {
+  type: PropTypes.string.isRequired,
   problems: PropTypes.array.isRequired,
 };

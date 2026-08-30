@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import { useAdminAudit } from '@/hooks/admin/useAdminAudit';
 import { AUDIT_DECISION_LABELS } from '@/config/interventionTypes';
+import AuditValueDiff from '@/components/ui/AuditValueDiff';
 
 /* ── Config ─────────────────────────────────────────────────────────────────── */
 
@@ -134,47 +135,6 @@ FiltersBar.propTypes = {
 
 // Sérialise une valeur de diff en chaîne lisible.
 // Les valeurs peuvent être des primitives ou des objets hydratés (ex: assigned_to = { initials, first_name, ... })
-function _serializeDiffEntry(val) {
-  if (val === null || val === undefined) return '—';
-  if (typeof val !== 'object') return String(val);
-  // Objet utilisateur hydraté
-  if (val.initials || val.first_name) {
-    return val.initials ?? [val.first_name, val.last_name].filter(Boolean).join(' ') ?? val.id ?? '?';
-  }
-  // Objet générique : join des valeurs primitives
-  return Object.values(val)
-    .filter((v) => v !== null && typeof v !== 'object')
-    .join(' · ') || JSON.stringify(val);
-}
-
-function _serializeDiff(diffObj) {
-  if (!diffObj) return null;
-  return Object.values(diffObj).map(_serializeDiffEntry).join(', ') || null;
-}
-
-function ValueDiff({ oldValue, newValue }) {
-  if (!oldValue && !newValue) return <Text size="1" color="gray">—</Text>;
-
-  const oldStr = _serializeDiff(oldValue);
-  const newStr = _serializeDiff(newValue);
-
-  if (!oldStr) return <Text size="1" color="green">{newStr}</Text>;
-  if (!newStr) return <Text size="1" color="red" style={{ textDecoration: 'line-through' }}>{oldStr}</Text>;
-
-  return (
-    <Flex align="center" gap="1" wrap="wrap">
-      <Text size="1" color="gray" style={{ textDecoration: 'line-through', opacity: 0.6 }}>{oldStr}</Text>
-      <Text size="1" color="gray">→</Text>
-      <Text size="1" color="blue">{newStr}</Text>
-    </Flex>
-  );
-}
-
-ValueDiff.propTypes = {
-  oldValue: PropTypes.object,
-  newValue: PropTypes.object,
-};
-
 function Pagination({ page, pageSize, total, onPage }) {
   const totalPages = Math.ceil(total / pageSize);
   if (totalPages <= 1) return null;
@@ -308,7 +268,7 @@ export default function AdminAuditLogSection() {
 
                     {/* old_value → new_value */}
                     <Table.Cell style={{ maxWidth: 180 }}>
-                      <ValueDiff oldValue={log.old_value} newValue={log.new_value} />
+                      <AuditValueDiff oldValue={log.old_value} newValue={log.new_value} />
                     </Table.Cell>
 
                     {/* Raison (objet imbriqué) */}

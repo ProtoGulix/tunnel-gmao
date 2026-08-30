@@ -4,7 +4,10 @@ import { Search } from 'lucide-react';
 /**
  * Champ de recherche avec icône
  */
-export default function SearchInput({ value, onChange, placeholder, required, label }) {
+export default function SearchInput({
+  value, onChange, placeholder, label,
+  onKeyDown, listboxId, expanded, activeOptionId,
+}) {
   return (
     <div style={{ position: 'relative', zIndex: 2, pointerEvents: 'auto' }}>
       <input
@@ -12,6 +15,7 @@ export default function SearchInput({ value, onChange, placeholder, required, la
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         style={{
           width: '100%',
           padding: '8px 12px 8px 36px',
@@ -24,8 +28,12 @@ export default function SearchInput({ value, onChange, placeholder, required, la
           background: 'var(--color-background, white)',
           pointerEvents: 'auto'
         }}
-        required={required}
         aria-label={label}
+        role="combobox"
+        aria-expanded={expanded}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={activeOptionId || undefined}
         autoComplete="off"
         inputMode="text"
       />
@@ -45,6 +53,9 @@ SearchInput.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string.isRequired,
-  required: PropTypes.bool.isRequired,
-  label: PropTypes.string.isRequired
+  label: PropTypes.string.isRequired,
+  onKeyDown: PropTypes.func,
+  listboxId: PropTypes.string,
+  expanded: PropTypes.bool,
+  activeOptionId: PropTypes.string,
 };

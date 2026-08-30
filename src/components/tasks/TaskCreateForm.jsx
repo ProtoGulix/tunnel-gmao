@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Box, Button, Card, Flex, Select, Spinner, Switch, Text, TextField } from '@radix-ui/themes';
 import { Plus } from 'lucide-react';
 import LockedBadge from '@/components/ui/LockedBadge';
+import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
 
 function TaskCreateForm({
   formData,
@@ -21,12 +22,6 @@ function TaskCreateForm({
   const handleSubmit = (event) => {
     event?.preventDefault?.();
     onSubmit(event);
-  };
-
-  const preventParentSubmit = (event) => {
-    if (embedded && event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
-      event.preventDefault();
-    }
   };
 
   const content = (
@@ -131,7 +126,7 @@ function TaskCreateForm({
   );
 
   return (
-    <Card onKeyDownCapture={preventParentSubmit} style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+    <Card onKeyDownCapture={embedded ? preventEnterSubmit : undefined} style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
       {embedded ? content : <form onSubmit={handleSubmit}>{content}</form>}
     </Card>
   );

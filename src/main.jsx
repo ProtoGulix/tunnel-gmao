@@ -5,11 +5,11 @@ import ReactDOM from 'react-dom/client';
 import packageJson from '../package.json';
 
 // 2. UI Libraries (Radix)
-import { Theme } from '@radix-ui/themes';
 import '@radix-ui/themes/styles.css';
 
 // 3. Custom Components
 import App from '@/App';
+import AppTheme from '@/app/AppTheme';
 
 // 4. Global Styles
 import '@/styles/globals.css';
@@ -45,7 +45,7 @@ if ('serviceWorker' in navigator) {
 
 // ===== RENDER =====
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <Theme accentColor="blue" grayColor="slate" radius="medium" scaling="95%">
+  <AppTheme>
     <App />
-  </Theme>
+  </AppTheme>
 );

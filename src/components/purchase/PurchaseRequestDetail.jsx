@@ -4,14 +4,17 @@
  */
 
 /* eslint-disable max-lines */
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Card, Checkbox, Flex, Table, Text, Separator, Tooltip } from '@radix-ui/themes';
+import { AlertDialog, Badge, Box, Button, Card, Checkbox, Flex, Heading, Table, Tabs, Text, Separator, Tooltip } from '@radix-ui/themes';
 import { ExternalLink, Package, Wrench, ShoppingCart, Trash2, Edit2, AlertTriangle, Scale } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseConfig';
 import HexBadge from '@/components/ui/HexBadge';
 import { isConsultationLost } from '@/components/purchase/SupplierOrderLines';
+import { formatPrice } from '@/utils/formatPrice';
+import PurchaseEntityHistoryTab, { PURCHASE_ENTITY_TYPES } from '@/components/purchase/PurchaseEntityHistoryTab';
 
 function DetailRow({ label, children }) {
   return (
@@ -40,7 +43,7 @@ function CardHeader({ icon: Icon, title, color = 'var(--gray-9)' }) {
       }}
     >
       <Icon size={14} color={color} />
-      <Text size="2" weight="medium" color="gray">{title}</Text>
+      <Heading as="h3" size="2" weight="medium" color="gray">{title}</Heading>
     </Flex>
   );
 }
@@ -51,7 +54,23 @@ CardHeader.propTypes = {
   color: PropTypes.string,
 };
 
+function formatUserRef(user) {
+  if (!user) return null;
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  return user.initial ? `${user.initial} - ${fullName}` : fullName;
+}
+
+function resolveRequester(item) {
+  return formatUserRef(item.requested_by_user) || item.requester_name || item.requested_by || '—';
+}
+
+function resolveApprover(item) {
+  return formatUserRef(item.approver_user) || item.approver_name;
+}
+
 function DaInfoCard({ item, urgency, statusColor, statusLabel }) {
+  const requester = resolveRequester(item);
+  const approver = resolveApprover(item);
   return (
     <Card size="2" variant="surface" style={{ overflow: 'hidden' }}>
       <CardHeader icon={ShoppingCart} title="Demande d'achat" color="var(--blue-9)" />
@@ -64,7 +83,8 @@ function DaInfoCard({ item, urgency, statusColor, statusLabel }) {
           {item.urgent && <Badge color="red" variant="solid" size="1"><AlertTriangle size={10} /> Urgent</Badge>}
         </Flex>
         <DetailRow label="Quantité"><Text size="2" weight="medium">{item.quantity} {item.unit || 'pcs'}</Text></DetailRow>
-        <DetailRow label="Demandeur"><Text size="2">{item.requester_name || item.requested_by || '—'}</Text></DetailRow>
+        <DetailRow label="Demandeur"><Text size="2">{requester}</Text></DetailRow>
+        {approver && <DetailRow label="Approbateur"><Text size="2">{approver}</Text></DetailRow>}
         {item.workshop && <DetailRow label="Atelier"><Text size="2">{item.workshop}</Text></DetailRow>}
         {item.reason && <DetailRow label="Motif"><Text size="2" color="gray">{item.reason}</Text></DetailRow>}
         {item.notes && <DetailRow label="Notes"><Text size="2" color="gray">{item.notes}</Text></DetailRow>}
@@ -265,8 +285,12 @@ function ManufacturerCell({ manufacturer, catalogRef }) {
 ManufacturerCell.propTypes = { manufacturer: PropTypes.object, catalogRef: PropTypes.string };
 
 function PriceCell({ value, bold }) {
-  if (value == null) return <Text size="1" color="gray">—</Text>;
-  return <Text size="2" weight={bold ? 'medium' : undefined}>{Number(value).toFixed(2)} €</Text>;
+  const isPriced = value != null;
+  return (
+    <Text size={isPriced ? '2' : '1'} weight={isPriced && bold ? 'medium' : undefined} color={isPriced ? undefined : 'gray'}>
+      {formatPrice(value)}
+    </Text>
+  );
 }
 
 PriceCell.propTypes = { value: PropTypes.number, bold: PropTypes.bool };
@@ -322,14 +346,9 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
   const canCompare = orderLines.length >= 2;
 
   const handleOpenComparator = () => {
-    const [lineA, lineB] = orderLines;
-    const params = new URLSearchParams({ tab: 'comparateur' });
-    // supplier_order_id est le FK exposé par le backend sur chaque ligne
-    if (lineA.supplier_order_id) params.set('a', lineA.supplier_order_id);
-    if (lineB.supplier_order_id) params.set('b', lineB.supplier_order_id);
-    // Fallback sur le numéro de panier si l'id n'est pas exposé
-    if (!lineA.supplier_order_id) params.set('a_num', lineA.supplier_order_number || '');
-    if (!lineB.supplier_order_id) params.set('b_num', lineB.supplier_order_number || '');
+    // supplier_order_id est le FK exposé par le backend sur chaque ligne (non nullable)
+    const orderIds = orderLines.map((l) => l.supplier_order_id).filter(Boolean);
+    const params = new URLSearchParams({ tab: 'comparateur', orders: orderIds.join(',') });
     navigate(`/achats?${params.toString()}`);
   };
 
@@ -338,9 +357,9 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
       <Flex align="center" justify="between" mb="2">
         <Flex align="center" gap="2">
           <ShoppingCart size={14} color="var(--gray-9)" />
-          <Text size="2" weight="bold" color="gray">
+          <Heading as="h3" size="2" color="gray">
             Paniers fournisseurs {orderLines.length > 0 && `(${orderLines.length})`}
-          </Text>
+          </Heading>
         </Flex>
         {canCompare && (
           <Button size="1" variant="soft" color="blue" onClick={handleOpenComparator}>
@@ -353,7 +372,7 @@ function OrderLinesSection({ orderLines, itemQuantity, itemUnit }) {
         <Card size="2" variant="surface">
           <Flex direction="column" align="center" justify="center" gap="2" py="5">
             <ShoppingCart size={28} color="var(--gray-5)" />
-            <Text size="2" weight="medium" color="gray">Cette DA n&apos;est dans aucun panier fournisseur</Text>
+            <Text size="2" weight="medium" color="gray">Cette demande d&apos;achat n&apos;est dans aucun panier fournisseur</Text>
             <Text size="1" color="gray">Le responsable achats devra dispatcher cette demande.</Text>
           </Flex>
         </Card>
@@ -395,31 +414,113 @@ OrderLinesSection.propTypes = {
   itemUnit: PropTypes.string,
 };
 
+function describeLinkedOrderLines(orderLines) {
+  const count = orderLines?.length ?? 0;
+  if (count === 0) return null;
+  const plural = count > 1 ? 's' : '';
+  return `${count} ligne${plural} de panier fournisseur associée${plural}`;
+}
+
+function describeLinkedPart(item) {
+  if (item.part?.internal_ref) return `la référence pièce liée ${item.part.internal_ref}`;
+  if (item.stock_item?.ref) return `la référence stock liée ${item.stock_item.ref}`;
+  return null;
+}
+
+function buildDeleteConsequences(item) {
+  return [
+    item.intervention?.code ? `l'intervention liée ${item.intervention.code}` : null,
+    describeLinkedPart(item),
+    describeLinkedOrderLines(item.order_lines),
+  ].filter(Boolean);
+}
+
+function DeleteConfirmDialog({ item, open, onOpenChange, onConfirm }) {
+  const consequences = buildDeleteConsequences(item);
+  return (
+    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
+      <AlertDialog.Content maxWidth="480px">
+        <AlertDialog.Title>Supprimer {item.code || item.item_label}</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          <Text weight="bold">{item.code || item.item_label}</Text> ({item.item_label}) sera supprimée définitivement.
+          {consequences.length > 0 && (
+            <>
+              {' '}Cette suppression n&apos;affectera pas {consequences.join(', ')}, qui resteront liés à leur propre historique.
+            </>
+          )}
+          {' '}Cette action est irréversible.
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <Button variant="soft" color="gray">Annuler</Button>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <Button variant="solid" color="red" onClick={onConfirm}>
+              <Trash2 size={14} /> Supprimer définitivement
+            </Button>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
+  );
+}
+DeleteConfirmDialog.propTypes = {
+  item: PropTypes.object.isRequired,
+  open: PropTypes.bool.isRequired,
+  onOpenChange: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
 function DetailHeader({ item, onEdit, onDelete }) {
   const isLocked = !item.is_editable;
   const isToQualify = !item.part && !item.stock_item;
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
-    <Flex align="center" justify="between" gap="2">
+    <Flex
+      align="center" justify="between" gap="2"
+      style={{
+        position: 'sticky', top: 0, zIndex: 1,
+        background: 'var(--color-background)',
+        borderBottom: '1px solid var(--gray-5)',
+        padding: '16px', margin: '-16px -16px 0',
+      }}
+    >
       <Flex align="center" gap="2">
         <ShoppingCart size={16} color="var(--blue-9)" />
-        <Text size="3" weight="bold">{item.item_label}</Text>
+        <Flex direction="column" gap="0">
+          <Heading as="h2" size="3">{item.code || item.item_label}</Heading>
+          {item.code && <Text size="1" color="gray">{item.item_label}</Text>}
+        </Flex>
         {item.urgent && <Badge color="red" variant="solid" size="1"><AlertTriangle size={10} /> Urgent</Badge>}
       </Flex>
-      <Flex gap="2">
+      <Flex gap="4" align="center">
         {onEdit && (
           <Button
-            size="1"
+            size="2"
             variant="soft"
             color={isToQualify ? 'amber' : undefined}
             onClick={onEdit}
             disabled={isLocked}
-            title={isLocked ? 'Non modifiable : DA dans un panier fournisseur actif' : undefined}
+            title={isLocked ? 'Non modifiable : demande d’achat dans un panier fournisseur actif' : undefined}
           >
-            {isToQualify ? <><Package size={12} /> Qualifier</> : <><Edit2 size={12} /> Modifier</>}
+            {isToQualify ? <><Package size={14} /> Qualifier</> : <><Edit2 size={14} /> Modifier</>}
           </Button>
         )}
-        {onDelete && <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /> Supprimer</Button>}
+        {onDelete && (
+          <>
+            <Separator orientation="vertical" size="4" style={{ height: 24 }} />
+            <Button size="2" variant="soft" color="red" onClick={() => setDeleteConfirmOpen(true)}>
+              <Trash2 size={14} /> Supprimer
+            </Button>
+            <DeleteConfirmDialog
+              item={item}
+              open={deleteConfirmOpen}
+              onOpenChange={setDeleteConfirmOpen}
+              onConfirm={() => { setDeleteConfirmOpen(false); onDelete(); }}
+            />
+          </>
+        )}
       </Flex>
     </Flex>
   );
@@ -441,18 +542,32 @@ export default function PurchaseRequestDetail({ item, onEdit, onDelete, onRefres
     <Box p="4">
       <Flex direction="column" gap="3">
         <DetailHeader item={item} onEdit={onEdit} onDelete={onDelete} />
-        <Separator size="4" />
-        <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
-          <DaInfoCard item={item} urgency={urgency} statusColor={statusColor} statusLabel={statusLabel} />
-          <InterventionCard intervention={item.intervention} />
-          <StockItemCard part={item.part} stockItem={item.stock_item} />
-        </Box>
-        <Separator size="4" />
-        <OrderLinesSection
-          orderLines={item.order_lines || []}
-          itemQuantity={item.quantity}
-          itemUnit={item.unit}
-        />
+        <Tabs.Root defaultValue="detail">
+          <Tabs.List>
+            <Tabs.Trigger value="detail">Détail</Tabs.Trigger>
+            <Tabs.Trigger value="history">Historique</Tabs.Trigger>
+          </Tabs.List>
+
+          <Tabs.Content value="detail">
+            <Flex direction="column" gap="3" pt="3">
+              <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)', alignItems: 'stretch' }}>
+                <DaInfoCard item={item} urgency={urgency} statusColor={statusColor} statusLabel={statusLabel} />
+                <InterventionCard intervention={item.intervention} />
+                <StockItemCard part={item.part} stockItem={item.stock_item} />
+              </Box>
+              <Separator size="4" />
+              <OrderLinesSection
+                orderLines={item.order_lines || []}
+                itemQuantity={item.quantity}
+                itemUnit={item.unit}
+              />
+            </Flex>
+          </Tabs.Content>
+
+          <Tabs.Content value="history">
+            <PurchaseEntityHistoryTab entityType={PURCHASE_ENTITY_TYPES.PURCHASE_REQUEST} entityId={item.id} />
+          </Tabs.Content>
+        </Tabs.Root>
       </Flex>
     </Box>
   );

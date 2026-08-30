@@ -4,9 +4,11 @@ import { Badge, Box, Button, Card, Flex, Heading, Select, Spinner, Text, TextAre
 import { ClipboardList, MapPin } from 'lucide-react';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import LockedBadge from '@/components/ui/LockedBadge';
+import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
 import { fetchEquipements } from '@/api/equipements';
 import { fetchServices } from '@/api/services';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import { useAuth } from '@/auth/useAuth';
 
 const INITIAL_FORM = {
   machineId: '',
@@ -24,8 +26,11 @@ function validate(form) {
 }
 
 export default function InterventionRequestForm({ onSubmit, onCancel, saving = false, machineId = null, machineName = null, bare = false }) {
+  const { user } = useAuth();
+  const userFullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
   const [form, setForm] = useState(() => ({
     ...INITIAL_FORM,
+    demandeurNom: userFullName,
     ...(machineId ? { machineId, machineName: machineName ?? '' } : {}),
   }));
   const [error, setError] = useState(null);
@@ -119,7 +124,6 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
               placeholder="Nom du demandeur"
               value={form.demandeurNom}
               onChange={(e) => set('demandeurNom', e.target.value)}
-              required
             />
           </Box>
 
@@ -172,6 +176,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
     <Card
       mt="4"
       mb="3"
+      onKeyDownCapture={preventEnterSubmit}
       style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}
     >
       {inner}

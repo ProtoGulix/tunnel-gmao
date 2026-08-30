@@ -10,6 +10,7 @@ import { Badge, Box, Button, Flex, Table, Text } from '@radix-ui/themes';
 import { AlertCircle, ExternalLink, Package, Pencil, ShoppingCart } from 'lucide-react';
 import StatusCallout from '@/components/ui/StatusCallout';
 import OrderLineRowEditable from '@/components/purchase/OrderLineRowEditable';
+import { formatPrice } from '@/utils/formatPrice';
 
 /**
  * Consultation perdue par cette ligne : un panier concurrent a été sélectionné, pas elle.
@@ -52,7 +53,7 @@ export function LinkedPurchaseRequests({ line }) {
   if (prs.length === 0) return null;
   return (
     <Flex align="baseline" gap="1" mt="1" wrap="wrap">
-      <Text size="1" color="gray">{prs.length > 1 ? 'DA liées :' : 'DA liée :'}</Text>
+      <Text size="1" color="gray">{prs.length > 1 ? 'Demandes d’achat liées :' : 'Demande d’achat liée :'}</Text>
       {prs.map((pr, i) => (
         <span key={pr.purchase_request_id}>
           <Link
@@ -60,7 +61,7 @@ export function LinkedPurchaseRequests({ line }) {
             title={pr.item_label || 'Voir la demande d’achat'}
             style={{ fontSize: 'var(--font-size-1)', color: 'var(--accent-9)' }}
           >
-            {i + 1}
+            {pr.code || `#${i + 1}`}
           </Link>
           {i < prs.length - 1 && <Text size="1" color="gray">, </Text>}
         </span>
@@ -88,9 +89,8 @@ export function CompetingOrders({ line }) {
   const currentSelected = !!line.is_selected;
 
   const openComparator = (sib) => {
-    const params = new URLSearchParams({ tab: 'comparateur' });
-    if (line.supplier_order_id) params.set('a', line.supplier_order_id);
-    if (sib.supplier_order_id) params.set('b', sib.supplier_order_id);
+    const ids = [line.supplier_order_id, sib.supplier_order_id].filter(Boolean);
+    const params = new URLSearchParams({ tab: 'comparateur', orders: ids.join(',') });
     navigate(`/achats?${params.toString()}`);
   };
 
@@ -140,14 +140,14 @@ function OrderLineRow({ line }) {
       <Table.Cell style={fade}><LineRefs line={line} /></Table.Cell>
       <Table.Cell style={fade}><Text size="2">{line.quantity} {line.stock_item_unit || 'pcs'}</Text></Table.Cell>
       <Table.Cell style={fade}>
-        {line.unit_price != null
-          ? <Text size="2">{Number(line.unit_price).toFixed(2)} €</Text>
-          : <Text size="1" color="gray">—</Text>}
+        <Text size={line.unit_price != null ? '2' : '1'} color={line.unit_price != null ? undefined : 'gray'}>
+          {formatPrice(line.unit_price)}
+        </Text>
       </Table.Cell>
       <Table.Cell style={fade}>
-        {line.total_price != null
-          ? <Text size="2" weight="medium">{Number(line.total_price).toFixed(2)} €</Text>
-          : <Text size="1" color="gray">—</Text>}
+        <Text size={line.total_price != null ? '2' : '1'} weight={line.total_price != null ? 'medium' : undefined} color={line.total_price != null ? undefined : 'gray'}>
+          {formatPrice(line.total_price)}
+        </Text>
       </Table.Cell>
       <Table.Cell><CompetingOrders line={line} /></Table.Cell>
     </Table.Row>

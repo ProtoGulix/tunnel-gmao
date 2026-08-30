@@ -3,6 +3,7 @@ import { Box } from "@radix-ui/themes";
 import { ClipboardList } from "lucide-react";
 import StandardHeaderLayout from "./StandardHeaderLayout";
 import HierarchicalHeaderLayout from "./HierarchicalHeaderLayout";
+import Breadcrumb from "./Breadcrumb";
 import useTimeSelection from "@/hooks/shared/useTimeSelection";
 
 export default function PageHeader(props) {
@@ -51,6 +52,7 @@ export default function PageHeader(props) {
         marginBottom: noMargin ? 0 : "var(--space-5)",
       }}
     >
+      <Breadcrumb inline />
       {isHierarchicalMode ? (
         <HierarchicalHeaderLayout {...hierarchicalProps} />
       ) : (

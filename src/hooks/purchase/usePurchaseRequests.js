@@ -99,11 +99,18 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
     await loadStats();
   }, [loadStats]);
 
-  const dispatch = useCallback(async () => {
+  const removeItems = useCallback(async (ids) => {
+    await Promise.all(ids.map((id) => deletePurchaseRequest(id)));
+    const idSet = new Set(ids);
+    setItems((prev) => prev.filter((item) => !idSet.has(item.id)));
+    await loadStats();
+  }, [loadStats]);
+
+  const dispatch = useCallback(async (excludedIds = []) => {
     setDispatching(true);
     setDispatchResult(null);
     try {
-      const result = await dispatchPurchaseRequests();
+      const result = await dispatchPurchaseRequests(excludedIds);
       const hasErrors = result.errors?.length > 0;
       const dispatched = result.dispatched_count ?? 0;
       setDispatchResult({
@@ -148,6 +155,7 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
     createItem,
     editItem,
     removeItem,
+    removeItems,
     dispatching,
     dispatchResult,
     setDispatchResult,

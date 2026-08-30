@@ -10,6 +10,7 @@ import { Plus, Link2, X } from 'lucide-react';
 import { fetchEquipementClasses } from '@/api/equipementClasses';
 import { fetchEquipementStatuts, fetchEquipements } from '@/api/equipements';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
+import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
 
 const DEFAULT_FORM = {
   name: '',
@@ -106,7 +107,7 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
   };
 
   return (
-    <Card style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
+    <Card onKeyDownCapture={preventEnterSubmit} style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}>
       <Flex direction="column" gap="3">
         <Flex align="center" gap="2">
           <Plus size={20} color="var(--blue-9)" />

@@ -20,6 +20,7 @@ export function useSearchableSelect({
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   // Synchroniser selectedItem avec value
   useEffect(() => {
@@ -53,6 +54,7 @@ export function useSearchableSelect({
     } else {
       setSuggestions([]);
     }
+    setActiveIndex(-1);
   }, [search, items, getSearchableFields, maxSuggestions]);
 
   const handleSearchChange = (e) => {
@@ -84,6 +86,7 @@ export function useSearchableSelect({
     const display = getDisplayText(item);
     setSearch(display);
     setSuggestions([]);
+    setActiveIndex(-1);
     if (onSearchChange) onSearchChange(display);
     onChange(item);
   };
@@ -92,14 +95,28 @@ export function useSearchableSelect({
     setSearch('');
     setSelectedItem(null);
     setSuggestions([]);
+    setActiveIndex(-1);
     if (onSearchChange) onSearchChange('');
     onChange(null);
+  };
+
+  const moveActiveIndex = (delta, listLength) => {
+    if (listLength <= 0) return;
+    setActiveIndex((prev) => {
+      const next = prev + delta;
+      if (next < 0) return listLength - 1;
+      if (next >= listLength) return 0;
+      return next;
+    });
   };
 
   return {
     search,
     selectedItem,
     suggestions,
+    activeIndex,
+    setActiveIndex,
+    moveActiveIndex,
     handleSearchChange,
     handleSelectItem,
     handleClear,

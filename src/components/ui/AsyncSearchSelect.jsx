@@ -28,37 +28,14 @@
  * />
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text } from '@radix-ui/themes';
-import { AlertCircle, HelpCircle, Info, Loader2, Plus, Search, SearchX } from 'lucide-react';
+import { Box, Button, Text } from '@radix-ui/themes';
+import { AlertCircle, HelpCircle, Info, Loader2, Plus, SearchX } from 'lucide-react';
 
 import { useDebounce } from '@/hooks/useDebounce';
-
-// ─── Zone d'état fixe (toujours rendue, hauteur stable) ───────────────────────
-
-// Hauteur fixe = 4 lignes de résultats (padding 8px × 2 + line-height ~20px = 36px/ligne)
-const RESULTS_HEIGHT = 144;
-
-const STATE_BOX = {
-  height: RESULTS_HEIGHT,
-  marginTop: 6,
-  borderRadius: 'var(--radius-2)',
-  border: '1px solid var(--gray-5)',
-  background: 'var(--gray-2)',
-  padding: '12px 10px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 8,
-  boxSizing: 'border-box',
-};
-
-function StateBox({ children }) {
-  return <Box style={STATE_BOX}>{children}</Box>;
-}
-StateBox.propTypes = { children: PropTypes.node };
+import { useListboxKeyboardNav } from '@/hooks/useListboxKeyboardNav';
+import { StateBox, ResultsListbox, SearchField } from './AsyncSearchSelectParts';
 
 /**
  * @param {Object}   props
@@ -94,6 +71,9 @@ export default function AsyncSearchSelect({
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState(false);
 
+  const listboxId = useId();
+  const getOptionId = (idx) => `${listboxId}-option-${idx}`;
+
   const debouncedSearch = useDebounce(search, debounceMs);
 
   const fetchFnRef = useRef(fetchFn);
@@ -122,6 +102,8 @@ export default function AsyncSearchSelect({
     onSelect(item);
   };
 
+  const { activeIndex, handleKeyDown } = useListboxKeyboardNav(results, handleSelect);
+
   const busy = isTyping || fetching;
 
   // ─── État courant ─────────────────────────────────────────────────────────
@@ -135,36 +117,18 @@ export default function AsyncSearchSelect({
 
   return (
     <Box>
-      {/* Champ de recherche */}
-      <Box style={{ position: 'relative' }}>
-        <input
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setFetchError(false); onSearchChange?.(e.target.value); }}
-          placeholder={placeholder}
-          style={{
-            width: '100%', padding: '8px 12px 8px 36px',
-            borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-7)',
-            fontSize: 'var(--font-size-2)', fontFamily: 'inherit',
-            boxSizing: 'border-box', height: 36,
-            background: 'var(--color-background)', color: 'var(--gray-12)',
-          }}
-          autoComplete="off"
-        />
-        {busy
-          ? <span style={{
-              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-              color: 'var(--blue-9)', pointerEvents: 'none',
-              display: 'flex', alignItems: 'center',
-            }}>
-              <Loader2 size={14} style={{ animation: 'spin 0.6s linear infinite' }} />
-            </span>
-          : <Search size={14} style={{
-              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-              color: search.length > 0 ? 'var(--blue-9)' : 'var(--gray-9)',
-              pointerEvents: 'none',
-            }} />
-        }
-      </Box>
+      <SearchField
+        search={search}
+        onChange={(e) => { setSearch(e.target.value); setFetchError(false); onSearchChange?.(e.target.value); }}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        busy={busy}
+        ariaProps={{
+          'aria-expanded': state === 'results',
+          'aria-controls': state === 'results' ? listboxId : undefined,
+          'aria-activedescendant': activeIndex >= 0 ? getOptionId(activeIndex) : undefined,
+        }}
+      />
 
       {/* Zone d'état — toujours présente */}
       {state === 'idle' && (
@@ -191,31 +155,14 @@ export default function AsyncSearchSelect({
       )}
 
       {state === 'results' && (
-        <Box mt="1" style={{
-          height: RESULTS_HEIGHT,
-          border: '1px solid var(--gray-6)', borderRadius: 'var(--radius-2)',
-          background: 'var(--color-background)', overflowY: 'auto',
-          boxShadow: 'var(--shadow-3)', position: 'relative', zIndex: 10,
-          boxSizing: 'border-box',
-        }}>
-          {results.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleSelect(item)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                padding: '8px 12px', border: 'none', background: 'transparent',
-                cursor: 'pointer', textAlign: 'left', fontSize: 'var(--font-size-2)',
-                fontFamily: 'inherit', color: 'var(--gray-12)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-3)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              {renderItem(item)}
-            </button>
-          ))}
-        </Box>
+        <ResultsListbox
+          listboxId={listboxId}
+          results={results}
+          activeIndex={activeIndex}
+          getOptionId={getOptionId}
+          renderItem={renderItem}
+          onSelect={handleSelect}
+        />
       )}
 
       {state === 'error' && (

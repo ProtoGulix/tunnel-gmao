@@ -5,6 +5,7 @@
 import { Badge, Flex, Text } from '@radix-ui/themes';
 import { Building2, Clock, Package } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { formatPrice } from '@/utils/formatPrice';
 
 const AGE_COLOR_MAP = { gray: 'gray', orange: 'orange', red: 'red' };
 
@@ -50,9 +51,7 @@ export function SupplierOrderListItem({ item, isSelected, onClick }) {
       </Flex>
 
       <Flex align="center" justify="between" style={{ padding: '4px 10px', borderTop: '1px solid var(--gray-3)', background: 'var(--gray-2)' }}>
-        <Text size="1" color="gray">
-          {item.total_amount != null ? `${Number(item.total_amount).toFixed(2)} €` : '—'}
-        </Text>
+        <Text size="1" color="gray">{formatPrice(item.total_amount)}</Text>
         {dateStr && <Text size="1" color="gray">{dateStr}</Text>}
       </Flex>
     </div>

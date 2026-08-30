@@ -30,7 +30,7 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button size="1" variant="soft" color={statusInfo.radixColor || 'gray'} loading={statusUpdating}>
-                Passer à <ChevronDown size={12} />
+                Changer le statut <ChevronDown size={12} />
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content size="1">
@@ -50,7 +50,7 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
         )}
         {onExportEmail && (
           <Button size="1" variant="soft" color="indigo" onClick={() => onExportEmail(detail.id)}>
-            <Mail size={12} /> Demande de prix
+            <Mail size={12} /> Envoyer la demande de devis
           </Button>
         )}
         {onExportCsv && (

@@ -14,6 +14,9 @@ import SupplierManageModal from '@/components/suppliers/SupplierManageModal';
 import { useSuppliers } from '@/hooks/suppliers/useSuppliers';
 import { useSupplierPartRefs } from '@/hooks/suppliers/useSupplierPartRefs';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
+import { ROW_PADDING_X, ROW_PADDING_Y, ROW_MIN_HEIGHT } from '@/styles/tokens/density';
+
+const CELL_STYLE = { padding: `${ROW_PADDING_Y} ${ROW_PADDING_X}`, height: ROW_MIN_HEIGHT, boxSizing: 'border-box' };
 
 function RefRow({ item, isSelected, onSelect }) {
   return (
@@ -21,19 +24,19 @@ function RefRow({ item, isSelected, onSelect }) {
       onClick={() => onSelect(item)}
       style={{ cursor: 'pointer', background: isSelected ? 'var(--accent-3)' : undefined }}
     >
-      <Table.Cell>
+      <Table.Cell style={CELL_STYLE}>
         <Badge variant="soft" color="gray">{item.supplier_name}</Badge>
       </Table.Cell>
-      <Table.Cell>
+      <Table.Cell style={CELL_STYLE}>
         <Badge variant="soft" color="blue">{item.internal_ref}</Badge>
       </Table.Cell>
-      <Table.Cell>
+      <Table.Cell style={CELL_STYLE}>
         <Flex direction="column" gap="1">
           <Text size="2" weight="medium">{item.manufacturer_name}</Text>
           <Badge variant="soft" color="violet" style={{ alignSelf: 'flex-start' }}>{item.manufacturer_ref}</Badge>
         </Flex>
       </Table.Cell>
-      <Table.Cell>
+      <Table.Cell style={CELL_STYLE}>
         <Badge variant="soft" color="indigo">{item.supplier_ref}</Badge>
       </Table.Cell>
     </Table.Row>
@@ -84,7 +87,7 @@ export default function SuppliersTab() {
   const [urlSearch, setUrlSearch] = useUrlSearch('sq');
   const [supplierFilter, setSupplierFilter] = useState('');
   const { suppliers } = useSuppliers({});
-  const { refs, loading, error, refresh } = useSupplierPartRefs({ supplierId: supplierFilter, search: urlSearch });
+  const { refs, loading, error, refresh, total, pagination } = useSupplierPartRefs({ supplierId: supplierFilter, search: urlSearch });
   const [selected, setSelected] = useState(null);
   const [manageSupplierId, setManageSupplierId] = useState(null);
 
@@ -120,11 +123,12 @@ export default function SuppliersTab() {
           masterProps={{
             icon: Truck,
             title: 'Références fournisseur',
-            count: refs.length,
+            count: total,
             search: urlSearch,
             onSearchChange: handleSearch,
             loading,
             headerExtra: filterSelect,
+            pagination,
             children: <RefsTable refs={refs} selectedId={selected?.id} onSelect={handleSelect} />,
           }}
           detailChildren={selected && (

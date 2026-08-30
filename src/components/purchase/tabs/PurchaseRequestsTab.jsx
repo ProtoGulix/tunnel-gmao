@@ -3,34 +3,18 @@
  * @module components/purchase/tabs/PurchaseRequestsTab
  */
 
-import { useEffect, useState } from 'react';
-import { Box, Flex, Text } from '@radix-ui/themes';
-import { MousePointerClick, ShoppingCart } from 'lucide-react';
-import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
+import { useEffect, useMemo, useState } from 'react';
+import { Box } from '@radix-ui/themes';
 import ErrorState from '@/components/ui/ErrorState';
 import PurchaseRequestDetail from '@/components/purchase/PurchaseRequestDetail';
 import PurchaseRequestEditForm from '@/components/purchase-requests/PurchaseRequestEditForm';
 import { usePurchaseRequests } from '@/hooks/purchase/usePurchaseRequests';
 import { useSelectedIdParam } from '@/hooks/shared/useSelectedIdParam';
+import { useUnsavedChangesGuard } from '@/hooks/shared/useUnsavedChangesGuard';
 import { fetchPurchaseRequestDetail, updatePurchaseRequest } from '@/api/purchaseRequests';
-import { PrFilters, PurchaseRequestListItem } from './PurchaseRequestsTabParts';
-
-// ─── Empty state détail ───────────────────────────────────────────────────────
-
-function DetailEmptyState({ label }) {
-  return (
-    <Flex direction="column" align="center" justify="center" gap="3" style={{ height: '100%', padding: 32, opacity: 0.6 }}>
-      <ShoppingCart size={36} color="var(--gray-7)" />
-      <Flex direction="column" align="center" gap="1">
-        <Text size="2" weight="medium" color="gray">{label}</Text>
-        <Flex align="center" gap="1">
-          <MousePointerClick size={12} color="var(--gray-8)" />
-          <Text size="1" color="gray">Cliquez sur une demande pour voir son détail</Text>
-        </Flex>
-      </Flex>
-    </Flex>
-  );
-}
+import { sortItems } from './PurchaseRequestsTabParts';
+import { UnsavedChangesDialog, BulkDeleteDialog } from './PurchaseRequestsTabDialogs';
+import PurchaseRequestsListView from './PurchaseRequestsListView';
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
@@ -48,7 +32,7 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
     search, setSearch,
     status, setStatus,
     urgency, setUrgency,
-    refresh, removeItem,
+    refresh, removeItem, removeItems,
     dispatching, dispatchResult, setDispatchResult, dispatch,
     readyToDispatch,
   } = usePurchaseRequests({ initialStatus: 'TO_QUALIFY' });
@@ -63,15 +47,54 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
   const [mode, setMode] = useState(null); // 'edit' | null
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isEditDirty, setIsEditDirty] = useState(false);
+  const [sort, setSort] = useState('age_desc');
+  const [checkedIds, setCheckedIds] = useState(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const sortedItems = useMemo(() => sortItems(items, sort), [items, sort]);
+
+  const toggleCheck = (id) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCheckAll = (visibleItems) => {
+    setCheckedIds((prev) => {
+      const allChecked = visibleItems.every((item) => prev.has(item.id));
+      if (allChecked) return new Set();
+      return new Set(visibleItems.map((item) => item.id));
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      await removeItems(Array.from(checkedIds));
+      setCheckedIds(new Set());
+      setBulkDeleteConfirm(false);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   // La DA sélectionnée est pilotée par l'URL (?requestId=...) : persistante, partageable,
   // compatible précédent/suivant du navigateur. Voir hooks/shared/useSelectedIdParam.
-  const [requestId, setRequestId] = useSelectedIdParam('requestId');
+  const [requestId, setRequestIdRaw] = useSelectedIdParam('requestId');
+
+  const { guard, isConfirmOpen, confirmDiscard, cancelDiscard } = useUnsavedChangesGuard(mode === 'edit' && isEditDirty);
+
+  const setRequestId = (id) => guard(() => setRequestIdRaw(id));
 
   useEffect(() => {
     if (!requestId) { setSelected(null); return; }
     let cancelled = false;
     setMode(null);
+    setIsEditDirty(false);
     setDetailLoading(true);
     fetchPurchaseRequestDetail(requestId)
       .then((detail) => { if (!cancelled) setSelected(detail); })
@@ -84,12 +107,15 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
     setRequestId(row.id === requestId ? null : row.id);
   };
 
+  const handleCancelEdit = () => guard(() => { setMode(null); setIsEditDirty(false); });
+
   const handleUpdate = async (data) => {
     if (!selected) return;
     setSaving(true);
     try {
       await updatePurchaseRequest(selected.id, data);
       setSelected(await fetchPurchaseRequestDetail(selected.id));
+      setIsEditDirty(false);
       setMode(null);
       refresh();
     } finally {
@@ -100,7 +126,8 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
   const handleDelete = async () => {
     if (!selected) return;
     await removeItem(selected.id);
-    setRequestId(null);
+    setIsEditDirty(false);
+    setRequestIdRaw(null);
     setMode(null);
   };
 
@@ -112,7 +139,8 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
           item={selected}
           onSubmit={handleUpdate}
           loading={saving}
-          onCancel={() => setMode(null)}
+          onCancel={handleCancelEdit}
+          onDirtyChange={setIsEditDirty}
         />
       );
     }
@@ -138,41 +166,39 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
-  const masterList = items.length === 0 && !loading ? (
-    <Flex direction="column" align="center" justify="center" gap="2" style={{ height: 200, padding: 24 }}>
-      <ShoppingCart size={28} color="var(--gray-7)" />
-      <Text size="2" color="gray">Aucune demande d&apos;achat</Text>
-    </Flex>
-  ) : (
-    <div style={{ padding: '8px 10px' }}>
-      {items.map((item) => (
-        <PurchaseRequestListItem key={item.id} item={item} isSelected={item.id === requestId} onClick={handleSelect} />
-      ))}
-    </div>
-  );
-
-  const headerExtra = (
-    <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />
-  );
-
   return (
     <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <MasterDetailLayout
-          freeDetail
-          ratio="38% 1fr"
-          masterProps={{
-            count: items.length,
-            search,
-            onSearchChange: setSearch,
-            loading,
-            children: masterList,
-            headerExtra,
-          }}
-          detailChildren={detailContent() ?? <DetailEmptyState label="Aucune demande sélectionnée" />}
-          detailLoading={detailLoading}
-        />
-      </div>
+      <PurchaseRequestsListView
+        items={sortedItems}
+        loading={loading}
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
+        statuses={statuses}
+        urgency={urgency}
+        setUrgency={setUrgency}
+        sort={sort}
+        setSort={setSort}
+        selectedId={requestId}
+        onSelect={handleSelect}
+        checkedIds={checkedIds}
+        onToggleCheck={toggleCheck}
+        onToggleCheckAll={toggleCheckAll}
+        onBulkDeleteClick={() => setBulkDeleteConfirm(true)}
+        detailContent={detailContent()}
+        detailLoading={detailLoading}
+      />
+
+      <UnsavedChangesDialog open={isConfirmOpen} onCancel={cancelDiscard} onConfirm={confirmDiscard} />
+
+      <BulkDeleteDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+        labels={items.filter((i) => checkedIds.has(i.id)).map((i) => i.code || i.item_label)}
+        onConfirm={handleBulkDelete}
+        deleting={bulkDeleting}
+      />
     </Box>
   );
 }

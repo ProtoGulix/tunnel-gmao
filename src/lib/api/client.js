@@ -45,7 +45,7 @@ function onRefreshDone(newToken) {
   refreshSubscribers = [];
 }
 
-function redirectToLogin() {
+function redirectToLogin(message) {
   const currentPath = window.location.pathname + window.location.search;
   if (currentPath !== '/login') {
     localStorage.setItem('redirect_after_login', currentPath);
@@ -53,7 +53,39 @@ function redirectToLogin() {
   localStorage.removeItem('auth_access_token');
   localStorage.removeItem('auth_refresh_token');
   localStorage.removeItem('auth_user');
+  if (message) {
+    sessionStorage.setItem('login_notice', message);
+  }
   window.location.href = '/login';
+}
+
+// ==============================
+// PANNE SERVEUR GLOBALE (5xx passerelle / réseau)
+// ==============================
+
+// 502/503/504 = la passerelle (Cloudflare, nginx…) ne trouve plus l'API derrière —
+// panne serveur totale, pas une erreur applicative ponctuelle. Erreur réseau (pas de
+// réponse du tout) traitée pareil. Dans ces cas on déconnecte et on renvoie vers /login
+// plutôt que de laisser chaque page afficher sa propre carte d'erreur sur un backend mort.
+//
+// DatabaseError (500) volontairement EXCLU d'ici : ce n'est pas forcément une panne
+// totale — un pic de requêtes concurrentes peut épuiser le pool de connexions PostgreSQL
+// (DB_POOL_MAX) et faire échouer une poignée de requêtes en DatabaseError alors que l'API
+// et la DB tournent parfaitement bien. Déconnecter l'utilisateur sur ce cas est un faux
+// positif (vécu en prod le 30/08/2026 avec le comparateur de commandes fournisseurs, qui
+// tire des dizaines de requêtes en parallèle). Une vraie panne DB soutenue continuera de
+// se manifester en 502/503/504 côté passerelle après coup si elle persiste.
+const GATEWAY_DOWN_STATUSES = new Set([502, 503, 504]);
+
+function isServerDownError(error) {
+  // Requête annulée volontairement (AbortController — navigation, unmount, StrictMode
+  // double-render) : ce n'est pas une panne serveur, ne jamais déconnecter sur ce cas.
+  if (axios.isCancel(error) || error.code === 'ERR_CANCELED') return false;
+
+  const status = error.response?.status;
+  if (status) return GATEWAY_DOWN_STATUSES.has(status);
+  // Pas de réponse du tout (timeout, DNS, connexion refusée, CORS…) = erreur réseau
+  return !!error.request;
 }
 
 // ==============================
@@ -154,6 +186,14 @@ api.interceptors.response.use(
       return handleAuditError(error);
     }
 
+    // Panne serveur totale (502/503/504 ou aucune réponse) : pas la peine de laisser
+    // chaque page tenter d'afficher son propre état, on déconnecte proprement.
+    if (isServerDownError(error)) {
+      console.error('[API] Serveur inaccessible', { url: error.config?.url, status });
+      redirectToLogin('Le serveur est temporairement inaccessible. Réessayez dans quelques instants.');
+      return Promise.reject(error);
+    }
+
     // 403 Forbidden
     if (status === 403) {
       console.error('[API] 403 Forbidden', { url: error.config?.url });
@@ -165,14 +205,9 @@ api.interceptors.response.use(
       console.warn('[API] 404 Not Found', { url: error.config?.url });
     }
 
-    // 5xx Server Error
+    // 5xx Server Error (erreur applicative, backend up mais en échec)
     if (status >= 500) {
       console.error(`[API] ${status} Server Error`, { url: error.config?.url });
-      emitSystemError(error);
-    }
-
-    // Erreur réseau
-    if (!status) {
       emitSystemError(error);
     }
 

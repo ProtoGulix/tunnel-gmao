@@ -4,6 +4,7 @@ import { MapPin, Plus } from 'lucide-react';
 import { TechDateRow, InterventionRow } from './InterventionFormFields';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import SelectionSummary from '@/components/ui/SelectionSummary';
+import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
 import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
 
 /* ── Sous-composants ───────────────────────────────────────────────────────── */
@@ -73,9 +74,6 @@ export default function InterventionCreateForm({
   fetchEquipementsFn, users, saving, error, onSubmit, onCancel,
 }) {
   const handleSubmit = (event) => { event?.preventDefault?.(); onSubmit(event); };
-  const preventParentSubmit = (event) => {
-    if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') event.preventDefault();
-  };
 
   const fields = (
     <Flex direction="column" gap="3">
@@ -123,7 +121,7 @@ export default function InterventionCreateForm({
 
   return (
     <Card
-      onKeyDownCapture={embedded ? preventParentSubmit : undefined}
+      onKeyDownCapture={embedded ? preventEnterSubmit : undefined}
       style={{ backgroundColor: 'var(--blue-2)', border: '1px solid var(--blue-6)' }}
     >
       {embedded ? content : <form onSubmit={handleSubmit}>{content}</form>}

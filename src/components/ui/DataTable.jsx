@@ -102,11 +102,13 @@ export default function DataTable({
 
         <Table.Body>
           {loading
-            ? Array.from({ length: 3 }).map((_, idx) => (
-                <Table.Row key={`skeleton-${idx}`}>
-                  <Table.Cell colSpan={colCount}>
-                    <Box height="20px" style={{ background: "var(--gray-3)", borderRadius: 6 }} />
-                  </Table.Cell>
+            ? Array.from({ length: 3 }).map((_, rowIdx) => (
+                <Table.Row key={`skeleton-${rowIdx}`}>
+                  {columns.map((col) => (
+                    <Table.Cell key={`skeleton-${rowIdx}-${col.key || col.header}`}>
+                      <Box className="skeleton-cell" height="16px" style={{ width: col.width ? undefined : "70%" }} />
+                    </Table.Cell>
+                  ))}
                 </Table.Row>
               ))
             : rowRenderer

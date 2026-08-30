@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Text } from '@radix-ui/themes';
 import SearchInput from './SearchInput';
@@ -49,6 +50,9 @@ export default function SearchableSelect(props) {
     search,
     selectedItem,
     suggestions,
+    activeIndex,
+    setActiveIndex,
+    moveActiveIndex,
     handleSearchChange,
     handleSelectItem
   } = useSearchableSelect({
@@ -62,18 +66,49 @@ export default function SearchableSelect(props) {
     debounceMs,
   });
 
+  const listboxId = useId();
+  const getOptionId = (idx) => `${listboxId}-option-${idx}`;
+  const isOpen = !selectedItem && search.trim().length > 0 && suggestions.length > 0;
+
+  const handleKeyDown = (event) => {
+    if (!isOpen) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveActiveIndex(1, suggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActiveIndex(-1, suggestions.length);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setActiveIndex(0);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setActiveIndex(suggestions.length - 1);
+    } else if (event.key === 'Enter') {
+      if (activeIndex >= 0 && activeIndex < suggestions.length) {
+        event.preventDefault();
+        handleSelectItem(suggestions[activeIndex]);
+      }
+    } else if (event.key === 'Escape') {
+      setActiveIndex(-1);
+    }
+  };
+
   return (
     <Box>
       <Text size="2" weight="bold" mb="1" style={{ display: 'block' }}>
-        {label}
+        {label}{required && <Text as="span" color="red"> *</Text>}
       </Text>
 
       <SearchInput
         value={search}
         onChange={handleSearchChange}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        required={required && !selectedItem}
         label={label}
+        listboxId={listboxId}
+        expanded={isOpen}
+        activeOptionId={activeIndex >= 0 ? getOptionId(activeIndex) : undefined}
       />
 
       <StatusBox
@@ -87,6 +122,9 @@ export default function SearchableSelect(props) {
         allowSpecialRequest={allowSpecialRequest}
         allowCreateNew={allowCreateNew}
         showEmptyState={showEmptyState}
+        activeIndex={activeIndex}
+        listboxId={listboxId}
+        getOptionId={getOptionId}
       />
     </Box>
   );

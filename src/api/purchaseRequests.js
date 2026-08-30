@@ -96,11 +96,21 @@ export async function deletePurchaseRequest(id) {
 
 
 /**
+ * Aperçu en lecture seule du dispatch : panier(s) cible(s) par demande, sans écriture en base
+ * @returns {Promise<Object>} { items: [{ purchase_request_id, code, item_label, target_orders, error }] }
+ */
+export async function fetchDispatchPreview() {
+  const response = await api.get('/purchase-requests/dispatch/preview');
+  return response.data;
+}
+
+/**
  * Dispatch all PENDING_DISPATCH purchase requests to supplier orders
+ * @param {string[]} [excludedIds] - Demandes à exclure du dispatch (restent PENDING_DISPATCH)
  * @returns {Promise<Object>} { dispatched_count, created_orders, errors, details }
  */
-export async function dispatchPurchaseRequests() {
-  const response = await api.post('/purchase-requests/dispatch');
+export async function dispatchPurchaseRequests(excludedIds = []) {
+  const response = await api.post('/purchase-requests/dispatch', { excluded_ids: excludedIds });
   return response.data;
 }
 

@@ -26,8 +26,10 @@
  * - Accessibilité role="main"
  * 
  * 📋 TODO : Améliorations futures
- * - [ ] Dark mode : adapter couleurs background pour thème sombre
- * - [ ] Breadcrumbs : afficher fil d'ariane en haut du main
+ * - [x] Breadcrumbs : afficher fil d'ariane en haut du main
+ * - [ ] Dark mode : infrastructure prête (voir src/app/AppTheme.jsx,
+ *       src/hooks/shared/useThemeAppearance.js) — reste à ajouter le toggle UI
+ *       et auditer les couleurs custom hors palette Radix (hexBadgeStyle, etc.)
  * - [ ] Skip to content : lien accessibilité sauter navigation
  * - [ ] Print styles : optimiser layout pour impression
  * - [ ] Sticky header mobile : header collant au scroll
@@ -48,12 +50,14 @@
  */
 
 import PropTypes from 'prop-types';
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpFromLine } from 'lucide-react';
 import { useAuth } from "@/auth/useAuth";
 import Sidebar from "./Sidebar";
+import { findPageForPath } from "./Breadcrumb";
 import { SystemErrorBanner } from './SystemErrorBanner';
 import { useMediaQuery } from "@/hooks/shared/useMediaQuery";
+import { useDocumentTitle } from "@/hooks/shared/useDocumentTitle";
 import { MOBILE_QUERY } from "@/config/layoutConfig";
 import styles from '@/styles/modules/Layout.module.css';
 import { useAuditGuard } from '@/hooks/useAuditGuard';
@@ -82,9 +86,13 @@ import AuditGuardDialog from '@/components/ui/AuditGuardDialog';
  */
 export default function Layout({ children, requiresAuth = true }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const { auditProps } = useAuditGuard();
+
+  const currentPage = findPageForPath(location.pathname);
+  useDocumentTitle(currentPage?.pageTitle);
 
   const handleLogout = async () => {
     await logout();
@@ -93,9 +101,9 @@ export default function Layout({ children, requiresAuth = true }) {
 
   return (
     <div className={styles.container}>
-      <Sidebar 
-        isAuthenticated={requiresAuth ? true : isAuthenticated} 
-        user={user} 
+      <Sidebar
+        isAuthenticated={requiresAuth ? true : isAuthenticated}
+        user={user}
         onLogout={handleLogout}
         isMobile={isMobile}
       />

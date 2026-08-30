@@ -127,7 +127,7 @@ CreateNewSupplierOption.propTypes = {
 /**
  * Liste de suggestions
  */
-export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect, search, showSpecialRequest, showCreateNew, onCreateNew }) {
+export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSelect, search, showSpecialRequest, showCreateNew, onCreateNew, activeIndex, getOptionId }) {
   const defaultRender = (item) => (
     <Box>
       <Text size="2" weight="bold">{getDisplayText(item)}</Text>
@@ -136,25 +136,32 @@ export function SuggestionsList({ suggestions, renderItem, getDisplayText, onSel
 
   return (
     <>
-      {suggestions.map((item, idx) => (
-        <Box
-          key={item.id}
-          p="2"
-          style={{
-            cursor: 'pointer',
-            borderBottom: '1px solid var(--gray-3)',
-            transition: 'background-color 0.15s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-3)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            onSelect(item);
-          }}
-        >
-          {renderItem ? renderItem(item) : defaultRender(item)}
-        </Box>
-      ))}
+      {suggestions.map((item, idx) => {
+        const active = idx === activeIndex;
+        return (
+          <Box
+            key={item.id}
+            id={getOptionId ? getOptionId(idx) : undefined}
+            role="option"
+            aria-selected={active}
+            p="2"
+            style={{
+              cursor: 'pointer',
+              borderBottom: '1px solid var(--gray-3)',
+              backgroundColor: active ? 'var(--gray-3)' : 'transparent',
+              transition: 'background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-3)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = active ? 'var(--gray-3)' : 'transparent'}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onSelect(item);
+            }}
+          >
+            {renderItem ? renderItem(item) : defaultRender(item)}
+          </Box>
+        );
+      })}
       {showCreateNew && search.trim() && (
         <CreateNewSupplierOption search={search} onSelect={onCreateNew || onSelect} />
       )}
@@ -174,4 +181,6 @@ SuggestionsList.propTypes = {
   showSpecialRequest: PropTypes.bool,
   showCreateNew: PropTypes.bool,
   onCreateNew: PropTypes.func,
+  activeIndex: PropTypes.number,
+  getOptionId: PropTypes.func,
 };

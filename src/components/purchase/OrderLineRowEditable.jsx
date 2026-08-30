@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import { Checkbox, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
 import { CompetingOrders, isConsultationLost, LinkedPurchaseRequests, LineRefs } from '@/components/purchase/SupplierOrderLines';
+import { formatPrice } from '@/utils/formatPrice';
 
 export default function OrderLineRowEditable({ line, draft, onChange, saving }) {
   const lost = isConsultationLost(line, draft.is_selected);
@@ -65,9 +66,9 @@ export default function OrderLineRowEditable({ line, draft, onChange, saving }) 
 
       {/* Total calculé par le backend — affiché tel quel */}
       <Table.Cell style={cellStyle}>
-        {line.total_price != null
-          ? <Text size="2" weight="medium" color="gray">{Number(line.total_price).toFixed(2)} €</Text>
-          : <Text size="1" color="gray">—</Text>}
+        <Text size={line.total_price != null ? '2' : '1'} weight={line.total_price != null ? 'medium' : undefined} color="gray">
+          {formatPrice(line.total_price)}
+        </Text>
       </Table.Cell>
 
       <Table.Cell style={{ verticalAlign: 'middle' }}>

@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.55.0] — 2026-08-30
+
+### Fiabilité — indisponibilité du serveur
+
+- En cas de panne ou d'indisponibilité totale du serveur, vous êtes désormais redirigé vers la page de connexion avec un message clair, plutôt que de rester sur une page qui ne répond plus
+- Une simple coupure passagère de charge (beaucoup de données chargées en même temps) n'entraîne plus de déconnexion à tort
+
+### Paniers fournisseurs — comparateur de commandes
+
+- Le comparateur de paniers fournisseurs (onglet Demandes d'achat) s'ouvre nettement plus vite, surtout lorsqu'il y a beaucoup de commandes à comparer
+
 ## [3.54.0] — 2026-07-24
 
 ### Admin — gestion de l'audit
