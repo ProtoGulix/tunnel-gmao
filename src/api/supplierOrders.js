@@ -110,6 +110,23 @@ export async function fetchSupplierOrderLines(supplierOrderId) {
 }
 
 /**
+ * Récupère les lignes (version allégée : id, part_id, stock_item_id, ref/name) de
+ * plusieurs commandes en un seul appel, groupées par commande. Utilisé par le
+ * comparateur de paniers pour calculer les clés de compatibilité d'articles sans
+ * tirer une requête HTTP par commande candidate.
+ * @param {string[]} supplierOrderIds
+ * @returns {Promise<Object<string, Array>>} { [supplierOrderId]: lines[] }
+ */
+export async function fetchSupplierOrderLineKeysByOrders(supplierOrderIds) {
+  if (!supplierOrderIds?.length) return {};
+  const response = await api.get('/supplier-order-lines/by-orders/keys', {
+    params: { ids: supplierOrderIds },
+    paramsSerializer: { indexes: null }, // ids=a&ids=b (pas ids[]=a&ids[]=b)
+  });
+  return response.data.by_order;
+}
+
+/**
  * Statistiques de prix obtenus pour une pièce chez un fournisseur (historique des commandes)
  * @param {string} partId
  * @param {string} supplierId

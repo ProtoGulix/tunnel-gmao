@@ -8,11 +8,11 @@ import { useSearchParams } from 'react-router-dom';
 import {
   fetchSupplierOrders,
   fetchSupplierOrderLines,
+  fetchSupplierOrderLineKeysByOrders,
   fetchSupplierOrderDetail,
   fetchSupplierOrderStatuses,
   updateSupplierOrderLine,
 } from '@/api/supplierOrders';
-import { mapWithConcurrency } from '@/lib/utils/concurrency';
 import {
   MAX_COMPARED_ORDERS,
   articleKeysOf,
@@ -100,20 +100,23 @@ export function useSupplierOrderComparator() {
     const toFetch = candidates.filter((o) => !(o.id in candidateKeysById));
     if (toFetch.length === 0) return undefined;
     let cancelled = false;
-    // Concurrence plafonnée : toFetch peut contenir des dizaines de commandes candidates,
-    // et un Promise.all sans limite sature le pool de connexions DB backend (DB_POOL_MAX),
-    // faisant échouer une partie des requêtes en DatabaseError alors que rien n'est en panne.
-    const CONCURRENCY_LIMIT = 5;
-    mapWithConcurrency(
-      toFetch,
-      CONCURRENCY_LIMIT,
-      (o) => fetchSupplierOrderLines(o.id).then((lines) => [o.id, articleKeysOf(lines)]).catch(() => [o.id, new Set()])
-    )
-      .then((pairs) => {
+    // Un seul appel groupé (au lieu d'une requête HTTP par commande candidate, qui
+    // pouvait saturer le pool de connexions DB backend sur de longues listes) —
+    // voir /supplier-order-lines/by-orders/keys côté API.
+    fetchSupplierOrderLineKeysByOrders(toFetch.map((o) => o.id))
+      .then((byOrder) => {
         if (cancelled) return;
         setCandidateKeysById((prev) => {
           const next = { ...prev };
-          pairs.forEach(([id, keys]) => { next[id] = keys; });
+          toFetch.forEach((o) => { next[o.id] = articleKeysOf(byOrder[o.id] || []); });
+          return next;
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCandidateKeysById((prev) => {
+          const next = { ...prev };
+          toFetch.forEach((o) => { next[o.id] = new Set(); });
           return next;
         });
       });
