@@ -2,14 +2,37 @@
 
 ## [3.55.0] — 2026-08-30
 
+### Paniers fournisseurs — comparateur retravaillé
+
+- Le comparateur affiche désormais un vrai tableau (une ligne par référence, une colonne par panier) et permet d'ajouter directement d'autres paniers à comparer depuis le tableau, sans se limiter à deux
+- Le comparateur s'ouvre nettement plus vite, surtout lorsqu'il y a beaucoup de commandes fournisseur à comparer
+
+### Demandes d'achat — aperçu avant envoi groupé
+
+- Avant de confirmer un envoi groupé de demandes vers les fournisseurs, un nouvel écran détaille demande par demande le panier fournisseur ciblé, avec la possibilité d'en exclure certaines avant validation
+- Suppression de plusieurs demandes d'achat en une seule action, au lieu d'une par une
+
+### Achats — historique des modifications
+
+- Nouvel onglet « Historique » sur le détail d'une demande d'achat et d'un panier fournisseur : qui a modifié quoi et quand
+
+### Champs de recherche — navigation au clavier
+
+- Les champs de recherche avec suggestions (équipements, pièces, fournisseurs…) se pilotent désormais au clavier : flèches pour parcourir les résultats, Début/Fin pour aller au premier ou dernier, Entrée pour valider
+
+### Navigation — fil d'Ariane
+
+- Un fil d'Ariane (Accueil > Section > Page) apparaît désormais en haut de chaque écran pour se repérer plus facilement
+- Le titre de l'onglet du navigateur reflète désormais la page consultée, utile en cas de plusieurs onglets ouverts
+
+### Confirmation avant perte de modifications
+
+- Une confirmation est désormais demandée avant de quitter un écran ou de fermer l'onglet du navigateur si des modifications n'ont pas été enregistrées
+
 ### Fiabilité — indisponibilité du serveur
 
 - En cas de panne ou d'indisponibilité totale du serveur, vous êtes désormais redirigé vers la page de connexion avec un message clair, plutôt que de rester sur une page qui ne répond plus
 - Une simple coupure passagère de charge (beaucoup de données chargées en même temps) n'entraîne plus de déconnexion à tort
-
-### Paniers fournisseurs — comparateur de commandes
-
-- Le comparateur de paniers fournisseurs (onglet Demandes d'achat) s'ouvre nettement plus vite, surtout lorsqu'il y a beaucoup de commandes à comparer
 
 ## [3.54.0] — 2026-07-24
 
