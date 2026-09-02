@@ -10,8 +10,12 @@ import {
 } from '@radix-ui/themes';
 import { Shield, History } from 'lucide-react';
 import { ROLE_COLORS } from '@/config/adminConfig';
+import AdminHomeViewRow from '@/components/admin/AdminHomeViewRow';
 
-export default function AdminRolePermissionsMatrix({ matrix, onToggle, onShowAudit }) {
+export default function AdminRolePermissionsMatrix({
+  matrix, onToggle, onShowAudit,
+  homeViews, homeViewByRoleId, onHomeViewChange, defaultHomeViewCode,
+}) {
   const [toggling, setToggling] = useState(null);
 
   const handleToggle = useCallback(async (permissionId, roleCode, endpointId, newAllowed) => {
@@ -27,6 +31,7 @@ export default function AdminRolePermissionsMatrix({ matrix, onToggle, onShowAud
 
   const { roles, modules } = matrix;
   const colSpan = roles.length + 1;
+  const showHomeViewRow = Array.isArray(homeViews) && homeViews.length > 0;
 
   return (
     <Box pt="2">
@@ -58,6 +63,17 @@ export default function AdminRolePermissionsMatrix({ matrix, onToggle, onShowAud
           </Table.Header>
 
           <Table.Body>
+            {showHomeViewRow && (
+              <AdminHomeViewRow
+                roles={roles}
+                colSpan={colSpan}
+                homeViews={homeViews}
+                homeViewByRoleId={homeViewByRoleId}
+                onHomeViewChange={onHomeViewChange}
+                defaultHomeViewCode={defaultHomeViewCode}
+              />
+            )}
+
             {Object.entries(modules).map(([mod, endpoints]) => (
               <Fragment key={mod}>
                 {/* Ligne de séparation de module */}
@@ -140,4 +156,11 @@ AdminRolePermissionsMatrix.propTypes = {
   }),
   onToggle: PropTypes.func.isRequired,
   onShowAudit: PropTypes.func.isRequired,
+  homeViews: PropTypes.arrayOf(PropTypes.shape({
+    code: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+  })),
+  homeViewByRoleId: PropTypes.object,
+  onHomeViewChange: PropTypes.func,
+  defaultHomeViewCode: PropTypes.string,
 };

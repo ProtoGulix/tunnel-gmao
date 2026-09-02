@@ -5,7 +5,10 @@ import { useState, useEffect, useCallback } from "react";
 // 2. React Router
 import { useNavigate } from "react-router-dom";
 
-// 3. Radix UI
+// 3. Icons
+import { Eye, EyeOff } from "lucide-react";
+
+// 4. Radix UI
 import {
   Box,
   Card,
@@ -18,11 +21,12 @@ import {
   Separator
 } from "@radix-ui/themes";
 
-// 4. Custom Components
+// 5. Custom Components
 import ServerStatus from "@/components/ui/ServerStatus";
 import BrandLogo from "@/components/ui/BrandLogo";
+import LoginFooter from "@/pages/auth/LoginFooter";
 
-// 5. Custom Hooks
+// 6. Custom Hooks
 import { useAuth } from "@/auth/useAuth";
 
 // ===== MAIN COMPONENT =====
@@ -47,6 +51,7 @@ export default function Login() {
   // ----- State -----
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -178,7 +183,7 @@ export default function Login() {
                     </Text>
                     <TextField.Root
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -187,7 +192,23 @@ export default function Login() {
                       disabled={loading}
                       size="3"
                       aria-describedby={error ? "form-error" : undefined}
-                    />
+                    >
+                      <TextField.Slot side="right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          color="gray"
+                          size="1"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          disabled={loading}
+                          aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          aria-pressed={showPassword}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Button>
+                      </TextField.Slot>
+                    </TextField.Root>
                   </Box>
 
                   <Button
@@ -218,18 +239,8 @@ export default function Login() {
 
               <Separator size="4" />
 
-              {/* Info Box */}
-              <Callout.Root color="blue" size="1">
-                <Callout.Icon>ℹ️</Callout.Icon>
-                <Callout.Text>
-                  <Text size="1" weight="bold" style={{ display: "block", marginBottom: "2px" }}>
-                    Mode hors ligne disponible
-                  </Text>
-                  <Text size="1" color="gray">
-                    Les données en cache restent accessibles sans connexion
-                  </Text>
-                </Callout.Text>
-              </Callout.Root>
+              {/* Footer */}
+              <LoginFooter />
             </Flex>
           </Card>
         </Container>

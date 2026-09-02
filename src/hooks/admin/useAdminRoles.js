@@ -11,7 +11,15 @@ import {
   updatePermission,
   fetchPermissionAudit,
 } from '@/api/adminRoles';
+import {
+  fetchHomeViews,
+  fetchHomeViewAssignments,
+  upsertHomeViewAssignment,
+  deleteHomeViewAssignment,
+} from '@/api/homeView';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+
+const DEFAULT_HOME_VIEW_CODE = 'technicien';
 
 export function useAdminRoles() {
   const [roles, setRoles] = useState([]);
@@ -82,6 +90,8 @@ export function useRolePermissions(roleId) {
 
 export function useRolesMatrix() {
   const [matrix, setMatrix] = useState(null);
+  const [homeViews, setHomeViews] = useState([]);
+  const [homeViewByRoleId, setHomeViewByRoleId] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -90,8 +100,16 @@ export function useRolesMatrix() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetchRolesMatrix()
-      .then((data) => setMatrix(data))
+    Promise.all([fetchRolesMatrix(), fetchHomeViews(), fetchHomeViewAssignments()])
+      .then(([matrixData, viewsData, assignmentsData]) => {
+        setMatrix(matrixData);
+        setHomeViews(Array.isArray(viewsData) ? viewsData : []);
+        const byRoleId = {};
+        for (const a of (Array.isArray(assignmentsData) ? assignmentsData : [])) {
+          byRoleId[a.role_id] = a.home_view;
+        }
+        setHomeViewByRoleId(byRoleId);
+      })
       .catch((err) => setError(extractApiErrorMessage(err, 'Erreur chargement matrice')))
       .finally(() => setLoading(false));
   }, []);
@@ -131,7 +149,30 @@ export function useRolesMatrix() {
     [matrix]
   );
 
-  return { matrix, loading, error, togglePermission, refresh: load };
+  // Vue d'accueil : un rôle sans entrée dans homeViewByRoleId est sur le
+  // défaut ('technicien') — reset = suppression de l'assignation explicite.
+  const setRoleHomeView = useCallback(
+    async (roleId, viewCode) => {
+      const prev = homeViewByRoleId;
+      setHomeViewByRoleId((m) => ({ ...m, [roleId]: viewCode }));
+      try {
+        if (viewCode === DEFAULT_HOME_VIEW_CODE) {
+          if (prev[roleId]) await deleteHomeViewAssignment(roleId);
+        } else {
+          await upsertHomeViewAssignment(roleId, viewCode);
+        }
+      } catch (err) {
+        setHomeViewByRoleId(prev);
+        throw err;
+      }
+    },
+    [homeViewByRoleId]
+  );
+
+  return {
+    matrix, loading, error, togglePermission, refresh: load,
+    homeViews, homeViewByRoleId, setRoleHomeView, defaultHomeViewCode: DEFAULT_HOME_VIEW_CODE,
+  };
 }
 
 export function usePermissionAudit() {
