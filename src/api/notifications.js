@@ -11,23 +11,23 @@ import { api } from '@/lib/api/client';
 /**
  * Récupère une page de notifications, triées par date décroissante par le backend.
  *
- * Code défensivement : le backend peut renvoyer soit { items, total }, soit un
- * tableau brut (selon la version de l'endpoint) — les deux formes sont acceptées.
+ * Le backend suit le format paginated() standard du projet : { items, pagination: { total, ... } }.
+ * Code défensivement : accepte aussi un tableau brut ou un { items, total } plat, au cas où.
  *
  * @param {Object} [params]
  * @param {number} [params.limit=20] - Nombre de résultats
- * @param {number} [params.offset=0] - Offset de pagination
+ * @param {number} [params.offset=0] - Offset de pagination (mappé vers le paramètre backend `skip`)
  * @returns {Promise<{items: Array<Object>, total: number}>}
  */
 export async function fetchNotifications({ limit = 20, offset = 0 } = {}) {
-  const response = await api.get('/notifications', { params: { limit, offset } });
+  const response = await api.get('/notifications', { params: { limit, skip: offset } });
   const payload = response.data;
 
   if (Array.isArray(payload)) {
     return { items: payload, total: payload.length };
   }
   const items = payload?.items ?? [];
-  const total = typeof payload?.total === 'number' ? payload.total : items.length;
+  const total = payload?.pagination?.total ?? payload?.total ?? items.length;
   return { items, total };
 }
 
