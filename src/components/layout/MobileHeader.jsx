@@ -17,9 +17,10 @@ import BrandLogo from '@/components/layout/BrandLogo';
  * @param {boolean} props.menuOpen - État d'ouverture du menu
  * @param {Function} props.onToggle - Callback pour basculer le menu
  * @param {Object} props.colors - Palette de couleurs
+ * @param {React.ReactNode} [props.notificationBell] - Cloche de notifications (auth uniquement)
  * @returns {JSX.Element}
  */
-export default function MobileHeader({ menuOpen, onToggle, colors }) {
+export default function MobileHeader({ menuOpen, onToggle, colors, notificationBell = null }) {
   return (
     <div style={{
       position: 'fixed',
@@ -58,7 +59,9 @@ export default function MobileHeader({ menuOpen, onToggle, colors }) {
       
       <BrandLogo size="mobile" showTitle={true} />
 
-      <div style={{ width: '40px' }} />
+      <div style={{ width: '40px', display: 'flex', justifyContent: 'flex-end' }}>
+        {notificationBell}
+      </div>
     </div>
   );
 }
@@ -70,4 +73,5 @@ MobileHeader.propTypes = {
     background: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
   }).isRequired,
+  notificationBell: PropTypes.node,
 };

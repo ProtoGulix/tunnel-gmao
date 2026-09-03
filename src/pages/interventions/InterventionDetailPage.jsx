@@ -10,7 +10,7 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ExternalLink, ClipboardList } from 'lucide-react';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ExternalLink, ClipboardList, CalendarCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
@@ -18,8 +18,10 @@ import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import DropdownButton from '@/components/ui/DropdownButton';
+import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
+import { useNotification } from '@/hooks/shared/useNotification';
 
 const ActionsTab = lazy(() => import('@/components/interventions/tabs/ActionsTab'));
 const SummaryTab = lazy(() => import('@/components/interventions/tabs/SummaryTab'));
@@ -72,6 +74,8 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   const tabParamKey = embedded ? 'dtab' : 'tab';
   const [activeTab, setActiveTab] = useState(() => searchParams.get(tabParamKey) ?? 'actions');
   const [mutationError, setMutationError] = useState('');
+  const [pointageDialogOpen, setPointageDialogOpen] = useState(false);
+  const { notification, notify } = useNotification();
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -140,6 +144,10 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
       setMutationError(extractApiErrorMessage(err, 'Erreur marquage imprimé'));
     }
   }, [updateIntervention]);
+
+  const handlePointageRequested = useCallback(() => {
+    notify('Demande de pointage envoyée');
+  }, [notify]);
 
   const handlePurchaseRequestCreated = useCallback(() => {
     // Rafraîchir l'intervention pour mettre à jour la liste des demandes d'achat
@@ -246,6 +254,18 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     />
   );
 
+  const pointageButton = (
+    <Button
+      variant="soft"
+      color="orange"
+      size="2"
+      onClick={() => setPointageDialogOpen(true)}
+    >
+      <CalendarCheck size={14} />
+      Demander le pointage
+    </Button>
+  );
+
   const tabsContent = (
     <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={embedded ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { marginTop: '2rem' }}>
       {mutationError && (
@@ -336,6 +356,24 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     </Tabs.Root>
   );
 
+  const pointageDialog = (
+    <RequestPointageDialog
+      open={pointageDialogOpen}
+      onOpenChange={setPointageDialogOpen}
+      interventionId={id}
+      defaultTechId={intervention.tech_id ?? null}
+      onSuccess={handlePointageRequested}
+    />
+  );
+
+  const notificationToast = notification && (
+    <Box mt="3">
+      <Callout.Root color={notification.type === 'error' ? 'red' : 'green'} size="1" role="status" aria-live="polite">
+        <Callout.Text>{notification.message}</Callout.Text>
+      </Callout.Root>
+    </Box>
+  );
+
   /* ── Mode embarqué (panneau droit du master-detail) ── */
   if (embedded) {
     return (
@@ -362,8 +400,10 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
           <Flex align="center" gap="2" wrap="wrap">
             {statusDropdown}
             {priorityDropdown}
+            {pointageButton}
             {deleteDialog && <Box style={{ marginLeft: 'auto' }}>{deleteDialog}</Box>}
           </Flex>
+          {notificationToast}
         </div>
 
         {/* Demande liée */}
@@ -381,6 +421,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
         )}
 
         {tabsContent}
+        {pointageDialog}
       </div>
     );
   }
@@ -400,8 +441,11 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
           ...(deleteDialog ? [{ label: deleteDialog }] : []),
           { label: statusDropdown },
           { label: priorityDropdown },
+          { label: pointageButton },
         ]}
       />
+
+      {notificationToast}
 
       {/* Demande liée */}
       <Box mt="4" style={intervention.request ? { cursor: 'pointer' } : undefined} onClick={intervention.request ? () => handleTabChange('demande') : undefined}>
@@ -411,6 +455,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
       </Box>
 
       {tabsContent}
+      {pointageDialog}
     </PageContainer>
   );
 }

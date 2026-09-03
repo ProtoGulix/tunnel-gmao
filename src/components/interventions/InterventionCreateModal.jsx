@@ -280,6 +280,7 @@ export default function InterventionCreateModal({ open, onOpenChange, onSuccess 
           demandeurNom,
           description: formData.title,
           serviceId: formData.serviceId || null,
+          origine: 'directe',
         });
         requestId = di.id;
       }

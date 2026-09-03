@@ -13,6 +13,7 @@ export function mapInterventionResponse(raw = {}) {
     reportedDate: raw.reported_date,
     printedFiche: raw.printed_fiche ?? false,
     plan_id: raw.plan_id || null,
+    tech_id: raw.tech_id?.toString() || raw.tech?.id?.toString() || null,
     techInitials: raw.tech_initials || '',
     reportedBy: raw.reported_by || '',
     machine: raw.equipements

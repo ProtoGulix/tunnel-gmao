@@ -137,6 +137,9 @@ export async function fetchInterventionRequest(id) {
  * @param {string} data.description - Description de l'intervention souhaitée (requis)
  * @param {string} [data.serviceId] - UUID du service/département du demandeur
  * @param {string} [data.type] - 'standard' (défaut) ou 'amelioration'
+ * @param {string} [data.origine] - Origine de la demande, ex: 'directe' (créée en même temps
+ *   qu'une intervention, sans passer par le workflow de signalement). Omis = défaut backend
+ *   ('signalee').
  * @returns {Promise<Object>} Demande créée avec code et statut initial
  */
 export async function createInterventionRequest(data) {
@@ -151,6 +154,9 @@ export async function createInterventionRequest(data) {
   }
   if (data.type) {
     payload.type = data.type;
+  }
+  if (data.origine) {
+    payload.origine = data.origine;
   }
 
   const response = await api.post('/intervention-requests', payload);

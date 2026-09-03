@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.57.0] — 2026-09-03
+
+### Centre de notifications
+
+- Nouvelle cloche de notifications dans la sidebar, avec badge du nombre de notifications non lues (mis à jour automatiquement)
+- Le panneau déroulant liste les notifications par date décroissante, avec un bouton « Tout marquer comme lu » et une pagination simple (« Charger plus »)
+- Cliquer sur une notification la marque comme lue et ouvre la demande d'intervention ou l'intervention concernée
+- Sur la fiche d'une intervention, nouvelle action « Demander le pointage » permettant de sélectionner un ou plusieurs techniciens à solliciter
+
+### Demandes d'intervention — origine des DI créées en même temps qu'une intervention
+
+- Correction : une demande d'intervention créée silencieusement en même temps qu'une intervention (sans passer par le workflow de signalement) est désormais marquée avec l'origine « directe », pour la distinguer des demandes réellement signalées
+
 ## [3.56.0] — 2026-09-03
 
 ### Accueil — vues personnalisées par rôle

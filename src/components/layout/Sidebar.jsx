@@ -24,6 +24,7 @@ import MobileHeader from '@/components/layout/MobileHeader';
 import SidebarMenuItem from '@/components/layout/SidebarMenuItem';
 import SidebarFooter from '@/components/layout/SidebarFooter';
 import BrandLogo from '@/components/layout/BrandLogo';
+import NotificationBellContainer from '@/components/layout/NotificationBellContainer';
 
 // 4. Config
 import { getMenuSections, SECTION_LABELS } from '@/config/menuConfig';
@@ -68,29 +69,25 @@ const LOGOUT_CONFIRM_DELAY = 2500;
  * @param {Object} colors - Color configuration
  * @returns {JSX.Element|null} Mobile header or null
  */
-const renderMobileHeader = (isMobile, menuOpen, onToggle, onClose, colors) => {
+const renderMobileHeader = (isMobile, menuOpen, onToggle, onClose, colors, notificationBell) => {
   if (!isMobile) return null;
-  
+
   return (
     <>
-      <MobileHeader menuOpen={menuOpen} onToggle={onToggle} colors={colors} />
+      <MobileHeader menuOpen={menuOpen} onToggle={onToggle} colors={colors} notificationBell={notificationBell} />
       {menuOpen && (
         <div
           onClick={onClose}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 998,
-          }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.5)', zIndex: 998 }}
         />
       )}
     </>
   );
 };
+
+// Cloche de notifications, uniquement pour un utilisateur authentifié.
+const renderNotificationBell = (isAuthenticated, colors) =>
+  isAuthenticated ? <NotificationBellContainer colors={colors} /> : null;
 
 /**
  * Render desktop header
@@ -98,18 +95,20 @@ const renderMobileHeader = (isMobile, menuOpen, onToggle, onClose, colors) => {
  * @param {Object} colors - Color configuration
  * @returns {JSX.Element|null} Desktop header or null
  */
-const renderDesktopHeader = (isMobile, colors) => {
+const renderDesktopHeader = (isMobile, colors, notificationBell) => {
   if (isMobile) return null;
-  
+
   return (
-    <div style={{ 
-      padding: '1rem', 
+    <div style={{
+      padding: '1rem',
       borderBottom: `1px solid ${colors.border}`,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       textAlign: 'center',
+      position: 'relative',
     }}>
+      {notificationBell && <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}>{notificationBell}</div>}
       <BrandLogo size="desktop" showTitle={true} />
     </div>
   );
@@ -192,9 +191,11 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   const closeMenu = () => setMenuOpen(false);
   const handleLogin = () => navigate('/login');
 
+  const notificationBell = renderNotificationBell(isAuthenticated, COLORS);
+
   return (
     <>
-      {renderMobileHeader(isMobile, menuOpen, toggleMenu, closeMenu, COLORS)}
+      {renderMobileHeader(isMobile, menuOpen, toggleMenu, closeMenu, COLORS, notificationBell)}
 
       <aside style={{
         width: `${SIDEBAR_WIDTH}px`,
@@ -210,7 +211,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
         transition: 'left 0.3s ease',
         boxShadow: isMobile && menuOpen ? '2px 0 8px rgba(0,0,0,0.3)' : 'none'
       }}>
-        {renderDesktopHeader(isMobile, COLORS)}
+        {renderDesktopHeader(isMobile, COLORS, notificationBell)}
 
         <nav style={{ flex: 1, padding: '1rem 0', overflowY: 'auto' }}>
           {/* Render main sections (maintenance, stock, production, admin) */}
