@@ -20,6 +20,7 @@ import FormErrors from '@/components/shared/FormErrors';
 import { handleAPIError } from '@/lib/api/errors';
 import { fetchSuppliers } from '@/api/suppliers';
 import { buildSupplierRefPayload, initialSupplierRefFormState } from '@/components/stock/SupplierRefFormRow';
+import SupplierSelectWithCreate from '@/components/suppliers/SupplierSelectWithCreate';
 
 // ─── Fournisseurs optionnels rattachés à une ref fabricant (0..N) ─────────────
 
@@ -38,7 +39,7 @@ function GhostSupplierRow({ onClick }) {
 
 GhostSupplierRow.propTypes = { onClick: PropTypes.func.isRequired };
 
-function SupplierRefEntry({ id, suppliers, entry, onChange, onRemove }) {
+function SupplierRefEntry({ id, suppliers, entry, onChange, onRemove, onSupplierCreated }) {
   const [expanded, setExpanded] = useState(false);
   const set = (field) => (e) => onChange({ ...entry, [field]: e.target.value });
 
@@ -52,14 +53,13 @@ function SupplierRefEntry({ id, suppliers, entry, onChange, onRemove }) {
         >
           {expanded ? <ChevronDown size={13} color="var(--gray-9)" /> : <ChevronRight size={13} color="var(--gray-9)" />}
         </Box>
-        <select
+        <SupplierSelectWithCreate
+          suppliers={suppliers}
           value={entry.supplier_id}
           onChange={set('supplier_id')}
+          onSupplierCreated={onSupplierCreated}
           style={{ flex: 1, minWidth: 0, height: 30, padding: '0 8px', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-7)', fontSize: 'var(--font-size-1)', background: 'var(--color-background)' }}
-        >
-          <option value="">Fournisseur…</option>
-          {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+        />
         <TextField.Root
           size="1"
           style={{ flex: 1, minWidth: 0 }}
@@ -107,9 +107,10 @@ SupplierRefEntry.propTypes = {
   entry: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
+  onSupplierCreated: PropTypes.func.isRequired,
 };
 
-function SupplierRefSection({ mfrIndex, suppliers, supplierRefs, onAdd, onChange, onRemove }) {
+function SupplierRefSection({ mfrIndex, suppliers, supplierRefs, onAdd, onChange, onRemove, onSupplierCreated }) {
   return (
     <Flex direction="column" gap="2">
       {supplierRefs.map((entry, i) => (
@@ -120,6 +121,7 @@ function SupplierRefSection({ mfrIndex, suppliers, supplierRefs, onAdd, onChange
           entry={entry}
           onChange={(updated) => onChange(i, updated)}
           onRemove={() => onRemove(i)}
+          onSupplierCreated={onSupplierCreated}
         />
       ))}
       <GhostSupplierRow onClick={onAdd} />
@@ -134,11 +136,12 @@ SupplierRefSection.propTypes = {
   onAdd: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
+  onSupplierCreated: PropTypes.func.isRequired,
 };
 
 // ─── Formulaire inline d'une ref fabricant (en création seulement) ────────────
 
-function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove, suppliers }) {
+function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove, suppliers, onSupplierCreated }) {
   const set = (field) => (e) => onChange(index, { ...mfrRef, [field]: e.target.value });
   const toggle = (field) => (v) => onChange(index, { ...mfrRef, [field]: v });
 
@@ -201,6 +204,7 @@ function MfrRefFields({ index, ref: mfrRef, onChange, onRemove, canRemove, suppl
           onAdd={addSupplierRef}
           onChange={changeSupplierRef}
           onRemove={removeSupplierRef}
+          onSupplierCreated={onSupplierCreated}
         />
       </Box>
     </Box>
@@ -214,6 +218,7 @@ MfrRefFields.propTypes = {
   onRemove: PropTypes.func.isRequired,
   canRemove: PropTypes.bool,
   suppliers: PropTypes.array.isRequired,
+  onSupplierCreated: PropTypes.func.isRequired,
 };
 
 const newMfrRef = (isPreferred = false) => ({
@@ -266,6 +271,10 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
     if (isEdit) return;
     fetchSuppliers({}).then((d) => setSuppliers(Array.isArray(d) ? d : [])).catch(() => {});
   }, [isEdit]);
+
+  const handleSupplierCreated = (created) => {
+    setSuppliers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+  };
 
   const subFamilies = allSubFamilies.filter((s) => s.family_code === form.family_code);
 
@@ -434,6 +443,7 @@ export default function PartForm({ part, onSubmit, onCancel, saving }) {
                   onRemove={removeMfrRef}
                   canRemove={mfrRefs.length > 1}
                   suppliers={suppliers}
+                  onSupplierCreated={handleSupplierCreated}
                 />
               ))}
               <Button type="button" size="1" variant="ghost" color="violet" onClick={addMfrRef} style={{ alignSelf: 'flex-start' }}>

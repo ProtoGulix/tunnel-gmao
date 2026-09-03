@@ -16,11 +16,17 @@ import {
 } from '@/api/supplierOrders';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
+/** Statuts terminaux — exclus de la vue "Actifs" par défaut. */
+export const TERMINAL_SUPPLIER_ORDER_STATUSES = ['CLOSED', 'CANCELLED'];
+
 /**
  * @param {Object} options
  * @param {string} [options.status] - Filter by order status
+ * @param {string} [options.supplierId] - Filter by supplier
+ * @param {boolean} [options.activeOnly] - Exclut côté client les statuts terminaux (CLOSED, CANCELLED) —
+ *   utilisé quand aucun statut précis n'est sélectionné, pour la vue "Actifs" par défaut.
  */
-export function useSupplierOrders({ status = '' } = {}) {
+export function useSupplierOrders({ status = '', supplierId = '', activeOnly = false } = {}) {
   const [items, setItems] = useState([]);
   const [facets, setFacets] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -34,13 +40,17 @@ export function useSupplierOrders({ status = '' } = {}) {
     try {
       const params = {};
       if (status) params.status = status;
+      if (supplierId) params.supplier_id = supplierId;
       if (search) params.search = search;
       const {
         items: data,
         facets: facetData,
         pagination: paginationData,
       } = await fetchSupplierOrders(params);
-      setItems(data);
+      const filtered = activeOnly
+        ? data.filter((item) => !TERMINAL_SUPPLIER_ORDER_STATUSES.includes(item.status))
+        : data;
+      setItems(filtered);
       setFacets(facetData);
       setPagination(paginationData);
     } catch (err) {
@@ -48,7 +58,7 @@ export function useSupplierOrders({ status = '' } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [status, search]);
+  }, [status, supplierId, search, activeOnly]);
 
   // Debounce la recherche pour éviter un appel API à chaque frappe
   useEffect(() => {

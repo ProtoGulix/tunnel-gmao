@@ -18,9 +18,8 @@ import { CheckCircle2, Edit2, Factory, Link2Off, Package, Plus, ShoppingCart, X 
 import * as partsApi from '@/api/parts';
 import { UNIT_OPTIONS } from '@/config/units';
 import { useDebounce } from '@/hooks/useDebounce';
-import PartForm from '@/components/stock/PartForm';
+import PartFormModal from '@/components/stock/PartFormModal';
 import StatusCallout from '@/components/ui/StatusCallout';
-import Drawer from '@/components/ui/Drawer';
 import { fetchActiveUsers } from '@/api/planning';
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
@@ -391,37 +390,32 @@ function SearchPartTab({ onSelect }) {
 }
 SearchPartTab.propTypes = { onSelect: PropTypes.func.isRequired };
 
-// ─── Drawer "Créer une pièce" ─────────────────────────────────────────────────
+// ─── Modale "Créer une pièce" (standard, cf. PartsTab) ────────────────────────
 
-function CreatePartDrawer({ open, onOpenChange, onCreated }) {
+function CreatePartModal({ open, onOpenChange, onCreated }) {
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
 
   const handleSubmit = async (payload) => {
-    setSaving(true);
-    setError(null);
     try {
+      setSaving(true);
       const part = await partsApi.createPartWithSupplierRef(payload);
       onCreated(part);
       onOpenChange(false);
-    } catch (err) {
-      setError(err?.response?.data?.detail || 'Erreur lors de la création de la pièce.');
-      throw err;
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} title="Créer une pièce catalogue" width={520}>
-      <Flex direction="column" gap="2">
-        {error && <StatusCallout type="error">{error}</StatusCallout>}
-        <PartForm onSubmit={handleSubmit} onCancel={() => onOpenChange(false)} saving={saving} />
-      </Flex>
-    </Drawer>
+    <PartFormModal
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit}
+      saving={saving}
+    />
   );
 }
-CreatePartDrawer.propTypes = {
+CreatePartModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onOpenChange: PropTypes.func.isRequired,
   onCreated: PropTypes.func.isRequired,
@@ -466,7 +460,7 @@ function PartCatalogCard({ currentPart, linkedPart, onLink, onUnlink }) {
         </Tabs.Content>
       </Tabs.Root>
 
-      <CreatePartDrawer open={createOpen} onOpenChange={setCreateOpen} onCreated={handleLink} />
+      <CreatePartModal open={createOpen} onOpenChange={setCreateOpen} onCreated={handleLink} />
     </Card>
   );
 }
