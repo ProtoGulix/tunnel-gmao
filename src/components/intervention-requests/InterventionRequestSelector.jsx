@@ -117,12 +117,16 @@ export default function InterventionRequestSelector({
 
   if (showCreate) {
     return (
+      // allowTypeSelection={false} : ce sélecteur sert à créer une DI pour
+      // l'accepter immédiatement (création d'intervention) — une idée
+      // d'amélioration ne suit pas ce workflow, donc pas de choix de type ici.
       <InterventionRequestForm
         onSubmit={handleCreate}
         onCancel={() => setShowCreate(false)}
         saving={saving}
         machineId={machineId}
         machineName={machineName}
+        allowTypeSelection={false}
       />
     );
   }

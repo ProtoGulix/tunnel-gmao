@@ -3,14 +3,15 @@
  * @module components/suppliers/tabs/SuppliersTab
  */
 
-import { useMemo, useState } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Flex, Table, Text } from '@radix-ui/themes';
+import { Badge, Box, Dialog, Flex, Table, Text, VisuallyHidden } from '@radix-ui/themes';
 import { Link2, Truck } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import SupplierPartRefDetail from '@/components/suppliers/SupplierPartRefDetail';
 import SupplierManageModal from '@/components/suppliers/SupplierManageModal';
+import SupplierForm from '@/components/suppliers/SupplierForm';
 import { useSuppliers } from '@/hooks/suppliers/useSuppliers';
 import { useSupplierPartRefs } from '@/hooks/suppliers/useSupplierPartRefs';
 import { useUrlSearch } from '@/hooks/shared/useUrlSearch';
@@ -83,13 +84,15 @@ RefsTable.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-export default function SuppliersTab() {
+const SuppliersTab = forwardRef(function SuppliersTab(props, ref) {
   const [urlSearch, setUrlSearch] = useUrlSearch('sq');
   const [supplierFilter, setSupplierFilter] = useState('');
-  const { suppliers } = useSuppliers({});
+  const { suppliers, createSupplier } = useSuppliers({});
   const { refs, loading, error, refresh, total, pagination } = useSupplierPartRefs({ supplierId: supplierFilter, search: urlSearch });
   const [selected, setSelected] = useState(null);
   const [manageSupplierId, setManageSupplierId] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const sortedSuppliers = useMemo(
     () => [...suppliers].sort((a, b) => a.name.localeCompare(b.name)),
@@ -98,6 +101,20 @@ export default function SuppliersTab() {
 
   const handleSearch = (v) => { setUrlSearch(v); };
   const handleSelect = (ref) => setSelected((prev) => (prev?.id === ref.id ? null : ref));
+
+  const handleCreate = async (data) => {
+    try {
+      setSaving(true);
+      await createSupplier(data);
+      setCreating(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    openCreate: () => setCreating(true),
+  }), []);
 
   if (error) return <ErrorState error={error} onRetry={refresh} />;
 
@@ -143,6 +160,17 @@ export default function SuppliersTab() {
         onOpenChange={(v) => { if (!v) setManageSupplierId(null); }}
         supplierId={manageSupplierId}
       />
+
+      <Dialog.Root open={creating} onOpenChange={(v) => { if (!v && !saving) setCreating(false); }}>
+        <Dialog.Content style={{ maxWidth: 560 }}>
+          <VisuallyHidden>
+            <Dialog.Title>Nouveau fournisseur</Dialog.Title>
+          </VisuallyHidden>
+          <SupplierForm onSubmit={handleCreate} onCancel={() => setCreating(false)} saving={saving} />
+        </Dialog.Content>
+      </Dialog.Root>
     </Box>
   );
-}
+});
+
+export default SuppliersTab;

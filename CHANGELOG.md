@@ -1,5 +1,38 @@
 # Changelog
 
+## [3.56.0] — 2026-09-03
+
+### Accueil — vues personnalisées par rôle
+
+- Nouvelle page d'accueil dédiée pour les acheteurs, avec un résumé des demandes d'achat à traiter
+- Nouvelle page d'accueil pour la direction technique, avec une vue kanban des demandes d'intervention standards et des idées d'amélioration
+- L'administration peut désormais assigner une vue d'accueil différente selon le rôle des utilisateurs
+
+### Demandes d'intervention — formulaire retravaillé
+
+- Le formulaire de création distingue maintenant clairement une demande d'intervention standard d'une idée d'amélioration
+- Sélection de l'équipement concerné simplifiée
+
+### Paniers fournisseurs — filtres retravaillés
+
+- Nouveau filtre pour n'afficher que les paniers d'un fournisseur en particulier
+- Le filtre par défaut affiche désormais tous les paniers actifs (tout sauf Clôturé et Annulé) plutôt qu'un seul statut ; les statuts détaillés (En mutualisation, Devis envoyé, En négociation…) restent sélectionnables juste en dessous
+- Le statut de chaque panier est désormais visible directement sur sa carte dans la liste, utile maintenant que plusieurs statuts peuvent être affichés ensemble
+
+### Fournisseurs — création simplifiée
+
+- Correction : il n'était plus possible de créer un nouveau fournisseur depuis l'onglet Stock > Fournisseurs (le bouton avait disparu lors d'une refonte de l'écran) — le bouton « + Ajouter » fonctionne de nouveau
+- Un nouveau fournisseur peut désormais être créé directement depuis le formulaire de création d'une pièce (ou de liaison d'une référence), sans interrompre la saisie en cours
+- Le formulaire de création d'un fournisseur reprend le même style sobre que celui d'une pièce
+
+### Demandes d'achat — qualification
+
+- Créer une nouvelle pièce catalogue lors de la qualification d'une demande d'achat utilise maintenant la même fenêtre standard que partout ailleurs dans l'application, au lieu d'un panneau latéral qui détonnait avec le reste
+
+### Page de connexion
+
+- Ajout d'un lien vers le dépôt du projet et d'une mention du développeur en bas de la page de connexion
+
 ## [3.55.0] — 2026-08-30
 
 ### Paniers fournisseurs — comparateur retravaillé

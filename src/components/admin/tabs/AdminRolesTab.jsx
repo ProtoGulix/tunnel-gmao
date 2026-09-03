@@ -16,7 +16,10 @@ import { useNotification } from '@/hooks/shared/useNotification';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export default function AdminRolesTab() {
-  const { matrix, loading, error, togglePermission, refresh: refreshMatrix } = useRolesMatrix();
+  const {
+    matrix, loading, error, togglePermission, refresh: refreshMatrix,
+    homeViews, homeViewByRoleId, setRoleHomeView, defaultHomeViewCode,
+  } = useRolesMatrix();
   const [auditOpen, setAuditOpen] = useState(false);
 
   const { audit, loading: auditLoading, load: loadAudit } = usePermissionAudit();
@@ -35,6 +38,15 @@ export default function AdminRolesTab() {
     loadAudit();
     setAuditOpen(true);
   }, [loadAudit]);
+
+  const handleHomeViewChange = useCallback(async (roleId, viewCode) => {
+    try {
+      await setRoleHomeView(roleId, viewCode);
+      notify('Vue d’accueil mise à jour');
+    } catch (err) {
+      notify(extractApiErrorMessage(err, 'Erreur lors de la mise à jour'), 'error');
+    }
+  }, [setRoleHomeView, notify]);
 
   const [syncing, setSyncing] = useState(false);
   const handleSyncEndpoints = useCallback(async () => {
@@ -88,6 +100,10 @@ export default function AdminRolesTab() {
         matrix={matrix}
         onToggle={handleToggle}
         onShowAudit={handleShowAudit}
+        homeViews={homeViews}
+        homeViewByRoleId={homeViewByRoleId}
+        onHomeViewChange={handleHomeViewChange}
+        defaultHomeViewCode={defaultHomeViewCode}
       />
 
       <AdminPermissionAuditPanel

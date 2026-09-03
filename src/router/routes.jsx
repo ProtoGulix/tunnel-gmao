@@ -12,7 +12,7 @@ import LoadingState from '@/components/ui/LoadingState';
 
 // Pages — chargées à la demande
 const Login = lazy(() => import('@/pages/auth/Login'));
-const HomeSplit = lazy(() => import('@/pages/HomeSplit'));
+const HomeRouter = lazy(() => import('@/pages/HomeRouter'));
 const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
 const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
 const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
@@ -94,7 +94,7 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout>
-              <HomeSplit />
+              <HomeRouter />
             </Layout>
           </ProtectedRoute>
         }

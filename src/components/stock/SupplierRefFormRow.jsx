@@ -9,6 +9,7 @@ import { Box, Button, Flex, Table, Text, TextField } from '@radix-ui/themes';
 import { addSupplierRef, updateSupplierRef } from '@/api/parts';
 import { fetchSuppliers } from '@/api/suppliers';
 import StatusCallout from '@/components/ui/StatusCallout';
+import SupplierSelectWithCreate from '@/components/suppliers/SupplierSelectWithCreate';
 
 export function buildSupplierRefPayload(form) {
   return {
@@ -46,18 +47,18 @@ export function initialSupplierRefFormState(initial) {
   };
 }
 
-export function SupplierPicker({ suppliers, value, onChange }) {
+export function SupplierPicker({ suppliers, value, onChange, onSupplierCreated }) {
   return (
     <Box>
       <Text size="1" color="gray" style={{ display: 'block', marginBottom: 3 }}>Fournisseur *</Text>
-      <select
+      <SupplierSelectWithCreate
+        suppliers={suppliers}
         value={value}
         onChange={onChange}
+        onSupplierCreated={onSupplierCreated}
+        placeholder="Sélectionner un fournisseur du catalogue…"
         style={{ width: '100%', maxWidth: 320, height: 32, padding: '0 8px', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-7)', fontSize: 'var(--font-size-2)', background: 'var(--color-background)' }}
-      >
-        <option value="">Sélectionner un fournisseur du catalogue…</option>
-        {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-      </select>
+      />
     </Box>
   );
 }
@@ -66,6 +67,7 @@ SupplierPicker.propTypes = {
   suppliers: PropTypes.array.isRequired,
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
+  onSupplierCreated: PropTypes.func.isRequired,
 };
 
 export function SupplierRefFields({ form, set }) {
@@ -115,6 +117,10 @@ export default function SupplierRefFormRow({ mfrRefId, initial, colSpan, onSaved
     fetchSuppliers({}).then((d) => setSuppliers(Array.isArray(d) ? d : [])).catch(() => {});
   }, [isEdit]);
 
+  const handleSupplierCreated = (created) => {
+    setSuppliers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+  };
+
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
@@ -148,6 +154,7 @@ export default function SupplierRefFormRow({ mfrRefId, initial, colSpan, onSaved
                 suppliers={suppliers}
                 value={form.supplier_id}
                 onChange={(e) => setForm((f) => ({ ...f, supplier_id: e.target.value }))}
+                onSupplierCreated={handleSupplierCreated}
               />
             )}
 

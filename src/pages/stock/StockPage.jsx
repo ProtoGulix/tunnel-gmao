@@ -14,17 +14,26 @@ const PartsTab = lazy(() => import('@/components/stock/tabs/PartsTab'));
 const SuppliersTab = lazy(() => import('@/components/suppliers/tabs/SuppliersTab'));
 const ManufacturersTab = lazy(() => import('@/components/manufacturers/ManufacturersTab'));
 
+const ADD_CONFIG = {
+  items: { label: 'Nouvelle pièce', openCreate: (ref) => ref.current?.openCreate() },
+  suppliers: { label: 'Nouveau fournisseur', openCreate: (ref) => ref.current?.openCreate() },
+};
+
 export default function StockPage() {
   const { activeTab, setActiveTab } = useTabNavigation('items', 'tab');
   const partsTabRef = useRef(null);
+  const suppliersTabRef = useRef(null);
+
+  const tabRefs = { items: partsTabRef, suppliers: suppliersTabRef };
+  const addConfig = ADD_CONFIG[activeTab];
 
   return (
     <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Stock"
         subtitle="Pièces, fournisseurs et fabricants"
-        onAdd={activeTab === 'items' ? () => partsTabRef.current?.openCreate() : undefined}
-        addLabel="Nouvelle pièce"
+        onAdd={addConfig ? () => addConfig.openCreate(tabRefs[activeTab]) : undefined}
+        addLabel={addConfig?.label}
       />
 
       <Box px="4" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -59,7 +68,7 @@ export default function StockPage() {
               {activeTab === 'items' && <PartsTab ref={partsTabRef} />}
             </Tabs.Content>
             <Tabs.Content value="suppliers" style={{ flex: 1, minHeight: 0 }}>
-              {activeTab === 'suppliers' && <SuppliersTab />}
+              {activeTab === 'suppliers' && <SuppliersTab ref={suppliersTabRef} />}
             </Tabs.Content>
             <Tabs.Content value="manufacturers" style={{ flex: 1, minHeight: 0 }}>
               {activeTab === 'manufacturers' && <ManufacturersTab />}

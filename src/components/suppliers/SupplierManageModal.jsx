@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Dialog } from '@radix-ui/themes';
+import { Dialog, VisuallyHidden } from '@radix-ui/themes';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import SupplierInfo from '@/components/suppliers/SupplierInfo';
@@ -30,7 +30,9 @@ export default function SupplierManageModal({ open, onOpenChange, supplierId }) 
   return (
     <Dialog.Root open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setEditing(false); }}>
       <Dialog.Content style={{ maxWidth: 560 }}>
-        <Dialog.Title>Fournisseur</Dialog.Title>
+        <VisuallyHidden>
+          <Dialog.Title>Fournisseur</Dialog.Title>
+        </VisuallyHidden>
         {loading && <LoadingState fullscreen={false} message="Chargement..." />}
         {error && <ErrorState error={error} onRetry={refresh} />}
         {!loading && !error && supplier && (
