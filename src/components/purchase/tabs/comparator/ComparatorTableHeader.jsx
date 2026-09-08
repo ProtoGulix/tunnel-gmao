@@ -7,7 +7,8 @@
  * qui défilent dessous.
  * @module components/purchase/tabs/comparator/ComparatorTableHeader
  */
-import { Box, Table, Text } from '@radix-ui/themes';
+import { Box, Flex, Table, Text } from '@radix-ui/themes';
+import { Building2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { formatPrice } from '@/utils/formatPrice';
 import GhostAddOrderCell from './GhostAddOrderCell';
@@ -22,15 +23,32 @@ const STICKY_ROW2 = { position: 'sticky', top: 49, zIndex: 2, background: 'var(-
 const ORDER_COLUMN_STYLE = { width: ORDER_COLUMN_WIDTH, minWidth: ORDER_COLUMN_WIDTH, maxWidth: ORDER_COLUMN_WIDTH };
 
 function OrderSummaryHeaderCell({ order, total, selectedCount, maxDelay, onRemove }) {
+  const supplierName = order.supplier?.name || 'Fournisseur inconnu';
+  // `total` (somme des lignes RETENUES) est distinct de `order.total_amount` (somme
+  // de TOUT le panier, renvoyé par l'API) : un panier peut être entièrement chiffré
+  // sans qu'aucune ligne n'y soit encore retenue. On ne réutilise donc pas le
+  // libellé générique "Non chiffré" de formatPrice ici, qui laisserait croire à
+  // tort que le panier n'a aucun prix.
+  const totalDisplay = selectedCount === 0 ? '—' : formatPrice(total);
   return (
     <Table.ColumnHeaderCell style={{ ...STICKY_ROW1, ...ORDER_COLUMN_STYLE, verticalAlign: 'top' }}>
-      <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-        <Text size="1" weight="bold" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={order.order_number}>
-          {order.order_number}
-        </Text>
+      <Box style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
+        <Flex align="center" gap="1" style={{ overflow: 'hidden', minWidth: 0 }}>
+          <Building2 size={15} color="var(--blue-9)" style={{ flexShrink: 0 }} />
+          <Text
+            size="3" weight="bold" color="blue"
+            style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.02em' }}
+            title={supplierName}
+          >
+            {supplierName}
+          </Text>
+        </Flex>
         <RemoveButton orderNumber={order.order_number} onRemove={onRemove} />
       </Box>
-      <Text size="4" weight="bold" style={{ display: 'block' }}>{formatPrice(total)}</Text>
+      <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }} title={order.order_number}>
+        {order.order_number}
+      </Text>
+      <Text size="4" weight="bold" style={{ display: 'block' }} color={selectedCount === 0 ? 'gray' : undefined}>{totalDisplay}</Text>
       <Text size="1" color="gray" style={{ display: 'block' }}>
         {selectedCount} ligne{selectedCount > 1 ? 's' : ''} retenue{selectedCount > 1 ? 's' : ''} · {maxDelay != null ? `${maxDelay} j max` : 'délai —'}
       </Text>

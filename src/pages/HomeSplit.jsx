@@ -89,7 +89,7 @@ export default function HomeSplit() {
   }, [refreshTasks]);
 
   const headerControls = (
-    <Flex align="center" gap="2">
+    <Flex align="center" gap="2" wrap="wrap">
       {/* Sélecteur tech — avatars */}
       <Flex gap="1" align="center">
         {users.map((u, i) => {

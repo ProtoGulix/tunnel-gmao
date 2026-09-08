@@ -3,8 +3,8 @@
  * prix/délai et rendu prix/délai/total en lecture.
  * @module components/purchase/tabs/comparator/ComparatorCellDisplay
  */
-import { Flex, Text } from '@radix-ui/themes';
-import { Trophy } from 'lucide-react';
+import { Flex, Spinner, Text } from '@radix-ui/themes';
+import { CheckCircle2, Clock, Euro, Trophy, XCircle } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { formatPrice } from '@/utils/formatPrice';
 
@@ -12,31 +12,58 @@ function computeLineTotal(price, quantity) {
   return !isNaN(price) && quantity ? (price * quantity) : null;
 }
 
-export function EditFields({ draft, onChange }) {
+function fieldBorderColor(hasError) {
+  return hasError ? 'var(--red-7)' : 'var(--gray-6)';
+}
+
+/** Icône de label d'un champ (€ ou ⏱), remplacée temporairement par un rolling
+ *  circle pendant la sauvegarde de la ligne, ou par une coche/croix juste après
+ *  (issue) — même emplacement, même taille, jamais de texte d'état. */
+function FieldStatusIcon({ icon, saving, saved, hasError }) {
+  if (saving) return <Spinner size="1" />;
+  if (hasError) return <XCircle size={11} color="var(--red-9)" />;
+  if (saved) return <CheckCircle2 size={11} color="var(--green-9)" />;
+  return icon;
+}
+FieldStatusIcon.propTypes = { icon: PropTypes.node, saving: PropTypes.bool, saved: PropTypes.bool, hasError: PropTypes.bool };
+
+export function EditFields({ draft, onChange, saving, saved, hasError }) {
   return (
     <Flex direction="column" gap="2">
       <Flex align="center" gap="1">
-        <Text size="1" color="gray" style={{ width: 40 }}>Prix</Text>
+        <Flex align="center" gap="1" style={{ width: 52, flexShrink: 0 }}>
+          <FieldStatusIcon icon={<Euro size={11} color="var(--gray-9)" />} saving={saving} saved={saved} hasError={hasError} />
+          <Text size="1" color="gray">Prix</Text>
+        </Flex>
         <input
           type="number" min="0" step="0.01" value={draft?.unit_price ?? ''} placeholder="0.00" autoFocus
           onChange={(e) => onChange('unit_price', e.target.value)}
-          style={{ flex: 1, fontSize: 'var(--font-size-2)', padding: '3px 6px', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-6)', background: 'var(--color-background)', color: 'var(--gray-12)', textAlign: 'right' }}
+          style={{ flex: '1 1 0%', minWidth: 0, width: '100%', boxSizing: 'border-box', fontSize: 'var(--font-size-2)', padding: '3px 6px', borderRadius: 'var(--radius-2)', border: `1px solid ${fieldBorderColor(hasError)}`, background: 'var(--color-background)', color: 'var(--gray-12)', textAlign: 'right' }}
         />
         <Text size="1" color="gray">€</Text>
       </Flex>
       <Flex align="center" gap="1">
-        <Text size="1" color="gray" style={{ width: 40 }}>Délai</Text>
+        <Flex align="center" gap="1" style={{ width: 52, flexShrink: 0 }}>
+          <FieldStatusIcon icon={<Clock size={11} color="var(--gray-9)" />} saving={saving} saved={saved} hasError={hasError} />
+          <Text size="1" color="gray">Délai</Text>
+        </Flex>
         <input
           type="number" min="0" step="1" value={draft?.lead_time_days ?? ''} placeholder="—"
           onChange={(e) => onChange('lead_time_days', e.target.value)}
-          style={{ flex: 1, fontSize: 'var(--font-size-2)', padding: '3px 6px', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-6)', background: 'var(--color-background)', color: 'var(--gray-12)', textAlign: 'right' }}
+          style={{ flex: '1 1 0%', minWidth: 0, width: '100%', boxSizing: 'border-box', fontSize: 'var(--font-size-2)', padding: '3px 6px', borderRadius: 'var(--radius-2)', border: `1px solid ${fieldBorderColor(hasError)}`, background: 'var(--color-background)', color: 'var(--gray-12)', textAlign: 'right' }}
         />
         <Text size="1" color="gray">j</Text>
       </Flex>
     </Flex>
   );
 }
-EditFields.propTypes = { draft: PropTypes.object, onChange: PropTypes.func.isRequired };
+EditFields.propTypes = {
+  draft: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  saving: PropTypes.bool,
+  saved: PropTypes.bool,
+  hasError: PropTypes.bool,
+};
 
 function PriceDisplay({ price, isPriceWinner }) {
   return (

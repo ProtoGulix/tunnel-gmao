@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { useNotificationCenter } from '@/hooks/shared/useNotificationCenter';
 
-export default function NotificationBellContainer({ colors }) {
+export default function NotificationBellContainer({ colors, compact = false }) {
   const {
     items,
     unreadCount,
@@ -32,6 +32,7 @@ export default function NotificationBellContainer({ colors }) {
       onMarkRead={markRead}
       onMarkAllRead={markAllRead}
       colors={colors}
+      compact={compact}
     />
   );
 }
@@ -40,4 +41,5 @@ NotificationBellContainer.propTypes = {
   colors: PropTypes.shape({
     text: PropTypes.string.isRequired,
   }).isRequired,
+  compact: PropTypes.bool,
 };

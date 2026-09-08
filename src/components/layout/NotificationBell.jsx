@@ -7,12 +7,17 @@
  * @requires lucide-react
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Popover, Flex, Text, Button, Separator } from '@radix-ui/themes';
 import { Bell } from 'lucide-react';
 import NotificationListItem, { resolveEntityPath } from '@/components/layout/NotificationListItem';
+
+// Durée du flash déclenché à l'arrivée d'une nouvelle notification (badge qui
+// pulse brièvement pour attirer l'œil, plutôt qu'une pulsation permanente qui
+// fatiguerait la lecture si l'utilisateur a déjà des non-lues en attente).
+const FLASH_DURATION_MS = 2400;
 
 /**
  * Cloche de notifications : badge orange (compteur non lu, pollé en continu) +
@@ -29,6 +34,7 @@ import NotificationListItem, { resolveEntityPath } from '@/components/layout/Not
  * @param {Function} props.onMarkRead
  * @param {Function} props.onMarkAllRead
  * @param {Object} props.colors
+ * @param {boolean} [props.compact=false] - Icône seule sans libellé (header mobile contraint)
  */
 export default function NotificationBell({
   unreadCount,
@@ -40,8 +46,23 @@ export default function NotificationBell({
   onMarkRead,
   onMarkAllRead,
   colors,
+  compact = false,
 }) {
   const navigate = useNavigate();
+
+  // Déclenche un flash bref sur le badge quand le compteur augmente (nouvelle
+  // notification détectée par le polling) — pas au montage initial.
+  const [flashing, setFlashing] = useState(false);
+  const prevCountRef = useRef(unreadCount);
+  useEffect(() => {
+    if (unreadCount > prevCountRef.current) {
+      setFlashing(true);
+      const timer = setTimeout(() => setFlashing(false), FLASH_DURATION_MS);
+      prevCountRef.current = unreadCount;
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   const handleItemOpen = useCallback((notification) => {
     if (!notification.read_at) {
@@ -53,28 +74,41 @@ export default function NotificationBell({
 
   return (
     <Popover.Root onOpenChange={onOpenChange}>
+      {/* Pulse du badge à l'arrivée d'une nouvelle notification — portée locale,
+          évite d'ajouter une keyframe globale pour un seul composant. */}
+      <style>{`
+        @keyframes notification-bell-flash {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.55); }
+          50% { transform: scale(1.18); box-shadow: 0 0 0 5px rgba(249, 115, 22, 0); }
+        }
+      `}</style>
       <Popover.Trigger>
         <button
           aria-label="Notifications"
           style={{
             position: 'relative',
-            background: 'transparent',
+            background: unreadCount > 0 ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
             border: 'none',
-            color: colors.text,
+            borderRadius: '999px',
+            color: unreadCount > 0 ? 'var(--orange-9)' : colors.text,
             cursor: 'pointer',
-            padding: '0.5rem',
+            padding: '0.375rem 0.625rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: '0.375rem',
+            transition: 'background 0.15s, color 0.15s',
           }}
         >
-          <Bell size={18} />
+          <Bell size={16} />
+          {!compact && (
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.02em' }}>
+              Notifications
+            </span>
+          )}
           {unreadCount > 0 && (
             <span
               style={{
-                position: 'absolute',
-                top: 2,
-                right: 2,
                 minWidth: 16,
                 height: 16,
                 borderRadius: '999px',
@@ -86,6 +120,7 @@ export default function NotificationBell({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '0 4px',
+                animation: flashing ? 'notification-bell-flash 0.6s ease-in-out 3' : 'none',
               }}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -138,4 +173,5 @@ NotificationBell.propTypes = {
   colors: PropTypes.shape({
     text: PropTypes.string.isRequired,
   }).isRequired,
+  compact: PropTypes.bool,
 };

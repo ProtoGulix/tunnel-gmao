@@ -10,6 +10,11 @@ export const MAX_COMPARED_ORDERS = 4;
  *  alignées, y compris quand une colonne est vide (fantôme au repos). */
 export const ORDER_COLUMN_WIDTH = 200;
 
+/** Hauteur mini commune à toutes les cards d'une ligne (absent / pending / priced /
+ *  édition) pour que les colonnes restent alignées horizontalement même quand leur
+ *  contenu diffère en nombre de lignes de texte. */
+export const CELL_CARD_MIN_HEIGHT = 74;
+
 export function lineKey(line) {
   return line.part_id || line.stock_item_ref || line.stock_item_name || line.id;
 }

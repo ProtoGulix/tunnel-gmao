@@ -24,6 +24,7 @@ import {
 } from '@/components/purchase/tabs/comparator/comparatorHelpers';
 
 const AUTOSAVE_DELAY_MS = 600;
+const SAVED_FLASH_MS = 1800;
 
 function initDraftsFor(lines, setDrafts) {
   setDrafts((prev) => {
@@ -50,12 +51,15 @@ export function useSupplierOrderComparator() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [drafts, setDrafts] = useState({});
   const [savingLines, setSavingLines] = useState({});
+  const [savedLines, setSavedLines] = useState({});
   const [lineErrors, setLineErrors] = useState({});
   const [selecting, setSelecting] = useState(null);
   const debounceTimers = useRef({});
+  const savedFlashTimers = useRef({});
 
   useEffect(() => () => {
     Object.values(debounceTimers.current).forEach(clearTimeout);
+    Object.values(savedFlashTimers.current).forEach(clearTimeout);
   }, []);
 
   useEffect(() => {
@@ -152,7 +156,9 @@ export function useSupplierOrderComparator() {
 
   /** Envoie le PATCH pour une ligne et resync les paniers avec la réponse serveur. */
   const saveLine = async (lineId, draft) => {
+    clearTimeout(savedFlashTimers.current[lineId]);
     setSavingLines((prev) => ({ ...prev, [lineId]: true }));
+    setSavedLines((prev) => ({ ...prev, [lineId]: false }));
     setLineErrors((prev) => ({ ...prev, [lineId]: null }));
     try {
       await updateSupplierOrderLine(lineId, {
@@ -160,6 +166,10 @@ export function useSupplierOrderComparator() {
         lead_time_days: draft.lead_time_days !== '' ? Number(draft.lead_time_days) : null,
       });
       await refreshSelectedOrders();
+      setSavedLines((prev) => ({ ...prev, [lineId]: true }));
+      savedFlashTimers.current[lineId] = setTimeout(() => {
+        setSavedLines((prev) => ({ ...prev, [lineId]: false }));
+      }, SAVED_FLASH_MS);
     } catch (err) {
       setLineErrors((prev) => ({ ...prev, [lineId]: err?.response?.data?.detail || 'Erreur lors de la sauvegarde' }));
     } finally {
@@ -201,7 +211,7 @@ export function useSupplierOrderComparator() {
   return {
     allOrders, loadingOrders, statusMap,
     selectedIds, selectedOrders, candidates,
-    rows, drafts, savingLines, lineErrors, selecting,
+    rows, drafts, savingLines, savedLines, lineErrors, selecting,
     loadingDetail,
     addOrder, removeOrder, changeDraft, selectLine,
     totalsByOrderId, selectedCountByOrderId, maxDelayByOrderId,

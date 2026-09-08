@@ -41,7 +41,7 @@ ComparatorBodyMessage.propTypes = { icon: PropTypes.elementType.isRequired, chil
 export default function SupplierOrderComparatorTab() {
   const {
     selectedIds, selectedOrders, candidates,
-    rows, drafts, selecting, savingLines, lineErrors,
+    rows, drafts, selecting, savingLines, savedLines, lineErrors,
     loadingDetail,
     addOrder, removeOrder, changeDraft, selectLine,
     totalsByOrderId, selectedCountByOrderId, maxDelayByOrderId,
@@ -109,6 +109,7 @@ export default function SupplierOrderComparatorTab() {
                             onSelect={() => line && selectLine(line.id)}
                             selecting={selecting}
                             saving={!!(line && savingLines[line.id])}
+                            saved={!!(line && savedLines[line.id])}
                             error={line && lineErrors[line.id]}
                           />
                         </Table.Cell>

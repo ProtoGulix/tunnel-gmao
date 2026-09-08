@@ -86,8 +86,9 @@ const renderMobileHeader = (isMobile, menuOpen, onToggle, onClose, colors, notif
 };
 
 // Cloche de notifications, uniquement pour un utilisateur authentifié.
-const renderNotificationBell = (isAuthenticated, colors) =>
-  isAuthenticated ? <NotificationBellContainer colors={colors} /> : null;
+// `compact` retire le libellé texte (header mobile contraint à 40px de large).
+const renderNotificationBell = (isAuthenticated, colors, compact = false) =>
+  isAuthenticated ? <NotificationBellContainer colors={colors} compact={compact} /> : null;
 
 /**
  * Render desktop header
@@ -106,10 +107,12 @@ const renderDesktopHeader = (isMobile, colors, notificationBell) => {
       flexDirection: 'column',
       alignItems: 'center',
       textAlign: 'center',
-      position: 'relative',
+      gap: '0.375rem',
     }}>
-      {notificationBell && <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}>{notificationBell}</div>}
-      <BrandLogo size="desktop" showTitle={true} />
+      {/* Titre masqué ici : redondant avec le logo, et la cloche juste en dessous
+          suffit comme second élément du bloc sans empiler un troisième texte. */}
+      <BrandLogo size="desktop" showTitle={false} />
+      {notificationBell}
     </div>
   );
 };
@@ -191,11 +194,12 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   const closeMenu = () => setMenuOpen(false);
   const handleLogin = () => navigate('/login');
 
+  const notificationBellCompact = renderNotificationBell(isAuthenticated, COLORS, true);
   const notificationBell = renderNotificationBell(isAuthenticated, COLORS);
 
   return (
     <>
-      {renderMobileHeader(isMobile, menuOpen, toggleMenu, closeMenu, COLORS, notificationBell)}
+      {renderMobileHeader(isMobile, menuOpen, toggleMenu, closeMenu, COLORS, notificationBellCompact)}
 
       <aside style={{
         width: `${SIDEBAR_WIDTH}px`,
