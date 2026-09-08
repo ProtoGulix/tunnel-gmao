@@ -262,6 +262,7 @@ export default function TaskSearchColumn({
   selectedTasks,
   onTasksChange,
   onInterventionCreated,
+  selectedRequest,
   onIvCreationChange,
   injectedQuery,
   onInjectedQueryConsumed,
@@ -454,7 +455,7 @@ export default function TaskSearchColumn({
         newIvEquipement && (
           <InterventionCreatorLeft
             equipementId={newIvEquipement.id}
-            equipementLabel={`${newIvEquipement.code ?? ''} — ${newIvEquipement.name ?? ''}`.trim()}
+            selectedRequest={selectedRequest}
             onRequestSelected={(req) => onIvCreationChange?.(buildCtx(newIvEquipement, req))}
           />
         )
@@ -508,6 +509,7 @@ TaskSearchColumn.propTypes = {
   selectedTasks: PropTypes.array.isRequired,
   onTasksChange: PropTypes.func.isRequired,
   onInterventionCreated: PropTypes.func.isRequired,
+  selectedRequest: PropTypes.object,
   onIvCreationChange: PropTypes.func,
   injectedQuery: PropTypes.string,
   onInjectedQueryConsumed: PropTypes.func,

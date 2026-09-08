@@ -177,7 +177,7 @@ InterventionRow.propTypes = {
  * affiche la liste des demandes ouvertes. La sélection d'une demande
  * remonte via onRequestSelected pour que le formulaire s'affiche à droite.
  */
-export function InterventionCreatorLeft({ equipementId, equipementLabel, selectedRequest, onRequestSelected, onCancel }) {
+export function InterventionCreatorLeft({ equipementId, selectedRequest, onRequestSelected, onCancel }) {
   return (
     <Flex direction="column" gap="3">
       {onCancel && (
@@ -189,7 +189,6 @@ export function InterventionCreatorLeft({ equipementId, equipementLabel, selecte
         selectedId={selectedRequest?.id}
         onSelect={onRequestSelected}
         machineId={equipementId}
-        machineName={equipementLabel}
       />
     </Flex>
   );
@@ -197,7 +196,6 @@ export function InterventionCreatorLeft({ equipementId, equipementLabel, selecte
 
 InterventionCreatorLeft.propTypes = {
   equipementId: PropTypes.string.isRequired,
-  equipementLabel: PropTypes.string,
   selectedRequest: PropTypes.object,
   onRequestSelected: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
@@ -326,7 +324,6 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
           selectedId={selectedRequest?.id}
           onSelect={handleSelectRequest}
           machineId={equipementId}
-          machineName={equipementLabel}
         />
       )}
 

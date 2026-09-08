@@ -9,6 +9,7 @@ import { createIntervention } from '@/api/interventions';
 import { createInterventionRequest, fetchInterventionRequest } from '@/api/intervention-requests';
 import ActionForm from '@/components/interventions/ActionForm';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
+import { TimelineIcon } from '@/components/interventions/InterventionFormFields';
 import { DiSummaryBlock } from '@/components/interventions/DiSummaryBlock';
 import LockedBadge from '@/components/ui/LockedBadge';
 
@@ -31,28 +32,36 @@ function DiSection({ selectedRequest, onClearDi, demandeurNom, serviceId, descri
     );
   }
 
+  // Pas de DI sélectionnée : formulaire de création inline, intégré à la même
+  // frise verticale (icône + traits pointillés) que DiSummaryBlock ci-dessus
+  // et TechDateRow/InterventionRow ci-dessous — sinon ce premier maillon de la
+  // frise "disparaît" tant qu'aucune DI n'est choisie.
+  const done = !!(demandeurNom.trim() && description.trim());
   return (
-    <Flex direction="column" gap="2" style={{ padding: '10px 12px', background: 'var(--gray-2)', border: '1px solid var(--gray-4)', borderRadius: 8 }}>
-      <Text size="1" weight="bold" color="gray">
-        Demande d&apos;intervention <Text size="1" color="gray" weight="regular">— ou sélectionnez-en une à gauche</Text>
-      </Text>
-      <Box>
-        <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Demandeur <Text color="red">*</Text></Text>
-        <TextField.Root placeholder="Nom du demandeur" value={demandeurNom} onChange={onDemandeurChange} required />
-      </Box>
-      <Box>
-        <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Service <Text size="1" color="gray" weight="regular">(optionnel)</Text></Text>
-        <Select.Root value={serviceId} onValueChange={onServiceChange}>
-          <Select.Trigger placeholder="Sélectionner un service…" style={{ width: '100%' }} />
-          <Select.Content>
-            {services.map((s) => <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>)}
-          </Select.Content>
-        </Select.Root>
-      </Box>
-      <Box>
-        <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Description <Text color="red">*</Text></Text>
-        <TextArea placeholder="Décrire le problème ou le besoin…" value={description} onChange={onDescriptionChange} rows={3} />
-      </Box>
+    <Flex align="stretch" gap="4">
+      <TimelineIcon icon={ClipboardList} done={done} />
+      <Flex direction="column" gap="2" style={{ flex: 1, padding: '10px 12px', margin: '10px 0', background: 'var(--gray-2)', border: '1px solid var(--gray-4)', borderRadius: 8 }}>
+        <Text size="1" weight="bold" color="gray">
+          Demande d&apos;intervention <Text size="1" color="gray" weight="regular">— ou sélectionnez-en une à gauche</Text>
+        </Text>
+        <Box>
+          <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Demandeur <Text color="red">*</Text></Text>
+          <TextField.Root placeholder="Nom du demandeur" value={demandeurNom} onChange={onDemandeurChange} required />
+        </Box>
+        <Box>
+          <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Service <Text size="1" color="gray" weight="regular">(optionnel)</Text></Text>
+          <Select.Root value={serviceId} onValueChange={onServiceChange}>
+            <Select.Trigger placeholder="Sélectionner un service…" style={{ width: '100%' }} />
+            <Select.Content>
+              {services.map((s) => <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>)}
+            </Select.Content>
+          </Select.Root>
+        </Box>
+        <Box>
+          <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Description <Text color="red">*</Text></Text>
+          <TextArea placeholder="Décrire le problème ou le besoin…" value={description} onChange={onDescriptionChange} rows={3} />
+        </Box>
+      </Flex>
     </Flex>
   );
 }

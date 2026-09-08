@@ -148,7 +148,6 @@ export default function DayContextLeftColumn({
                 selectedId={selectedRequest?.id ?? null}
                 onSelect={handleToggleRequest}
                 machineId={equipementId}
-                machineName={equipementLabel}
               />
             </Tabs.Content>
             <Tabs.Content value="purchase">

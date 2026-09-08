@@ -9,7 +9,7 @@ const PRIORITY_OPTIONS = [
   { value: 'faible',    label: 'Faible' },
 ];
 
-function TimelineIcon({ icon: Icon, done = false, last = false }) {
+export function TimelineIcon({ icon: Icon, done = false, last = false }) {
   const color  = done ? 'var(--green-9)' : 'var(--gray-7)';
   const dotted = done ? '2.5px dashed var(--green-7)' : '2.5px dashed var(--gray-6)';
   return (

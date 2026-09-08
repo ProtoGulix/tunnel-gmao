@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Flex, Text, Tooltip } from '@radix-ui/themes';
 import { Bot, ClipboardList } from 'lucide-react';
-import { createInterventionRequest, fetchInterventionRequest, fetchInterventionRequests } from '@/api/intervention-requests';
-import InterventionRequestForm from '@/components/intervention-requests/InterventionRequestForm';
+import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
 
@@ -75,16 +74,12 @@ export default function InterventionRequestSelector({
   selectedId,
   onSelect,
   machineId = null,
-  machineName = null,
   locked = false,
   lockedLabel,
   lockedIcon,
 }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (locked) return;
@@ -100,37 +95,14 @@ export default function InterventionRequestSelector({
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [refreshKey, machineId, locked]);
+  }, [machineId, locked]);
 
-  const handleCreate = useCallback(async (formData) => {
-    setSaving(true);
-    try {
-      const created = await createInterventionRequest(formData);
-      const detail = await fetchInterventionRequest(created.id);
-      setShowCreate(false);
-      setRefreshKey((k) => k + 1);
-      onSelect(detail);
-    } finally {
-      setSaving(false);
-    }
-  }, [onSelect]);
-
-  if (showCreate) {
-    return (
-      // allowTypeSelection={false} : ce sélecteur sert à créer une DI pour
-      // l'accepter immédiatement (création d'intervention) — une idée
-      // d'amélioration ne suit pas ce workflow, donc pas de choix de type ici.
-      <InterventionRequestForm
-        onSubmit={handleCreate}
-        onCancel={() => setShowCreate(false)}
-        saving={saving}
-        machineId={machineId}
-        machineName={machineName}
-        allowTypeSelection={false}
-      />
-    );
-  }
-
+  // Pas de création de DI depuis ce sélecteur : ce composant n'apparaît que
+  // dans les écrans "créer une intervention" (sélection d'une DI existante
+  // pour l'accepter immédiatement). Créer une DI ici sans intervention
+  // associée doublonnait le formulaire de droite et pouvait laisser une DI
+  // orpheline (non liée) — le seul point d'entrée pour signaler une DI
+  // standalone est ailleurs dans l'app (hors de ce flux d'acceptation).
   return (
     <EntitySelectorCard
       title="Demandes ouvertes"
@@ -142,8 +114,6 @@ export default function InterventionRequestSelector({
       renderRow={(req, isSelected, onSelect_) => (
         <RequestRow req={req} isSelected={isSelected} onToggle={onSelect_} />
       )}
-      onCreateClick={() => setShowCreate(true)}
-      createLabel="Nouvelle"
       emptyMessage="Aucune demande ouverte"
       locked={locked}
       lockedLabel={lockedLabel}
@@ -156,7 +126,6 @@ InterventionRequestSelector.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
   machineId: PropTypes.string,
-  machineName: PropTypes.string,
   locked: PropTypes.bool,
   lockedLabel: PropTypes.string,
   lockedIcon: PropTypes.elementType,

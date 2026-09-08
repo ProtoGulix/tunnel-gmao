@@ -195,7 +195,6 @@ export function ContextSection({
                   selectedId={selectedRequest?.id ?? null}
                   onSelect={handleSelectRequest}
                   machineId={pickedEquipement.id}
-                  machineName={pickedEquipement.name}
                 />
                 {selectedRequest && formData && (
                   <Box mt="2">

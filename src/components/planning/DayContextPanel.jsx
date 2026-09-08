@@ -83,6 +83,7 @@ export default function DayContextPanel({
         selectedTasks={selectedTasks}
         onTasksChange={handleTasksChange}
         onInterventionCreated={handleInterventionCreated}
+        selectedRequest={ivCreationCtx?.selectedRequest ?? null}
         onIvCreationChange={setIvCreationCtx}
         injectedQuery={injectedQuery}
         onInjectedQueryConsumed={() => setInjectedQuery(null)}
