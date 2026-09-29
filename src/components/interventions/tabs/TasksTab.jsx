@@ -135,12 +135,12 @@ export default function TasksTab({ interventionId, isLocked = false }) {
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleSkip = async () => {
-    if (!skipTarget) return;
+    if (!skipTarget || !skipReason.trim()) return;
     try {
       setSaving(skipTarget.id);
       await patchInterventionTask(skipTarget.id, {
         status: 'skipped',
-        skip_reason: skipReason || null,
+        skip_reason: skipReason.trim(),
       });
       await loadData();
     } finally {
@@ -255,7 +255,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
             <Text as="p" size="2" color="gray" style={{ marginBottom: 12 }}>{skipTarget.label}</Text>
           )}
           <Box mb="3">
-            <Text as="div" size="1" weight="bold" mb="1">Motif du skip <Text size="1" color="gray">(optionnel)</Text></Text>
+            <Text as="div" size="1" weight="bold" mb="1">Motif du skip <Text color="red">*</Text></Text>
             <TextField.Root
               value={skipReason}
               onChange={(e) => setSkipReason(e.target.value)}
@@ -266,7 +266,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
             <Button variant="soft" color="gray" onClick={() => { setSkipTarget(null); setSkipReason(''); }}>
               Annuler
             </Button>
-            <Button color="orange" disabled={saving === skipTarget?.id} onClick={handleSkip}>
+            <Button color="orange" disabled={saving === skipTarget?.id || !skipReason.trim()} onClick={handleSkip}>
               Ignorer
             </Button>
           </Flex>

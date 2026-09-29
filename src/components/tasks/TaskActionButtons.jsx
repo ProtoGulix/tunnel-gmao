@@ -2,8 +2,15 @@
  * TaskActionButtons — boutons inline de changement de statut + suppression d'une tâche.
  *
  * Deux modes :
- *   - "form"  : changement d'état local (formulaire), retour vers 'in_progress'
- *   - "live"  : appel API direct (patchInterventionTask), retour vers 'todo'
+ *   - "form"  : changement d'état local (formulaire ActionTaskSection), retour vers
+ *               'in_progress'. Le bouton "Marquer terminée" y est légitime : le statut
+ *               'done' choisi ici n'est appliqué qu'au submit de l'action, via
+ *               close_task=true (POST /intervention-actions) — jamais un PATCH isolé.
+ *   - "live"  : appel API direct (patchInterventionTask). PATCH /intervention-tasks/{id}
+ *               n'accepte que status ∈ {todo, skipped} (voir InterventionTaskPatch côté
+ *               tunnel-backend) — 'done' est volontairement exclu, une tâche ne peut être
+ *               clôturée qu'en la liant à une action. Bouton "Marquer terminée" donc masqué
+ *               ici ; retour au statut précédent limité à 'todo'.
  *
  * Visibilité : masqués par défaut, révélés au survol du parent via `visible`.
  * Quand un statut terminal est actif (done/skipped), le bouton actif reste visible.
@@ -30,6 +37,7 @@ export default function TaskActionButtons({
   const [deleting, setDeleting]       = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const [countdown, setCountdown]     = useState(null); // null = inactif, 0..N = en cours
+  const [skipReasonDraft, setSkipReasonDraft] = useState(null); // null = pas en saisie, string = motif en cours
   const timerRef = useRef(null);
 
   const isDone    = status === 'done';
@@ -40,14 +48,20 @@ export default function TaskActionButtons({
   // Nettoyage à l'unmount
   useEffect(() => () => clearInterval(timerRef.current), []);
 
-  async function handleStatusChange(newStatus) {
+  async function handleStatusChange(newStatus, extra = {}) {
     if (mode === 'live') {
       setSavingStatus(true);
-      try { await patchInterventionTask(taskId, { status: newStatus }); }
+      try { await patchInterventionTask(taskId, { status: newStatus, ...extra }); }
       catch { setSavingStatus(false); return; }
       setSavingStatus(false);
     }
     onStatusChange?.(taskId, newStatus);
+  }
+
+  function confirmSkip() {
+    if (!skipReasonDraft?.trim()) return;
+    handleStatusChange('skipped', { skip_reason: skipReasonDraft.trim() });
+    setSkipReasonDraft(null);
   }
 
   function startDeleteCountdown() {
@@ -99,15 +113,36 @@ export default function TaskActionButtons({
         >
           <RotateCcw size={12} strokeWidth={3} />
         </IconButton>
-      ) : (
-        <Flex gap="2" align="center">
-          <IconButton size="1" color="green" variant="soft" type="button" title="Marquer terminée"
-            onClick={() => handleStatusChange('done')}
+      ) : skipReasonDraft !== null ? (
+        <Flex gap="1" align="center" onClick={(e) => e.stopPropagation()}>
+          <input
+            autoFocus
+            value={skipReasonDraft}
+            onChange={(e) => setSkipReasonDraft(e.target.value)}
+            placeholder="Motif requis…"
+            onKeyDown={(e) => { if (e.key === 'Enter' && skipReasonDraft.trim()) confirmSkip(); if (e.key === 'Escape') setSkipReasonDraft(null); }}
+            style={{ width: 120, fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--amber-7)' }}
+          />
+          <IconButton size="1" color="amber" variant="soft" type="button" title="Confirmer" disabled={!skipReasonDraft.trim()}
+            onClick={confirmSkip}
           >
             <Check size={12} strokeWidth={3} />
           </IconButton>
+        </Flex>
+      ) : (
+        <Flex gap="2" align="center">
+          {/* "Marquer terminée" n'existe qu'en mode form : le statut 'done' choisi
+              ici n'est appliqué qu'au submit de l'action (close_task=true) — en mode
+              live, PATCH direct, 'done' est rejeté par le backend (voir docstring). */}
+          {mode !== 'live' && (
+            <IconButton size="1" color="green" variant="soft" type="button" title="Marquer terminée"
+              onClick={() => handleStatusChange('done')}
+            >
+              <Check size={12} strokeWidth={3} />
+            </IconButton>
+          )}
           <IconButton size="1" color="amber" variant="soft" type="button" title="Ignorer"
-            onClick={() => handleStatusChange('skipped')}
+            onClick={() => (mode === 'live' ? setSkipReasonDraft('') : handleStatusChange('skipped'))}
           >
             <Ban size={12} strokeWidth={3} />
           </IconButton>

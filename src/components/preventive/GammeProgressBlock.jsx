@@ -164,12 +164,12 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
   useEffect(() => { loadData(); }, [loadData, refreshKey]);
 
   const handleSkip = async () => {
-    if (!skipTarget) return;
+    if (!skipTarget || !skipReason.trim()) return;
     try {
       setSaving(skipTarget.id);
       await patchInterventionTask(skipTarget.id, {
         status: 'skipped',
-        skip_reason: skipReason || null,
+        skip_reason: skipReason.trim(),
       });
       await loadData();
       onProgressUpdate?.();
@@ -251,14 +251,12 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
               <TextField.Root
                 value={skipReason}
                 onChange={(e) => setSkipReason(e.target.value)}
-                placeholder="Raison (optionnel)…"
+                placeholder="Raison de l'exclusion…"
               />
             </Box>
             <Flex gap="3" mt="4" justify="end">
               <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-              <AlertDialog.Action>
-                <Button color="orange" onClick={handleSkip}>Ignorer</Button>
-              </AlertDialog.Action>
+              <Button color="orange" disabled={!skipReason.trim()} onClick={handleSkip}>Ignorer</Button>
             </Flex>
           </AlertDialog.Content>
         </AlertDialog.Root>
