@@ -1,0 +1,744 @@
+import logging
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+from fastapi import HTTPException
+
+from api.db import get_connection, release_connection
+from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.supplier_orders.validators import SupplierOrderValidator
+from api.utils.search import build_search_clause
+
+logger = logging.getLogger(__name__)
+
+
+class SupplierOrderRepository:
+    """Requêtes pour le domaine supplier_order"""
+
+    def _get_connection(self):
+        return get_connection()
+
+    def _convert_decimals(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convertit les Decimal en float pour la sérialisation JSON"""
+        for key, value in data.items():
+            if isinstance(value, Decimal):
+                data[key] = float(value)
+        return data
+
+    def _map_supplier(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Mappe les colonnes supplier en objet imbriqué"""
+        if data.get('s_id'):
+            data['supplier'] = {
+                'id': data['s_id'],
+                'name': data['s_name'],
+                'code': data['s_code'],
+                'contact_name': data['s_contact_name'],
+                'email': data['s_email'],
+                'phone': data['s_phone'],
+            }
+        else:
+            data['supplier'] = None
+
+        # Nettoie les colonnes intermédiaires
+        for key in ['s_id', 's_name', 's_code', 's_contact_name', 's_email', 's_phone']:
+            data.pop(key, None)
+
+        return data
+
+    def _compute_age_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Calcule age_days, age_color et is_blocking"""
+        created_at = data.get('created_at')
+        status = data.get('status', 'OPEN')
+
+        # Calcul de l'âge en jours
+        if created_at and isinstance(created_at, datetime):
+            # Gère les datetimes avec ou sans timezone
+            now = datetime.now(timezone.utc)
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            age_days = (now - created_at).days
+        else:
+            age_days = 0
+
+        data['age_days'] = age_days
+
+        # Couleur basée sur l'âge (seuils: 7 jours orange, 14 jours rouge)
+        if age_days >= 14:
+            data['age_color'] = 'red'
+        elif age_days >= 7:
+            data['age_color'] = 'orange'
+        else:
+            data['age_color'] = 'gray'
+
+        # Commande bloquante si en attente depuis trop longtemps
+        blocking_statuses = ['OPEN', 'SENT', 'ACK']
+        data['is_blocking'] = status in blocking_statuses and age_days >= 7
+
+        # Bools d'action pour l'UI (aucun calcul côté frontend)
+        data['add_lines'] = status == 'OPEN'
+        data['edit_lines'] = status in ('SENT', 'ACK')
+        data['receive_lines'] = status == 'RECEIVED'
+
+        return data
+
+    def _get_order_lines(self, order_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les lignes d'une commande avec références fournisseur et fabricant"""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    sol.id, sol.supplier_order_id, sol.stock_item_id, sol.part_id,
+                    sol.quantity, sol.unit_price, sol.total_price,
+                    sol.quantity_received, sol.is_selected,
+                    sol.notes, sol.quote_price, sol.lead_time_days,
+                    sol.manufacturer as sol_manufacturer,
+                    sol.manufacturer_ref as sol_manufacturer_ref,
+
+                    -- Champs legacy (stock_item)
+                    si.name as stock_item_name, si.ref as stock_item_ref,
+                    si.spec as stock_item_spec, si.unit as stock_item_unit,
+                    sis.supplier_ref as legacy_supplier_ref,
+                    mi.manufacturer_name as legacy_manufacturer,
+                    mi.manufacturer_ref as legacy_manufacturer_ref,
+
+                    -- Champs V4 (part)
+                    pt.internal_ref as part_internal_ref,
+                    pt.unit as part_unit,
+                    COALESCE(
+                        (SELECT pmr.label FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.label FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_display_name,
+                    COALESCE(
+                        (SELECT psr.supplier_ref FROM part_supplier_ref psr
+                         JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
+                         WHERE pmr.part_id = pt.id AND psr.supplier_id = so.supplier_id LIMIT 1),
+                        (SELECT psr.supplier_ref FROM part_supplier_ref psr
+                         JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
+                         WHERE pmr.part_id = pt.id AND psr.is_preferred = true LIMIT 1)
+                    ) as part_supplier_ref,
+                    COALESCE(
+                        (SELECT pmr.manufacturer_name FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.manufacturer_name FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_manufacturer_name,
+                    COALESCE(
+                        (SELECT pmr.manufacturer_ref FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.manufacturer_ref FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_manufacturer_ref,
+
+                    (SELECT COUNT(*) FROM supplier_order_line_purchase_request
+                     WHERE supplier_order_line_id = sol.id) as purchase_request_count,
+                    (
+                        -- Demandes d'achat liées à cette ligne (pour lien direct vers la DA)
+                        SELECT json_agg(jsonb_build_object(
+                            'purchase_request_id', pr3.id,
+                            'item_label', pr3.item_label
+                        ) ORDER BY pr3.created_at)
+                        FROM supplier_order_line_purchase_request solpr3
+                        JOIN purchase_request pr3 ON pr3.id = solpr3.purchase_request_id
+                        WHERE solpr3.supplier_order_line_id = sol.id
+                    ) as linked_purchase_requests,
+                    (
+                        -- Autres paniers fournisseur (lignes sœurs) portant sur la même DA :
+                        -- c'est le principe de la consultation multi-fournisseurs.
+                        SELECT json_agg(sib ORDER BY (sib->>'order_number'))
+                        FROM (
+                            SELECT DISTINCT ON (sol2.id) json_build_object(
+                                'supplier_order_line_id', sol2.id,
+                                'supplier_order_id', so2.id,
+                                'order_number', so2.order_number,
+                                'supplier_name', s2.name,
+                                'is_selected', sol2.is_selected
+                            ) AS sib
+                            FROM supplier_order_line_purchase_request solpr2
+                            JOIN supplier_order_line sol2 ON sol2.id = solpr2.supplier_order_line_id
+                            JOIN supplier_order so2 ON so2.id = sol2.supplier_order_id
+                            LEFT JOIN supplier s2 ON s2.id = so2.supplier_id
+                            WHERE solpr2.purchase_request_id IN (
+                                SELECT purchase_request_id FROM supplier_order_line_purchase_request
+                                WHERE supplier_order_line_id = sol.id
+                            )
+                            AND sol2.id != sol.id
+                        ) siblings
+                    ) as competing_order_lines
+                FROM supplier_order_line sol
+                JOIN supplier_order so ON sol.supplier_order_id = so.id
+                -- Legacy
+                LEFT JOIN stock_item si ON sol.stock_item_id = si.id
+                LEFT JOIN stock_item_supplier sis
+                    ON sis.stock_item_id = sol.stock_item_id
+                    AND sis.supplier_id = so.supplier_id
+                LEFT JOIN manufacturer_item mi ON sis.manufacturer_item_id = mi.id
+                -- V4
+                LEFT JOIN part pt ON pt.id = sol.part_id
+                WHERE sol.supplier_order_id = %s
+                ORDER BY sol.created_at ASC
+                """,
+                (order_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+            results = []
+            for row in rows:
+                line = self._convert_decimals(dict(zip(cols, row)))
+                line['competing_order_lines'] = line.get('competing_order_lines') or []
+                line['competing_orders_count'] = len(line['competing_order_lines'])
+                line['linked_purchase_requests'] = line.get('linked_purchase_requests') or []
+                line['is_consultation'] = line['competing_orders_count'] > 0
+                line['consultation_resolved'] = (
+                    (
+                        bool(line.get('is_selected'))
+                        or any(sib.get('is_selected') for sib in line['competing_order_lines'])
+                    )
+                    if line['is_consultation']
+                    else True
+                )
+
+                # Choisit la source V4 (part) ou legacy (stock_item)
+                is_v4 = line.get('part_id') is not None
+
+                if is_v4:
+                    line['stock_item_name'] = line.pop('part_display_name', None)
+                    line['stock_item_ref'] = line.pop('part_internal_ref', None)
+                    line['stock_item_unit'] = line.pop('part_unit', None)
+                    line['stock_item_spec'] = None
+                    supplier_ref = line.pop('part_supplier_ref', None)
+                    mfr_name = line.pop('part_manufacturer_name', None)
+                    mfr_ref = line.pop('part_manufacturer_ref', None)
+                    line.pop('legacy_supplier_ref', None)
+                    line.pop('legacy_manufacturer', None)
+                    line.pop('legacy_manufacturer_ref', None)
+                else:
+                    line.pop('part_display_name', None)
+                    line.pop('part_internal_ref', None)
+                    line.pop('part_unit', None)
+                    supplier_ref = line.pop('legacy_supplier_ref', None)
+                    mfr_name = line.pop('legacy_manufacturer', None)
+                    mfr_ref = line.pop('legacy_manufacturer_ref', None)
+                    line.pop('part_supplier_ref', None)
+                    line.pop('part_manufacturer_name', None)
+                    line.pop('part_manufacturer_ref', None)
+
+                sol_mfr = line.pop('sol_manufacturer', None)
+                sol_mfr_ref = line.pop('sol_manufacturer_ref', None)
+                mfr_name = sol_mfr or mfr_name
+                mfr_ref = sol_mfr_ref or mfr_ref
+
+                line['supplier'] = {'ref': supplier_ref} if supplier_ref else None
+                line['manufacturer'] = (
+                    {'name': mfr_name, 'ref': mfr_ref} if (mfr_name or mfr_ref) else None
+                )
+                results.append(line)
+            return results
+        except Exception:
+            return []
+
+    def get_all(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        status: Optional[str] = None,
+        supplier_id: Optional[str] = None,
+        search: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Récupère toutes les commandes avec filtres, pagination et facets par statut"""
+        limit = min(limit, 1000)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            where_clauses = []
+            params: List[Any] = []
+
+            if status:
+                where_clauses.append("so.status = %s")
+                params.append(status)
+
+            if supplier_id:
+                where_clauses.append("so.supplier_id = %s")
+                params.append(supplier_id)
+
+            if search:
+                clause, search_params = build_search_clause(
+                    search,
+                    ["so.order_number ILIKE %s", "s.name ILIKE %s"],
+                )
+                where_clauses.append(clause)
+                params.extend(search_params)
+
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+            join_supplier_sql = "LEFT JOIN supplier s ON so.supplier_id = s.id" if search else ""
+
+            # Total filtré
+            cur.execute(
+                f"SELECT COUNT(*) FROM supplier_order so {join_supplier_sql} {where_sql}", params
+            )
+            total = cur.fetchone()[0]
+
+            # Facets par statut (toujours sur l'ensemble non filtré par status)
+            facet_params = [supplier_id] if supplier_id else []
+            facet_where = "WHERE so.supplier_id = %s" if supplier_id else ""
+            cur.execute(
+                f"""
+                SELECT so.status, COUNT(*) as count
+                FROM supplier_order so
+                {facet_where}
+                GROUP BY so.status
+                ORDER BY so.status
+                """,
+                facet_params,
+            )
+            facets = [
+                {
+                    "status": row[0],
+                    "count": row[1],
+                    "transitions": SupplierOrderValidator.get_allowed_transitions(row[0]),
+                }
+                for row in cur.fetchall()
+            ]
+
+            # Items paginés
+            query = f"""
+                SELECT
+                    so.id, so.order_number, so.supplier_id, so.status,
+                    so.total_amount, so.ordered_at, so.expected_delivery_date,
+                    so.created_at, so.updated_at,
+                    (SELECT COUNT(*) FROM supplier_order_line WHERE supplier_order_id = so.id) as line_count,
+                    s.id as s_id, s.name as s_name, s.code as s_code,
+                    s.contact_name as s_contact_name, s.email as s_email, s.phone as s_phone
+                FROM supplier_order so
+                LEFT JOIN supplier s ON so.supplier_id = s.id
+                {where_sql}
+                ORDER BY so.created_at DESC
+                LIMIT %s OFFSET %s
+            """
+
+            cur.execute(query, (*params, limit, offset))
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            items = []
+            for row in rows:
+                order = self._convert_decimals(dict(zip(cols, row)))
+                order = self._map_supplier(order)
+                order = self._compute_age_fields(order)
+                items.append(order)
+
+            return {
+                "items": items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "facets": facets,
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_by_id(self, order_id: str) -> Dict[str, Any]:
+        """Récupère une commande par ID avec ses lignes et fournisseur"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT so.*,
+                       s.id as s_id, s.name as s_name, s.code as s_code,
+                       s.contact_name as s_contact_name, s.email as s_email, s.phone as s_phone
+                FROM supplier_order so
+                LEFT JOIN supplier s ON so.supplier_id = s.id
+                WHERE so.id = %s
+                """,
+                (order_id,),
+            )
+            row = cur.fetchone()
+
+            if not row:
+                raise NotFoundError(f"Commande {order_id} non trouvée")
+
+            cols = [desc[0] for desc in cur.description]
+            result = self._convert_decimals(dict(zip(cols, row)))
+            result = self._map_supplier(result)
+            result = self._compute_age_fields(result)
+            result['lines'] = self._get_order_lines(order_id, conn)
+            result['line_count'] = len(result['lines'])
+            result['transitions'] = SupplierOrderValidator.get_allowed_transitions(result['status'])
+
+            return result
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_by_order_number(self, order_number: str) -> Dict[str, Any]:
+        """Récupère une commande par numéro avec fournisseur"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT so.*,
+                       s.id as s_id, s.name as s_name, s.code as s_code,
+                       s.contact_name as s_contact_name, s.email as s_email, s.phone as s_phone
+                FROM supplier_order so
+                LEFT JOIN supplier s ON so.supplier_id = s.id
+                WHERE so.order_number = %s
+                """,
+                (order_number,),
+            )
+            row = cur.fetchone()
+
+            if not row:
+                raise NotFoundError(f"Commande {order_number} non trouvée")
+
+            cols = [desc[0] for desc in cur.description]
+            result = self._convert_decimals(dict(zip(cols, row)))
+            result = self._map_supplier(result)
+            result = self._compute_age_fields(result)
+            result['lines'] = self._get_order_lines(str(result['id']), conn)
+            result['line_count'] = len(result['lines'])
+
+            return result
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def add(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Crée une nouvelle commande fournisseur"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            order_id = str(uuid4())
+
+            # Note: order_number est généré automatiquement par trigger
+            cur.execute(
+                """
+                INSERT INTO supplier_order
+                (id, supplier_id, status, ordered_at, expected_delivery_date, notes, currency)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    order_id,
+                    data['supplier_id'],
+                    data.get('status', 'OPEN'),
+                    data.get('ordered_at'),
+                    data.get('expected_delivery_date'),
+                    data.get('notes'),
+                    data.get('currency'),
+                ),
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la création de la commande: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(order_id)
+
+    def update(self, order_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Met à jour une commande existante"""
+        # Vérifie que la commande existe
+        current = self.get_by_id(order_id)
+
+        # Valide la transition de statut si le statut change
+        if 'status' in data and data['status'] != current['status']:
+            SupplierOrderValidator.validate_status_transition(current['status'], data['status'])
+
+            if data['status'] == 'RECEIVED':
+                SupplierOrderValidator.validate_received_preconditions(order_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            # Champs modifiables (order_number est généré, non modifiable)
+            updatable_fields = [
+                'supplier_id',
+                'status',
+                'ordered_at',
+                'expected_delivery_date',
+                'received_at',
+                'notes',
+                'currency',
+            ]
+
+            set_clauses = []
+            params = []
+
+            for field in updatable_fields:
+                if field in data:
+                    set_clauses.append(f"{field} = %s")
+                    params.append(data[field])
+
+            if not set_clauses:
+                return self.get_by_id(order_id)
+
+            params.append(order_id)
+
+            query = f"""
+                UPDATE supplier_order
+                SET {', '.join(set_clauses)}
+                WHERE id = %s
+            """
+
+            cur.execute(query, params)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(order_id)
+
+    def delete(self, order_id: str) -> bool:
+        """Supprime une commande (cascade sur les lignes)"""
+        # Vérifie que la commande existe
+        self.get_by_id(order_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM supplier_order WHERE id = %s", (order_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+    def _get_export_lines(self, order_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les lignes enrichies pour l'export (CSV et email)"""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    sol.id, sol.supplier_order_id, sol.stock_item_id, sol.part_id,
+                    sol.quantity, sol.unit_price, sol.total_price,
+                    sol.quantity_received, sol.is_selected,
+                    sol.manufacturer as sol_manufacturer,
+                    sol.manufacturer_ref as sol_manufacturer_ref,
+
+                    -- Champs legacy (stock_item)
+                    si.id as si_id, si.name as si_name, si.ref as si_ref,
+                    si.family_code, si.sub_family_code, si.spec as si_spec,
+                    si.dimension, si.unit as si_unit,
+                    sis.supplier_ref as legacy_supplier_ref,
+                    mi.manufacturer_name as legacy_manufacturer,
+                    mi.manufacturer_ref as legacy_manufacturer_ref,
+
+                    -- Champs V4 (part)
+                    pt.internal_ref as part_internal_ref,
+                    pt.unit as part_unit,
+                    COALESCE(
+                        (SELECT pmr.label FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.label FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_display_name,
+                    COALESCE(
+                        (SELECT psr.supplier_ref FROM part_supplier_ref psr
+                         JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
+                         WHERE pmr.part_id = pt.id AND psr.supplier_id = so.supplier_id LIMIT 1),
+                        (SELECT psr.supplier_ref FROM part_supplier_ref psr
+                         JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
+                         WHERE pmr.part_id = pt.id AND psr.is_preferred = true LIMIT 1)
+                    ) as part_supplier_ref,
+                    COALESCE(
+                        (SELECT pmr.manufacturer_name FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.manufacturer_name FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_manufacturer_name,
+                    COALESCE(
+                        (SELECT pmr.manufacturer_ref FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id AND pmr.is_preferred = true LIMIT 1),
+                        (SELECT pmr.manufacturer_ref FROM part_manufacturer_ref pmr
+                         WHERE pmr.part_id = pt.id LIMIT 1)
+                    ) as part_manufacturer_ref
+                FROM supplier_order_line sol
+                JOIN supplier_order so ON sol.supplier_order_id = so.id
+                -- Legacy
+                LEFT JOIN stock_item si ON sol.stock_item_id = si.id
+                LEFT JOIN stock_item_supplier sis
+                    ON sis.stock_item_id = sol.stock_item_id
+                    AND sis.supplier_id = so.supplier_id
+                LEFT JOIN manufacturer_item mi ON sis.manufacturer_item_id = mi.id
+                -- V4
+                LEFT JOIN part pt ON pt.id = sol.part_id
+                WHERE sol.supplier_order_id = %s
+                ORDER BY sol.created_at ASC
+                """,
+                (order_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            results = []
+            for row in rows:
+                line = self._convert_decimals(dict(zip(cols, row)))
+
+                is_v4 = line.get('part_id') is not None
+
+                if is_v4:
+                    mfr_label = line.pop('part_display_name', None)
+                    stock_item_ref = line.pop('part_internal_ref', None)
+                    stock_item_unit = line.pop('part_unit', None)
+                    supplier_ref = line.pop('part_supplier_ref', None)
+                    mfr_name = line.pop('part_manufacturer_name', None)
+                    mfr_ref = line.pop('part_manufacturer_ref', None)
+                    line.pop('legacy_supplier_ref', None)
+                    line.pop('legacy_manufacturer', None)
+                    line.pop('legacy_manufacturer_ref', None)
+                    line['manufacturer_label'] = mfr_label
+                    line['stock_item'] = (
+                        {
+                            'name': mfr_label,
+                            'ref': stock_item_ref,
+                            'spec': None,
+                            'unit': stock_item_unit,
+                            'family_code': None,
+                            'sub_family_code': None,
+                        }
+                        if (mfr_label or stock_item_ref)
+                        else None
+                    )
+                else:
+                    line.pop('part_display_name', None)
+                    line.pop('part_internal_ref', None)
+                    line.pop('part_unit', None)
+                    supplier_ref = line.pop('legacy_supplier_ref', None)
+                    mfr_name = line.pop('legacy_manufacturer', None)
+                    mfr_ref = line.pop('legacy_manufacturer_ref', None)
+                    line.pop('part_supplier_ref', None)
+                    line.pop('part_manufacturer_name', None)
+                    line.pop('part_manufacturer_ref', None)
+                    line['manufacturer_label'] = None
+                    if line.get('si_id'):
+                        line['stock_item'] = {
+                            'id': line['si_id'],
+                            'name': line['si_name'],
+                            'ref': line['si_ref'],
+                            'family_code': line['family_code'],
+                            'sub_family_code': line['sub_family_code'],
+                            'spec': line['si_spec'],
+                            'dimension': line['dimension'],
+                            'unit': line['si_unit'],
+                        }
+                    else:
+                        line['stock_item'] = None
+
+                # Champs manuels de la ligne ont priorité sur le catalogue
+                sol_mfr = line.pop('sol_manufacturer', None)
+                sol_mfr_ref = line.pop('sol_manufacturer_ref', None)
+                line['supplier_ref'] = supplier_ref
+                line['manufacturer'] = sol_mfr or mfr_name
+                line['manufacturer_ref'] = sol_mfr_ref or mfr_ref
+
+                # Nettoyage colonnes legacy stock_item
+                for key in [
+                    'si_id',
+                    'si_name',
+                    'si_ref',
+                    'family_code',
+                    'sub_family_code',
+                    'si_spec',
+                    'dimension',
+                    'si_unit',
+                ]:
+                    line.pop(key, None)
+
+                line['purchase_requests'] = self._get_line_purchase_requests(str(line['id']), conn)
+
+                results.append(line)
+
+            return results
+        except Exception as e:
+            logger.error("Erreur dans _get_export_lines pour order_id=%s: %s", order_id, str(e))
+            return []
+
+    def _get_line_purchase_requests(self, line_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les demandes d'achat liées à une ligne pour l'export"""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    pr.id, pr.item_label, pr.requested_by AS requester_name,
+                    pr.urgency AS urgency_level,
+                    solpr.quantity as allocated_quantity
+                FROM supplier_order_line_purchase_request solpr
+                JOIN purchase_request pr ON solpr.purchase_request_id = pr.id
+                WHERE solpr.supplier_order_line_id = %s
+                ORDER BY solpr.created_at ASC
+                """,
+                (line_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+            return [dict(zip(cols, row)) for row in rows]
+        except Exception:
+            return []
+
+    def get_export_data(self, order_id: str) -> Dict[str, Any]:
+        """Récupère les données complètes pour l'export (CSV/Email)"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT so.id, so.order_number, so.supplier_id, so.status,
+                       so.total_amount, so.ordered_at, so.expected_delivery_date,
+                       so.notes, so.currency, so.created_at,
+                       s.id as s_id, s.name as s_name, s.code as s_code,
+                       s.contact_name as s_contact_name, s.email as s_email, s.phone as s_phone
+                FROM supplier_order so
+                LEFT JOIN supplier s ON so.supplier_id = s.id
+                WHERE so.id = %s
+                """,
+                (order_id,),
+            )
+            row = cur.fetchone()
+
+            if not row:
+                raise NotFoundError(f"Commande {order_id} non trouvée")
+
+            cols = [desc[0] for desc in cur.description]
+            result = self._convert_decimals(dict(zip(cols, row)))
+            result = self._map_supplier(result)
+            result['lines'] = self._get_export_lines(order_id, conn)
+
+            return result
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)

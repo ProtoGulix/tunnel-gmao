@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+# En-tête Conventional Commits obligatoire : type(scope optionnel)!: description (ADR 0001).
+header=$(head -n1 "$1")
+case "$header" in
+  Merge*|Revert*) exit 0 ;;
+esac
+echo "$header" | grep -qE '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9_-]+\))?!?: .+' && exit 0
+echo "En-tête de commit invalide. Format attendu : 'fix(auth): bloquer l'escalade RESP vers ADMIN'" >&2
+exit 1

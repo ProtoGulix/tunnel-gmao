@@ -1,0 +1,5 @@
+# Faux positifs gitleaks vérifiés le 2026-10-07 : valeurs d'exemple, aucun secret réel.
+# Format : chemin:règle:ligne (sans commit, valable sur tout l'historique).
+backend/tests/test_admin_users_roles.py:generic-api-key:16
+docs/api/endpoints/api-keys.md:generic-api-key:39
+docs/api/API_REFERENCE.md:generic-api-key:85

@@ -1,0 +1,23 @@
+/**
+ * AnomalyTypeE.module.css
+ * Styles responsives pour le composant AnomalyTypeE
+ */
+
+@media (min-width: 640px) {
+  .actionsContainer {
+    flex-direction: row !important;
+  }
+
+  .arrowDesktop {
+    display: inline !important;
+  }
+
+  .arrowMobile {
+    display: none !important;
+  }
+
+  .arrowSeparator {
+    min-width: 40px;
+    min-height: auto;
+  }
+}

@@ -1,0 +1,1008 @@
+import json
+import logging
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+from fastapi import HTTPException
+
+from api.constants import CLOSED_STATUS_CODE, NON_DISPATCHED_PR_STATUSES
+from api.db import get_connection, release_connection
+from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
+from api.intervention_actions.validators import InterventionActionValidator
+from api.utils.sanitizer import strip_html
+
+logger = logging.getLogger(__name__)
+
+
+def _audit_task_from_action(
+    cur, task_id: str, old_status: str, new_status: str, action_id: str
+) -> None:
+    """Audite une transition de statut de tâche déclenchée par une action."""
+    try:
+        cur.execute(
+            """
+            SELECT public.fn_audit_log_decision(
+                %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
+            )
+            """,
+            (
+                "task",
+                task_id,
+                "updated",
+                json.dumps({"status": old_status, "triggered_by_action": action_id}),
+                json.dumps({"status": new_status, "triggered_by_action": action_id}),
+                "TASK_STATUS",
+                None,
+                None,
+                True,
+            ),
+        )
+    except Exception as exc:
+        logger.error("_audit_task_from_action(%s) : %s", task_id, exc)
+
+
+class InterventionActionRepository:
+    """Requêtes pour le domaine intervention_action"""
+
+    def _get_connection(self):
+        return get_connection()
+
+    def _ensure_intervention_editable(self, cur, intervention_id: str) -> None:
+        """Bloque toute écriture sur une intervention fermée."""
+        cur.execute(
+            "SELECT status_actual FROM intervention WHERE id = %s",
+            (intervention_id,),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise NotFoundError(f"Intervention {intervention_id} non trouvée")
+
+        status_actual = str(row[0] or "").strip().lower()
+        if status_actual == CLOSED_STATUS_CODE:
+            raise ValidationError(
+                "Intervention fermée : aucune modification des actions n'est autorisée"
+            )
+
+    def _map_action_with_subcategory(self, row_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Mappe une row avec subcategory et category imbriquées"""
+        if row_dict.get('description'):
+            row_dict['description'] = strip_html(row_dict['description'])
+
+        if row_dict.get('subcategory_id') is not None:
+            row_dict['subcategory'] = {
+                'id': row_dict['subcategory_id'],
+                'name': row_dict['subcategory_name'],
+                'code': row_dict['subcategory_code'],
+                'category': {
+                    'id': row_dict['category_id'],
+                    'name': row_dict['category_name'],
+                    'code': row_dict['category_code'],
+                    'color': row_dict['color'],
+                },
+            }
+        else:
+            row_dict['subcategory'] = None
+
+        for key in [
+            'subcategory_id',
+            'subcategory_name',
+            'subcategory_code',
+            'category_id',
+            'category_name',
+            'category_code',
+            'color',
+        ]:
+            row_dict.pop(key, None)
+
+        return row_dict
+
+    def _map_tech_user(self, row_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Mappe les colonnes tech_* en objet tech imbriqué"""
+        if row_dict.get('tech_id') is not None:
+            row_dict['tech'] = {
+                'id': row_dict['tech_id'],
+                'first_name': row_dict.get('tech_first_name'),
+                'last_name': row_dict.get('tech_last_name'),
+                'email': row_dict.get('tech_email'),
+                'initial': row_dict.get('tech_initial'),
+                'status': row_dict.get('tech_status', 'active'),
+                'role': row_dict.get('tech_role'),
+            }
+        else:
+            row_dict['tech'] = None
+
+        for key in [
+            'tech_id',
+            'tech_first_name',
+            'tech_last_name',
+            'tech_email',
+            'tech_initial',
+            'tech_status',
+            'tech_role',
+        ]:
+            row_dict.pop(key, None)
+
+        return row_dict
+
+    def _get_linked_purchase_requests(self, action_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les demandes d'achat liées à une action (PurchaseRequestListItem)"""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT purchase_request_id
+                FROM intervention_action_purchase_request
+                WHERE intervention_action_id = %s
+                """,
+                (action_id,),
+            )
+            pr_ids = [str(row[0]) for row in cur.fetchall() if row[0] is not None]
+
+            if not pr_ids:
+                return []
+
+            # Import lazy pour éviter import circulaire
+            from api.purchase_requests.repo import PurchaseRequestRepository
+
+            return PurchaseRequestRepository().get_list(ids=pr_ids)
+        except Exception:
+            return []
+
+    def _get_tasks_for_action(self, action_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les tâches liées à cette action via la table de jonction M2M."""
+        # Import lazy pour éviter la circularité avec intervention_tasks.repo
+        from api.intervention_tasks.repo import _TASK_SELECT, _map_task
+
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f"""
+                {_TASK_SELECT}
+                INNER JOIN intervention_action_task iat ON iat.task_id = it.id
+                WHERE iat.action_id = %s
+                ORDER BY it.sort_order ASC
+                """,
+                (action_id,),
+            )
+            rows = cur.fetchall()
+            cols = [d[0] for d in cur.description]
+            return [_map_task(dict(zip(cols, row))) for row in rows]
+        except Exception:
+            return []
+
+    def get_all(
+        self,
+        date_from: Optional[date] = None,
+        date_to: Optional[date] = None,
+        tech_id: Optional[str] = None,
+        task_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Récupère les actions groupées par date (created_at::date), triées du plus récent au plus ancien"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            where_clauses = []
+            params: List[Any] = []
+
+            if date_from is not None:
+                where_clauses.append("ia.created_at::date >= %s")
+                params.append(date_from)
+            if date_to is not None:
+                where_clauses.append("ia.created_at::date <= %s")
+                params.append(date_to)
+            if tech_id is not None:
+                where_clauses.append("ia.tech = %s")
+                params.append(tech_id)
+            task_join_sql = ""
+            task_join_params: List[Any] = []
+            if task_id is not None:
+                task_join_sql = "INNER JOIN intervention_action_task iat_filter ON iat_filter.action_id = ia.id AND iat_filter.task_id = %s"
+                task_join_params = [task_id]
+
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+            cur.execute(
+                f"""
+                SELECT
+                    ia.id, ia.intervention_id, ia.description, ia.time_spent,
+                    ia.tech, ia.complexity_score, ia.complexity_factor,
+                    ia.action_start, ia.action_end,
+                    ia.created_at, ia.updated_at,
+                    sc.id as subcategory_id, sc.name as subcategory_name, sc.code as subcategory_code,
+                    ac.id as category_id, ac.name as category_name, ac.code as category_code, ac.color,
+                    u.id as tech_id, u.first_name as tech_first_name,
+                    u.last_name as tech_last_name, u.email as tech_email,
+                    u.initial as tech_initial, NULL::text as tech_status,
+                    NULL::text as tech_role,
+                    i.code as interv_code, i.title as interv_title, i.status_actual as interv_status,
+                    m.id as interv_equipement_id, m.code as interv_equipement_code, m.name as interv_equipement_name
+                FROM intervention_action ia
+                LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
+                LEFT JOIN action_category ac ON sc.category_id = ac.id
+                LEFT JOIN tunnel_user u ON ia.tech = u.id
+                LEFT JOIN intervention i ON ia.intervention_id = i.id
+                LEFT JOIN machine m ON i.machine_id = m.id
+                {task_join_sql}
+                {where_sql}
+                ORDER BY ia.created_at::date DESC, ia.created_at ASC
+            """,
+                [*task_join_params, *params],
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            all_actions = []
+            for row in rows:
+                action = self._map_action_with_subcategory(dict(zip(cols, row)))
+                action = self._map_tech_user(action)
+                action['intervention'] = (
+                    {
+                        'id': action['intervention_id'],
+                        'code': action.pop('interv_code', None),
+                        'title': action.pop('interv_title', None),
+                        'status_actual': action.pop('interv_status', None),
+                        'equipement_id': action.pop('interv_equipement_id', None),
+                        'equipement_code': action.pop('interv_equipement_code', None),
+                        'equipement_name': action.pop('interv_equipement_name', None),
+                    }
+                    if action.get('intervention_id')
+                    else None
+                )
+                action['purchase_requests'] = []
+                action['tasks'] = []
+                all_actions.append(action)
+
+            if all_actions:
+                action_ids = [str(a['id']) for a in all_actions]
+                placeholders = ','.join(['%s'] * len(action_ids))
+
+                # Batch PR
+                cur.execute(
+                    f"""
+                    SELECT intervention_action_id, purchase_request_id
+                    FROM intervention_action_purchase_request
+                    WHERE intervention_action_id IN ({placeholders})
+                    """,
+                    action_ids,
+                )
+                links = cur.fetchall()
+                if links:
+                    pr_ids = list({str(row[1]) for row in links if row[1]})
+                    from api.purchase_requests.repo import PurchaseRequestRepository
+
+                    all_prs = PurchaseRequestRepository().get_list(ids=pr_ids)
+                    pr_by_id = {str(pr['id']): pr for pr in all_prs}
+                    action_pr_map: Dict[str, List] = {}
+                    for action_id, pr_id in links:
+                        action_pr_map.setdefault(str(action_id), []).append(str(pr_id))
+                    for action in all_actions:
+                        action['purchase_requests'] = [
+                            pr_by_id[pid]
+                            for pid in action_pr_map.get(str(action['id']), [])
+                            if pid in pr_by_id
+                        ]
+
+                # Batch tâches liées via la table de jonction M2M
+                # Import lazy pour éviter la circularité avec intervention_tasks.repo
+                from api.intervention_tasks.repo import _map_task as _mt
+
+                cur.execute(
+                    f"""
+                    SELECT iat.action_id,
+                           it.id, it.intervention_id, it.label, it.origin, it.status,
+                           it.optional, it.due_date, it.sort_order, it.skip_reason,
+                           it.gamme_step_id, it.occurrence_id,
+                           it.closed_by, it.created_by, it.created_at, it.updated_at,
+                           COALESCE(agg.action_count, 0) AS action_count,
+                           COALESCE(agg.time_spent, 0.0) AS time_spent,
+                           u.id AS assigned_id,
+                           u.first_name AS assigned_first_name,
+                           u.last_name AS assigned_last_name,
+                           u.email AS assigned_email,
+                           u.initial AS assigned_initial,
+                           NULL::text AS assigned_status,
+                           NULL::text AS assigned_role
+                    FROM intervention_action_task iat
+                    INNER JOIN intervention_task it ON it.id = iat.task_id
+                    LEFT JOIN tunnel_user u ON u.id = it.assigned_to
+                    LEFT JOIN LATERAL (
+                        SELECT COUNT(DISTINCT iat2.action_id) AS action_count,
+                               COALESCE(SUM(ia2.time_spent), 0) AS time_spent
+                        FROM intervention_action_task iat2
+                        INNER JOIN intervention_action ia2 ON ia2.id = iat2.action_id
+                        WHERE iat2.task_id = it.id
+                    ) agg ON TRUE
+                    WHERE iat.action_id IN ({placeholders})
+                    ORDER BY it.sort_order ASC
+                    """,
+                    action_ids,
+                )
+                task_rows = cur.fetchall()
+                if task_rows:
+                    tasks_by_action: Dict[str, List[Dict]] = {}
+                    cols_task = [d[0] for d in cur.description]
+                    for row in task_rows:
+                        row_dict = dict(zip(cols_task, row))
+                        aid = str(row_dict.pop('action_id'))
+                        tasks_by_action.setdefault(aid, []).append(_mt(row_dict))
+                    for action in all_actions:
+                        action['tasks'] = tasks_by_action.get(str(action['id']), [])
+
+            # Groupement par date
+            groups: Dict[date, List[Dict[str, Any]]] = {}
+            for action in all_actions:
+                day = action['created_at'].date() if action.get('created_at') else None
+                if day is not None:
+                    groups.setdefault(day, []).append(action)
+
+            return [{'date': d, 'actions': groups[d]} for d in sorted(groups.keys(), reverse=True)]
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def _get_intervention_stats(self, intervention_id: str, conn) -> Dict[str, Any]:
+        """Calcule les stats agrégées d'une intervention depuis ses actions (sans les charger)."""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    COUNT(ia.id)                          AS action_count,
+                    COALESCE(SUM(ia.time_spent), 0)       AS total_time,
+                    AVG(NULLIF(ia.complexity_score, 0))   AS avg_complexity,
+                    COUNT(DISTINCT iapr.purchase_request_id) AS purchase_count
+                FROM intervention_action ia
+                LEFT JOIN intervention_action_purchase_request iapr ON iapr.intervention_action_id = ia.id
+                WHERE ia.intervention_id = %s
+                """,
+                (intervention_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return {
+                    'action_count': 0,
+                    'total_time': 0,
+                    'avg_complexity': None,
+                    'purchase_count': 0,
+                }
+            cols = [d[0] for d in cur.description]
+            stats = dict(zip(cols, row))
+            if stats.get('avg_complexity') is not None:
+                stats['avg_complexity'] = round(float(stats['avg_complexity']), 2)
+            stats['total_time'] = float(stats['total_time'] or 0)
+            return stats
+        except Exception:
+            return {'action_count': 0, 'total_time': 0, 'avg_complexity': None, 'purchase_count': 0}
+
+    def _build_intervention_detail(self, intervention_id: str) -> Dict[str, Any]:
+        """Construit le détail complet d'une intervention parente pour l'analyse IA.
+
+        Utilise include_actions=False pour éviter la récursion infinie, puis injecte
+        les stats calculées via une requête SQL agrégée séparée.
+        """
+        # Import lazy pour éviter la circularité avec interventions.repo
+        from api.interventions.repo import InterventionRepository
+
+        try:
+            detail = InterventionRepository().get_by_id(intervention_id, include_actions=False)
+            if detail is None:
+                return None
+            # Recalculer les stats via SQL agrégé (include_actions=False les met à zéro)
+            stats_conn = self._get_connection()
+            try:
+                detail['stats'] = self._get_intervention_stats(intervention_id, stats_conn)
+            finally:
+                release_connection(stats_conn)
+            return detail
+        except Exception:
+            return None
+
+    def get_by_id(self, action_id: str) -> Dict[str, Any]:
+        """Récupère une action par ID avec contexte complet de l'intervention parente"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    ia.id, ia.intervention_id, ia.description, ia.time_spent,
+                    ia.tech, ia.complexity_score, ia.complexity_factor,
+                    ia.action_start, ia.action_end,
+                    ia.created_at, ia.updated_at,
+                    sc.id as subcategory_id, sc.name as subcategory_name, sc.code as subcategory_code,
+                    ac.id as category_id, ac.name as category_name, ac.code as category_code, ac.color,
+                    u.id as tech_id, u.first_name as tech_first_name,
+                    u.last_name as tech_last_name, u.email as tech_email,
+                    u.initial as tech_initial, NULL::text as tech_status,
+                    NULL::text as tech_role
+                FROM intervention_action ia
+                LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
+                LEFT JOIN action_category ac ON sc.category_id = ac.id
+                LEFT JOIN tunnel_user u ON ia.tech = u.id
+                WHERE ia.id = %s
+            """,
+                (action_id,),
+            )
+            row = cur.fetchone()
+
+            if not row:
+                raise NotFoundError(f"Action {action_id} non trouvée")
+
+            cols = [desc[0] for desc in cur.description]
+            action = self._map_action_with_subcategory(dict(zip(cols, row)))
+            action = self._map_tech_user(action)
+            action['purchase_requests'] = self._get_linked_purchase_requests(
+                str(action['id']), conn
+            )
+            action['tasks'] = self._get_tasks_for_action(str(action['id']), conn)
+
+            intervention_id_str = (
+                str(action['intervention_id']) if action.get('intervention_id') else None
+            )
+            action['intervention'] = (
+                self._build_intervention_detail(intervention_id_str)
+                if intervention_id_str
+                else None
+            )
+
+            return action
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_by_intervention(self, intervention_id: str) -> List[Dict[str, Any]]:
+        """Récupère les actions d'une intervention avec détail de sous-catégorie et couleur"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    ia.id, ia.intervention_id, ia.description, ia.time_spent,
+                    ia.tech, ia.complexity_score, ia.complexity_factor,
+                    ia.action_start, ia.action_end,
+                    ia.created_at, ia.updated_at,
+                    sc.id as subcategory_id, sc.name as subcategory_name, sc.code as subcategory_code,
+                    ac.id as category_id, ac.name as category_name, ac.code as category_code, ac.color,
+                    u.id as tech_id, u.first_name as tech_first_name,
+                    u.last_name as tech_last_name, u.email as tech_email,
+                    u.initial as tech_initial, NULL::text as tech_status,
+                    NULL::text as tech_role
+                FROM intervention_action ia
+                LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
+                LEFT JOIN action_category ac ON sc.category_id = ac.id
+                LEFT JOIN tunnel_user u ON ia.tech = u.id
+                WHERE ia.intervention_id = %s
+                ORDER BY ia.created_at ASC
+                """,
+                (intervention_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            results = []
+            for row in rows:
+                action = self._map_action_with_subcategory(dict(zip(cols, row)))
+                action = self._map_tech_user(action)
+                action['purchase_requests'] = []
+                action['tasks'] = []
+                results.append(action)
+
+            if not results:
+                return results
+
+            action_ids = [str(a['id']) for a in results]
+            placeholders = ','.join(['%s'] * len(action_ids))
+
+            # Batch PR
+            cur.execute(
+                f"""
+                SELECT intervention_action_id, purchase_request_id
+                FROM intervention_action_purchase_request
+                WHERE intervention_action_id IN ({placeholders})
+                """,
+                action_ids,
+            )
+            links = cur.fetchall()
+
+            if links:
+                pr_ids = list({str(row[1]) for row in links if row[1]})
+                from api.purchase_requests.repo import PurchaseRequestRepository
+
+                all_prs = PurchaseRequestRepository().get_list(ids=pr_ids)
+                pr_by_id = {str(pr['id']): pr for pr in all_prs}
+
+                action_pr_map: Dict[str, List] = {}
+                for action_id, pr_id in links:
+                    action_pr_map.setdefault(str(action_id), []).append(str(pr_id))
+
+                for action in results:
+                    action['purchase_requests'] = [
+                        pr_by_id[pid]
+                        for pid in action_pr_map.get(str(action['id']), [])
+                        if pid in pr_by_id
+                    ]
+
+            # Batch tâches liées via la table de jonction M2M
+            # Import lazy pour éviter la circularité avec intervention_tasks.repo
+            from api.intervention_tasks.repo import _map_task as _mt
+
+            cur.execute(
+                f"""
+                SELECT iat.action_id,
+                       it.id, it.intervention_id, it.label, it.origin, it.status,
+                       it.optional, it.due_date, it.sort_order, it.skip_reason,
+                       it.gamme_step_id, it.occurrence_id,
+                       it.closed_by, it.created_by, it.created_at, it.updated_at,
+                       COALESCE(agg.action_count, 0) AS action_count,
+                       COALESCE(agg.time_spent, 0.0) AS time_spent,
+                       u.id AS assigned_id,
+                       u.first_name AS assigned_first_name,
+                       u.last_name AS assigned_last_name,
+                       u.email AS assigned_email,
+                       u.initial AS assigned_initial,
+                       NULL::text AS assigned_status,
+                       NULL::text AS assigned_role
+                FROM intervention_action_task iat
+                INNER JOIN intervention_task it ON it.id = iat.task_id
+                LEFT JOIN tunnel_user u ON u.id = it.assigned_to
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(DISTINCT iat2.action_id) AS action_count,
+                           COALESCE(SUM(ia2.time_spent), 0) AS time_spent
+                    FROM intervention_action_task iat2
+                    INNER JOIN intervention_action ia2 ON ia2.id = iat2.action_id
+                    WHERE iat2.task_id = it.id
+                ) agg ON TRUE
+                WHERE iat.action_id IN ({placeholders})
+                ORDER BY it.sort_order ASC
+                """,
+                action_ids,
+            )
+            task_rows = cur.fetchall()
+            if task_rows:
+                tasks_by_action: Dict[str, List[Dict]] = {}
+                cols_task = [d[0] for d in cur.description]
+                for row in task_rows:
+                    row_dict = dict(zip(cols_task, row))
+                    aid = str(row_dict.pop('action_id'))
+                    tasks_by_action.setdefault(aid, []).append(_mt(row_dict))
+                for action in results:
+                    action['tasks'] = tasks_by_action.get(str(action['id']), [])
+
+            return results
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_by_id_with_subcategory(self, action_id: str) -> Dict[str, Any]:
+        """Récupère une action avec détail de sous-catégorie et couleur"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    ia.id, ia.intervention_id, ia.description, ia.time_spent,
+                    ia.tech, ia.complexity_score, ia.complexity_factor,
+                    ia.created_at, ia.updated_at,
+                    sc.id as subcategory_id, sc.name as subcategory_name, sc.code as subcategory_code,
+                    ac.id as category_id, ac.name as category_name, ac.code as category_code, ac.color,
+                    u.id as tech_id, u.first_name as tech_first_name,
+                    u.last_name as tech_last_name, u.email as tech_email,
+                    u.initial as tech_initial, NULL::text as tech_status,
+                    NULL::text as tech_role
+                FROM intervention_action ia
+                LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
+                LEFT JOIN action_category ac ON sc.category_id = ac.id
+                LEFT JOIN tunnel_user u ON ia.tech = u.id
+                WHERE ia.id = %s
+                """,
+                (action_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Action {action_id} non trouvée")
+            cols = [desc[0] for desc in cur.description]
+            action = self._map_action_with_subcategory(dict(zip(cols, row)))
+            action = self._map_tech_user(action)
+            action['purchase_requests'] = self._get_linked_purchase_requests(action_id, conn)
+            return action
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def add(self, action_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Ajoute une nouvelle action à une intervention.
+
+        Si tasks est fourni, chaque tâche est vérifiée (appartenance à
+        l'intervention) puis liée via la table de jonction M2M intervention_action_task.
+        Une tâche peut être liée à plusieurs actions et vice-versa.
+        La transition todo→in_progress est gérée en Python sur chaque tâche liée.
+        """
+        import uuid as _uuid
+
+        # Extraire tasks avant validation (champ non géré par le validateur)
+        tasks = action_data.pop('tasks', None) or []
+
+        # RÈGLE MÉTIER : définie dans InterventionActionValidator
+        InterventionActionValidator.validate_tasks_required(tasks)
+
+        validated_data = InterventionActionValidator.validate_and_prepare(action_data)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            action_id = str(uuid4())
+            now = datetime.now()
+            created_at = validated_data.get('created_at', now)
+
+            validated_data.pop('task_id', None)
+
+            intervention_id_str = (
+                str(validated_data['intervention_id'])
+                if isinstance(validated_data['intervention_id'], _uuid.UUID)
+                else validated_data['intervention_id']
+            )
+
+            self._ensure_intervention_editable(cur, intervention_id_str)
+
+            cur.execute(
+                """
+                INSERT INTO intervention_action
+                (id, intervention_id, description, time_spent, action_subcategory,
+                 tech, complexity_score, complexity_factor, action_start, action_end,
+                 created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    action_id,
+                    str(validated_data['intervention_id'])
+                    if isinstance(validated_data['intervention_id'], _uuid.UUID)
+                    else validated_data['intervention_id'],
+                    validated_data['description'],
+                    validated_data.get('time_spent'),
+                    validated_data['action_subcategory'],
+                    str(validated_data['tech'])
+                    if isinstance(validated_data['tech'], _uuid.UUID)
+                    else validated_data['tech'],
+                    validated_data['complexity_score'],
+                    validated_data.get('complexity_factor'),
+                    validated_data.get('action_start'),
+                    validated_data.get('action_end'),
+                    created_at,
+                    now,
+                ),
+            )
+
+            for task_req in tasks:
+                task_req_data = (
+                    task_req
+                    if isinstance(task_req, dict)
+                    else {
+                        'task_id': task_req.task_id,
+                        'close_task': task_req.close_task,
+                        'skip': task_req.skip,
+                        'skip_reason': task_req.skip_reason,
+                    }
+                )
+                tid = str(task_req_data['task_id'])
+
+                # Vérifier existence + appartenance à la même intervention
+                cur.execute(
+                    "SELECT intervention_id, status, label FROM intervention_task WHERE id = %s",
+                    (tid,),
+                )
+                task_row = cur.fetchone()
+                if not task_row:
+                    raise NotFoundError(f"Tâche {tid} introuvable")
+                task_intervention, task_status, task_label = task_row
+                if str(task_intervention) != intervention_id_str:
+                    raise ValidationError(
+                        f"Tâche « {task_label} » n'appartient pas à cette intervention"
+                    )
+
+                # Créer la liaison M2M
+                cur.execute(
+                    """
+                    INSERT INTO intervention_action_task (action_id, task_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (action_id, tid),
+                )
+
+                if task_req_data.get('skip', False):
+                    if task_status in ('done', 'skipped'):
+                        raise ValidationError(
+                            f"Tâche « {task_label} » déjà clôturée — impossible de la skipper"
+                        )
+                    cur.execute(
+                        """
+                        UPDATE intervention_task
+                        SET status = 'skipped', skip_reason = %s, updated_at = NOW()
+                        WHERE id = %s
+                        """,
+                        (task_req_data.get('skip_reason'), tid),
+                    )
+                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id)
+                else:
+                    if task_status in ('done', 'skipped'):
+                        raise ValidationError(
+                            f"Tâche « {task_label} » déjà clôturée — impossible de la tagger"
+                        )
+                    if task_req_data.get('close_task', False):
+                        cur.execute(
+                            "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
+                            (tid,),
+                        )
+                        _audit_task_from_action(cur, tid, task_status, 'done', action_id)
+                    else:
+                        new_status = 'in_progress' if task_status == 'todo' else task_status
+                        cur.execute(
+                            """
+                            UPDATE intervention_task
+                            SET status = CASE WHEN status = 'todo' THEN 'in_progress' ELSE status END,
+                                updated_at = NOW()
+                            WHERE id = %s
+                            """,
+                            (tid,),
+                        )
+                        if new_status != task_status:
+                            _audit_task_from_action(cur, tid, task_status, new_status, action_id)
+
+            conn.commit()
+            return self.get_by_id(action_id)
+        except (ValidationError, NotFoundError):
+            conn.rollback()
+            raise
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "ajout action")
+        finally:
+            release_connection(conn)
+
+    def update(self, action_id: str, patch_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Met à jour partiellement une action existante"""
+        tasks = patch_data.pop('tasks', None) or []
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT intervention_id, complexity_score, complexity_factor FROM intervention_action WHERE id = %s",
+                (action_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Action {action_id} non trouvée")
+            cols = [desc[0] for desc in cur.description]
+            current = dict(zip(cols, row))
+        except NotFoundError:
+            raise
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+        updatable_fields = {
+            'description',
+            'time_spent',
+            'action_subcategory',
+            'tech',
+            'complexity_score',
+            'complexity_factor',
+            'action_start',
+            'action_end',
+            'created_at',
+        }
+
+        updates = {k: v for k, v in patch_data.items() if k in updatable_fields and v is not None}
+
+        if not updates and not tasks:
+            return self.get_by_id(action_id)
+
+        if 'description' in updates:
+            updates['description'] = InterventionActionValidator.sanitize_description(
+                updates['description']
+            )
+        if 'time_spent' in updates:
+            InterventionActionValidator.validate_time_spent(updates['time_spent'])
+        if 'complexity_score' in updates:
+            InterventionActionValidator.validate_complexity_score(updates['complexity_score'])
+        if 'complexity_factor' in updates:
+            updates['complexity_factor'] = InterventionActionValidator.validate_complexity_factor(
+                updates['complexity_factor']
+            )
+
+        score = updates.get('complexity_score', current.get('complexity_score'))
+        factor = updates.get('complexity_factor', current.get('complexity_factor'))
+        if isinstance(score, int) and score > 5 and (not factor or not str(factor).strip()):
+            raise ValidationError("complexity_factor est obligatoire quand complexity_score > 5")
+
+        has_bounds = 'action_start' in updates or 'action_end' in updates
+        has_direct = 'time_spent' in updates
+        if has_bounds and not has_direct:
+            updates['time_spent'] = None
+        elif has_direct and not has_bounds:
+            updates['action_start'] = None
+            updates['action_end'] = None
+
+        import uuid as _uuid
+
+        params_updates = {k: str(v) if isinstance(v, _uuid.UUID) else v for k, v in updates.items()}
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            self._ensure_intervention_editable(cur, str(current['intervention_id']))
+
+            if params_updates:
+                set_clauses = [f"{field} = %s" for field in params_updates]
+                params = list(params_updates.values())
+                set_clauses.append("updated_at = %s")
+                params.append(datetime.now())
+                params.append(action_id)
+
+                cur.execute(
+                    f"UPDATE intervention_action SET {', '.join(set_clauses)} WHERE id = %s", params
+                )
+
+            intervention_id_str = str(current['intervention_id'])
+            for task_req in tasks:
+                task_req_data = (
+                    task_req
+                    if isinstance(task_req, dict)
+                    else {
+                        'task_id': task_req.task_id,
+                        'close_task': task_req.close_task,
+                        'skip': task_req.skip,
+                        'skip_reason': task_req.skip_reason,
+                    }
+                )
+                tid = str(task_req_data['task_id'])
+
+                cur.execute(
+                    "SELECT intervention_id, status, label FROM intervention_task WHERE id = %s",
+                    (tid,),
+                )
+                task_row = cur.fetchone()
+                if not task_row:
+                    raise NotFoundError(f"Tâche {tid} introuvable")
+
+                task_intervention, task_status, task_label = task_row
+                if str(task_intervention) != intervention_id_str:
+                    raise ValidationError(
+                        f"Tâche « {task_label} » n'appartient pas à cette intervention"
+                    )
+
+                # Créer la liaison M2M
+                cur.execute(
+                    """
+                    INSERT INTO intervention_action_task (action_id, task_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (action_id, tid),
+                )
+
+                if task_req_data.get('skip', False):
+                    if task_status in ('done', 'skipped'):
+                        raise ValidationError(
+                            f"Tâche « {task_label} » déjà clôturée — impossible de la skipper"
+                        )
+                    cur.execute(
+                        """
+                        UPDATE intervention_task
+                        SET status = 'skipped', skip_reason = %s, updated_at = NOW()
+                        WHERE id = %s
+                        """,
+                        (task_req_data.get('skip_reason'), tid),
+                    )
+                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id)
+                else:
+                    if task_status in ('done', 'skipped'):
+                        raise ValidationError(
+                            f"Tâche « {task_label} » déjà clôturée — impossible de la tagger"
+                        )
+                    if task_req_data.get('close_task', False):
+                        cur.execute(
+                            "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
+                            (tid,),
+                        )
+                        _audit_task_from_action(cur, tid, task_status, 'done', action_id)
+                    else:
+                        new_status = 'in_progress' if task_status == 'todo' else task_status
+                        cur.execute(
+                            """
+                            UPDATE intervention_task
+                            SET status = CASE WHEN status = 'todo' THEN 'in_progress' ELSE status END,
+                                updated_at = NOW()
+                            WHERE id = %s
+                            """,
+                            (tid,),
+                        )
+                        if new_status != task_status:
+                            _audit_task_from_action(cur, tid, task_status, new_status, action_id)
+
+            conn.commit()
+        except (ValidationError, NotFoundError):
+            conn.rollback()
+            raise
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "mise à jour action")
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(action_id)
+
+    def delete(self, action_id: str) -> bool:
+        """Supprime une action d'intervention.
+
+        Bloquée si l'intervention parente est fermée, ou si une DA liée
+        a déjà été dispatchée (statut dérivé hors NON_DISPATCHED_PR_STATUSES).
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT intervention_id FROM intervention_action WHERE id = %s",
+                (action_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Action {action_id} non trouvée")
+            intervention_id = str(row[0])
+
+            self._ensure_intervention_editable(cur, intervention_id)
+
+            linked_prs = self._get_linked_purchase_requests(action_id, conn)
+            dispatched = [
+                pr
+                for pr in linked_prs
+                if pr.get('derived_status', {}).get('code') not in NON_DISPATCHED_PR_STATUSES
+            ]
+            if dispatched:
+                raise ValidationError(
+                    "Suppression impossible : une demande d'achat liée a déjà été dispatchée"
+                )
+
+            cur.execute("DELETE FROM intervention_action WHERE id = %s", (action_id,))
+            conn.commit()
+            return True
+        except (ValidationError, NotFoundError):
+            conn.rollback()
+            raise
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "suppression action")
+        finally:
+            release_connection(conn)

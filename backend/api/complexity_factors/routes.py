@@ -1,0 +1,28 @@
+from typing import List
+
+from fastapi import APIRouter, Depends
+
+from api.auth.permissions import require_authenticated
+from api.complexity_factors.repo import ComplexityFactorRepository
+from api.complexity_factors.schemas import ComplexityFactorOut
+from api.utils.response import single
+
+router = APIRouter(
+    prefix="/complexity-factors",
+    tags=["complexity-factors"],
+    dependencies=[Depends(require_authenticated)],
+)
+
+
+@router.get("", response_model=List[ComplexityFactorOut])
+def list_factors():
+    """Liste tous les facteurs de complexité"""
+    repo = ComplexityFactorRepository()
+    return repo.get_all()
+
+
+@router.get("/{code}")
+def get_factor(code: str):
+    """Récupère un facteur de complexité par code"""
+    repo = ComplexityFactorRepository()
+    return single(repo.get_by_code(code))

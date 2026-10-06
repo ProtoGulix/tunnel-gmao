@@ -1,0 +1,51 @@
+"""Routes API pour les classes d'équipement"""
+
+from fastapi import APIRouter, Depends, status
+
+from api.auth.permissions import require_authenticated
+from api.utils.response import single
+
+from .repo import EquipementClassRepository
+from .schemas import EquipementClass, EquipementClassCreate, EquipementClassUpdate
+
+router = APIRouter(
+    prefix="/equipement-class",
+    tags=["equipement-class"],
+    dependencies=[Depends(require_authenticated)],
+)
+repo = EquipementClassRepository()
+
+
+@router.get("", response_model=list[EquipementClass])
+def list_equipement_classes():
+    """Liste toutes les classes d'équipement"""
+    return repo.get_all()
+
+
+@router.get("/{class_id}")
+def get_equipement_class(class_id: str):
+    """Récupère une classe d'équipement par ID"""
+    return single(repo.get_by_id(class_id))
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+def create_equipement_class(data: EquipementClassCreate):
+    """Crée une nouvelle classe d'équipement"""
+    return single(repo.create(code=data.code, label=data.label, description=data.description))
+
+
+@router.patch("/{class_id}")
+def update_equipement_class(class_id: str, data: EquipementClassUpdate):
+    """Met à jour une classe d'équipement"""
+    return single(
+        repo.update(
+            class_id=class_id, code=data.code, label=data.label, description=data.description
+        )
+    )
+
+
+@router.delete("/{class_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_equipement_class(class_id: str):
+    """Supprime une classe d'équipement"""
+    repo.delete(class_id)
+    return None

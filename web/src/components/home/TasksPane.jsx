@@ -1,0 +1,352 @@
+import { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import { Flex, Text, Badge, IconButton, Button } from '@radix-ui/themes';
+import { AlertTriangle, CalendarClock, ChevronLeft, ChevronRight, Clock, User, UserCog, Wrench } from 'lucide-react';
+import GhostCreateRow from '@/components/tasks/GhostCreateRow';
+import { patchInterventionTask } from '@/api/interventionTasks';
+import { GroupCard } from '@/components/shared/GroupCard';
+
+const ORIGIN_CONFIG = {
+  plan: { Icon: CalendarClock, color: 'var(--violet-9)', title: 'Préventif' },
+  resp: { Icon: UserCog,       color: 'var(--orange-9)', title: 'Responsable' },
+  tech: { Icon: Wrench,        color: 'var(--blue-9)',   title: 'Technicien' },
+};
+
+const STATUS_CONFIG = {
+  in_progress: { color: 'var(--blue-9)',  bg: 'var(--blue-2)',  label: 'En cours', badge: 'blue' },
+  todo:        { color: 'var(--gray-7)',  bg: 'transparent',    label: 'À faire',  badge: 'gray' },
+  done:        { color: 'var(--green-9)', bg: 'var(--green-2)', label: 'Fait',     badge: 'green' },
+};
+
+const formatDue = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+};
+
+const STATUS_BUCKET = { in_progress: 0, todo: 0, done: 1, skipped: 1 };
+
+// Retourne un timestamp numérique pour le tri : passé < futur < Infinity (sans date)
+const dueSortKey = (iso) => (iso ? new Date(iso).getTime() : Infinity);
+
+function sortTasks(tasks) {
+  return [...tasks].sort((a, b) => {
+    const ba = STATUS_BUCKET[a.status] ?? 0;
+    const bb = STATUS_BUCKET[b.status] ?? 0;
+    if (ba !== bb) return ba - bb;
+    return dueSortKey(a.due_date) - dueSortKey(b.due_date);
+  });
+}
+
+// Clé de tri d'un groupe = due_date la plus urgente parmi ses tâches actives
+function groupSortKey(group) {
+  const activeTasks = (group.tasks ?? []).filter((t) => STATUS_BUCKET[t.status] === 0);
+  if (activeTasks.length === 0) return Infinity;
+  return Math.min(...activeTasks.map((t) => dueSortKey(t.due_date)));
+}
+
+function deriveInitials(assignedTo) {
+  if (!assignedTo) return null;
+  if (assignedTo.initial) return String(assignedTo.initial).toUpperCase();
+  if (assignedTo.initials) return String(assignedTo.initials).toUpperCase();
+  const f = String(assignedTo.first_name || assignedTo.firstName || '').trim();
+  const l = String(assignedTo.last_name || assignedTo.lastName || '').trim();
+  const initials = `${f[0] || ''}${l[0] || ''}`.toUpperCase();
+  return initials || null;
+}
+
+function userFullName(u) {
+  const f = u.first_name || u.firstName || '';
+  const l = u.last_name || u.lastName || '';
+  return `${f} ${l}`.trim() || u.email || u.initials || u.initial || String(u.id);
+}
+
+export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAction, users = [], onTaskUpdate }) {
+  const [editCell, setEditCell] = useState(null); // { taskId, field: 'due_date' | 'assigned_to' }
+  const [saving, setSaving] = useState(null);     // taskId being saved
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const inProgressCount = taskGroups.reduce((sum, g) => sum + g.tasks.filter((t) => t.status === 'in_progress').length, 0);
+  const todoCount = taskGroups.reduce((sum, g) => sum + g.tasks.filter((t) => t.status === 'todo').length, 0);
+
+  const pageSize = pagination?.page_size ?? 20;
+  const hasPrev = skip > 0;
+  const hasNext = pagination ? skip + pageSize < pagination.total : false;
+
+  const startEdit = useCallback((taskId, field) => {
+    setEditCell({ taskId, field });
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditCell(null);
+  }, []);
+
+  const saveField = useCallback(async (taskId, field, value) => {
+    setSaving(taskId);
+    setEditCell(null);
+    try {
+      await patchInterventionTask(taskId, { [field]: value || null });
+      onTaskUpdate?.();
+    } finally {
+      setSaving(null);
+    }
+  }, [onTaskUpdate]);
+
+  return (
+    <div>
+      {/* Header */}
+      <Flex align="center" gap="2" style={{ padding: '10px 14px 8px', flexShrink: 0, borderBottom: '1px solid var(--gray-4)', background: 'var(--gray-2)' }}>
+        <Text size="2" weight="bold" style={{ color: 'var(--gray-12)' }}>Tâches à exécuter</Text>
+        {inProgressCount > 0 && (
+          <Badge color="blue" variant="solid" size="1" radius="full">{inProgressCount} en cours</Badge>
+        )}
+        {todoCount > 0 && (
+          <Badge color="gray" variant="soft" size="1" radius="full">{todoCount} à faire</Badge>
+        )}
+        {pagination && (
+          <Text size="1" color="gray" style={{ marginLeft: 'auto' }}>{pagination.total} inter.</Text>
+        )}
+      </Flex>
+
+      {/* List */}
+      <div style={{ padding: '8px 10px' }}>
+        {taskGroups.length === 0 && (
+          <Text size="1" color="gray" style={{ display: 'block', marginTop: 8, textAlign: 'center' }}>
+            Aucune tâche assignée
+          </Text>
+        )}
+
+        {[...taskGroups].sort((a, b) => groupSortKey(a) - groupSortKey(b)).map((group) => {
+          const interventionCode = group.code ?? null;
+          const interventionTitle = group.title ?? null;
+          const sortedTasks = sortTasks(group.tasks);
+          return (
+            <GroupCard
+              key={group.id}
+              code={interventionCode}
+              title={interventionTitle}
+              priority={group.priority ?? 'normal'}
+              count={sortedTasks.length}
+              countLabel="tâche"
+            >
+              {sortedTasks.map((task, idx) => {
+                  const due = formatDue(task.due_date);
+                  const overdue = due && new Date(task.due_date) < today;
+                  const cfg = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.todo;
+                  const originCfg = ORIGIN_CONFIG[task.origin] ?? null;
+                  const isLast = idx === sortedTasks.length - 1;
+                  const isSaving = saving === task.id;
+
+                  const isDone = task.status === 'done' || task.status === 'skipped';
+                  const editingDue = !isDone && editCell?.taskId === task.id && editCell?.field === 'due_date';
+                  const editingAssignee = !isDone && editCell?.taskId === task.id && editCell?.field === 'assigned_to';
+
+                  const assignedTo = task.assigned_to ?? null;
+                  const initials = deriveInitials(assignedTo);
+                  const currentAssigneeId = String(assignedTo?.id ?? '');
+
+                  return (
+                    <GroupCard.Row
+                      key={task.id}
+                      accentColor={cfg.color}
+                      background={cfg.bg}
+                      isLast={isLast}
+                      style={{ opacity: isSaving ? 0.6 : 1, transition: 'opacity 0.15s' }}
+                    >
+                      {/* Icône origine */}
+                      {originCfg && (
+                        <originCfg.Icon size={13} color={originCfg.color} title={originCfg.title} style={{ flexShrink: 0 }} />
+                      )}
+
+                      {/* Label tâche */}
+                      <Text size="2" style={{ flex: 1, color: 'var(--gray-12)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {task.label}
+                      </Text>
+
+                      {/* Statut */}
+                      <Badge color={cfg.badge} variant="soft" size="1" style={{ flexShrink: 0 }}>
+                        {cfg.label}
+                      </Badge>
+
+                      {/* ── Échéance éditable ── */}
+                      {editingDue ? (
+                        <input
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          type="date"
+                          defaultValue={task.due_date?.slice(0, 10) ?? ''}
+                          onBlur={(e) => {
+                            const v = e.target.value;
+                            if (v !== (task.due_date?.slice(0, 10) ?? '')) {
+                              saveField(task.id, 'due_date', v || null);
+                            } else {
+                              cancelEdit();
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.target.blur();
+                            if (e.key === 'Escape') cancelEdit();
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 11,
+                            padding: '1px 4px',
+                            borderRadius: 4,
+                            border: '1px solid var(--accent-8)',
+                            background: 'var(--color-background)',
+                            color: 'var(--gray-12)',
+                            outline: 'none',
+                            cursor: 'pointer',
+                          }}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          title={isDone ? undefined : "Modifier l'échéance"}
+                          onClick={() => { if (!isDone) startEdit(task.id, 'due_date'); }}
+                          style={{
+                            flexShrink: 0,
+                            background: 'none',
+                            border: 'none',
+                            padding: '1px 3px',
+                            borderRadius: 4,
+                            cursor: isDone ? 'default' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                        >
+                          {overdue && due && !isDone ? (
+                            <Badge color="red" variant="solid" size="1" style={{ display: 'flex', alignItems: 'center', gap: 3, pointerEvents: 'none' }}>
+                              <AlertTriangle size={10} />
+                              {due}
+                            </Badge>
+                          ) : due ? (
+                            <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{due}</Text>
+                          ) : !isDone ? (
+                            <Text size="1" style={{ color: 'var(--gray-7)', whiteSpace: 'nowrap' }}>+date</Text>
+                          ) : null}
+                        </button>
+                      )}
+
+                      {/* ── Affectation éditable ── */}
+                      {editingAssignee ? (
+                        <select
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
+                          autoFocus
+                          defaultValue={currentAssigneeId}
+                          onBlur={(e) => {
+                            const v = e.target.value;
+                            if (v !== currentAssigneeId) {
+                              saveField(task.id, 'assigned_to', v || null);
+                            } else {
+                              cancelEdit();
+                            }
+                          }}
+                          onChange={(e) => {
+                            saveField(task.id, 'assigned_to', e.target.value || null);
+                          }}
+                          onKeyDown={(e) => { if (e.key === 'Escape') cancelEdit(); }}
+                          style={{
+                            flexShrink: 0,
+                            fontSize: 11,
+                            padding: '1px 4px',
+                            borderRadius: 4,
+                            border: '1px solid var(--accent-8)',
+                            background: 'var(--color-background)',
+                            color: 'var(--gray-12)',
+                            outline: 'none',
+                            cursor: 'pointer',
+                            maxWidth: 140,
+                          }}
+                        >
+                          <option value="">— Non assigné</option>
+                          {users.map((u) => (
+                            <option key={u.id} value={String(u.id)}>{userFullName(u)}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          type="button"
+                          title={isDone ? undefined : (initials ? `Affecté : ${userFullName(assignedTo)} — modifier` : 'Assigner')}
+                          onClick={() => { if (!isDone) startEdit(task.id, 'assigned_to'); }}
+                          style={{
+                            flexShrink: 0,
+                            background: initials ? (isDone ? 'var(--gray-3)' : 'var(--accent-4)') : 'var(--gray-3)',
+                            border: '1px solid',
+                            borderColor: initials && !isDone ? 'var(--accent-6)' : 'var(--gray-5)',
+                            borderRadius: '50%',
+                            width: 22,
+                            height: 22,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: isDone ? 'default' : 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          {initials ? (
+                            <Text size="1" weight="bold" style={{ color: isDone ? 'var(--gray-9)' : 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>
+                              {initials}
+                            </Text>
+                          ) : (
+                            <User size={11} color="var(--gray-9)" />
+                          )}
+                        </button>
+                      )}
+
+                      {/* Bouton Logger */}
+                      {onAddAction && !isDone && (
+                        <IconButton
+                          size="1"
+                          variant="soft"
+                          color="blue"
+                          title="Logger du temps"
+                          onClick={() => onAddAction({ date: null, group, task })}
+                          style={{ flexShrink: 0 }}
+                        >
+                          <Clock size={12} />
+                        </IconButton>
+                      )}
+                    </GroupCard.Row>
+                  );
+                })}
+                <GhostCreateRow
+                  interventionId={String(group.id)}
+                  users={users}
+                  onCreated={() => onTaskUpdate?.()}
+                />
+            </GroupCard>
+          );
+        })}
+
+        {/* Pagination */}
+        {(hasPrev || hasNext) && (
+          <Flex align="center" justify="center" gap="2" pt="2">
+            <Button size="1" variant="soft" color="gray" disabled={!hasPrev} onClick={() => onPageChange(skip - pageSize)}>
+              <ChevronLeft size={13} />
+            </Button>
+            <Text size="1" color="gray">
+              {Math.floor(skip / pageSize) + 1} / {pagination?.total_pages ?? '…'}
+            </Text>
+            <Button size="1" variant="soft" color="gray" disabled={!hasNext} onClick={() => onPageChange(skip + pageSize)}>
+              <ChevronRight size={13} />
+            </Button>
+          </Flex>
+        )}
+      </div>
+    </div>
+  );
+}
+
+TasksPane.propTypes = {
+  taskGroups: PropTypes.array.isRequired,
+  pagination: PropTypes.object,
+  skip: PropTypes.number,
+  onPageChange: PropTypes.func,
+  onAddAction: PropTypes.func,
+  users: PropTypes.array,
+  onTaskUpdate: PropTypes.func,
+};

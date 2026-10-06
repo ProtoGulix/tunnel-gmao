@@ -1,0 +1,174 @@
+/**
+ * @fileoverview Page de gestion des demandes d'achat et paniers fournisseurs
+ * @module pages/purchase/PurchaseRequestsPage
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { Box, Button, Flex, Tabs, Text } from '@radix-ui/themes';
+import { FileUp, Scale, ShoppingBag, ShoppingCart, Zap } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
+import PurchaseRequestsTab from '@/components/purchase/tabs/PurchaseRequestsTab';
+import SupplierOrdersTab from '@/components/purchase/tabs/SupplierOrdersTab';
+import SupplierOrderComparatorTab from '@/components/purchase/tabs/SupplierOrderComparatorTab';
+import DispatchBanner from '@/components/purchase/DispatchBanner';
+import DispatchPreviewDialog from '@/components/purchase/DispatchPreviewDialog';
+import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurchaseRequestModal';
+import CsvImportWizard from '@/components/purchase/CsvImportWizard';
+import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { fetchPurchaseRequestFacets } from '@/api/purchaseRequests';
+
+// Params propres à un onglet donné — obsolètes dès qu'on quitte cet onglet.
+const TAB_OWNED_PARAMS = ['requestId', 'panier_status', 'order_id', 'orders'];
+
+export default function PurchaseRequestsPage() {
+  const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab', TAB_OWNED_PARAMS);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [refreshSignal, setRefreshSignal] = useState(0);
+
+  // Facets (compteurs par statut + pending_dispatch_count) chargés une seule fois ici et
+  // partagés avec PurchaseRequestsTab (dropdown de filtre) — évite un double appel /facets.
+  const [facets, setFacets] = useState(null);
+  const loadFacets = useCallback(async () => {
+    try {
+      const data = await fetchPurchaseRequestFacets();
+      setFacets(data);
+    } catch {
+      // non-bloquant
+    }
+  }, []);
+  const pendingDispatchCount = facets?.pending_dispatch_count ?? 0;
+
+  // Chargement initial + polling 30s + rechargement après création de DA ou changement d'onglet
+  useEffect(() => {
+    loadFacets();
+    const id = setInterval(loadFacets, 30_000);
+    return () => clearInterval(id);
+  }, [loadFacets, refreshSignal, activeTab]);
+
+  // Fonctions dispatch exposées par le tab actif
+  const [dispatchFn, setDispatchFn] = useState(null);
+  const [dispatching, setDispatchingState] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
+
+  const handleDispatchStateChange = useCallback((state) => {
+    setDispatchFn(() => state.onDispatch);
+    setDispatchingState(state.dispatching);
+    setDispatchResult(state.dispatchResult);
+  }, []);
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const handleConfirmDispatch = useCallback(async (excludedIds) => {
+    if (!dispatchFn) return;
+    await dispatchFn(excludedIds);
+    await loadFacets();
+    setPreviewOpen(false);
+  }, [dispatchFn, loadFacets]);
+
+  const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 ? {
+    label: (
+      <Button color="blue" size="2" disabled={dispatching} onClick={() => setPreviewOpen(true)}>
+        <Zap size={16} />
+        {dispatching ? 'Dispatch en cours...' : `Dispatcher (${pendingDispatchCount})`}
+      </Button>
+    ),
+  } : null;
+
+  const headerActions = [
+    ...(dispatchAction ? [dispatchAction] : []),
+    {
+      label: 'Import CSV',
+      icon: FileUp,
+      onClick: () => setImportOpen(true),
+    },
+    {
+      label: 'Nouvelle demande',
+      icon: ShoppingCart,
+      onClick: () => setModalOpen(true),
+    },
+  ];
+
+  return (
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
+      <PageHeader
+        title="Achats"
+        subtitle="Demandes d'achat et paniers fournisseurs"
+        actions={headerActions}
+      />
+
+      <Box px="4" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {activeTab === 'requests' && dispatchResult && (
+          <DispatchBanner
+            dispatchResult={dispatchResult}
+            onClearResult={() => setDispatchResult(null)}
+          />
+        )}
+
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={setActiveTab}
+          style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+        >
+          <Tabs.List style={{ borderBottom: '1px solid var(--gray-6)', flexShrink: 0 }}>
+            <Tabs.Trigger value="requests">
+              <Flex align="center" gap="2">
+                <ShoppingCart size={14} />
+                <Text>Demandes d&apos;achat</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="orders">
+              <Flex align="center" gap="2">
+                <ShoppingBag size={14} />
+                <Text>Paniers fournisseurs</Text>
+              </Flex>
+            </Tabs.Trigger>
+            <Tabs.Trigger value="comparateur">
+              <Flex align="center" gap="2">
+                <Scale size={14} />
+                <Text>Comparateur</Text>
+              </Flex>
+            </Tabs.Trigger>
+          </Tabs.List>
+
+          <Tabs.Content value="requests" style={{ flex: 1, minHeight: 0 }}>
+            {activeTab === 'requests' && (
+              <PurchaseRequestsTab
+                refreshSignal={refreshSignal}
+                onDispatchStateChange={handleDispatchStateChange}
+                facets={facets}
+              />
+            )}
+          </Tabs.Content>
+
+          <Tabs.Content value="orders" style={{ flex: 1, minHeight: 0 }}>
+            {activeTab === 'orders' && <SupplierOrdersTab />}
+          </Tabs.Content>
+
+          <Tabs.Content value="comparateur" style={{ flex: 1, minHeight: 0 }}>
+            {activeTab === 'comparateur' && <SupplierOrderComparatorTab />}
+          </Tabs.Content>
+        </Tabs.Root>
+      </Box>
+
+      <DispatchPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        onConfirm={handleConfirmDispatch}
+        dispatching={dispatching}
+      />
+
+      <SpontaneousPurchaseRequestModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSuccess={() => setRefreshSignal((n) => n + 1)}
+      />
+
+      <CsvImportWizard
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onSuccess={() => setRefreshSignal((n) => n + 1)}
+      />
+    </Flex>
+  );
+}

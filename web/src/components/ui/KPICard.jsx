@@ -1,0 +1,92 @@
+/**
+ * @fileoverview Carte KPI générique avec progression et colorisation intelligente
+ * 
+ * @module components/common/KPICard
+ * @requires react
+ * @requires prop-types
+ * @requires @radix-ui/themes
+ */
+import { Card, Box, Text, Heading, Progress } from "@radix-ui/themes";
+import PropTypes from "prop-types";
+
+/** Seuils pour déterminer les couleurs de disponibilité */
+const AVAILABILITY_THRESHOLDS = {
+  EXCELLENT: 95,
+  GOOD: 85
+};
+
+/** Couleur par défaut des KPIs */
+const DEFAULT_COLOR = "blue";
+
+/**
+ * Détermine la couleur en fonction du contexte et de la valeur de progression
+ * @param {string|undefined} color - Couleur explicite fournie
+ * @param {number|undefined} progress - Valeur de progression 0-100
+ * @returns {string} Nom de la couleur Radix UI
+ */
+const determineColor = (color, progress) => {
+  if (color) return color;
+  
+  if (progress !== undefined && typeof progress === "number") {
+    if (progress >= AVAILABILITY_THRESHOLDS.EXCELLENT) return "green";
+    if (progress >= AVAILABILITY_THRESHOLDS.GOOD) return "orange";
+    return "red";
+  }
+  
+  return DEFAULT_COLOR;
+};
+
+/**
+ * Carte KPI générique avec valeur, sous-titre et barre de progression
+ * @component
+ * @param {Object} props
+ * @param {string} props.label - Label du KPI
+ * @param {string|number} props.value - Valeur principale à afficher
+ * @param {string} [props.subtitle] - Texte additionnel sous la valeur
+ * @param {string} [props.color] - Couleur du badge (green, orange, red, blue, etc.)
+ * @param {number} [props.progress] - Valeur de progression 0-100
+ * @returns {JSX.Element} Card avec KPI formaté
+ * @example
+ * <KPICard label="Disponibilité" value="92.5%" progress={92.5} />
+ * <KPICard label="Interventions" value={8} subtitle="sur 15 total" color="orange" />
+ */
+export default function KPICard({ label, value, subtitle, color, progress, notice }) {
+  const displayColor = determineColor(color, progress);
+
+  return (
+    <Card>
+      <Box p="3" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Heading size="3" color={displayColor} mb="2">
+          {label}
+        </Heading>
+        
+        <Box flex="1">
+          <Heading size="6" color={displayColor} mb="1">
+            {value}
+          </Heading>
+          {subtitle && (
+            <Text size="2" color="gray" mb="2">{subtitle}</Text>
+          )}
+          {progress !== undefined && (
+            <Progress value={progress || 0} color={displayColor} mb="3" />
+          )}
+        </Box>
+        
+        {notice && (
+          <Text size="1" color="gray" style={{ marginTop: 'auto', borderTop: '1px solid var(--gray-5)', paddingTop: '0.75rem' }}>
+            {notice}
+          </Text>
+        )}
+      </Box>
+    </Card>
+  );
+}
+
+KPICard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  subtitle: PropTypes.string,
+  color: PropTypes.string,
+  progress: PropTypes.number,
+  notice: PropTypes.string,
+};

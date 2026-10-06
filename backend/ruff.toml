@@ -1,0 +1,21 @@
+# Configuration ruff (ADR 0003). Cible : Python 3.12, celui de l'image Docker.
+target-version = "py312"
+line-length = 100
+extend-exclude = ["_legacy", "alembic/versions", "graphify-out", "scripts/_*.py"]
+
+[lint]
+# Socle volontairement réduit pour démarrer sans bruit : erreurs réelles (F),
+# style PEP 8 de base (E, W), imports (I) et bugs courants (B).
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+    "E501",  # la longueur de ligne est gérée par le formateur
+    "B905",  # zip(cols, row) sur des curseurs de même longueur : strict= n'apporte rien ici
+    "B904",  # raise ... from e : 43 occurrences, reprise progressive (docs/backlog/raise-from.md)
+]
+
+[lint.per-file-ignores]
+# FastAPI : Depends() et Query() dans les valeurs par défaut sont le motif normal.
+"api/**/routes.py" = ["B008"]
+
+[format]
+quote-style = "preserve"

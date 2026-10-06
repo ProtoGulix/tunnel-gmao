@@ -1,0 +1,109 @@
+from datetime import date, datetime
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from api.users.schemas import UserListItem
+
+
+class InterventionTaskOut(BaseModel):
+    id: UUID
+    intervention_id: Optional[UUID] = None
+    label: str
+    origin: str = "plan"
+    status: str
+    optional: bool
+    assigned_to: Optional[UserListItem] = None
+    due_date: Optional[date] = None
+    sort_order: int
+    skip_reason: Optional[str] = None
+    gamme_step_id: Optional[UUID] = None
+    occurrence_id: Optional[UUID] = None
+    closed_by: Optional[UUID] = None
+    created_by: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    action_count: int = 0
+    time_spent: float = 0.0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InterventionTaskIn(BaseModel):
+    intervention_id: UUID
+    label: str
+    origin: str = Field(default="tech", pattern="^(plan|resp|tech)$")
+    optional: bool = False
+    assigned_to: Optional[UUID] = None
+    due_date: Optional[date] = None
+    sort_order: int = 0
+    reason_code: str = Field(
+        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    )
+    reason_text: Optional[str] = Field(
+        default=None, description="Texte libre obligatoire si reason_code=OTHER."
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InterventionTaskPatch(BaseModel):
+    label: Optional[str] = None
+    status: Optional[str] = Field(
+        default=None,
+        pattern="^(todo|skipped)$",
+        description=(
+            "Transitions autorisées via PATCH direct : todo (réouverture), "
+            "skipped (exclusion). `done` est volontairement exclu — une tâche "
+            "ne peut être clôturée qu'en la liant à une action "
+            "(POST /intervention-actions avec tasks=[{task_id, close_task: true}]), "
+            "jamais par un PATCH isolé sans travail associé."
+        ),
+    )
+    skip_reason: Optional[str] = None
+    assigned_to: Optional[UUID] = None
+    due_date: Optional[date] = None
+    sort_order: Optional[int] = None
+    reason_code: str = Field(
+        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    )
+    reason_text: Optional[str] = Field(
+        default=None, description="Texte libre obligatoire si reason_code=OTHER."
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_status_rules(self) -> "InterventionTaskPatch":
+        if self.status == "skipped" and not (self.skip_reason or "").strip():
+            raise ValueError("skip_reason obligatoire si status=skipped")
+        return self
+
+
+class InterventionTaskDelete(BaseModel):
+    reason_code: str = Field(
+        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    )
+    reason_text: Optional[str] = Field(
+        default=None, description="Texte libre obligatoire si reason_code=OTHER."
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TaskProgressOut(BaseModel):
+    total: int
+    todo: int
+    in_progress: int
+    done: int
+    skipped: int
+    blocking_pending: int = 0
+    is_complete: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def compute_is_complete(self) -> "TaskProgressOut":
+        self.is_complete = self.blocking_pending == 0 and self.total > 0
+        return self

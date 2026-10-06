@@ -1,0 +1,81 @@
+/**
+ * Header du détail d'un panier fournisseur : numéro, statut, actions.
+ * @module components/purchase/SupplierOrderHeader
+ */
+
+import PropTypes from 'prop-types';
+import { Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
+import { Building2, ChevronDown, Download, Mail, Trash2 } from 'lucide-react';
+import HexBadge from '@/components/ui/HexBadge';
+
+export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onExportEmail, onDelete }) {
+  return (
+    <Flex align="center" justify="between" gap="2">
+      <Flex direction="column" gap="1">
+        <Flex align="center" gap="2">
+          <Building2 size={16} color="var(--blue-9)" />
+          <Text size="3" weight="bold">{detail.supplier?.name || '—'}</Text>
+          <HexBadge color={statusInfo.color} label={statusInfo.label} fallbackColor={statusInfo.color || 'gray'} />
+        </Flex>
+        <Flex align="center" gap="2" style={{ paddingLeft: 24 }}>
+          <Text size="1" color="gray">{detail.order_number}</Text>
+          {statusInfo.description && (
+            <Text size="1" color="gray">· {statusInfo.description}</Text>
+          )}
+        </Flex>
+      </Flex>
+
+      <Flex gap="2" align="center">
+        {transitions.length > 0 && (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button size="1" variant="soft" color={statusInfo.radixColor || 'gray'} loading={statusUpdating}>
+                Changer le statut <ChevronDown size={12} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content size="1">
+              {transitions.map((t) => {
+                const info = statuses[t.to] ?? { label: t.to, color: 'gray' };
+                return (
+                  <DropdownMenu.Item key={t.to} color={info.radixColor || 'gray'} onSelect={() => onStatusChange(t.to)}>
+                    {info.label}
+                    {t.description && (
+                      <Text size="1" color="gray" style={{ display: 'block' }}>{t.description}</Text>
+                    )}
+                  </DropdownMenu.Item>
+                );
+              })}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        )}
+        {onExportEmail && (
+          <Button size="1" variant="soft" color="indigo" onClick={() => onExportEmail(detail.id)}>
+            <Mail size={12} /> Envoyer la demande de devis
+          </Button>
+        )}
+        {onExportCsv && (
+          <Button size="1" variant="soft" onClick={() => onExportCsv(detail.id)}>
+            <Download size={12} /> CSV
+          </Button>
+        )}
+        {onDelete && (
+          <Button size="1" variant="soft" color="red" onClick={onDelete}>
+            <Trash2 size={12} /> Supprimer
+          </Button>
+        )}
+      </Flex>
+    </Flex>
+  );
+}
+
+SupplierOrderHeader.propTypes = {
+  detail: PropTypes.object.isRequired,
+  statusInfo: PropTypes.object.isRequired,
+  transitions: PropTypes.array.isRequired,
+  statuses: PropTypes.object.isRequired,
+  statusUpdating: PropTypes.bool,
+  onStatusChange: PropTypes.func.isRequired,
+  onExportCsv: PropTypes.func,
+  onExportEmail: PropTypes.func,
+  onDelete: PropTypes.func,
+};

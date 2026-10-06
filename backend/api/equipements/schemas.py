@@ -1,0 +1,286 @@
+"""Schémas Pydantic pour le domaine équipements"""
+
+from datetime import date, datetime
+from uuid import UUID
+
+from pydantic import BaseModel
+
+from api.utils.pagination import PaginationMeta
+
+
+class EquipmentClassRef(BaseModel):
+    """Référence à une classe d'équipement"""
+
+    id: UUID
+    code: str
+    label: str
+
+
+class EquipementStatutRef(BaseModel):
+    """Référence à un statut d'équipement"""
+
+    id: int
+    code: str
+    label: str
+    interventions: bool
+    couleur: str | None = None
+
+
+class EquipementHealth(BaseModel):
+    """Santé d'un équipement"""
+
+    level: str
+    reason: str
+    open_interventions_count: int = 0
+    urgent_count: int = 0
+    open_requests_count: int = 0
+    new_requests_count: int = 0
+    request_status_counts: dict[str, int] | None = None
+    open_tasks_count: int = 0
+    overdue_tasks_count: int = 0
+    unassigned_tasks_count: int = 0
+    open_purchase_requests_count: int = 0
+    purchase_request_status_counts: dict[str, int] | None = None
+    has_affectation: bool = False
+    rules_triggered: list[str] | None = None
+
+
+class EquipementParent(BaseModel):
+    """Équipement parent"""
+
+    id: UUID
+    code: str | None = None
+    name: str
+
+
+class EquipementListItem(BaseModel):
+    """Équipement pour liste - vue légère avec health"""
+
+    id: UUID
+    code: str | None = None
+    name: str
+    health: EquipementHealth
+    parent: EquipementParent | None = None
+    equipement_class: EquipmentClassRef | None = None
+    statut: EquipementStatutRef | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class TypeInterventionRef(BaseModel):
+    """Référence à un type d'intervention avec code et label"""
+
+    code: str | None = None
+    label: str | None = None
+
+
+class InterventionListItem(BaseModel):
+    """Intervention légère pour inclusion dans le détail équipement"""
+
+    id: UUID
+    code: str | None = None
+    title: str | None = None
+    type_inter: TypeInterventionRef | None = None
+    status_actual: str | None = None
+    priority: str | None = None
+    reported_date: date | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class InterventionsPaginated(BaseModel):
+    """Interventions paginées pour inclusion dans le détail équipement"""
+
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    items: list[InterventionListItem]
+
+
+class EquipementChildItem(BaseModel):
+    """Enfant d'un équipement - vue légère avec health"""
+
+    id: UUID
+    code: str | None = None
+    name: str
+    health: EquipementHealth
+
+    class Config:
+        from_attributes = True
+
+
+class PreventivePlanSummary(BaseModel):
+    """Résumé d'un plan de maintenance préventive applicable"""
+
+    id: UUID
+    code: str
+    label: str
+    trigger_type: str  # "periodicity" | "hours"
+    periodicity_days: int | None = None
+    hours_threshold: int | None = None
+    active: bool
+    # date de la prochaine occurrence pending/générée
+    next_occurrence: date | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class PreventiveOccurrencesSummary(BaseModel):
+    """Résumé des occurrences préventives récentes/en cours"""
+
+    pending_count: int = 0
+    generated_count: int = 0
+    skipped_count: int = 0
+    next_scheduled: date | None = None  # prochaine occurrence pending
+    last_skipped_reason: str | None = None
+
+
+class OpenRequestSummary(BaseModel):
+    """Résumé d'une demande d'intervention ouverte"""
+
+    id: UUID
+    code: str | None = None
+    description: str | None = None
+    statut: str
+    statut_label: str | None = None
+    statut_color: str | None = None
+    is_system: bool
+    created_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class EquipementDetail(BaseModel):
+    """Équipement détaillé avec tous les champs, children_count et interventions paginées"""
+
+    id: UUID
+    code: str | None = None
+    name: str
+    no_machine: str | None = None
+    affectation: str | None = None
+    is_mere: bool | None = None
+    fabricant: str | None = None
+    numero_serie: str | None = None
+    date_mise_service: date | None = None
+    notes: str | None = None
+    health: EquipementHealth
+    parent: EquipementParent | None = None
+    equipement_class: EquipmentClassRef | None = None
+    statut: EquipementStatutRef | None = None
+    children_count: int = 0
+    interventions: InterventionsPaginated
+    preventive_plans: list[PreventivePlanSummary] | None = None
+    preventive_occurrences_summary: PreventiveOccurrencesSummary | None = None
+    open_requests: list[OpenRequestSummary] | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class EquipementCreate(BaseModel):
+    """Schéma pour créer un équipement"""
+
+    name: str
+    code: str | None = None
+    no_machine: str | None = None
+    affectation: str | None = None
+    is_mere: bool | None = None
+    fabricant: str | None = None
+    numero_serie: str | None = None
+    date_mise_service: date | None = None
+    notes: str | None = None
+    parent_id: UUID | None = None
+    equipement_class_id: UUID | None = None
+    statut_id: int | None = None
+    children_ids: list[UUID] | None = None
+
+
+class EquipementUpdate(BaseModel):
+    """Schéma pour PUT — remplacement complet (name obligatoire)"""
+
+    name: str
+    code: str | None = None
+    no_machine: str | None = None
+    affectation: str | None = None
+    is_mere: bool | None = None
+    fabricant: str | None = None
+    numero_serie: str | None = None
+    date_mise_service: date | None = None
+    notes: str | None = None
+    parent_id: UUID | None = None
+    equipement_class_id: UUID | None = None
+    statut_id: int | None = None
+    children_ids: list[UUID] | None = None
+
+
+class EquipementPatch(BaseModel):
+    """Schéma pour PATCH — mise à jour partielle"""
+
+    name: str | None = None
+    code: str | None = None
+    no_machine: str | None = None
+    affectation: str | None = None
+    is_mere: bool | None = None
+    fabricant: str | None = None
+    numero_serie: str | None = None
+    date_mise_service: date | None = None
+    notes: str | None = None
+    parent_id: UUID | None = None
+    equipement_class_id: UUID | None = None
+    statut_id: int | None = None
+    children_ids: list[UUID] | None = None
+
+
+class InterventionsStats(BaseModel):
+    """Statistiques interventions pour endpoint /stats"""
+
+    open: int
+    closed: int
+    by_status: dict[str, int]
+    by_priority: dict[str, int]
+
+
+class EquipementStatsDetailed(BaseModel):
+    """Stats détaillées pour GET /equipements/{id}/stats"""
+
+    interventions: InterventionsStats
+
+
+class EquipementHealthOnly(BaseModel):
+    """Health uniquement pour endpoint ultra-léger"""
+
+    level: str
+    reason: str
+    open_interventions_count: int = 0
+    urgent_count: int = 0
+    open_requests_count: int = 0
+    new_requests_count: int = 0
+    request_status_counts: dict[str, int] | None = None
+    open_tasks_count: int = 0
+    overdue_tasks_count: int = 0
+    unassigned_tasks_count: int = 0
+    open_purchase_requests_count: int = 0
+    purchase_request_status_counts: dict[str, int] | None = None
+    has_affectation: bool = False
+    rules_triggered: list[str] | None = None
+
+
+class EquipementClassFacetItem(BaseModel):
+    """Facette par classe d'équipement"""
+
+    code: str | None = None
+    label: str | None = None
+    count: int
+
+
+class EquipementListPaginated(BaseModel):
+    """Réponse paginée de la liste des équipements avec facettes"""
+
+    items: list[EquipementListItem]
+    pagination: PaginationMeta
+    facets: dict[str, list[EquipementClassFacetItem]]

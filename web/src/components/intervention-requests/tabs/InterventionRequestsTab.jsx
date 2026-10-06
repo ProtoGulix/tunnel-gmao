@@ -1,0 +1,295 @@
+/**
+ * @fileoverview Onglet orchestrateur des demandes d'intervention
+ *
+ * Gère : filtres statut (onglets facets), recherche, liste paginée,
+ * détail en ligne expandable et formulaire de création.
+ *
+ * @module components/intervention-requests/tabs/InterventionRequestsTab
+ */
+
+import { useCallback, useState } from 'react';
+import { Badge, Box, Button, Callout, Dialog, Flex, Select, Spinner, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList, Plus, Wrench } from 'lucide-react';
+import { useInterventionRequests } from '@/hooks/intervention-requests/useInterventionRequests';
+import { createInterventionRequest, repairInterventionRequests } from '@/api/intervention-requests';
+import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import TableHeader from '@/components/ui/TableHeader';
+import DataTable from '@/components/ui/DataTable';
+import ErrorState from '@/components/ui/ErrorState';
+import Pagination from '@/components/ui/Pagination';
+import InterventionRequestDetail from '@/components/intervention-requests/InterventionRequestDetail';
+import InterventionRequestForm from '@/components/intervention-requests/InterventionRequestForm';
+import StatutTabs from '@/components/intervention-requests/StatutTabs';
+
+// ─── Colonnes ─────────────────────────────────────────────────────────────────
+
+const ELLIPSIS = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300, display: 'block' };
+const formatDay = (iso) => iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+const columns = [
+  { key: 'code', header: 'Code', width: 160,
+    render: (row) => <Text size="2" weight="medium" style={{ fontFamily: 'monospace' }}>{row.code}</Text> },
+  { key: 'machine', header: 'Équipement',
+    render: (row) => (
+      <Flex align="center" gap="2">
+        {row.equipement?.code && <Badge color="gray" variant="soft" size="1">{row.equipement.code}</Badge>}
+        <Text size="2">{row.equipement?.name ?? '—'}</Text>
+      </Flex>
+    ) },
+  { key: 'demandeur', header: 'Demandeur', width: 200,
+    render: (row) => (
+      <Flex direction="column" gap="0">
+        <Flex align="center" gap="1" wrap="wrap">
+          <Text size="2">{row.demandeur_nom}</Text>
+          {row.is_system && (
+            <Tooltip content="Demande générée automatiquement par le moteur préventif">
+              <Badge color="gray" variant="soft" size="1" style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Bot size={10} />Système
+              </Badge>
+            </Tooltip>
+          )}
+        </Flex>
+        {(row.service?.label || row.demandeur_service) && (
+          <Text size="1" color="gray">{row.service?.label ?? row.demandeur_service}</Text>
+        )}
+      </Flex>
+    ) },
+  { key: 'description', header: 'Description',
+    render: (row) => (
+      <Flex direction="column" gap="1">
+        <Text size="2" color="gray" style={ELLIPSIS}>{row.description}</Text>
+        {row.suggested_type_inter && (
+          <Tooltip content="Type d'intervention suggéré">
+            <Badge color="blue" variant="soft" size="1" style={{ cursor: 'default', width: 'fit-content' }}>
+              {TYPE_INTER_LABELS[row.suggested_type_inter] ?? row.suggested_type_inter}
+            </Badge>
+          </Tooltip>
+        )}
+      </Flex>
+    ) },
+  { key: 'statut', header: 'Statut', width: 120,
+    render: (row) => (
+      <Badge style={{ backgroundColor: row.statut_color + '22', color: row.statut_color }} variant="soft" radius="full">
+        {row.statut_label}
+      </Badge>
+    ) },
+  { key: 'created_at', header: 'Créée le', width: 110,
+    render: (row) => <Text size="1" color="gray">{formatDay(row.created_at)}</Text> },
+];
+
+// ─── Tab principal ────────────────────────────────────────────────────────────
+
+export default function InterventionRequestsTab() {
+  const {
+    items,
+    loading,
+    error,
+    search,
+    setSearch,
+    statut,
+    setStatut,
+    isSystem,
+    setIsSystem,
+    facets,
+    page,
+    setPage,
+    pageSize,
+    changePageSize,
+    total,
+    refresh,
+  } = useInterventionRequests();
+
+  const [selectedId, setSelectedId] = useState(null);
+  const [mode, setMode] = useState(null); // 'create' | null
+  const [saving, setSaving] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState(null);
+
+  const handleRepair = async () => {
+    try {
+      setRepairing(true);
+      const result = await repairInterventionRequests();
+      setRepairResult(result);
+      if (result.repaired_count > 0) refresh();
+    } catch {
+      // ignoré — le bouton se désactive simplement
+    } finally {
+      setRepairing(false);
+    }
+  };
+
+  const handleRowClick = useCallback(
+    (row) => {
+      if (mode === 'create') return;
+      setSelectedId((prev) => (prev === row.id ? null : row.id));
+    },
+    [mode]
+  );
+
+  const handleCreate = async (formData) => {
+    try {
+      setSaving(true);
+      await createInterventionRequest(formData);
+      setMode(null);
+      refresh();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (error) return <ErrorState error={error} onRetry={refresh} />;
+
+  return (
+    <Box>
+      {/* Formulaire de création */}
+      {mode === 'create' && (
+        <InterventionRequestForm
+          onSubmit={handleCreate}
+          onCancel={() => setMode(null)}
+          saving={saving}
+        />
+      )}
+
+      {/* Dialog résultat réparation */}
+      <Dialog.Root open={repairResult !== null} onOpenChange={(open) => { if (!open) setRepairResult(null); }}>
+        <Dialog.Content maxWidth="480px">
+          <Dialog.Title>Réparation des DIs orphelines</Dialog.Title>
+          {repairResult && (
+            <Flex direction="column" gap="3" mt="2">
+              {repairResult.repaired_count === 0 ? (
+                <Callout.Root color="gray" size="1">
+                  <Callout.Text>Aucune DI orpheline trouvée — tout est cohérent.</Callout.Text>
+                </Callout.Root>
+              ) : (
+                <>
+                  <Callout.Root color="green" size="1">
+                    <Callout.Text>{repairResult.repaired_count} DI{repairResult.repaired_count > 1 ? 's passées' : ' passée'} à <strong>Clôturée</strong>.</Callout.Text>
+                  </Callout.Root>
+                  <Flex direction="column" gap="1">
+                    {repairResult.details.map((d) => (
+                      <Flex key={d.id} gap="2" align="center">
+                        <Badge color="gray" variant="soft" size="1" style={{ fontFamily: 'monospace' }}>{d.code}</Badge>
+                        <Text size="1" color="gray">{d.machine_code}</Text>
+                      </Flex>
+                    ))}
+                  </Flex>
+                </>
+              )}
+              <Flex justify="end">
+                <Dialog.Close>
+                  <Button size="2" variant="soft" color="gray">Fermer</Button>
+                </Dialog.Close>
+              </Flex>
+            </Flex>
+          )}
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* En-tête avec recherche */}
+      <TableHeader
+        icon={ClipboardList}
+        title="Demandes d'intervention"
+        count={total}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Rechercher par code, demandeur, description, équipement ou service…"
+        loading={loading}
+        showRefreshButton
+        onRefresh={refresh}
+        rightActions={
+          <Flex gap="2" align="center">
+            <Tooltip content="Clôturer les DIs dont l'intervention liée est déjà fermée (correction de données orphelines)">
+              <Button
+                size="2"
+                color="amber"
+                variant="soft"
+                disabled={repairing}
+                onClick={handleRepair}
+              >
+                {repairing ? <Spinner size="1" /> : <Wrench size={14} />}
+                Réparer les DIs
+              </Button>
+            </Tooltip>
+            {mode !== 'create' && (
+              <Button
+                size="2"
+                color="blue"
+                onClick={() => { setSelectedId(null); setMode('create'); }}
+              >
+                <Plus size={14} />
+                Nouvelle demande
+              </Button>
+            )}
+          </Flex>
+        }
+      />
+
+      {/* Filtre source */}
+      <Flex align="center" gap="2" mb="2">
+        <Text size="1" color="gray" weight="medium">Source :</Text>
+        <Select.Root
+          value={isSystem === null ? 'all' : isSystem ? 'system' : 'human'}
+          onValueChange={(v) => setIsSystem(v === 'all' ? null : v === 'system')}
+        >
+          <Select.Trigger size="1" />
+          <Select.Content>
+            <Select.Item value="all">Toutes</Select.Item>
+            <Select.Item value="human">Humaines</Select.Item>
+            <Select.Item value="system">Système</Select.Item>
+          </Select.Content>
+        </Select.Root>
+      </Flex>
+
+      {/* Onglets statut (depuis facets) */}
+      {facets.statut?.length > 0 && (
+        <Box mb="3">
+          <StatutTabs
+            facets={facets.statut}
+            activeStatut={statut}
+            onStatutChange={setStatut}
+          />
+        </Box>
+      )}
+
+      {/* Tableau */}
+      <DataTable
+        columns={columns}
+        data={items}
+        loading={loading}
+        onRowClick={handleRowClick}
+        getRowKey={(row) => row.id}
+        rowStyles={(row) => ({
+          cursor: 'pointer',
+          background: row.id === selectedId ? 'var(--accent-3)' : undefined,
+          boxShadow: row.id === selectedId ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+        })}
+        isRowExpanded={(row) => row.id === selectedId}
+        renderExpandedRow={(row) => (
+          <InterventionRequestDetail
+            requestId={row.id}
+            onTransitionDone={refresh}
+            onDeleted={() => { setSelectedId(null); refresh(); }}
+          />
+        )}
+        emptyState={{
+          icon: ClipboardList,
+          title: 'Aucune demande',
+          description: 'Aucune demande d\'intervention ne correspond aux filtres.',
+        }}
+      />
+
+      {/* Pagination */}
+      {total > pageSize && (
+        <Box mt="3">
+          <Pagination
+            currentPage={page}
+            totalItems={total}
+            itemsPerPage={pageSize}
+            onPageChange={setPage}
+            onItemsPerPageChange={changePageSize}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}

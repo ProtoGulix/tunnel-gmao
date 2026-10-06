@@ -1,0 +1,388 @@
+from datetime import datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from api.supplier_order_lines.schemas import ManufacturerInfo
+from api.supplier_orders.schemas import SupplierOrderStatusInfo
+from api.suppliers.schemas import SupplierListItem
+
+
+class UserRefOut(BaseModel):
+    """Référence légère vers un utilisateur tunnel_user"""
+
+    id: UUID
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    initial: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ========== Schémas optimisés v1.2.0 ==========
+
+
+class DerivedStatus(BaseModel):
+    """Statut dérivé calculé côté backend"""
+
+    code: str = Field(
+        ...,
+        description="Code statut (TO_QUALIFY, NO_SUPPLIER_REF, PENDING_DISPATCH, OPEN, QUOTED, ORDERED, PARTIAL, RECEIVED, REJECTED)",
+    )
+    label: str = Field(..., description="Label lisible")
+    color: str = Field(..., description="Couleur hexadécimale")
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseRequestListItem(BaseModel):
+    """Schéma léger pour liste (tableau, pagination)"""
+
+    id: UUID
+    code: str = Field(..., description="Référence lisible DA-YYYY-NNNN")
+    item_label: str
+    quantity: int
+    unit: Optional[str] = Field(default=None)
+
+    # Statut dérivé (calculé en SQL)
+    derived_status: DerivedStatus
+
+    # Infos essentielles sans objets imbriqués
+    stock_item_id: Optional[UUID] = Field(default=None, description="ID article stock")
+    stock_item_ref: Optional[str] = Field(default=None, description="Référence article")
+    stock_item_name: Optional[str] = Field(default=None, description="Nom article")
+    intervention_code: Optional[str] = Field(default=None, description="Code intervention")
+    requester_name: Optional[str] = Field(default=None)
+    urgency: Optional[str] = Field(default=None)
+
+    # Compteurs agrégés (évite de charger order_lines)
+    quotes_count: int = Field(default=0, description="Nombre de devis reçus")
+    selected_count: int = Field(default=0, description="Nombre de lignes sélectionnées")
+    suppliers_count: int = Field(default=0, description="Nombre de fournisseurs différents")
+
+    # Métadonnées
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class LinkedOrderLineDetail(BaseModel):
+    """Ligne de commande avec fournisseur enrichi (pour détails complets)"""
+
+    id: UUID
+    supplier_order_line_id: UUID
+    quantity_allocated: int
+
+    # Commande fournisseur
+    supplier_order_id: UUID
+    supplier_order_number: Optional[str] = Field(default=None)
+    supplier_order_status: Optional[SupplierOrderStatusInfo] = Field(default=None)
+
+    # Fournisseur enrichi + référence catalogue
+    supplier: Optional[SupplierListItem] = Field(default=None)
+    catalog_ref: Optional[str] = Field(
+        default=None, description="Référence de l'article dans le catalogue fournisseur"
+    )
+    manufacturer: Optional[ManufacturerInfo] = Field(
+        default=None, description="Fabricant et sa référence"
+    )
+
+    # Détails ligne
+    unit_price: Optional[float] = Field(default=None)
+    total_price: Optional[float] = Field(default=None)
+    quote_received: Optional[bool] = Field(default=None)
+    quote_price: Optional[float] = Field(default=None)
+    quote_received_at: Optional[datetime] = Field(default=None)
+    is_selected: Optional[bool] = Field(default=None)
+    quantity_received: Optional[int] = Field(default=None)
+    lead_time_days: Optional[int] = Field(default=None)
+    notes: Optional[str] = Field(default=None)
+    created_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class EquipementInfo(BaseModel):
+    """Informations équipement pour contexte intervention"""
+
+    id: UUID
+    code: Optional[str] = Field(default=None)
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class InterventionInfo(BaseModel):
+    """Informations intervention complètes"""
+
+    id: UUID
+    code: Optional[str] = Field(default=None)
+    title: str
+    priority: Optional[str] = Field(default=None)
+    status_actual: Optional[str] = Field(default=None)
+    equipement: Optional[EquipementInfo] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class StockItemDetail(BaseModel):
+    """Article stock complet (pour édition)"""
+
+    id: UUID
+    name: str
+    ref: Optional[str] = Field(default=None)
+    family_code: str
+    sub_family_code: str
+    quantity: Optional[int] = Field(default=0)
+    unit: Optional[str] = Field(default=None)
+    location: Optional[str] = Field(default=None)
+    supplier_refs_count: Optional[int] = Field(default=0)
+
+    class Config:
+        from_attributes = True
+
+
+class PartDetail(BaseModel):
+    """Pièce catalogue V4 (pour édition)"""
+
+    id: UUID
+    internal_ref: str
+    display_name: Optional[str] = Field(default=None)
+    family_code: Optional[str] = Field(default=None)
+    sub_family_code: Optional[str] = Field(default=None)
+    qty_in_stock: Optional[int] = Field(default=0)
+    unit: Optional[str] = Field(default=None)
+    location: Optional[str] = Field(default=None)
+    supplier_refs_count: Optional[int] = Field(default=0)
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseRequestDetail(BaseModel):
+    """Schéma complet pour détails (modal, édition)"""
+
+    id: UUID
+    code: str = Field(..., description="Référence lisible DA-YYYY-NNNN")
+    item_label: str
+    quantity: int
+    unit: Optional[str] = Field(default=None)
+
+    # Statut dérivé
+    derived_status: DerivedStatus
+    is_editable: bool = Field(
+        default=False, description="True si la DA peut encore être modifiée (non dispatchée)"
+    )
+
+    # Relations complètes
+    stock_item_id: Optional[UUID] = Field(default=None)
+    part_id: Optional[UUID] = Field(default=None)
+    stock_item: Optional[StockItemDetail] = Field(default=None, description="Article stock legacy")
+    part: Optional[PartDetail] = Field(default=None, description="Pièce catalogue V4")
+    intervention: Optional[InterventionInfo] = Field(
+        default=None, description="Intervention complète"
+    )
+    order_lines: List[LinkedOrderLineDetail] = Field(
+        default_factory=list, description="Lignes avec fournisseurs"
+    )
+
+    # Métadonnées demande
+    requested_by: Optional[str] = Field(
+        default=None, description="Demandeur texte libre (legacy — CSV/formulaire public)"
+    )
+    requested_by_user: Optional[UserRefOut] = Field(
+        default=None, description="Demandeur réel, si référencé"
+    )
+    approver_name: Optional[str] = Field(
+        default=None, description="Approbateur texte libre (legacy)"
+    )
+    approver_user: Optional[UserRefOut] = Field(
+        default=None, description="Approbateur réel, si référencé"
+    )
+    approved_at: Optional[datetime] = Field(default=None)
+    urgency: Optional[str] = Field(default=None)
+    reason: Optional[str] = Field(default=None)
+    notes: Optional[str] = Field(default=None)
+    workshop: Optional[str] = Field(default=None)
+    quantity_approved: Optional[int] = Field(default=None)
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseRequestStats(BaseModel):
+    """Statistiques agrégées"""
+
+    period: dict = Field(..., description="Période analysée")
+    totals: dict = Field(..., description="Totaux généraux")
+    by_status: List[dict] = Field(default_factory=list)
+    by_urgency: List[dict] = Field(default_factory=list)
+    top_items: List[dict] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class DispatchError(BaseModel):
+    """Erreur lors du dispatch d'une demande"""
+
+    purchase_request_id: str
+    item_label: Optional[str] = Field(default=None)
+    error: str
+    error_detail: Optional[str] = Field(default=None)
+
+
+class DispatchPreviewTargetOrder(BaseModel):
+    """Panier fournisseur qu'une demande rejoindra si le dispatch est confirmé"""
+
+    supplier_id: str
+    supplier_name: Optional[str] = Field(default=None)
+    is_new_order: bool = Field(
+        ...,
+        description="True si aucun panier OPEN n'existe pour ce fournisseur : un nouveau sera créé",
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class DispatchPreviewItem(BaseModel):
+    """Aperçu du dispatch pour une demande donnée, avant confirmation"""
+
+    purchase_request_id: str
+    code: Optional[str] = Field(default=None, description="Référence lisible DA-YYYY-NNNN")
+    item_label: str
+    target_orders: List[DispatchPreviewTargetOrder] = Field(default_factory=list)
+    error: Optional[str] = Field(
+        default=None, description="Si présent, cette demande ne pourra pas être dispatchée"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class DispatchPreview(BaseModel):
+    """Aperçu en lecture seule du dispatch — aucune écriture en base"""
+
+    items: List[DispatchPreviewItem] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
+
+
+class DispatchIn(BaseModel):
+    """Demandes explicitement exclues du dispatch depuis l'écran de prévisualisation"""
+
+    excluded_ids: List[str] = Field(default_factory=list)
+
+
+class DispatchResult(BaseModel):
+    """Résultat du dispatch automatique"""
+
+    dispatched_count: int = Field(..., description="Nombre de demandes dispatchées")
+    created_orders: int = Field(..., description="Nombre de supplier_orders créés")
+    errors: List[DispatchError] = Field(default_factory=list, description="Erreurs rencontrées")
+    details: List[dict] = Field(
+        default_factory=list,
+        description="Détail par demande : mode 'consultation' (un panier par fournisseur référencé)",
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class ImportLineResult(BaseModel):
+    """Résultat pour une ligne du CSV importé"""
+
+    row: int
+    raw_ref: str
+    raw_qty: str
+    part_id: Optional[str] = Field(default=None)
+    display_name: Optional[str] = Field(default=None)
+    internal_ref: Optional[str] = Field(default=None)
+    status: str = Field(..., description="preview | created | skipped | error")
+    da_status: Optional[str] = Field(default=None, description="Statut dérivé de la DA créée")
+    duplicate_warning: bool = Field(default=False)
+    existing_qty: Optional[int] = Field(default=None)
+    existing_to_qualify: int = Field(
+        default=0, description="Nombre de DA À qualifier existantes pour cette référence"
+    )
+    error: Optional[str] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class ImportResult(BaseModel):
+    """Rapport global de l'import CSV"""
+
+    total: int
+    created: int
+    skipped: int = Field(default=0)
+    errors: int
+    lines: List[ImportLineResult]
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseRequestIn(BaseModel):
+    """Schéma d'entrée pour créer ou modifier une demande d'achat"""
+
+    stock_item_id: Optional[UUID] = Field(
+        default=None, description="ID de l'item en stock (optionnel)"
+    )
+    part_id: Optional[UUID] = Field(
+        default=None,
+        description="ID de la pièce catalogue V4 (optionnel, prioritaire sur stock_item_id)",
+    )
+    item_label: str = Field(..., description="Libellé de l'article demandé")
+    quantity: int = Field(..., gt=0, description="Quantité demandée")
+    unit: Optional[str] = Field(default=None, max_length=50, description="Unité (pièce, kg, etc.)")
+    requested_by: Optional[str] = Field(
+        default=None,
+        description="Demandeur texte libre (legacy — CSV/formulaire public sans utilisateur authentifié)",
+    )
+    requested_by_id: Optional[UUID] = Field(
+        default=None,
+        description="Demandeur réel (tunnel_user.id) — prioritaire sur requested_by à l'affichage",
+    )
+    approver_id: Optional[UUID] = Field(
+        default=None,
+        description="Approbateur réel (tunnel_user.id) — prioritaire sur approver_name à l'affichage",
+    )
+    urgency: Optional[str] = Field(
+        default="normal", description="Niveau d'urgence (normal, high, critical)"
+    )
+    reason: Optional[str] = Field(default=None, description="Raison de la demande")
+    notes: Optional[str] = Field(default=None, description="Notes complémentaires")
+    workshop: Optional[str] = Field(default=None, max_length=255, description="Atelier concerné")
+    intervention_action_id: Optional[UUID] = Field(
+        default=None,
+        description="ID de l'action d'intervention. Si fourni, la DA est liée à cette action (préventif, gestion stock, kit retrofit). Sinon, la DA est autonome (réappro spontanée, sans relation).",
+    )
+    quantity_requested: Optional[int] = Field(
+        default=None, description="Quantité demandée (détail)"
+    )
+    requester_name: Optional[str] = Field(default=None, description="Nom du demandeur")
+    reason_code: Optional[str] = Field(
+        default=None,
+        description="Code raison pour l'audit (ex: ROUTINE, OTHER). Voir GET /audit/reasons. Géré automatiquement par le middleware si absent.",
+    )
+    reason_text: Optional[str] = Field(
+        default=None,
+        description="Texte libre obligatoire si reason_code=OTHER.",
+    )
+
+    class Config:
+        from_attributes = True

@@ -1,0 +1,216 @@
+from datetime import datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from api.stock_items.schemas import StockItemListItem
+
+
+class LinkedPurchaseRequest(BaseModel):
+    """Demande d'achat liée à la ligne de commande"""
+
+    id: UUID
+    purchase_request_id: UUID
+    quantity: int
+    code: Optional[str] = Field(default=None, description="Référence lisible DA-YYYY-NNNN")
+    item_label: Optional[str] = Field(default=None)
+    requester_name: Optional[str] = Field(default=None)
+    intervention_request_id: Optional[UUID] = Field(
+        default=None, description="DI d'origine, si la demande provient d'une intervention"
+    )
+    intervention_request_code: Optional[str] = Field(
+        default=None, description="Code de la DI d'origine (ex: DI-2026-0042)"
+    )
+    created_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class PurchaseRequestLink(BaseModel):
+    """Schéma pour lier une demande d'achat à une ligne"""
+
+    purchase_request_id: UUID
+    quantity: int = Field(..., gt=0, description="Quantité allouée à cette demande")
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderLineIn(BaseModel):
+    """Schéma d'entrée pour créer une ligne de commande fournisseur"""
+
+    supplier_order_id: UUID = Field(..., description="ID de la commande fournisseur")
+    stock_item_id: UUID = Field(..., description="ID de l'article en stock")
+    supplier_ref_snapshot: Optional[str] = Field(
+        default=None, description="Référence fournisseur snapshot"
+    )
+    quantity: int = Field(..., gt=0, description="Quantité commandée")
+    unit_price: Optional[float] = Field(default=None, description="Prix unitaire")
+    notes: Optional[str] = Field(default=None, description="Notes")
+    quote_received: Optional[bool] = Field(default=None, description="Devis reçu")
+    is_selected: Optional[bool] = Field(default=None, description="Ligne sélectionnée")
+    quote_price: Optional[float] = Field(default=None, description="Prix du devis")
+    manufacturer: Optional[str] = Field(default=None, description="Fabricant")
+    manufacturer_ref: Optional[str] = Field(default=None, description="Référence fabricant")
+    quote_received_at: Optional[datetime] = Field(default=None, description="Date réception devis")
+    rejected_reason: Optional[str] = Field(default=None, description="Raison du rejet")
+    lead_time_days: Optional[int] = Field(default=None, description="Délai de livraison en jours")
+    purchase_requests: Optional[List[PurchaseRequestLink]] = Field(
+        default=None, description="Demandes d'achat à lier"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderLinePatch(BaseModel):
+    """Schéma d'entrée pour la mise à jour partielle d'une ligne (PATCH)"""
+
+    supplier_ref_snapshot: Optional[str] = Field(default=None)
+    quantity: Optional[int] = Field(default=None, gt=0)
+    unit_price: Optional[float] = Field(default=None)
+    quantity_received: Optional[int] = Field(default=None, ge=0)
+    notes: Optional[str] = Field(default=None)
+    quote_received: Optional[bool] = Field(default=None)
+    is_selected: Optional[bool] = Field(default=None)
+    quote_price: Optional[float] = Field(default=None)
+    manufacturer: Optional[str] = Field(default=None)
+    manufacturer_ref: Optional[str] = Field(default=None)
+    quote_received_at: Optional[datetime] = Field(default=None)
+    rejected_reason: Optional[str] = Field(default=None)
+    lead_time_days: Optional[int] = Field(default=None)
+    purchase_requests: Optional[List[PurchaseRequestLink]] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderLineOut(BaseModel):
+    """Schéma de sortie pour une ligne de commande fournisseur"""
+
+    id: UUID
+    supplier_order_id: UUID
+    stock_item_id: UUID
+    stock_item: Optional[StockItemListItem] = Field(default=None, description="Détail de l'article")
+    supplier_ref_snapshot: Optional[str] = Field(default=None)
+    quantity: int
+    unit_price: Optional[float] = Field(default=None)
+    total_price: Optional[float] = Field(default=None, description="Calculé automatiquement")
+    quantity_received: Optional[int] = Field(default=0)
+    is_fully_received: bool = Field(default=False, description="Toute la quantité a été reçue")
+    is_consultation: bool = Field(
+        default=False, description="Ligne issue d'un dispatch multi-fournisseurs"
+    )
+    consultation_resolved: bool = Field(
+        default=True, description="Une ligne sœur a été sélectionnée (ou pas de consultation)"
+    )
+    notes: Optional[str] = Field(default=None)
+    quote_received: Optional[bool] = Field(default=None)
+    is_selected: Optional[bool] = Field(default=None)
+    quote_price: Optional[float] = Field(default=None)
+    manufacturer: Optional[str] = Field(default=None)
+    manufacturer_ref: Optional[str] = Field(default=None)
+    quote_received_at: Optional[datetime] = Field(default=None)
+    rejected_reason: Optional[str] = Field(default=None)
+    lead_time_days: Optional[int] = Field(default=None)
+    purchase_requests: Optional[List[LinkedPurchaseRequest]] = Field(
+        default=None, description="Demandes d'achat liées"
+    )
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierCatalogRef(BaseModel):
+    """Référence de l'article dans le catalogue du fournisseur"""
+
+    ref: Optional[str] = Field(default=None, description="Référence interne fournisseur")
+
+    class Config:
+        from_attributes = True
+
+
+class ManufacturerInfo(BaseModel):
+    """Informations fabricant de l'article"""
+
+    name: Optional[str] = Field(default=None, description="Nom du fabricant")
+    ref: Optional[str] = Field(default=None, description="Référence fabricant")
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierPriceStats(BaseModel):
+    """Statistiques de prix obtenus pour une pièce chez un fournisseur, à partir de l'historique des commandes"""
+
+    order_count: int = Field(..., description="Nombre de commandes prises en compte")
+    avg_price: Optional[float] = Field(default=None, description="Prix unitaire moyen")
+    min_price: Optional[float] = Field(default=None, description="Prix unitaire minimum")
+    max_price: Optional[float] = Field(default=None, description="Prix unitaire maximum")
+    last_price: Optional[float] = Field(default=None, description="Dernier prix unitaire obtenu")
+    last_ordered_at: Optional[datetime] = Field(
+        default=None, description="Date de la dernière commande"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderLineKey(BaseModel):
+    """Version allégée d'une ligne, pour le calcul de compatibilité d'articles (comparateur)"""
+
+    id: UUID
+    part_id: Optional[UUID] = Field(default=None)
+    stock_item_id: Optional[UUID] = Field(default=None)
+    stock_item_ref: Optional[str] = Field(default=None)
+    stock_item_name: Optional[str] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderLineKeysByOrder(BaseModel):
+    """Lignes allégées groupées par commande fournisseur"""
+
+    by_order: dict[UUID, List[SupplierOrderLineKey]]
+
+
+class SupplierOrderLineListItem(BaseModel):
+    """Schéma léger pour la liste"""
+
+    id: UUID
+    supplier_order_id: UUID
+    stock_item_id: UUID
+    stock_item_name: Optional[str] = Field(default=None)
+    stock_item_ref: Optional[str] = Field(default=None)
+    stock_item_spec: Optional[str] = Field(default=None, description="Spécification de l'article")
+    stock_item_unit: Optional[str] = Field(default=None, description="Unité de l'article")
+    supplier: Optional[SupplierCatalogRef] = Field(
+        default=None, description="Référence fournisseur depuis le catalogue"
+    )
+    manufacturer: Optional[ManufacturerInfo] = Field(
+        default=None, description="Fabricant et sa référence"
+    )
+    quantity: int
+    unit_price: Optional[float] = Field(default=None)
+    total_price: Optional[float] = Field(default=None)
+    quantity_received: Optional[int] = Field(default=0)
+    is_fully_received: bool = Field(default=False, description="Toute la quantité a été reçue")
+    is_consultation: bool = Field(
+        default=False, description="Ligne issue d'un dispatch multi-fournisseurs"
+    )
+    consultation_resolved: bool = Field(
+        default=True, description="Une ligne sœur a été sélectionnée (ou pas de consultation)"
+    )
+    is_selected: Optional[bool] = Field(default=None)
+    notes: Optional[str] = Field(default=None)
+    quote_price: Optional[float] = Field(default=None, description="Prix du devis reçu")
+    lead_time_days: Optional[int] = Field(default=None, description="Délai de livraison en jours")
+    purchase_request_count: Optional[int] = Field(default=0)
+
+    class Config:
+        from_attributes = True

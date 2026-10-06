@@ -1,0 +1,33 @@
+/**
+ * ServerStatus.module.css
+ * Styles pour le composant ServerStatus
+ */
+
+/* Animation spin pour l'icône RefreshCw pendant le checking */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animation pulse pour l'icône pendant le checking (alternative) */
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

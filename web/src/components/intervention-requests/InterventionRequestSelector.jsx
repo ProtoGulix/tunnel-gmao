@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Badge, Box, Flex, Text, Tooltip } from '@radix-ui/themes';
+import { Bot, ClipboardList } from 'lucide-react';
+import { fetchInterventionRequests } from '@/api/intervention-requests';
+import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
+
+function RequestRow({ req, isSelected, onToggle }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Box
+      onClick={() => onToggle(isSelected ? null : req)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: 'pointer',
+        padding: '10px 12px',
+        borderBottom: '1px solid var(--gray-4)',
+        background: isSelected ? 'var(--accent-3)' : hovered ? 'var(--gray-2)' : undefined,
+        boxShadow: isSelected ? 'inset 3px 0 0 var(--accent-9)' : undefined,
+        transition: 'background-color 0.15s',
+      }}
+    >
+      <Flex direction="column" gap="1">
+        <Flex align="center" justify="between" gap="2">
+          <Text size="1" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--accent-11)' }}>
+            {req.code}
+          </Text>
+          <Badge size="1" variant="soft" style={{ backgroundColor: req.statut_color + '22', color: req.statut_color }}>
+            {req.statut_label}
+          </Badge>
+        </Flex>
+        <Flex align="center" gap="2">
+          {req.equipement?.code && <Badge color="gray" variant="soft" size="1">{req.equipement.code}</Badge>}
+          <Text size="2" weight="medium">{req.equipement?.name ?? '—'}</Text>
+        </Flex>
+        <Flex align="center" gap="2" wrap="wrap">
+          <Text size="1" color="gray">
+            {req.demandeur_nom}
+            {req.demandeur_service ? ` — ${req.demandeur_service}` : ''}
+          </Text>
+          {req.is_system && (
+            <Tooltip content="Demande générée automatiquement par le moteur préventif">
+              <Badge color="gray" variant="soft" size="1" style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <Bot size={10} />Système
+              </Badge>
+            </Tooltip>
+          )}
+        </Flex>
+        <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {req.description}
+        </Text>
+        {req.suggested_type_inter && (
+          <Flex align="center" gap="1">
+            <Text size="1" color="gray">Type suggéré :</Text>
+            <Badge color="blue" variant="soft" size="1">
+              {TYPE_INTER_LABELS[req.suggested_type_inter] ?? req.suggested_type_inter}
+            </Badge>
+          </Flex>
+        )}
+      </Flex>
+    </Box>
+  );
+}
+
+RequestRow.propTypes = {
+  req: PropTypes.object.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+};
+
+export default function InterventionRequestSelector({
+  selectedId,
+  onSelect,
+  machineId = null,
+  locked = false,
+  lockedLabel,
+  lockedIcon,
+}) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (locked) return;
+    let cancelled = false;
+    setLoading(true);
+    const params = { limit: 100, excludeStatuses: 'rejetee,cloturee,acceptee' };
+    if (machineId) params.machineId = machineId;
+    fetchInterventionRequests(params)
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res.items ?? []);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [machineId, locked]);
+
+  // Pas de création de DI depuis ce sélecteur : ce composant n'apparaît que
+  // dans les écrans "créer une intervention" (sélection d'une DI existante
+  // pour l'accepter immédiatement). Créer une DI ici sans intervention
+  // associée doublonnait le formulaire de droite et pouvait laisser une DI
+  // orpheline (non liée) — le seul point d'entrée pour signaler une DI
+  // standalone est ailleurs dans l'app (hors de ce flux d'acceptation).
+  return (
+    <EntitySelectorCard
+      title="Demandes ouvertes"
+      icon={ClipboardList}
+      items={items}
+      loading={loading}
+      selectedId={selectedId}
+      onSelect={onSelect}
+      renderRow={(req, isSelected, onSelect_) => (
+        <RequestRow req={req} isSelected={isSelected} onToggle={onSelect_} />
+      )}
+      emptyMessage="Aucune demande ouverte"
+      locked={locked}
+      lockedLabel={lockedLabel}
+      lockedIcon={lockedIcon ?? ClipboardList}
+    />
+  );
+}
+
+InterventionRequestSelector.propTypes = {
+  selectedId: PropTypes.string,
+  onSelect: PropTypes.func.isRequired,
+  machineId: PropTypes.string,
+  locked: PropTypes.bool,
+  lockedLabel: PropTypes.string,
+  lockedIcon: PropTypes.elementType,
+};

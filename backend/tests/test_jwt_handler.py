@@ -1,0 +1,52 @@
+"""Émission et vérification des access tokens."""
+
+from datetime import datetime, timedelta, timezone
+
+import jwt
+import pytest
+
+from api.auth.jwt_handler import create_access_token, extract_user_from_token
+from api.errors.exceptions import UnauthorizedError
+from api.settings import settings
+
+
+def test_un_token_emis_se_relit_avec_son_utilisateur_et_son_role():
+    token = create_access_token("user-1", "TECH", [])
+    user = extract_user_from_token(token)
+    assert user["user_id"] == "user-1"
+    assert user["role"] == "TECH"
+
+
+def test_un_token_expire_est_refuse():
+    payload = {
+        "sub": "user-1",
+        "role": "TECH",
+        "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+    }
+    token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")
+    with pytest.raises(UnauthorizedError):
+        extract_user_from_token(token)
+
+
+def test_un_token_signe_avec_une_autre_cle_est_refuse():
+    payload = {
+        "sub": "user-1",
+        "role": "ADMIN",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+    token = jwt.encode(
+        payload, "une-autre-cle-de-plus-de-trente-deux-caracteres", algorithm="HS256"
+    )
+    with pytest.raises(UnauthorizedError):
+        extract_user_from_token(token)
+
+
+def test_un_token_sans_signature_alg_none_est_refuse():
+    payload = {
+        "sub": "user-1",
+        "role": "ADMIN",
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+    token = jwt.encode(payload, None, algorithm="none")
+    with pytest.raises(UnauthorizedError):
+        extract_user_from_token(token)

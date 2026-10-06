@@ -1,0 +1,15 @@
+# Contexte de build de deploy/web.Dockerfile (racine du dépôt) : seuls web/ et
+# mobile/ sont utiles, sans leurs dépendances locales ni leurs builds.
+.git
+.claude
+graphify-out
+backend
+docs
+scripts
+deploy/.env
+deploy/docker-compose.yml
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/*.log

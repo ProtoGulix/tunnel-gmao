@@ -1,0 +1,22 @@
+5c5
+< \restrict nyXkBHrwQp56YRM7xQUupDjY8opvgri0gJVDdx7G2feHDPSyeLYzmfR0cSbZHWc
+---
+> \restrict BIlF2ThVluXxtmbmbgVU5Xvi9WSxJUSzk6bfwRHjQlHbOFVDgneRxhITj4KAOZp
+1739c1739
+<     CONSTRAINT chk_intervention_request_origine CHECK (((origine)::text = ANY ((ARRAY['directe'::character varying, 'signalee'::character varying])::text[])))
+---
+>     CONSTRAINT chk_intervention_request_origine CHECK (((origine)::text = ANY (ARRAY[('directe'::character varying)::text, ('signalee'::character varying)::text])))
+1922c1922
+<     CONSTRAINT chk_notification_type CHECK (((type)::text = ANY ((ARRAY['di_a_traiter'::character varying, 'intervention_a_cloturer'::character varying, 'pointage_demande'::character varying, 'preventif_echeance'::character varying])::text[])))
+---
+>     CONSTRAINT chk_notification_type CHECK (((type)::text = ANY (ARRAY[('di_a_traiter'::character varying)::text, ('intervention_a_cloturer'::character varying)::text, ('pointage_demande'::character varying)::text, ('preventif_echeance'::character varying)::text])))
+2365,2366c2365,2366
+<             bool_or(((so.status)::text = ANY ((ARRAY['SENT'::character varying, 'ACK'::character varying])::text[]))) AS has_locked_order,
+<             bool_and(((so.status)::text = ANY ((ARRAY['CANCELLED'::character varying, 'CLOSED'::character varying])::text[]))) AS all_terminal,
+---
+>             bool_or(((so.status)::text = ANY (ARRAY[('SENT'::character varying)::text, ('ACK'::character varying)::text]))) AS has_locked_order,
+>             bool_and(((so.status)::text = ANY (ARRAY[('CANCELLED'::character varying)::text, ('CLOSED'::character varying)::text]))) AS all_terminal,
+4140c4140
+< \unrestrict nyXkBHrwQp56YRM7xQUupDjY8opvgri0gJVDdx7G2feHDPSyeLYzmfR0cSbZHWc
+---
+> \unrestrict BIlF2ThVluXxtmbmbgVU5Xvi9WSxJUSzk6bfwRHjQlHbOFVDgneRxhITj4KAOZp

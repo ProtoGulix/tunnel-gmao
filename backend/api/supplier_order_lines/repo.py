@@ -1,0 +1,617 @@
+from decimal import Decimal
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+from api.db import get_connection, release_connection
+from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+
+
+class SupplierOrderLineRepository:
+    """Requêtes pour le domaine supplier_order_line"""
+
+    def _get_connection(self):
+        return get_connection()
+
+    def _convert_decimals(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convertit les Decimal en float pour la sérialisation JSON"""
+        for key, value in data.items():
+            if isinstance(value, Decimal):
+                data[key] = float(value)
+        return data
+
+    def _enrich_with_stock_item(self, line_dict: Dict[str, Any], conn) -> Dict[str, Any]:
+        """Enrichit une ligne avec les détails du stock_item (legacy) et de la part (nouveau)."""
+        stock_item_id = line_dict.get('stock_item_id')
+        if stock_item_id:
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    SELECT id, name, ref, family_code, sub_family_code,
+                           quantity, unit, location
+                    FROM stock_item WHERE id = %s
+                    """,
+                    (str(stock_item_id),),
+                )
+                row = cur.fetchone()
+                if row:
+                    cols = [desc[0] for desc in cur.description]
+                    line_dict['stock_item'] = dict(zip(cols, row))
+                else:
+                    line_dict['stock_item'] = None
+            except Exception:
+                line_dict['stock_item'] = None
+        else:
+            line_dict['stock_item'] = None
+
+        part_id = line_dict.get('part_id')
+        if part_id:
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    SELECT p.id, p.internal_ref, p.family_code, p.sub_family_code,
+                           p.qty_in_stock, p.unit, p.location,
+                           COALESCE(pmr.label, pmr.manufacturer_ref, p.internal_ref) AS display_name
+                    FROM part p
+                    LEFT JOIN LATERAL (
+                        SELECT label, manufacturer_ref FROM part_manufacturer_ref
+                        WHERE part_id = p.id AND is_preferred = true LIMIT 1
+                    ) pmr ON true
+                    WHERE p.id = %s
+                    """,
+                    (str(part_id),),
+                )
+                row = cur.fetchone()
+                if row:
+                    cols = [desc[0] for desc in cur.description]
+                    line_dict['part'] = dict(zip(cols, row))
+                else:
+                    line_dict['part'] = None
+            except Exception:
+                line_dict['part'] = None
+        else:
+            line_dict['part'] = None
+
+        return line_dict
+
+    def _compute_consultation_fields(self, line_id: str, conn) -> tuple[bool, bool]:
+        """Calcule is_consultation et consultation_resolved pour une ligne."""
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                EXISTS (
+                    SELECT 1 FROM supplier_order_line_purchase_request solpr2
+                    JOIN supplier_order_line sol2 ON sol2.id = solpr2.supplier_order_line_id
+                    WHERE solpr2.purchase_request_id IN (
+                        SELECT purchase_request_id FROM supplier_order_line_purchase_request
+                        WHERE supplier_order_line_id = %s
+                    )
+                    AND sol2.supplier_order_id != (
+                        SELECT supplier_order_id FROM supplier_order_line WHERE id = %s
+                    )
+                ) AS is_consultation,
+                EXISTS (
+                    SELECT 1 FROM supplier_order_line_purchase_request solpr3
+                    JOIN supplier_order_line sol3 ON sol3.id = solpr3.supplier_order_line_id
+                    WHERE solpr3.purchase_request_id IN (
+                        SELECT purchase_request_id FROM supplier_order_line_purchase_request
+                        WHERE supplier_order_line_id = %s
+                    )
+                    AND sol3.is_selected = true
+                ) AS has_selected_sister
+            """,
+            (line_id, line_id, line_id),
+        )
+        row = cur.fetchone()
+        is_consultation = bool(row[0])
+        has_selected_sister = bool(row[1])
+        consultation_resolved = has_selected_sister if is_consultation else True
+        return is_consultation, consultation_resolved
+
+    def _get_linked_purchase_requests(self, line_id: str, conn) -> List[Dict[str, Any]]:
+        """Récupère les demandes d'achat liées à une ligne, avec la DI d'origine si applicable"""
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    solpr.id, solpr.purchase_request_id, solpr.quantity as quantity, solpr.created_at,
+                    pr.code, pr.item_label, pr.requested_by AS requester_name,
+                    ir.id AS intervention_request_id, ir.code AS intervention_request_code
+                FROM supplier_order_line_purchase_request solpr
+                JOIN purchase_request pr ON solpr.purchase_request_id = pr.id
+                LEFT JOIN intervention_action_purchase_request iapr ON iapr.purchase_request_id = pr.id
+                LEFT JOIN intervention_action ia ON ia.id = iapr.intervention_action_id
+                LEFT JOIN intervention_request ir ON ir.intervention_id = ia.intervention_id
+                WHERE solpr.supplier_order_line_id = %s
+                ORDER BY solpr.created_at ASC
+                """,
+                (line_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+            return [dict(zip(cols, row)) for row in rows]
+        except Exception:
+            return []
+
+    def get_all(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        supplier_order_id: Optional[str] = None,
+        stock_item_id: Optional[str] = None,
+        part_id: Optional[str] = None,
+        is_selected: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """Récupère toutes les lignes de commande avec filtres optionnels"""
+        limit = min(limit, 1000)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            where_clauses = []
+            params: List[Any] = []
+
+            if supplier_order_id:
+                where_clauses.append("sol.supplier_order_id = %s")
+                params.append(supplier_order_id)
+
+            if stock_item_id:
+                where_clauses.append("sol.stock_item_id = %s")
+                params.append(stock_item_id)
+
+            if part_id:
+                where_clauses.append("sol.part_id = %s")
+                params.append(part_id)
+
+            if is_selected is not None:
+                where_clauses.append("sol.is_selected = %s")
+                params.append(is_selected)
+
+            where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+
+            query = f"""
+                SELECT
+                    sol.id, sol.supplier_order_id, sol.stock_item_id, sol.part_id,
+                    sol.quantity, sol.unit_price, sol.total_price,
+                    sol.quantity_received, sol.is_selected,
+                    si.name as stock_item_name, si.ref as stock_item_ref,
+                    COALESCE(pmr_pref.label, pmr_pref.manufacturer_ref, pt.internal_ref) AS part_display_name,
+                    (SELECT COUNT(*) FROM supplier_order_line_purchase_request
+                     WHERE supplier_order_line_id = sol.id) as purchase_request_count,
+                    EXISTS (
+                        SELECT 1 FROM supplier_order_line_purchase_request solpr2
+                        JOIN supplier_order_line sol2 ON sol2.id = solpr2.supplier_order_line_id
+                        WHERE solpr2.purchase_request_id IN (
+                            SELECT purchase_request_id FROM supplier_order_line_purchase_request
+                            WHERE supplier_order_line_id = sol.id
+                        )
+                        AND sol2.supplier_order_id != sol.supplier_order_id
+                    ) AS is_consultation,
+                    EXISTS (
+                        SELECT 1 FROM supplier_order_line_purchase_request solpr3
+                        JOIN supplier_order_line sol3 ON sol3.id = solpr3.supplier_order_line_id
+                        WHERE solpr3.purchase_request_id IN (
+                            SELECT purchase_request_id FROM supplier_order_line_purchase_request
+                            WHERE supplier_order_line_id = sol.id
+                        )
+                        AND sol3.is_selected = true
+                    ) AS has_selected_sister
+                FROM supplier_order_line sol
+                LEFT JOIN stock_item si ON sol.stock_item_id = si.id
+                LEFT JOIN part pt ON sol.part_id = pt.id
+                LEFT JOIN LATERAL (
+                    SELECT label, manufacturer_ref FROM part_manufacturer_ref
+                    WHERE part_id = pt.id AND is_preferred = true LIMIT 1
+                ) pmr_pref ON true
+                {where_sql}
+                ORDER BY sol.created_at DESC
+                LIMIT %s OFFSET %s
+            """
+
+            cur.execute(query, (*params, limit, offset))
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            lines = [self._convert_decimals(dict(zip(cols, row))) for row in rows]
+            for line in lines:
+                line['is_fully_received'] = (line.get('quantity_received') or 0) >= (
+                    line.get('quantity') or 1
+                )
+                is_consultation = bool(line.pop('is_consultation', False))
+                has_selected_sister = bool(line.pop('has_selected_sister', False))
+                line['is_consultation'] = is_consultation
+                line['consultation_resolved'] = has_selected_sister if is_consultation else True
+            return lines
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_price_stats(self, part_id: str, supplier_id: str) -> Dict[str, Any]:
+        """Statistiques de prix obtenus pour une pièce chez un fournisseur, à partir de l'historique des commandes"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    COUNT(*) AS order_count,
+                    AVG(sol.unit_price) AS avg_price,
+                    MIN(sol.unit_price) AS min_price,
+                    MAX(sol.unit_price) AS max_price,
+                    (ARRAY_AGG(sol.unit_price ORDER BY so.ordered_at DESC))[1] AS last_price,
+                    MAX(so.ordered_at) AS last_ordered_at
+                FROM supplier_order_line sol
+                JOIN supplier_order so ON so.id = sol.supplier_order_id
+                WHERE sol.part_id = %s AND so.supplier_id = %s AND sol.unit_price IS NOT NULL
+                """,
+                (part_id, supplier_id),
+            )
+            row = cur.fetchone()
+            cols = [desc[0] for desc in cur.description]
+            return self._convert_decimals(dict(zip(cols, row)))
+        except Exception as e:
+            raise_db_error(e, "statistiques de prix")
+        finally:
+            release_connection(conn)
+
+    def get_by_id(self, line_id: str) -> Dict[str, Any]:
+        """Récupère une ligne par ID avec stock_item et purchase_requests"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM supplier_order_line WHERE id = %s", (line_id,))
+            row = cur.fetchone()
+
+            if not row:
+                raise NotFoundError(f"Ligne de commande {line_id} non trouvée")
+
+            cols = [desc[0] for desc in cur.description]
+            result = self._convert_decimals(dict(zip(cols, row)))
+
+            # Enrichit avec stock_item
+            result = self._enrich_with_stock_item(result, conn)
+
+            # Ajoute les purchase_requests liées
+            result['purchase_requests'] = self._get_linked_purchase_requests(line_id, conn)
+
+            result['is_fully_received'] = (result.get('quantity_received') or 0) >= (
+                result.get('quantity') or 1
+            )
+            is_consultation, consultation_resolved = self._compute_consultation_fields(
+                line_id, conn
+            )
+            result['is_consultation'] = is_consultation
+            result['consultation_resolved'] = consultation_resolved
+
+            return result
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_by_order(self, supplier_order_id: str) -> List[Dict[str, Any]]:
+        """Récupère toutes les lignes d'une commande avec détails"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM supplier_order_line WHERE supplier_order_id = %s ORDER BY created_at ASC",
+                (supplier_order_id,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            results = []
+            for row in rows:
+                line = self._convert_decimals(dict(zip(cols, row)))
+                line = self._enrich_with_stock_item(line, conn)
+                line['purchase_requests'] = self._get_linked_purchase_requests(
+                    str(line['id']), conn
+                )
+                line['is_fully_received'] = (line.get('quantity_received') or 0) >= (
+                    line.get('quantity') or 1
+                )
+                is_consultation, consultation_resolved = self._compute_consultation_fields(
+                    str(line['id']), conn
+                )
+                line['is_consultation'] = is_consultation
+                line['consultation_resolved'] = consultation_resolved
+                results.append(line)
+
+            return results
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def get_keys_by_orders(self, supplier_order_ids: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+        """Récupère les lignes de plusieurs commandes en une seule requête groupée.
+
+        Version allégée de get_by_order() : ne retourne que les colonnes nécessaires
+        au calcul des clés d'articles côté comparateur (part_id, stock_item_id,
+        stock_item_ref/name), sans l'enrichissement complet (purchase_requests,
+        is_consultation…) qui coûte plusieurs requêtes SQL par ligne. Remplace un
+        appel HTTP + get_by_order() par commande candidate par un seul aller-retour.
+        """
+        if not supplier_order_ids:
+            return {}
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    sol.supplier_order_id, sol.id, sol.part_id, sol.stock_item_id,
+                    si.ref AS stock_item_ref, si.name AS stock_item_name
+                FROM supplier_order_line sol
+                LEFT JOIN stock_item si ON sol.stock_item_id = si.id
+                WHERE sol.supplier_order_id = ANY(%s::uuid[])
+                ORDER BY sol.supplier_order_id, sol.created_at ASC
+                """,
+                (supplier_order_ids,),
+            )
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            by_order: Dict[str, List[Dict[str, Any]]] = {str(oid): [] for oid in supplier_order_ids}
+            for row in rows:
+                line = dict(zip(cols, row))
+                order_id = str(line.pop('supplier_order_id'))
+                by_order.setdefault(order_id, []).append(line)
+
+            return by_order
+        except Exception as e:
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+
+    def add(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Crée une nouvelle ligne de commande"""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            line_id = str(uuid4())
+
+            # Note: total_price est calculé par trigger
+            cur.execute(
+                """
+                INSERT INTO supplier_order_line
+                (id, supplier_order_id, stock_item_id, part_id, supplier_ref_snapshot,
+                 quantity, unit_price, notes, quote_received, is_selected,
+                 quote_price, manufacturer, manufacturer_ref, quote_received_at,
+                 rejected_reason, lead_time_days)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    line_id,
+                    data['supplier_order_id'],
+                    data.get('stock_item_id'),
+                    data.get('part_id'),
+                    data.get('supplier_ref_snapshot'),
+                    data['quantity'],
+                    data.get('unit_price'),
+                    data.get('notes'),
+                    data.get('quote_received'),
+                    data.get('is_selected'),
+                    data.get('quote_price'),
+                    data.get('manufacturer'),
+                    data.get('manufacturer_ref'),
+                    data.get('quote_received_at'),
+                    data.get('rejected_reason'),
+                    data.get('lead_time_days'),
+                ),
+            )
+
+            # Gère les liens avec purchase_requests si fournis
+            purchase_requests = data.get('purchase_requests')
+            if purchase_requests:
+                for pr_link in purchase_requests:
+                    qty = pr_link.get('quantity', 1)
+                    cur.execute(
+                        """
+                        INSERT INTO supplier_order_line_purchase_request
+                        (id, supplier_order_line_id, purchase_request_id, quantity)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (str(uuid4()), line_id, str(pr_link['purchase_request_id']), qty),
+                    )
+
+                # Règle métier: une seule ligne sélectionnée par purchase_request
+                # Si is_selected = true, désélectionne les autres lignes liées aux mêmes PR
+                if data.get('is_selected') is True:
+                    pr_ids = [str(pr['purchase_request_id']) for pr in purchase_requests]
+                    cur.execute(
+                        """
+                        UPDATE supplier_order_line
+                        SET is_selected = false
+                        WHERE id != %s
+                        AND id IN (
+                            SELECT DISTINCT supplier_order_line_id
+                            FROM supplier_order_line_purchase_request
+                            WHERE purchase_request_id = ANY(%s)
+                        )
+                        """,
+                        (line_id, pr_ids),
+                    )
+
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la création de la ligne: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(line_id)
+
+    def update(self, line_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Met à jour une ligne de commande existante"""
+        # Vérifie que la ligne existe
+        self.get_by_id(line_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            # Champs modifiables
+            updatable_fields = [
+                'supplier_ref_snapshot',
+                'quantity',
+                'unit_price',
+                'quantity_received',
+                'notes',
+                'quote_received',
+                'is_selected',
+                'quote_price',
+                'manufacturer',
+                'manufacturer_ref',
+                'quote_received_at',
+                'rejected_reason',
+                'lead_time_days',
+            ]
+
+            set_clauses = []
+            params = []
+
+            for field in updatable_fields:
+                if field in data:
+                    set_clauses.append(f"{field} = %s")
+                    params.append(data[field])
+
+            if set_clauses:
+                params.append(line_id)
+                query = f"""
+                    UPDATE supplier_order_line
+                    SET {', '.join(set_clauses)}
+                    WHERE id = %s
+                """
+                cur.execute(query, params)
+
+            # Règle métier: une seule ligne sélectionnée par purchase_request
+            # Si is_selected = true, désélectionne les autres lignes liées aux mêmes PR
+            if data.get('is_selected') is True:
+                cur.execute(
+                    """
+                    UPDATE supplier_order_line
+                    SET is_selected = false
+                    WHERE id != %s
+                    AND id IN (
+                        SELECT DISTINCT sol2.id
+                        FROM supplier_order_line sol2
+                        JOIN supplier_order_line_purchase_request solpr2 ON sol2.id = solpr2.supplier_order_line_id
+                        WHERE solpr2.purchase_request_id IN (
+                            SELECT purchase_request_id
+                            FROM supplier_order_line_purchase_request
+                            WHERE supplier_order_line_id = %s
+                        )
+                    )
+                    """,
+                    (line_id, line_id),
+                )
+
+            # Met à jour les liens purchase_requests si fournis
+            if 'purchase_requests' in data:
+                # Supprime les liens existants
+                cur.execute(
+                    "DELETE FROM supplier_order_line_purchase_request WHERE supplier_order_line_id = %s",
+                    (line_id,),
+                )
+
+                # Ajoute les nouveaux liens
+                purchase_requests = data.get('purchase_requests') or []
+                for pr_link in purchase_requests:
+                    qty = pr_link.get('quantity', 1)
+                    cur.execute(
+                        """
+                        INSERT INTO supplier_order_line_purchase_request
+                        (id, supplier_order_line_id, purchase_request_id, quantity)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (str(uuid4()), line_id, str(pr_link['purchase_request_id']), qty),
+                    )
+
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(line_id)
+
+    def delete(self, line_id: str) -> bool:
+        """Supprime une ligne de commande (cascade sur M2M)"""
+        # Vérifie que la ligne existe
+        self.get_by_id(line_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM supplier_order_line WHERE id = %s", (line_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+    def link_purchase_request(
+        self, line_id: str, purchase_request_id: str, quantity: int
+    ) -> Dict[str, Any]:
+        """Lie une demande d'achat à une ligne de commande"""
+        # Vérifie que la ligne existe
+        self.get_by_id(line_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO supplier_order_line_purchase_request
+                (id, supplier_order_line_id, purchase_request_id, quantity)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (supplier_order_line_id, purchase_request_id)
+                DO UPDATE SET quantity = EXCLUDED.quantity
+                """,
+                (str(uuid4()), line_id, purchase_request_id, quantity),
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la liaison: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(line_id)
+
+    def unlink_purchase_request(self, line_id: str, purchase_request_id: str) -> Dict[str, Any]:
+        """Retire le lien avec une demande d'achat"""
+        # Vérifie que la ligne existe
+        self.get_by_id(line_id)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                DELETE FROM supplier_order_line_purchase_request
+                WHERE supplier_order_line_id = %s AND purchase_request_id = %s
+                """,
+                (line_id, purchase_request_id),
+            )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la suppression du lien: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_id(line_id)

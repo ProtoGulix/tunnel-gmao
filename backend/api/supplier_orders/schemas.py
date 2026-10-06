@@ -1,0 +1,169 @@
+from datetime import date, datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+from api.supplier_order_lines.schemas import SupplierOrderLineListItem
+from api.suppliers.schemas import SupplierListItem
+from api.utils.pagination import PaginationMeta
+
+
+class SupplierOrderIn(BaseModel):
+    """Schéma d'entrée pour créer une commande fournisseur"""
+
+    supplier_id: UUID = Field(..., description="ID du fournisseur")
+    status: Optional[str] = Field(
+        default="OPEN", max_length=50, description="Statut de la commande"
+    )
+    ordered_at: Optional[datetime] = Field(default=None, description="Date de commande")
+    expected_delivery_date: Optional[date] = Field(
+        default=None, description="Date de livraison prévue"
+    )
+    notes: Optional[str] = Field(default=None, description="Notes")
+    currency: Optional[float] = Field(default=None, description="Devise/taux")
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderUpdate(BaseModel):
+    """Schéma d'entrée pour mettre à jour une commande fournisseur (tous champs optionnels)"""
+
+    supplier_id: Optional[UUID] = Field(default=None, description="ID du fournisseur")
+    status: Optional[str] = Field(default=None, max_length=50, description="Statut de la commande")
+    ordered_at: Optional[datetime] = Field(default=None, description="Date de commande")
+    expected_delivery_date: Optional[date] = Field(
+        default=None, description="Date de livraison prévue"
+    )
+    received_at: Optional[datetime] = Field(default=None, description="Date de réception")
+    notes: Optional[str] = Field(default=None, description="Notes")
+    currency: Optional[float] = Field(default=None, description="Devise/taux")
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderStatusInfo(BaseModel):
+    """Statut complet d'une commande fournisseur (code + label + couleur)"""
+
+    code: str
+    label: str
+    color: str
+    description: str
+    is_locked: bool
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderTransition(BaseModel):
+    to: str
+    description: str
+
+
+class SupplierOrderOut(BaseModel):
+    """Schéma de sortie pour une commande fournisseur"""
+
+    id: UUID
+    order_number: str = Field(..., description="Numéro de commande (généré automatiquement)")
+    supplier_id: UUID
+    supplier: Optional[SupplierListItem] = Field(
+        default=None, description="Informations fournisseur enrichies"
+    )
+    status: str
+    total_amount: Optional[float] = Field(default=0, description="Montant total")
+    ordered_at: Optional[datetime] = Field(default=None)
+    expected_delivery_date: Optional[date] = Field(default=None)
+    received_at: Optional[datetime] = Field(default=None)
+    notes: Optional[str] = Field(default=None)
+    currency: Optional[float] = Field(default=None)
+    lines: Optional[List[SupplierOrderLineListItem]] = Field(
+        default=None, description="Lignes de la commande"
+    )
+    line_count: int = Field(default=0, description="Nombre de lignes")
+    age_days: int = Field(default=0, description="Âge en jours depuis création")
+    age_color: str = Field(default="gray", description="Couleur indicateur âge (gray, orange, red)")
+    is_blocking: bool = Field(
+        default=False, description="Commande bloquante (en attente trop longtemps)"
+    )
+    add_lines: bool = Field(default=False, description="Ajout de lignes autorisé (OPEN)")
+    edit_lines: bool = Field(default=False, description="Édition des lignes autorisée (SENT, ACK)")
+    receive_lines: bool = Field(
+        default=False, description="Saisie des réceptions autorisée (RECEIVED)"
+    )
+    transitions: List[SupplierOrderTransition] = Field(
+        default_factory=list, description="Transitions de statut autorisées depuis le statut actuel"
+    )
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderListItem(BaseModel):
+    """Schéma léger pour la liste"""
+
+    id: UUID
+    order_number: str
+    supplier_id: UUID
+    supplier: Optional[SupplierListItem] = Field(
+        default=None, description="Informations fournisseur enrichies"
+    )
+    status: str
+    total_amount: Optional[float] = Field(default=0)
+    ordered_at: Optional[datetime] = Field(default=None)
+    expected_delivery_date: Optional[date] = Field(default=None)
+    line_count: int = Field(default=0, description="Nombre de lignes")
+    age_days: int = Field(default=0, description="Âge en jours depuis création")
+    age_color: str = Field(default="gray", description="Couleur indicateur âge (gray, orange, red)")
+    is_blocking: bool = Field(
+        default=False, description="Commande bloquante (en attente trop longtemps)"
+    )
+    add_lines: bool = Field(default=False, description="Ajout de lignes autorisé (OPEN)")
+    edit_lines: bool = Field(default=False, description="Édition des lignes autorisée (SENT, ACK)")
+    receive_lines: bool = Field(
+        default=False, description="Saisie des réceptions autorisée (RECEIVED)"
+    )
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
+
+    class Config:
+        from_attributes = True
+
+
+class SupplierOrderFacet(BaseModel):
+    status: str
+    count: int
+    transitions: List[SupplierOrderTransition] = Field(
+        default_factory=list, description="Transitions autorisées depuis ce statut"
+    )
+
+
+class SupplierOrderListResponse(BaseModel):
+    """Réponse paginée avec facets"""
+
+    items: List[SupplierOrderListItem]
+    pagination: PaginationMeta = Field(..., description="Métadonnées de pagination")
+    facets: List[SupplierOrderFacet] = Field(
+        default_factory=list, description="Compteurs par statut (sans filtre statut)"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class EmailExportOut(BaseModel):
+    """Schéma de sortie pour l'export email"""
+
+    subject: str = Field(..., description="Sujet de l'email")
+    body_text: str = Field(..., description="Corps de l'email en texte brut")
+    body_html: str = Field(..., description="Corps de l'email en HTML")
+    supplier_email: Optional[str] = Field(default=None, description="Email du fournisseur")
+    mailto_url: Optional[str] = Field(
+        default=None, description="Lien mailto: prêt à l'emploi (subject + body encodés)"
+    )
+
+    class Config:
+        from_attributes = True

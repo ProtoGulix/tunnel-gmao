@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+/parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Graphify
+
+
+graphify-out/
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+backup_*.sql
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Templates
+config/templates/logo.png
+
+# Windows reserved names
+nul
+
+# Claude Code : réglages locaux propres à chaque poste
+.claude/settings.local.json
+# Worktrees des subagents Claude Code
+.claude/worktrees/
+# Référentiels propres à l'usine, à relire avant toute publication (ADR 0006)
+docs/spikes/0001-installation-a-vide/03_seed_douteux.sql

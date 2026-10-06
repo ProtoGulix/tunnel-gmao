@@ -1,0 +1,93 @@
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from api.auth.permissions import require_authenticated
+from api.part_templates.repo import PartTemplateRepository
+from api.part_templates.schemas import PartTemplateIn, PartTemplateUpdate
+from api.stock_items.template_schemas import PartTemplate
+from api.stock_items.template_service import TemplateService
+
+router = APIRouter(
+    prefix="/part-templates", tags=["part-templates"], dependencies=[Depends(require_authenticated)]
+)
+
+
+@router.get("", response_model=List[PartTemplate])
+def list_templates():
+    """
+    Liste tous les templates (dernière version de chaque) avec leurs champs
+    Retourne les données complètes (optimisé pour pages de gestion)
+    """
+    repo = PartTemplateRepository()
+    return repo.get_all()
+
+
+@router.get("/code/{code}", response_model=List[dict])
+def get_template_versions_by_code(code: str):
+    """
+    Récupère toutes les versions d'un template par code
+    """
+    repo = PartTemplateRepository()
+    versions = repo.get_by_code(code)
+    if not versions:
+        raise HTTPException(status_code=404, detail="Template %s non trouvé" % code)
+    return versions
+
+
+@router.get("/{template_id}", response_model=PartTemplate)
+def get_template(
+    template_id: str,
+    version: Optional[int] = Query(None, description="Version spécifique (dernière si omis)"),
+):
+    """
+    Récupère un template complet avec ses champs et enum_values
+    Si version est omise, retourne la version la plus récente
+    """
+    service = TemplateService()
+    return service.load_template(template_id, version)
+
+
+@router.post("", response_model=dict, status_code=201)
+def create_template(data: PartTemplateIn):
+    """
+    Crée un nouveau template (version 1)
+
+    Le template inclut :
+    - code unique
+    - pattern de génération
+    - liste des champs avec leurs types
+    - valeurs enum si applicable
+    """
+    repo = PartTemplateRepository()
+    return repo.create(data)
+
+
+@router.post("/{template_id}/versions", response_model=dict, status_code=201)
+def create_template_version(template_id: str, data: PartTemplateUpdate):
+    """
+    Crée une nouvelle version d'un template existant
+
+    Permet de faire évoluer un template sans casser les pièces existantes
+    Le numéro de version est incrémenté automatiquement
+    """
+    repo = PartTemplateRepository()
+    return repo.create_new_version(template_id, data)
+
+
+@router.delete("/{template_id}")
+def delete_template(
+    template_id: str,
+    version: Optional[int] = Query(None, description="Version à supprimer (toutes si omis)"),
+):
+    """
+    Supprime un template ou une version spécifique
+
+    Si version est omise, supprime toutes les versions du template
+    Refuse la suppression si des pièces utilisent ce template
+    """
+    repo = PartTemplateRepository()
+    repo.delete(template_id, version)
+    if version:
+        return {"message": "Template %s version %s supprimé" % (template_id, version)}
+    return {"message": "Template %s supprimé (toutes versions)" % template_id}

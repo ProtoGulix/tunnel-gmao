@@ -1,0 +1,128 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 🏗️ Layout.jsx - Layout principal application (authentifié + public)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * Layout wrapper unifié pour toutes les pages de l'application
+ * - Mode authentifié : Sidebar avec user + logout (requiresAuth=true)
+ * - Mode public : Sidebar sans auth (requiresAuth=false)
+ * - Responsive mobile/desktop avec breakpoint 768px
+ * - Sidebar 220px desktop, header 56px mobile
+ * - Background var(--gray-1) conforme COLOR_PALETTE.md
+ * 
+ * Utilisé dans :
+ * - App.jsx : wrapper automatique pour toutes les routes via PAGES_CONFIG
+ * - Routes protégées : <Layout requiresAuth>{children}</Layout>
+ * - Routes publiques : <Layout requiresAuth={false}>{children}</Layout>
+ * 
+ * ✅ Implémenté :
+ * - Fusion Layout + PublicLayout (ancien doublon éliminé)
+ * - Prop requiresAuth pour contrôler isAuthenticated Sidebar
+ * - Hook useMediaQuery custom pour responsive
+ * - CSS module pour externaliser styles
+ * - Constants layoutConfig (SIDEBAR_WIDTH, MOBILE_BREAKPOINT, etc.)
+ * - Cleanup resize listener automatique
+ * - Background var(--gray-1) Radix UI
+ * - Accessibilité role="main"
+ * 
+ * 📋 TODO : Améliorations futures
+ * - [x] Breadcrumbs : afficher fil d'ariane en haut du main
+ * - [ ] Dark mode : infrastructure prête (voir src/app/AppTheme.jsx,
+ *       src/hooks/shared/useThemeAppearance.js) — reste à ajouter le toggle UI
+ *       et auditer les couleurs custom hors palette Radix (hexBadgeStyle, etc.)
+ * - [ ] Skip to content : lien accessibilité sauter navigation
+ * - [ ] Print styles : optimiser layout pour impression
+ * - [ ] Sticky header mobile : header collant au scroll
+ * - [ ] Animation transition : smooth entre pages (Framer Motion)
+ * - [ ] Footer global : ajouter footer en bas de page
+ * - [ ] Scroll to top : bouton retour en haut
+ * - [ ] Loading bar : barre progression chargement page
+ * - [ ] Offline indicator : bannière "Vous êtes hors ligne"
+ * - [ ] Layout variants : compact, wide, fullscreen
+ * - [ ] Safe area : gérer notch iPhone/Android
+ * 
+ * @module components/Layout
+ * @requires react
+ * @requires react-router-dom
+ * @requires auth/AuthContext
+ * @requires hooks/useMediaQuery
+ * @requires config/layoutConfig
+ */
+
+import PropTypes from 'prop-types';
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowUpFromLine } from 'lucide-react';
+import { useAuth } from "@/auth/useAuth";
+import Sidebar from "./Sidebar";
+import { findPageForPath } from "./Breadcrumb";
+import { SystemErrorBanner } from './SystemErrorBanner';
+import { useMediaQuery } from "@/hooks/shared/useMediaQuery";
+import { useDocumentTitle } from "@/hooks/shared/useDocumentTitle";
+import { MOBILE_QUERY } from "@/config/layoutConfig";
+import styles from '@/styles/modules/Layout.module.css';
+import { useAuditGuard } from '@/hooks/useAuditGuard';
+import AuditGuardDialog from '@/components/ui/AuditGuardDialog';
+
+/**
+ * Layout principal avec Sidebar + contenu responsive
+ * 
+ * @component
+ * @param {Object} props - Props du composant
+ * @param {React.ReactNode} props.children - Contenu de la page à afficher
+ * @param {boolean} [props.requiresAuth=true] - Mode authentifié (true) ou public (false)
+ * @returns {JSX.Element} Layout avec sidebar et contenu
+ * 
+ * @example
+ * // Layout authentifié (par défaut)
+ * <Layout>
+ *   <DashboardPage />
+ * </Layout>
+ * 
+ * @example
+ * // Layout public
+ * <Layout requiresAuth={false}>
+ *   <LoginPage />
+ * </Layout>
+ */
+export default function Layout({ children, requiresAuth = true }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const { auditProps } = useAuditGuard();
+
+  const currentPage = findPageForPath(location.pathname);
+  useDocumentTitle(currentPage?.pageTitle);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  return (
+    <div className={styles.container}>
+      <Sidebar
+        isAuthenticated={requiresAuth ? true : isAuthenticated}
+        user={user}
+        onLogout={handleLogout}
+        isMobile={isMobile}
+      />
+
+      <AuditGuardDialog {...auditProps} />
+
+      <main className={styles.main} role="main" aria-label="Contenu principal">
+        <SystemErrorBanner />
+        {children}
+        <footer className={styles.footer} aria-label="Pied de page">
+          <ArrowUpFromLine size={16} strokeWidth={1.5} />
+          <em>Vous avez atteint le bout du tunnel… il est maintenant temps de remonter à la surface.</em>
+        </footer>
+      </main>
+    </div>
+  );
+}
+
+Layout.propTypes = {
+  children: PropTypes.node.isRequired,
+  requiresAuth: PropTypes.bool
+};

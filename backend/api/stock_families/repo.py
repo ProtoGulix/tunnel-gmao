@@ -1,0 +1,246 @@
+"""Repository pour les familles de stock"""
+
+import logging
+from typing import List
+
+from api.db import get_connection, release_connection
+from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.stock_families.schemas import StockFamilyDetail, StockFamilyIn, StockFamilyListItem
+from api.stock_items.template_schemas import StockSubFamily
+from api.stock_items.template_service import TemplateService
+from api.utils.search import build_search_clause
+
+logger = logging.getLogger(__name__)
+
+
+class StockFamilyRepository:
+    """Requêtes pour le domaine stock_family"""
+
+    def __init__(self):
+        self.template_service = TemplateService()
+
+    def _get_connection(self):
+        return get_connection()
+
+    def get_all(self) -> List[StockFamilyListItem]:
+        """
+        Liste toutes les familles de stock avec le nombre de sous-familles
+
+        Returns:
+            Liste des familles triées par family_code
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            cur.execute(
+                """
+                SELECT
+                    sf.code AS family_code,
+                    sf.label,
+                    COUNT(ssf.code) AS sub_family_count
+                FROM stock_family sf
+                LEFT JOIN stock_sub_family ssf ON ssf.family_code = sf.code
+                GROUP BY sf.code, sf.label
+                ORDER BY sf.code
+                """
+            )
+
+            rows = cur.fetchall()
+            cols = [desc[0] for desc in cur.description]
+
+            return [StockFamilyListItem(**dict(zip(cols, row))) for row in rows]
+
+        except Exception as e:
+            logger.error("Erreur lors du chargement des familles: %s", str(e))
+            raise DatabaseError(f"Erreur lors du chargement des familles: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+    def get_by_code(self, family_code: str, search: str = None) -> StockFamilyDetail:
+        """
+        Récupère une famille par son code avec ses sous-familles et templates
+
+        Args:
+            family_code: Code de la famille
+            search: Filtre optionnel sur code ou label des sous-familles (ILIKE)
+
+        Returns:
+            Détail de la famille avec liste des sous-familles et templates complets
+
+        Raises:
+            NotFoundError: Si la famille n'existe pas
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            # Vérifier que la famille existe et récupérer son label
+            cur.execute("SELECT code, label FROM stock_family WHERE code = %s", (family_code,))
+            family_row = cur.fetchone()
+            if not family_row:
+                raise NotFoundError(f"Famille {family_code} non trouvée")
+            family_label = family_row[1]
+
+            # Construction de la requête avec filtre optionnel
+            query = """
+                SELECT
+                    family_code,
+                    code,
+                    label,
+                    template_id
+                FROM stock_sub_family
+                WHERE family_code = %s
+            """
+            params = [family_code]
+
+            if search:
+                clause, search_params = build_search_clause(
+                    search,
+                    ["code ILIKE %s", "label ILIKE %s"],
+                )
+                query += f" AND {clause}"
+                params.extend(search_params)
+
+            query += " ORDER BY code"
+
+            # Récupérer les sous-familles avec template_id
+            cur.execute(query, params)
+
+            rows = cur.fetchall()
+
+            cols = [desc[0] for desc in cur.description]
+            sub_families_data = [dict(zip(cols, row)) for row in rows]
+
+            # Charger les templates pour chaque sous-famille
+            sub_families = []
+            for sf_data in sub_families_data:
+                template_id = sf_data.get('template_id')
+
+                if template_id:
+                    try:
+                        # Charger le template complet
+                        template = self.template_service.load_template(template_id)
+                        sf_data['template'] = template
+                    except (DatabaseError, ValueError, KeyError) as e:
+                        logger.warning(
+                            "Impossible de charger le template %s: %s", template_id, str(e)
+                        )
+                        sf_data['template'] = None
+                else:
+                    sf_data['template'] = None
+
+                # Retirer template_id du dict (pas dans le schéma de sortie)
+                sf_data.pop('template_id', None)
+
+                sub_families.append(StockSubFamily(**sf_data))
+
+            # Calculer les compteurs
+            with_template = sum(1 for sf in sub_families if sf.template is not None)
+            without_template = len(sub_families) - with_template
+
+            return StockFamilyDetail(
+                family_code=family_code,
+                label=family_label,
+                sub_families=sub_families,
+                sub_family_count=len(sub_families),
+                with_template_count=with_template,
+                without_template_count=without_template,
+            )
+
+        except NotFoundError:
+            raise
+        except Exception as e:
+            logger.error("Erreur lors du chargement de la famille %s: %s", family_code, str(e))
+            raise DatabaseError(f"Erreur lors du chargement de la famille: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+    def update(self, old_code: str, new_code: str, label: str = None) -> StockFamilyDetail:
+        """
+        Met à jour une famille de stock (code et/ou label).
+        Si le code change, met à jour family_code en cascade sur toutes ses sous-familles.
+
+        Raises:
+            NotFoundError: Si la famille n'existe pas
+            DatabaseError: Si le nouveau code est déjà utilisé
+        """
+        # Vérifier que la famille existe
+        self.get_by_code(old_code)
+
+        if new_code != old_code:
+            conn_check = self._get_connection()
+            try:
+                cur = conn_check.cursor()
+                cur.execute("SELECT 1 FROM stock_family WHERE code = %s", (new_code,))
+                if cur.fetchone():
+                    raise ValidationError(f"La famille '{new_code}' existe déjà")
+            finally:
+                release_connection(conn_check)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+
+            set_clauses = []
+            params = []
+            if new_code != old_code:
+                set_clauses.append("code = %s")
+                params.append(new_code)
+            if label is not None:
+                set_clauses.append("label = %s")
+                params.append(label)
+
+            if set_clauses:
+                params.append(old_code)
+                cur.execute(
+                    f"UPDATE stock_family SET {', '.join(set_clauses)} WHERE code = %s", params
+                )
+
+            if new_code != old_code:
+                cur.execute(
+                    "UPDATE stock_sub_family SET family_code = %s WHERE family_code = %s",
+                    (new_code, old_code),
+                )
+
+            conn.commit()
+            logger.info("Famille %s mise à jour (new_code=%s, label=%s)", old_code, new_code, label)
+        except ValidationError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_code(new_code)
+
+    def create(self, data: StockFamilyIn) -> StockFamilyDetail:
+        """
+        Crée une nouvelle famille de stock.
+
+        Raises:
+            ValidationError: Si le code est déjà utilisé
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM stock_family WHERE code = %s", (data.code,))
+            if cur.fetchone():
+                raise ValidationError(f"La famille '{data.code}' existe déjà")
+            cur.execute(
+                "INSERT INTO stock_family (code, label) VALUES (%s, %s)", (data.code, data.label)
+            )
+            conn.commit()
+            logger.info("Famille %s créée", data.code)
+        except ValidationError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise DatabaseError(f"Erreur lors de la création: {str(e)}") from e
+        finally:
+            release_connection(conn)
+
+        return self.get_by_code(data.code)

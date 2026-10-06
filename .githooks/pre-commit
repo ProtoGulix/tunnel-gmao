@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Bloque le commit si la vérification unique échoue (ADR 0003).
+exec "$(git rev-parse --show-toplevel)/scripts/check.sh"

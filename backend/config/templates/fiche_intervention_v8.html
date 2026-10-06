@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>FICHE MAINTENANCE - {{ code }}</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      /* A4-safe layout (toutes les mesures en mm ou pt) */
+      @page {
+        size: A4 portrait;
+        margin: 9mm 10mm 15mm 10mm; /* top right bottom left */
+
+        @bottom-left {
+          content: "API v" string(api-version) " | Template "
+            string(template-version);
+          font-size: 7pt;
+          color: #94a3b8;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+
+        @bottom-center {
+          content: string(intervention-code) "  ·  Page " counter(page) " / "
+            counter(pages);
+          font-size: 8pt;
+          font-weight: bold;
+          color: #1e3a8a;
+          font-family: "Consolas", "Courier New", monospace;
+        }
+
+        @bottom-right {
+          content: "Généré le " string(generation-date);
+          font-size: 7pt;
+          color: #94a3b8;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 9pt;
+        line-height: 1.1;
+        color: #1e293b;
+        counter-reset: page;
+      }
+
+      /* Conteneur principal */
+      .container {
+        /*width: 195mm;*/
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+
+      /* En-tête */
+      .main-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: -4mm;
+      }
+
+      .header-left {
+        flex: 1;
+        text-align: right;
+      }
+
+      .header-title {
+        font-size: 16pt;
+        font-weight: bold;
+        color: #1e3a8a;
+        margin: 0 0 2mm 0;
+        line-height: 1.2;
+      }
+
+      .header-meta {
+        font-size: 8pt;
+        line-height: 1.1;
+        margin-bottom: 1mm;
+      }
+
+      .logo-container {
+        width: 45mm;
+        height: 20mm;
+      }
+
+      .logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      /* Code unique */
+      .code-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 3mm;
+      }
+
+      .code-label {
+        font-weight: bold;
+        color: #1e3a8a;
+        margin-right: 2mm;
+        font-size: 10pt;
+        white-space: nowrap;
+      }
+
+      .code-value {
+        string-set: intervention-code content();
+        background-color: #e0f2fe;
+        border: 1px solid #1e3a8a;
+        border-radius: 1mm;
+        padding: 2mm 4mm;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 12pt;
+        font-weight: bold;
+        color: #1e3a8a;
+        white-space: nowrap;
+      }
+
+      /* Ligne supérieure */
+      .top-row {
+        display: flex;
+        width: 100%;
+        gap: 2mm;
+      }
+
+      .top-row .col {
+        box-sizing: border-box;
+      }
+
+      .top-row .col:nth-child(1) {
+        width: 35%;
+      }
+
+      .top-row .col:nth-child(2) {
+        width: 65%;
+      }
+
+      /* Sections */
+      .section {
+        margin-top: 2mm;
+      }
+
+      .section h2 {
+        margin: 0 0 1.5mm 0;
+        font-size: 10pt;
+        color: #1e3a8a;
+        border-bottom: 0.5mm solid #475569;
+        padding-bottom: 1mm;
+      }
+
+      /* Lignes de champ */
+      .field-row {
+        display: flex;
+        margin-bottom: 1mm;
+        align-items: flex-start;
+      }
+
+      .field-label {
+        width: 20mm;
+        font-weight: 600;
+        color: #475569;
+        padding-right: 1mm;
+        font-size: 8.5pt;
+        padding-top: 1mm;
+      }
+
+      .field-value {
+        flex: 1;
+        padding: 1mm 2mm;
+        border: 0.3mm solid #cbd5e1;
+        border-radius: 1mm;
+        min-height: 6mm;
+        box-sizing: border-box;
+        font-size: 9pt;
+      }
+
+      /* Badge de priorité */
+      .priority-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1mm;
+      }
+
+      .priority-label {
+        width: 20mm;
+        font-weight: 600;
+        color: #475569;
+        padding-right: 1mm;
+        font-size: 8.5pt;
+        padding-top: 1mm;
+      }
+
+      .priority-badge {
+        flex: 1;
+        padding: 1mm 2mm;
+        border-radius: 1mm;
+        font-weight: bold;
+        font-size: 9pt;
+        border: 0.3mm solid #cbd5e1;
+        text-align: center;
+      }
+
+      .priority-normal {
+        background-color: #dcfce7;
+        color: #166534;
+        border-color: #166534;
+      }
+
+      .priority-high {
+        background-color: #fed7aa;
+        color: #9a3412;
+        border-color: #9a3412;
+      }
+
+      .priority-urgent {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border-color: #991b1b;
+      }
+
+      /* Badges de statut */
+      .status-badge {
+        display: inline-block;
+        padding: 0.5mm 2mm;
+        border-radius: 2mm;
+        font-size: 8pt;
+        font-weight: bold;
+        text-align: center;
+        min-width: 15mm;
+      }
+
+      .status-inprogress {
+        background-color: #bbf7d0;
+        color: #166534;
+      }
+
+      .status-completed {
+        background-color: #bfdbfe;
+        color: #1e40af;
+      }
+
+      .status-cancelled {
+        background-color: #fecaca;
+        color: #991b1b;
+      }
+
+      /* Lignes de planification */
+      .planification-row {
+        display: flex;
+        margin-bottom: 1mm;
+      }
+
+      .planification-label {
+        width: 20mm;
+        font-weight: 600;
+        color: #475569;
+        padding-right: 1mm;
+        padding-top: 1mm;
+        font-size: 8.5pt;
+      }
+
+      .planification-value {
+        flex: 1;
+        padding: 1mm 2mm;
+        border: 0.3mm solid #cbd5e1;
+        border-radius: 1mm;
+        min-height: 6mm;
+        box-sizing: border-box;
+        font-size: 9pt;
+      }
+
+      /* Tableaux */
+      .actions-table,
+      .status-table {
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin-top: 2mm;
+        font-size: 8.5pt;
+        width: 100%;
+      }
+
+      .actions-table th:nth-child(1) {
+        width: 20mm;
+      }
+      .actions-table th:nth-child(2) {
+        width: 20mm;
+      }
+      .actions-table th:nth-child(3) {
+        width: 20mm;
+      }
+      .actions-table th:nth-child(4) {
+        width: 20mm;
+      }
+      .actions-table th:nth-child(5) {
+        width: 100mm;
+      }
+
+      .status-table th:nth-child(1) {
+        width: 20mm;
+      }
+      .status-table th:nth-child(2) {
+        width: 75mm;
+      }
+      .status-table th:nth-child(3) {
+        width: 20mm;
+      }
+
+      .actions-table thead th,
+      .status-table thead th {
+        background: #0f4c81;
+        color: #ffffff;
+        font-weight: 600;
+        padding: 1mm;
+        border-bottom: 0.5mm solid #1e3a8a;
+      }
+
+      .actions-table tbody td,
+      .status-table tbody td {
+        padding: 1mm;
+        vertical-align: top;
+        border-bottom: 0.3mm solid #cbd5e1;
+      }
+
+      .actions-table tbody td p {
+        margin: 0;
+      }
+
+      .actions-table tbody tr:nth-child(even) {
+        background: #e2e8f0;
+      }
+
+      /* Tableau des pièces */
+      .parts-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1mm;
+        font-size: 8.5pt;
+      }
+
+      .parts-table th {
+        background-color: #f3f4f6;
+        padding: 1mm;
+        text-align: left;
+        font-weight: bold;
+        color: #1e3a8a;
+        border-bottom: 0.5mm solid #cbd5e1;
+      }
+
+      .parts-table td {
+        padding: 1mm;
+        border-bottom: 0.3mm solid #cbd5e1;
+      }
+
+      .parts-table tr:nth-child(even) {
+        background-color: #e2e8f0;
+      }
+
+      .parts-qty {
+        width: 15mm;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .parts-reference {
+        width: 40mm;
+      }
+
+      .parts-stock {
+        width: 25mm;
+      }
+
+      /* Commentaires */
+      .comments {
+        min-height: 20mm;
+        padding: 1mm;
+        border: 0.3mm solid #cbd5e1;
+        box-sizing: border-box;
+        font-size: 9pt;
+        background-color: #f8fafc;
+      }
+
+      .comments:empty::before {
+        content: "Ex. : Problème résolu. Pièce remplacée. À surveiller : ...";
+        color: #9ca3af;
+        font-style: italic;
+      }
+
+      /* Message "pas de pièces" */
+      .no-parts {
+        font-weight: bold;
+        color: #1e3a8a;
+        background-color: #f0f9ff;
+        padding: 2mm;
+        border-radius: 1mm;
+        text-align: center;
+        margin-top: 1mm;
+      }
+
+      /* Éléments string-set pour @page */
+      .page-meta-api-version {
+        string-set: api-version content();
+      }
+      .page-meta-template-version {
+        string-set: template-version content();
+      }
+      .page-meta-generation-date {
+        string-set: generation-date content();
+      }
+      .page-meta {
+        height: 0;
+        overflow: hidden;
+        font-size: 0;
+        line-height: 0;
+      }
+
+      /* Règles d'impression */
+      @media print {
+        thead {
+          display: table-header-group;
+        }
+        tfoot {
+          display: table-footer-group;
+        }
+        tr {
+          page-break-inside: avoid;
+        }
+        .header,
+        .section,
+        .actions-table,
+        .status-table,
+        .parts-table,
+        .comments {
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Métadonnées pour pied de page @page (string-set) - doit être avant le contenu -->
+    <div class="page-meta">
+      <span class="page-meta-api-version">{{ api_version }}</span>
+      <span class="page-meta-template-version">{{ template_version }}</span>
+      <span class="page-meta-generation-date">{{ now | format_date }}</span>
+    </div>
+    <div class="container">
+      <!-- Header with logo and meta -->
+      <div class="main-header">
+        <div class="logo-container">
+          <img class="logo" src="{{ logo_path }}" alt="logo" />
+        </div>
+        <div class="header-left">
+          <div class="header-meta">
+            <div>Api : {{ api_version }}</div>
+            <div>Format : {{ template_version }}</div>
+          </div>
+          <div class="header-title">FICHE MAINTENANCE</div>
+        </div>
+      </div>
+      <!-- Unique code -->
+      <div class="code-container" style="float: right">
+        <span class="code-label">Numéro unique:</span>
+        <span class="code-value">{{ code }}</span>
+      </div>
+      <div style="clear: both" />
+      <!-- Top row: request and planning side-by-side -->
+      <div class="top-row" role="region">
+        <div class="col">
+          <section class="section demande" aria-labelledby="demande">
+            <h2 id="demande">Demande</h2>
+            <div class="field-row">
+              <div class="field-label">Demandeur</div>
+              <div class="field-value">{{ reported_by | default("N/A") }}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Date</div>
+              <div class="field-value">{{ reported_date | format_date }}</div>
+            </div>
+            <div class="field-row">
+              <div class="field-label">Description</div>
+              <div class="field-value">
+                {{ title | default('&nbsp;') | safe }}
+              </div>
+            </div>
+          </section>
+          <section class="section general" aria-labelledby="plan">
+            <h2 id="plan">Planification / Suivie</h2>
+            <div class="priority-container">
+              <div class="priority-label">Priorité</div>
+              <div
+                class="priority-badge {% if priority == 'normal' %}priority-normal {% elif priority == 'important' %}priority-high {% elif priority == 'urgent' %}priority-urgent {% endif %}"
+              >
+                {{ priority }}
+              </div>
+            </div>
+            <div class="planification-row">
+              <div class="planification-label">Code équipement</div>
+              <div class="planification-value">{{ equipements.code }}</div>
+            </div>
+            <div class="planification-row">
+              <div class="planification-label">Classeur</div>
+              <div class="planification-value">
+                {% if equipements.equipement_type %}{{
+                equipements.equipement_type.no_classeur or '-' }}{% else %}-{%
+                endif %}
+              </div>
+            </div>
+            <div class="planification-row">
+              <div class="planification-label">Type</div>
+              <div class="planification-value">{{ type_inter }}</div>
+            </div>
+            <div class="planification-row">
+              <div class="planification-label">Technicien</div>
+              <div class="planification-value">{{ tech_initials }}</div>
+            </div>
+          </section>
+        </div>
+        <div class="col">
+          <section
+            class="section status-history"
+            aria-labelledby="status-history"
+          >
+            <h2 id="status-history">Historique des statuts</h2>
+            <table class="status-table" aria-label="Historique des statuts">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Changement</th>
+                  <th>Modifié par</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if status_logs %} {% for s in status_logs %}
+                <tr>
+                  <td>{{ s.date|format_date }}</td>
+                  <td>
+                    {{ s.status_from }} <span class="arrow">→</span> {{
+                    s.status_to }}
+                  </td>
+                  <td>
+                    {% if s.technician_id is mapping and s.technician_id.initial
+                    %} {{ s.technician_id.initial }} {% else %} N/A {% endif %}
+                  </td>
+                </tr>
+                {% endfor %} {% else %}
+                <tr>
+                  <td colspan="3" class="text-center">
+                    Aucun statut enregistré.
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+      <!-- Actions -->
+      <section class="section actions" aria-labelledby="actions">
+        <h2 id="actions">Actions réalisées</h2>
+        <table class="actions-table" aria-label="Actions réalisées">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Durée</th>
+              <th>Technicien</th>
+              <th>Code Action</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in actions %}
+            <tr>
+              <td>{{ a.created_at | format_date }}</td>
+              <td><b>{{ a.time_spent | default('') }}</b></td>
+              <td>
+                {% if a.tech is mapping %} {{ a.tech.initial |
+                default(a.tech.first_name ~ ' ' ~ a.tech.last_name) }} {% else
+                %} {{ a.tech }} {% endif %}
+              </td>
+              <td>{{ a.action_subcategory.code | default('') }}</td>
+              <td>{{ a.description | default('') | safe }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">Aucune action enregistrée.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      <!-- Observations -->
+      <!--
+      <section class="section observations">
+        <h2>Commentaires / Observations</h2>
+        <div class="comments">
+          {{ observations | default('&nbsp;') | safe }}
+        </div>
+      </section> -->
+      <!-- Parts with improved table -->
+      <!--<section class="section pieces">
+        <h2>Pièces détachées</h2>
+        {% if parts %}
+        <table class="parts-table">
+          <thead>
+            <tr>
+              <th class="parts-qty">Qté</th>
+              <th class="parts-reference">Référence</th>
+              <th class="parts-stock">Stock</th>
+              <th class="parts-comment">Commentaire</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in parts %}
+            <tr>
+              <td class="parts-qty">{{ p.qty }}</td>
+              <td class="parts-reference">{{ p.reference }}</td>
+              <td class="parts-stock">{{ p.in_stock }}</td>
+              <td class="parts-comment">{{ p.comment | default('') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="no-parts">Aucune pièce enregistrée.</div>
+        {% endif %}
+      </section> -->
+      <!-- Purchase Requests -->
+      <section class="section purchase-requests">
+        <h2>Demandes d'achat</h2>
+        {% if purchase_requests %}
+        <table class="parts-table" style="font-size: 9px">
+          <thead>
+            <tr>
+              <th style="width: 5%; text-align: center">Qté</th>
+              <th style="width: 15%">Réf. Interne</th>
+              <th style="width: 25%">Désignation</th>
+              <th style="width: 15%">Fournisseur</th>
+              <th style="width: 15%">Réf. Fournisseur</th>
+              <th style="width: 10%">Fabricant</th>
+              <th style="width: 10%">Réf. Fabricant</th>
+              <th style="width: 5%; text-align: center">URG</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pr in purchase_requests %}
+            <tr
+              {%
+              if
+              pr.urgent
+              %}style="background-color: #ffe6e6;"
+              {%
+              endif
+              %}
+            >
+              <td style="text-align: center; font-weight: bold">
+                {{ pr.quantity_requested }} {{ pr.unit | default('pcs') }}
+              </td>
+              <td style="font-family: monospace; font-size: 8px">
+                {{ pr.stock_item_ref | default('-') }}
+              </td>
+              <td>
+                {% if pr.stock_item_name %} {{ pr.stock_item_name }} {% else %}
+                {{ pr.item_label }} {% endif %}
+              </td>
+              <td>{{ pr.supplier_name | default('-') }}</td>
+              <td style="font-family: monospace; font-size: 8px">
+                {{ pr.supplier_ref | default('-') }}
+              </td>
+              <td>{{ pr.manufacturer_name | default('-') }}</td>
+              <td style="font-family: monospace; font-size: 8px">
+                {{ pr.manufacturer_ref | default('-') }}
+              </td>
+              <td style="text-align: center">
+                {% if pr.urgent %}
+                <span style="color: #d32f2f; font-weight: bold; font-size: 12px"
+                  >⚠</span
+                >
+                {% else %} - {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="no-parts">Aucune demande d'achat.</div>
+        {% endif %}
+      </section>
+    </div>
+  </body>
+</html>

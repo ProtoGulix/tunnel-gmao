@@ -1,0 +1,85 @@
+# Tunnel GMAO : installation par docker compose (ADR 0002, 0006).
+# Usage : voir deploy/README.md. Les réglages viennent de deploy/.env (install.sh).
+#
+# Seul le service web est publié. db et api ne sont joignables que depuis le réseau
+# « tunnel » (réseau Compose, avec accès sortant pour l'envoi de mails).
+
+name: tunnel
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      # Le rôle créé par l'image est le propriétaire (migrations). Le rôle
+      # applicatif sans superuser est créé par le bootstrap de l'api.
+      POSTGRES_USER: tunnel_owner
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?DB_OWNER_PASSWORD manquant, lancer deploy/install.sh}
+      POSTGRES_DB: tunnel
+    volumes:
+      - tunnel-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tunnel_owner -d tunnel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [tunnel]
+
+  api:
+    build:
+      context: ../backend
+    image: tunnel-api:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_OWNER: postgresql://tunnel_owner:${DB_OWNER_PASSWORD}@db:5432/tunnel
+      DATABASE_URL: postgresql://tunnel_app:${DB_APP_PASSWORD:?DB_APP_PASSWORD manquant, lancer deploy/install.sh}@db:5432/tunnel
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL manquant, lancer deploy/install.sh}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY manquant, lancer deploy/install.sh}
+      API_ENV: production
+      # Adresse interne du front : l'API y lit CHANGELOG.md. Même origine pour les
+      # navigateurs, donc pas de CORS à configurer.
+      FRONTEND_URL: http://web:8080
+      EXPORT_QR_BASE_URL: ${PUBLIC_URL:-http://localhost:8080}/interventions
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-tunnel@example.com}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Tunnel GMAO}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    networks: [tunnel]
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    image: tunnel-web:local
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      CLIENT_MAX_BODY_SIZE: ${CLIENT_MAX_BODY_SIZE:-20m}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      REAL_IP_HEADER: ${REAL_IP_HEADER:-X-Forwarded-For}
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:8080"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    networks: [tunnel]
+
+volumes:
+  tunnel-db:
+
+networks:
+  tunnel:

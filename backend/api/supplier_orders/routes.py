@@ -1,0 +1,195 @@
+import csv
+import urllib.parse
+from io import StringIO
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
+
+from api.auth.permissions import require_authenticated
+from api.constants import SUPPLIER_ORDER_STATUS_CONFIG
+from api.supplier_orders.repo import SupplierOrderRepository
+from api.supplier_orders.schemas import (
+    EmailExportOut,
+    SupplierOrderIn,
+    SupplierOrderListResponse,
+    SupplierOrderUpdate,
+)
+from api.supplier_orders.validators import SupplierOrderValidator
+from api.utils.csv_safety import neutralize_csv_row
+from api.utils.response import paginated, referentiel, single
+from config.export_templates import (
+    format_csv_row,
+    get_csv_filename,
+    get_csv_headers,
+    get_email_body_html,
+    get_email_body_text,
+    get_email_subject,
+)
+
+router = APIRouter(
+    prefix="/supplier-orders",
+    tags=["supplier-orders"],
+    dependencies=[Depends(require_authenticated)],
+)
+
+
+@router.get("/statuses")
+def list_supplier_order_statuses():
+    """Retourne tous les statuts possibles avec leur label et couleur."""
+    return referentiel(
+        [
+            {
+                "code": code,
+                "label": cfg["label"],
+                "color": cfg["color"],
+                "description": cfg["description"],
+                "is_locked": cfg["is_locked"],
+            }
+            for code, cfg in SUPPLIER_ORDER_STATUS_CONFIG.items()
+        ]
+    )
+
+
+@router.get("", response_model=SupplierOrderListResponse)
+def list_supplier_orders(
+    skip: int = Query(0, ge=0, description="Nombre d'éléments à sauter"),
+    limit: int = Query(100, ge=1, le=1000, description="Nombre max d'éléments"),
+    status: Optional[str] = Query(
+        None, description="Filtrer par statut : OPEN, SENT, ACK, RECEIVED, CLOSED, CANCELLED"
+    ),
+    supplier_id: Optional[str] = Query(None, description="Filtrer par fournisseur"),
+    search: Optional[str] = Query(
+        None, description="Recherche texte (numéro de commande, nom fournisseur)"
+    ),
+):
+    """Liste les commandes fournisseur avec pagination et facets par statut"""
+    repo = SupplierOrderRepository()
+    result = repo.get_all(
+        limit=limit, offset=skip, status=status, supplier_id=supplier_id, search=search
+    )
+    return paginated(
+        result["items"], total=result["total"], offset=skip, limit=limit, facets=result["facets"]
+    )
+
+
+@router.get("/{order_id}/transitions")
+def get_supplier_order_transitions(order_id: str):
+    """Retourne les transitions de statut autorisées depuis le statut actuel de la commande."""
+    repo = SupplierOrderRepository()
+    order = repo.get_by_id(order_id)
+    return {
+        "current_status": order["status"],
+        "transitions": SupplierOrderValidator.get_allowed_transitions(order["status"]),
+    }
+
+
+@router.get("/{order_id}")
+def get_supplier_order(order_id: str):
+    """Récupère une commande fournisseur par ID avec ses lignes"""
+    repo = SupplierOrderRepository()
+    return single(repo.get_by_id(order_id))
+
+
+@router.get("/number/{order_number}")
+def get_supplier_order_by_number(order_number: str):
+    """Récupère une commande fournisseur par numéro"""
+    repo = SupplierOrderRepository()
+    return single(repo.get_by_order_number(order_number))
+
+
+@router.post("")
+def create_supplier_order(supplier_order: SupplierOrderIn):
+    """Crée une nouvelle commande fournisseur"""
+    repo = SupplierOrderRepository()
+    return single(repo.add(supplier_order.model_dump()))
+
+
+@router.put("/{order_id}")
+def update_supplier_order(order_id: str, supplier_order: SupplierOrderUpdate):
+    """Met à jour une commande fournisseur existante"""
+    repo = SupplierOrderRepository()
+    return single(repo.update(order_id, supplier_order.model_dump(exclude_unset=True)))
+
+
+@router.delete("/{order_id}")
+def delete_supplier_order(order_id: str):
+    """Supprime une commande fournisseur"""
+    repo = SupplierOrderRepository()
+    repo.delete(order_id)
+    return {"message": f"Commande fournisseur {order_id} supprimée"}
+
+
+@router.post("/{order_id}/export/csv")
+def export_supplier_order_csv(order_id: str):
+    """
+    Exporte une commande fournisseur en CSV (lignes sélectionnées uniquement).
+
+    Configuration : Modifiez config/export_templates.py pour personnaliser :
+    - get_csv_headers() : Colonnes du CSV
+    - format_csv_row() : Format des données
+    - get_csv_filename() : Nom du fichier
+    """
+    repo = SupplierOrderRepository()
+    data = repo.get_export_data(order_id)
+
+    output = StringIO()
+    writer = csv.writer(output, delimiter=';')
+
+    # En-tête (depuis template)
+    writer.writerow(neutralize_csv_row(get_csv_headers()))
+
+    # Lignes de la commande (depuis template)
+    for line in data.get('lines', []):
+        writer.writerow(neutralize_csv_row(format_csv_row(line)))
+
+    output.seek(0)
+    filename = get_csv_filename(data.get('order_number', order_id))
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.post("/{order_id}/export/email", response_model=EmailExportOut)
+def export_supplier_order_email(order_id: str):
+    """
+    Génère le contenu d'un email de commande fournisseur.
+
+    Configuration : Modifiez config/export_templates.py pour personnaliser :
+    - get_email_subject() : Sujet de l'email
+    - get_email_body_text() : Corps texte brut
+    - get_email_body_html() : Corps HTML avec tableau
+    """
+    repo = SupplierOrderRepository()
+    data = repo.get_export_data(order_id)
+
+    order_number = data.get('order_number', '')
+    supplier = data.get('supplier') or {}
+    supplier_name = supplier.get('name', 'Fournisseur')
+    supplier_email = supplier.get('email')
+    lines = data.get('lines', [])
+
+    # Génération depuis templates
+    subject = get_email_subject(order_number)
+    body_text = get_email_body_text(order_number, supplier_name, lines)
+    body_html = get_email_body_html(order_number, supplier_name, lines)
+
+    # Lien mailto: encodé pour ouverture directe dans le client mail
+    mailto_url = None
+    if supplier_email:
+        mailto_url = (
+            f"mailto:{supplier_email}"
+            f"?subject={urllib.parse.quote(subject)}"
+            f"&body={urllib.parse.quote(body_text)}"
+        )
+
+    return EmailExportOut(
+        subject=subject,
+        body_text=body_text,
+        body_html=body_html,
+        supplier_email=supplier_email,
+        mailto_url=mailto_url,
+    )
