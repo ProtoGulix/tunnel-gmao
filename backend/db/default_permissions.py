@@ -50,6 +50,12 @@ def _w(module: str, *methods: str, path: Optional[str] = None) -> WriteRule:
     return WriteRule(module, frozenset(methods) if methods else WRITE_METHODS, path)
 
 
+# --- Historique d'audit : pilotage (RESP) et agent d'audit (MCP) seulement ------------
+# Décision du 2026-10-07 : TECH et ACHETEUR ne lisent pas qui a fait quoi ; les motifs
+# (/audit/reasons) et règles (/audit/rules), nécessaires à toute saisie, restent ouverts.
+AUDIT_HISTORY_PATHS = ("/audit/logs", "/audit/briefing")
+AUDIT_HISTORY_READERS = ("RESP", "MCP")
+
 # --- Zones fermées en lecture aux rôles non-ADMIN ------------------------------------
 # /admin/* et /api-keys sont réservés à ADMIN, sauf les exceptions de RESP ci-dessous.
 CLOSED_PREFIXES = ("/admin", "/api-keys", "/home-view/admin")
@@ -128,6 +134,8 @@ def default_allowed(role: str, endpoint: Endpoint) -> bool:
         return _under(path, prefixes)
 
     if is_read:
+        if path in AUDIT_HISTORY_PATHS:
+            return role in AUDIT_HISTORY_READERS
         return role in ("RESP", "TECH", "ACHETEUR", "MCP")
     if role == "RESP":
         return True

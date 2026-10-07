@@ -13,6 +13,8 @@ import { STATUS_CONFIG, TYPE_INTER_LABELS, AUDIT_DECISION_LABELS } from '@/confi
 import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
 import TaskCreateForm from '@/components/tasks/TaskCreateForm';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 /* ── Config locale ────────────────────────────────────────────────────────── */
 
@@ -649,6 +651,9 @@ export function InterventionDetailView({ situation, onRefresh }) {
   const [detail, setDetail]     = useState(null);
   const [tasks, setTasks]       = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  // Historique d'audit réservé à RESP, ADMIN et MCP (décision du 2026-10-07).
+  const { can } = usePermissions();
+  const canReadAuditLogs = can(PERM.audit.readLogs);
   const [loading, setLoading]   = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editCell, setEditCell] = useState(null);
@@ -666,6 +671,7 @@ export function InterventionDetailView({ situation, onRefresh }) {
         setDetail(iv);
         setTasks(Array.isArray(iv.tasks) ? iv.tasks : []);
         // Charge les logs d'audit pour l'intervention et ses tâches
+        if (!canReadAuditLogs) return;
         const taskIds = Array.isArray(iv.tasks) ? iv.tasks.map((t) => String(t.id)) : [];
         const fromDt = iv.reportedDate ? new Date(iv.reportedDate).toISOString() : undefined;
         const fetches = [
@@ -681,7 +687,7 @@ export function InterventionDetailView({ situation, onRefresh }) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [canReadAuditLogs]);
 
   useEffect(() => {
     if (situation?.id) loadDetail(situation.id);

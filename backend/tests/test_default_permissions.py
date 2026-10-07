@@ -233,3 +233,21 @@ def test_chaque_module_des_regles_existe_dans_l_application():
         for regle in regles
     }
     assert modules_des_regles - tags_reels == set()
+
+
+@pytest.mark.parametrize("chemin", ["/audit/logs", "/audit/briefing"])
+def test_historique_d_audit_lu_par_resp_et_mcp_pas_par_tech_ni_acheteur(chemin):
+    """Décision du 2026-10-07 : l'historique (qui a fait quoi, valeurs avant et après) est
+    réservé au pilotage (RESP) et à l'agent d'audit (MCP)."""
+    endpoint = ep("GET", chemin, "Audit")
+    assert default_allowed("RESP", endpoint)
+    assert default_allowed("MCP", endpoint)
+    assert not default_allowed("TECH", endpoint)
+    assert not default_allowed("ACHETEUR", endpoint)
+
+
+@pytest.mark.parametrize("chemin", ["/audit/reasons", "/audit/rules"])
+def test_motifs_et_regles_d_audit_restent_lisibles_par_tous(chemin):
+    """Toute saisie auditée a besoin des motifs et des règles."""
+    for role in ("TECH", "ACHETEUR", "MCP", "RESP"):
+        assert default_allowed(role, ep("GET", chemin, "Audit"))

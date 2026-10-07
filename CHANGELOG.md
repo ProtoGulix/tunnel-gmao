@@ -16,6 +16,8 @@ tout le dépôt.
 
 ### Sécurité
 - Le journal d'audit ne peut plus être modifié ni supprimé par l'application.
+- L'historique d'audit (qui a fait quoi) est réservé à RESP, ADMIN et aux clés d'API
+  d'audit (MCP) ; motifs et règles d'audit restent lisibles par tous.
 - Le jeton de session ne transporte plus la liste des permissions (plus léger).
 - L'anti-flood du login ne compte plus que les échecs : des connexions réussies
   depuis la même IP (réseau d'usine) ne bloquent plus personne.

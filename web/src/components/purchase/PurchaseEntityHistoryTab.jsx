@@ -12,6 +12,8 @@ import { History } from '@/components/ui/GenericTabComponents';
 import AuditValueDiff from '@/components/ui/AuditValueDiff';
 import { fetchAuditLogs } from '@/api/auditLogs';
 import { AUDIT_DECISION_LABELS } from '@/config/interventionTypes';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 // entity_type audit_log valides pour ce composant — voir api/audits/middleware.py _ENTITY_MAP.
 // Constantes (plutôt que littéraux inline) pour éviter un faux positif de la règle ESLint
@@ -52,9 +54,12 @@ HistoryLogItem.propTypes = { log: PropTypes.object.isRequired };
 export default function PurchaseEntityHistoryTab({ entityType, entityId }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Historique d'audit réservé à RESP, ADMIN et MCP (décision du 2026-10-07).
+  const { can } = usePermissions();
+  const canReadAuditLogs = can(PERM.audit.readLogs);
 
   useEffect(() => {
-    if (!entityId) return;
+    if (!entityId || !canReadAuditLogs) return;
     let cancelled = false;
     setLoading(true);
     fetchAuditLogs({ entity_type: entityType, entity_id: entityId, limit: 200 })
@@ -62,7 +67,15 @@ export default function PurchaseEntityHistoryTab({ entityType, entityId }) {
       .catch(() => { if (!cancelled) setLogs([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [entityType, entityId]);
+  }, [entityType, entityId, canReadAuditLogs]);
+
+  if (!canReadAuditLogs) {
+    return (
+      <Text size="2" color="gray">
+        L'historique des modifications est réservé aux responsables.
+      </Text>
+    );
+  }
 
   return (
     <History

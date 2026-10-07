@@ -11,6 +11,10 @@
 
 export const PERM = {
   // Onglets de la page Administration (lecture : sans elle, l'onglet ne chargerait qu'un 403)
+  audit: {
+    // Historique (qui a fait quoi) : RESP, ADMIN et MCP seulement.
+    readLogs: 'audit:get_logs',
+  },
   adminTabs: {
     roles: 'admin:list_roles',
     security: 'admin:list_security_logs',
