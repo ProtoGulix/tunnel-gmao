@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # API
     API_TITLE: str = "GMAO API"
-    API_VERSION: str = "5.0.0"
+    API_VERSION: str = "5.1.0"
     API_ENV: str = os.getenv("API_ENV", "development")
     AUTH_DISABLED: bool = os.getenv("AUTH_DISABLED", "false").lower() == "true"
     # Durée de vie du cache des permissions (secondes) : délai maximal avant qu'un

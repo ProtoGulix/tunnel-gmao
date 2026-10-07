@@ -8,6 +8,8 @@ WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
+# « Nouveautés » : le script de build copie le CHANGELOG racine (source unique).
+COPY CHANGELOG.md /src/CHANGELOG.md
 # Même origine que le front : l'API est atteinte en relatif sous /api.
 ENV VITE_API_URL=/api
 RUN npm run build

@@ -1,5 +1,8 @@
 # Changelog
 
+> Historique arrêté à la version 4 du dépôt séparé. La suite (5.0.0 et après) est dans
+> le CHANGELOG.md à la racine du dépôt.
+
 ## [1.4.0] — 12 avril 2026
 
 Unification des formulaires plein écran, composant `BottomBar`, sélecteur de service pour les demandes d'intervention, et normalisation de l'UI.
