@@ -26,3 +26,6 @@ backup_*.sql
 
 # Dumps de migration v4 : données réelles, jamais versionnées
 deploy/backups-v4/
+
+# Archives et données locales, jamais versionnées
+private/
