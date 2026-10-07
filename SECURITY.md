@@ -13,8 +13,8 @@ jours.
   placée derrière un proxy HTTPS (voir deploy/README.md).
 - Ne publiez jamais d'autre port que celui du service web.
 
-## Limites connues (5.0.0)
+## Versions corrigées
 
-Les droits par rôle ne sont pas encore appliqués aux routes métier : tout utilisateur
-authentifié peut modifier les données métier. Réservez les comptes aux personnes de
-confiance en attendant la version qui applique la matrice de permissions.
+- 5.0.0 : les droits par rôle n'étaient pas appliqués aux routes métier (tout
+  utilisateur authentifié pouvait modifier les données). Corrigé en 5.1.0 : la matrice
+  des permissions est vérifiée à chaque requête (ADR 0007). Mettez à jour.

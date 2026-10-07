@@ -17,6 +17,8 @@ import StatusCallout from '@/components/ui/StatusCallout';
 import { useSupplierOrderStatuses } from '@/hooks/purchase/useSupplierOrders';
 import { useSupplierOrderDetail } from '@/hooks/purchase/useSupplierOrderDetail';
 import SupplierOrderHeader from '@/components/purchase/SupplierOrderHeader';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { formatPrice } from '@/utils/formatPrice';
 import SupplierOrderLines from '@/components/purchase/SupplierOrderLines';
 import PurchaseEntityHistoryTab, { PURCHASE_ENTITY_TYPES } from '@/components/purchase/PurchaseEntityHistoryTab';
@@ -81,6 +83,7 @@ DeliveryDateField.propTypes = {
 };
 
 export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, onStatusChange }) {
+  const { can } = usePermissions();
   const [emailError, setEmailError] = useState(null);
 
   const handleExportEmail = async (id) => {
@@ -178,7 +181,7 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
                     </DetailRow>
                   )}
                   <DetailRow label="Livraison prévue">
-                    {detail.edit_lines
+                    {detail.edit_lines && can(PERM.supplierOrders.update)
                       ? <DeliveryDateField value={deliveryDate} onChange={setDeliveryDate} dirty={deliveryDate !== currentDelivery} onSave={handleDeliverySave} saving={savingDelivery} />
                       : <Text size="2">{detail.expected_delivery_date ? new Date(detail.expected_delivery_date).toLocaleDateString('fr-FR') : '—'}</Text>
                     }
@@ -203,7 +206,7 @@ export default function SupplierOrderDetail({ orderId, onDelete, onExportCsv, on
                   <Separator size="4" />
                   <SupplierOrderLines
                     lines={detail.lines}
-                    isNegotiating={!!detail.edit_lines}
+                    isNegotiating={!!detail.edit_lines && can(PERM.supplierOrders.updateLine)}
                     lineDrafts={lineDrafts}
                     savingLines={savingLines}
                     lineErrors={lineErrors}

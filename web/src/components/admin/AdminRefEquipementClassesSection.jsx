@@ -8,8 +8,11 @@ import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text, TextField, Dialog, AlertDialog } from '@radix-ui/themes';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 export function EquipementClassesSection({ items, loading, onCreate, onUpdate, onDelete }) {
+  const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -130,16 +133,20 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
       width: 100,
       render: (i) => (
         <Flex gap="1">
-          <Button size="1" variant="soft" onClick={() => openEdit(i)}>
-            <Pencil size={12} />
-          </Button>
-          <Button size="1" variant="soft" color="red" onClick={() => openDelete(i)}>
-            <Trash2 size={12} />
-          </Button>
+          {can(PERM.adminRef.updateEquipementClass) && (
+            <Button size="1" variant="soft" onClick={() => openEdit(i)}>
+              <Pencil size={12} />
+            </Button>
+          )}
+          {can(PERM.adminRef.removeEquipementClass) && (
+            <Button size="1" variant="soft" color="red" onClick={() => openDelete(i)}>
+              <Trash2 size={12} />
+            </Button>
+          )}
         </Flex>
       ),
     },
-  ], []); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [can]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Box mb="6">
@@ -185,11 +192,11 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
           title: "Classes d'équipement",
           count: items.length,
           showSearchInput: false,
-          actions: (
+          actions: can(PERM.adminRef.createEquipementClass) ? (
             <Button size="2" onClick={openCreate}>
               <Plus size={14} /> Nouvelle classe
             </Button>
-          ),
+          ) : null,
         }}
         columns={columns}
         data={items}

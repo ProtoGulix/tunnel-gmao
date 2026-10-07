@@ -786,6 +786,11 @@ class InterventionRepository:
                 self._link_request(cur, intervention_id, request_id)
 
             conn.commit()
+        except HTTPException:
+            # Erreurs métier (validation, conflit, introuvable) : leur message est destiné
+            # à l'utilisateur, il ne doit pas devenir une erreur 500 générique.
+            conn.rollback()
+            raise
         except Exception as e:
             conn.rollback()
             raise DatabaseError(f"Erreur lors de la création de l'intervention: {str(e)}") from e

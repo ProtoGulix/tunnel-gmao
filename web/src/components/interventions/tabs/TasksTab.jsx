@@ -17,6 +17,7 @@ import {
 } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ListTodo, MinusCircle, Plus } from 'lucide-react';
 import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import {
   fetchInterventionTasks,
   fetchInterventionTasksProgress,
@@ -99,7 +100,7 @@ TaskRow.propTypes = {
 /* ── Composant principal ────────────────────────────────────────────────────── */
 
 export default function TasksTab({ interventionId, isLocked = false }) {
-  const { canSkipObligatory } = usePermissions();
+  const { canSkipObligatory, can } = usePermissions();
 
   const [tasks, setTasks] = useState([]);
   const [progress, setProgress] = useState(null);
@@ -205,7 +206,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
               onSkipOpen={(t) => { setSkipTarget(t); setSkipReason(''); }}
               saving={saving}
               canSkipObligatory={canSkipObligatory}
-              isLocked={isLocked}
+              isLocked={isLocked || !can(PERM.interventions.updateTask)}
             />
           ))
       ) : (
@@ -216,7 +217,7 @@ export default function TasksTab({ interventionId, isLocked = false }) {
       )}
 
       {/* ── Création inline ── */}
-      {!isLocked && (
+      {!isLocked && can(PERM.interventions.createTask) && (
         <Box mt="3">
           {showCreate ? (
             <TaskCreateForm

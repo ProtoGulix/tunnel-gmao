@@ -13,4 +13,5 @@ Tu implémentes les fronts de Tunnel GMAO. CLAUDE.md est la référence pour la 
 - Respecte les composants existants listés dans la doc du dépôt avant d'en créer un.
 - N'ajoute aucune dépendance npm : signale le besoin.
 - Lance le build du front (npm run build) et ./scripts/check.sh avant de rendre la main.
+- Branches (CLAUDE.md section 12, ADR 0008) : tu travailles uniquement sur la branche de travail ou le worktree fourni, jamais sur main ni develop. Vérifie d'abord `git branch --show-current` et le commit de départ indiqué ; s'ils ne correspondent pas, signale-le avant toute modification. Tu ne fusionnes jamais, tu ne pousses jamais, et tu ne commites que si l'agent principal le demande (format Conventional Commits).
 - Rends un résumé court : fichiers modifiés, écrans touchés, ce qui reste NON VÉRIFIÉ.

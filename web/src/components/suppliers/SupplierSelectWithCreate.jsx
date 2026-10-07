@@ -8,12 +8,15 @@ import PropTypes from 'prop-types';
 import { Dialog, VisuallyHidden } from '@radix-ui/themes';
 import SupplierForm from '@/components/suppliers/SupplierForm';
 import { createSupplier } from '@/api/suppliers';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const NEW_OPTION = '__new__';
 
 export default function SupplierSelectWithCreate({
   suppliers, value, onChange, onSupplierCreated, placeholder = 'Fournisseur…', style,
 }) {
+  const { can } = usePermissions();
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -44,7 +47,7 @@ export default function SupplierSelectWithCreate({
       >
         <option value="">{placeholder}</option>
         {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        <option value={NEW_OPTION}>+ Nouveau fournisseur…</option>
+        {can(PERM.suppliers.create) && <option value={NEW_OPTION}>+ Nouveau fournisseur…</option>}
       </select>
 
       <Dialog.Root open={creating} onOpenChange={(v) => { if (!v && !saving) setCreating(false); }}>

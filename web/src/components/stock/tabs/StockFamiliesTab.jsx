@@ -13,6 +13,8 @@ import DataTable from '@/components/ui/DataTable';
 import StockFamilyDetail from '@/components/stock/StockFamilyDetail';
 import StockFamilyForm from '@/components/stock/StockFamilyForm';
 import { useStockFamilies } from '@/hooks/stock/useStockFamilies';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const columns = [
   {
@@ -35,6 +37,7 @@ const columns = [
 ];
 
 export default function StockFamiliesTab() {
+  const { can } = usePermissions();
   const { families, loading, error, refresh, createFamily, updateFamily } = useStockFamilies();
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [mode, setMode] = useState(null); // 'create' | 'edit' | null
@@ -99,11 +102,11 @@ export default function StockFamiliesTab() {
         count={families.length}
         showSearchInput={false}
         showRefreshButton={false}
-        rightActions={
+        rightActions={can(PERM.stock.createFamily) ? (
           <Button size="2" color="blue" onClick={() => { setSelectedFamily(null); setMode('create'); }}>
             <Plus size={14} /> Ajouter
           </Button>
-        }
+        ) : null}
       />
       {mode === 'create' && (
         <Box mb="3">

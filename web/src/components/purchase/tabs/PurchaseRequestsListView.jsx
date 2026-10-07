@@ -7,6 +7,8 @@ import { Button, Flex, Text } from '@radix-ui/themes';
 import { ShoppingCart, Trash2 } from 'lucide-react';
 import PropTypes from 'prop-types';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { PurchaseRequestsTable, SortSelect } from './PurchaseRequestsTabParts';
 import { PrFilters } from './PurchaseRequestsFilters';
 import { DetailEmptyState } from './PurchaseRequestsDetailEmptyState';
@@ -18,6 +20,7 @@ export default function PurchaseRequestsListView({
   checkedIds, onToggleCheck, onToggleCheckAll, onBulkDeleteClick,
   detailContent, detailLoading,
 }) {
+  const { can } = usePermissions();
   const masterList = items.length === 0 && !loading ? (
     <Flex direction="column" align="center" justify="center" gap="2" style={{ height: 200, padding: 24 }}>
       <ShoppingCart size={28} color="var(--gray-7)" />
@@ -40,7 +43,7 @@ export default function PurchaseRequestsListView({
     <Flex align="center" gap="2" wrap="wrap">
       <PrFilters status={status} setStatus={setStatus} statuses={statuses} urgency={urgency} setUrgency={setUrgency} />
       <SortSelect sort={sort} setSort={setSort} />
-      {checkedIds.size > 0 && (
+      {checkedIds.size > 0 && can(PERM.purchaseRequests.remove) && (
         <Button size="1" color="red" variant="soft" onClick={onBulkDeleteClick}>
           <Trash2 size={12} /> Supprimer ({checkedIds.size})
         </Button>

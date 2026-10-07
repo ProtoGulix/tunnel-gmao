@@ -6,6 +6,25 @@ Utilisé par le démarrage de l'API (api.app) et par scripts.bootstrap.
 import re
 
 
+def endpoint_code(route, method: str) -> str:
+    """Code d'endpoint d'une route FastAPI pour une méthode HTTP.
+
+    Source unique : utilisé par la synchronisation du catalogue et par le contrôle
+    des droits (ADR 0007), pour que les deux produisent exactement les mêmes codes.
+    Format : "{tag ou 1er segment du chemin}:{nom de la fonction}", en minuscules,
+    caractères hors [a-z0-9:_-] remplacés par "_", tronqué à 100 ; suffixé par
+    "_{méthode}" si la route déclare plusieurs méthodes.
+    """
+    path = route.path
+    tags = getattr(route, "tags", None) or []
+    module = tags[0] if tags else None
+    operation_id = getattr(route, "name", None) or ""
+    prefix = module or (path.split("/")[1] if path.count("/") >= 1 else "root")
+    code_raw = f"{prefix}:{operation_id}"
+    code = re.sub(r"[^a-z0-9:_\-]", "_", code_raw.lower())[:100]
+    return f"{code}_{method.lower()}" if len(route.methods or set()) > 1 else code
+
+
 def sync_catalog(routes, conn) -> int:
     """Fait un UPSERT dans tunnel_endpoint pour chaque route et crée les lignes
     tunnel_permission manquantes (allowed=False) pour chaque rôle. Valide la
@@ -18,16 +37,10 @@ def sync_catalog(routes, conn) -> int:
         tags = getattr(route, "tags", None) or []
         module = tags[0] if tags else None
         summary = getattr(route, "summary", None) or getattr(route, "name", None)
-        operation_id = getattr(route, "name", None) or ""
         is_sensitive = path.startswith("/admin")
 
-        # code = "{module}:{operation_id}" normalisé
-        prefix = module or (path.split("/")[1] if path.count("/") >= 1 else "root")
-        code_raw = f"{prefix}:{operation_id}"
-        code = re.sub(r"[^a-z0-9:_\-]", "_", code_raw.lower())[:100]
-
         for method in route.methods or {"GET"}:
-            endpoint_code = f"{code}_{method.lower()}" if len(route.methods or set()) > 1 else code
+            code = endpoint_code(route, method)
             with conn.cursor() as cur:
                 cur.execute(
                     """
@@ -42,7 +55,7 @@ def sync_catalog(routes, conn) -> int:
                         is_sensitive = EXCLUDED.is_sensitive
                     RETURNING id
                     """,
-                    (endpoint_code, method, path, summary, module, is_sensitive),
+                    (code, method, path, summary, module, is_sensitive),
                 )
                 row = cur.fetchone()
                 if row:

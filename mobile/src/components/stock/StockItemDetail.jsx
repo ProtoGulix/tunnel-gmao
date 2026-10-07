@@ -6,6 +6,8 @@ import { SectionTitle, InfoRow } from '../ui/DetailRows'
 import { DynBadge } from '../ui/DynBadge'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { PurchaseRequestForm } from '../purchases/PurchaseRequestForm'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 function SupplierRow({ supplier }) {
   return (
@@ -49,6 +51,7 @@ function CharacteristicRow({ char }) {
 }
 
 export function StockItemDetail({ id, openPurchaseOnMount = false }) {
+  const { can } = usePermissions()
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -142,15 +145,17 @@ export function StockItemDetail({ id, openPurchaseOnMount = false }) {
         </div>
       </div>
 
-      <BottomBar>
-        <BottomBtn
-          variant="primary"
-          icon={<ShoppingCart size={16} />}
-          onClick={() => setShowForm(true)}
-        >
-          Demande d'achat
-        </BottomBtn>
-      </BottomBar>
+      {can(PERM.purchases.create) && (
+        <BottomBar>
+          <BottomBtn
+            variant="primary"
+            icon={<ShoppingCart size={16} />}
+            onClick={() => setShowForm(true)}
+          >
+            Demande d'achat
+          </BottomBtn>
+        </BottomBar>
+      )}
 
       {showForm && (
         <PurchaseRequestForm

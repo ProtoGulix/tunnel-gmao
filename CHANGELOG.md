@@ -1,10 +1,43 @@
 # Changelog
 
-Les historiques détaillés des versions 1 à 4 se trouvent dans backend/CHANGELOG.md,
-web/CHANGELOG.md et mobile/CHANGELOG.md. À partir de la 5.0.0, ce fichier couvre
-tout le dépôt.
+Source unique des nouveautés de Tunnel : ce fichier alimente aussi l'écran
+« Nouveautés » de l'application. Format : `## [X.Y.Z] — AAAA-MM-JJ`, sections `###` ;
+une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les historiques
+des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
+mobile/CHANGELOG.md.
 
-## 5.0.0 — 2026-10-07
+## [5.1.0] — 2026-10-07
+
+### Droits par rôle
+- Chaque profil (responsable, technicien, acheteur) ne peut faire que ce qui concerne
+  son métier. L'administrateur ajuste les droits dans Administration → Rôles et
+  permissions.
+- Les boutons des actions non autorisées sont masqués.
+- L'historique des modifications est réservé aux responsables.
+
+### Sécurité
+- Le journal des décisions ne peut plus être modifié ni effacé.
+- Plusieurs postes d'un même réseau ne se bloquent plus mutuellement après de
+  nombreuses connexions réussies.
+
+### Corrections
+- Créer une intervention avec un type invalide affiche un message clair au lieu
+  d'une erreur interne.
+
+### [interne] Technique
+- Matrice tunnel_permission appliquée à chaque requête (ADR 0007) : matrice par défaut
+  posée au démarrage sans écraser les choix d'un admin, cache rechargé toutes les 30 s,
+  ADMIN toujours autorisé, clés d'API MCP en lecture (historique d'audit compris).
+- Rôle applicatif sans UPDATE, DELETE ni TRUNCATE sur audit_log, permission_audit_log
+  et security_log.
+- Jeton de session sans la liste des permissions (208 octets) ; les fronts la lisent
+  sur /auth/me. Anti-flood par IP limité aux échecs. DatabaseError journalise son
+  détail.
+- Branches et versions (ADR 0008), CI GitHub Actions, garde-fous .githooks.
+- Ce fichier devient la source de « Nouveautés » ; versions de l'API, du front web et
+  du mobile alignées sur 5.1.0.
+
+## [5.0.0] — 2026-10-07
 
 Première version publiée sous forme d'un seul dépôt (backend, front web, mobile).
 
@@ -32,7 +65,7 @@ Première version publiée sous forme d'un seul dépôt (backend, front web, mob
   du tableau de bord ne trouvaient rien.
 - Plusieurs erreurs 500 dues à des imports manquants.
 
-### Connu
+### [interne] Connu
 - Les droits par rôle (matrice de permissions) ne sont pas encore appliqués aux
   routes métier : tout utilisateur connecté, et une clé d'API, peut écrire. Chantier
   prioritaire de la prochaine version.

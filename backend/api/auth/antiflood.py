@@ -43,19 +43,24 @@ def check_email_flood(email: str, conn) -> None:
 
 
 def check_ip_flood(ip: str, conn) -> None:
-    """Lève 429 si ≥ 20 tentatives depuis cette IP dans la dernière heure."""
+    """Lève 429 si ≥ 20 tentatives ÉCHOUÉES depuis cette IP dans la dernière heure.
+
+    Les connexions réussies ne comptent pas : dans une usine, tous les postes sortent
+    souvent par la même IP, et 20 connexions légitimes par heure bloqueraient tout le monde.
+    """
     with conn.cursor() as cur:
         cur.execute(
             """
             SELECT COUNT(*) FROM auth_attempt
             WHERE ip_address = %s
+              AND success = false
               AND created_at > now() - INTERVAL '1 hour'
             """,
             (ip,),
         )
         count = cur.fetchone()[0]
     if count >= 20:
-        logger.warning("Flood IP détecté : %s (%d tentatives)", ip, count)
+        logger.warning("Flood IP détecté : %s (%d échecs)", ip, count)
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=_MSG_BLOCKED)
 
 

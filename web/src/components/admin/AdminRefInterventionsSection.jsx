@@ -8,6 +8,8 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Text, TextField, Dialog } from '@radix-ui/themes';
 import { Lock, Plus, Pencil } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 function ImmutableCode({ code }) {
   return (
@@ -30,6 +32,7 @@ function ColorSwatch({ color }) {
 
 // ---- Section types d'intervention ----
 export function InterventionTypesSection({ items, loading, onCreate, onUpdate, onToggleActive }) {
+  const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -63,14 +66,18 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
       key: 'actions', header: '', align: 'end', width: 120,
       render: (i) => (
         <Flex gap="1">
-          <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
-          <Button size="1" variant="soft" color={i.is_active ? 'red' : 'green'} onClick={() => onToggleActive(i.id, !i.is_active)}>
-            {i.is_active ? 'Désactiver' : 'Activer'}
-          </Button>
+          {can(PERM.adminRef.patchInterventionType) && (
+            <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
+          )}
+          {can(PERM.adminRef.setInterventionTypeActive) && (
+            <Button size="1" variant="soft" color={i.is_active ? 'red' : 'green'} onClick={() => onToggleActive(i.id, !i.is_active)}>
+              {i.is_active ? 'Désactiver' : 'Activer'}
+            </Button>
+          )}
         </Flex>
       ),
     },
-  ], [onToggleActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [onToggleActive, can]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const LabelForm = ({ onSubmit, submitLabel }) => (
     <form onSubmit={onSubmit}>
@@ -114,7 +121,9 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
           title: "Types d'intervention",
           count: items.length,
           showSearchInput: false,
-          actions: <Button size="2" onClick={() => { setForm({ code: '', label: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>,
+          actions: can(PERM.adminRef.createInterventionType)
+            ? <Button size="2" onClick={() => { setForm({ code: '', label: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>
+            : null,
         }}
         columns={columns}
         data={items}
@@ -127,6 +136,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
 
 // ---- Section statuts d'intervention (lecture + modif label+couleur seulement) ----
 export function InterventionStatusesSection({ items, loading, onUpdate }) {
+  const { can } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ label: '', color: '' });
@@ -152,10 +162,12 @@ export function InterventionStatusesSection({ items, loading, onUpdate }) {
     {
       key: 'actions', header: '', align: 'end', width: 80,
       render: (i) => (
-        <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
+        can(PERM.adminRef.patchInterventionStatus)
+          ? <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
+          : null
       ),
     },
-  ], []); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [can]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Box mb="6">

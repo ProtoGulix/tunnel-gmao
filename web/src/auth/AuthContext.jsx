@@ -16,6 +16,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const storeUser = (profile) => {
+    if (!profile) return;
+    localStorage.setItem('auth_user', JSON.stringify(profile));
+    setUser(profile);
+  };
+
   useEffect(() => {
     // Restaurer l'utilisateur depuis le cache localStorage au démarrage
     const cached = localStorage.getItem('auth_user');
@@ -25,6 +31,9 @@ export function AuthProvider({ children }) {
       } catch {
         localStorage.removeItem('auth_user');
       }
+      // Les droits (ADR 0007) peuvent avoir changé depuis la dernière visite :
+      // on relit le profil complet (rôle + permissions) sans bloquer l'affichage.
+      authApi.getMe().then(storeUser).catch(() => {});
     }
     setLoading(false);
   }, []);
@@ -40,9 +49,17 @@ export function AuthProvider({ children }) {
       localStorage.setItem('auth_refresh_token', refresh_token);
     }
     localStorage.setItem('auth_user', JSON.stringify(userData));
-
     setUser(userData);
-    return userData;
+
+    // La réponse de login ne porte pas les permissions : GET /auth/me les renvoie.
+    try {
+      const profile = await authApi.getMe();
+      const fullUser = { ...userData, ...profile };
+      storeUser(fullUser);
+      return fullUser;
+    } catch {
+      return userData;
+    }
   };
 
   const logout = async () => {

@@ -14,6 +14,8 @@ import { useInterventionRequestDetail } from '../../hooks/interventions/useInter
 import { transitionInterventionRequest, getIntervention } from '../../api/interventions'
 import { INTERVENTION_STATUSES } from '../../config/badges'
 import { formatDateFr } from '../../utils/dateUtils'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 // Transitions autorisées par statut
 const ALLOWED_TRANSITIONS = {
@@ -127,6 +129,7 @@ const AcceptDISheet = ({ item, onClose, onDone }) => {
 
 // ── Détail d'une demande ──────────────────────────────────────────────────────
 const DIDetail = ({ id, onNavigateIntervention }) => {
+  const { can } = usePermissions()
   const { item, loading, error, reload } = useInterventionRequestDetail(id)
   const [showAcceptForm, setShowAcceptForm] = useState(false)
 
@@ -138,6 +141,7 @@ const DIDetail = ({ id, onNavigateIntervention }) => {
 
   const eq = item.equipement
   const canAccept = ALLOWED_TRANSITIONS[item.statut]?.includes('acceptee') && !item.intervention_id
+    && can(PERM.requests.accept)
   const hasIntervention = !!item.intervention_id
 
   return (
@@ -252,6 +256,7 @@ const DIDetail = ({ id, onNavigateIntervention }) => {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function InterventionRequestsPage() {
+  const { can } = usePermissions()
   const { requestId } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -322,11 +327,13 @@ export default function InterventionRequestsPage() {
         />
       </div>
 
-      <BottomBar>
-        <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
-          Nouvelle demande
-        </BottomBtn>
-      </BottomBar>
+      {can(PERM.requests.create) && (
+        <BottomBar>
+          <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+            Nouvelle demande
+          </BottomBtn>
+        </BottomBar>
+      )}
 
       {showForm && (
         <DIForm

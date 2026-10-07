@@ -10,7 +10,8 @@ Variables d'environnement :
     ADMIN_EMAIL         email du premier admin (requis tant qu'aucun admin actif n'existe)
 
 Code de sortie 0 si la base est prête, 1 sinon. Relancé sur une base déjà
-installée, il ne change rien : pas de nouvel admin, aucune permission écrasée.
+installée, il ne change rien d'important : pas de nouvel admin, aucune permission modifiée
+par un admin n'est réécrite (seules les permissions jamais touchées suivent la matrice par défaut).
 """
 
 import os
@@ -29,14 +30,6 @@ from pydantic import BaseModel, EmailStr, ValidationError
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 WAIT_SECONDS = 60
 
-# Droits MCP de départ (lecture seule), repris de la base de dev (spike 0001).
-MCP_ALLOWED_ENDPOINTS = (
-    "action-categories:list_categories",
-    "action-categories:get_category",
-    "action-categories:get_category_subcategories",
-    "dashboard:get_dashboard_summary",
-)
-
 # Page d'accueil de départ par rôle. Un rôle absent suit la vue par défaut (technicien).
 ROLE_HOME_VIEWS = {
     "ADMIN": "direction_technique",
@@ -44,6 +37,10 @@ ROLE_HOME_VIEWS = {
     "TECH": "technicien",
     "ACHETEUR": "acheteur",
 }
+
+
+# Tables de journal : le rôle applicatif les lit et y ajoute, sans modifier ni supprimer.
+APPEND_ONLY_TABLES = ("audit_log", "permission_audit_log", "security_log")
 
 
 class BootstrapError(Exception):
@@ -133,8 +130,18 @@ def ensure_app_role(conn, app_user: str, app_password: str) -> None:
             cur.execute(
                 sql.SQL(statement).format(role=role, owner=owner_id, db=sql.Identifier(database))
             )
+        # Journaux infalsifiables par l'application (ADR 0007, point 6) : ajout seul.
+        # Les privilèges par défaut ne sont pas concernés : ils ne portent que sur les
+        # tables futures, et ces trois tables existent déjà.
+        for table in APPEND_ONLY_TABLES:
+            cur.execute(
+                sql.SQL("REVOKE UPDATE, DELETE, TRUNCATE ON {} FROM {}").format(
+                    sql.Identifier(table), role
+                )
+            )
     conn.commit()
     say(f"rôle applicatif {app_user} prêt ({verb.lower()}), droits accordés")
+    say(f"journaux en ajout seul pour {app_user} : {', '.join(APPEND_ONLY_TABLES)}")
 
 
 class _AdminEmail(BaseModel):
@@ -164,27 +171,66 @@ def has_active_admin(conn) -> bool:
         return cur.fetchone() is not None
 
 
-def seed_first_install(conn) -> None:
-    """Droits MCP et pages d'accueil de départ, une seule fois (avant le premier admin).
+def sync_and_apply_default_permissions(conn) -> None:
+    """Synchronise le catalogue des endpoints, puis ouvre/ferme les permissions jamais touchées.
 
-    Exécuté seulement tant qu'aucun admin actif n'existe : aucun admin n'a donc pu
-    modifier ces réglages, et une instance en service n'est jamais touchée.
+    Une permission est « jamais touchée » si permission_audit_log n'a aucune ligne pour
+    ce couple rôle/endpoint : api/admin/repo.py y écrit à chaque modification par un admin.
+    Idempotent : rejouable à chaque démarrage, une valeur choisie par un admin est conservée.
     """
     from api.app import app
     from api.endpoints_catalog import sync_catalog
+    from db.default_permissions import Endpoint, default_allowed
 
     count = sync_catalog(app.routes, conn)
     with conn.cursor() as cur:
         cur.execute(
             """
-            UPDATE tunnel_permission tp SET allowed = true
-            FROM tunnel_role r, tunnel_endpoint e
-            WHERE r.id = tp.role_id AND e.id = tp.endpoint_id
-              AND r.code = 'MCP' AND e.code = ANY(%s)
-            """,
-            (list(MCP_ALLOWED_ENDPOINTS),),
+            SELECT tp.id, r.code, tp.allowed, e.code, e.method, e.path, e.module
+            FROM tunnel_permission tp
+            JOIN tunnel_role r ON r.id = tp.role_id
+            JOIN tunnel_endpoint e ON e.id = tp.endpoint_id
+            WHERE NOT EXISTS (
+                SELECT 1 FROM permission_audit_log pal
+                WHERE pal.role_id = tp.role_id AND pal.endpoint_id = tp.endpoint_id
+            )
+            """
         )
-        mcp_updated = cur.rowcount
+        rows = cur.fetchall()
+        opened: dict[str, int] = {}
+        closed: dict[str, int] = {}
+        to_open, to_close = [], []
+        for perm_id, role, current, code, method, path, module in rows:
+            wanted = default_allowed(role, Endpoint(code, method, path, module))
+            if wanted == current:
+                continue
+            (to_open if wanted else to_close).append(perm_id)
+            counter = opened if wanted else closed
+            counter[role] = counter.get(role, 0) + 1
+        for ids, value in ((to_open, True), (to_close, False)):
+            if ids:
+                cur.execute(
+                    "UPDATE tunnel_permission SET allowed = %s WHERE id = ANY(%s::uuid[])",
+                    (value, ids),
+                )
+    conn.commit()
+    say(f"catalogue synchronisé ({count} endpoints), {len(rows)} permissions jamais modifiées")
+    for role in sorted(set(opened) | set(closed)):
+        say(
+            f"droits par défaut {role} : {opened.get(role, 0)} ouverts, "
+            f"{closed.get(role, 0)} fermés"
+        )
+    if not opened and not closed:
+        say("droits par défaut déjà à jour")
+
+
+def seed_first_install(conn) -> None:
+    """Pages d'accueil de départ, une seule fois (avant le premier admin).
+
+    Exécuté seulement tant qu'aucun admin actif n'existe : aucun admin n'a donc pu
+    modifier ces réglages, et une instance en service n'est jamais touchée.
+    """
+    with conn.cursor() as cur:
         for role_code, view in ROLE_HOME_VIEWS.items():
             cur.execute(
                 """
@@ -195,7 +241,6 @@ def seed_first_install(conn) -> None:
                 (view, role_code),
             )
     conn.commit()
-    say(f"catalogue synchronisé ({count} endpoints), {mcp_updated} droits MCP en lecture posés")
     say("pages d'accueil par rôle initialisées")
 
 
@@ -254,11 +299,14 @@ def main() -> int:
         conn = psycopg2.connect(owner_url)
         try:
             ensure_app_role(conn, app_user, app_password)
+            email = None
             if has_active_admin(conn):
                 say("un admin actif existe déjà : rien à créer")
             else:
                 email = validate_admin_email(require_env("ADMIN_EMAIL"))
                 ensure_admin_email_is_free(conn, email)
+            sync_and_apply_default_permissions(conn)
+            if email:
                 seed_first_install(conn)
                 announce_admin(email, create_first_admin(conn, email))
         finally:

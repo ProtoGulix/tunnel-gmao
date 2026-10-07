@@ -1,0 +1,52 @@
+# Intégration continue (ADR 0008) : check.sh puis tests d'intégration, sur chaque pull
+# request et chaque push vers develop ou main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check.sh (format, lint, tests, builds)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            mobile/package-lock.json
+      - name: Bibliothèques système de WeasyPrint
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
+      - name: Dépendances backend
+        run: python -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements-dev.txt
+      - name: Dépendances des fronts
+        run: |
+          (cd web && npm ci --no-audit --no-fund)
+          (cd mobile && npm ci --no-audit --no-fund)
+      - run: ./scripts/check.sh
+
+  integration:
+    name: tests d'intégration (PostgreSQL jetable)
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Bibliothèques système de WeasyPrint
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
+      - name: Dépendances backend
+        run: python -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements-dev.txt
+      - run: ./scripts/test-integration.sh

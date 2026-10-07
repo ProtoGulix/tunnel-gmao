@@ -22,6 +22,8 @@ import RequestPointageDialog from '@/components/interventions/RequestPointageDia
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const ActionsTab = lazy(() => import('@/components/interventions/tabs/ActionsTab'));
 const SummaryTab = lazy(() => import('@/components/interventions/tabs/SummaryTab'));
@@ -68,6 +70,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   const { id: idParam } = useParams();
   const id = idProp ?? idParam;
   const navigate = useNavigate();
+  const { can } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   // En mode embarqué (master-detail), la page parente possède déjà `tab` pour ses propres
   // onglets : on utilise `dtab` pour éviter toute collision.
@@ -203,7 +206,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   const isLocked = ['ferme', 'cancelled'].includes(mapDtoStatusToConfigKey(intervention?.status));
 
   /* ── Blocs partagés ── */
-  const deleteDialog = isDeletable ? (
+  const deleteDialog = isDeletable && can(PERM.interventions.remove) ? (
     <AlertDialog.Root>
       <AlertDialog.Trigger>
         <Button color="red" variant="soft" size="2">
@@ -229,7 +232,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
       label={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.label || 'En cours'}
       color={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.activeBg || 'var(--blue-6)'}
       textColor={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.textActive || 'white'}
-      disabled={isLocked}
+      disabled={isLocked || !can(PERM.interventions.update)}
       items={[
         { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
         { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },
@@ -244,7 +247,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
       label={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.label || 'Normal'}
       color={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.activeBg || 'var(--gray-6)'}
       textColor={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.textActive || 'white'}
-      disabled={isLocked}
+      disabled={isLocked || !can(PERM.interventions.update)}
       items={[
         { label: 'Urgent', color: PRIORITY_COLORS.urgent.activeBg, onClick: () => handlePriorityChange('urgent') },
         { label: 'Important', color: PRIORITY_COLORS.important.activeBg, onClick: () => handlePriorityChange('important') },
@@ -254,7 +257,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     />
   );
 
-  const pointageButton = (
+  const pointageButton = !can(PERM.interventions.requestPointage) ? null : (
     <Button
       variant="soft"
       color="orange"
@@ -313,7 +316,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
               statusLog={statusLog}
               searchTerm={searchActions}
               onSearchChange={setSearchActions}
-              onAddAction={isLocked ? null : addAction}
+              onAddAction={isLocked || !can(PERM.interventions.createAction) ? null : addAction}
               interventionId={id}
               onPurchaseRequestCreated={handlePurchaseRequestCreated}
               onActionDeleted={refetch}
@@ -441,7 +444,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
           ...(deleteDialog ? [{ label: deleteDialog }] : []),
           { label: statusDropdown },
           { label: priorityDropdown },
-          { label: pointageButton },
+          ...(pointageButton ? [{ label: pointageButton }] : []),
         ]}
       />
 

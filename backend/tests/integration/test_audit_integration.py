@@ -31,7 +31,10 @@ def _auteurs(instance, entity_id, decision_type):
     return [r[0] for r in rows]
 
 
-def test_changement_de_statut_trace_lauteur_du_jeton(instance, client, make_user, intervention):
+def test_changement_de_statut_trace_lauteur_du_jeton(
+    instance, client, make_user, intervention, grant
+):
+    grant("TECH", "POST", "/intervention-status-log")
     auteur = make_user("TECH")
     autre = make_user("TECH")  # « au nom de » : déclaratif, jamais une preuve d'identité
     resp = client.post(
@@ -50,8 +53,9 @@ def test_changement_de_statut_trace_lauteur_du_jeton(instance, client, make_user
 
 
 def test_mutation_tracee_par_le_middleware_ecrit_lauteur_du_jeton(
-    instance, client, make_user, intervention
+    instance, client, make_user, intervention, grant
 ):
+    grant("RESP", "PUT", "/interventions/{intervention_id}")
     auteur = make_user("RESP")
     resp = client.put(
         f"/interventions/{intervention}",
@@ -62,7 +66,8 @@ def test_mutation_tracee_par_le_middleware_ecrit_lauteur_du_jeton(
     assert _auteurs(instance, intervention, "title_changed") == [auteur.id]
 
 
-def test_export_csv_commande_neutralise_une_formule(instance, client, make_user):
+def test_export_csv_commande_neutralise_une_formule(instance, client, make_user, grant):
+    grant("ACHETEUR", "POST", "/supplier-orders/{order_id}/export/csv")
     acheteur = make_user("ACHETEUR")
     fournisseur = instance.sql("INSERT INTO supplier (name) VALUES ('Fourn IT') RETURNING id")[0][0]
     article = instance.sql(

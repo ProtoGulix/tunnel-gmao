@@ -10,6 +10,8 @@ import { ClipboardCheck, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { usePreventivePlans } from '@/hooks/preventive/usePreventivePlans';
 import PreventivePlanForm from '@/components/preventive/PreventivePlanForm';
 import PreventivePlanDetail from '@/components/preventive/PreventivePlanDetail';
@@ -42,6 +44,7 @@ function PlanItem({ plan, isSelected, onClick }) {
 }
 
 export default function PreventivePage() {
+  const { can } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeOnly, setActiveOnly] = useState(true);
   const [search, setSearch] = useState('');
@@ -171,9 +174,11 @@ export default function PreventivePage() {
                   />
                   <Text size="1" color="gray">Actifs seulement</Text>
                 </Flex>
-                <Button size="1" color="blue" onClick={() => { selectPlan(null); setMode('create'); }}>
-                  <Plus size={12} />Nouveau
-                </Button>
+                {can(PERM.preventive.createPlan) && (
+                  <Button size="1" color="blue" onClick={() => { selectPlan(null); setMode('create'); }}>
+                    <Plus size={12} />Nouveau
+                  </Button>
+                )}
               </Flex>
             ),
           }}

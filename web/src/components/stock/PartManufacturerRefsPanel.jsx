@@ -9,6 +9,8 @@ import { Box, Flex, Text } from '@radix-ui/themes';
 import { Plus } from 'lucide-react';
 import MfrRefFormRow from '@/components/stock/MfrRefFormRow';
 import MfrRefRow from '@/components/stock/MfrRefRow';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 function GhostAddSection({ onClick }) {
   return (
@@ -29,6 +31,7 @@ function GhostAddSection({ onClick }) {
 GhostAddSection.propTypes = { onClick: PropTypes.func.isRequired };
 
 export default function PartManufacturerRefsPanel({ part, onRefresh }) {
+  const { can } = usePermissions();
   const [showForm, setShowForm] = useState(false);
   const refs = part.manufacturer_refs || [];
 
@@ -48,7 +51,7 @@ export default function PartManufacturerRefsPanel({ part, onRefresh }) {
           onSaved={() => { setShowForm(false); onRefresh(); }}
           onCancel={() => setShowForm(false)}
         />
-      ) : (
+      ) : can(PERM.parts.addManufacturerRef) && (
         <GhostAddSection onClick={() => setShowForm(true)} />
       )}
     </Flex>

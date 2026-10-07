@@ -13,6 +13,8 @@ import * as actionCategoriesApi from "@/api/actionCategories";
 import * as complexityFactorsApi from "@/api/complexityFactors";
 import { createPurchaseRequest as createPurchaseRequestApi, deletePurchaseRequest as deletePurchaseRequestApi } from "@/api/purchaseRequests";
 import { useAuth } from "@/auth/useAuth";
+import { usePermissions } from "@/auth/usePermissions";
+import { PERM } from "@/auth/permissionCodes";
 import { sanitizeDescription } from "@/lib/utils/interventionUtils";
 import { canDeleteAction } from "@/lib/utils/actionUtils";
 import { extractApiErrorMessage } from "@/lib/api/errorMessage";
@@ -81,6 +83,7 @@ const getComplexityColor = (score) => {
 
 export default function ActionItemCard({ action, interventionId, onPurchaseRequestCreated, onActionDeleted, isLocked = false }) {
   const { user } = useAuth();
+  const { can } = usePermissions();
   const [localAction, setLocalAction] = useState(action);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
@@ -248,7 +251,7 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
     }
   }, []);
 
-  const deleteDisabledReason = isLocked
+  const deleteDisabledReason = isLocked || !can(PERM.interventions.removeAction)
     ? undefined
     : canDeleteAction({ purchaseRequests }) ? null : "Suppression impossible : une demande d'achat liée a déjà été dispatchée";
 
@@ -300,10 +303,10 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
         />
 
         <ActionButtons
-          onEdit={isLocked ? undefined : handleOpenEdit}
+          onEdit={isLocked || !can(PERM.interventions.updateAction) ? undefined : handleOpenEdit}
           onDuplicate={undefined}
-          onPurchase={isLocked ? undefined : () => setShowPurchaseForm(!showPurchaseForm)}
-          onDelete={isLocked ? undefined : () => setConfirmingDelete(true)}
+          onPurchase={isLocked || !can(PERM.purchaseRequests.create) ? undefined : () => setShowPurchaseForm(!showPurchaseForm)}
+          onDelete={isLocked || !can(PERM.interventions.removeAction) ? undefined : () => setConfirmingDelete(true)}
           deleteDisabledReason={deleteDisabledReason}
           purchaseRequestCount={purchaseRequests.length}
         />

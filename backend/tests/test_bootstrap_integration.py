@@ -125,13 +125,15 @@ def test_app_role_is_not_superuser_and_can_read_write(first_run):
         conn.close()
 
 
-def test_seeds_mcp_read_rights_and_home_views(first_run):
+def test_seeds_default_matrix_and_home_views(first_run):
     allowed = _query(
         OWNER_URL,
         "SELECT r.code, count(*) FROM tunnel_permission p JOIN tunnel_role r ON r.id = p.role_id "
         "WHERE p.allowed GROUP BY r.code",
     )
-    assert allowed == [("MCP", 4)]
+    # Matrice par défaut (db/default_permissions.py) ; détail dans
+    # tests/integration/test_default_permissions_integration.py.
+    assert dict(allowed) == {"ADMIN": 256, "RESP": 220, "TECH": 118, "ACHETEUR": 156, "MCP": 109}
     assert _query(OWNER_URL, "SELECT count(*) FROM role_home_view")[0][0] == 4
 
 

@@ -59,7 +59,6 @@ class JWTMiddleware(BaseHTTPMiddleware):
                         user_info = extract_user_from_token(token)
                         request.state.user_id = user_info["user_id"]
                         request.state.role = user_info["role"]
-                        request.state.permissions = user_info.get("permissions", [])
                         logger.info(
                             "[AUTH_DISABLED] ✓ JWT valide — user=%s role=%s %s %s",
                             user_info["user_id"],
@@ -70,18 +69,15 @@ class JWTMiddleware(BaseHTTPMiddleware):
                     else:
                         request.state.user_id = None
                         request.state.role = None
-                        request.state.permissions = []
                 except Exception as e:
                     logger.warning(
                         "[AUTH_DISABLED] JWT invalide — %s %s : %s", request.method, path, e
                     )
                     request.state.user_id = None
                     request.state.role = None
-                    request.state.permissions = []
             else:
                 request.state.user_id = None
                 request.state.role = None
-                request.state.permissions = []
             return await call_next(request)
 
         # --- Auth obligatoire ---
@@ -139,7 +135,6 @@ class JWTMiddleware(BaseHTTPMiddleware):
 
         request.state.user_id = user_id
         request.state.role = token_role
-        request.state.permissions = user_info.get("permissions", [])
         logger.info(
             "✓ JWT valide — user=%s role=%s %s %s", user_id, token_role, request.method, path
         )
@@ -165,7 +160,6 @@ async def _handle_api_key(request: Request, call_next, raw_key: str, path: str):
 
     request.state.user_id = None
     request.state.role = key_info["role_code"]
-    request.state.permissions = []
     request.state.api_key_id = key_info["key_id"]
 
     logger.info(

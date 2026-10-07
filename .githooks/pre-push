@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Push vers main réservé à la publication d'une version (ADR 0008) : TUNNEL_RELEASE=1 git push.
+# Les tags et les autres branches passent.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "${TUNNEL_RELEASE:-}" != 1 ]; then
+    echo "Push vers main refusé (ADR 0008) : main ne reçoit que des versions livrables." >&2
+    echo "Publication d'une version validée par l'utilisateur : TUNNEL_RELEASE=1 git push origin main" >&2
+    exit 1
+  fi
+done
+exit 0

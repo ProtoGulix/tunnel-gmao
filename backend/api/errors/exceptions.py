@@ -41,6 +41,10 @@ class DatabaseError(HTTPException):
     """Erreur de base de données (500)"""
 
     def __init__(self, detail: str = "Erreur base de données"):
+        # Le client reçoit toujours le message générique ; le détail (souvent l'erreur
+        # PostgreSQL brute) n'est que journalisé, avec la trace de l'exception en cours.
+        if detail != "Erreur base de données":
+            logger.error("DatabaseError : %s", detail, exc_info=True)
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur base de données",

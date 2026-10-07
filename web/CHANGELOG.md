@@ -1,5 +1,8 @@
 # Changelog
 
+> Historique arrêté à la version 4 du dépôt séparé. La suite (5.0.0 et après) est dans
+> le CHANGELOG.md à la racine du dépôt.
+
 ## [3.57.0] — 2026-09-03
 
 ### Centre de notifications

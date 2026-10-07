@@ -6,6 +6,8 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { AlertCircle, Ban, Bot, Clock, Trash2, User, Wrench, Zap, ShoppingCart, ArrowUpRight } from 'lucide-react';
 import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
@@ -242,8 +244,8 @@ DeleteRequestDialog.propTypes = {
 };
 
 // Zone d'actions en en-tête — Rejeter (transition) et Supprimer (doublon) côte à côte
-function RequestHeaderActions({ statut, code, transitioning, transitionError, onTransition, canDelete, deleting, deleteError, onDelete }) {
-  const canReject = (TRANSITIONS[statut] ?? []).length > 0;
+function RequestHeaderActions({ statut, code, transitioning, transitionError, onTransition, canTransition, canDelete, deleting, deleteError, onDelete }) {
+  const canReject = canTransition && (TRANSITIONS[statut] ?? []).length > 0;
 
   // Pas de modal custom : le motif de rejet EST la raison d'audit (reason_text). Le backend
   // n'est plus silencieux pour cette entité (voir _SILENT_FIELDS_BY_ENTITY["request"]), donc
@@ -282,6 +284,7 @@ RequestHeaderActions.propTypes = {
   transitioning: PropTypes.bool,
   transitionError: PropTypes.string,
   onTransition: PropTypes.func.isRequired,
+  canTransition: PropTypes.bool,
   canDelete: PropTypes.bool,
   deleting: PropTypes.bool,
   deleteError: PropTypes.string,
@@ -337,6 +340,7 @@ RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired };
  * @param {Function} [props.onDeleted] - Appelé après une suppression réussie
  */
 export default function InterventionRequestDetail({ requestId, onTransitionDone, onDeleted }) {
+  const { can } = usePermissions();
   const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete } =
     useInterventionRequestDetail(requestId);
 
@@ -354,7 +358,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
   if (error) return <ErrorState error={error} />;
   if (!detail) return null;
 
-  const canDelete = !detail.intervention_id;
+  const canDelete = !detail.intervention_id && can(PERM.interventionRequests.remove);
 
   return (
     <Box p="3">
@@ -372,6 +376,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
             transitioning={transitioning}
             transitionError={transitionError}
             onTransition={handleTransition}
+            canTransition={can(PERM.interventionRequests.transition)}
             canDelete={canDelete}
             deleting={deleting}
             deleteError={deleteError}

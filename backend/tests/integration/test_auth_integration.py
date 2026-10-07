@@ -10,6 +10,12 @@ pytestmark = pytest.mark.integration
 ROUTE_METIER = "/interventions"
 
 
+@pytest.fixture(autouse=True)
+def _tech_lit_les_interventions(grant):
+    """Ces tests vérifient l'authentification : le TECH doit pouvoir lire la route métier."""
+    grant("TECH", "GET", ROUTE_METIER)
+
+
 def test_anonyme_refuse_sur_une_route_metier(client):
     assert client.get(ROUTE_METIER).status_code == 401
 

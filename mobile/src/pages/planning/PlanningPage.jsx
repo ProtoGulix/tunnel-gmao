@@ -4,6 +4,8 @@ import { usePlanningWeek } from '../../hooks/planning/usePlanningWeek'
 import { ActionCard } from './ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 import { formatWeekLabel, formatTime, isToday } from '../../utils/dateUtils'
 
 const DAY_NAMES = ['Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.', 'Dim.']
@@ -17,6 +19,7 @@ function formatDayHeader(date) {
 const COL_WIDTH = 172
 
 export default function PlanningPage() {
+  const { can } = usePermissions()
   const { weekStart, days, loading, error, prevWeek, nextWeek, goToToday, reload } = usePlanningWeek()
   const [addingDay, setAddingDay] = useState(null)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
@@ -91,15 +94,17 @@ export default function PlanningPage() {
                   </div>
 
                   {/* Bouton ajouter */}
-                  <div className="px-2 pt-2 shrink-0">
-                    <button
-                      onClick={() => setAddingDay(day.dateStr)}
-                      className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium text-tunnel-accent active:bg-blue-50"
-                    >
-                      <Plus size={11} />
-                      Ajouter
-                    </button>
-                  </div>
+                  {can(PERM.actions.add) && (
+                    <div className="px-2 pt-2 shrink-0">
+                      <button
+                        onClick={() => setAddingDay(day.dateStr)}
+                        className="w-full flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium text-tunnel-accent active:bg-blue-50"
+                      >
+                        <Plus size={11} />
+                        Ajouter
+                      </button>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex-1 overflow-y-auto px-2 py-1.5 space-y-1.5">
@@ -110,7 +115,7 @@ export default function PlanningPage() {
                         <ActionCard
                           key={action.id ?? ai}
                           action={action}
-                          onAddPurchase={setPurchaseActionId}
+                          onAddPurchase={can(PERM.purchases.create) ? setPurchaseActionId : undefined}
                         />
                       ))
                     )}
