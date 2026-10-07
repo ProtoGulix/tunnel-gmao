@@ -8,6 +8,8 @@ import { Badge, Box, Button, Flex, Separator, Tabs, Text } from '@radix-ui/theme
 import { CalendarClock, CheckCircle2, ExternalLink, Pause, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import DataTable from '@/components/ui/DataTable';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
 import { triggerLabel, OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS } from '@/config/preventiveConfig';
@@ -17,6 +19,7 @@ import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
 export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSaveSteps, saving }) {
+  const { can } = usePermissions();
   const { items, loading } = usePreventiveOccurrences({ plan_id: plan.id });
   const { labelMap: diLabelMap, colorMap: diColorMap } = useInterventionRequestStatuses();
   const { activeTab, setActiveTab } = useTabNavigation('gamme', 'tab');
@@ -96,12 +99,16 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
           </Flex>
         </Flex>
         <Flex gap="2" shrink="0" align="center">
-          <Button size="2" variant="soft" color="blue" onClick={() => onEdit(plan)}>
-            <Pencil size={13} />Modifier
-          </Button>
-          <Button size="2" variant="soft" color="orange" onClick={() => onDeactivate(plan)}>
-            <Pause size={13} />Désactiver
-          </Button>
+          {can(PERM.preventive.updatePlan) && (
+            <Button size="2" variant="soft" color="blue" onClick={() => onEdit(plan)}>
+              <Pencil size={13} />Modifier
+            </Button>
+          )}
+          {can(PERM.preventive.removePlan) && (
+            <Button size="2" variant="soft" color="orange" onClick={() => onDeactivate(plan)}>
+              <Pause size={13} />Désactiver
+            </Button>
+          )}
         </Flex>
       </Flex>
 

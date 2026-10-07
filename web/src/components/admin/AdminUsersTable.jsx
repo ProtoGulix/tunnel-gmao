@@ -9,6 +9,8 @@ import { Badge, Button, Flex, Text, Select } from '@radix-ui/themes';
 import { Plus, Users, Pencil, Shield, Power, KeyRound } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import { ROLE_COLORS } from '@/config/adminConfig';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const ROLE_OPTIONS = [
   { value: '__all__', label: 'Tous les rôles' },
@@ -40,6 +42,7 @@ export default function AdminUsersTable({
   onToggleActiveClick,
   onResetPasswordClick,
 }) {
+  const { can } = usePermissions();
   const columns = useMemo(() => [
     {
       key: 'initials',
@@ -93,12 +96,17 @@ export default function AdminUsersTable({
       width: 220,
       render: (u) => (
         <Flex gap="1">
-          <Button size="3" variant="soft" onClick={() => onEditClick(u)} title="Modifier" style={{ minWidth: 40, minHeight: 40 }}>
-            <Pencil size={16} />
-          </Button>
-          <Button size="3" variant="soft" color="blue" onClick={() => onChangeRoleClick(u)} title="Changer le rôle" style={{ minWidth: 40, minHeight: 40 }}>
-            <Shield size={16} />
-          </Button>
+          {can(PERM.users.update) && (
+            <Button size="3" variant="soft" onClick={() => onEditClick(u)} title="Modifier" style={{ minWidth: 40, minHeight: 40 }}>
+              <Pencil size={16} />
+            </Button>
+          )}
+          {can(PERM.users.changeRole) && (
+            <Button size="3" variant="soft" color="blue" onClick={() => onChangeRoleClick(u)} title="Changer le rôle" style={{ minWidth: 40, minHeight: 40 }}>
+              <Shield size={16} />
+            </Button>
+          )}
+          {can(PERM.users.setActive) && (
           <Button
             size="3"
             variant="soft"
@@ -109,13 +117,16 @@ export default function AdminUsersTable({
           >
             <Power size={16} />
           </Button>
-          <Button size="3" variant="soft" color="orange" onClick={() => onResetPasswordClick(u)} title="Réinitialiser le mot de passe" style={{ minWidth: 40, minHeight: 40 }}>
-            <KeyRound size={16} />
-          </Button>
+          )}
+          {can(PERM.users.resetPassword) && (
+            <Button size="3" variant="soft" color="orange" onClick={() => onResetPasswordClick(u)} title="Réinitialiser le mot de passe" style={{ minWidth: 40, minHeight: 40 }}>
+              <KeyRound size={16} />
+            </Button>
+          )}
         </Flex>
       ),
     },
-  ], [onEditClick, onChangeRoleClick, onToggleActiveClick, onResetPasswordClick]);
+  ], [onEditClick, onChangeRoleClick, onToggleActiveClick, onResetPasswordClick, can]);
 
   return (
     <DataTable
@@ -144,9 +155,11 @@ export default function AdminUsersTable({
                 ))}
               </Select.Content>
             </Select.Root>
-            <Button size="2" onClick={onCreateClick}>
-              <Plus size={14} /> Nouvel utilisateur
-            </Button>
+            {can(PERM.users.create) && (
+              <Button size="2" onClick={onCreateClick}>
+                <Plus size={14} /> Nouvel utilisateur
+              </Button>
+            )}
           </Flex>
         ),
       }}

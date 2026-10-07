@@ -6,6 +6,8 @@
 import { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Table, Text } from '@radix-ui/themes';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { Factory, Plus } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
@@ -88,6 +90,7 @@ LinksTable.propTypes = {
 };
 
 function ManufacturerDetailView({ base, detail, detailLoading, onEdit, onDelete }) {
+  const { can } = usePermissions();
   const name = detail?.manufacturer_name || base?.manufacturer_name || '';
   const ref = detail?.manufacturer_ref || base?.manufacturer_ref;
   const designation = detail?.designation || base?.designation;
@@ -108,8 +111,12 @@ function ManufacturerDetailView({ base, detail, detailLoading, onEdit, onDelete 
           {designation && <Text size="2" color="gray" ml="6">{designation}</Text>}
         </Flex>
         <Flex gap="2">
-          <Button size="1" variant="soft" color="gray" onClick={onEdit}>Modifier</Button>
-          <Button size="1" variant="soft" color="red" onClick={onDelete}>Supprimer</Button>
+          {can(PERM.manufacturers.update) && (
+            <Button size="1" variant="soft" color="gray" onClick={onEdit}>Modifier</Button>
+          )}
+          {can(PERM.manufacturers.remove) && (
+            <Button size="1" variant="soft" color="red" onClick={onDelete}>Supprimer</Button>
+          )}
         </Flex>
       </Flex>
 
@@ -133,6 +140,7 @@ ManufacturerDetailView.propTypes = {
 };
 
 export default function ManufacturersTab() {
+  const { can } = usePermissions();
   const [urlSearch, setUrlSearch] = useUrlSearch('mq');
   const {
     manufacturers, total, page, pageSize, loading, error, search,
@@ -203,11 +211,13 @@ export default function ManufacturersTab() {
 
   return (
     <Box pt="3" style={{ height: '100%', minHeight: 400, display: 'flex', flexDirection: 'column' }}>
-      <Flex justify="end" mb="2" style={{ flexShrink: 0 }}>
-        <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
-          <Plus size={14} /> Ajouter
-        </Button>
-      </Flex>
+      {can(PERM.manufacturers.create) && (
+        <Flex justify="end" mb="2" style={{ flexShrink: 0 }}>
+          <Button size="2" color="blue" onClick={() => { setSelected(null); setMode('create'); }}>
+            <Plus size={14} /> Ajouter
+          </Button>
+        </Flex>
+      )}
       {mode === 'create' && (
         <Box mb="3" style={{ flexShrink: 0 }}>
           <ManufacturerForm onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />

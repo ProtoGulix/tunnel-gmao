@@ -7,6 +7,8 @@ import { Fragment, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Spinner, Table, Text, TextField, Select, Dialog } from '@radix-ui/themes';
 import { ChevronDown, ChevronRight, Lock, Plus, Pencil } from 'lucide-react';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import DataTable from '@/components/ui/DataTable';
 import ExpandableDetailsRow from '@/components/ui/ExpandableDetailsRow';
 import {
@@ -100,6 +102,7 @@ EditLabelColorModal.propTypes = {
 
 // ---- Section catégories d'actions (sous-catégories en dropdown, chargement lazy) ----
 export function ActionCategoriesSection({ items, loading, onUpdate }) {
+  const { can } = usePermissions();
   // Edition catégorie
   const [editCatOpen, setEditCatOpen] = useState(false);
   const [selectedCat, setSelectedCat] = useState(null);
@@ -220,9 +223,11 @@ export function ActionCategoriesSection({ items, loading, onUpdate }) {
                     <Table.Cell><Text size="2" weight="medium">{cat.name}</Text></Table.Cell>
                     <Table.Cell><ColorSwatch color={cat.color} /></Table.Cell>
                     <Table.Cell>
-                      <Button size="1" variant="soft" onClick={(e) => { e.stopPropagation(); setSelectedCat(cat); setEditCatOpen(true); }}>
-                        <Pencil size={12} />
-                      </Button>
+                      {can(PERM.adminRef.patchCategory) && (
+                        <Button size="1" variant="soft" onClick={(e) => { e.stopPropagation(); setSelectedCat(cat); setEditCatOpen(true); }}>
+                          <Pencil size={12} />
+                        </Button>
+                      )}
                     </Table.Cell>
                   </Table.Row>
                   {isOpen && (
@@ -232,9 +237,11 @@ export function ActionCategoriesSection({ items, loading, onUpdate }) {
                           <Text size="1" weight="bold" color="gray" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Sous-catégories — {cat.code}
                           </Text>
-                          <Button size="1" onClick={(e) => { e.stopPropagation(); setCreateSubForCat(cat); }}>
-                            <Plus size={11} /> Ajouter
-                          </Button>
+                          {can(PERM.adminRef.createSubcategory) && (
+                            <Button size="1" onClick={(e) => { e.stopPropagation(); setCreateSubForCat(cat); }}>
+                              <Plus size={11} /> Ajouter
+                            </Button>
+                          )}
                         </Flex>
                         {subsLoading ? (
                           <Flex align="center" gap="2"><Spinner size="1" /><Text size="1" color="gray">Chargement...</Text></Flex>
@@ -248,9 +255,11 @@ export function ActionCategoriesSection({ items, loading, onUpdate }) {
                                   <Table.Cell style={{ width: 150 }}><ImmutableCode code={sub.code} /></Table.Cell>
                                   <Table.Cell><Text size="2">{sub.name}</Text></Table.Cell>
                                   <Table.Cell style={{ width: 52, textAlign: 'right' }}>
-                                    <Button size="1" variant="soft" onClick={(e) => { e.stopPropagation(); setSelectedSub(sub); setEditSubOpen(true); }}>
-                                      <Pencil size={12} />
-                                    </Button>
+                                    {can(PERM.adminRef.patchSubcategory) && (
+                                      <Button size="1" variant="soft" onClick={(e) => { e.stopPropagation(); setSelectedSub(sub); setEditSubOpen(true); }}>
+                                        <Pencil size={12} />
+                                      </Button>
+                                    )}
                                   </Table.Cell>
                                 </Table.Row>
                               ))}
@@ -322,6 +331,7 @@ CreateSubcategoryModal.propTypes = {
 
 // ---- Section sous-catégories d'actions (conservée pour compatibilité éventuelle) ----
 function ActionSubcategoriesSection({ items, categories, loading, onCreate, onUpdate }) {
+  const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -351,10 +361,12 @@ function ActionSubcategoriesSection({ items, categories, loading, onCreate, onUp
     {
       key: 'actions', header: '', align: 'end', width: 80,
       render: (i) => (
-        <Button size="1" variant="soft" onClick={() => { setSelected(i); setEditOpen(true); }}><Pencil size={12} /></Button>
+        can(PERM.adminRef.patchSubcategory)
+          ? <Button size="1" variant="soft" onClick={() => { setSelected(i); setEditOpen(true); }}><Pencil size={12} /></Button>
+          : null
       ),
     },
-  ], [getCategoryLabel]);
+  ], [getCategoryLabel, can]);
 
   return (
     <Box mb="6">
@@ -366,7 +378,9 @@ function ActionSubcategoriesSection({ items, categories, loading, onCreate, onUp
           count: items.length,
           showSearchInput: false,
           actions: (
-            <Button size="2" onClick={() => setCreateOpen(true)}><Plus size={14} /> Nouvelle sous-catégorie</Button>
+            can(PERM.adminRef.createSubcategory)
+              ? <Button size="2" onClick={() => setCreateOpen(true)}><Plus size={14} /> Nouvelle sous-catégorie</Button>
+              : null
           ),
         }}
         columns={columns}
@@ -380,6 +394,7 @@ function ActionSubcategoriesSection({ items, categories, loading, onCreate, onUp
 
 // ---- Section facteurs de complexité ----
 export function ComplexityFactorsSection({ items, categories, loading, onUpdate, onToggleActive }) {
+  const { can } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -410,10 +425,12 @@ export function ComplexityFactorsSection({ items, categories, loading, onUpdate,
     {
       key: 'actions', header: '', align: 'end', width: 80,
       render: (i) => (
-        <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
+        can(PERM.adminRef.patchFactor)
+          ? <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
+          : null
       ),
     },
-  ], [getCategoryLabel, openEdit]);
+  ], [getCategoryLabel, openEdit, can]);
 
   return (
     <Box mb="6">

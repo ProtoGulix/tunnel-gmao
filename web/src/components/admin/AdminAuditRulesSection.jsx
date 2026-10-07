@@ -8,11 +8,14 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Text } from '@radix-ui/themes';
 import { Pencil, Plus } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { createAuditRule, updateAuditRule } from '@/api/adminAuditRules';
 import { CreateRuleModal, EditRuleModal } from '@/components/admin/AdminAuditRuleModals';
 import { ENTITY_LABELS } from '@/config/auditRuleEntities';
 
 export default function AdminAuditRulesSection({ rules, reasons, loading, onRefresh }) {
+  const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -60,10 +63,12 @@ export default function AdminAuditRulesSection({ rules, reasons, loading, onRefr
     {
       key: 'actions', header: '', align: 'end', width: 80,
       render: (r) => (
-        <Button size="1" variant="soft" onClick={() => openEdit(r)}><Pencil size={12} /></Button>
+        can(PERM.adminRef.updateAuditRule)
+          ? <Button size="1" variant="soft" onClick={() => openEdit(r)}><Pencil size={12} /></Button>
+          : null
       ),
     },
-  ], [openEdit]);
+  ], [openEdit, can]);
 
   return (
     <Box mt="6">
@@ -87,9 +92,9 @@ export default function AdminAuditRulesSection({ rules, reasons, loading, onRefr
           title: "Règles d'audit — routine vs sensible",
           count: rules.length,
           showSearchInput: false,
-          actions: (
-            <Button size="2" onClick={openCreate}><Plus size={14} /> Nouvelle règle</Button>
-          ),
+          actions: can(PERM.adminRef.createAuditRule)
+            ? <Button size="2" onClick={openCreate}><Plus size={14} /> Nouvelle règle</Button>
+            : null,
         }}
         columns={columns}
         data={rules}

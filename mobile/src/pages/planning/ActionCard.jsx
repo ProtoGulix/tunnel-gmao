@@ -90,6 +90,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
               )}
               <button
                 onClick={e => { e.stopPropagation(); onAddPurchase?.(action.id) }}
+                disabled={!onAddPurchase}
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }
@@ -137,6 +138,7 @@ export function ActionCard({ action, onAddPurchase, variant = 'planning' }) {
               )}
               <button
                 onClick={e => { e.stopPropagation(); onAddPurchase?.(action.id) }}
+                disabled={!onAddPurchase}
                 className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md active:opacity-70 shrink-0"
                 style={daCount > 0
                   ? { backgroundColor: badgeColor + '22', color: badgeColor }

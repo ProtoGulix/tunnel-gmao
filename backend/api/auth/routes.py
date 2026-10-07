@@ -174,8 +174,8 @@ async def login(request: Request, payload: LoginPayload):
                     (new_hash, user_id),
                 )
 
-        permissions = permission_cache.permissions_for_role(role_code)
-        access_token = create_access_token(user_id, role_code, permissions)
+        # La matrice n'est pas embarquée dans le jeton : les fronts la lisent sur /auth/me.
+        access_token = create_access_token(user_id, role_code)
         token_clair, token_hash = create_refresh_token()
 
         expires_at = datetime.now(timezone.utc) + timedelta(
@@ -278,8 +278,7 @@ async def refresh_token(payload: RefreshPayload, request: Request):
         with conn.cursor() as cur:
             cur.execute("UPDATE refresh_token SET revoked = true WHERE id = %s", (rt_id,))
 
-        permissions = permission_cache.permissions_for_role(role_code)
-        new_access = create_access_token(user_id, role_code, permissions)
+        new_access = create_access_token(user_id, role_code)
         new_clair, new_hash = create_refresh_token()
         new_expires = now + timedelta(hours=settings.REFRESH_TOKEN_EXPIRE_HOURS)
 

@@ -9,14 +9,16 @@ import { Factory, Package, Truck } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const PartsTab = lazy(() => import('@/components/stock/tabs/PartsTab'));
 const SuppliersTab = lazy(() => import('@/components/suppliers/tabs/SuppliersTab'));
 const ManufacturersTab = lazy(() => import('@/components/manufacturers/ManufacturersTab'));
 
 const ADD_CONFIG = {
-  items: { label: 'Nouvelle pièce', openCreate: (ref) => ref.current?.openCreate() },
-  suppliers: { label: 'Nouveau fournisseur', openCreate: (ref) => ref.current?.openCreate() },
+  items: { label: 'Nouvelle pièce', code: PERM.parts.create, openCreate: (ref) => ref.current?.openCreate() },
+  suppliers: { label: 'Nouveau fournisseur', code: PERM.suppliers.create, openCreate: (ref) => ref.current?.openCreate() },
 };
 
 export default function StockPage() {
@@ -25,7 +27,9 @@ export default function StockPage() {
   const suppliersTabRef = useRef(null);
 
   const tabRefs = { items: partsTabRef, suppliers: suppliersTabRef };
-  const addConfig = ADD_CONFIG[activeTab];
+  const { can } = usePermissions();
+  const config = ADD_CONFIG[activeTab];
+  const addConfig = config && can(config.code) ? config : undefined;
 
   return (
     <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>

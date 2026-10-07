@@ -14,6 +14,8 @@ import { PURCHASE_URGENCY, INTERVENTION_STATUS_COLORS } from '@/config/purchaseC
 import HexBadge from '@/components/ui/HexBadge';
 import { isConsultationLost } from '@/components/purchase/SupplierOrderLines';
 import { formatPrice } from '@/utils/formatPrice';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import PurchaseEntityHistoryTab, { PURCHASE_ENTITY_TYPES } from '@/components/purchase/PurchaseEntityHistoryTab';
 
 function DetailRow({ label, children }) {
@@ -472,6 +474,7 @@ DeleteConfirmDialog.propTypes = {
 };
 
 function DetailHeader({ item, onEdit, onDelete }) {
+  const { can } = usePermissions();
   const isLocked = !item.is_editable;
   const isToQualify = !item.part && !item.stock_item;
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -495,7 +498,7 @@ function DetailHeader({ item, onEdit, onDelete }) {
         {item.urgent && <Badge color="red" variant="solid" size="1"><AlertTriangle size={10} /> Urgent</Badge>}
       </Flex>
       <Flex gap="4" align="center">
-        {onEdit && (
+        {onEdit && can(PERM.purchaseRequests.update) && (
           <Button
             size="2"
             variant="soft"
@@ -507,7 +510,7 @@ function DetailHeader({ item, onEdit, onDelete }) {
             {isToQualify ? <><Package size={14} /> Qualifier</> : <><Edit2 size={14} /> Modifier</>}
           </Button>
         )}
-        {onDelete && (
+        {onDelete && can(PERM.purchaseRequests.remove) && (
           <>
             <Separator orientation="vertical" size="4" style={{ height: 24 }} />
             <Button size="2" variant="soft" color="red" onClick={() => setDeleteConfirmOpen(true)}>

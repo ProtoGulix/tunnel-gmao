@@ -9,6 +9,8 @@ import { CalendarClock, ChevronDown, ChevronRight, ExternalLink, Play, Wrench } 
 import { Link } from 'react-router-dom';
 import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurrences';
 import { fetchPreventivePlans } from '@/api/preventivePlans';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
@@ -36,6 +38,7 @@ const stepColumns = [
 ];
 
 export default function PreventiveOccurrencesTab() {
+  const { can } = usePermissions();
   const { labelMap: diLabelMap, colorMap: diColorMap } = useInterventionRequestStatuses();
   const [planId, setPlanId] = useState('');
   const [status, setStatus] = useState('');
@@ -171,7 +174,7 @@ export default function PreventiveOccurrencesTab() {
         const hasSteps = (r.tasks ?? []).length > 0;
         return (
           <Flex align="center" gap="2" justify="end">
-            {r.status === 'pending' && (
+            {r.status === 'pending' && can(PERM.preventive.skipOccurrence) && (
               <Button size="1" variant="ghost" color="orange" onClick={(e) => { e.stopPropagation(); setToSkip(r); }}>
                 Ignorer
               </Button>
@@ -200,12 +203,16 @@ export default function PreventiveOccurrencesTab() {
         showRefreshButton={false}
         rightActions={
           <Flex gap="2">
-            <Button size="2" color="amber" variant="soft" onClick={() => setConfirmRepair(true)} disabled={repairing}>
-              <Wrench size={14} />{repairing ? 'Correction…' : 'Corriger'}
-            </Button>
-            <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
-              <Play size={14} />{generating ? 'Génération…' : 'Générer'}
-            </Button>
+            {can(PERM.preventive.repair) && (
+              <Button size="2" color="amber" variant="soft" onClick={() => setConfirmRepair(true)} disabled={repairing}>
+                <Wrench size={14} />{repairing ? 'Correction…' : 'Corriger'}
+              </Button>
+            )}
+            {can(PERM.preventive.generate) && (
+              <Button size="2" color="green" onClick={() => setConfirmGen(true)} disabled={generating}>
+                <Play size={14} />{generating ? 'Génération…' : 'Générer'}
+              </Button>
+            )}
           </Flex>
         }
       />

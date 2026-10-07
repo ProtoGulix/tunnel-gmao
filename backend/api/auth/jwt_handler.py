@@ -23,13 +23,12 @@ def _secret() -> str:
     return key
 
 
-def create_access_token(user_id: str, role_code: str, permissions: list[str]) -> str:
+def create_access_token(user_id: str, role_code: str) -> str:
     """Émet un access token JWT HS256 valide ACCESS_TOKEN_EXPIRE_MINUTES minutes."""
     now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "role": role_code,
-        "permissions": permissions,
         "iat": now,
         "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     }
@@ -81,13 +80,12 @@ def decode_access_token(token: str) -> Dict[str, Any]:
 def extract_user_from_token(token: str) -> Dict[str, Any]:
     """
     Compatibilité avec le middleware existant.
-    Retourne {user_id, role, permissions, iat, exp}.
+    Retourne {user_id, role, iat, exp}.
     """
     payload = decode_access_token(token)
     return {
         "user_id": payload["sub"],
         "role": payload["role"],
-        "permissions": payload.get("permissions", []),
         "iat": payload.get("iat"),
         "exp": payload.get("exp"),
     }

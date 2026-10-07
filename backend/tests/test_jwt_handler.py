@@ -11,7 +11,7 @@ from api.settings import settings
 
 
 def test_un_token_emis_se_relit_avec_son_utilisateur_et_son_role():
-    token = create_access_token("user-1", "TECH", [])
+    token = create_access_token("user-1", "TECH")
     user = extract_user_from_token(token)
     assert user["user_id"] == "user-1"
     assert user["role"] == "TECH"
@@ -50,3 +50,13 @@ def test_un_token_sans_signature_alg_none_est_refuse():
     token = jwt.encode(payload, None, algorithm="none")
     with pytest.raises(UnauthorizedError):
         extract_user_from_token(token)
+
+
+def test_le_jeton_ne_transporte_pas_la_matrice_des_droits():
+    """La matrice est lue en cache côté serveur (ADR 0007) et les fronts la reçoivent par
+    /auth/me : l'embarquer dans le jeton le rendait trop gros pour nginx (≈ 12 Ko pour
+    ADMIN, réponse 400 « Request Header Too Large »)."""
+    token = create_access_token("user-1", "ADMIN")
+    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=["HS256"])
+    assert "permissions" not in payload
+    assert len(token) < 1024

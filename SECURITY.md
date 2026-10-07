@@ -17,4 +17,5 @@ jours.
 
 Les droits par rôle ne sont pas encore appliqués aux routes métier : tout utilisateur
 authentifié peut modifier les données métier. Réservez les comptes aux personnes de
-confiance en attendant la version qui applique la matrice de permissions.
+confiance. Corrigé dans la prochaine version (matrice des permissions appliquée,
+ADR 0007).

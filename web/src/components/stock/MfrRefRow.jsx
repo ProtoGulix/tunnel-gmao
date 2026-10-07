@@ -10,8 +10,11 @@ import { Pencil, Star, Trash2 } from 'lucide-react';
 import { deleteManufacturerRef, setPreferredManufacturerRef } from '@/api/parts';
 import MfrRefFormRow from '@/components/stock/MfrRefFormRow';
 import PartSupplierRefsPanel from '@/components/stock/PartSupplierRefsPanel';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 function MfrRefHeader({ mfrRef, onEdit, onSetPreferred, onDelete }) {
+  const { can } = usePermissions();
   return (
     <Flex align="center" gap="2">
       <Badge variant={mfrRef.is_preferred ? 'solid' : 'soft'} color="violet" size="1" style={{ fontFamily: 'monospace' }}>
@@ -22,17 +25,21 @@ function MfrRefHeader({ mfrRef, onEdit, onSetPreferred, onDelete }) {
       {mfrRef.is_preferred && <Star size={12} fill="var(--amber-9)" color="var(--amber-9)" />}
       <Box style={{ flex: 1 }} />
       <Flex gap="1">
-        {!mfrRef.is_preferred && (
+        {!mfrRef.is_preferred && can(PERM.parts.setPreferredManufacturerRef) && (
           <IconButton size="1" variant="ghost" color="amber" title="Définir comme préférée" onClick={onSetPreferred}>
             <Star size={11} />
           </IconButton>
         )}
-        <IconButton size="1" variant="ghost" color="blue" title="Modifier" onClick={onEdit}>
-          <Pencil size={11} />
-        </IconButton>
-        <IconButton size="1" variant="ghost" color="red" title="Supprimer" onClick={onDelete}>
-          <Trash2 size={11} />
-        </IconButton>
+        {can(PERM.parts.updateManufacturerRef) && (
+          <IconButton size="1" variant="ghost" color="blue" title="Modifier" onClick={onEdit}>
+            <Pencil size={11} />
+          </IconButton>
+        )}
+        {can(PERM.parts.deleteManufacturerRef) && (
+          <IconButton size="1" variant="ghost" color="red" title="Supprimer" onClick={onDelete}>
+            <Trash2 size={11} />
+          </IconButton>
+        )}
       </Flex>
     </Flex>
   );

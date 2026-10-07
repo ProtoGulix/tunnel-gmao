@@ -7,8 +7,11 @@ import PropTypes from 'prop-types';
 import { Button, DropdownMenu, Flex, Text } from '@radix-ui/themes';
 import { Building2, ChevronDown, Download, Mail, Trash2 } from 'lucide-react';
 import HexBadge from '@/components/ui/HexBadge';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 export default function SupplierOrderHeader({ detail, statusInfo, transitions, statuses, statusUpdating, onStatusChange, onExportCsv, onExportEmail, onDelete }) {
+  const { can } = usePermissions();
   return (
     <Flex align="center" justify="between" gap="2">
       <Flex direction="column" gap="1">
@@ -26,7 +29,7 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
       </Flex>
 
       <Flex gap="2" align="center">
-        {transitions.length > 0 && (
+        {transitions.length > 0 && can(PERM.supplierOrders.update) && (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button size="1" variant="soft" color={statusInfo.radixColor || 'gray'} loading={statusUpdating}>
@@ -48,17 +51,17 @@ export default function SupplierOrderHeader({ detail, statusInfo, transitions, s
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         )}
-        {onExportEmail && (
+        {onExportEmail && can(PERM.supplierOrders.exportEmail) && (
           <Button size="1" variant="soft" color="indigo" onClick={() => onExportEmail(detail.id)}>
             <Mail size={12} /> Envoyer la demande de devis
           </Button>
         )}
-        {onExportCsv && (
+        {onExportCsv && can(PERM.supplierOrders.exportCsv) && (
           <Button size="1" variant="soft" onClick={() => onExportCsv(detail.id)}>
             <Download size={12} /> CSV
           </Button>
         )}
-        {onDelete && (
+        {onDelete && can(PERM.supplierOrders.remove) && (
           <Button size="1" variant="soft" color="red" onClick={onDelete}>
             <Trash2 size={12} /> Supprimer
           </Button>

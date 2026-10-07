@@ -9,6 +9,8 @@ import { Users, Shield, Database, Lock, ScrollText } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const AdminUsersTab = lazy(() => import('@/components/admin/tabs/AdminUsersTab'));
 const AdminRolesTab = lazy(() => import('@/components/admin/tabs/AdminRolesTab'));
@@ -17,7 +19,12 @@ const AdminSecurityTab = lazy(() => import('@/components/admin/tabs/AdminSecurit
 const AdminAuditTab = lazy(() => import('@/components/admin/tabs/AdminAuditTab'));
 
 export default function AdminPage() {
-  const { activeTab, setActiveTab } = useTabNavigation('users', 'tab');
+  const { activeTab: requestedTab, setActiveTab } = useTabNavigation('users', 'tab');
+  const { can } = usePermissions();
+  const showRoles = can(PERM.adminTabs.roles);
+  const showSecurity = can(PERM.adminTabs.security);
+  // Un onglet masqué ne doit pas rester actif via l'URL (?tab=roles)
+  const activeTab = (requestedTab === 'roles' && !showRoles) || (requestedTab === 'security' && !showSecurity) ? 'users' : requestedTab;
 
   return (
     <>
@@ -35,24 +42,28 @@ export default function AdminPage() {
               <Text>Utilisateurs</Text>
             </Flex>
           </Tabs.Trigger>
-          <Tabs.Trigger value="roles">
-            <Flex align="center" gap="2">
-              <Shield size={14} />
-              <Text>Rôles &amp; Permissions</Text>
-            </Flex>
-          </Tabs.Trigger>
+          {showRoles && (
+            <Tabs.Trigger value="roles">
+              <Flex align="center" gap="2">
+                <Shield size={14} />
+                <Text>Rôles &amp; Permissions</Text>
+              </Flex>
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger value="referentiel">
             <Flex align="center" gap="2">
               <Database size={14} />
               <Text>Référentiel</Text>
             </Flex>
           </Tabs.Trigger>
-          <Tabs.Trigger value="security">
-            <Flex align="center" gap="2">
-              <Lock size={14} />
-              <Text>Sécurité</Text>
-            </Flex>
-          </Tabs.Trigger>
+          {showSecurity && (
+            <Tabs.Trigger value="security">
+              <Flex align="center" gap="2">
+                <Lock size={14} />
+                <Text>Sécurité</Text>
+              </Flex>
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger value="audit">
             <Flex align="center" gap="2">
               <ScrollText size={14} />

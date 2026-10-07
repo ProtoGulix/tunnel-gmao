@@ -43,3 +43,14 @@ def test_import_csv_illisible_ne_fuit_pas_le_detail(monkeypatch, caplog):
             routes._parse_csv_bytes(b"a;b\n1;2\n")
     assert SECRET not in str(exc.value.detail)
     assert SECRET in caplog.text
+
+
+def test_database_error_journalise_son_detail_sans_le_renvoyer(caplog):
+    """Une centaine de blocs except lèvent DatabaseError(f"...{e}") : le détail doit
+    rester visible dans les logs, jamais dans la réponse."""
+    from api.errors.exceptions import DatabaseError
+
+    with caplog.at_level("ERROR"):
+        exc = DatabaseError("relation secret_table does not exist")
+    assert "secret_table" not in exc.detail
+    assert "secret_table" in caplog.text

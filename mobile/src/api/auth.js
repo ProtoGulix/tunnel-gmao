@@ -9,6 +9,9 @@ export function logout() {
   return client.post('/auth/logout', { refresh_token: localStorage.getItem('auth_refresh_token') })
 }
 
-export function getMe() {
-  return client.get('/users/me')
+// /users/me porte le profil, /auth/me porte `role` et `permissions` (codes d'endpoint,
+// ADR 0007). On fusionne les deux ; /auth/me gagne sur un champ commun.
+export async function getMe() {
+  const [profile, auth] = await Promise.all([client.get('/users/me'), client.get('/auth/me')])
+  return { ...profile, ...auth }
 }

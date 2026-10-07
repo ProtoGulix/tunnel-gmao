@@ -10,10 +10,13 @@ import { ClipboardList, Wrench } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import InterventionsTabContent from '@/components/interventions/InterventionsTabContent';
 import RequestsTabContent from '@/components/intervention-requests/RequestsTabContent';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 /* ── Page principale ────────────────────────────────────────────────────── */
 export default function InterventionsListPage() {
   const navigate = useNavigate();
+  const { can } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'interventions';
   // Un seul param `id` dans l'URL : sa signification dépend de l'onglet actif (`tab`).
@@ -71,7 +74,7 @@ export default function InterventionsListPage() {
         title="Interventions"
         subtitle="Gestion des interventions de maintenance"
         icon={Wrench}
-        onAdd={() => navigate('/intervention/new')}
+        onAdd={can(PERM.interventions.create) ? () => navigate('/intervention/new') : undefined}
         addLabel="Nouvelle intervention"
       />
 

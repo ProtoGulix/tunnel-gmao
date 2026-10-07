@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Check, Ban, RotateCcw, Loader2 } from 'lucide-react'
 import { updateTask } from '../../api/tasks'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 /**
  * TaskStatusButtons — boutons de transition de statut d'une tâche.
@@ -17,6 +19,7 @@ import { updateTask } from '../../api/tasks'
  * @param {{ task: Object, onChanged: (updatedTask: Object) => void }} props
  */
 export function TaskStatusButtons({ task, onChanged }) {
+  const { can } = usePermissions()
   const [saving, setSaving] = useState(false)
   const [showSkipForm, setShowSkipForm] = useState(false)
   const [skipReason, setSkipReason] = useState('')
@@ -45,6 +48,8 @@ export function TaskStatusButtons({ task, onChanged }) {
     if (!skipReason.trim()) return
     applyStatus('skipped', { skip_reason: skipReason.trim() })
   }
+
+  if (!can(PERM.intervention.updateTask)) return null
 
   if (saving) {
     return <Loader2 size={16} className="animate-spin text-tunnel-muted shrink-0" />

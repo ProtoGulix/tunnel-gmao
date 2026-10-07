@@ -8,6 +8,8 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Pencil, Plus } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { createAuditReason, updateAuditReason, toggleAuditReasonActive } from '@/api/adminAuditRules';
 import { CreateReasonModal, EditReasonModal, CATEGORY_LABELS, EMPTY_REASON_FORM } from '@/components/admin/AdminAuditReasonModals';
 import { ENTITY_LABELS } from '@/config/auditRuleEntities';
@@ -24,6 +26,7 @@ function ColorSwatch({ color }) {
 ColorSwatch.propTypes = { color: PropTypes.string };
 
 export default function AdminAuditReasonsSection({ reasons, loading, onRefresh }) {
+  const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -109,14 +112,18 @@ export default function AdminAuditReasonsSection({ reasons, loading, onRefresh }
       key: 'actions', header: '', align: 'end', width: 140,
       render: (r) => (
         <Flex gap="1">
-          <Button size="1" variant="soft" onClick={() => openEdit(r)}><Pencil size={12} /></Button>
-          <Button size="1" variant="soft" color={r.is_active ? 'red' : 'green'} onClick={() => handleToggleActive(r.id, !r.is_active)}>
-            {r.is_active ? 'Désactiver' : 'Activer'}
-          </Button>
+          {can(PERM.adminRef.updateAuditReason) && (
+            <Button size="1" variant="soft" onClick={() => openEdit(r)}><Pencil size={12} /></Button>
+          )}
+          {can(PERM.adminRef.setAuditReasonActive) && (
+            <Button size="1" variant="soft" color={r.is_active ? 'red' : 'green'} onClick={() => handleToggleActive(r.id, !r.is_active)}>
+              {r.is_active ? 'Désactiver' : 'Activer'}
+            </Button>
+          )}
         </Flex>
       ),
     },
-  ], [openEdit, handleToggleActive]);
+  ], [openEdit, handleToggleActive, can]);
 
   return (
     <Box mt="6">
@@ -128,9 +135,9 @@ export default function AdminAuditReasonsSection({ reasons, loading, onRefresh }
           title: "Raisons d'audit",
           count: reasons.length,
           showSearchInput: false,
-          actions: (
-            <Button size="2" onClick={openCreate}><Plus size={14} /> Nouvelle raison</Button>
-          ),
+          actions: can(PERM.adminRef.createAuditReason)
+            ? <Button size="2" onClick={openCreate}><Plus size={14} /> Nouvelle raison</Button>
+            : null,
         }}
         columns={columns}
         data={reasons}

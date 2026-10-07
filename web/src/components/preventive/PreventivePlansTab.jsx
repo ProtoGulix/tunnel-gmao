@@ -13,8 +13,11 @@ import ErrorState from '@/components/ui/ErrorState';
 import PreventivePlanForm from '@/components/preventive/PreventivePlanForm';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
 import { triggerLabel } from '@/config/preventiveConfig';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 export default function PreventivePlansTab() {
+  const { can } = usePermissions();
   const [activeOnly, setActiveOnly] = useState(true);
   const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
@@ -70,18 +73,24 @@ export default function PreventivePlansTab() {
       key: 'actions', header: '', width: 180,
       render: (r) => (
         <Flex gap="1" justify="end" onClick={(e) => e.stopPropagation()}>
-          <Button size="1" variant="ghost" color="blue" title="Modifier"
-            onClick={() => { setEditing(r); setMode(null); setStepsFor(null); }}>
-            <Pencil size={12} />
-          </Button>
-          <Button size="1" variant="soft" color="indigo" title="Gérer les étapes"
-            onClick={() => { setStepsFor(r); setEditing(null); setMode(null); }}>
-            <CheckCircle2 size={12} />Étapes
-          </Button>
-          <Button size="1" variant="ghost" color="red" title="Désactiver"
-            onClick={() => setToDeactivate(r)}>
-            <Trash2 size={12} />
-          </Button>
+          {can(PERM.preventive.updatePlan) && (
+            <Button size="1" variant="ghost" color="blue" title="Modifier"
+              onClick={() => { setEditing(r); setMode(null); setStepsFor(null); }}>
+              <Pencil size={12} />
+            </Button>
+          )}
+          {can(PERM.preventive.replaceSteps) && (
+            <Button size="1" variant="soft" color="indigo" title="Gérer les étapes"
+              onClick={() => { setStepsFor(r); setEditing(null); setMode(null); }}>
+              <CheckCircle2 size={12} />Étapes
+            </Button>
+          )}
+          {can(PERM.preventive.removePlan) && (
+            <Button size="1" variant="ghost" color="red" title="Désactiver"
+              onClick={() => setToDeactivate(r)}>
+              <Trash2 size={12} />
+            </Button>
+          )}
         </Flex>
       ),
     },
@@ -104,9 +113,11 @@ export default function PreventivePlansTab() {
               <Switch checked={activeOnly} onCheckedChange={setActiveOnly} size="1" />
               <Text size="1" color="gray">Actifs</Text>
             </Flex>
-            <Button size="2" color="blue" onClick={() => { reset(); setMode('create'); }}>
-              <Plus size={14} />Nouveau plan
-            </Button>
+            {can(PERM.preventive.createPlan) && (
+              <Button size="2" color="blue" onClick={() => { reset(); setMode('create'); }}>
+                <Plus size={14} />Nouveau plan
+              </Button>
+            )}
           </Flex>
         }
       />

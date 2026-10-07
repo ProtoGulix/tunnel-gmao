@@ -173,3 +173,41 @@ def make_user(instance, client, admin):
         )
 
     return _make
+
+
+@pytest.fixture
+def grant(instance, client):
+    """Accorde des permissions de la matrice (ADR 0007) en SQL propriétaire, le temps du test.
+
+    grant("TECH", "POST", "/suppliers") ou grant(..., allowed=False) pour retirer un droit
+    de la matrice par défaut posée par le bootstrap. Les valeurs d'origine sont
+    rétablies en fin de test et le cache du process est rechargé tout de suite.
+    """
+    from api.auth.permissions import permission_cache
+
+    anciens: list[tuple[str, str, bool]] = []
+
+    def _grant(role: str, method: str, path: str, allowed: bool = True) -> None:
+        rows = instance.sql(
+            "SELECT tp.role_id::text, tp.endpoint_id::text, tp.allowed FROM tunnel_permission tp "
+            "JOIN tunnel_role tr ON tr.id = tp.role_id "
+            "JOIN tunnel_endpoint te ON te.id = tp.endpoint_id "
+            "WHERE tr.code = %s AND te.method = %s AND te.path = %s",
+            (role, method, path),
+        )
+        assert len(rows) == 1, f"endpoint {method} {path} absent du catalogue pour {role}"
+        role_id, endpoint_id, avant = rows[0]
+        anciens.append((role_id, endpoint_id, avant))
+        instance.sql(
+            "UPDATE tunnel_permission SET allowed = %s WHERE role_id = %s AND endpoint_id = %s",
+            (allowed, role_id, endpoint_id),
+        )
+        permission_cache.reload()
+
+    yield _grant
+    for role_id, endpoint_id, avant in reversed(anciens):
+        instance.sql(
+            "UPDATE tunnel_permission SET allowed = %s WHERE role_id = %s AND endpoint_id = %s",
+            (avant, role_id, endpoint_id),
+        )
+    permission_cache.reload()

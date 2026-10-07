@@ -12,6 +12,8 @@ import { DIForm } from '../../components/interventions/DIForm'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { INTERVENTION_STATUSES, PRIORITIES, INTERVENTION_TYPES } from '../../config/badges'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 import { DAY_LABELS, formatWeekLabel, formatTime, isToday } from '../../utils/dateUtils'
 
 // ── Helpers couleurs — depuis la source de vérité config/badges.js ───────────
@@ -209,6 +211,7 @@ function ListView({ searchOpen, onTyping }) {
 
 // ── Vue Planning ──────────────────────────────────────────────────────────────
 function PlanningView() {
+  const { can } = usePermissions()
   const { weekStart, days, loading, error, prevWeek, nextWeek, goToToday, reload } = usePlanningWeek()
   const [addingDay, setAddingDay] = useState(null)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
@@ -270,7 +273,7 @@ function PlanningView() {
                         {day.date.getDate()}
                       </span>
                     </div>
-                    {!isWeekend && (
+                    {!isWeekend && can(PERM.actions.add) && (
                       <button
                         onClick={() => setAddingDay(day.dateStr)}
                         className="mt-1 w-full flex items-center justify-center gap-0.5 py-1 rounded text-[10px] font-medium text-[#1F3A5F] active:bg-[#1F3A5F]/10 border border-[#1F3A5F]/20">
@@ -290,7 +293,7 @@ function PlanningView() {
                         <ActionCard
                           key={action.id ?? ai}
                           action={action}
-                          onAddPurchase={setPurchaseActionId}
+                          onAddPurchase={can(PERM.purchases.create) ? setPurchaseActionId : undefined}
                         />
                       ))
                     )}
@@ -331,6 +334,7 @@ function PlanningView() {
 
 // ── Vue Demandes ──────────────────────────────────────────────────────────────
 function DemandesView() {
+  const { can } = usePermissions()
   const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState('nouvelle')
   const [showForm, setShowForm] = useState(false)
@@ -388,11 +392,13 @@ function DemandesView() {
       <div className="flex-1 overflow-y-auto">
         <DIList items={items} loading={loading} error={error} onSelect={id => navigate(`/intervention-requests/${id}`)} />
       </div>
-      <BottomBar>
-        <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
-          Nouvelle demande
-        </BottomBtn>
-      </BottomBar>
+      {can(PERM.requests.create) && (
+        <BottomBar>
+          <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+            Nouvelle demande
+          </BottomBtn>
+        </BottomBar>
+      )}
     </div>
   )
 }

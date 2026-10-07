@@ -6,8 +6,11 @@
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Edit2 } from 'lucide-react';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 export default function SupplierInfo({ supplier, onEdit }) {
+  const { can } = usePermissions();
   const contacts = [supplier.contact_name, supplier.email, supplier.phone].filter(Boolean);
   return (
     <Flex justify="between" align="start">
@@ -28,7 +31,7 @@ export default function SupplierInfo({ supplier, onEdit }) {
         <Badge color={supplier.is_active ? 'green' : 'gray'} variant="soft">
           {supplier.is_active ? 'Actif' : 'Inactif'}
         </Badge>
-        {onEdit && (
+        {onEdit && can(PERM.suppliers.update) && (
           <Button size="2" variant="soft" color="gray" onClick={onEdit}>
             <Edit2 size={14} /> Modifier
           </Button>

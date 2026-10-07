@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     API_VERSION: str = "5.0.0"
     API_ENV: str = os.getenv("API_ENV", "development")
     AUTH_DISABLED: bool = os.getenv("AUTH_DISABLED", "false").lower() == "true"
+    # Durée de vie du cache des permissions (secondes) : délai maximal avant qu'un
+    # worker voie une modification de la matrice faite par l'admin (ADR 0007).
+    PERMISSION_CACHE_TTL_SECONDS: float = float(os.getenv("PERMISSION_CACHE_TTL_SECONDS", "30"))
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
 

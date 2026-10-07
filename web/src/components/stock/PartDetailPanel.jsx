@@ -8,6 +8,8 @@ import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
 import { Edit2, Factory, PackageSearch, ShoppingCart, Star, Trash2, X } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import PartManufacturerRefsPanel from '@/components/stock/PartManufacturerRefsPanel';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 // ─── Sous-composants ──────────────────────────────────────────────────────────
 
@@ -95,6 +97,7 @@ PartMeta.propTypes = { part: PropTypes.object.isRequired };
 // ─── Panel principal ──────────────────────────────────────────────────────────
 
 export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onClose }) {
+  const { can } = usePermissions();
   if (!part) return null;
 
   return (
@@ -107,8 +110,12 @@ export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onC
           <Text size="3" weight="medium" style={{ marginTop: 4 }}>{part.display_name}</Text>
         </Flex>
         <Flex gap="1" ml="3" style={{ flexShrink: 0 }}>
-          <Button size="1" variant="soft" color="gray" onClick={onEdit}><Edit2 size={12} /> Modifier</Button>
-          <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /></Button>
+          {can(PERM.parts.update) && (
+            <Button size="1" variant="soft" color="gray" onClick={onEdit}><Edit2 size={12} /> Modifier</Button>
+          )}
+          {can(PERM.parts.update) && (
+            <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /></Button>
+          )}
           <Button size="1" variant="ghost" color="gray" onClick={onClose}><X size={14} /></Button>
         </Flex>
       </Flex>

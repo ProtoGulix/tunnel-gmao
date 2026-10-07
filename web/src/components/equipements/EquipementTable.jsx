@@ -15,6 +15,8 @@ import Pagination from '@/components/ui/Pagination';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 import ErrorState from '@/components/ui/ErrorState';
 import EquipementCreateForm from '@/components/equipements/EquipementCreateForm';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 export default function EquipementTable({
   equipements, loading, error, getParentInfo,
@@ -25,6 +27,8 @@ export default function EquipementTable({
   onCreateEquipement,
 }) {
   const navigate = useNavigate();
+  const { can } = usePermissions();
+  const canCreate = !!onCreateEquipement && can(PERM.equipements.create);
   const [createOpen, setCreateOpen] = useState(false);
 
   const handleCreate = useCallback(async (payload) => {
@@ -152,12 +156,12 @@ export default function EquipementTable({
           showResetButton: true,
           showRefreshButton: false,
           actions: classSelect,
-          rightActions: onCreateEquipement ? (
+          rightActions: canCreate ? (
             <Button size="2" onClick={() => setCreateOpen(true)}>
               <Plus size={14} /> Nouvel équipement
             </Button>
           ) : null,
-          children: (onCreateEquipement && createOpen) ? (
+          children: (canCreate && createOpen) ? (
             <Box mt="4">
               <EquipementCreateForm
                 onCancel={() => setCreateOpen(false)}

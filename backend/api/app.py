@@ -3,7 +3,7 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -16,6 +16,7 @@ from api.api_keys.routes import router as api_keys_router
 from api.audits.middleware import AuditMiddleware
 from api.audits.routes import router as audit_router
 from api.auth.middleware import JWTMiddleware
+from api.auth.permissions import enforce_permission_matrix
 from api.auth.routes import router as auth_router
 from api.changelog.routes import router as changelog_router
 from api.complexity_factors.routes import router as complexity_factor_router
@@ -111,6 +112,8 @@ app = FastAPI(
     version=settings.API_VERSION,
     lifespan=lifespan,
     redirect_slashes=False,
+    # Matrice des droits appliquée à chaque requête authentifiée (ADR 0007).
+    dependencies=[Depends(enforce_permission_matrix)],
     description="API Proxy - Gateway entre frontend et données",
 )
 

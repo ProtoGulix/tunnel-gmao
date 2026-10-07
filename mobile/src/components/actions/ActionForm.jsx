@@ -10,6 +10,8 @@ import { SheetPicker } from '../ui/SheetPicker'
 import { getEquipements, getServices } from '../../api/interventions'
 import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
 import { getOpenTasksByIntervention, createTask } from '../../api/tasks'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -184,6 +186,7 @@ function DIInlineForm({ equip, user, onCreated, onCancel }) {
 
 // ─── Section Tâche (lien obligatoire action↔tâche) ────────────────────────────
 function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCloseTaskChange }) {
+  const { can } = usePermissions()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -282,7 +285,7 @@ function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCl
             <X size={13} />
           </button>
         </div>
-      ) : (
+      ) : can(PERM.intervention.createTask) && (
         <button type="button" onClick={() => setShowCreate(true)}
           className="mt-2 flex items-center gap-1.5 text-xs font-medium text-tunnel-accent">
           <Plus size={12} /> Nouvelle tâche
@@ -419,6 +422,7 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
 // ─── Formulaire principal ─────────────────────────────────────────────────────
 export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, defaultIntervention = null, mode = 'modal' }) {
   const { user } = useAuth()
+  const { can } = usePermissions()
   const { formState, handlers, validation } = useActionForm({ date: actionDate })
 
   // Équipement — déduit de defaultIntervention si fourni
@@ -735,19 +739,19 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
 
                     {/* Boutons d'action */}
                     <div className="flex gap-2">
-                      {noDI && !showDIForm && (
+                      {noDI && !showDIForm && can(PERM.actions.createRequest) && (
                         <button type="button" onClick={() => { setShowDIForm(true); setShowInterForm(false) }}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-tunnel-accent text-tunnel-accent text-xs font-semibold active:bg-blue-50">
                           <Plus size={13} /> Nouvelle DI
                         </button>
                       )}
-                      {!noDI && !showDIForm && !showInterForm && (
+                      {!noDI && !showDIForm && !showInterForm && can(PERM.actions.createRequest) && (
                         <button type="button" onClick={() => { setShowDIForm(true) }}
                           className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-tunnel-border text-tunnel-muted text-xs font-medium active:bg-tunnel-bg">
                           <Plus size={12} /> Nouvelle DI
                         </button>
                       )}
-                      {availableDIs.length > 0 && !showInterForm && (
+                      {availableDIs.length > 0 && !showInterForm && can(PERM.actions.createIntervention) && (
                         <button type="button"
                           onClick={() => { setShowInterForm(true); setShowDIForm(false); setSelectedDI(null) }}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-tunnel-accent text-white text-xs font-semibold active:opacity-90">

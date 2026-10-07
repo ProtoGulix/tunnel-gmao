@@ -9,10 +9,13 @@ import { Badge, Flex, IconButton, Table, Text } from '@radix-ui/themes';
 import { ExternalLink, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { deleteSupplierRef, setPreferredSupplierRef } from '@/api/parts';
 import SupplierRefFormRow from '@/components/stock/SupplierRefFormRow';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 const COLSPAN = 7;
 
 function SupplierRefRow({ sup, onEdit, onDelete, onSetPreferred }) {
+  const { can } = usePermissions();
   return (
     <Table.Row>
       <Table.Cell>
@@ -39,17 +42,21 @@ function SupplierRefRow({ sup, onEdit, onDelete, onSetPreferred }) {
       </Table.Cell>
       <Table.Cell>
         <Flex gap="1" justify="end">
-          {!sup.is_preferred && (
+          {!sup.is_preferred && can(PERM.parts.setPreferredSupplierRef) && (
             <IconButton size="1" variant="ghost" color="amber" title="Définir comme préféré" onClick={() => onSetPreferred(sup.id)}>
               <Star size={11} />
             </IconButton>
           )}
-          <IconButton size="1" variant="ghost" color="blue" title="Modifier" onClick={() => onEdit(sup.id)}>
-            <Pencil size={11} />
-          </IconButton>
-          <IconButton size="1" variant="ghost" color="red" title="Supprimer" onClick={() => onDelete(sup.id)}>
-            <Trash2 size={11} />
-          </IconButton>
+          {can(PERM.parts.updateSupplierRef) && (
+            <IconButton size="1" variant="ghost" color="blue" title="Modifier" onClick={() => onEdit(sup.id)}>
+              <Pencil size={11} />
+            </IconButton>
+          )}
+          {can(PERM.parts.deleteSupplierRef) && (
+            <IconButton size="1" variant="ghost" color="red" title="Supprimer" onClick={() => onDelete(sup.id)}>
+              <Trash2 size={11} />
+            </IconButton>
+          )}
         </Flex>
       </Table.Cell>
     </Table.Row>
@@ -84,6 +91,7 @@ function GhostAddRow({ onClick }) {
 GhostAddRow.propTypes = { onClick: PropTypes.func.isRequired };
 
 export default function PartSupplierRefsPanel({ mfrRef, onRefresh }) {
+  const { can } = usePermissions();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -149,7 +157,7 @@ export default function PartSupplierRefsPanel({ mfrRef, onRefresh }) {
               onSaved={() => { setShowForm(false); onRefresh(); }}
               onCancel={() => setShowForm(false)}
             />
-          ) : (
+          ) : can(PERM.parts.addSupplierRef) && (
             <GhostAddRow onClick={() => { setShowForm(true); setEditingId(null); }} />
           )}
         </Table.Body>

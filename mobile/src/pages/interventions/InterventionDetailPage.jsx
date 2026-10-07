@@ -9,6 +9,8 @@ import { ActionForm } from '../../components/actions/ActionForm'
 import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
 import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestForm'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 import { formatDateFr } from '../../utils/dateUtils'
 
 function getInitials(name) {
@@ -136,6 +138,7 @@ export default function InterventionDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { can } = usePermissions()
   const { intervention, loading, error, reload } = useInterventionDetail(id)
   const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
@@ -203,7 +206,7 @@ export default function InterventionDetailPage() {
               </p>
             )}
           </div>
-          {statusCode && statuses.length > 0 && (
+          {statusCode && statuses.length > 0 && can(PERM.intervention.changeStatus) && (
             <button
               onClick={() => setShowStatusSheet(true)}
               className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-tunnel-bg border border-tunnel-border text-tunnel-text mr-2"
@@ -278,7 +281,7 @@ export default function InterventionDetailPage() {
                       key={action.id}
                       action={action}
                       variant="detail"
-                      onAddPurchase={() => setPurchaseActionId(action.id)}
+                      onAddPurchase={can(PERM.intervention.createPurchaseRequest) ? () => setPurchaseActionId(action.id) : undefined}
                     />
                   ))}
                 </div>
@@ -289,7 +292,7 @@ export default function InterventionDetailPage() {
       </div>
 
       {/* FAB bottom bar */}
-      {!loading && intervention && (
+      {!loading && intervention && can(PERM.intervention.addAction) && (
         <BottomBar>
           <BottomBtn variant="primary" onClick={() => setShowActionForm(true)} icon={<Plus size={16} />}>
             Ajouter une action

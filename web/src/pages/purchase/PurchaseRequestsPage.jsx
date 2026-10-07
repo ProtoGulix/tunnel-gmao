@@ -16,12 +16,15 @@ import SpontaneousPurchaseRequestModal from '@/components/home/SpontaneousPurcha
 import CsvImportWizard from '@/components/purchase/CsvImportWizard';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
 import { fetchPurchaseRequestFacets } from '@/api/purchaseRequests';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 
 // Params propres à un onglet donné — obsolètes dès qu'on quitte cet onglet.
 const TAB_OWNED_PARAMS = ['requestId', 'panier_status', 'order_id', 'orders'];
 
 export default function PurchaseRequestsPage() {
   const { activeTab, setActiveTab } = useTabNavigation('requests', 'tab', TAB_OWNED_PARAMS);
+  const { can } = usePermissions();
   const [modalOpen, setModalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
@@ -66,7 +69,7 @@ export default function PurchaseRequestsPage() {
     setPreviewOpen(false);
   }, [dispatchFn, loadFacets]);
 
-  const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 ? {
+  const dispatchAction = activeTab === 'requests' && pendingDispatchCount > 0 && can(PERM.purchaseRequests.dispatch) ? {
     label: (
       <Button color="blue" size="2" disabled={dispatching} onClick={() => setPreviewOpen(true)}>
         <Zap size={16} />
@@ -77,16 +80,12 @@ export default function PurchaseRequestsPage() {
 
   const headerActions = [
     ...(dispatchAction ? [dispatchAction] : []),
-    {
-      label: 'Import CSV',
-      icon: FileUp,
-      onClick: () => setImportOpen(true),
-    },
-    {
-      label: 'Nouvelle demande',
-      icon: ShoppingCart,
-      onClick: () => setModalOpen(true),
-    },
+    ...(can(PERM.purchaseRequests.importCsv)
+      ? [{ label: 'Import CSV', icon: FileUp, onClick: () => setImportOpen(true) }]
+      : []),
+    ...(can(PERM.purchaseRequests.create)
+      ? [{ label: 'Nouvelle demande', icon: ShoppingCart, onClick: () => setModalOpen(true) }]
+      : []),
   ];
 
   return (

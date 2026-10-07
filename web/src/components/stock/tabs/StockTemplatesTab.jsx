@@ -12,6 +12,8 @@ import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import PartTemplateDetail from '@/components/stock/PartTemplateDetail';
 import PartTemplateCreateForm from '@/components/stock/PartTemplateCreateForm';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import { usePartTemplates } from '@/hooks/stock/usePartTemplates';
 
 const columns = [
@@ -43,6 +45,7 @@ const columns = [
 ];
 
 export default function StockTemplatesTab() {
+  const { can } = usePermissions();
   const { templates, loading, error, addTemplate, addVersion, removeTemplate } = usePartTemplates();
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -124,11 +127,11 @@ export default function StockTemplatesTab() {
         count={templates.length}
         showSearchInput={false}
         showRefreshButton={false}
-        rightActions={
+        rightActions={can(PERM.stock.createTemplate) ? (
           <Button size="2" color="blue" onClick={() => { setSelected(null); setShowCreate(true); }}>
             <Plus size={14} /> Ajouter
           </Button>
-        }
+        ) : null}
       />
       {showCreate && (
         <Box mb="3">

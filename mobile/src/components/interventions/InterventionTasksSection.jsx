@@ -4,6 +4,8 @@ import { getAllTasksByIntervention, getTasksProgress, createTask } from '../../a
 import { TaskStatusBadge } from '../ui/TaskStatusBadge'
 import { TaskStatusButtons } from '../ui/TaskStatusButtons'
 import { TASK_ORIGINS } from '../../config/badges'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
 
@@ -63,6 +65,7 @@ function TaskRow({ task, onChanged }) {
  * (pas de tableau RESP, pas de suppression de tâche).
  */
 export function InterventionTasksSection({ interventionId, refreshKey = 0 }) {
+  const { can } = usePermissions()
   const [tasks, setTasks] = useState([])
   const [progress, setProgress] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -155,7 +158,7 @@ export function InterventionTasksSection({ interventionId, refreshKey = 0 }) {
       )}
 
       <div className="mt-2">
-        {showCreate ? (
+        {!can(PERM.intervention.createTask) ? null : showCreate ? (
           <div className="p-3 rounded-lg bg-blue-50 border border-blue-100 space-y-2">
             {createError && <p className="text-xs text-red-700">{createError}</p>}
             <input
@@ -184,7 +187,7 @@ export function InterventionTasksSection({ interventionId, refreshKey = 0 }) {
             <Plus size={12} /> Nouvelle tâche
           </button>
         )}
-        {tasks.some(t => t.status !== 'done' && t.status !== 'skipped') && (
+        {can(PERM.intervention.updateTask) && tasks.some(t => t.status !== 'done' && t.status !== 'skipped') && (
           <p className="text-[11px] text-tunnel-muted mt-2">
             Pour terminer une tâche : ajoutez une action liée depuis le bouton en bas de page.
           </p>

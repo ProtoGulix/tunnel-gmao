@@ -9,6 +9,8 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { StockItemList } from '../../components/stock/StockItemList'
 import { StockItemDetail } from '../../components/stock/StockItemDetail'
 import { useStockItems } from '../../hooks/stock/useStockItems'
+import { usePermissions } from '../../hooks/auth/usePermissions'
+import { PERM } from '../../auth/permissionCodes'
 
 const TABS = [
   { key: 'stock',  label: 'Stock',            icon: Package },
@@ -32,6 +34,7 @@ function TabBar({ active, onChange }) {
 
 // ── Vue Demandes d'achat ──────────────────────────────────────────────────────
 function AchatsView() {
+  const { can } = usePermissions()
   const [showForm, setShowForm] = useState(false)
   const { items, loading, error, reload } = usePurchaseRequests()
 
@@ -40,11 +43,13 @@ function AchatsView() {
       <div className="flex-1 overflow-y-auto">
         <DAList items={items} loading={loading} error={error} />
       </div>
-      <BottomBar>
-        <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
-          Nouvelle demande
-        </BottomBtn>
-      </BottomBar>
+      {can(PERM.purchases.create) && (
+        <BottomBar>
+          <BottomBtn variant="primary" icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+            Nouvelle demande
+          </BottomBtn>
+        </BottomBar>
+      )}
       {showForm && (
         <PurchaseRequestForm onClose={() => setShowForm(false)} onDone={reload} />
       )}
