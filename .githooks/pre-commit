@@ -1,3 +1,17 @@
 #!/usr/bin/env sh
-# Bloque le commit si la vérification unique échoue (ADR 0003).
+# 1. Branches protégées (ADR 0008) : aucun commit sur main ; sur develop, seulement pour
+#    finaliser une intégration (TUNNEL_INTEGRATION=1, squash merge d'une branche relue).
+# 2. Vérification unique (ADR 0003).
+branch=$(git symbolic-ref --short -q HEAD || echo "")
+case "$branch" in
+  main)
+    echo "Commit direct sur main interdit (ADR 0008) : main ne reçoit que des versions." >&2
+    exit 1 ;;
+  develop)
+    if [ "${TUNNEL_INTEGRATION:-}" != 1 ]; then
+      echo "Commit direct sur develop interdit (ADR 0008) : travailler sur une branche feat/, fix/, docs/..." >&2
+      echo "Pour finaliser une intégration relue : TUNNEL_INTEGRATION=1 git commit" >&2
+      exit 1
+    fi ;;
+esac
 exec "$(git rev-parse --show-toplevel)/scripts/check.sh"

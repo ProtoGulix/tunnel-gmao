@@ -4,6 +4,12 @@ Les historiques détaillés des versions 1 à 4 se trouvent dans backend/CHANGEL
 web/CHANGELOG.md et mobile/CHANGELOG.md. À partir de la 5.0.0, ce fichier couvre
 tout le dépôt.
 
+## Non publié
+
+### Ajouté
+- Règles de branches et de versions (ADR 0008) : main ne reçoit que des versions,
+  develop intègre les chantiers ; CI GitHub Actions sur chaque pull request.
+
 ## 5.0.0 — 2026-10-07
 
 Première version publiée sous forme d'un seul dépôt (backend, front web, mobile).

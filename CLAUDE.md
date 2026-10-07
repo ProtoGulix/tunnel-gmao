@@ -87,7 +87,7 @@ Agents du projet (.claude/agents/) :
 2. db-dev : migrations alembic, données de départ, rôles PostgreSQL.
 3. frontend-dev : implémente dans web/ ou mobile/
 4. test-writer : écrit les tests pytest (et front si besoin), ne touche pas au code de production.
-5. reviewer : relit le diff contre ce fichier avant tout commit. N'édite jamais. Un verdict BLOQUÉ bloque le commit.
+5. reviewer : relit le diff d'une branche contre ce fichier avant sa fusion dans develop. N'édite jamais. Un verdict BLOQUÉ bloque la fusion.
 6. researcher : vérifications externes (versions, CVE, bibliothèques) et rapports dans docs/spikes.
 7. doc-writer : documentation d'endpoints, CHANGELOG, guides. Lancé en haiku par défaut.
 
@@ -96,7 +96,7 @@ Pour une exploration en lecture seule, utilise l'agent intégré Explore.
 ## 8. Qualité du code
 
 1. Langue : échanges, commentaires, docstrings, commits et docs en français. Noms de variables, fonctions et classes en anglais (PEP 8).
-2. Commits petits et atomiques, au format Conventional Commits (feat(scope): ..., fix, docs, chore, refactor, test). Le hook commit-msg le vérifie.
+2. Commits petits et atomiques, au format Conventional Commits (feat(scope): ..., fix, docs, chore, refactor, test), toujours sur une branche de travail (section 12). Le hook commit-msg vérifie le format.
 3. Une décision d'architecture égale un ADR dans docs/decisions, avec l'alternative écartée.
 4. Un test avec chaque comportement nouveau, en priorité sur l'autorisation et les validators. scripts/check.sh (ruff format, ruff check, pytest) doit passer avant chaque commit ; le hook pre-commit le lance (ADR 0003). Installation : .venv/bin/pip install -r requirements-dev.txt. Les tests d'intégration (vrais middlewares, vraie base) se lancent à part avec scripts/test-integration.sh, qui exige Docker et reste hors de check.sh.
 5. Fonctions courtes qui font une chose, commentaires qui expliquent le pourquoi. Pas de print, pas de code commenté, pas de TODO sans fichier de backlog.
@@ -128,6 +128,19 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 4. La base de dev contient des données réelles de production : aucune écriture en base, aucune migration et aucune requête qui modifie des données sans accord.
 5. Demande l'accord de l'utilisateur avant : d'ajouter ou changer une dépendance, de modifier un schéma de base ou une API publique, de toucher à la configuration serveur, Docker ou réseau, de lancer une extraction sémantique Graphify, ou de contredire un ADR.
 6. Ajoute l'entrée au CHANGELOG à chaque correctif ; un correctif de sécurité est aussi reporté dans le bilan de sécurité interne.
+
+## 12. Branches, intégration et versions (ADR 0008)
+
+    main      versions livrables uniquement, taguées vX.Y.Z (jamais de commit direct)
+    develop   intégration, toujours verte (jamais de commit de travail direct)
+    feat/… fix/… refactor/… test/… chore/… docs/…   une branche par chantier, depuis develop
+    hotfix/X.Y.Z   correctif urgent, depuis main
+
+1. Avant tout travail : `git switch develop && git pull`, puis `git switch -c <type>/<sujet>`. Un subagent travaille dans un worktree de cette branche, jamais sur develop ni main.
+2. Fusion dans develop par l'agent principal seulement, quand check.sh et test-integration.sh sont verts, que le reviewer a rendu APPROUVÉ et que CHANGELOG.md (section « Non publié ») est à jour : `git switch develop && git merge --squash <branche> && TUNNEL_INTEGRATION=1 git commit` (message Conventional Commits qui résume le chantier), puis push de develop et suppression de la branche.
+3. Une version est décidée par l'utilisateur : branche chore/release-X.Y.Z (API_VERSION, section datée du CHANGELOG) intégrée dans develop, pull request develop → main en merge commit (--no-ff), tag annoté vX.Y.Z sur main, main refusionnée dans develop. Le push vers main exige TUNNEL_RELEASE=1 ; un commit après conflit sur develop ou un cherry-pick exige TUNNEL_INTEGRATION=1 (ADR 0008 point 8).
+4. ADR : premier commit de la branche du chantier qu'il décide ; ADR sans code : branche docs/adr-NNNN-<sujet>.
+5. Ne jamais réécrire l'historique de main ou develop (pas de force push).
 
 ## graphify
 
