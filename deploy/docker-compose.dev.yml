@@ -1,0 +1,94 @@
+# Stack de dev : tout se recharge à chaud depuis le dépôt de travail (ADR 0010).
+# S'ajoute à docker-compose.yml, ne sert pas à une installation PME.
+#
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d
+#
+# Le navigateur montre la branche extraite. Une migration de la branche s'applique
+# à la base au prochain démarrage du conteneur api (pas à chaque rechargement).
+
+services:
+  api:
+    volumes:
+      - ../backend:/app:ro
+    # Même séquence que docker-entrypoint.sh, avec un seul processus en --reload.
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        python -m scripts.bootstrap &&
+        unset DATABASE_URL_OWNER &&
+        exec uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+        --proxy-headers --forwarded-allow-ips "$${FORWARDED_ALLOW_IPS:-*}"
+
+  web-vite:
+    image: node:24-slim
+    restart: unless-stopped
+    working_dir: /src/web
+    # Démarre en root pour donner le volume node_modules à l'utilisateur node (uid
+    # 1000, celui du dépôt), puis tourne en node : les fichiers écrits dans le dépôt
+    # (public/CHANGELOG.md) gardent le bon propriétaire.
+    command: ["sh", "/src/deploy/dev/vite-start.sh"]
+    environment:
+      VITE_API_URL: /api
+      VITE_ALLOWED_HOSTS: ${DEV_ALLOWED_HOSTS:-localhost}
+      VITE_HMR_CLIENT_PORT: ${DEV_HMR_CLIENT_PORT:-}
+    volumes:
+      - ..:/src
+      - web-node-modules:/src/web/node_modules
+      # Les secrets du serveur ne sont pas exposés au serveur Vite.
+      - /dev/null:/src/deploy/.env:ro
+    security_opt:
+      - no-new-privileges:true
+    networks: [tunnel]
+
+  mobile-vite:
+    image: node:24-slim
+    restart: unless-stopped
+    working_dir: /src/mobile
+    command: ["sh", "/src/deploy/dev/vite-start.sh"]
+    environment:
+      VITE_API_URL: /api
+      VITE_BASE_PATH: /m/
+      VITE_ALLOWED_HOSTS: ${DEV_ALLOWED_HOSTS:-localhost}
+      VITE_HMR_CLIENT_PORT: ${DEV_HMR_CLIENT_PORT:-}
+    volumes:
+      - ..:/src
+      - mobile-node-modules:/src/mobile/node_modules
+      # Les secrets du serveur ne sont pas exposés au serveur Vite.
+      - /dev/null:/src/deploy/.env:ro
+    security_opt:
+      - no-new-privileges:true
+    networks: [tunnel]
+
+  web:
+    build: !reset null
+    image: nginxinc/nginx-unprivileged:1.28-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+      web-vite:
+        condition: service_started
+      mobile-vite:
+        condition: service_started
+    environment:
+      API_UPSTREAM: http://api:8000
+      WEB_UPSTREAM: http://web-vite:5173
+      MOBILE_UPSTREAM: http://mobile-vite:5174
+      DNS_RESOLVER: 127.0.0.11
+    volumes:
+      - ./nginx/tunnel.dev.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/15-real-ip.sh:/opt/tunnel/15-real-ip.sh:ro
+    # Le script est monté sans bit d'exécution : on le lance avant l'entrypoint officiel.
+    entrypoint:
+      - sh
+      - -c
+      - sh /opt/tunnel/15-real-ip.sh && exec /docker-entrypoint.sh nginx -g 'daemon off;'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  web-node-modules:
+  mobile-node-modules:

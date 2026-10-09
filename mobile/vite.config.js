@@ -42,6 +42,8 @@ export default defineConfig(({ mode }) => {
       allowedHosts: env.VITE_ALLOWED_HOSTS?.split(',') ?? [],
       port: 5174,
       strictPort: true,
+      // Derrière un proxy HTTPS (stack de dev, ADR 0010) : la websocket passe par le 443.
+      hmr: env.VITE_HMR_CLIENT_PORT ? { clientPort: Number(env.VITE_HMR_CLIENT_PORT) } : undefined,
     },
     resolve: {
       alias: { '@': '/src' }

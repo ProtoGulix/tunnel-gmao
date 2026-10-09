@@ -6,6 +6,12 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne] Développement
+- Stack de dev rechargée à chaud (deploy/docker-compose.dev.yml, ADR 0010) : API en
+  uvicorn --reload, fronts web et mobile servis par Vite. Sans effet sur une installation.
+
 ## [5.1.0] — 2026-10-07
 
 ### Droits par rôle
