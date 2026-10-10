@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any, Dict, List
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import psycopg2
 from fastapi import HTTPException
@@ -15,7 +15,12 @@ from api.equipements.validators import (
     validate_children_exist,
     validate_deletable,
 )
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import (
+    DatabaseError,
+    NotFoundError,
+    ValidationError,
+    raise_db_error,
+)
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -37,6 +42,8 @@ class EquipementRepository:
         exclude_class: list[str] | None = None,
         select_class: list[str] | None = None,
         select_mere: str | None = None,
+        subtree_of: str | None = None,
+        roots_only: bool = False,
     ) -> tuple[str, list]:
         """Construit la clause WHERE et les params associés pour les filtres de liste."""
         conditions = []
@@ -51,6 +58,23 @@ class EquipementRepository:
         if select_mere:
             conditions.append("m.equipement_mere = %s")
             params.append(select_mere)
+        if subtree_of:
+            # Descendants de tout niveau, sans l'équipement lui-même (borné par _TREE_SCAN_LIMIT).
+            conditions.append(
+                """m.id IN (
+                    WITH RECURSIVE down(id, lvl) AS (
+                        SELECT id, 1 FROM machine WHERE equipement_mere = %s
+                        UNION ALL
+                        SELECT c.id, down.lvl + 1
+                        FROM machine c JOIN down ON c.equipement_mere = down.id
+                        WHERE down.lvl < %s
+                    )
+                    SELECT id FROM down WHERE id <> %s
+                )"""
+            )
+            params.extend([subtree_of, self._TREE_SCAN_LIMIT, subtree_of])
+        if roots_only:
+            conditions.append("m.equipement_mere IS NULL")
         if select_class:
             placeholders = ",".join(["%s"] * len(select_class))
             conditions.append(f"ec.code IN ({placeholders})")
@@ -70,8 +94,10 @@ class EquipementRepository:
         exclude_class: list[str] | None = None,
         select_class: list[str] | None = None,
         select_mere: str | None = None,
+        subtree_of: str | None = None,
+        roots_only: bool = False,
     ) -> List[Dict[str, Any]]:
-        """Récupère les équipements paginés - liste légère avec health"""
+        """Récupère les équipements paginés - liste légère avec health, children_count, ancestors"""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -81,6 +107,8 @@ class EquipementRepository:
                 exclude_class=exclude_class,
                 select_class=select_class,
                 select_mere=select_mere,
+                subtree_of=subtree_of,
+                roots_only=roots_only,
             )
 
             query = f"""
@@ -122,6 +150,8 @@ class EquipementRepository:
 
             equipement_ids = [str(e.get('id')) for e in equipements if e.get('id')]
             health_inputs_map = self._fetch_health_inputs(cur, equipement_ids)
+            children_counts = self._children_counts(cur, equipement_ids)
+            ancestors_map = self._ancestors_batch(cur, equipement_ids)
 
             # Enrichir avec health et restructurer equipement_class
             for equipement in equipements:
@@ -134,7 +164,20 @@ class EquipementRepository:
                 metrics.setdefault('new_requests_count', int(new_requests_count))
 
                 equipement['health'] = self._calculate_health(metrics)
-                equipement['parent_id'] = equipement.pop('equipement_mere', None)
+                # parent_id vient déjà du SELECT (pm.id) : on bâtit seulement l'objet parent.
+                parent_code = equipement.get('parent_code')
+                parent_name = equipement.get('parent_name')
+                equipement['parent'] = (
+                    {
+                        'id': equipement['parent_id'],
+                        'code': parent_code,
+                        'name': parent_name,
+                    }
+                    if equipement.get('parent_id')
+                    else None
+                )
+                equipement['children_count'] = children_counts.get(str(equipement['id']), 0)
+                equipement['ancestors'] = ancestors_map.get(str(equipement['id']), [])
 
                 ec_id = equipement.pop('equipement_class_id', None)
                 ec_code = equipement.pop('equipement_class_code', None)
@@ -176,6 +219,8 @@ class EquipementRepository:
         exclude_class: list[str] | None = None,
         select_class: list[str] | None = None,
         select_mere: str | None = None,
+        subtree_of: str | None = None,
+        roots_only: bool = False,
     ) -> int:
         """Compte le nombre total d'équipements avec les mêmes filtres que get_all."""
         conn = self._get_connection()
@@ -186,6 +231,8 @@ class EquipementRepository:
                 exclude_class=exclude_class,
                 select_class=select_class,
                 select_mere=select_mere,
+                subtree_of=subtree_of,
+                roots_only=roots_only,
             )
             cur.execute(
                 f"""
@@ -227,9 +274,18 @@ class EquipementRepository:
             release_connection(conn)
 
     def get_by_id(
-        self, equipement_id: str, interventions_page: int = 1, interventions_limit: int = 20
+        self,
+        equipement_id: str,
+        interventions_page: int = 1,
+        interventions_limit: int = 20,
+        include_descendants: bool | None = None,
     ) -> Dict[str, Any]:
-        """Récupère un équipement par ID avec tous les champs, children_count et interventions paginées"""
+        """Récupère un équipement par ID avec tous les champs, children_count et interventions paginées.
+
+        include_descendants : None = vrai si l'équipement a des filles (ADR 0011, 2.4). Il
+        s'applique aux interventions, aux demandes ouvertes, au résumé des occurrences
+        préventives et à la santé ; les plans préventifs restent ceux de sa propre classe.
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -287,9 +343,7 @@ class EquipementRepository:
             metrics.setdefault('open_interventions_count', int(open_count))
             metrics.setdefault('urgent_count', int(urgent_count))
             metrics.setdefault('new_requests_count', int(new_requests_count))
-            health = self._calculate_health(metrics)
-
-            equipement['health'] = health
+            own_health = self._calculate_health(metrics)
 
             parent_id = equipement.pop('parent_id', None)
             parent_code = equipement.pop('parent_code', None)
@@ -330,14 +384,31 @@ class EquipementRepository:
                 else None
             )
 
-            # children_count
-            cur.execute("SELECT COUNT(*) FROM machine WHERE equipement_mere = %s", (equipement_id,))
-            equipement['children_count'] = cur.fetchone()[0] or 0
+            # children_count, chemin des ancêtres et descendants
+            equipement['children_count'] = self._children_counts(cur, [equipement_id]).get(
+                str(equipement_id), 0
+            )
+            equipement['ancestors'] = self._ancestors(cur, equipement_id)
+            descendants = self._descendants(cur, equipement_id)
+            equipement['descendants_count'] = len(descendants)
+            if include_descendants is None:
+                include_descendants = bool(descendants)
+            equipement['include_descendants'] = include_descendants
+            scope_ids = [str(equipement_id)] + (
+                [str(d[0]) for d in descendants] if include_descendants else []
+            )
+            equipement['health'] = self._worst_health(
+                cur, equipement_id, own_health, descendants if include_descendants else []
+            )
+            scope_sql, scope_params = self._scope_clause("machine_id", scope_ids)
 
             # Interventions paginées (liées directement à cet équipement)
             offset = (interventions_page - 1) * interventions_limit
 
-            cur.execute("SELECT COUNT(*) FROM intervention WHERE machine_id = %s", (equipement_id,))
+            cur.execute(
+                f"SELECT COUNT(*) FROM intervention WHERE {scope_sql}",
+                scope_params,
+            )
             interventions_total = cur.fetchone()[0] or 0
 
             from math import ceil
@@ -347,14 +418,14 @@ class EquipementRepository:
             )
 
             cur.execute(
-                """
+                f"""
                 SELECT id, code, title, type_inter, status_actual, priority, reported_date
                 FROM intervention
-                WHERE machine_id = %s
+                WHERE {scope_sql}
                 ORDER BY reported_date DESC
                 LIMIT %s OFFSET %s
                 """,
-                (equipement_id, interventions_limit, offset),
+                (*scope_params, interventions_limit, offset),
             )
             int_rows = cur.fetchall()
             int_cols = [desc[0] for desc in cur.description]
@@ -390,10 +461,10 @@ class EquipementRepository:
             plans = self._fetch_preventive_plans(cur, equipement_class_id, equipement_id)
             equipement['preventive_plans'] = plans or None
 
-            occurrences_summary = self._fetch_preventive_occurrences_summary(cur, equipement_id)
+            occurrences_summary = self._fetch_preventive_occurrences_summary(cur, scope_ids)
             equipement['preventive_occurrences_summary'] = occurrences_summary
 
-            open_requests = self._fetch_open_requests(cur, equipement_id)
+            open_requests = self._fetch_open_requests(cur, scope_ids)
             equipement['open_requests'] = open_requests or None
 
             return equipement
@@ -414,6 +485,145 @@ class EquipementRepository:
     # deux rattachements concurrents valident chacun l'état d'avant l'autre et peuvent former
     # un cycle ou dépasser la profondeur autorisée. Relâché au commit ou au rollback.
     _TREE_LOCK_KEY = 4_011_000_001
+
+    # --- Lectures de l'arbre (lecture seule, bornées par _TREE_SCAN_LIMIT) ---------------
+
+    def _ancestors(self, cur, equipement_id: str) -> List[Dict[str, Any]]:
+        """Ancêtres de la racine jusqu'au parent, sans l'équipement lui-même : [{id, code, name}]."""
+        return self._ancestors_batch(cur, [str(equipement_id)]).get(str(equipement_id), [])
+
+    def _ancestors_batch(self, cur, equipement_ids: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+        """Ancêtres (racine d'abord) d'une liste d'équipements, en une requête. Clé = id texte."""
+        if not equipement_ids:
+            return {}
+        cur.execute(
+            """
+            WITH RECURSIVE up(origin, id, code, name, mere, lvl) AS (
+                SELECT c.id, p.id, p.code, p.name, p.equipement_mere, 1
+                FROM machine c JOIN machine p ON p.id = c.equipement_mere
+                WHERE c.id = ANY(%s::uuid[])
+                UNION ALL
+                SELECT up.origin, p.id, p.code, p.name, p.equipement_mere, up.lvl + 1
+                FROM machine p JOIN up ON p.id = up.mere
+                WHERE up.lvl < %s
+            )
+            SELECT origin, id, code, name FROM up WHERE id <> origin ORDER BY origin, lvl DESC
+            """,
+            (list(equipement_ids), self._TREE_SCAN_LIMIT),
+        )
+        result: Dict[str, List[Dict[str, Any]]] = {}
+        for origin, anc_id, code, name in cur.fetchall():
+            result.setdefault(str(origin), []).append({'id': anc_id, 'code': code, 'name': name})
+        return result
+
+    def _children_counts(self, cur, equipement_ids: List[str]) -> Dict[str, int]:
+        """Nombre de filles directes pour une liste d'équipements, en une requête."""
+        if not equipement_ids:
+            return {}
+        cur.execute(
+            """
+            SELECT equipement_mere, COUNT(*) FROM machine
+            WHERE equipement_mere = ANY(%s::uuid[]) GROUP BY equipement_mere
+            """,
+            (list(equipement_ids),),
+        )
+        return {str(mere): int(n) for mere, n in cur.fetchall()}
+
+    def _descendants(self, cur, equipement_id: str) -> List[tuple]:
+        """Descendants de tout niveau, sans l'équipement lui-même : [(id, code, name)] triés par code."""
+        cur.execute(
+            """
+            WITH RECURSIVE down(id, lvl) AS (
+                SELECT id, 1 FROM machine WHERE equipement_mere = %s
+                UNION ALL
+                SELECT m.id, down.lvl + 1
+                FROM machine m JOIN down ON m.equipement_mere = down.id
+                WHERE down.lvl < %s
+            )
+            SELECT DISTINCT m.id, m.code, m.name
+            FROM machine m JOIN down d ON d.id = m.id
+            WHERE m.id <> %s
+            ORDER BY m.code, m.id
+            """,
+            (str(equipement_id), self._TREE_SCAN_LIMIT, str(equipement_id)),
+        )
+        return cur.fetchall()
+
+    def _descendant_ids(self, cur, equipement_id: str) -> List[str]:
+        """Identifiants (texte) des descendants de tout niveau, sans l'équipement lui-même."""
+        return [str(row[0]) for row in self._descendants(cur, equipement_id)]
+
+    @staticmethod
+    def _scope_clause(column: str, machine_ids: List[str]) -> tuple[str, list]:
+        """Fragment SQL paramétré « colonne = machine » ou « colonne = ANY(machines) » + ses params."""
+        if len(machine_ids) == 1:
+            return f"{column} = %s", [machine_ids[0]]
+        return f"{column} = ANY(%s::uuid[])", [list(machine_ids)]
+
+    @staticmethod
+    def _uuid_or_400(equipement_id: str) -> str:
+        try:
+            return str(UUID(str(equipement_id)))
+        except ValueError:
+            raise ValidationError("Identifiant d'équipement invalide : UUID attendu") from None
+
+    def scope_clause(
+        self, cur, column: str, equipement_id: str, include_descendants: bool
+    ) -> tuple[str, list]:
+        """Filtre « machine = X » ou « machine = X ou descendante de X », utilisable par les
+        autres domaines (interventions, demandes, préventif) sans SQL dans leurs routes.
+        Un identifiant qui n'est pas un UUID valide est refusé (400), avec ou sans descendants."""
+        ids = [self._uuid_or_400(equipement_id)]
+        if include_descendants:
+            ids += self._descendant_ids(cur, ids[0])
+        return self._scope_clause(column, ids)
+
+    def machine_scope(
+        self, column: str, equipement_id: str, include_descendants: bool = False
+    ) -> tuple[str, list]:
+        """Point d'entrée des autres domaines : fragment SQL « column = X » ou, avec
+        include_descendants, « column = ANY(X et ses descendants) », et ses paramètres.
+        Ouvre sa propre connexion (lecture seule) : à appeler avant de prendre la sienne."""
+        equipement_id = self._uuid_or_400(equipement_id)
+        if not include_descendants:
+            return self._scope_clause(column, [equipement_id])
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                return self.scope_clause(cur, column, equipement_id, True)
+        except Exception as e:
+            raise_db_error(e, "périmètre équipement")
+        finally:
+            release_connection(conn)
+
+    _HEALTH_RANK = {'ok': 0, 'maintenance': 1, 'warning': 2, 'critical': 3}
+
+    def _worst_health(
+        self, cur, equipement_id: str, own_health: Dict[str, Any], descendants: List[tuple]
+    ) -> Dict[str, Any]:
+        """Santé du plus dégradé entre l'équipement et ses descendants (égalité : l'équipement
+        d'abord, puis l'ordre des codes). Ajoute `source` : null, ou {id, code, name} du descendant
+        (la raison est préfixée par `code`, à défaut `name`)."""
+        own_health['source'] = None
+        if not descendants:
+            return own_health
+        inputs = self._fetch_health_inputs(cur, [str(d[0]) for d in descendants])
+        worst, worst_rank, worst_desc = own_health, self._HEALTH_RANK[own_health['level']], None
+        for desc_id, code, name in descendants:
+            metrics = inputs.get(str(desc_id))
+            if metrics is None:
+                continue
+            health = self._calculate_health(metrics)
+            rank = self._HEALTH_RANK[health['level']]
+            if rank > worst_rank:
+                worst, worst_rank, worst_desc = health, rank, (desc_id, code, name)
+        if worst_desc is None:
+            return own_health
+        desc_id, code, name = worst_desc
+        label = code or name
+        worst['reason'] = f"{label} : {worst['reason']}"
+        worst['source'] = {'id': desc_id, 'code': code, 'name': name}
+        return worst
 
     def _check_attachment(self, cur, equipement_id: str | None, parent_id: str) -> None:
         """Recueille les faits de l'arbre puis applique validators.validate_attachment."""
@@ -668,6 +878,8 @@ class EquipementRepository:
 
             equipement_ids = [str(e.get('id')) for e in equipements if e.get('id')]
             health_inputs_map = self._fetch_health_inputs(cur, equipement_ids)
+            children_counts = self._children_counts(cur, equipement_ids)
+            ancestors_map = self._ancestors_batch(cur, equipement_ids)
 
             # Enrichir avec health et restructurer equipement_class
             for equipement in equipements:
@@ -680,7 +892,20 @@ class EquipementRepository:
                 metrics.setdefault('new_requests_count', int(new_requests_count))
 
                 equipement['health'] = self._calculate_health(metrics)
-                equipement['parent_id'] = equipement.pop('equipement_mere', None)
+                # parent_id vient déjà du SELECT (pm.id) : on bâtit seulement l'objet parent.
+                parent_code = equipement.get('parent_code')
+                parent_name = equipement.get('parent_name')
+                equipement['parent'] = (
+                    {
+                        'id': equipement['parent_id'],
+                        'code': parent_code,
+                        'name': parent_name,
+                    }
+                    if equipement.get('parent_id')
+                    else None
+                )
+                equipement['children_count'] = children_counts.get(str(equipement['id']), 0)
+                equipement['ancestors'] = ancestors_map.get(str(equipement['id']), [])
 
                 # Restructurer equipement_class
                 ec_id = equipement.pop('equipement_class_id', None)
@@ -791,8 +1016,14 @@ class EquipementRepository:
         finally:
             release_connection(conn)
 
-    def get_health_by_id(self, equipement_id: str) -> Dict[str, Any]:
-        """Récupère uniquement le health d'un équipement (ultra-léger)"""
+    def get_health_by_id(
+        self, equipement_id: str, include_descendants: bool | None = None
+    ) -> Dict[str, Any]:
+        """Récupère uniquement le health d'un équipement (ultra-léger).
+
+        include_descendants : None = vrai si l'équipement a des filles ; la santé est alors
+        celle du plus dégradé de l'équipement et de ses descendants.
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -818,7 +1049,11 @@ class EquipementRepository:
                 },
             )
 
-            return self._calculate_health(metrics)
+            own_health = self._calculate_health(metrics)
+            descendants = []
+            if include_descendants is None or include_descendants:
+                descendants = self._descendants(cur, equipement_id)
+            return self._worst_health(cur, equipement_id, own_health, descendants)
         except NotFoundError:
             raise
         except HTTPException:
@@ -858,10 +1093,11 @@ class EquipementRepository:
             logger.error("Erreur récupération plans préventifs pour équipement: %s", e)
             return []
 
-    def _fetch_preventive_occurrences_summary(self, cur, equipement_id: str) -> Dict[str, Any]:
-        """Récupère le résumé des occurrences préventives"""
+    def _fetch_preventive_occurrences_summary(self, cur, machine_ids: List[str]) -> Dict[str, Any]:
+        """Récupère le résumé des occurrences préventives des machines données"""
         try:
-            query = """
+            scope_sql, scope_params = self._scope_clause("machine_id", machine_ids)
+            query = f"""
                 SELECT
                     COUNT(CASE WHEN status = 'pending' THEN 1 END) AS pending_count,
                     COUNT(CASE WHEN status = 'generated' THEN 1 END) AS generated_count,
@@ -869,13 +1105,13 @@ class EquipementRepository:
                     MIN(CASE WHEN status = 'pending' THEN scheduled_date END) AS next_scheduled,
                     (
                         SELECT skip_reason FROM preventive_occurrence
-                        WHERE machine_id = %s AND status = 'skipped'
+                        WHERE {scope_sql} AND status = 'skipped'
                         ORDER BY created_at DESC LIMIT 1
                     ) AS last_skipped_reason
                 FROM preventive_occurrence
-                WHERE machine_id = %s
+                WHERE {scope_sql}
             """
-            cur.execute(query, (equipement_id, equipement_id))
+            cur.execute(query, (*scope_params, *scope_params))
             row = cur.fetchone()
             if not row:
                 return {
@@ -897,21 +1133,22 @@ class EquipementRepository:
                 'last_skipped_reason': None,
             }
 
-    def _fetch_open_requests(self, cur, equipement_id: str) -> List[Dict[str, Any]]:
-        """Récupère les demandes d'intervention ouvertes"""
+    def _fetch_open_requests(self, cur, machine_ids: List[str]) -> List[Dict[str, Any]]:
+        """Récupère les demandes d'intervention ouvertes des machines données"""
         try:
-            query = """
+            scope_sql, scope_params = self._scope_clause("ir.machine_id", machine_ids)
+            query = f"""
                 SELECT
                     ir.id, ir.code, ir.description, ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.is_system, ir.created_at
                 FROM intervention_request ir
                 LEFT JOIN request_status_ref rs ON rs.code = ir.statut
-                WHERE ir.machine_id = %s
+                WHERE {scope_sql}
                   AND ir.statut NOT IN ('rejetee', 'cloturee')
                 ORDER BY ir.created_at DESC
             """
-            cur.execute(query, (equipement_id,))
+            cur.execute(query, scope_params)
             rows = cur.fetchall()
             cols = [desc[0] for desc in cur.description]
             return [dict(zip(cols, row)) for row in rows]

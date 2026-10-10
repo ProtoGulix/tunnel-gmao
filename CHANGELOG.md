@@ -14,9 +14,16 @@ mobile/CHANGELOG.md.
   machine, sous-ensemble).
 - Un équipement qui a des sous-équipements ne peut plus être supprimé.
 - Les techniciens peuvent modifier un équipement et son rattachement.
+- La santé d'une ligne ou d'un site reflète celle de ses machines.
 - Chaque modification d'équipement apparaît dans l'historique, avec son auteur.
 
 ### [interne] Équipements (ADR 0011)
+- API de l'arbre (étape 2) : ancestors et descendants_count sur le détail, subtree_of
+  et roots_only sur la liste, children_count, ancestors et parent sur chaque item,
+  include_descendants sur le détail et la santé (santé d'une mère = pire descendant,
+  health.source), et sur GET /interventions, /intervention-requests et
+  /preventive-occurrences.
+- Correction : parent_id était toujours vide dans la liste des équipements.
 - Migration 0003 : clés étrangères ON DELETE RESTRICT sur machine (equipement_mere,
   equipement_class_id, statut_id) et index sur equipement_mere.
 - Contrôles de l'arbre dans api/equipements/validators.py (cycle, profondeur, parent
@@ -30,6 +37,11 @@ mobile/CHANGELOG.md.
   correctif, ces changements n'étaient pas journalisés, quelle que soit l'entité.
 - Équipements : classe ou statut inexistant renvoie 400 au lieu de 500 ; verrou
   consultatif contre les rattachements concurrents.
+- PUT et PATCH /equipements renvoient le détail avec include_descendants par défaut :
+  pour une mère, la réponse agrège ses descendants (santé comprise). health.source
+  porte aussi name.
+- Filtres par équipement (interventions, préventif) : un identifiant qui n'est pas un
+  UUID renvoie 400 au lieu de 500 (les demandes répondaient déjà 422).
 
 ### [interne] Développement
 - Stack de dev rechargée à chaud (deploy/docker-compose.dev.yml, ADR 0010) : API en

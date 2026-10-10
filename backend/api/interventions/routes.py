@@ -85,6 +85,10 @@ def list_interventions(
         description="Filtre par statut d'impression/archivage. false=actives (défaut), true=archivées, null=toutes",
     ),
     tech_id: str | None = Query(None, description="Filtrer par UUID technicien pilote"),
+    include_descendants: bool = Query(
+        False,
+        description="Avec equipement_id : inclut les interventions des équipements descendants. Ignoré sans equipement_id",
+    ),
 ) -> Dict[str, Any]:
     """Liste interventions avec filtres/sort et stats optionnelles (sans actions)"""
     intervention_repo = InterventionRepository()
@@ -107,6 +111,7 @@ def list_interventions(
         include_tasks=include_tasks,
         printed=printed,
         tech_id=tech_id,
+        include_descendants=include_descendants,
     )
     total = intervention_repo.count_all(
         search=search,
@@ -115,6 +120,7 @@ def list_interventions(
         priorities=priorities,
         printed=printed,
         tech_id=tech_id,
+        include_descendants=include_descendants,
     )
     return paginated(items, total=total, offset=skip, limit=limit, audit_entity="intervention")
 

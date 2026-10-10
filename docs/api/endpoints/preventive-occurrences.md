@@ -42,6 +42,7 @@ Liste les occurrences de maintenance préventive avec filtres optionnels.
 | --------------------- | ------ | ---------------------------------------------- |
 | `plan_id`             | uuid   | Filtrer par plan préventif                     |
 | `machine_id`          | uuid   | Filtrer par machine                            |
+| `include_descendants` | bool   | Avec `machine_id` : inclut les occurrences des équipements descendants (défaut `false`). Ignoré sans `machine_id` |
 | `status`              | string | `pending`, `generated`, `completed`, `skipped` |
 | `scheduled_date_from` | date   | Filtre date planifiée ≥ (format `YYYY-MM-DD`)  |
 | `scheduled_date_to`   | date   | Filtre date planifiée ≤ (format `YYYY-MM-DD`)  |

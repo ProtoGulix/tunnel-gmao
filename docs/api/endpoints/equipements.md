@@ -24,6 +24,10 @@ Tri par défaut : urgents DESC, ouverts DESC, nom ASC.
 | `select_class`  | string | —      | Codes de classes à inclure (filtre exclusif), séparés par virgule. Ex: `POM,SCI` |
 | `exclude_class` | string | —      | Codes de classes à exclure, séparés par virgule. Ex: `POM,SCI`                   |
 | `select_mere`   | uuid   | —      | UUID de l'équipement parent : retourne uniquement ses enfants directs            |
+| `subtree_of`    | uuid   | —      | UUID d'un équipement : retourne tous ses descendants (tout niveau), sans lui-même |
+| `roots_only`    | bool   | false  | `true` : uniquement les équipements sans mère (`equipement_mere IS NULL`)        |
+
+`subtree_of` et `roots_only` se combinent avec les autres filtres (`total` les respecte). Les facettes ne changent pas : elles suivent `search` seul. Chaque item expose en plus `parent_id`, `parent` (`{id, code, name}` ou `null`), `children_count` (filles directes) et `ancestors` (`[{id, code, name}]`, de la racine jusqu'au parent, vide pour une racine).
 
 ### Réponse `200`
 
@@ -98,6 +102,9 @@ Détail complet d'un équipement avec tous les champs de la base, `children_coun
 | --------------------- | ---- | ------ | ------------------------ |
 | `interventions_page`  | int  | 1      | Page des interventions   |
 | `interventions_limit` | int  | 20     | Taille de page (max 100) |
+| `include_descendants` | bool | auto   | Inclut les équipements descendants dans `interventions`, `open_requests`, `preventive_occurrences_summary` et `health`. Omis : vrai si l'équipement a des filles, faux sinon. `preventive_plans` reste celui de la classe de l'équipement lui-même |
+
+Champs ajoutés : `ancestors` (`[{id, code, name}]`, de la racine jusqu'au parent, sans l'équipement), `descendants_count` (descendants de tout niveau) et `include_descendants` (valeur effective appliquée). `health.source` vaut `null` si la santé est celle de l'équipement, sinon `{id, code, name}` du descendant le plus dégradé (niveaux `ok` < `maintenance` < `warning` < `critical` ; à égalité, l'équipement lui-même) et `health.reason` est alors préfixée `"<code> : "` (`"<name> : "` si le descendant n'a pas de code). Les compteurs de `health` sont ceux de ce descendant. Le calcul est borné à 20 niveaux de récursion.
 
 ### Réponse `200`
 
@@ -324,6 +331,8 @@ Même body que `POST`, avec `name` obligatoire.
 
 Équipement complet (même format que `GET /equipements/{id}`).
 
+> Le détail renvoyé applique la valeur par défaut de `include_descendants` : pour un équipement mère, il agrège ses descendants (interventions, demandes, préventif, santé), comme `GET /equipements/{id}` sans paramètre (ADR 0011).
+
 ---
 
 ## `PATCH /equipements/{id}`
@@ -344,6 +353,8 @@ Même body que `POST`, tous les champs optionnels (dont `name`).
 ### Réponse `200`
 
 Équipement complet (même format que `GET /equipements/{id}`).
+
+> Le détail renvoyé applique la valeur par défaut de `include_descendants` : pour un équipement mère, il agrège ses descendants (interventions, demandes, préventif, santé), comme `GET /equipements/{id}` sans paramètre (ADR 0011).
 
 > `children_ids` fonctionne de la même façon pour `PUT` et `PATCH` : les équipements listés voient leur `equipement_mere` mis à jour pour pointer vers cet équipement. Les enfants existants non listés ne sont pas modifiés.
 
@@ -384,6 +395,8 @@ Statistiques détaillées pour un équipement.
 ## `GET /equipements/{id}/health`
 
 État de santé uniquement (ultra-léger, polling-friendly).
+
+Paramètre `include_descendants` (bool, défaut : vrai si l'équipement a des filles) : même logique que le détail. La réponse contient `source` (`null` ou `{id, code, name}` du descendant le plus dégradé) et la `reason` préfixée du code de ce descendant (de son nom s'il n'a pas de code).
 
 ### Réponse `200`
 
