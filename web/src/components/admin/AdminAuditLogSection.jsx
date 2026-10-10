@@ -21,6 +21,7 @@ const ENTITY_LABELS = {
   purchase_request: 'Demande DA',
   task:             'Tâche',
   action:           'Action',
+  equipement:       'Équipement',
 };
 
 const ENTITY_COLORS = {
@@ -29,6 +30,7 @@ const ENTITY_COLORS = {
   purchase_request: 'orange',
   task:             'green',
   action:           'cyan',
+  equipement:       'gray',
 };
 
 /* ── Sous-composants ─────────────────────────────────────────────────────────── */

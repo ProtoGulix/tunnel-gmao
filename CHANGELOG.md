@@ -8,6 +8,29 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Équipements
+- Un équipement ne peut plus être rattaché à lui-même ni à l'un de ses
+  sous-équipements, et l'arborescence est limitée à 4 niveaux (par exemple site, ligne,
+  machine, sous-ensemble).
+- Un équipement qui a des sous-équipements ne peut plus être supprimé.
+- Les techniciens peuvent modifier un équipement et son rattachement.
+- Chaque modification d'équipement apparaît dans l'historique, avec son auteur.
+
+### [interne] Équipements (ADR 0011)
+- Migration 0003 : clés étrangères ON DELETE RESTRICT sur machine (equipement_mere,
+  equipement_class_id, statut_id) et index sur equipement_mere.
+- Contrôles de l'arbre dans api/equipements/validators.py (cycle, profondeur, parent
+  inexistant, children_ids, suppression), requêtes récursives bornées dans repo.py.
+- Matrice par défaut : PUT et PATCH /equipements ouverts à TECH, appliqués aux seules
+  permissions qu'aucun admin n'a modifiées.
+- Migration 0004 : motif EQUIPMENT_UPDATE et règle d'audit routine pour l'entité
+  equipement, recalage des séquences audit_reason_code et audit_rule.
+- AuditMiddleware trace les équipements (une ligne par champ modifié, auteur du jeton).
+- Audit : les valeurs UUID et date sont sérialisées (json.dumps default=str). Avant ce
+  correctif, ces changements n'étaient pas journalisés, quelle que soit l'entité.
+- Équipements : classe ou statut inexistant renvoie 400 au lieu de 500 ; verrou
+  consultatif contre les rattachements concurrents.
+
 ### [interne] Développement
 - Stack de dev rechargée à chaud (deploy/docker-compose.dev.yml, ADR 0010) : API en
   uvicorn --reload, fronts web et mobile servis par Vite. Sans effet sur une installation.

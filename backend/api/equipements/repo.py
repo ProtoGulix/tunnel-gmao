@@ -4,11 +4,17 @@ import logging
 from typing import Any, Dict, List
 from uuid import uuid4
 
+import psycopg2
 from fastapi import HTTPException
 
 from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPES_MAP, PRIORITY_TYPES
 from api.db import get_connection, release_connection
-from api.equipements.validators import build_equipement_code
+from api.equipements.validators import (
+    build_equipement_code,
+    validate_attachment,
+    validate_children_exist,
+    validate_deletable,
+)
 from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
 from api.utils.search import build_search_clause
 
@@ -400,15 +406,83 @@ class EquipementRepository:
         finally:
             release_connection(conn)
 
-    def _assign_children(self, cur, parent_id: str, children_ids: list) -> None:
-        """Assigne une liste d'équipements comme enfants de parent_id"""
-        if not children_ids:
-            return
-        placeholders = ','.join(['%s'] * len(children_ids))
-        cur.execute(
-            f"UPDATE machine SET equipement_mere = %s WHERE id IN ({placeholders})",
-            (parent_id, *[str(cid) for cid in children_ids]),
+    # Borne des requêtes récursives : au-delà de l'arbre autorisé, et protège d'un cycle
+    # déjà présent en base. Le calcul se fait dans la transaction en cours.
+    _TREE_SCAN_LIMIT = 20
+
+    # Verrou consultatif (portée transaction) qui sérialise les écritures de l'arbre : sans lui,
+    # deux rattachements concurrents valident chacun l'état d'avant l'autre et peuvent former
+    # un cycle ou dépasser la profondeur autorisée. Relâché au commit ou au rollback.
+    _TREE_LOCK_KEY = 4_011_000_001
+
+    def _check_attachment(self, cur, equipement_id: str | None, parent_id: str) -> None:
+        """Recueille les faits de l'arbre puis applique validators.validate_attachment."""
+        limit = self._TREE_SCAN_LIMIT
+        cur.execute("SELECT pg_advisory_xact_lock(%s)", (self._TREE_LOCK_KEY,))
+        cur.execute("SELECT 1 FROM machine WHERE id = %s", (str(parent_id),))
+        parent_exists = cur.fetchone() is not None
+        parent_depth = 0
+        if parent_exists:
+            # Chaîne des ancêtres du parent, lui compris : sa longueur est son niveau.
+            cur.execute(
+                """
+                WITH RECURSIVE up(id, mere, lvl) AS (
+                    SELECT id, equipement_mere, 1 FROM machine WHERE id = %s
+                    UNION ALL
+                    SELECT m.id, m.equipement_mere, up.lvl + 1
+                    FROM machine m JOIN up ON m.id = up.mere
+                    WHERE up.lvl < %s
+                )
+                SELECT COALESCE(MAX(lvl), 0) FROM up
+                """,
+                (str(parent_id), limit),
+            )
+            parent_depth = cur.fetchone()[0]
+        subtree_ids: set[str] = set()
+        subtree_height = 1
+        if equipement_id is not None:
+            # L'équipement déplacé et tous ses descendants.
+            cur.execute(
+                """
+                WITH RECURSIVE down(id, lvl) AS (
+                    SELECT id, 1 FROM machine WHERE id = %s
+                    UNION ALL
+                    SELECT m.id, down.lvl + 1
+                    FROM machine m JOIN down ON m.equipement_mere = down.id
+                    WHERE down.lvl < %s
+                )
+                SELECT id::text, lvl FROM down
+                """,
+                (str(equipement_id), limit),
+            )
+            rows = cur.fetchall()
+            subtree_ids = {r[0] for r in rows}
+            subtree_height = max((r[1] for r in rows), default=1)
+        validate_attachment(
+            equipement_id,
+            parent_id,
+            parent_exists=parent_exists,
+            parent_depth=parent_depth,
+            subtree_ids=subtree_ids,
+            subtree_height=subtree_height,
         )
+
+    def _assign_children(self, cur, parent_id: str, children_ids: list) -> None:
+        """Assigne une liste d'équipements comme enfants de parent_id, après contrôle de l'arbre.
+
+        Les enfants sont contrôlés et rattachés un par un : le contrôle du suivant voit
+        l'arbre déjà modifié par le précédent.
+        """
+        for child_id in dict.fromkeys(str(cid) for cid in children_ids):
+            cur.execute("SELECT equipement_mere::text FROM machine WHERE id = %s", (child_id,))
+            row = cur.fetchone()
+            validate_children_exist([] if row else [child_id])
+            if row[0] == str(parent_id):
+                continue  # déjà rattaché : rien à contrôler ni à écrire
+            self._check_attachment(cur, child_id, parent_id)
+            cur.execute(
+                "UPDATE machine SET equipement_mere = %s WHERE id = %s", (parent_id, child_id)
+            )
 
     def _default_code(self, cur, data: Dict[str, Any]) -> str:
         """Code calculé quand le client n'en fournit pas (voir validators.build_equipement_code)."""
@@ -430,6 +504,8 @@ class EquipementRepository:
         try:
             cur = conn.cursor()
             equipement_id = str(uuid4())
+            if data.get('parent_id'):
+                self._check_attachment(cur, None, str(data['parent_id']))
             code = data.get('code') or self._default_code(cur, data)
 
             values = {
@@ -461,6 +537,12 @@ class EquipementRepository:
             if data.get('children_ids'):
                 self._assign_children(cur, equipement_id, data['children_ids'])
             conn.commit()
+        except HTTPException:
+            conn.rollback()
+            raise
+        except psycopg2.Error as e:
+            conn.rollback()
+            raise_db_error(e, "création de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
             raise DatabaseError(f"Erreur lors de la creation de l'equipement: {str(e)}") from e
@@ -476,6 +558,13 @@ class EquipementRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+
+            if data.get('parent_id') is not None:
+                cur.execute(
+                    "SELECT equipement_mere::text FROM machine WHERE id = %s", (equipement_id,)
+                )
+                if cur.fetchone()[0] != str(data['parent_id']):
+                    self._check_attachment(cur, equipement_id, str(data['parent_id']))
 
             field_map = {
                 'code': 'code',
@@ -508,6 +597,12 @@ class EquipementRepository:
                 self._assign_children(cur, equipement_id, data['children_ids'])
 
             conn.commit()
+        except HTTPException:
+            conn.rollback()
+            raise
+        except psycopg2.Error as e:
+            conn.rollback()
+            raise_db_error(e, "mise à jour de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
             raise DatabaseError(f"Erreur lors de la mise a jour de l'equipement: {str(e)}") from e
@@ -523,9 +618,16 @@ class EquipementRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+            # Même verrou que les rattachements : une fille ajoutée en parallèle doit être vue.
+            cur.execute("SELECT pg_advisory_xact_lock(%s)", (self._TREE_LOCK_KEY,))
+            cur.execute("SELECT COUNT(*) FROM machine WHERE equipement_mere = %s", (equipement_id,))
+            validate_deletable(cur.fetchone()[0])
             cur.execute("DELETE FROM machine WHERE id = %s", (equipement_id,))
             conn.commit()
             return True
+        except HTTPException:
+            conn.rollback()
+            raise
         except Exception as e:
             conn.rollback()
             raise DatabaseError(f"Erreur lors de la suppression de l'equipement: {str(e)}") from e

@@ -89,6 +89,7 @@ TECH_WRITES = (
     _w("intervention-requests", "POST", path="/intervention-requests"),  # créer une DI
     _w("interventions", "PUT", "PATCH"),  # modifier, pas créer ni supprimer
     _w("interventions", "POST", path="/interventions/{intervention_id}/request-pointage"),
+    _w("equipements", "PUT", "PATCH"),  # modifier une fiche, pas créer ni supprimer
     _w("intervention-actions"),
     _w("Intervention Tasks"),
     _w("intervention-status-log", "POST"),
