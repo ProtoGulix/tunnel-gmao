@@ -6,6 +6,18 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Équipements
+- Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
+  version est vidée.
+
+### [interne] Équipements (ADR 0011, fin)
+- Migration 0005 : affectation = « 0 » remplacée par NULL (valeur exacte seulement).
+- Suppression du code mort de l'ancienne page Équipements (tableau, onglets, hooks et
+  fonctions d'API sans appelant) ; guides web alignés sur MasterDetailLayout ;
+  backlog nettoyé.
+
 ## [5.2.0] — 2026-10-10
 
 ### Équipements

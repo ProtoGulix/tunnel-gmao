@@ -44,7 +44,7 @@ Les conventions de code découlent directement des règles métier. Par exemple 
 6. [API & Data Fetching](#6-api--data-fetching)
 7. [Formulaires](#7-formulaires)
 8. [Gestion des Onglets](#8-gestion-des-onglets)
-   - 8.7 [Mise en Page Deux Panneaux](#87-mise-en-page-deux-panneaux-twopanellayout)
+   - 8.7 [Mise en Page Liste / Détail](#87-mise-en-page-liste--détail-masterdetaillayout)
 
 ### Qualité & Sécurité
 
@@ -1269,85 +1269,44 @@ const handleAdd = async (data) => {
 - [ ] Auto-refresh seulement sur onglets pertinents
 - [ ] `LoadingState` et `ErrorState` gérés dans chaque Tab
 - [ ] Notifications via `useNotification`
-- [ ] Layout deux panneaux → `TwoPanelLayout` (voir 8.7)
+- [ ] Layout liste/détail → `MasterDetailLayout` (voir 8.7)
 
-### 8.7 Mise en Page Deux Panneaux (`TwoPanelLayout`)
+### 8.7 Mise en Page Liste / Détail (`MasterDetailLayout`)
 
-Lorsqu'un onglet présente une liste à gauche et un détail/formulaire à droite,
-utiliser systématiquement `TwoPanelLayout` depuis `components/ui/`.
+Pour une liste à gauche et un détail à droite, utiliser `components/ui/MasterDetailLayout.jsx`
+(ne pas recoder la grille). Exemples : pages Interventions et Équipements.
 
-**Quand l'utiliser :**
+**Props réelles :**
 
-- Sélection dans une liste → affichage du détail
-- Sélection dans une liste → formulaire d'édition/création
-- Nécessite un état vide clair quand rien n'est sélectionné
+| Prop             | Type     | Défaut                         | Description                                                        |
+| ---------------- | -------- | ------------------------------ | ------------------------------------------------------------------ |
+| `masterProps`    | object   | —                              | Panneau gauche standard : `icon`, `title`, `count`, `search`, `onSearchChange`, `loading`, `pagination` (`currentPage`, `totalPages`, `onPageChange`), `headerExtra`, `children` (la liste) |
+| `leftPanel`      | node     | —                              | Panneau gauche libre (remplace `masterProps`, sans en-tête ni recherche intégrés) |
+| `detailChildren` | node     | —                              | Contenu du détail ; absent → état vide (`emptyLabel`)              |
+| `detailLoading`  | bool     | —                              | Affiche un `LoadingState` dans le panneau de détail                |
+| `emptyLabel`     | string   | « Sélectionnez un élément… »   | Texte de l'état vide                                               |
+| `ratio`          | string   | `'1fr 1.3fr'` (`'42% 1fr'` avec `leftPanel`) | Valeur CSS `grid-template-columns`                  |
+| `fullHeight`     | bool     | `true`                         | Hauteur 100 % (`false` pour la désactiver)                         |
+| `freeDetail`     | bool     | `false`                        | Détail sans cadre ni padding (le contenu gère sa mise en page) ; implicite avec `leftPanel` |
 
-**Deux variantes disponibles :**
+**Modes :**
 
-| Variante                 | Panneau gauche       | Panneau droit | Séparateur | Usage typique                 |
-| ------------------------ | -------------------- | ------------- | ---------- | ----------------------------- |
-| `fixed-sidebar` (défaut) | Largeur fixe (320px) | `flex: 1`     | Oui        | Liste compacte + grand détail |
-| `proportional`           | `flex: 1`            | `flex: 2`     | Non        | Deux panneaux équilibrés      |
+- Standard : `masterProps` (en-tête, recherche, pagination du composant) + détail encadré.
+- `freeDetail` : le détail est libre (bordure gauche seule), utile pour une fiche avec sections
+  et onglets. La page Équipements l'utilise avec `ratio="35% 1fr"`.
+- `leftPanel` : le panneau gauche est entièrement custom, sans écart entre colonnes.
 
-**Exemple — variante `fixed-sidebar` avec état vide (cas standard) :**
+**Sélection dans l'URL :** l'élément sélectionné vit dans `?id=` (`useSearchParams`), pas dans un
+état local, pour que la sélection survive au rechargement et soit partageable. Le détail est
+monté avec `key={id}`.
 
-```jsx
-import TwoPanelLayout from '@/components/ui/TwoPanelLayout';
-import EmptyState from '@/components/ui/EmptyState';
-import { Shapes } from 'lucide-react';
+**Page Équipements :** exemple de liste en arbre. `EquipementList` affiche soit une liste plate
+(recherche, tri), soit l'arbre mère/fille chargé à la demande (hook `useEquipementsBrowser`).
 
-// Le Tab calcule ce qu'affiche le panneau droit
-const rightPanel = showCreate
-  ? <MonFormulaire ... />
-  : selected
-  ? <MonDetail ... />
-  : null;
+**Listes dans les panneaux de détail :** utiliser le hook `hooks/shared/usePagedList`
+(pagination API `skip`/`limit`, retour page 1 quand le périmètre change) avec le composant
+standard `components/ui/Pagination`.
 
-return (
-  <TwoPanelLayout
-    left={<MaListe ... />}
-    right={rightPanel}
-    emptyState={
-      <EmptyState
-        icon={<Shapes size={48} />}
-        title="Rien de sélectionné"
-        description="Sélectionnez un élément dans la liste."
-      />
-    }
-  />
-);
-```
-
-**Exemple — variante `proportional` sans séparateur :**
-
-```jsx
-return (
-  <TwoPanelLayout
-    variant="proportional"
-    separator={false}
-    left={<MaListe ... />}
-    right={selected ? <MonDetail ... /> : null}
-  />
-);
-```
-
-**Props disponibles :**
-
-| Prop         | Type   | Défaut            | Description                                  |
-| ------------ | ------ | ----------------- | -------------------------------------------- |
-| `left`       | node   | —                 | Contenu du panneau gauche (requis)           |
-| `right`      | node   | —                 | Contenu du panneau droit (null → emptyState) |
-| `emptyState` | node   | —                 | Affiché quand `right` est null/undefined     |
-| `separator`  | bool   | `true`            | Affiche le séparateur vertical               |
-| `variant`    | string | `'fixed-sidebar'` | `'fixed-sidebar'` ou `'proportional'`        |
-| `leftWidth`  | number | `320`             | Largeur px du panneau gauche (fixed-sidebar) |
-
-**Règles :**
-
-- La marge haute `mt="4"` est appliquée automatiquement par le composant
-- Le Tab garde la logique de sélection et l'état en interne
-- L'`EmptyState` est toujours accompagné d'une icône Lucide React
-- Ne pas recoder ce layout directement — toujours passer par `TwoPanelLayout`
 
 ---
 

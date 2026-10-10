@@ -101,7 +101,7 @@ def test_schema_roles_and_status_codes(first_run):
     assert len(statuses) == 4
     assert all(i == c and c for i, c in statuses)
     version = _query(OWNER_URL, "SELECT version_num FROM alembic_version_backend")
-    assert version == [("0004_audit_equipements",)]
+    assert version == [("0005_affectation_residu",)]
 
 
 def test_app_role_is_not_superuser_and_can_read_write(first_run):

@@ -238,3 +238,24 @@ Ajout factuel, la décision ne change pas.
    conversion prévue en section 1, point 3, est donc sans objet. Le travail de données
    consiste à rattacher les machines à leurs lignes depuis l'écran de modification.
    Vider le résidu « 0 » est une écriture en base : elle se fera sur accord.
+
+## Réalisation (2026-10-10)
+
+Ajout factuel : les six étapes des Conséquences (point 5) sont réalisées.
+
+1. Intégrité de l'arbre : migration 0003 (clés étrangères), validators, droits TECH,
+   audit des équipements par la migration 0004. Livré en 5.2.0.
+2. API de l'arbre : chemin, sous-arbre, `include_descendants`, santé agrégée des
+   mères. Livré en 5.2.0.
+3. Page master-detail en lecture, avec tri par santé ou par code et arbre replié par
+   défaut. Livré en 5.2.0.
+4. Modification de la fiche, sur place et champ par champ : voir l'ADR 0012, qui
+   affine la décision 3.4. Livré en 5.2.0.
+5. Données : la migration 0005 vide le résidu « 0 » d'`affectation`. Le rattachement
+   des machines à leurs lignes ne peut pas se déduire des données : l'équipe le fait
+   depuis la fiche.
+6. Nettoyage : l'ancien code de la page Équipements est supprimé, et les guides web
+   décrivent `MasterDetailLayout`.
+
+Le constat de départ reste vrai : la vision par ligne dépend du rattachement saisi.
+Au 2026-10-10, les lignes L000 à L025 n'ont encore aucune fille.

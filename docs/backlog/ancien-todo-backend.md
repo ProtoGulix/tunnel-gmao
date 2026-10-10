@@ -71,8 +71,6 @@ Voir aussi [CLAUDE.md](CLAUDE.md) pour les patterns et conventions du projet.
 
 - [ ] **Logging dupliqué** : Exceptions loggées à la fois dans `__init__` ET dans le handler global. **Action** : choisir un seul point de log.
 
-- [ ] **Rate limit manquant** : Endpoint public `/equipements/{id}/qrcode` sans limite. **Action** : ajouter rate limit basic (ex. `10/minute`).
-
 - [ ] **Architecture.md absent** : Créer un diagramme flux système dans `docs/`.
 
 ---
