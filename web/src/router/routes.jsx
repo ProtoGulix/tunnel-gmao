@@ -21,7 +21,6 @@ const InterventionDetailPage = lazy(() => import('@/pages/interventions/Interven
 const InterventionCreatePage = lazy(() => import('@/pages/interventions/InterventionCreatePage'));
 const PurchaseRequestPage = lazy(() => import('@/pages/purchase-requests/PurchaseRequestPage'));
 const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage'));
-const EquipementDetailPage = lazy(() => import('@/pages/equipements/EquipementDetailPage'));
 const StockPage = lazy(() => import('@/pages/stock/StockPage'));
 const BriefingPage = lazy(() => import('@/pages/briefing/BriefingPage'));
 const CoordinationPage = lazy(() => import('@/pages/coordination/CoordinationPage'));
@@ -51,6 +50,11 @@ function ProtectedRoute({ children }) {
   }
 
   return children;
+}
+
+function EquipementAliasRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/equipements?id=${encodeURIComponent(id)}`} replace />;
 }
 
 function InterventionAliasRedirect() {
@@ -190,9 +194,7 @@ export default function AppRoutes() {
         path="/equipements/:id"
         element={
           <ProtectedRoute>
-            <Layout>
-              <EquipementDetailPage />
-            </Layout>
+            <EquipementAliasRedirect />
           </ProtectedRoute>
         }
       />

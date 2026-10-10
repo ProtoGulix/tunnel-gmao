@@ -49,6 +49,7 @@ const _LIST_OPTIONAL_FILTERS = [
   ['statut', 'statut', (v) => !!v],
   ['excludeStatuses', 'exclude_statuses', (v) => !!v],
   ['machineId', 'machine_id', (v) => !!v],
+  ['includeDescendants', 'include_descendants', (v) => v !== undefined && v !== null],
   ['isSystem', 'is_system', (v) => v !== undefined && v !== null],
   ['search', 'search', (v) => !!v?.trim()],
   ['type', 'type', (v) => !!v],
@@ -78,6 +79,7 @@ function buildListQueryParams(params) {
  * @param {number} [params.limit=50] - Nombre de résultats (max 500)
  * @param {string} [params.statut] - Filtrer par code statut
  * @param {string} [params.machineId] - Filtrer par UUID équipement
+ * @param {boolean} [params.includeDescendants] - Avec machineId : inclut les équipements descendants
  * @param {string} [params.search] - Recherche libre (code, demandeur_nom, description)
  * @param {string} [params.type] - Filtrer par type(s) de DI, séparés par virgule (ex: 'amelioration')
  * @param {string} [params.sousStatut] - Filtrer par sous-statut(s), séparés par virgule

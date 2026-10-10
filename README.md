@@ -5,7 +5,7 @@ industrielles de 10 à 100 machines et les équipes de maintenance de 1 à 10
 personnes. L'action est l'unité de travail réel : temps, complexité et pièces
 sont tracés là où le travail se fait.
 
-> Version 5.1.0. Installation : voir `deploy/README.md`.
+> Version 5.2.0. Installation : voir `deploy/README.md`.
 
 ## Contenu
 

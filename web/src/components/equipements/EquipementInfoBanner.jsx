@@ -147,7 +147,7 @@ export default function EquipementInfoBanner({
             <Box mt="4">
               <InfoField label="Équipement parent">
                 <EquipementLink
-                  to={`/equipements/${parent.id}`}
+                  to={`/equipements?id=${parent.id}`}
                   label={[parent.code, parent.name].filter(Boolean).join(' – ')}
                 />
               </InfoField>

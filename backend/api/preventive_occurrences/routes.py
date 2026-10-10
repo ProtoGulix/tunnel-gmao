@@ -23,6 +23,10 @@ router = APIRouter(
 def list_occurrences(
     plan_id: Optional[str] = Query(None),
     machine_id: Optional[str] = Query(None),
+    include_descendants: bool = Query(
+        False,
+        description="Avec machine_id : inclut les occurrences des équipements descendants. Ignoré sans machine_id",
+    ),
     status: Optional[str] = Query(None),
     scheduled_date_from: Optional[date] = Query(None),
     scheduled_date_to: Optional[date] = Query(None),
@@ -35,6 +39,7 @@ def list_occurrences(
         status=status,
         scheduled_date_from=scheduled_date_from,
         scheduled_date_to=scheduled_date_to,
+        include_descendants=include_descendants,
     )
 
 

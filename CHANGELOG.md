@@ -6,6 +6,57 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.2.0] — 2026-10-10
+
+### Équipements
+- Un équipement ne peut plus être rattaché à lui-même ni à l'un de ses
+  sous-équipements, et l'arborescence est limitée à 4 niveaux (par exemple site, ligne,
+  machine, sous-ensemble).
+- Un équipement qui a des sous-équipements ne peut plus être supprimé.
+- Les techniciens peuvent modifier un équipement et son rattachement.
+- La santé d'une ligne ou d'un site reflète celle de ses machines.
+- Nouvelle page Équipements : la liste à gauche, en arbre (sites, lignes, machines,
+  replié au départ) ou à plat avec le chemin de chaque équipement, triée par santé ou
+  par code ; la fiche à droite, avec ses sous-équipements et son activité (option
+  « Inclure les sous-équipements »). La création se fait dans une fenêtre dédiée.
+- La fiche d'un équipement se modifie sur place, champ par champ : un clic sur une
+  valeur ouvre le champ, Entrée enregistre, Échap annule. Le rattachement se choisit
+  par une recherche qui exclut l'équipement et ses sous-équipements.
+- L'onglet Classes quitte la page Équipements : les classes se gèrent dans
+  Administration → Référentiel.
+- Chaque modification d'équipement apparaît dans l'historique, avec son auteur.
+
+### [interne] Équipements (ADR 0011)
+- GET /equipements : paramètre sort (health par défaut, ou code) ; la santé d'une mère y est le pire de ses descendants (health.source). Le tri par défaut change (avant : urgents, ouverts, nom).
+- API de l'arbre (étape 2) : ancestors et descendants_count sur le détail, subtree_of
+  et roots_only sur la liste, children_count, ancestors et parent sur chaque item,
+  include_descendants sur le détail et la santé (santé d'une mère = pire descendant,
+  health.source), et sur GET /interventions, /intervention-requests et
+  /preventive-occurrences.
+- Correction : parent_id était toujours vide dans la liste des équipements.
+- Migration 0003 : clés étrangères ON DELETE RESTRICT sur machine (equipement_mere,
+  equipement_class_id, statut_id) et index sur equipement_mere.
+- Contrôles de l'arbre dans api/equipements/validators.py (cycle, profondeur, parent
+  inexistant, children_ids, suppression), requêtes récursives bornées dans repo.py.
+- Matrice par défaut : PUT et PATCH /equipements ouverts à TECH, appliqués aux seules
+  permissions qu'aucun admin n'a modifiées.
+- Migration 0004 : motif EQUIPMENT_UPDATE et règle d'audit routine pour l'entité
+  equipement, recalage des séquences audit_reason_code et audit_rule.
+- AuditMiddleware trace les équipements (une ligne par champ modifié, auteur du jeton).
+- Audit : les valeurs UUID et date sont sérialisées (json.dumps default=str). Avant ce
+  correctif, ces changements n'étaient pas journalisés, quelle que soit l'entité.
+- Équipements : classe ou statut inexistant renvoie 400 au lieu de 500 ; verrou
+  consultatif contre les rattachements concurrents.
+- PUT et PATCH /equipements renvoient le détail avec include_descendants par défaut :
+  pour une mère, la réponse agrège ses descendants (santé comprise). health.source
+  porte aussi name.
+- Filtres par équipement (interventions, préventif) : un identifiant qui n'est pas un
+  UUID renvoie 400 au lieu de 500 (les demandes répondaient déjà 422).
+
+### [interne] Développement
+- Stack de dev rechargée à chaud (deploy/docker-compose.dev.yml, ADR 0010) : API en
+  uvicorn --reload, fronts web et mobile servis par Vite. Sans effet sur une installation.
+
 ## [5.1.0] — 2026-10-07
 
 ### Droits par rôle

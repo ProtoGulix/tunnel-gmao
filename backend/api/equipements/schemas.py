@@ -26,6 +26,14 @@ class EquipementStatutRef(BaseModel):
     couleur: str | None = None
 
 
+class EquipementHealthSource(BaseModel):
+    """Descendant dont la santé est affichée à la place de celle de l'équipement"""
+
+    id: UUID
+    code: str | None = None
+    name: str | None = None
+
+
 class EquipementHealth(BaseModel):
     """Santé d'un équipement"""
 
@@ -43,10 +51,19 @@ class EquipementHealth(BaseModel):
     purchase_request_status_counts: dict[str, int] | None = None
     has_affectation: bool = False
     rules_triggered: list[str] | None = None
+    source: EquipementHealthSource | None = None
 
 
 class EquipementParent(BaseModel):
     """Équipement parent"""
+
+    id: UUID
+    code: str | None = None
+    name: str
+
+
+class EquipementAncestor(BaseModel):
+    """Ancêtre dans le chemin de rattachement (de la racine au parent)"""
 
     id: UUID
     code: str | None = None
@@ -60,7 +77,10 @@ class EquipementListItem(BaseModel):
     code: str | None = None
     name: str
     health: EquipementHealth
+    parent_id: UUID | None = None
     parent: EquipementParent | None = None
+    children_count: int = 0
+    ancestors: list[EquipementAncestor] = []
     equipement_class: EquipmentClassRef | None = None
     statut: EquipementStatutRef | None = None
 
@@ -173,6 +193,9 @@ class EquipementDetail(BaseModel):
     equipement_class: EquipmentClassRef | None = None
     statut: EquipementStatutRef | None = None
     children_count: int = 0
+    ancestors: list[EquipementAncestor] = []
+    descendants_count: int = 0
+    include_descendants: bool = False
     interventions: InterventionsPaginated
     preventive_plans: list[PreventivePlanSummary] | None = None
     preventive_occurrences_summary: PreventiveOccurrencesSummary | None = None
@@ -268,6 +291,7 @@ class EquipementHealthOnly(BaseModel):
     purchase_request_status_counts: dict[str, int] | None = None
     has_affectation: bool = False
     rules_triggered: list[str] | None = None
+    source: EquipementHealthSource | None = None
 
 
 class EquipementClassFacetItem(BaseModel):

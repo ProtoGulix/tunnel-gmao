@@ -63,7 +63,7 @@ RightPanel.propTypes = {
 };
 
 /**
- * BriefingPage — panneau briefing, utilisable en standalone ou embarqué dans EquipementDetailPage.
+ * BriefingPage — panneau briefing, utilisable en standalone ou filtré par équipement (equipementId).
  * Doit être placé dans un conteneur avec une hauteur définie (height: 100% ou flex: 1).
  */
 export default function BriefingPage({ equipementId, leftHeader }) {

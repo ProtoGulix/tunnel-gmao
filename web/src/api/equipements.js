@@ -16,17 +16,25 @@ import { api } from '@/lib/api/client';
  * @param {string} [params.selectClass] - Codes de classes à inclure (filtre exclusif, csv)
  * @param {string} [params.excludeClass] - Codes de classes à exclure (csv)
  * @param {string} [params.selectMere] - UUID du parent : retourne uniquement ses enfants directs
+ * @param {string} [params.subtreeOf] - UUID : retourne tout le sous-arbre de cet équipement
+ * @param {boolean} [params.rootsOnly] - Uniquement les équipements sans parent
+ * @param {'health'|'code'} [params.sort] - Tri (défaut serveur : health)
  * @returns {Promise<{ items: Array, pagination: Object, facets: Object }>}
  */
 export async function fetchEquipements(params = {}) {
-  const queryParams = {
-    skip: params.skip ?? 0,
-    limit: params.limit ?? 50,
+  const queryParams = { skip: params.skip ?? 0, limit: params.limit ?? 50 };
+  const optional = {
+    search: params.search?.trim(),
+    select_class: params.selectClass,
+    exclude_class: params.excludeClass,
+    select_mere: params.selectMere,
+    subtree_of: params.subtreeOf,
+    roots_only: params.rootsOnly || undefined,
+    sort: params.sort,
   };
-  if (params.search?.trim()) queryParams.search = params.search.trim();
-  if (params.selectClass) queryParams.select_class = params.selectClass;
-  if (params.excludeClass) queryParams.exclude_class = params.excludeClass;
-  if (params.selectMere) queryParams.select_mere = params.selectMere;
+  Object.entries(optional).forEach(([key, value]) => {
+    if (value) queryParams[key] = value;
+  });
 
   const response = await api.get('/equipements', { params: queryParams });
   return response.data;
@@ -38,6 +46,7 @@ export async function fetchEquipements(params = {}) {
  * @param {Object} [params] - Paramètres optionnels
  * @param {number} [params.interventions_page] - Page des interventions
  * @param {number} [params.interventions_limit] - Limite par page
+ * @param {boolean} [params.include_descendants] - Inclure l'activité des sous-équipements (défaut serveur : vrai si l'équipement a des filles)
  * @returns {Promise<Object>} Détail de l'équipement
  */
 export async function fetchEquipementById(id, params = {}) {
@@ -110,20 +119,6 @@ export async function fetchEquipementStats(id, params = {}) {
  */
 export async function fetchEquipementHealth(id) {
   const response = await api.get(`/equipements/${id}/health`);
-  return response.data;
-}
-
-/**
- * Récupère la liste paginée des enfants d'un équipement
- * @param {string} id - ID de l'équipement parent
- * @param {Object} [params] - Paramètres optionnels
- * @param {number} [params.page] - Numéro de page
- * @param {number} [params.limit] - Limite par page (max 100)
- * @param {string} [params.search] - Filtre sur code ou name
- * @returns {Promise<Object>} Liste paginée { total, page, page_size, total_pages, items }
- */
-export async function fetchEquipementChildren(id, params = {}) {
-  const response = await api.get(`/equipements/${id}/children`, { params });
   return response.data;
 }
 

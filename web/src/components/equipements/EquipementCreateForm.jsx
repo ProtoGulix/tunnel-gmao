@@ -194,7 +194,7 @@ export default function EquipementCreateForm({ onCancel, onSubmit }) {
                 </Field>
               </Box>
               <Box style={{ flex: '2', minWidth: '200px' }}>
-                <Field label="Affectation">
+                <Field label="Emplacement">
                   <TextField.Root value={form.affectation} onChange={set('affectation')} placeholder="Atelier A" />
                 </Field>
               </Box>

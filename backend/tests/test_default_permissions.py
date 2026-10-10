@@ -251,3 +251,28 @@ def test_motifs_et_regles_d_audit_restent_lisibles_par_tous(chemin):
     """Toute saisie auditée a besoin des motifs et des règles."""
     for role in ("TECH", "ACHETEUR", "MCP", "RESP"):
         assert default_allowed(role, ep("GET", chemin, "Audit"))
+
+
+def test_tech_modifie_un_equipement_sans_le_creer_ni_le_supprimer():
+    assert default_allowed("TECH", ep("PUT", "/equipements/{equipement_id}", "equipements"))
+    assert default_allowed("TECH", ep("PATCH", "/equipements/{equipement_id}", "equipements"))
+    assert not default_allowed("TECH", ep("POST", "/equipements", "equipements"))
+    assert not default_allowed("TECH", ep("DELETE", "/equipements/{equipement_id}", "equipements"))
+
+
+def test_equipements_ecriture_fermee_a_acheteur_et_mcp_ouverte_a_resp():
+    for role in ("ACHETEUR", "MCP"):
+        for method, path in (
+            ("POST", "/equipements"),
+            ("PUT", "/equipements/{equipement_id}"),
+            ("PATCH", "/equipements/{equipement_id}"),
+            ("DELETE", "/equipements/{equipement_id}"),
+        ):
+            assert not default_allowed(role, ep(method, path, "equipements")), (role, method)
+    for method, path in (
+        ("POST", "/equipements"),
+        ("PUT", "/equipements/{equipement_id}"),
+        ("PATCH", "/equipements/{equipement_id}"),
+        ("DELETE", "/equipements/{equipement_id}"),
+    ):
+        assert default_allowed("RESP", ep(method, path, "equipements")), method

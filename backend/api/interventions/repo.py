@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
+from api.equipements.repo import EquipementRepository
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
@@ -83,6 +84,7 @@ class InterventionRepository:
         include_tasks: bool = False,
         printed: bool | None = None,
         tech_id: str | None = None,
+        include_descendants: bool = False,
     ) -> List[Dict[str, Any]]:
         """Récupère interventions avec filtres/sort et stats calculées en SQL (sans actions)"""
         # Garde-fou: limit max 1000
@@ -108,8 +110,12 @@ class InterventionRepository:
             params.extend(search_params)
 
         if equipement_id:
-            where_clauses.append("i.machine_id = %s")
-            params.append(equipement_id)
+            # include_descendants : l'équipement et toutes ses filles (ADR 0011, 2.4)
+            scope_sql, scope_params = EquipementRepository().machine_scope(
+                "i.machine_id", equipement_id, include_descendants
+            )
+            where_clauses.append(scope_sql)
+            params.extend(scope_params)
 
         if statuses and len(statuses) > 0:
             placeholders = ",".join(["%s"] * len(statuses))
@@ -254,9 +260,7 @@ class InterventionRepository:
 
             raw_rows = [dict(zip(cols, row)) for row in rows]
 
-            # Import lazy pour rester aligné sur la logique health centralisée des équipements.
-            from api.equipements.repo import EquipementRepository
-
+            # Logique health centralisée des équipements.
             equipement_repo = EquipementRepository()
             equipement_ids = [
                 str(r['machine_id']) for r in raw_rows if r.get('machine_id') is not None
@@ -441,6 +445,7 @@ class InterventionRepository:
         priorities: List[str] | None = None,
         printed: bool | None = None,
         tech_id: str | None = None,
+        include_descendants: bool = False,
     ) -> int:
         """Compte le nombre total d'interventions correspondant aux filtres de get_all()"""
         priorities_norm = None
@@ -460,8 +465,12 @@ class InterventionRepository:
             params.extend(search_params)
 
         if equipement_id:
-            where_clauses.append("i.machine_id = %s")
-            params.append(equipement_id)
+            # include_descendants : l'équipement et toutes ses filles (ADR 0011, 2.4)
+            scope_sql, scope_params = EquipementRepository().machine_scope(
+                "i.machine_id", equipement_id, include_descendants
+            )
+            where_clauses.append(scope_sql)
+            params.extend(scope_params)
 
         if statuses and len(statuses) > 0:
             placeholders = ",".join(["%s"] * len(statuses))
@@ -573,12 +582,10 @@ class InterventionRepository:
 
             # Récupérer l'équipement via EquipementRepository pour garantir la cohérence
             if intervention.get('machine_id'):
-                from api.equipements.repo import EquipementRepository
-
                 equipement_repo = EquipementRepository()
                 try:
                     intervention['equipements'] = equipement_repo.get_by_id(
-                        intervention['machine_id']
+                        intervention['machine_id'], include_descendants=False
                     )
                 except NotFoundError:
                     intervention['equipements'] = None

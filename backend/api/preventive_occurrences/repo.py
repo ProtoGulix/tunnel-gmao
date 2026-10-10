@@ -24,8 +24,17 @@ class PreventiveOccurrenceRepository:
         status: Optional[str] = None,
         scheduled_date_from: Optional[date] = None,
         scheduled_date_to: Optional[date] = None,
+        include_descendants: bool = False,
     ) -> List[Dict[str, Any]]:
-        """Liste les occurrences avec filtres optionnels"""
+        """Liste les occurrences avec filtres optionnels (machine_id + descendants si demandé)"""
+        machine_sql, machine_params = "", []
+        if machine_id:
+            # Import lazy : equipements.repo n'est utile qu'à ce filtre
+            from api.equipements.repo import EquipementRepository
+
+            machine_sql, machine_params = EquipementRepository().machine_scope(
+                "po.machine_id", machine_id, include_descendants
+            )
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -36,8 +45,8 @@ class PreventiveOccurrenceRepository:
                 where.append("po.plan_id = %s")
                 params.append(plan_id)
             if machine_id:
-                where.append("po.machine_id = %s")
-                params.append(machine_id)
+                where.append(machine_sql)
+                params.extend(machine_params)
             if status:
                 where.append("po.status = %s")
                 params.append(status)

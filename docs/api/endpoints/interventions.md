@@ -46,6 +46,7 @@ Liste les interventions avec filtres, tri et pagination.
 | `limit`         | int    | 100    | Nombre max (max: 1000)                                                  |
 | `search`        | string | —      | Recherche insensible à la casse sur code, titre, code et nom équipement |
 | `equipement_id` | uuid   | —      | Filtrer par équipement (`machine_id`)                                   |
+| `include_descendants` | bool | false | Avec `equipement_id` : inclut les interventions des équipements descendants (tout niveau). Ignoré sans `equipement_id` |
 | `status`        | csv    | —      | Filtrer par codes statut (ex: `ouvert,ferme,en_cours`)                  |
 | `priority`      | csv    | —      | Filtrer par priorité (`faible,normale,important,urgent`)                |
 | `printed`       | bool   | —      | `true` : imprimées, `false` : non imprimées, omis : toutes              |

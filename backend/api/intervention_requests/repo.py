@@ -314,6 +314,20 @@ class InterventionRequestRepository:
     # Liste
     # ──────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _machine_scope(
+        machine_id: Optional[str], include_descendants: bool
+    ) -> tuple[str, List[Any]]:
+        """Filtre sur la machine de la demande, avec ses descendants si demandé (ADR 0011, 2.4)."""
+        if not machine_id:
+            return "", []
+        # Import lazy : equipements.repo n'est utile qu'à ce filtre
+        from api.equipements.repo import EquipementRepository
+
+        return EquipementRepository().machine_scope(
+            "ir.machine_id", machine_id, include_descendants
+        )
+
     def get_list(
         self,
         limit: int = 50,
@@ -323,8 +337,10 @@ class InterventionRequestRepository:
         machine_id: Optional[str] = None,
         search: Optional[str] = None,
         is_system: Optional[bool] = None,
+        include_descendants: bool = False,
     ) -> List[Dict[str, Any]]:
         limit = min(limit, 500)
+        machine_sql, machine_params = self._machine_scope(machine_id, include_descendants)
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -340,8 +356,8 @@ class InterventionRequestRepository:
                 where.append(f"ir.statut NOT IN ({placeholders})")
                 params.extend(exclude_statuses)
             if machine_id:
-                where.append("ir.machine_id = %s")
-                params.append(machine_id)
+                where.append(machine_sql)
+                params.extend(machine_params)
             if search:
                 clause, search_params = build_search_clause(
                     search,
@@ -411,7 +427,9 @@ class InterventionRequestRepository:
         machine_id: Optional[str] = None,
         search: Optional[str] = None,
         is_system: Optional[bool] = None,
+        include_descendants: bool = False,
     ) -> int:
+        machine_sql, machine_params = self._machine_scope(machine_id, include_descendants)
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -427,8 +445,8 @@ class InterventionRequestRepository:
                 where.append(f"ir.statut NOT IN ({placeholders})")
                 params.extend(exclude_statuses)
             if machine_id:
-                where.append("ir.machine_id = %s")
-                params.append(machine_id)
+                where.append(machine_sql)
+                params.extend(machine_params)
             if search:
                 clause, search_params = build_search_clause(
                     search,
@@ -467,8 +485,10 @@ class InterventionRequestRepository:
         self,
         machine_id: Optional[str] = None,
         search: Optional[str] = None,
+        include_descendants: bool = False,
     ) -> List[Dict[str, Any]]:
         """Comptage par statut (filtres machine_id/search appliqués, statut exclu)."""
+        machine_sql, machine_params = self._machine_scope(machine_id, include_descendants)
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -476,8 +496,8 @@ class InterventionRequestRepository:
             params: List[Any] = []
 
             if machine_id:
-                where.append("ir.machine_id = %s")
-                params.append(machine_id)
+                where.append(machine_sql)
+                params.extend(machine_params)
             if search:
                 clause, search_params = build_search_clause(
                     search,

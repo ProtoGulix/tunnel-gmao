@@ -97,3 +97,20 @@ Après modification de `.env` : `docker compose up -d`.
 | `web` | nginx : front web sous `/`, mobile sous `/m/`, proxy de `/api/` vers l'API | oui (`HTTP_BIND:HTTP_PORT`) |
 | `api` | FastAPI, lance le bootstrap puis uvicorn | non |
 | `db` | PostgreSQL 15, volume nommé `tunnel-db` | non |
+
+## Stack de développement (contributeurs)
+
+Pour travailler sur le code, `docker-compose.dev.yml` remplace les images figées par
+du rechargement à chaud : API en `uvicorn --reload` sur `backend/` monté, fronts web
+et mobile servis par Vite (ADR 0010). Depuis la racine du dépôt :
+
+```
+docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d
+```
+
+Derrière un proxy HTTPS, renseigner `DEV_ALLOWED_HOSTS` et `DEV_HMR_CLIENT_PORT=443`
+dans `deploy/.env`, et faire transmettre les websockets par le proxy (en-têtes
+`Upgrade` et `Connection`). Sans `DEV_ALLOWED_HOSTS`, Vite n'accepte que localhost.
+Prérequis : Docker Compose 2.24 ou plus (`!reset`), dépôt possédé par l'uid 1000
+(utilisateur node des conteneurs Vite). Pas de CSP en dev : ne jamais utiliser cette
+stack en production, ni y mettre des comptes ou secrets de production.

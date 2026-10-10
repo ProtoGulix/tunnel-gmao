@@ -1,5 +1,8 @@
 """Routes pour les équipements"""
 
+from typing import Literal
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, status
 
 from api.auth.permissions import require_authenticated
@@ -34,6 +37,20 @@ def list_equipements(
     select_mere: str | None = Query(
         None, description="UUID de l'équipement parent : retourne uniquement ses enfants directs"
     ),
+    subtree_of: UUID | None = Query(
+        None,
+        description="UUID d'un équipement : retourne tous ses descendants (tout niveau), sans lui-même",
+    ),
+    roots_only: bool = Query(
+        False, description="Retourne uniquement les équipements sans mère (racines de l'arbre)"
+    ),
+    sort: Literal["health", "code"] = Query(
+        "health",
+        description=(
+            "Tri : health (défaut) = santé agrégée (la pire de l'item et de ses descendants) "
+            "décroissante critical > warning > maintenance > ok, puis code ; code = par code"
+        ),
+    ),
 ):
     """Liste les équipements avec pagination et facettes par classe"""
     repo = EquipementRepository()
@@ -43,6 +60,7 @@ def list_equipements(
     select_list = (
         [c.strip() for c in select_class.split(",") if c.strip()] if select_class else None
     )
+    subtree_of_str = str(subtree_of) if subtree_of else None
     items = repo.get_all(
         search=search,
         skip=skip,
@@ -50,9 +68,17 @@ def list_equipements(
         exclude_class=exclude_list,
         select_class=select_list,
         select_mere=select_mere,
+        subtree_of=subtree_of_str,
+        roots_only=roots_only,
+        sort=sort,
     )
     total = repo.count_all(
-        search=search, exclude_class=exclude_list, select_class=select_list, select_mere=select_mere
+        search=search,
+        exclude_class=exclude_list,
+        select_class=select_list,
+        select_mere=select_mere,
+        subtree_of=subtree_of_str,
+        roots_only=roots_only,
     )
     facets = repo.get_facets(search=search)
     return paginated(
@@ -67,14 +93,22 @@ def get_equipement(
     interventions_limit: int = Query(
         20, ge=1, le=100, description="Nombre d'interventions par page"
     ),
+    include_descendants: bool | None = Query(
+        None,
+        description=(
+            "Inclut les équipements descendants dans interventions, demandes ouvertes, "
+            "occurrences préventives et santé. Défaut : vrai si l'équipement a des filles"
+        ),
+    ),
 ):
-    """Récupère un équipement par ID avec tous les champs, children_count et interventions paginées"""
+    """Récupère un équipement par ID avec ancêtres, descendants_count, children_count et interventions paginées"""
     repo = EquipementRepository()
     return single(
         repo.get_by_id(
             equipement_id,
             interventions_page=interventions_page,
             interventions_limit=interventions_limit,
+            include_descendants=include_descendants,
         )
     )
 
@@ -120,7 +154,13 @@ def get_equipement_stats(
 
 
 @router.get("/{equipement_id}/health")
-def get_equipement_health(equipement_id: str):
+def get_equipement_health(
+    equipement_id: str,
+    include_descendants: bool | None = Query(
+        None,
+        description="Santé du plus dégradé entre l'équipement et ses descendants. Défaut : vrai si l'équipement a des filles",
+    ),
+):
     """Récupère uniquement le health d'un équipement (ultra-léger)"""
     repo = EquipementRepository()
-    return single(repo.get_health_by_id(equipement_id))
+    return single(repo.get_health_by_id(equipement_id, include_descendants=include_descendants))

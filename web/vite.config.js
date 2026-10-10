@@ -91,6 +91,8 @@ export default defineConfig(({ mode }) => {
       },
       hmr: {
         overlay: true,
+        // Derrière un proxy HTTPS (stack de dev, ADR 0010) : la websocket passe par le 443.
+        clientPort: env.VITE_HMR_CLIENT_PORT ? Number(env.VITE_HMR_CLIENT_PORT) : undefined,
       },
       proxy: {
         '/api': {

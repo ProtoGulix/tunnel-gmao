@@ -52,6 +52,10 @@ def list_requests(
         None, description="Statuts à exclure, séparés par virgule. Ex: rejetee,cloturee"
     ),
     machine_id: Optional[UUID] = Query(None),
+    include_descendants: bool = Query(
+        False,
+        description="Avec machine_id : inclut les demandes des équipements descendants. Ignoré sans machine_id",
+    ),
     search: Optional[str] = Query(
         None,
         description="Recherche libre : code DI, demandeur, description, code équipement, service",
@@ -77,6 +81,7 @@ def list_requests(
         machine_id=machine_id_str,
         search=search,
         is_system=is_system,
+        include_descendants=include_descendants,
     )
     total = repo.count_list(
         statut=statut_list,
@@ -84,8 +89,11 @@ def list_requests(
         machine_id=machine_id_str,
         search=search,
         is_system=is_system,
+        include_descendants=include_descendants,
     )
-    facets = repo.get_facets(machine_id=machine_id_str, search=search)
+    facets = repo.get_facets(
+        machine_id=machine_id_str, search=search, include_descendants=include_descendants
+    )
     return paginated(
         items,
         total=total,

@@ -1,21 +1,37 @@
 import { api } from '@/lib/api/client';
 import { mapInterventionResponse, mapInterventionDetailResponse } from './interventionMappers';
 
-export async function fetchInterventions(filters = {}) {
+function buildListParams(filters) {
   const params = {
     skip: filters.skip ?? 0,
     limit: filters.limit ?? 1000,
   };
   if (filters.equipementId) params.equipement_id = filters.equipementId;
+  if (filters.includeDescendants !== undefined) params.include_descendants = filters.includeDescendants;
   if (filters.status) params.status = filters.status;
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;
   if (filters.include) params.include = filters.include;
   if (filters.search) params.search = filters.search;
+  return params;
+}
 
-  const response = await api.get('/interventions', { params });
+export async function fetchInterventions(filters = {}) {
+  const response = await api.get('/interventions', { params: buildListParams(filters) });
   const items = response.data.items ?? [];
   return items.map(mapInterventionResponse);
+}
+
+/**
+ * Liste paginée des interventions avec métadonnées de pagination.
+ * @returns {Promise<{items: Array, pagination: Object|undefined}>}
+ */
+export async function fetchInterventionsPage(filters = {}) {
+  const response = await api.get('/interventions', { params: buildListParams(filters) });
+  return {
+    items: (response.data.items ?? []).map(mapInterventionResponse),
+    pagination: response.data.pagination,
+  };
 }
 
 export async function searchOpenInterventions(search, { limit = 20 } = {}) {

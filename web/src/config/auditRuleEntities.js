@@ -4,6 +4,7 @@ export const ENTITY_LABELS = {
   purchase_request: 'Demande DA',
   task:             'Tâche',
   action:           'Action',
+  equipement:       'Équipement',
 };
 
 export const ENTITY_OPTIONS = Object.keys(ENTITY_LABELS);

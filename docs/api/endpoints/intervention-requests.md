@@ -139,6 +139,7 @@ Liste paginée des demandes avec filtres.
 | `statut`           | string  | —      | Filtrer par code statut (`nouvelle`, `acceptee`, etc.)         |
 | `exclude_statuses` | csv     | —      | Statuts à exclure, séparés par virgule. Ex: `rejetee,cloturee` |
 | `machine_id`       | uuid    | —      | Filtrer par équipement                                         |
+| `include_descendants` | bool | false  | Avec `machine_id` : inclut les demandes des équipements descendants (liste et `total`). Ignoré sans `machine_id`. Les `facets` ignorent `machine_id` et ses descendants (limite connue : `docs/backlog/facettes-demandes-ignorent-filtres.md`) |
 | `search`           | string  | —      | Recherche sur `code`, `demandeur_nom`, `description` (ILIKE)   |
 | `is_system`        | boolean | —      | `true` : DI générées automatiquement. `false` : DI humaines    |
 

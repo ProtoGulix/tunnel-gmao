@@ -24,6 +24,7 @@ _ENTITY_MAP = {
     "purchase-requests": "purchase_request",
     "intervention-actions": "action",
     "intervention-tasks": "task",
+    "equipements": "equipement",
 }
 
 
