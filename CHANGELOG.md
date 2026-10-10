@@ -15,9 +15,16 @@ mobile/CHANGELOG.md.
 - Un équipement qui a des sous-équipements ne peut plus être supprimé.
 - Les techniciens peuvent modifier un équipement et son rattachement.
 - La santé d'une ligne ou d'un site reflète celle de ses machines.
+- Nouvelle page Équipements : la liste à gauche, en arbre (sites, lignes, machines,
+  replié au départ) ou à plat avec le chemin de chaque équipement, triée par santé ou
+  par code ; la fiche à droite, avec ses sous-équipements et son activité (option
+  « Inclure les sous-équipements »). La création se fait dans une fenêtre dédiée.
+- L'onglet Classes quitte la page Équipements : les classes se gèrent dans
+  Administration → Référentiel.
 - Chaque modification d'équipement apparaît dans l'historique, avec son auteur.
 
 ### [interne] Équipements (ADR 0011)
+- GET /equipements : paramètre sort (health par défaut, ou code) ; la santé d'une mère y est le pire de ses descendants (health.source). Le tri par défaut change (avant : urgents, ouverts, nom).
 - API de l'arbre (étape 2) : ancestors et descendants_count sur le détail, subtree_of
   et roots_only sur la liste, children_count, ancestors et parent sur chaque item,
   include_descendants sur le détail et la santé (santé d'une mère = pire descendant,

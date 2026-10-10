@@ -325,3 +325,58 @@ def test_identifiant_non_uuid_avec_et_sans_descendants(client, admin, route, par
     )
     assert avec.status_code == sans.status_code
     assert avec.status_code == expected, avec.text
+
+
+def _liste(client, admin, **params):
+    r = client.get("/equipements", params=params, headers=admin.headers)
+    assert r.status_code == 200, r.text
+    return r.json()["items"]
+
+
+def test_liste_sante_agregee_de_la_mere_avec_source(client, admin, arbre):
+    ligne = next(
+        i
+        for i in _liste(client, admin, search="Ligne A", roots_only="true")
+        if i["id"] == arbre["ligne"]["id"]
+    )
+    assert ligne["health"]["level"] == "critical"
+    assert ligne["health"]["source"]["id"] == arbre["organe"]["id"]
+    assert ligne["health"]["source"]["code"] == arbre["organe"]["code"]
+    assert ligne["health"]["reason"].startswith(f"{arbre['organe']['code']} : ")
+    detail = _detail(client, admin, arbre["ligne"]["id"])
+    assert ligne["health"] == detail["health"]
+    # Une feuille garde sa propre santé, sans source
+    four = _liste(client, admin, search="Four A")[0]
+    assert four["health"]["level"] == "warning"
+    assert four["health"]["source"] is None
+
+
+def test_liste_sort_code(client, admin, arbre):
+    items = _liste(client, admin, subtree_of=arbre["ligne"]["id"], sort="code")
+    codes = [i["code"] for i in items]
+    assert len(codes) == 3
+    assert codes == sorted(codes)
+
+
+def test_liste_sort_sante_defaut_et_pagination(client, admin, arbre):
+    rang = {"critical": 3, "warning": 2, "maintenance": 1, "ok": 0}
+    params = {"subtree_of": arbre["ligne"]["id"]}
+    defaut = _liste(client, admin, **params)  # défaut = health
+    attendu = sorted(defaut, key=lambda i: (-rang[i["health"]["level"]], i["code"]))
+    assert [i["id"] for i in defaut] == [i["id"] for i in attendu]
+    assert [i["health"]["level"] for i in defaut] == ["critical", "critical", "warning"]
+    assert defaut[2]["id"] == arbre["four"]["id"]
+    assert [i["id"] for i in _liste(client, admin, sort="health", **params)] == [
+        i["id"] for i in defaut
+    ]
+
+    page2 = _liste(client, admin, skip=1, limit=1, **params)
+    assert [i["id"] for i in page2] == [defaut[1]["id"]]
+    pages = [_liste(client, admin, skip=n, limit=2, **params) for n in (0, 2)]
+    assert [i["id"] for p in pages for i in p] == [i["id"] for i in defaut]
+    assert _liste(client, admin, skip=3, **params) == []
+
+
+def test_liste_sort_invalide(client, admin):
+    r = client.get("/equipements", params={"sort": "name"}, headers=admin.headers)
+    assert r.status_code == 422

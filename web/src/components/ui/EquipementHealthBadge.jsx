@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import { Badge, Flex, Text } from '@radix-ui/themes';
 import { AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-const HEALTH_CONFIG = {
+export const HEALTH_CONFIG = {
   ok: {
     color: 'green',
     icon: CheckCircle2,

@@ -1,141 +1,44 @@
 /**
- * @fileoverview Hook pour le détail d'un équipement
+ * @fileoverview Hook pour le détail d'un équipement (panneau de la page master-detail)
  * @module hooks/equipements/useEquipementDetail
- *
- * Gère le fetch du détail d'un équipement avec stats, santé et hiérarchie
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  fetchEquipementById,
-  updateEquipement as apiUpdateEquipement,
-  fetchEquipementStats,
-  fetchEquipementHealth,
-} from '@/api/equipements';
+import { fetchEquipementById } from '@/api/equipements';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
- * Hook pour gérer le détail d'un équipement
- *
  * @param {string} id - ID de l'équipement
- * @returns {Object} État et méthodes
+ * @param {Object} [options]
+ * @param {boolean} [options.includeDescendants] - undefined = défaut serveur (vrai si l'équipement a des filles)
+ * @returns {{ equipement: Object|null, loading: boolean, error: string|null, refetch: Function }}
  */
-export function useEquipementDetail(id) {
+export function useEquipementDetail(id, { includeDescendants } = {}) {
   const [equipement, setEquipement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const initialLoadRef = useRef(false);
+  const requestId = useRef(0);
 
-  const [stats, setStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [health, setHealth] = useState({ level: 'unknown', reason: '' });
-
-  // Fetch détail de l'équipement
-  const fetchDetail = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      setError(null);
-
-      try {
-        const data = await fetchEquipementById(id);
-        setEquipement(data);
-        setHealth(
-          data.health || {
-            level: 'unknown',
-            reason: 'Santé inconnue',
-            rules_triggered: [],
-          }
-        );
-      } catch (err) {
-        console.error('Erreur fetch équipement:', err);
-        setError(extractApiErrorMessage(err, "Erreur lors du chargement de l'équipement"));
-      } finally {
-        if (!silent) setLoading(false);
-      }
-    },
-    [id]
-  );
-
-  // Fetch stats
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
+  const load = useCallback(async () => {
+    const current = ++requestId.current;
+    setLoading(true);
+    setError(null);
     try {
-      const data = await fetchEquipementStats(id);
-      setStats(data);
+      // Demandes et interventions sont paginées à part (useEquipementActivity)
+      const params = { interventions_limit: 1 };
+      if (includeDescendants !== undefined) params.include_descendants = includeDescendants;
+      const data = await fetchEquipementById(id, params);
+      if (current !== requestId.current) return;
+      setEquipement(data);
     } catch (err) {
-      console.error('Erreur fetch stats:', err);
+      if (current !== requestId.current) return;
+      setError(extractApiErrorMessage(err, "Erreur lors du chargement de l'équipement"));
     } finally {
-      setStatsLoading(false);
+      if (current === requestId.current) setLoading(false);
     }
-  }, [id]);
+  }, [id, includeDescendants]);
 
-  // Refresh santé (ultra-léger, polling-friendly)
-  const refreshHealth = useCallback(async () => {
-    try {
-      const data = await fetchEquipementHealth(id);
-      setHealth(data);
-    } catch (err) {
-      console.error('Erreur refresh santé:', err);
-    }
-  }, [id]);
+  useEffect(() => { load(); }, [load]);
 
-  // Ref stable pour l'auto-refresh (évite de recréer l'interval à chaque render)
-  const refreshHealthRef = useRef(refreshHealth);
-  refreshHealthRef.current = refreshHealth;
-
-  // Chargement initial + rechargement si l'id change (navigation entre équipements)
-  useEffect(() => {
-    initialLoadRef.current = true;
-    fetchDetail();
-    fetchStats();
-  }, [fetchDetail, fetchStats]);
-
-  // Auto-refresh santé toutes les 30 secondes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshHealthRef.current();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Refresh manuel
-  const manualRefresh = useCallback(async () => {
-    await fetchDetail(false);
-    await fetchStats();
-    await refreshHealth();
-  }, [fetchDetail, fetchStats, refreshHealth]);
-
-  // Mutations
-  const updateEquipement = useCallback(
-    async (updates) => {
-      try {
-        const updated = await apiUpdateEquipement(id, updates);
-        setEquipement(updated);
-        return updated;
-      } catch (err) {
-        console.error('Erreur update équipement:', err);
-        throw new Error(
-          extractApiErrorMessage(err, "Erreur lors de la mise à jour de l'équipement")
-        );
-      }
-    },
-    [id]
-  );
-
-  return {
-    equipement,
-    loading,
-    error,
-    health,
-    stats,
-    statsLoading,
-    interventions: equipement?.interventions || { total: 0, items: [] },
-    childrenCount: equipement?.children_count || 0,
-    parent: equipement?.parent || null,
-    updateEquipement,
-    manualRefresh,
-    refetch: fetchDetail,
-    refreshHealth,
-  };
+  return { equipement, loading, error, refetch: load };
 }

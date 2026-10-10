@@ -96,8 +96,15 @@ class EquipementRepository:
         select_mere: str | None = None,
         subtree_of: str | None = None,
         roots_only: bool = False,
+        sort: str = "health",
     ) -> List[Dict[str, Any]]:
-        """Récupère les équipements paginés - liste légère avec health, children_count, ancestors"""
+        """Récupère les équipements paginés - liste légère avec health, children_count, ancestors.
+
+        `sort` : "code" (ordre SQL par code) ou "health" (défaut : santé agrégée décroissante,
+        puis code). La santé d'une mère est celle du pire de ses descendants (comme le détail,
+        ADR 0011). Le tri par santé se fait en Python sur tous les items filtrés (borne
+        `_HEALTH_SORT_MAX`, au-delà repli sur l'ancien ordre SQL).
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -110,6 +117,20 @@ class EquipementRepository:
                 subtree_of=subtree_of,
                 roots_only=roots_only,
             )
+            order_by = "m.code ASC, m.id ASC"
+            page_health: Dict[str, Dict[str, Any]] | None = None
+            if sort == "health":
+                ranked = self._rank_by_health(cur, where_clause, filter_params)
+                if ranked is None:
+                    # Trop d'items : repli sur l'ordre SQL historique
+                    order_by = "urgent_count DESC, open_interventions_count DESC, m.name ASC"
+                else:
+                    page_health = {i: h for i, h in ranked[skip : skip + limit]}
+                    if not page_health:
+                        return []
+                    where_clause = "WHERE m.id = ANY(%s::uuid[])"
+                    filter_params = [list(page_health)]
+                    skip = 0
 
             query = f"""
                 SELECT
@@ -137,7 +158,7 @@ class EquipementRepository:
                 LEFT JOIN machine pm ON pm.id = m.equipement_mere
                 {where_clause}
                 GROUP BY m.id, pm.id, pm.code, pm.name, ec.id, ec.code, ec.label, es.id, es.code, es.libelle, es.interventions, es.couleur
-                ORDER BY urgent_count DESC, open_interventions_count DESC, m.name ASC
+                ORDER BY {order_by}
                 LIMIT %s OFFSET %s
             """
 
@@ -147,23 +168,22 @@ class EquipementRepository:
             rows = cur.fetchall()
             cols = [desc[0] for desc in cur.description]
             equipements = [dict(zip(cols, row)) for row in rows]
+            if page_health is not None:
+                # Ordre de la page = ordre du classement (la requête ne le garantit pas)
+                position = {i: n for n, i in enumerate(page_health)}
+                equipements.sort(key=lambda e: position[str(e['id'])])
 
             equipement_ids = [str(e.get('id')) for e in equipements if e.get('id')]
-            health_inputs_map = self._fetch_health_inputs(cur, equipement_ids)
+            if page_health is None:
+                page_health = self._aggregate_health_batch(cur, equipement_ids)
             children_counts = self._children_counts(cur, equipement_ids)
             ancestors_map = self._ancestors_batch(cur, equipement_ids)
 
             # Enrichir avec health et restructurer equipement_class
             for equipement in equipements:
-                open_count = equipement.pop('open_interventions_count', 0) or 0
-                urgent_count = equipement.pop('urgent_count', 0) or 0
-                new_requests_count = equipement.pop('new_requests_count', 0) or 0
-                metrics = health_inputs_map.get(str(equipement.get('id')), {})
-                metrics.setdefault('open_interventions_count', int(open_count))
-                metrics.setdefault('urgent_count', int(urgent_count))
-                metrics.setdefault('new_requests_count', int(new_requests_count))
-
-                equipement['health'] = self._calculate_health(metrics)
+                for compteur in ('open_interventions_count', 'urgent_count', 'new_requests_count'):
+                    equipement.pop(compteur, None)
+                equipement['health'] = page_health[str(equipement['id'])]
                 # parent_id vient déjà du SELECT (pm.id) : on bâtit seulement l'objet parent.
                 parent_code = equipement.get('parent_code')
                 parent_name = equipement.get('parent_name')
@@ -549,6 +569,84 @@ class EquipementRepository:
         )
         return cur.fetchall()
 
+    def _descendants_batch(self, cur, equipement_ids: List[str]) -> Dict[str, List[tuple]]:
+        """Descendants de tout niveau (sans l'item lui-même) d'une liste d'équipements, en une
+        requête : {id texte: [(id, code, name)]} triés par code, comme `_descendants`."""
+        if not equipement_ids:
+            return {}
+        cur.execute(
+            """
+            WITH RECURSIVE down(origin, id, lvl) AS (
+                SELECT equipement_mere, id, 1 FROM machine
+                WHERE equipement_mere = ANY(%s::uuid[])
+                UNION ALL
+                SELECT down.origin, m.id, down.lvl + 1
+                FROM machine m JOIN down ON m.equipement_mere = down.id
+                WHERE down.lvl < %s
+            )
+            SELECT DISTINCT d.origin, m.id, m.code, m.name
+            FROM machine m JOIN down d ON d.id = m.id
+            WHERE m.id <> d.origin
+            ORDER BY d.origin, m.code, m.id
+            """,
+            (list(equipement_ids), self._TREE_SCAN_LIMIT),
+        )
+        result: Dict[str, List[tuple]] = {}
+        for origin, desc_id, code, name in cur.fetchall():
+            result.setdefault(str(origin), []).append((desc_id, code, name))
+        return result
+
+    def _aggregate_health_batch(self, cur, equipement_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Santé de chaque équipement = pire entre lui et ses descendants (règle du détail),
+        avec `source`. Une seule passe de `_fetch_health_inputs` sur l'union des ids et de
+        leurs descendants. Clé = id texte, dans l'ordre de `equipement_ids`."""
+        descendants_map = self._descendants_batch(cur, equipement_ids)
+        all_ids = set(equipement_ids)
+        for descs in descendants_map.values():
+            all_ids.update(str(d[0]) for d in descs)
+        inputs = self._fetch_health_inputs(cur, list(all_ids))
+        return {
+            eid: self._worst_health(
+                cur,
+                eid,
+                self._calculate_health(dict(inputs.get(eid, {}))),
+                descendants_map.get(eid, []),
+                inputs=inputs,
+            )
+            for eid in equipement_ids
+        }
+
+    # Borne de sécurité du tri par santé (calculé en Python sur tous les items filtrés)
+    _HEALTH_SORT_MAX = 5000
+
+    def _rank_by_health(
+        self, cur, where_clause: str, filter_params: list
+    ) -> List[tuple[str, Dict[str, Any]]] | None:
+        """Tous les items filtrés classés par santé agrégée décroissante (critical > warning >
+        maintenance > ok), puis code : [(id texte, health)]. None si plus de `_HEALTH_SORT_MAX`
+        items (l'appelant se replie alors sur l'ordre SQL)."""
+        cur.execute(
+            f"""
+            SELECT m.id, m.code FROM machine m
+            LEFT JOIN equipement_class ec ON ec.id = m.equipement_class_id
+            {where_clause}
+            ORDER BY m.code ASC, m.id ASC
+            LIMIT %s
+            """,
+            (*filter_params, self._HEALTH_SORT_MAX + 1),
+        )
+        rows = cur.fetchall()
+        if len(rows) > self._HEALTH_SORT_MAX:
+            logger.warning(
+                "Tri par santé abandonné : plus de %d équipements filtrés, repli sur l'ordre SQL",
+                self._HEALTH_SORT_MAX,
+            )
+            return None
+        ids = [str(r[0]) for r in rows]
+        healths = self._aggregate_health_batch(cur, ids)
+        # rows déjà triées par code : le tri Python est stable, seul le rang de santé s'ajoute
+        return sorted(healths.items(), key=lambda kv: -self._HEALTH_RANK[kv[1]['level']])
+
     def _descendant_ids(self, cur, equipement_id: str) -> List[str]:
         """Identifiants (texte) des descendants de tout niveau, sans l'équipement lui-même."""
         return [str(row[0]) for row in self._descendants(cur, equipement_id)]
@@ -599,7 +697,12 @@ class EquipementRepository:
     _HEALTH_RANK = {'ok': 0, 'maintenance': 1, 'warning': 2, 'critical': 3}
 
     def _worst_health(
-        self, cur, equipement_id: str, own_health: Dict[str, Any], descendants: List[tuple]
+        self,
+        cur,
+        equipement_id: str,
+        own_health: Dict[str, Any],
+        descendants: List[tuple],
+        inputs: Dict[str, Dict[str, Any]] | None = None,
     ) -> Dict[str, Any]:
         """Santé du plus dégradé entre l'équipement et ses descendants (égalité : l'équipement
         d'abord, puis l'ordre des codes). Ajoute `source` : null, ou {id, code, name} du descendant
@@ -607,7 +710,8 @@ class EquipementRepository:
         own_health['source'] = None
         if not descendants:
             return own_health
-        inputs = self._fetch_health_inputs(cur, [str(d[0]) for d in descendants])
+        if inputs is None:
+            inputs = self._fetch_health_inputs(cur, [str(d[0]) for d in descendants])
         worst, worst_rank, worst_desc = own_health, self._HEALTH_RANK[own_health['level']], None
         for desc_id, code, name in descendants:
             metrics = inputs.get(str(desc_id))

@@ -12,7 +12,7 @@ Gestion du parc d'équipements avec état de santé calculé, classification et 
 
 Liste les équipements avec leur état de santé, paginée, avec facettes par classe.
 
-Tri par défaut : urgents DESC, ouverts DESC, nom ASC.
+Tri par défaut (`sort=health`) : santé décroissante `critical` > `warning` > `maintenance` > `ok`, puis `code`. La santé d'un item qui a des descendants est celle du pire parmi lui et ses descendants, comme le détail (ADR 0011) : `health.source` vaut `null` ou `{id, code, name}` du descendant en cause, et `health.reason` est préfixée par son code. **Changement** : l'ancien ordre par défaut (urgents DESC, ouverts DESC, nom ASC) n'existe plus que comme repli, si plus de 5000 équipements correspondent aux filtres avec `sort=health` (le tri se fait alors en base, un avertissement est journalisé).
 
 ### Query params
 
@@ -26,6 +26,7 @@ Tri par défaut : urgents DESC, ouverts DESC, nom ASC.
 | `select_mere`   | uuid   | —      | UUID de l'équipement parent : retourne uniquement ses enfants directs            |
 | `subtree_of`    | uuid   | —      | UUID d'un équipement : retourne tous ses descendants (tout niveau), sans lui-même |
 | `roots_only`    | bool   | false  | `true` : uniquement les équipements sans mère (`equipement_mere IS NULL`)        |
+| `sort`          | string | `health` | `health` : santé agrégée décroissante puis `code` ; `code` : par `code`. Autre valeur : `422` |
 
 `subtree_of` et `roots_only` se combinent avec les autres filtres (`total` les respecte). Les facettes ne changent pas : elles suivent `search` seul. Chaque item expose en plus `parent_id`, `parent` (`{id, code, name}` ou `null`), `children_count` (filles directes) et `ancestors` (`[{id, code, name}]`, de la racine jusqu'au parent, vide pour une racine).
 

@@ -187,7 +187,7 @@ function EquipementLabel({ equipement }) {
     <Flex align="center" gap="2">
       {equipement?.code && (
         equipement.id ? (
-          <Link to={`/equipements/${equipement.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`/equipements?id=${equipement.id}`} style={{ textDecoration: 'none' }}>
             <Badge color="gray" variant="soft" size="1" style={{ cursor: 'pointer' }}>
               {equipement.code}
             </Badge>

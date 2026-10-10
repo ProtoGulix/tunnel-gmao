@@ -1,5 +1,6 @@
 """Routes pour les équipements"""
 
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -43,6 +44,13 @@ def list_equipements(
     roots_only: bool = Query(
         False, description="Retourne uniquement les équipements sans mère (racines de l'arbre)"
     ),
+    sort: Literal["health", "code"] = Query(
+        "health",
+        description=(
+            "Tri : health (défaut) = santé agrégée (la pire de l'item et de ses descendants) "
+            "décroissante critical > warning > maintenance > ok, puis code ; code = par code"
+        ),
+    ),
 ):
     """Liste les équipements avec pagination et facettes par classe"""
     repo = EquipementRepository()
@@ -62,6 +70,7 @@ def list_equipements(
         select_mere=select_mere,
         subtree_of=subtree_of_str,
         roots_only=roots_only,
+        sort=sort,
     )
     total = repo.count_all(
         search=search,
