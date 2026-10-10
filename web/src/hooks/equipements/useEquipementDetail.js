@@ -11,7 +11,7 @@ import { extractApiErrorMessage } from '@/lib/api/errorMessage';
  * @param {string} id - ID de l'équipement
  * @param {Object} [options]
  * @param {boolean} [options.includeDescendants] - undefined = défaut serveur (vrai si l'équipement a des filles)
- * @returns {{ equipement: Object|null, loading: boolean, error: string|null, refetch: Function }}
+ * @returns {{ equipement: Object|null, loading: boolean, error: string|null, refetch: Function, applyDetail: Function }}
  */
 export function useEquipementDetail(id, { includeDescendants } = {}) {
   const [equipement, setEquipement] = useState(null);
@@ -40,5 +40,12 @@ export function useEquipementDetail(id, { includeDescendants } = {}) {
 
   useEffect(() => { load(); }, [load]);
 
-  return { equipement, loading, error, refetch: load };
+  /** Remplace le détail affiché par une réponse d'API (ex. retour d'un PATCH) */
+  const applyDetail = useCallback((detail) => {
+    requestId.current += 1; // une lecture en vol serait périmée
+    setEquipement(detail);
+    setLoading(false);
+  }, []);
+
+  return { equipement, loading, error, refetch: load, applyDetail };
 }

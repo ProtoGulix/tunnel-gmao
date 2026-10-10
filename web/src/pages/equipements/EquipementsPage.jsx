@@ -1,5 +1,5 @@
 /**
- * @fileoverview Page Équipements — master-detail (arbre ou liste à plat + fiche en lecture seule)
+ * @fileoverview Page Équipements — master-detail (arbre ou liste à plat + fiche modifiable sur place)
  * @module pages/equipements/EquipementsPage
  *
  * La sélection vit dans l'URL (?id=). Les classes se gèrent dans l'admin des référentiels.
@@ -119,7 +119,7 @@ export default function EquipementsPage() {
             ),
           }}
           detailChildren={selectedId ? (
-            <EquipementDetailPanel key={selectedId} id={selectedId} onLoaded={handleLoaded} />
+            <EquipementDetailPanel key={selectedId} id={selectedId} onLoaded={handleLoaded} onChanged={refresh} />
           ) : null}
           emptyLabel="Sélectionnez un équipement pour voir sa fiche"
         />

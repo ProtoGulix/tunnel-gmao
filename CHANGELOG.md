@@ -19,6 +19,9 @@ mobile/CHANGELOG.md.
   replié au départ) ou à plat avec le chemin de chaque équipement, triée par santé ou
   par code ; la fiche à droite, avec ses sous-équipements et son activité (option
   « Inclure les sous-équipements »). La création se fait dans une fenêtre dédiée.
+- La fiche d'un équipement se modifie sur place, champ par champ : un clic sur une
+  valeur ouvre le champ, Entrée enregistre, Échap annule. Le rattachement se choisit
+  par une recherche qui exclut l'équipement et ses sous-équipements.
 - L'onglet Classes quitte la page Équipements : les classes se gèrent dans
   Administration → Référentiel.
 - Chaque modification d'équipement apparaît dans l'historique, avec son auteur.

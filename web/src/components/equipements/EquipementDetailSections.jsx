@@ -6,14 +6,15 @@
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { Badge, Box, Flex, Text } from '@radix-ui/themes';
-import { BanIcon, ChevronRight } from 'lucide-react';
+import { BanIcon } from 'lucide-react';
 import EquipementHealthBadge from '@/components/ui/EquipementHealthBadge';
 import EquipementHealthDot from '@/components/equipements/EquipementHealthDot';
 import EquipementStatutBadge from '@/components/equipements/EquipementStatutBadge';
 import Pagination from '@/components/ui/Pagination';
 import { PAGE_SIZE_OPTIONS } from '@/hooks/shared/usePagedList';
+import EditableProperty from '@/components/equipements/EditableProperty';
 
-const equipementUrl = (id) => `/equipements?id=${id}`;
+export const equipementUrl = (id) => `/equipements?id=${id}`;
 export const linkStyle = { textDecoration: 'none' };
 
 export function formatDate(iso) {
@@ -34,28 +35,6 @@ export function Section({ title, count, children }) {
 }
 Section.propTypes = { title: PropTypes.string.isRequired, count: PropTypes.number, children: PropTypes.node };
 
-function Breadcrumb({ ancestors, current }) {
-  return (
-    <Flex align="center" gap="1" wrap="wrap" mb="2" aria-label="Fil d'Ariane">
-      {ancestors.map((a) => (
-        <Flex key={a.id} align="center" gap="1">
-          <Link to={equipementUrl(a.id)} replace style={linkStyle}>
-            <Text size="1" color="blue">{a.code || a.name}</Text>
-          </Link>
-          <ChevronRight size={11} color="var(--gray-8)" />
-        </Flex>
-      ))}
-      <Text size="1" color="gray">{current}</Text>
-    </Flex>
-  );
-}
-Breadcrumb.propTypes = { ancestors: PropTypes.array.isRequired, current: PropTypes.string };
-
-function ClassBadge({ equipementClass }) {
-  if (!equipementClass) return null;
-  return <Badge variant="soft" size="1">{equipementClass.label ?? equipementClass.code}</Badge>;
-}
-ClassBadge.propTypes = { equipementClass: PropTypes.object };
 
 function BlockedBadge({ statut }) {
   if (statut?.interventions !== false) return null;
@@ -76,20 +55,35 @@ function HealthSource({ source }) {
 }
 HealthSource.propTypes = { source: PropTypes.object };
 
-export function Header({ eq }) {
+/**
+ * @param {Object} eq
+ * @param {boolean} [editable] - droit de modifier (ADR 0012)
+ * @param {Function} [onSave] - async (champ, valeur) ; rejette en cas d'erreur
+ */
+export function Header({ eq, editable = false, onSave }) {
   const health = eq.health;
   return (
     <Box mb="4">
-      <Breadcrumb ancestors={eq.ancestors ?? []} current={eq.code || eq.name} />
-      <Flex align="center" gap="2" wrap="wrap" mb="1">
+      {/* Statut, classe et chemin vivent dans la fiche (lignes modifiables) : pas de doublon ici */}
+      <Flex align="center" gap="2" wrap="wrap" mb="2">
         <Text size="4" weight="bold" style={{ fontFamily: 'monospace', color: 'var(--accent-11)' }}>
           {eq.code || '—'}
         </Text>
-        <EquipementStatutBadge statut={eq.statut} />
-        <ClassBadge equipementClass={eq.equipement_class} />
+        <Text size="4" color="gray">–</Text>
+        <Box style={{ flex: 1, minWidth: 0 }}>
+          <EditableProperty
+            bare
+            label="Nom"
+            value={eq.name}
+            editable={editable}
+            required
+            requiredMessage="Le nom est obligatoire"
+            onSave={(v) => onSave('name', v)}
+            textProps={{ size: '4', weight: 'bold' }}
+          />
+        </Box>
         <BlockedBadge statut={eq.statut} />
       </Flex>
-      <Text size="3" weight="medium" style={{ display: 'block', marginBottom: 6 }}>{eq.name}</Text>
       <Flex align="center" gap="2" wrap="wrap">
         <EquipementHealthBadge level={health?.level || 'ok'} showLabel />
         {health?.reason && <Text size="1" color="gray">{health.reason}</Text>}
@@ -98,37 +92,7 @@ export function Header({ eq }) {
     </Box>
   );
 }
-Header.propTypes = { eq: PropTypes.object.isRequired };
-
-function Field({ label, children }) {
-  return (
-    <Box>
-      <Text size="1" color="gray" style={{ display: 'block' }}>{label}</Text>
-      <Text size="2" weight="medium">{children || '—'}</Text>
-    </Box>
-  );
-}
-Field.propTypes = { label: PropTypes.string.isRequired, children: PropTypes.node };
-
-export function FicheSection({ eq }) {
-  return (
-    <Section title="Fiche">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 'var(--space-3)' }}>
-        <Field label="N° machine">{eq.no_machine}</Field>
-        <Field label="Affectation">{eq.affectation}</Field>
-        <Field label="Fabricant">{eq.fabricant}</Field>
-        <Field label="N° série">{eq.numero_serie}</Field>
-        <Field label="Mise en service">{formatDate(eq.date_mise_service)}</Field>
-        <Field label="Équipement mère">{eq.is_mere == null ? null : (eq.is_mere ? 'Oui' : 'Non')}</Field>
-      </div>
-      <Box mt="3">
-        <Text size="1" color="gray" style={{ display: 'block' }}>Notes</Text>
-        <Text size="2" style={{ whiteSpace: 'pre-wrap' }}>{eq.notes || '—'}</Text>
-      </Box>
-    </Section>
-  );
-}
-FicheSection.propTypes = { eq: PropTypes.object.isRequired };
+Header.propTypes = { eq: PropTypes.object.isRequired, editable: PropTypes.bool, onSave: PropTypes.func };
 
 export function ChildrenSection({ list }) {
   const { items, total, loading, error, page, pageSize, setPage, setPageSize } = list;
