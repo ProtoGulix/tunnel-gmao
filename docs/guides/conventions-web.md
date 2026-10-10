@@ -769,6 +769,13 @@ StockItemRow.propTypes = {
 };
 ```
 
+### Codes internes cliquables (ADR 0009)
+
+Un code interne (intervention, demande d'achat) affiché avec une icône est un lien : passer
+par `EntityCodeLink` (`components/shared/`), jamais par un `<Link>` ou un `<a>` écrit à la
+main. Les URL de destination ne sont écrites que dans ce composant. Sans id connu, le
+composant rend le badge seul, sans icône ; id connu et code vide : « sans code », cliquable.
+
 ### 4.5 Codes Couleur des Badges et Sélection
 
 #### Badges de Référence

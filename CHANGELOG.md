@@ -8,6 +8,12 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Accueil
+- Les codes d'intervention et de demande d'achat portent une petite icône de lien :
+  un clic ouvre l'intervention ou la demande d'achat. C'est valable dans les tâches à
+  exécuter, le planning (y compris les demandes d'achat liées à une action) et la vue
+  direction technique, sans recharger l'application.
+
 ### Équipements
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.

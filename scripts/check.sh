@@ -16,4 +16,6 @@ for front in web mobile; do
   fi
   (cd "$ROOT/$front" && npm run --silent build >/dev/null)
 done
+echo "== web (tests)"
+(cd "$ROOT/web" && npm test --silent)
 echo "check.sh : tout est vert"

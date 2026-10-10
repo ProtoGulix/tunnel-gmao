@@ -5,7 +5,7 @@
  *               panneau équipements (coordination).
  *
  * Structure :
- *   <GroupCard code="IV-001" title="Graissage BROYEUR" count={3}>
+ *   <GroupCard code="IV-001" codeId={id} title="Graissage BROYEUR" count={3}>
  *     <GroupCard.Row accentColor="var(--blue-9)">...</GroupCard.Row>
  *   </GroupCard>
  */
@@ -13,10 +13,11 @@
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text } from '@radix-ui/themes';
 import { PRIORITY_CONFIG } from '@/config/interventionTypes';
+import { EntityCodeLink } from './EntityCodeLink';
 
 /* ── GroupCard ────────────────────────────────────────────────────────────── */
 
-export function GroupCard({ code, title, titleItalic = true, badge, count, countLabel, headerRight, children, style, priority }) {
+export function GroupCard({ code, codeType, codeId, title, titleItalic = true, badge, count, countLabel, headerRight, children, style, priority }) {
   const rowCount = count ?? null;
   const label = countLabel ?? (rowCount === 1 ? 'élément' : 'éléments');
   const pCfg = priority ? (PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.normal) : null;
@@ -41,15 +42,8 @@ export function GroupCard({ code, title, titleItalic = true, badge, count, count
           borderBottom: `1px solid ${pCfg ? pCfg.border : 'var(--gray-4)'}`,
         }}
       >
-        {code && (
-          <Badge
-            variant="outline"
-            color="gray"
-            size="2"
-            style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, flexShrink: 0 }}
-          >
-            {code}
-          </Badge>
+        {(code || codeId) && (
+          <EntityCodeLink type={codeType ?? 'intervention'} id={codeId} code={code} />
         )}
         {title && (
           <Text
@@ -101,6 +95,8 @@ export function GroupCard({ code, title, titleItalic = true, badge, count, count
 
 GroupCard.propTypes = {
   code: PropTypes.string,
+  codeType: PropTypes.oneOf(['intervention', 'purchase_request']),
+  codeId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
   titleItalic: PropTypes.bool,
   badge: PropTypes.node,

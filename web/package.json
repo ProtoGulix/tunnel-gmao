@@ -34,7 +34,8 @@
     "lint:api": "node scripts/lint-api.js",
     "arch:check": "powershell -ExecutionPolicy Bypass -File ./scripts/arch-check.ps1",
     "arch:check:bash": "bash ./scripts/arch-check.sh",
-    "changelog:check": "node scripts/validate-changelog.cjs"
+    "changelog:check": "node scripts/validate-changelog.cjs",
+    "test": "node --test \"src/**/*.test.js\""
   },
   "dependencies": {
     "@radix-ui/themes": "^3.2.1",
