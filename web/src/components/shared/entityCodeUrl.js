@@ -4,7 +4,7 @@
  */
 
 export function entityCodeUrl(type, id) {
-  if (type === 'intervention') return `/intervention/${id}`;
+  if (type === 'intervention') return `/interventions?id=${id}`;
   if (type === 'purchase_request') return `/achats?tab=requests&requestId=${id}`;
   return null;
 }

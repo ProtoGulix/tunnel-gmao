@@ -90,3 +90,13 @@ préventif ? donnée reprise de la v4 ?).
 4. Le front mobile n'est pas concerné.
 5. Test : un test de composant vérifie l'URL produite pour chaque type, le rendu
    sans icône quand l'id manque et le libellé « sans code ».
+
+## Révision du 2026-10-10
+
+À la demande de l'utilisateur, un code d'intervention mène désormais à
+`/interventions?id=<id>` au lieu de `/intervention/<id>`. Cette adresse ouvre
+l'intervention dans la page master-detail des interventions, avec la liste à gauche,
+ce qui s'intègre mieux au reste de l'application. La page complète
+`/intervention/<id>` reste accessible depuis le détail. `entityCodeUrl.js` reste le
+seul endroit où l'URL est écrite. Le détail d'un équipement l'utilise aussi pour ses
+interventions.

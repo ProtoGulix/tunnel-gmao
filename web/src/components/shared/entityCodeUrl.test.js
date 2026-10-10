@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { entityCodeLabel, entityCodeTitle, entityCodeUrl } from './entityCodeUrl.js';
 
 test('URL par type', () => {
-  assert.equal(entityCodeUrl('intervention', 'abc'), '/intervention/abc');
+  assert.equal(entityCodeUrl('intervention', 'abc'), '/interventions?id=abc');
   assert.equal(entityCodeUrl('purchase_request', 'xyz'), '/achats?tab=requests&requestId=xyz');
   assert.equal(entityCodeUrl('autre', 'x'), null);
 });

@@ -13,6 +13,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import Pagination from '@/components/ui/Pagination';
 import { useEquipementActivity, ACTIVITY_PAGE_SIZE_OPTIONS } from '@/hooks/equipements/useEquipementActivity';
 import EquipementPreventifTab from '@/components/equipements/tabs/EquipementPreventifTab';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 import { Section, formatDate, linkStyle } from '@/components/equipements/EquipementDetailSections';
 import { STATUS_CONFIG, PRIORITY_BADGE_COLORS } from '@/config/interventionTypes';
 
@@ -104,7 +105,7 @@ function InterventionsBlock({ list }) {
       {(inter) => {
         const status = STATUS_CONFIG[inter.status_actual?.toLowerCase()];
         return (
-          <RowLink key={inter.id} to={`/intervention/${inter.id}`}>
+          <RowLink key={inter.id} to={entityCodeUrl('intervention', inter.id)}>
             <Badge variant="solid" color="blue" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{inter.code}</Badge>
             <Text size="2" style={ellipsis}>{inter.title || 'Sans titre'}</Text>
             {inter.priority && (
