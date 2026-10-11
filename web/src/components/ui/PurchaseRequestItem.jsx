@@ -1,5 +1,6 @@
 /**
  * Élément individuel de demande d'achat avec confirmation de suppression inline.
+ * Le code de la DA est un lien vers la demande (ADR 0009).
  * @module components/ui/PurchaseRequestItem
  */
 import { Flex, Text, Badge, Button } from "@radix-ui/themes";
@@ -8,6 +9,7 @@ import PropTypes from "prop-types";
 import { useState } from "react";
 import StockRefLink from "@/components/ui/StockRefLink";
 import HexBadge from "@/components/ui/HexBadge";
+import { EntityCodeLink } from "@/components/shared/EntityCodeLink";
 
 const getSelectedBasketNumber = (pr) => {
   const selected = (pr.order_lines || []).find(l => l.is_selected === true);
@@ -134,15 +136,12 @@ export default function PurchaseRequestItem({ pr, onDelete }) {
       <ShoppingCart size={14} color={icon} style={{ flexShrink: 0 }} />
       {stockRef && <StockRefLink reference={stockRef} tab="stock" color="gray" variant="outline" size="1" />}
       <Flex direction="column" gap="0" style={{ flex: 1, minWidth: 0 }}>
-        <Text size="2" weight="medium"
-          style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {pr.code || itemLabel}
+        <Flex>
+          <EntityCodeLink type="purchase_request" id={pr.id} code={pr.code} size={2} />
+        </Flex>
+        <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {itemLabel}
         </Text>
-        {pr.code && (
-          <Text size="1" color="gray" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {itemLabel}
-          </Text>
-        )}
       </Flex>
       {isToQualify && (
         <Flex align="center" gap="1" style={{ flexShrink: 0 }}>

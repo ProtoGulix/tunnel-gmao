@@ -22,6 +22,8 @@ mobile/CHANGELOG.md.
 - « Demander le pointage », « Copier le code » et « Supprimer » passent dans le menu
   « ⋯ ». Si la suppression est impossible, l'entrée reste grisée avec la raison.
 - Le lien vers la page complète est retiré du panneau.
+- Dans les actions d'une intervention, le code d'une demande d'achat liée est un lien
+  qui ouvre la demande dans la page Achats.
 - La page complète d'une intervention disparaît : le détail s'ouvre toujours dans la
   page Interventions (ADR 0014). Les anciennes adresses, dont les QR codes des fiches
   déjà imprimées, ouvrent l'intervention dans cette page. Les liens du préventif, des
