@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import { Badge, Flex, Text, Box } from '@radix-ui/themes';
 import { ClipboardList, Wrench, Info } from 'lucide-react';
 import { getTimeAgo } from '@/lib/utils/actionUtils';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 // Icône par type de notification. `di_a_traiter`/`intervention_a_cloturer`/
 // `preventif_echeance` sont accueillis par le backend mais pas encore tous émis —
@@ -62,7 +63,7 @@ export function resolveEntityPath(notification) {
     return `/interventions?tab=demandes&id=${entityId}`;
   }
   if (entityType === 'intervention') {
-    return `/intervention/${entityId}`;
+    return entityCodeUrl('intervention', entityId);
   }
   return null;
 }

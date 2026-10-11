@@ -15,6 +15,7 @@ import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurr
 import { triggerLabel, OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS } from '@/config/preventiveConfig';
 import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
@@ -67,7 +68,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
           )}
           {r.intervention_id && (
             <Button size="1" variant="soft" color="gray" asChild>
-              <Link to={`/intervention/${r.intervention_id}`}><ExternalLink size={11} />Intervention</Link>
+              <Link to={entityCodeUrl('intervention', r.intervention_id)}><ExternalLink size={11} />Intervention</Link>
             </Button>
           )}
           {!r.di_id && !r.intervention_id && (

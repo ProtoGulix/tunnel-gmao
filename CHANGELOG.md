@@ -22,10 +22,19 @@ mobile/CHANGELOG.md.
 - « Demander le pointage », « Copier le code » et « Supprimer » passent dans le menu
   « ⋯ ». Si la suppression est impossible, l'entrée reste grisée avec la raison.
 - Le lien vers la page complète est retiré du panneau.
+- La page complète d'une intervention disparaît : le détail s'ouvre toujours dans la
+  page Interventions (ADR 0014). Les anciennes adresses, dont les QR codes des fiches
+  déjà imprimées, ouvrent l'intervention dans cette page. Les liens du préventif, des
+  demandes, des demandes d'achat, de l'accueil et des notifications y mènent aussi.
 
 ### Équipements
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.
+
+### [interne] Interventions (ADR 0014)
+- `InterventionDetailPage` devient `components/interventions/InterventionDetailPanel`
+  (mode panneau seul). Suppression de deux composants morts : `InterventionDetailView`
+  et `tabs/InterventionsListTab`. Liens internes via `entityCodeUrl` (ADR 0009).
 
 ### [interne] Outillage
 - `npm run changelog:check` vérifie de nouveau le CHANGELOG racine (format des titres,

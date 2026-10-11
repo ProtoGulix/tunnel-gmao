@@ -1,25 +1,22 @@
 /**
- * Page de détail d'une intervention
+ * Détail d'une intervention, affiché dans le panneau droit de la page Interventions
+ * (master-detail). Seul affichage du détail depuis l'ADR 0014 : la page complète
+ * /intervention/:id a été supprimée et redirige vers /interventions?id=.
  *
- * Affiche le détail complet d'une intervention avec :
- * - Header dynamique avec dropdowns statut/priorité
- * - 4 onglets : Actions, Résumé, Fiche et Historique
- * - Auto-refresh toutes les 30s
+ * En-tête compact (ADR 0013) puis onglets : Actions, Tâches, Achats, Demande,
+ * Résumé, Fiche et Historique.
  */
 
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ClipboardList, CalendarCheck } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
+import { Activity, FileText, History, TrendingUp, ShoppingCart, ListTodo, ClipboardList } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
-import PageContainer from '@/components/layout/PageContainer';
-import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
-import DropdownButton from '@/components/ui/DropdownButton';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
 import InterventionPanelHeader from '@/components/interventions/InterventionPanelHeader';
-import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { usePermissions } from '@/auth/usePermissions';
@@ -30,7 +27,6 @@ const SummaryTab = lazy(() => import('@/components/interventions/tabs/SummaryTab
 const SheetTab = lazy(() => import('@/components/interventions/tabs/SheetTab'));
 const HistoryTab = lazy(() => import('@/components/interventions/tabs/HistoryTab'));
 const InterventionPurchaseTab = lazy(() => import('@/components/interventions/tabs/InterventionPurchaseTab'));
-const InterventionRequestCard = lazy(() => import('@/components/intervention-requests/InterventionRequestCard'));
 const InterventionRequestDetail = lazy(() => import('@/components/intervention-requests/InterventionRequestDetail'));
 const TasksTab = lazy(() => import('@/components/interventions/tabs/TasksTab'));
 
@@ -66,15 +62,12 @@ const mapDtoStatusToConfigKey = (dtoStatus) => {
 };
 
 /* eslint-disable complexity, max-lines */
-export default function InterventionDetailPage({ id: idProp, embedded = false, onDeleted, onRefreshList }) {
-  const { id: idParam } = useParams();
-  const id = idProp ?? idParam;
-  const navigate = useNavigate();
+export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }) {
   const { can } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
-  // En mode embarqué (master-detail), la page parente possède déjà `tab` pour ses propres
-  // onglets : on utilise `dtab` pour éviter toute collision.
-  const tabParamKey = embedded ? 'dtab' : 'tab';
+  // La page Interventions possède déjà `tab` pour ses propres onglets : le détail
+  // utilise `dtab` pour éviter toute collision.
+  const tabParamKey = 'dtab';
   const [activeTab, setActiveTab] = useState(() => searchParams.get(tabParamKey) ?? 'actions');
   const [mutationError, setMutationError] = useState('');
   const [pointageDialogOpen, setPointageDialogOpen] = useState(false);
@@ -161,116 +154,23 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     try {
       setMutationError('');
       await deleteIntervention();
-      if (embedded) {
-        onDeleted?.();
-        onRefreshList?.();
-      } else {
-        navigate('/interventions');
-      }
+      onDeleted?.();
+      onRefreshList?.();
     } catch (err) {
       setMutationError(extractApiErrorMessage(err, 'Erreur suppression intervention'));
     }
-  }, [deleteIntervention, navigate, embedded, onDeleted, onRefreshList]);
+  }, [deleteIntervention, onDeleted, onRefreshList]);
 
-  // Error state
-  if (error && !intervention) {
-    if (embedded) return <ErrorState error={error} onRetry={refetch} />;
-    return (
-      <PageContainer>
-        <ErrorState error={error} onRetry={refetch} backLink="/interventions" backLabel="Retour aux interventions" />
-      </PageContainer>
-    );
-  }
-
-  // Loading initial
-  if (loading && !intervention) {
-    if (embedded) return <LoadingState message="Chargement de l'intervention..." />;
-    return (
-      <PageContainer>
-        <Box mt="4"><LoadingState message="Chargement de l'intervention..." /></Box>
-      </PageContainer>
-    );
-  }
-
-  if (!intervention) {
-    if (embedded) return null;
-    return (
-      <PageContainer>
-        <ErrorState error="Intervention non trouvée" backLink="/interventions" backLabel="Retour aux interventions" />
-      </PageContainer>
-    );
-  }
+  if (error && !intervention) return <ErrorState error={error} onRetry={refetch} />;
+  if (loading && !intervention) return <LoadingState message="Chargement de l'intervention..." />;
+  if (!intervention) return null;
 
   const stats = intervention.stats || {};
   const isDeletable = !stats.actionCount && !stats.purchaseCount;
   const isLocked = ['ferme', 'cancelled'].includes(mapDtoStatusToConfigKey(intervention?.status));
 
-  /* ── Blocs partagés ── */
-  const deleteDialog = isDeletable && can(PERM.interventions.remove) ? (
-    <AlertDialog.Root>
-      <AlertDialog.Trigger>
-        <Button color="red" variant="soft" size="2">
-          <Trash2 size={14} />
-          Supprimer
-        </Button>
-      </AlertDialog.Trigger>
-      <AlertDialog.Content maxWidth="420px">
-        <AlertDialog.Title>Supprimer l&apos;intervention</AlertDialog.Title>
-        <AlertDialog.Description>
-          Confirmer la suppression de <strong>{intervention.code}</strong> ? Cette action est irréversible.
-        </AlertDialog.Description>
-        <Flex gap="3" mt="4" justify="end">
-          <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-          <AlertDialog.Action><Button color="red" onClick={handleDelete}>Supprimer</Button></AlertDialog.Action>
-        </Flex>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
-  ) : null;
-
-  const statusDropdown = (
-    <DropdownButton
-      label={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.label || 'En cours'}
-      color={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.activeBg || 'var(--blue-6)'}
-      textColor={STATE_COLORS[mapDtoStatusToConfigKey(intervention.status)]?.textActive || 'white'}
-      disabled={isLocked || !can(PERM.interventions.update)}
-      items={[
-        { label: STATE_COLORS.ouvert.label, color: STATE_COLORS.ouvert.activeBg, onClick: () => handleStatusChange('ouvert') },
-        { label: STATE_COLORS.attente_pieces.label, color: STATE_COLORS.attente_pieces.activeBg, onClick: () => handleStatusChange('attente_pieces') },
-        { label: STATE_COLORS.attente_prod.label, color: STATE_COLORS.attente_prod.activeBg, onClick: () => handleStatusChange('attente_prod') },
-        { label: STATE_COLORS.ferme.label, color: STATE_COLORS.ferme.activeBg, onClick: () => handleStatusChange('ferme') },
-      ]}
-    />
-  );
-
-  const priorityDropdown = (
-    <DropdownButton
-      label={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.label || 'Normal'}
-      color={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.activeBg || 'var(--gray-6)'}
-      textColor={PRIORITY_COLORS[mapPriorityToConfigKey(intervention.priority)]?.textActive || 'white'}
-      disabled={isLocked || !can(PERM.interventions.update)}
-      items={[
-        { label: 'Urgent', color: PRIORITY_COLORS.urgent.activeBg, onClick: () => handlePriorityChange('urgent') },
-        { label: 'Important', color: PRIORITY_COLORS.important.activeBg, onClick: () => handlePriorityChange('important') },
-        { label: 'Normal', color: PRIORITY_COLORS.normal.activeBg, onClick: () => handlePriorityChange('normal') },
-        { label: 'Faible', color: PRIORITY_COLORS.faible.activeBg, onClick: () => handlePriorityChange('faible') },
-      ]}
-    />
-  );
-
-  const pointageButton = !can(PERM.interventions.requestPointage) ? null : (
-    <Button
-      variant="soft"
-      color="orange"
-      size="2"
-      onClick={() => setPointageDialogOpen(true)}
-    >
-      <CalendarCheck size={14} />
-      Demander le pointage
-    </Button>
-  );
-
   const tabsContent = (
-    <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={embedded ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { marginTop: '2rem' }}>
+    <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {mutationError && (
         <Box mt="3">
           <Callout.Root color="red" size="1" role="alert" aria-live="polite">
@@ -296,18 +196,14 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
         })}
       </Tabs.List>
       <Box
-        px={embedded ? '4' : undefined}
-        style={
-          embedded
-            ? {
-                flex: 1,
-                minHeight: 0,
-                overflowY: activeTab === 'fiche' ? 'hidden' : 'auto',
-                display: activeTab === 'fiche' ? 'flex' : 'block',
-                flexDirection: 'column',
-              }
-            : undefined
-        }
+        px="4"
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: activeTab === 'fiche' ? 'hidden' : 'auto',
+          display: activeTab === 'fiche' ? 'flex' : 'block',
+          flexDirection: 'column',
+        }}
       >
         <Suspense fallback={<LoadingState />}>
           <Tabs.Content value="actions">
@@ -340,7 +236,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
           </Tabs.Content>
           <Tabs.Content
             value="fiche"
-            style={embedded ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } : undefined}
+            style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
           >
             <SheetTab
               pdfUrl={pdfUrl}
@@ -348,7 +244,7 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
               printedFiche={intervention.printedFiche}
               fileName={ficheFileName}
               onMarkPrinted={isLocked ? null : handleMarkPrinted}
-              fillHeight={embedded}
+              fillHeight
             />
           </Tabs.Content>
           <Tabs.Content value="history">
@@ -377,62 +273,32 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
     </Box>
   );
 
-  /* ── Mode embarqué (panneau droit du master-detail) ── */
-  if (embedded) {
-    return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <InterventionPanelHeader
-          intervention={intervention}
-          statusKey={mapDtoStatusToConfigKey(intervention.status)}
-          priorityKey={mapPriorityToConfigKey(intervention.priority)}
-          canEditProperties={!isLocked && can(PERM.interventions.update)}
-          onStatusChange={handleStatusChange}
-          onPriorityChange={handlePriorityChange}
-          onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}
-          onOpenRequest={() => handleTabChange('demande')}
-          onCopyCode={(ok) => notify(ok ? 'Code copié' : 'Copie impossible', ok ? 'success' : 'error')}
-          canDelete={can(PERM.interventions.remove)}
-          isDeletable={isDeletable}
-          onDelete={handleDelete}
-        />
-        {notificationToast && <Box px="4" style={{ flexShrink: 0 }}>{notificationToast}</Box>}
-
-        {tabsContent}
-        {pointageDialog}
-      </div>
-    );
-  }
-
-  /* ── Mode page complète ── */
   return (
-    <PageContainer style={{ paddingBottom: '4rem' }}>
-      <PageHeader
-        icon={Wrench}
-        title={`${intervention.machine?.name || 'Machine'} • ${intervention.code || `INT-${id}`}`}
-        subtitle={intervention.title || 'Intervention'}
-        stats={[
-          { label: 'Actions', value: stats.actionCount || 0 },
-          { label: 'Temps', value: `${stats.totalTime || 0}h` },
-        ]}
-        actions={[
-          ...(deleteDialog ? [{ label: deleteDialog }] : []),
-          { label: statusDropdown },
-          { label: priorityDropdown },
-          ...(pointageButton ? [{ label: pointageButton }] : []),
-        ]}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <InterventionPanelHeader
+        intervention={intervention}
+        statusKey={mapDtoStatusToConfigKey(intervention.status)}
+        priorityKey={mapPriorityToConfigKey(intervention.priority)}
+        canEditProperties={!isLocked && can(PERM.interventions.update)}
+        onStatusChange={handleStatusChange}
+        onPriorityChange={handlePriorityChange}
+        onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}
+        onOpenRequest={() => handleTabChange('demande')}
+        onCopyCode={(ok) => notify(ok ? 'Code copié' : 'Copie impossible', ok ? 'success' : 'error')}
+        canDelete={can(PERM.interventions.remove)}
+        isDeletable={isDeletable}
+        onDelete={handleDelete}
       />
-
-      {notificationToast}
-
-      {/* Demande liée */}
-      <Box mt="4" style={intervention.request ? { cursor: 'pointer' } : undefined} onClick={intervention.request ? () => handleTabChange('demande') : undefined}>
-        <Suspense fallback={null}>
-          <InterventionRequestCard request={intervention.request ?? null} />
-        </Suspense>
-      </Box>
+      {notificationToast && <Box px="4" style={{ flexShrink: 0 }}>{notificationToast}</Box>}
 
       {tabsContent}
       {pointageDialog}
-    </PageContainer>
+    </div>
   );
 }
+
+InterventionDetailPanel.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onDeleted: PropTypes.func,
+  onRefreshList: PropTypes.func,
+};

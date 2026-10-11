@@ -9,7 +9,7 @@ import { Badge, Box, Flex, Text } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
-import InterventionDetailPage from '@/pages/interventions/InterventionDetailPage';
+import InterventionDetailPanel from '@/components/interventions/InterventionDetailPanel';
 import { useInterventionsList } from '@/hooks/interventions/useInterventionsList';
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { getInterventionUrgency, formatDueDate } from '@/hooks/useInterventionUrgency';
@@ -156,9 +156,8 @@ export default function InterventionsTabContent({ selectedId, onSelect, onCreate
           ) : null,
         }}
         detailChildren={selectedId ? (
-          <InterventionDetailPage
+          <InterventionDetailPanel
             id={selectedId}
-            embedded
             onDeleted={onCreate}
             onRefreshList={refetch}
           />

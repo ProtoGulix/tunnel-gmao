@@ -4,6 +4,7 @@ import { fetchEquipements } from '@/api/equipements';
 import { fetchActiveUsers } from '@/api/planning';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useAuth } from '@/auth/useAuth';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 const getDefaultDateTimeLocal = () => {
   const now = new Date();
@@ -67,7 +68,7 @@ export function useInterventionCreate({ navigate }) {
             ? new Date(formData.reportedDate).toISOString()
             : undefined,
         });
-        navigate(`/intervention/${created.id}`);
+        navigate(entityCodeUrl('intervention', created.id));
       } catch (err) {
         setError(extractApiErrorMessage(err, "Erreur lors de la création de l'intervention"));
       } finally {

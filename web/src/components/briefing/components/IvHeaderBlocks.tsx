@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { formatDueDate } from '@/hooks/useInterventionUrgency';
 import type { BriefingSituation, InterventionDetail } from '@/types/briefing';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 export const STATUS_ORDER = ['ouvert', 'attente_pieces', 'attente_prod', 'ferme'] as const;
 
@@ -107,14 +108,14 @@ export function IvBlock({ situation, typeLabel, statusCfg, priorityCfg, actionCo
   return (
     <div style={{ ...TILE_STYLE, border: `2px solid ${borderColor}` }}>
       <TileHeader bg={bandBg}>
-        <Link to={`/intervention/${situation.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+        <Link to={entityCodeUrl('intervention', situation.id)} style={{ textDecoration: 'none', flexShrink: 0 }}>
           <Badge size="2" variant="outline" color="gray" style={{ fontFamily: 'monospace' }}>{situation.code}</Badge>
         </Link>
         {typeLabel   && <Badge size="2" color="gray" variant="soft">{typeLabel}</Badge>}
         {statusCfg   && <Badge size="2" color={statusCfg.color as never} variant="soft">{statusCfg.label}</Badge>}
         {priorityCfg && <Badge size="2" color={priorityCfg.color as never} variant="soft">{priorityCfg.label}</Badge>}
         <div style={{ flex: 1 }} />
-        <Link to={`/intervention/${situation.id}`} style={{ flexShrink: 0 }}>
+        <Link to={entityCodeUrl('intervention', situation.id)} style={{ flexShrink: 0 }}>
           <Button size="1" variant="ghost" color="gray"><ExternalLink size={13} /></Button>
         </Link>
       </TileHeader>

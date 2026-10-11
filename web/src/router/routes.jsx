@@ -9,6 +9,7 @@ import Layout from '@/components/layout/Layout';
 import PageHeader from '@/components/layout/PageHeader';
 import RequireRole from '@/auth/RequireRole';
 import LoadingState from '@/components/ui/LoadingState';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 // Pages — chargées à la demande
 const Login = lazy(() => import('@/pages/auth/Login'));
@@ -17,7 +18,6 @@ const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
 const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
 const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
 const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
-const InterventionDetailPage = lazy(() => import('@/pages/interventions/InterventionDetailPage'));
 const InterventionCreatePage = lazy(() => import('@/pages/interventions/InterventionCreatePage'));
 const PurchaseRequestPage = lazy(() => import('@/pages/purchase-requests/PurchaseRequestPage'));
 const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage'));
@@ -57,9 +57,11 @@ function EquipementAliasRedirect() {
   return <Navigate to={`/equipements?id=${encodeURIComponent(id)}`} replace />;
 }
 
+// Anciennes adresses du détail (page complète supprimée, ADR 0014) : QR codes des
+// fiches imprimées, favoris, anciennes notifications.
 function InterventionAliasRedirect() {
   const { id } = useParams();
-  return <Navigate to={`/intervention/${id}`} replace />;
+  return <Navigate to={entityCodeUrl('intervention', encodeURIComponent(id))} replace />;
 }
 
 ProtectedRoute.propTypes = {
@@ -163,9 +165,7 @@ export default function AppRoutes() {
         path="/intervention/:id"
         element={
           <ProtectedRoute>
-            <Layout>
-              <InterventionDetailPage />
-            </Layout>
+            <InterventionAliasRedirect />
           </ProtectedRoute>
         }
       />

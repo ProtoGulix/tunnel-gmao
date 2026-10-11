@@ -24,6 +24,7 @@ import {
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import { TASK_STATUS_LABEL, TASK_STATUS_COLOR } from '@/config/taskConfig';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 function ProgressBar({ done, total }) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
@@ -222,7 +223,7 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
       {readOnly && !allPendingNoIntervention && tasks.some((t) => t.intervention_id) && (
         <Box mb="3">
           <Button size="1" variant="ghost" asChild>
-            <Link to={`/intervention/${tasks.find((t) => t.intervention_id)?.intervention_id}`}>
+            <Link to={entityCodeUrl('intervention', tasks.find((t) => t.intervention_id)?.intervention_id)}>
               <ExternalLink size={11} />Voir l&apos;intervention
             </Link>
           </Button>
