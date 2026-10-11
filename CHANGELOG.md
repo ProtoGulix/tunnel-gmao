@@ -27,6 +27,11 @@ mobile/CHANGELOG.md.
   déjà imprimées, ouvrent l'intervention dans cette page. Les liens du préventif, des
   demandes, des demandes d'achat, de l'accueil et des notifications y mènent aussi.
 
+### Préventif
+- Le filtre « Tous statuts » des occurrences ne fait plus planter l'écran.
+- Les occurrences en cours et clôturées affichent leur statut en français et en
+  couleur (« En cours », « Clôturée ») au lieu du code brut.
+
 ### Équipements
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.

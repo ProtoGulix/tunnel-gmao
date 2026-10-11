@@ -229,7 +229,7 @@ export default function PreventiveOccurrencesTab() {
           <Select.Trigger style={{ minWidth: 130 }} placeholder="Tous statuts" />
           <Select.Content>
             <Select.Item value="__all__">Tous statuts</Select.Item>
-            {Object.entries(STATUS_LABELS).map(([k, v]) => <Select.Item key={k} value={k}>{v}</Select.Item>)}
+            {Object.entries(OCCURRENCE_STATUS_LABELS).map(([k, v]) => <Select.Item key={k} value={k}>{v}</Select.Item>)}
           </Select.Content>
         </Select.Root>
         <TextField.Root type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
