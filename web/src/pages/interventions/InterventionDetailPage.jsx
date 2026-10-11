@@ -10,8 +10,7 @@
 import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertDialog, Button, Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
-import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ExternalLink, ClipboardList, CalendarCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Wrench, Activity, FileText, History, TrendingUp, ShoppingCart, Trash2, ListTodo, ClipboardList, CalendarCheck } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
 import PageContainer from '@/components/layout/PageContainer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -19,6 +18,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import DropdownButton from '@/components/ui/DropdownButton';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
+import InterventionPanelHeader from '@/components/interventions/InterventionPanelHeader';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
@@ -381,47 +381,21 @@ export default function InterventionDetailPage({ id: idProp, embedded = false, o
   if (embedded) {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header compact */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-5)', background: 'var(--gray-1)', flexShrink: 0 }}>
-          <Flex align="center" gap="2" mb="2" wrap="wrap">
-            <Badge variant="solid" color="blue" size="2" style={{ fontFamily: 'monospace', fontWeight: 700 }}>
-              {intervention.code}
-            </Badge>
-            {intervention.machine?.code && (
-              <Badge variant="solid" color="gray" size="1" style={{ fontFamily: 'monospace' }}>
-                {intervention.machine.code}
-              </Badge>
-            )}
-            <Text size="2" color="gray">{intervention.machine?.name ?? ''}</Text>
-            <Link to={`/intervention/${id}`} style={{ marginLeft: 'auto', flexShrink: 0 }} title="Ouvrir la page complète">
-              <Button size="1" variant="ghost" color="gray"><ExternalLink size={13} /></Button>
-            </Link>
-          </Flex>
-          <Text size="3" weight="bold" style={{ display: 'block', color: 'var(--gray-12)', marginBottom: 8 }}>
-            {intervention.title}
-          </Text>
-          <Flex align="center" gap="2" wrap="wrap">
-            {statusDropdown}
-            {priorityDropdown}
-            {pointageButton}
-            {deleteDialog && <Box style={{ marginLeft: 'auto' }}>{deleteDialog}</Box>}
-          </Flex>
-          {notificationToast}
-        </div>
-
-        {/* Demande liée */}
-        {intervention.request && (
-          <Box
-            px="3"
-            pt="2"
-            style={{ flexShrink: 0, cursor: 'pointer' }}
-            onClick={() => handleTabChange('demande')}
-          >
-            <Suspense fallback={null}>
-              <InterventionRequestCard request={intervention.request} />
-            </Suspense>
-          </Box>
-        )}
+        <InterventionPanelHeader
+          intervention={intervention}
+          statusKey={mapDtoStatusToConfigKey(intervention.status)}
+          priorityKey={mapPriorityToConfigKey(intervention.priority)}
+          canEditProperties={!isLocked && can(PERM.interventions.update)}
+          onStatusChange={handleStatusChange}
+          onPriorityChange={handlePriorityChange}
+          onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}
+          onOpenRequest={() => handleTabChange('demande')}
+          onCopyCode={(ok) => notify(ok ? 'Code copié' : 'Copie impossible', ok ? 'success' : 'error')}
+          canDelete={can(PERM.interventions.remove)}
+          isDeletable={isDeletable}
+          onDelete={handleDelete}
+        />
+        {notificationToast && <Box px="4" style={{ flexShrink: 0 }}>{notificationToast}</Box>}
 
         {tabsContent}
         {pointageDialog}

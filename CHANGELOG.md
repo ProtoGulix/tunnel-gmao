@@ -14,6 +14,15 @@ mobile/CHANGELOG.md.
   C'est valable dans les tâches à exécuter, le planning (y compris les demandes d'achat
   liées à une action) et la vue direction technique, sans recharger l'application.
 
+### Interventions
+- L'en-tête du détail, dans le panneau de droite, est plus compact (ADR 0013). Statut
+  et priorité deviennent des propriétés discrètes qu'on change d'un clic. La demande
+  liée tient sur une ligne et ouvre l'onglet Demande. Le titre est plus grand et coupé
+  à deux lignes (complet au survol).
+- « Demander le pointage », « Copier le code » et « Supprimer » passent dans le menu
+  « ⋯ ». Si la suppression est impossible, l'entrée reste grisée avec la raison.
+- Le lien vers la page complète est retiré du panneau.
+
 ### Équipements
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.
