@@ -29,6 +29,11 @@ mobile/CHANGELOG.md.
   déjà imprimées, ouvrent l'intervention dans cette page. Les liens du préventif, des
   demandes, des demandes d'achat, de l'accueil et des notifications y mènent aussi.
 
+### Droits
+- Ignorer une étape obligatoire d'une gamme est réservé aux responsables et aux
+  administrateurs, y compris depuis la page Coordination. Un technicien peut toujours
+  ignorer une étape optionnelle ou une tâche hors gamme.
+
 ### Préventif
 - Le filtre « Tous statuts » des occurrences ne fait plus planter l'écran.
 - Les occurrences en cours et clôturées affichent leur statut en français et en

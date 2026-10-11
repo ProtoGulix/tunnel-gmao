@@ -2,7 +2,7 @@ from datetime import date
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from api.auth.permissions import require_authenticated
 from api.intervention_actions.repo import InterventionActionRepository
@@ -51,7 +51,7 @@ def get_action(action_id: str) -> Dict[str, Any]:
 
 
 @router.post("")
-def add_action(action: InterventionActionIn):
+def add_action(action: InterventionActionIn, request: Request):
     """
     Ajoute une action à une intervention.
 
@@ -60,13 +60,14 @@ def add_action(action: InterventionActionIn):
 
     Les tâches listées dans `tasks` sont liées à l'action via la table M2M
     et leur statut est mis à jour (todo→in_progress, ou done/skipped selon les flags).
+    Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
     """
     repo = InterventionActionRepository()
-    return single(repo.add(action.model_dump()))
+    return single(repo.add(action.model_dump(), role=getattr(request.state, "role", None)))
 
 
 @router.patch("/{action_id}")
-def patch_action(action_id: str, patch: InterventionActionPatch):
+def patch_action(action_id: str, patch: InterventionActionPatch, request: Request):
     """
     Met à jour partiellement une action d'intervention.
 
@@ -74,7 +75,8 @@ def patch_action(action_id: str, patch: InterventionActionPatch):
     `reason_text` est obligatoire si `reason_code=OTHER`.
     """
     repo = InterventionActionRepository()
-    return single(repo.update(action_id, patch.model_dump(exclude_none=True)))
+    role = getattr(request.state, "role", None)
+    return single(repo.update(action_id, patch.model_dump(exclude_none=True), role=role))
 
 
 @router.delete("/{action_id}", status_code=204)

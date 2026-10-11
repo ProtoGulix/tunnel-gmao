@@ -10,6 +10,7 @@ from api.constants import CLOSED_STATUS_CODE, NON_DISPATCHED_PR_STATUSES
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 from api.intervention_actions.validators import InterventionActionValidator
+from api.intervention_tasks.validators import ensure_can_skip
 from api.utils.sanitizer import strip_html
 
 logger = logging.getLogger(__name__)
@@ -628,7 +629,7 @@ class InterventionActionRepository:
         finally:
             release_connection(conn)
 
-    def add(self, action_data: Dict[str, Any]) -> Dict[str, Any]:
+    def add(self, action_data: Dict[str, Any], role: Optional[str] = None) -> Dict[str, Any]:
         """Ajoute une nouvelle action à une intervention.
 
         Si tasks est fourni, chaque tâche est vérifiée (appartenance à
@@ -706,13 +707,14 @@ class InterventionActionRepository:
 
                 # Vérifier existence + appartenance à la même intervention
                 cur.execute(
-                    "SELECT intervention_id, status, label FROM intervention_task WHERE id = %s",
+                    "SELECT intervention_id, status, label, origin, optional"
+                    " FROM intervention_task WHERE id = %s",
                     (tid,),
                 )
                 task_row = cur.fetchone()
                 if not task_row:
                     raise NotFoundError(f"Tâche {tid} introuvable")
-                task_intervention, task_status, task_label = task_row
+                task_intervention, task_status, task_label, task_origin, task_optional = task_row
                 if str(task_intervention) != intervention_id_str:
                     raise ValidationError(
                         f"Tâche « {task_label} » n'appartient pas à cette intervention"
@@ -733,6 +735,7 @@ class InterventionActionRepository:
                         raise ValidationError(
                             f"Tâche « {task_label} » déjà clôturée — impossible de la skipper"
                         )
+                    ensure_can_skip({'origin': task_origin, 'optional': task_optional}, role)
                     cur.execute(
                         """
                         UPDATE intervention_task
@@ -781,7 +784,9 @@ class InterventionActionRepository:
         finally:
             release_connection(conn)
 
-    def update(self, action_id: str, patch_data: Dict[str, Any]) -> Dict[str, Any]:
+    def update(
+        self, action_id: str, patch_data: Dict[str, Any], role: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Met à jour partiellement une action existante"""
         tasks = patch_data.pop('tasks', None) or []
 
@@ -884,14 +889,15 @@ class InterventionActionRepository:
                 tid = str(task_req_data['task_id'])
 
                 cur.execute(
-                    "SELECT intervention_id, status, label FROM intervention_task WHERE id = %s",
+                    "SELECT intervention_id, status, label, origin, optional"
+                    " FROM intervention_task WHERE id = %s",
                     (tid,),
                 )
                 task_row = cur.fetchone()
                 if not task_row:
                     raise NotFoundError(f"Tâche {tid} introuvable")
 
-                task_intervention, task_status, task_label = task_row
+                task_intervention, task_status, task_label, task_origin, task_optional = task_row
                 if str(task_intervention) != intervention_id_str:
                     raise ValidationError(
                         f"Tâche « {task_label} » n'appartient pas à cette intervention"
@@ -912,6 +918,7 @@ class InterventionActionRepository:
                         raise ValidationError(
                             f"Tâche « {task_label} » déjà clôturée — impossible de la skipper"
                         )
+                    ensure_can_skip({'origin': task_origin, 'optional': task_optional}, role)
                     cur.execute(
                         """
                         UPDATE intervention_task

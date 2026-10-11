@@ -10,6 +10,7 @@ from api.intervention_tasks.schemas import (
     InterventionTaskIn,
     InterventionTaskPatch,
 )
+from api.intervention_tasks.validators import ensure_can_skip
 from api.utils.response import single
 
 router = APIRouter(
@@ -119,12 +120,16 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
     Les transitions vers `in_progress` et `done` passent obligatoirement par une action
     (`POST /intervention-actions`).
 
+    Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
+
     **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
     Si les champs modifiés sont couverts par une règle routine, AuditMiddleware
     l'injecte silencieusement. `reason_text` est obligatoire si `reason_code=OTHER`.
     """
     user_id = str(getattr(request.state, "user_id", None) or "")
     repo = InterventionTaskRepository()
+    if data.status == "skipped":
+        ensure_can_skip(repo.get_by_id(task_id), getattr(request.state, "role", None))
     return single(repo.patch(task_id, data, closed_by=user_id or None))
 
 
