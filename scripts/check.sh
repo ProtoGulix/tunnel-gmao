@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Vérification unique du monorepo (ADR 0003) : backend (format, lint, tests),
-# puis build des deux fronts. Lancée par le hook pre-commit et par la CI.
+# format du CHANGELOG, puis build des deux fronts. Lancée par le hook pre-commit et par la CI.
 # Les fronts sont construits l'un après l'autre : pas de charge parallèle sur la VM.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,6 +16,8 @@ for front in web mobile; do
   fi
   (cd "$ROOT/$front" && npm run --silent build >/dev/null)
 done
+echo "== changelog"
+(cd "$ROOT/web" && node scripts/validate-changelog.cjs)
 echo "== web (tests)"
 (cd "$ROOT/web" && npm test --silent)
 echo "check.sh : tout est vert"

@@ -1,157 +1,96 @@
 #!/usr/bin/env node
 
 /**
- * Validation automatique des changelogs
+ * Vérifie le format du CHANGELOG.md racine, source unique des nouveautés.
  *
- * Bloque les commits si le changelog PATCH ne respecte pas les règles :
- * - Max 1 bullet point en "Impact fonctionnel"
- * - Pas de section "Stabilisation / Dette technique"
- * - Pas de jargon technique (hook, callback, optimiste, etc.)
- * - Longueur raisonnable (< 100 caractères)
+ * Le backend (api/changelog/parser.py) lit ce fichier pour l'écran « Nouveautés » et
+ * ignore en silence une version mal formée : ce script rend l'erreur visible avant le
+ * commit. Règles :
+ * - un titre `##` est soit « Non publié », soit `## [X.Y.Z] — AAAA-MM-JJ` ;
+ * - « Non publié », s'il existe, vient avant toutes les versions ;
+ * - les versions sont uniques, en ordre décroissant, et leurs dates aussi ;
+ * - chaque entrée `- ` se trouve sous une section `###`.
+ *
+ * Usage : node scripts/validate-changelog.cjs [chemin du CHANGELOG]
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Couleurs pour terminaux
-const colors = {
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  reset: '\x1b[0m',
-};
+const UNRELEASED = 'Non publié';
+const VERSION_RE = /^## \[(\d+)\.(\d+)\.(\d+)\] — (\d{4}-\d{2}-\d{2})$/;
 
-function log(color, message) {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+function compareVersions(a, b) {
+  for (let i = 0; i < 3; i += 1) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return 0;
+}
+
+function isValidDate(iso) {
+  const date = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(iso);
+}
+
+function checkVersionHeader(line, lineNo, state, errors) {
+  const match = line.match(VERSION_RE);
+  if (!match) {
+    errors.push(`ligne ${lineNo} : titre attendu « ## ${UNRELEASED} » ou « ## [X.Y.Z] — AAAA-MM-JJ », trouvé « ${line} »`);
+    return;
+  }
+  const version = match.slice(1, 4).map(Number);
+  const date = match[4];
+  const label = version.join('.');
+  if (!isValidDate(date)) errors.push(`ligne ${lineNo} : date invalide ${date} pour ${label}`);
+  if (state.previous) {
+    if (compareVersions(version, state.previous.version) >= 0) {
+      errors.push(`ligne ${lineNo} : ${label} doit être inférieure à ${state.previous.version.join('.')} (ordre décroissant, sans doublon)`);
+    }
+    if (date > state.previous.date) {
+      errors.push(`ligne ${lineNo} : la date de ${label} (${date}) est postérieure à celle de ${state.previous.version.join('.')} (${state.previous.date})`);
+    }
+  }
+  state.previous = { version, date };
+}
+
+function validate(content) {
+  const errors = [];
+  const state = { previous: null, inRelease: false, inSection: false };
+
+  content.split(/\r?\n/).forEach((line, index) => {
+    const lineNo = index + 1;
+    if (line.startsWith('## ')) {
+      state.inRelease = true;
+      state.inSection = false;
+      if (line === `## ${UNRELEASED}`) {
+        if (state.previous) errors.push(`ligne ${lineNo} : « ${UNRELEASED} » doit précéder toutes les versions`);
+      } else {
+        checkVersionHeader(line, lineNo, state, errors);
+      }
+    } else if (line.startsWith('### ')) {
+      state.inSection = true;
+    } else if (line.startsWith('- ') && state.inRelease && !state.inSection) {
+      errors.push(`ligne ${lineNo} : entrée hors d'une section « ### »`);
+    }
+  });
+
+  if (!state.previous) errors.push('aucune version publiée trouvée');
+  return errors;
 }
 
 function main() {
-  const changelogPath = process.argv[2] || path.join(__dirname, '..', 'docs', 'CHANGELOG.md');
-
+  const changelogPath = process.argv[2] || path.join(__dirname, '..', '..', 'CHANGELOG.md');
   if (!fs.existsSync(changelogPath)) {
-    log('red', '❌ CHANGELOG.md introuvable');
+    console.error(`CHANGELOG introuvable : ${changelogPath}`);
     process.exit(1);
   }
-
-  const changelog = fs.readFileSync(changelogPath, 'utf8');
-  const lines = changelog.split('\n');
-
-  // Extraire la dernière version
-  const versionMatch = changelog.match(/^## (\d+\.\d+\.\d+) - /m);
-  if (!versionMatch) {
-    log('red', '❌ Aucune version trouvée dans CHANGELOG.md');
+  const errors = validate(fs.readFileSync(changelogPath, 'utf8'));
+  if (errors.length > 0) {
+    console.error(`CHANGELOG non conforme (${changelogPath}) :`);
+    errors.forEach((error) => console.error(`  - ${error}`));
     process.exit(1);
   }
-
-  const version = versionMatch[1];
-  const versionParts = version.split('.').map(Number);
-  const isPatch = versionParts[2] !== 0; // Z !== 0 = PATCH
-
-  if (!isPatch) {
-    log('green', `✅ MINOR/MAJOR ${version} (contrôle allégé)`);
-    process.exit(0);
-  }
-
-  // ===== VALIDATION PATCH =====
-  log('yellow', `🔍 Validation PATCH ${version}...`);
-
-  // Extraire la section de cette version
-  const versionSectionMatch = changelog.match(
-    new RegExp(`## ${version.replace(/\./g, '\\.')}[\\s\\S]*?(?=## \\d|$)`)
-  );
-
-  if (!versionSectionMatch) {
-    log('red', `❌ Section pour ${version} introuvable`);
-    process.exit(1);
-  }
-
-  const versionSection = versionSectionMatch[0];
-
-  // 1. Vérifier section "Impact fonctionnel"
-  const impactMatch = versionSection.match(/### 🎯 Impact fonctionnel[\s\n]+([\s\S]*?)(?=###|$)/);
-  if (!impactMatch) {
-    log('red', '❌ PATCH: Section "Impact fonctionnel" manquante');
-    process.exit(1);
-  }
-
-  const impactContent = impactMatch[1].trim();
-
-  // 2. Compter les bullet points
-  const bullets = (impactContent.match(/^- /gm) || []).length;
-  if (bullets === 0) {
-    log('red', '❌ PATCH: Aucun bullet point en "Impact fonctionnel"');
-    process.exit(1);
-  }
-  if (bullets > 1) {
-    log('red', `❌ PATCH: Max 1 bullet en "Impact fonctionnel" (trouvé: ${bullets})`);
-    log('yellow', '💡 Si plusieurs changements → créer un MINOR (X.Y.0)');
-    process.exit(1);
-  }
-
-  // 3. Vérifier longueur du bullet (max ~100 caractères)
-  const bulletText = impactContent.replace(/^- /, '').trim();
-  if (bulletText.length > 120) {
-    log('red', `❌ PATCH: Bullet trop long (${bulletText.length} caractères, max 100)`);
-    log('yellow', `💡 Texte actuel: "${bulletText}"`);
-    log('yellow', "💡 Simplifier la phrase pour qu'elle soit claire et concise");
-    process.exit(1);
-  }
-
-  // 4. Détecter jargon technique
-  const bannedWords = [
-    'hook',
-    'callback',
-    'optimiste',
-    'optimistic',
-    'synchronisation',
-    'refactor',
-    'useOptimistic',
-    'useState',
-    'useEffect',
-    'component',
-    'composant technique',
-    'architecture',
-    'invalidate',
-    'mutation',
-    'state',
-    'props',
-  ];
-
-  const lowerBullet = bulletText.toLowerCase();
-  const foundBanned = bannedWords.filter((word) => lowerBullet.includes(word));
-
-  if (foundBanned.length > 0) {
-    log('red', `❌ PATCH: Jargon technique détecté: ${foundBanned.join(', ')}`);
-    log(
-      'yellow',
-      '💡 Utiliser vocabulaire utilisateur : affichage, création, modification, correction'
-    );
-    process.exit(1);
-  }
-
-  // 5. Vérifier absence de "Stabilisation / Dette technique"
-  if (versionSection.includes('### 🧱 Stabilisation')) {
-    log('red', '❌ PATCH: Ne doit pas avoir "Stabilisation / Dette technique"');
-    log('yellow', '💡 Cette section est réservée aux MINOR/MAJOR');
-    process.exit(1);
-  }
-
-  // 6. Vérifier nombre de composants (≤ 2)
-  const componentsMatch = versionSection.match(/### 🧩 Composants[\s\S]*?\n([\s\S]*?)(?=###|$)/);
-  if (componentsMatch) {
-    const componentsList = componentsMatch[1];
-    const componentsCount = (componentsList.match(/^- /gm) || []).length;
-    if (componentsCount > 2) {
-      log('red', `❌ PATCH: Trop de composants listés (${componentsCount}, max 2)`);
-      log('yellow', '💡 Si changements sur > 2 fichiers → créer un MINOR');
-      process.exit(1);
-    }
-  }
-
-  // ===== SUCCÈS =====
-  log('green', `✅ PATCH ${version} conforme aux conventions`);
-  log('green', `   → "${bulletText}"`);
-  process.exit(0);
+  console.log('CHANGELOG conforme');
 }
 
 main();

@@ -27,6 +27,11 @@ mobile/CHANGELOG.md.
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.
 
+### [interne] Outillage
+- `npm run changelog:check` vérifie de nouveau le CHANGELOG racine (format des titres,
+  ordre des versions et des dates, entrées rangées sous une section). Le script hérité
+  de la v4 cherchait un fichier disparu. La vérification est ajoutée à check.sh.
+
 ### [interne] Équipements (ADR 0011, fin)
 - Migration 0005 : affectation = « 0 » remplacée par NULL (valeur exacte seulement).
 - Suppression du code mort de l'ancienne page Équipements (tableau, onglets, hooks et
