@@ -13,4 +13,4 @@ Tu écris les tests de Tunnel GMAO. CLAUDE.md est la référence.
 - Jamais de test contre la base de dev (données réelles) : base jetable ou dépendances injectées.
 - Tu ne modifies que des fichiers de test et des fixtures. Si le code de production semble faux, signale le au lieu de le corriger.
 - Branches (CLAUDE.md section 12, ADR 0008) : tu travailles uniquement sur la branche de travail ou le worktree fourni, jamais sur main ni develop. Vérifie d'abord `git branch --show-current` et le commit de départ indiqué ; s'ils ne correspondent pas, signale-le avant toute modification. Tu ne fusionnes jamais, tu ne pousses jamais, et tu ne commites que si l'agent principal le demande (format Conventional Commits).
-- Rends un résumé court des cas couverts et du résultat de l'exécution.
+- Compte rendu court, sans recopier de fichier (CLAUDE.md section 7) : fait, fichiers touchés, résultat des tests, commandes en échec (commande, code, sortie, même corrigées ensuite), questions ouvertes et ce qui reste NON VÉRIFIÉ. Ne laisse aucune tâche de fond ni aucun processus en cours.

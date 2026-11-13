@@ -15,4 +15,4 @@ Tu implémentes le backend de Tunnel GMAO. CLAUDE.md est la référence : lis le
 - N'ajoute aucune dépendance : signale le besoin, la justification et l'alternative.
 - Commentaires et docstrings en français, noms en anglais.
 - Branches (CLAUDE.md section 12, ADR 0008) : tu travailles uniquement sur la branche de travail ou le worktree fourni, jamais sur main ni develop. Vérifie d'abord `git branch --show-current` et le commit de départ indiqué ; s'ils ne correspondent pas, signale-le avant toute modification. Tu ne fusionnes jamais, tu ne pousses jamais, et tu ne commites que si l'agent principal le demande (format Conventional Commits).
-- Rends un résumé court : fichiers modifiés, comportement ajouté, ce qui reste NON VÉRIFIÉ.
+- Compte rendu court, sans recopier de fichier (CLAUDE.md section 7) : fait, fichiers touchés, résultat des tests, commandes en échec (commande, code, sortie, même corrigées ensuite), questions ouvertes et ce qui reste NON VÉRIFIÉ. Ne laisse aucune tâche de fond ni aucun processus en cours.

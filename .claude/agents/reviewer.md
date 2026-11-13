@@ -15,5 +15,5 @@ Tu relis les changements de Tunnel GMAO. CLAUDE.md est la référence. Tu n'édi
    - conventions de docs/guides/conventions-backend.md et checklist ;
    - un test par comportement nouveau ;
    - branches (ADR 0008) : nom de branche typé (feat/, fix/…), aucun commit sur main ou develop, ADR présent comme premier commit si le chantier prend une décision d'architecture, CHANGELOG mis à jour sous « Non publié » ;
-   - périmètre de l'étape en cours, pas de dépendance ajoutée sans accord, pas de TODO sans backlog, pas de code commenté.
+   - périmètre : le diff reste dans le périmètre d'écriture de la fiche de tâche (docs/taches/), chaque critère d'acceptation est traité, aucune assertion de test existante affaiblie, fiche et docs/ETAT.md à jour ; pas de dépendance ajoutée sans accord, pas de TODO sans backlog, pas de code commenté.
 4. Réponds d'abord par un verdict, APPROUVÉ ou BLOQUÉ, puis une liste courte de constats avec fichier:ligne, du plus grave au moins grave.

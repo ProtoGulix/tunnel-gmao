@@ -48,6 +48,12 @@ mobile/CHANGELOG.md.
   (mode panneau seul). Suppression de deux composants morts : `InterventionDetailView`
   et `tabs/InterventionsListTab`. Liens internes via `entityCodeUrl` (ADR 0009).
 
+### [interne] Pilotage du projet
+- CLAUDE.md suit le schéma de pilotage des projets pantin et pétanque : protocole de
+  reprise, état d'avancement dans docs/ETAT.md, une fiche par tâche dans docs/taches/,
+  contrôle des comptes rendus des subagents. Les agents du projet rendent un compte rendu
+  au format commun ; le reviewer contrôle le périmètre de la fiche de tâche.
+
 ### [interne] Outillage
 - `npm run changelog:check` vérifie de nouveau le CHANGELOG racine (format des titres,
   ordre des versions et des dates, entrées rangées sous une section). Le script hérité

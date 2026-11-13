@@ -2,6 +2,8 @@
 
 Ce fichier est la référence du projet. Lis le en entier avant toute action. Il reste volontairement court : le détail vit dans docs/ et se charge à la demande. Une information non vérifiée est marquée NON VÉRIFIÉ : ne la traite jamais comme un fait.
 
+Protocole de reprise : au début de chaque session et après chaque compaction du contexte, avant toute action, relis ce fichier, puis docs/ETAT.md, puis la fiche de la tâche en cours dans docs/taches/.
+
 ## 1. Objectif
 
 Tunnel est une GMAO (gestion de maintenance assistée par ordinateur) open source (AGPL-3.0), utilisée chaque jour en production dans une vraie usine. Public : PME industrielles de 10 à 100 machines, équipes de maintenance de 1 à 10 personnes, qui veulent structurer leur maintenance sans logiciel lourd.
@@ -91,7 +93,19 @@ Agents du projet (.claude/agents/) :
 6. researcher : vérifications externes (versions, CVE, bibliothèques) et rapports dans docs/spikes.
 7. doc-writer : documentation d'endpoints, CHANGELOG, guides. Lancé en haiku par défaut.
 
-Pour une exploration en lecture seule, utilise l'agent intégré Explore.
+Pour une exploration en lecture seule, utilise l'agent intégré Explore. Seul l'agent principal délègue : un subagent ne lance pas d'autre subagent. Les agents de .claude/agents/ ne sont chargés qu'au démarrage d'une session ; à défaut, un agent généraliste lit le fichier de rôle.
+
+Chaque consigne d'agent renvoie à la fiche de tâche, rappelle le périmètre d'écriture autorisé et exige ce compte rendu, court et sans recopier de fichier : fait, fichiers touchés, résultat des tests, commandes en échec (commande, code, sortie, même corrigées ensuite), questions ouvertes. Aucune tâche de fond ni aucun processus ne reste en cours à la fin.
+
+Contrôle des subagents : ne crois jamais un compte rendu sur parole.
+
+1. Relance toi même scripts/check.sh (et test-integration.sh si la tâche touche la base ou les middlewares) après chaque agent.
+2. Compare git diff --stat au périmètre d'écriture de la fiche ; rejette tout débordement.
+3. Vérifie que chaque critère d'acceptation de la fiche est traité.
+4. Vérifie par git diff -w qu'aucune assertion de test existante n'a été affaiblie pour faire passer le code.
+5. Après chaque agent, examine ses tâches de fond (codes de sortie, tuées, délais), les processus restants et les worktrees ; signale à l'utilisateur tout échec, même corrigé.
+6. Une affirmation grave d'un agent (faille, perte de données, incident) est reproduite par l'agent principal avant d'être retenue.
+7. Après deux échecs sur une même tâche, redécoupe la ou remonte la à l'utilisateur.
 
 ## 8. Qualité du code
 
@@ -109,16 +123,20 @@ Pour une exploration en lecture seule, utilise l'agent intégré Explore.
     docs/guides      conventions détaillées, chargées à la demande
     docs/spikes      rapports de vérification
     docs/endpoints   documentation par domaine de l'API
+    docs/ETAT.md     état d'avancement : chantier en cours, tâches, dernière décision, prochaine action
+    docs/taches      une fiche par tâche : périmètre, critère d'acceptation, compte rendu (format dans docs/taches/README.md)
+
+En cas de contradiction, l'ADR le plus récent l'emporte sur ce fichier et sur les guides ; signale l'écart pour qu'il soit corrigé.
 
 ## 10. Feuille de route
 
-Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que quand le critère de sortie est vérifié.
+Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que quand le critère de sortie est vérifié. Les étapes ci dessous sont l'historique fondateur ; l'état courant (chantier en cours, tâches, réserves) vit dans docs/ETAT.md, pas ici.
 
 1. ✅ (2026-10-06, ADR 0004) Configuration (hors code, sur confirmation de l'utilisateur) : corriger API_ENV, changer le mot de passe de la base, limiter les ports Docker à 127.0.0.1, expirer la clé d'API Claude. Sortie : /api/docs répond 401 ou 404 depuis Internet, la base n'est plus joignable depuis le réseau local.
 2. ✅ (2026-10-06, ADR 0005) Failles bloquantes du code : escalade RESP vers ADMIN, identité prise du jeton, erreurs SQL masquées, IP client fiable, export CSV neutralisé. Sortie : un test par faille, qui échoue avant le correctif et passe après.
 3. ✅ (2026-10-06, réserves dans docs/backlog/suites-etape-3c.md et 3d.md) Monorepo : nouveau dépôt, Compose à trois services, installation automatique de la base (ADR 0002). Sortie : docker compose up sur une machine vierge donne une instance fonctionnelle avec un premier admin.
 4. ✅ (2026-10-07, v5.0.0 publiée) Publication : gitleaks propre, anciens dépôts passés en privé et archivés (archivage : action de l'utilisateur sur GitHub).
-5. Chantier RBAC : matrice de permissions remplie, contrôle appliqué globalement, MCP en lecture seule. Sortie : tests rôle par endpoint verts.
+5. ✅ (2026-10-07, ADR 0007, v5.1.0 publiée, réserves dans docs/backlog/suites-etape-5.md) Chantier RBAC : matrice de permissions remplie, contrôle appliqué globalement, MCP en lecture seule. Sortie : tests rôle par endpoint verts (critère NON VÉRIFIÉ lors de la mise à jour du 2026-11-13 : livré, mais la couverture rôle par endpoint n'a pas été recontrôlée).
 
 ## 11. Règles de travail
 
@@ -128,6 +146,9 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 4. La base de dev contient des données réelles de production : aucune écriture en base, aucune migration et aucune requête qui modifie des données sans accord.
 5. Demande l'accord de l'utilisateur avant : d'ajouter ou changer une dépendance, de modifier un schéma de base ou une API publique, de toucher à la configuration serveur, Docker ou réseau, de lancer une extraction sémantique Graphify, ou de contredire un ADR.
 6. Ajoute l'entrée au CHANGELOG à chaque correctif ; un correctif de sécurité est aussi reporté dans le bilan de sécurité interne.
+7. Tout chantier est découpé en tâches, une fiche par tâche dans docs/taches/ avant de déléguer. Une tâche sans critère d'acceptation vérifiable est mal définie : signale le.
+8. Toute décision structurante non couverte par ce fichier ou un ADR est posée comme question à l'utilisateur, jamais supposée.
+9. Après chaque tâche terminée : mets à jour sa fiche (compte rendu) et docs/ETAT.md, dans le même commit que le travail.
 
 ## 12. Branches, intégration et versions (ADR 0008)
 
