@@ -93,9 +93,15 @@ def register_error_handlers(app: FastAPI):
     # Handler pour les erreurs de validation Pydantic
     @app.exception_handler(RequestValidationError)
     async def pydantic_validation_error_handler(request: Request, exc: RequestValidationError):
-        # Exclure le champ "input" qui peut contenir des bytes non sérialisables
-        # (ex: corps brut quand Content-Type != application/json)
-        errors = [{k: v for k, v in e.items() if k != "input"} for e in exc.errors()]
+        # Exclure "input" (peut contenir des bytes non sérialisables, ex : corps brut quand
+        # Content-Type != application/json) et convertir "ctx" en texte : il porte
+        # l'exception d'un model_validator (ValueError), non sérialisable en JSON.
+        errors = []
+        for e in exc.errors():
+            err = {k: v for k, v in e.items() if k not in ("input", "ctx")}
+            if e.get("ctx"):
+                err["ctx"] = {k: str(v) for k, v in e["ctx"].items()}
+            errors.append(err)
         logger.warning("Validation error on %s: %d errors", request.url.path, len(errors))
 
         content = {"detail": "Erreur de validation des données", "errors": errors}

@@ -17,30 +17,31 @@ logger = logging.getLogger(__name__)
 
 
 def _audit_task_from_action(
-    cur, task_id: str, old_status: str, new_status: str, action_id: str
+    cur, task_id: str, old_status: str, new_status: str, action_id: str, user_id: Optional[str]
 ) -> None:
-    """Audite une transition de statut de tâche déclenchée par une action."""
-    try:
-        cur.execute(
-            """
-            SELECT public.fn_audit_log_decision(
-                %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
-            )
-            """,
-            (
-                "task",
-                task_id,
-                "updated",
-                json.dumps({"status": old_status, "triggered_by_action": action_id}),
-                json.dumps({"status": new_status, "triggered_by_action": action_id}),
-                "TASK_STATUS",
-                None,
-                None,
-                True,
-            ),
+    """Audite une transition de statut de tâche déclenchée par une action.
+
+    user_id est l'auteur réel (jeton, jamais un champ déclaratif). L'écriture se fait dans
+    la transaction de l'action : une erreur remonte et annule toute la mutation (ADR 0017).
+    """
+    cur.execute(
+        """
+        SELECT public.fn_audit_log_decision(
+            %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
         )
-    except Exception as exc:
-        logger.error("_audit_task_from_action(%s) : %s", task_id, exc)
+        """,
+        (
+            "task",
+            task_id,
+            "updated",
+            json.dumps({"status": old_status, "triggered_by_action": action_id}),
+            json.dumps({"status": new_status, "triggered_by_action": action_id}),
+            "TASK_STATUS",
+            None,
+            user_id,
+            True,
+        ),
+    )
 
 
 class InterventionActionRepository:
@@ -629,7 +630,12 @@ class InterventionActionRepository:
         finally:
             release_connection(conn)
 
-    def add(self, action_data: Dict[str, Any], role: Optional[str] = None) -> Dict[str, Any]:
+    def add(
+        self,
+        action_data: Dict[str, Any],
+        role: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Ajoute une nouvelle action à une intervention.
 
         Si tasks est fourni, chaque tâche est vérifiée (appartenance à
@@ -744,7 +750,7 @@ class InterventionActionRepository:
                         """,
                         (task_req_data.get('skip_reason'), tid),
                     )
-                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id)
+                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id, user_id)
                 else:
                     if task_status in ('done', 'skipped'):
                         raise ValidationError(
@@ -755,7 +761,7 @@ class InterventionActionRepository:
                             "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
                             (tid,),
                         )
-                        _audit_task_from_action(cur, tid, task_status, 'done', action_id)
+                        _audit_task_from_action(cur, tid, task_status, 'done', action_id, user_id)
                     else:
                         new_status = 'in_progress' if task_status == 'todo' else task_status
                         cur.execute(
@@ -768,7 +774,9 @@ class InterventionActionRepository:
                             (tid,),
                         )
                         if new_status != task_status:
-                            _audit_task_from_action(cur, tid, task_status, new_status, action_id)
+                            _audit_task_from_action(
+                                cur, tid, task_status, new_status, action_id, user_id
+                            )
 
             conn.commit()
             return self.get_by_id(action_id)
@@ -785,7 +793,11 @@ class InterventionActionRepository:
             release_connection(conn)
 
     def update(
-        self, action_id: str, patch_data: Dict[str, Any], role: Optional[str] = None
+        self,
+        action_id: str,
+        patch_data: Dict[str, Any],
+        role: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Met à jour partiellement une action existante"""
         tasks = patch_data.pop('tasks', None) or []
@@ -927,7 +939,7 @@ class InterventionActionRepository:
                         """,
                         (task_req_data.get('skip_reason'), tid),
                     )
-                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id)
+                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id, user_id)
                 else:
                     if task_status in ('done', 'skipped'):
                         raise ValidationError(
@@ -938,7 +950,7 @@ class InterventionActionRepository:
                             "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
                             (tid,),
                         )
-                        _audit_task_from_action(cur, tid, task_status, 'done', action_id)
+                        _audit_task_from_action(cur, tid, task_status, 'done', action_id, user_id)
                     else:
                         new_status = 'in_progress' if task_status == 'todo' else task_status
                         cur.execute(
@@ -951,7 +963,9 @@ class InterventionActionRepository:
                             (tid,),
                         )
                         if new_status != task_status:
-                            _audit_task_from_action(cur, tid, task_status, new_status, action_id)
+                            _audit_task_from_action(
+                                cur, tid, task_status, new_status, action_id, user_id
+                            )
 
             conn.commit()
         except (ValidationError, NotFoundError):

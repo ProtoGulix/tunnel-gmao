@@ -153,29 +153,28 @@ def _audit_request(
     is_system: bool = False,
 ) -> None:
     """Insère un log d'audit pour une DI via fn_audit_log_decision().
-    Les erreurs sont loggées sans jamais interrompre la mutation métier.
+
+    Appelée dans la transaction de la mutation : une erreur remonte à l'appelant, qui
+    annule toute la mutation (ADR 0017 point 3). changed_by est l'auteur réel (jeton).
     """
-    try:
-        cur.execute(
-            """
-            SELECT public.fn_audit_log_decision(
-                %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
-            )
-            """,
-            (
-                "request",
-                request_id,
-                decision_type,
-                json.dumps(old_value) if old_value is not None else None,
-                json.dumps(new_value) if new_value is not None else None,
-                reason_code,
-                reason_text,
-                changed_by,
-                is_system,
-            ),
+    cur.execute(
+        """
+        SELECT public.fn_audit_log_decision(
+            %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
         )
-    except Exception as exc:
-        logger.error("_audit_request(%s, %s) : %s", request_id, decision_type, exc)
+        """,
+        (
+            "request",
+            request_id,
+            decision_type,
+            json.dumps(old_value) if old_value is not None else None,
+            json.dumps(new_value) if new_value is not None else None,
+            reason_code,
+            reason_text,
+            changed_by,
+            is_system,
+        ),
+    )
 
 
 class InterventionRequestRepository:
@@ -652,9 +651,11 @@ class InterventionRequestRepository:
                     "description": description,
                     "is_system": is_system,
                 },
-                reason_code=data.get("reason_code", "OTHER"),
+                reason_code=data["reason_code"],
                 reason_text=data.get("reason_text"),
-                is_system=is_system,
+                # L'auteur réel est l'utilisateur du jeton : l'audit est une mutation
+                # manuelle même si la demande porte le drapeau is_system (donnée métier).
+                changed_by=created_by,
             )
 
             conn.commit()
@@ -719,6 +720,7 @@ class InterventionRequestRepository:
         intervention_data: Optional[Dict[str, Any]] = None,
         reason_code: str = "OTHER",
         reason_text: Optional[str] = None,
+        audit_user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         existing = self.get_by_id(request_id)
         current_statut = existing["statut"]
@@ -893,7 +895,9 @@ class InterventionRequestRepository:
                 new_value={"statut": status_to, "notes": notes},
                 reason_code=reason_code,
                 reason_text=reason_text,
-                changed_by=changed_by,
+                # changed_by reste déclaratif (historique des statuts) ; l'audit prend
+                # l'auteur réel transmis par la route.
+                changed_by=audit_user_id,
             )
 
             conn.commit()
@@ -1139,7 +1143,7 @@ class InterventionRequestRepository:
     # Réparation manuelle des DIs orphelines
     # ──────────────────────────────────────────────────────────────
 
-    def repair_orphaned_requests(self) -> Dict[str, Any]:
+    def repair_orphaned_requests(self, audit_user_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Passe à 'cloturee' toutes les DIs en statut 'acceptee' dont l'intervention
         liée est déjà fermée (status_actual = CLOSED_STATUS_CODE).
@@ -1227,8 +1231,10 @@ class InterventionRequestRepository:
                         "statut": "cloturee",
                         "notes": "Clôture manuelle via endpoint /repair",
                     },
-                    reason_code="SYSTEM",
-                    is_system=True,
+                    # Le motif « SYSTEM » n'existe pas en base : la clôture est déclenchée
+                    # par un utilisateur via /repair, elle est tracée à son nom (ROUTINE).
+                    reason_code="ROUTINE",
+                    changed_by=audit_user_id,
                 )
                 repaired.append(
                     {

@@ -7,10 +7,13 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
+# Motif explicite, valable pour demande, intervention, tâche et action (audit_rule seed).
+RAISON = "ROUTINE"
+
 
 def _intervention(client, admin, instance):
     """Crée équipement, demande et intervention ; renvoie (intervention_id, reason_code)."""
-    raison = instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    raison = RAISON
     equipement = client.post("/equipements", json={"name": "Broyeur test"}, headers=admin.headers)
     machine_id = equipement.json().get("data", equipement.json())["id"]
     demande = client.post(

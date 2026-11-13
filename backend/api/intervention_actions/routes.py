@@ -63,7 +63,10 @@ def add_action(action: InterventionActionIn, request: Request):
     Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
     """
     repo = InterventionActionRepository()
-    return single(repo.add(action.model_dump(), role=getattr(request.state, "role", None)))
+    user_id = str(getattr(request.state, "user_id", None) or "") or None
+    return single(
+        repo.add(action.model_dump(), role=getattr(request.state, "role", None), user_id=user_id)
+    )
 
 
 @router.patch("/{action_id}")
@@ -76,7 +79,10 @@ def patch_action(action_id: str, patch: InterventionActionPatch, request: Reques
     """
     repo = InterventionActionRepository()
     role = getattr(request.state, "role", None)
-    return single(repo.update(action_id, patch.model_dump(exclude_none=True), role=role))
+    user_id = str(getattr(request.state, "user_id", None) or "") or None
+    return single(
+        repo.update(action_id, patch.model_dump(exclude_none=True), role=role, user_id=user_id)
+    )
 
 
 @router.delete("/{action_id}", status_code=204)

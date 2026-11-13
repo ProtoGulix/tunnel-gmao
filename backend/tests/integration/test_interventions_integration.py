@@ -6,12 +6,15 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
+# Motif explicite, valable pour demande, intervention, tâche et action (audit_rule seed).
+RAISON = "ROUTINE"
+
 
 def test_parcours_demande_puis_intervention_sur_une_installation_neuve(client, admin, instance):
     equipement = client.post("/equipements", json={"name": "Presse neuve"}, headers=admin.headers)
     assert equipement.status_code in (200, 201), equipement.text
     machine_id = equipement.json().get("data", equipement.json())["id"]
-    raison = instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    raison = RAISON
 
     demande = client.post(
         "/intervention-requests",
@@ -48,7 +51,7 @@ def test_un_type_d_intervention_inconnu_renvoie_une_erreur_metier_pas_une_500(
     """La validation métier levée dans le dépôt ne doit pas être convertie en 500."""
     equipement = client.post("/equipements", json={"name": "Tour"}, headers=admin.headers)
     machine_id = equipement.json().get("data", equipement.json())["id"]
-    raison = instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    raison = RAISON
     demande = client.post(
         "/intervention-requests",
         json={

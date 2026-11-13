@@ -67,6 +67,25 @@ mobile/CHANGELOG.md.
 - Le champ Emplacement n'affiche plus « 0 » : cette valeur héritée de l'ancienne
   version est vidée.
 
+### Traçabilité
+- Chaque création de demande d'intervention est désormais inscrite dans l'historique
+  d'audit, au nom de la personne connectée. Jusqu'ici aucune ne l'était.
+- Une modification envoyée avec un motif qui ne la concerne pas, avec un motif réservé
+  aux traitements automatiques, ou avec « Autre raison » sans texte est refusée au lieu
+  d'être enregistrée sans trace fiable.
+- Si l'inscription dans l'historique échoue, la modification d'une demande, d'une
+  action ou d'une tâche est annulée au lieu de passer sans trace.
+- Une tâche modifiée n'apparaît plus deux fois dans l'historique d'audit.
+
+### [interne] Audit (ADR 0017)
+- Migration 0006 : fn_audit_log_decision ne masque plus ses erreurs (retour arrière :
+  `alembic downgrade 0005_affectation_residu`).
+- Une erreur de validation levée par un modèle répond 422 avec son message, et non plus 500.
+- /intervention-requests/repair utilisait un motif inexistant : l'audit de la
+  réparation échouait en silence.
+- POST /audit/log : un motif invalide répond désormais une erreur (400) au lieu de
+  `{"id": null}`.
+
 ### [interne] Interventions (ADR 0014)
 - `InterventionDetailPage` devient `components/interventions/InterventionDetailPanel`
   (mode panneau seul). Suppression de deux composants morts : `InterventionDetailView`

@@ -44,6 +44,12 @@ _PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Mutations dont le repo écrit lui-même l'audit, dans la transaction et avec l'auteur du
+# jeton (AUD-04) : le middleware valide leur motif avant la route mais n'écrit plus après,
+# sinon chaque champ serait tracé deux fois. Toute autre mutation reste tracée ici.
+# (entity_type, méthode) : intervention_tasks PATCH et DELETE (le POST n'a pas d'id d'URL).
+_AUDITED_BY_REPO = frozenset({("task", "PATCH"), ("task", "DELETE")})
+
 # Champs ignorés dans le calcul du diff (méta-données techniques)
 _DIFF_IGNORE = frozenset(
     {"id", "created_at", "updated_at", "updated_by", "reason_code", "reason_text"}
@@ -58,6 +64,30 @@ def _extract_entity(path: str) -> Optional[Tuple[str, Optional[str]]]:
     resource, entity_id = m.groups()
     entity_type = _ENTITY_MAP.get(resource)
     return (entity_type, entity_id) if entity_type else None
+
+
+def _reason_refusal(
+    reason: Optional[Dict[str, Any]],
+    reason_code: str,
+    reason_text: Optional[str],
+    entity_type: str,
+) -> Optional[str]:
+    """Retourne le message de refus (français) d'un motif envoyé par un client, ou None si valide.
+
+    Contrôles faits avant la route (ADR 0017) : motif connu et actif, applicable à l'entité
+    (entity_types NULL = toutes les entités), texte libre pour OTHER, et motif de catégorie
+    system réservé aux traitements automatiques (jamais envoyé par un utilisateur).
+    """
+    if not reason or not reason.get("is_active"):
+        return f"Raison '{reason_code}' inconnue ou inactive"
+    if reason.get("category") == "system":
+        return f"Raison '{reason_code}' réservée aux traitements automatiques"
+    entity_types = reason.get("entity_types")
+    if entity_types is not None and entity_type not in entity_types:
+        return f"Raison '{reason_code}' non applicable à cette entité"
+    if reason_code == "OTHER" and not (isinstance(reason_text, str) and reason_text.strip()):
+        return "Un texte est obligatoire avec la raison 'OTHER'"
+    return None
 
 
 def _compute_diff(old: Dict[str, Any], new: Dict[str, Any]) -> Dict[str, Tuple[Any, Any]]:
@@ -129,14 +159,16 @@ class AuditMiddleware(BaseHTTPMiddleware):
             else:
                 repo = AuditRepository()
                 reason = repo.get_reason_by_code(reason_code)
-                if not reason or not reason.get("is_active"):
+                refusal = _reason_refusal(reason, reason_code, reason_text, entity_type)
+                if refusal:
                     return JSONResponse(
                         status_code=400,
-                        content={
-                            "detail": f"Raison '{reason_code}' inconnue ou inactive",
-                            "error_type": "ValidationError",
-                        },
+                        content={"detail": refusal, "error_type": "ValidationError"},
                     )
+
+        # ── Mutation déjà auditée par son repo : rien à écrire ici (AUD-04) ──
+        if (entity_type, request.method) in _AUDITED_BY_REPO:
+            return await call_next(request)
 
         # ── Snapshot avant mutation (PATCH / PUT / DELETE avec UUID uniquement) ──
         old_state: Dict[str, Any] = {}
@@ -228,7 +260,15 @@ def _write_audit_log(
         )
     except Exception as exc:
         # L'audit ne doit jamais faire échouer la réponse métier
-        logger.error("AuditMiddleware — échec insertion log : %s", exc)
+        # Le détail reste dans les logs, jamais vers le client
+        logger.error(
+            "AuditMiddleware — échec écriture audit : entité=%s id=%s motif=%s décision=%s : %s",
+            entity_type,
+            entity_id_str,
+            reason_code,
+            decision_type,
+            exc,
+        )
 
 
 async def _fetch_entity_state(entity_type: str, entity_id_str: str) -> Dict[str, Any]:

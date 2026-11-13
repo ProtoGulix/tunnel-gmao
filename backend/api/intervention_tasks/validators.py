@@ -44,8 +44,8 @@ def ensure_explicit_close_reason(
     la demande de motif standard. `reasons` = motifs actifs de l'entité task ; seuls ceux
     dont decision_types contient le décideur du bouton (task_done ou task_skipped) sont
     proposés et acceptés, un decision_types NULL est exclu (ADR 0016).
-    Le middleware ne contrôle ni l'entité du motif ni le texte de OTHER, et
-    fn_audit_log_decision avale ses erreurs : ces deux règles se vérifient ici.
+    Le middleware valide déjà le motif (ADR 0017) ; le filtre par bouton, propre à ce
+    passage direct, ne peut se vérifier qu'ici.
     """
     decision = _CLOSE_DECISIONS[target_status]
     proposed = [r for r in reasons if decision in (r.get("decision_types") or [])]

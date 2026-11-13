@@ -143,7 +143,7 @@ def create_request(
 
 
 @router.post("/{request_id}/transition")
-def transition_request_status(request_id: UUID, body: StatusTransitionIn):
+def transition_request_status(request_id: UUID, body: StatusTransitionIn, request: Request):
     """
     Effectue une transition de statut sur une demande.
 
@@ -189,6 +189,7 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn):
             intervention_data=intervention_data,
             reason_code=body.reason_code,
             reason_text=body.reason_text,
+            audit_user_id=str(getattr(request.state, "user_id", None) or "") or None,
         )
     )
 
@@ -205,7 +206,7 @@ def delete_request(request_id: UUID):
 
 
 @router.post("/repair")
-def repair_orphaned_requests():
+def repair_orphaned_requests(request: Request):
     """
     Passe à `cloturee` toutes les DIs en statut `acceptee` dont l'intervention
     liée est déjà fermée.
@@ -214,4 +215,8 @@ def repair_orphaned_requests():
     automatique n'a pas été déclenchée.
     Idémpotent.
     """
-    return single(repo.repair_orphaned_requests())
+    return single(
+        repo.repair_orphaned_requests(
+            audit_user_id=str(getattr(request.state, "user_id", None) or "") or None
+        )
+    )

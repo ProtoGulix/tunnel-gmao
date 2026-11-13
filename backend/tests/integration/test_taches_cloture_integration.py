@@ -13,12 +13,15 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
+# Motif explicite, valable pour demande, intervention, tâche et action (audit_rule seed).
+RAISON = "ROUTINE"
+
 TEXTE = "Travail fait, constaté en réunion de coordination"
 
 
 def _intervention(client, admin, instance, plan_id=None):
     """Crée équipement, demande et intervention ; renvoie intervention_id."""
-    raison = instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    raison = RAISON
     equipement = client.post("/equipements", json={"name": "Presse test"}, headers=admin.headers)
     machine_id = equipement.json().get("data", equipement.json())["id"]
     demande = client.post(
@@ -107,8 +110,8 @@ def _cloturer(client, account_headers, task_id, **kwargs):
 def _audits(instance, task_id):
     """Entrées d'audit distinctes du changement de statut (texte, auteur).
 
-    Le repo et le middleware écrivent chacun leur ligne (docs/backlog/
-    audit-taches-double-ecriture.md) : toutes doivent porter la raison et l'auteur."""
+    Le repo écrit une ligne par champ (AUD-04, ADR 0017) : elle doit porter la raison
+    et l'auteur."""
     rows = instance.sql(
         "SELECT reason_text, changed_by::text FROM audit_log "
         "WHERE entity_id = %s AND decision_type = 'status_changed'",
@@ -282,7 +285,7 @@ def test_resp_cloture_une_tache_en_cours_qui_a_une_action(client, admin, instanc
     intervention_id = _intervention(client, admin, instance)
     task_id = _tache(instance, intervention_id)
     resp = make_user("RESP")
-    raison = instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    raison = RAISON
     sous_categorie = instance.sql("SELECT id FROM action_subcategory LIMIT 1")[0][0]
     action = client.post(
         "/intervention-actions",

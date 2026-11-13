@@ -23,11 +23,17 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
-| à planifier | Backlog audit et erreurs relevé pendant CLO | à créer | voir Prochaine action |
+| à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
 Onglet Tâches (ADR 0015) : fusionné dans develop le 2026-11-13, après validation à
 l'écran par l'utilisateur, check.sh et test-integration.sh verts, reviewer APPROUVÉ.
+
+Intégrité de l'audit (ADR 0017, fiches AUD-01 à AUD-05) : fusionnée dans develop le
+2026-11-13, check.sh et test-integration.sh (107) verts, reviewer APPROUVÉ. Migration
+0006 jouée sur la base de dev le 2026-11-13 avec l'accord de l'utilisateur (bootstrap,
+révision 0006_audit_erreurs_visibles vérifiée). Production : à jouer à sa prochaine
+mise à jour, avec les motifs de clôture (backlog motifs-cloture-bases-existantes.md).
 
 Clôture en coordination (ADR 0016, fiches CLO-01 à CLO-06) : fusionnée dans develop le
 2026-11-13, après validation à l'écran par l'utilisateur, check.sh et
@@ -36,11 +42,12 @@ et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.
 
 ## Tâches
 
-Aucune fiche ouverte. Fiches closes du chantier CLO : docs/taches/CLO-01 à CLO-06.
+Aucune fiche ouverte. Fiches closes : CLO-01 à CLO-06, AUD-01 à AUD-05.
 
 ## Dernière décision
 
-2026-11-13 : tout changement hors travail normal passe par les règles d'audit du système
+2026-11-13 : l'audit est validé avant la mutation et ses erreurs ne sont plus masquées
+(ADR 0017). Avant : tout changement hors travail normal passe par les règles d'audit du système
 (CLAUDE.md section 2.4) ; clôture des tâches en coordination (ADR 0016).
 Avant : fusionné dans develop (05f7cd0), alignement de CLAUDE.md sur le schéma de pilotage éprouvé sur les projets
 pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle des
@@ -48,12 +55,14 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-1. Plan du backlog relevé pendant CLO, à soumettre à l'utilisateur.
-2. Demandé par l'utilisateur le 2026-11-13, à traiter test d'abord (un test qui échoue
-   avant le correctif) : (a) fn_audit_log_decision avale ses erreurs
-   (docs/backlog/audit-erreurs-avalees.md, migration soumise à accord) ; (b) remettre à
-   faire une tâche close ou annulée est une correction hors travail normal : motif
-   d'audit exigé (CLAUDE.md section 2.4).
+1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
+   correctifs de l'ADR 0017.
+2. Chantier changements hors travail normal, décisions de l'utilisateur du 2026-11-13 :
+   remettre à faire exige un motif (task_reopened : « Clôturée par erreur », « Travail à
+   reprendre », OTHER) ; nouveau motif de clôture task_done « Oubli de clôture à la
+   saisie » ; occurrence préventive ignorée par motif d'audit ; nettoyage du ROUTINE en
+   dur du mobile et de GammeProgressBlock ; une base de production existe (indisponible
+   pour l'instant) : migration de données idempotente pour tous les motifs.
 3. Archivage en masse : ouvrir le chantier (code ARCH), écrire la fiche ARCH-01 de cadrage
    (inventaire de l'existant : statut fermé, champs ou tables d'archive, routes, écrans,
    besoin d'ADR, de migration ou d'écriture en base, ces deux dernières soumises à l'accord

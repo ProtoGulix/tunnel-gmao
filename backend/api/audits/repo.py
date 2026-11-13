@@ -108,7 +108,7 @@ class AuditRepository:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, code, label, category, color, description, is_active
+                    SELECT id, code, label, category, entity_types, color, description, is_active
                     FROM audit_reason_code
                     WHERE code = %s
                     """,
@@ -283,7 +283,8 @@ class AuditRepository:
         """
         Appelle fn_audit_log_decision() en base.
         La DB valide la raison, les contraintes métier, et insère le log.
-        Retourne l'UUID du log créé, ou None si la fonction DB a retourné NULL.
+        Retourne l'UUID du log créé ; une règle non respectée lève une erreur depuis la
+        migration 0006 (ADR 0017), la fonction ne renvoie plus NULL.
         """
         conn = None
         try:

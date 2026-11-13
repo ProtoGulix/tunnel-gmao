@@ -27,38 +27,31 @@ def _audit_task(
     reason_text: Optional[str] = None,
 ) -> None:
     """Insère une entrée d'audit pour une tâche via fn_audit_log_decision().
-    Les erreurs sont loggées mais n'interrompent jamais la mutation métier.
+
+    Appelée dans la transaction de la mutation : une erreur remonte à l'appelant, qui
+    annule alors toute la mutation (ADR 0017 point 3). Aucune trace ne doit manquer.
     """
-    try:
-        cur.execute("SAVEPOINT _audit_sp")
-        cur.execute(
-            """
-            SELECT public.fn_audit_log_decision(
-                %s::varchar, %s::uuid, %s::varchar,
-                %s::jsonb, %s::jsonb,
-                %s::varchar, %s::text,
-                %s::uuid, %s::boolean
-            )
-            """,
-            (
-                "task",
-                task_id,
-                decision_type,
-                json.dumps(old_value) if old_value is not None else None,
-                json.dumps(new_value) if new_value is not None else None,
-                reason_code,
-                reason_text,
-                changed_by,
-                is_system,
-            ),
+    cur.execute(
+        """
+        SELECT public.fn_audit_log_decision(
+            %s::varchar, %s::uuid, %s::varchar,
+            %s::jsonb, %s::jsonb,
+            %s::varchar, %s::text,
+            %s::uuid, %s::boolean
         )
-        cur.execute("RELEASE SAVEPOINT _audit_sp")
-    except Exception as exc:
-        logger.error("audit_task(%s, %s) : %s", task_id, decision_type, exc)
-        try:
-            cur.execute("ROLLBACK TO SAVEPOINT _audit_sp")
-        except Exception:
-            pass
+        """,
+        (
+            "task",
+            task_id,
+            decision_type,
+            json.dumps(old_value) if old_value is not None else None,
+            json.dumps(new_value) if new_value is not None else None,
+            reason_code,
+            reason_text,
+            changed_by,
+            is_system,
+        ),
+    )
 
 
 _TASK_SELECT = """
@@ -424,7 +417,8 @@ class InterventionTaskRepository:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT status, intervention_id, label, assigned_to, due_date, sort_order, skip_reason
+                SELECT status, intervention_id, label, assigned_to, due_date, sort_order, skip_reason,
+                       closed_by
                 FROM intervention_task WHERE id = %s
                 """,
                 (task_id,),
@@ -441,6 +435,7 @@ class InterventionTaskRepository:
                 old_due_date,
                 old_sort,
                 old_skip,
+                old_closed_by,
             ) = row
             self._ensure_intervention_editable(cur, str(intervention_id))
 
@@ -463,6 +458,11 @@ class InterventionTaskRepository:
                 if data.status in ("done", "skipped"):
                     set_parts.append("closed_by = %s")
                     params.append(closed_by)
+                    # Le repo est la seule source d'audit d'une tâche (AUD-04) : closed_by,
+                    # que le middleware tracait aussi, reste donc tracé ici.
+                    if str(closed_by or "") != str(old_closed_by or ""):
+                        old_vals["closed_by"] = str(old_closed_by) if old_closed_by else None
+                        new_vals["closed_by"] = str(closed_by) if closed_by else None
             if data.skip_reason is not None and data.skip_reason != old_skip:
                 set_parts.append("skip_reason = %s")
                 params.append(data.skip_reason)
@@ -515,7 +515,7 @@ class InterventionTaskRepository:
                 params,
             )
 
-            # Un log par champ modifié pour granularité (cohérent avec AuditMiddleware)
+            # Un log par champ modifié pour granularité (source unique, AUD-04)
             for field in old_vals:
                 _audit_task(
                     cur,
