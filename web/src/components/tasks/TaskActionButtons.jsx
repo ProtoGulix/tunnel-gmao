@@ -15,6 +15,8 @@
  * Visibilité : masqués par défaut, révélés au survol du parent via `visible`.
  * Quand un statut terminal est actif (done/skipped), le bouton actif reste visible.
  * Suppression : compte à rebours 10s avant envoi, annulable.
+ * Erreurs : le message de l'API est remonté par `onError(message)` (ADR 0015).
+ * `canSkip=false` masque « Ignorer » (étape de gamme obligatoire, voir canSkipTask).
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -22,6 +24,7 @@ import PropTypes from 'prop-types';
 import { Flex, IconButton, Spinner } from '@radix-ui/themes';
 import { Ban, Check, RotateCcw, Trash2 } from 'lucide-react';
 import { patchInterventionTask, deleteInterventionTask } from '@/api/interventionTasks';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 const COUNTDOWN = 5;
 
@@ -31,8 +34,10 @@ export default function TaskActionButtons({
   visible,
   mode = 'form',
   canDelete = false,
+  canSkip = true,
   onStatusChange,
   onDeleted,
+  onError,
 }) {
   const [deleting, setDeleting]       = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
@@ -52,7 +57,11 @@ export default function TaskActionButtons({
     if (mode === 'live') {
       setSavingStatus(true);
       try { await patchInterventionTask(taskId, { status: newStatus, ...extra }); }
-      catch { setSavingStatus(false); return; }
+      catch (err) {
+        setSavingStatus(false);
+        onError?.(extractApiErrorMessage(err, 'Impossible de modifier la tâche'));
+        return;
+      }
       setSavingStatus(false);
     }
     onStatusChange?.(taskId, newStatus);
@@ -89,8 +98,9 @@ export default function TaskActionButtons({
     try {
       await deleteInterventionTask(taskId);
       onDeleted?.(taskId);
-    } catch { /* silencieux */ }
-    finally { setDeleting(false); }
+    } catch (err) {
+      onError?.(extractApiErrorMessage(err, 'Impossible de supprimer la tâche'));
+    } finally { setDeleting(false); }
   }
 
   const show = visible || hasStatus || countdown !== null;
@@ -141,11 +151,13 @@ export default function TaskActionButtons({
               <Check size={12} strokeWidth={3} />
             </IconButton>
           )}
-          <IconButton size="1" color="amber" variant="soft" type="button" title="Ignorer"
-            onClick={() => (mode === 'live' ? setSkipReasonDraft('') : handleStatusChange('skipped'))}
-          >
-            <Ban size={12} strokeWidth={3} />
-          </IconButton>
+          {canSkip && (
+            <IconButton size="1" color="amber" variant="soft" type="button" title="Ignorer"
+              onClick={() => (mode === 'live' ? setSkipReasonDraft('') : handleStatusChange('skipped'))}
+            >
+              <Ban size={12} strokeWidth={3} />
+            </IconButton>
+          )}
         </Flex>
       )}
 
@@ -183,6 +195,8 @@ TaskActionButtons.propTypes = {
   visible:        PropTypes.bool,
   mode:           PropTypes.oneOf(['form', 'live']),
   canDelete:      PropTypes.bool,
+  canSkip:        PropTypes.bool,
+  onError:        PropTypes.func,
   onStatusChange: PropTypes.func,
   onDeleted:      PropTypes.func,
 };

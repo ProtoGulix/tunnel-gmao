@@ -13,6 +13,8 @@ import { searchOpenInterventions } from '@/api/interventions';
 import { InterventionCreatorLeft } from '@/components/planning/InterventionSelector';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 import TaskActionButtons from '@/components/tasks/TaskActionButtons';
+import { canSkipTask } from '@/components/tasks/taskUtils';
+import { usePermissions } from '@/auth/usePermissions';
 import EquipementSearch from '@/components/planning/EquipementSearch';
 
 /* ── Constantes ─────────────────────────────────────────────────────────── */
@@ -101,6 +103,7 @@ function useTaskSearch(query) {
 
 function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelete, onTaskActionStatusChange, onSkipReasonChange }) {
   const [hovered, setHovered] = useState(false);
+  const { canSkipObligatory } = usePermissions();
 
   const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
 
@@ -149,6 +152,7 @@ function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelet
             visible={hovered}
             mode="form"
             canDelete={canDelete}
+            canSkip={canSkipTask(task, canSkipObligatory)}
             onStatusChange={onTaskActionStatusChange}
             onDeleted={onDelete}
           />

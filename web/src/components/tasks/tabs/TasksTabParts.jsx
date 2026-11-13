@@ -80,10 +80,10 @@ export function TasksFilters({ status, setStatus, origin, setOrigin, assignee, s
         <Select.Trigger placeholder="Tous les statuts" variant={status ? 'soft' : 'surface'} color={status ? 'blue' : undefined} />
         <Select.Content>
           <Select.Item value="__all__">Tous les statuts</Select.Item>
-          <Select.Item value="todo">En attente</Select.Item>
+          <Select.Item value="todo">À faire</Select.Item>
           <Select.Item value="in_progress">En cours</Select.Item>
-          <Select.Item value="done">Validees</Select.Item>
-          <Select.Item value="skipped">Ignorees</Select.Item>
+          <Select.Item value="done">Terminé</Select.Item>
+          <Select.Item value="skipped">Ignoré</Select.Item>
         </Select.Content>
       </Select.Root>
 

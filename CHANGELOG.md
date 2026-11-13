@@ -28,6 +28,18 @@ mobile/CHANGELOG.md.
   page Interventions (ADR 0014). Les anciennes adresses, dont les QR codes des fiches
   déjà imprimées, ouvrent l'intervention dans cette page. Les liens du préventif, des
   demandes, des demandes d'achat, de l'accueil et des notifications y mènent aussi.
+- L'onglet Tâches d'une intervention reprend la présentation de la page Coordination :
+  une ligne par tâche avec une barre de couleur selon l'état, l'état, le libellé, la
+  personne affectée et l'échéance, modifiables d'un clic. Les boutons Ignorer et
+  Supprimer apparaissent au survol. Une tâche se crée avec la ligne « Ajouter une
+  tâche… ». L'onglet est en lecture seule sur une intervention fermée ou sans droit de
+  modification. Les états s'appellent partout À faire, En cours, Terminé et Ignoré.
+
+### Coordination
+- Le statut d'une tâche n'est plus cliquable : le clic « À faire » / « En cours » ne
+  fonctionnait pas. Une tâche passe « En cours » ou « Terminé » par une action.
+- Quand une modification échoue (affectation, échéance, ignorer, supprimer), le
+  message de l'application s'affiche au lieu de ne rien dire.
 
 ### Droits
 - Ignorer une étape obligatoire d'une gamme est réservé aux responsables et aux
