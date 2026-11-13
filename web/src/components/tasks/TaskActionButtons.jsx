@@ -14,7 +14,9 @@
  *
  * Visibilité : masqués par défaut, révélés au survol du parent via `visible`.
  * Quand un statut terminal est actif (done/skipped), le bouton actif reste visible.
- * Suppression : compte à rebours 10s avant envoi, annulable.
+ * Ignorer (live) : envoie seulement {status: 'skipped'} ; le motif vient de la fenêtre
+ * d'audit (intercepteur auditGuard), skip_reason est rempli par le backend (ADR 0016).
+ * Suppression : compte à rebours de COUNTDOWN secondes (5) avant envoi, annulable.
  * Erreurs : le message de l'API est remonté par `onError(message)` (ADR 0015).
  * `canSkip=false` masque « Ignorer » (étape de gamme obligatoire, voir canSkipTask).
  */
@@ -42,7 +44,6 @@ export default function TaskActionButtons({
   const [deleting, setDeleting]       = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
   const [countdown, setCountdown]     = useState(null); // null = inactif, 0..N = en cours
-  const [skipReasonDraft, setSkipReasonDraft] = useState(null); // null = pas en saisie, string = motif en cours
   const timerRef = useRef(null);
 
   const isDone    = status === 'done';
@@ -53,24 +54,19 @@ export default function TaskActionButtons({
   // Nettoyage à l'unmount
   useEffect(() => () => clearInterval(timerRef.current), []);
 
-  async function handleStatusChange(newStatus, extra = {}) {
+  async function handleStatusChange(newStatus) {
     if (mode === 'live') {
       setSavingStatus(true);
-      try { await patchInterventionTask(taskId, { status: newStatus, ...extra }); }
+      try { await patchInterventionTask(taskId, { status: newStatus }); }
       catch (err) {
         setSavingStatus(false);
+        if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien à signaler
         onError?.(extractApiErrorMessage(err, 'Impossible de modifier la tâche'));
         return;
       }
       setSavingStatus(false);
     }
     onStatusChange?.(taskId, newStatus);
-  }
-
-  function confirmSkip() {
-    if (!skipReasonDraft?.trim()) return;
-    handleStatusChange('skipped', { skip_reason: skipReasonDraft.trim() });
-    setSkipReasonDraft(null);
   }
 
   function startDeleteCountdown() {
@@ -123,22 +119,6 @@ export default function TaskActionButtons({
         >
           <RotateCcw size={12} strokeWidth={3} />
         </IconButton>
-      ) : skipReasonDraft !== null ? (
-        <Flex gap="1" align="center" onClick={(e) => e.stopPropagation()}>
-          <input
-            autoFocus
-            value={skipReasonDraft}
-            onChange={(e) => setSkipReasonDraft(e.target.value)}
-            placeholder="Motif requis…"
-            onKeyDown={(e) => { if (e.key === 'Enter' && skipReasonDraft.trim()) confirmSkip(); if (e.key === 'Escape') setSkipReasonDraft(null); }}
-            style={{ width: 120, fontSize: 11, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--amber-7)' }}
-          />
-          <IconButton size="1" color="amber" variant="soft" type="button" title="Confirmer" disabled={!skipReasonDraft.trim()}
-            onClick={confirmSkip}
-          >
-            <Check size={12} strokeWidth={3} />
-          </IconButton>
-        </Flex>
       ) : (
         <Flex gap="2" align="center">
           {/* "Marquer terminée" n'existe qu'en mode form : le statut 'done' choisi
@@ -153,7 +133,7 @@ export default function TaskActionButtons({
           )}
           {canSkip && (
             <IconButton size="1" color="amber" variant="soft" type="button" title="Ignorer"
-              onClick={() => (mode === 'live' ? setSkipReasonDraft('') : handleStatusChange('skipped'))}
+              onClick={() => handleStatusChange('skipped')}
             >
               <Ban size={12} strokeWidth={3} />
             </IconButton>

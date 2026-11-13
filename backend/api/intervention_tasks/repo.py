@@ -24,6 +24,7 @@ def _audit_task(
     reason_code: str,
     changed_by: Optional[str] = None,
     is_system: bool = False,
+    reason_text: Optional[str] = None,
 ) -> None:
     """Insère une entrée d'audit pour une tâche via fn_audit_log_decision().
     Les erreurs sont loggées mais n'interrompent jamais la mutation métier.
@@ -46,7 +47,7 @@ def _audit_task(
                 json.dumps(old_value) if old_value is not None else None,
                 json.dumps(new_value) if new_value is not None else None,
                 reason_code,
-                None,
+                reason_text,
                 changed_by,
                 is_system,
             ),
@@ -524,6 +525,10 @@ class InterventionTaskRepository:
                     {field: new_vals[field]},
                     data.reason_code,
                     closed_by,
+                    # La raison saisie (clôture en coordination, ADR 0016) doit figurer
+                    # sur chaque ligne d'audit de la mutation, pas seulement sur celles
+                    # du middleware.
+                    reason_text=data.reason_text,
                 )
 
             conn.commit()

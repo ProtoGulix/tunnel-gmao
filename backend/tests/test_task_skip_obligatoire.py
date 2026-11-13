@@ -33,6 +33,19 @@ def patches(monkeypatch):
             return {**etat["tache"], "status": data.status}
 
     monkeypatch.setattr(task_routes, "InterventionTaskRepository", _FauxRepo)
+    # La route lit les motifs en base pour contrôler le motif explicite : motif OTHER fixe
+    monkeypatch.setattr(
+        task_routes,
+        "list_entity_reasons",
+        lambda entity: [
+            {
+                "code": "OTHER",
+                "label": "Autre raison",
+                "category": "user",
+                "decision_types": ["task_done", "task_skipped"],
+            }
+        ],
+    )
     return recus, etat
 
 

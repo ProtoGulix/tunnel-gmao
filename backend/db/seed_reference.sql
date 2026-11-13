@@ -160,7 +160,7 @@ INSERT INTO public.audit_reason_code VALUES (6, 'TECHNICIAN_UNAVAILABLE', 'Techn
 INSERT INTO public.audit_reason_code VALUES (7, 'SUPPLIER_DELAY', 'Délai fournisseur', 'manual', '{purchase_request}', NULL, '#f97316', 'Dépassement délai', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (8, 'PRIORITY_BOOST', 'Accélération demandée', 'manual', '{intervention,task}', NULL, '#06b6d4', 'Nécessite plus vite', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (9, 'RESOURCE_CONSTRAINT', 'Contrainte ressource', 'manual', '{task,intervention}', NULL, '#a855f7', 'Manque de ressource', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.audit_reason_code VALUES (11, 'LEGACY_STATUS_CHANGE', 'Changement historique', 'manual', NULL, NULL, '#d1d5db', 'Logs migrés depuis les anciennes tables de statut', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.audit_reason_code VALUES (11, 'LEGACY_STATUS_CHANGE', 'Changement historique', 'manual', NULL, NULL, '#d1d5db', 'Logs migrés depuis les anciennes tables de statut', false, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (12, 'TASK_CREATED', 'Tâche créée', 'system', '{task}', NULL, '#10b981', 'Création automatique ou manuelle d''une tâche', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (13, 'TASK_UPDATED', 'Tâche modifiée', 'system', '{task}', NULL, '#6366f1', 'Modification d''un champ de la tâche (label, date, affectation…)', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (14, 'TASK_STATUS', 'Changement de statut tâche', 'system', '{task}', NULL, '#f59e0b', 'Transition de statut : todo → in_progress → done / skipped', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
@@ -168,7 +168,7 @@ INSERT INTO public.audit_reason_code VALUES (15, 'TASK_DELETED', 'Tâche supprim
 INSERT INTO public.audit_reason_code VALUES (17, 'PLANNING_CHANGE', 'Changement de planning', 'user', '{task}', NULL, '#3b82f6', 'La date ou le technicien a ete modifie suite a une reorganisation du planning', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (18, 'TECH_UNAVAILABLE', 'Technicien indisponible', 'user', '{task}', NULL, '#f97316', 'Le technicien assigne nest plus disponible (absence, surcharge)', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (19, 'PRIORITY_CHANGE', 'Changement de priorite', 'user', '{task}', NULL, '#8b5cf6', 'La tache est reprogrammee ou reassignee suite a une nouvelle priorite', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.audit_reason_code VALUES (10, 'OTHER', 'Autre raison', 'user', '{task,request,purchase_request,intervention}', NULL, '#9ca3af', 'À justifier en texte libre', true, '2026-05-18 09:20:59.449181+00', '2026-07-24 04:49:31.671453+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.audit_reason_code VALUES (10, 'OTHER', 'Autre raison', 'user', '{task,request,purchase_request,intervention}', '{task_done,task_skipped}', '#9ca3af', 'À justifier en texte libre', true, '2026-05-18 09:20:59.449181+00', '2026-07-24 04:49:31.671453+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (16, 'ROUTINE', 'Opération courante', 'auto', '{task,action,request,intervention,purchase_request,supplier_order}', NULL, '#94a3b8', 'Envoyée silencieusement par le front pour les mutations courantes (création tâche, saisie action). Jamais affichée à l''utilisateur.', true, '2026-05-18 15:24:14.768244+00', '2026-05-18 15:24:14.768244+00') ON CONFLICT DO NOTHING;
 
 
@@ -314,3 +314,16 @@ SELECT setval(pg_get_serial_sequence('public.anomaly_threshold','id'), COALESCE(
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
 SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
 SELECT setval(pg_get_serial_sequence('public.equipement_statuts','id'), COALESCE(MAX(id),0)+1, false) FROM public.equipement_statuts;
+
+--
+-- Motifs de clôture ou d'annulation d'une tâche sans action (ADR 0016), proposés dans
+-- le choix de motif d'audit. decision_types : task_done pour Terminé, task_skipped pour
+-- Annuler et Ignorer ; seuls les motifs qui portent la valeur sont proposés. Identifiant calculé et ON CONFLICT (code) : idempotent,
+-- sans collision avec les motifs ajoutés depuis l'administration.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_DONE_UNRECORDED', 'Réalisée sans action saisie', 'user', '{task}', '{task_done}', '#16a34a', 'Le travail a été fait mais aucune action n''a été saisie ; constaté en réunion de coordination.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_HANDLED_ELSEWHERE', 'Traitée dans une autre intervention', 'user', '{task}', '{task_done,task_skipped}', '#0ea5e9', 'Le besoin a été traité par une autre intervention ou une autre tâche.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_NO_LONGER_NEEDED', 'Plus nécessaire', 'user', '{task}', '{task_skipped}', '#d97706', 'Le besoin a disparu : situation résolue, équipement remplacé ou arrêté.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_DUPLICATE', 'Doublon', 'user', '{task}', '{task_skipped}', '#6b7280', 'La même tâche existe déjà.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;

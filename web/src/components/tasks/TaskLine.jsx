@@ -3,7 +3,8 @@
  *
  * Barre de couleur selon le statut, statut, libellé (barré si terminé ou ignoré) et
  * badge « Optionnelle » le cas échéant,
- * boutons d'action au survol, affectation, échéance.
+ * boutons « Terminé » et « Annuler » toujours visibles pour RESP et ADMIN (ADR 0016),
+ * autres boutons d'action au survol, affectation, échéance.
  * Lecture seule si `readOnly` (intervention fermée) ou sans droit de modifier les tâches.
  */
 
@@ -18,7 +19,8 @@ import TaskStatusBadge from './TaskStatusBadge';
 import TaskAssignCell from './TaskAssignCell';
 import TaskDueDateCell from './TaskDueDateCell';
 import TaskActionButtons from './TaskActionButtons';
-import { canSkipTask } from './taskUtils';
+import TaskCloseButtons from './TaskCloseButtons';
+import { canCloseTask, canDeleteTask, canSkipTask } from './taskUtils';
 
 function TaskLabel({ task }) {
   const finished = task.status === 'done' || task.status === 'skipped';
@@ -41,11 +43,12 @@ function TaskLabel({ task }) {
 TaskLabel.propTypes = { task: PropTypes.object.isRequired };
 
 function useTaskRights(task, readOnly) {
-  const { can, canSkipObligatory } = usePermissions();
+  const { can, canSkipObligatory, isElevated } = usePermissions();
   return {
     locked: readOnly || !can(PERM.interventions.updateTask),
     canSkip: canSkipTask(task, canSkipObligatory),
-    canDelete: can(PERM.interventions.removeTask) && (task.action_count ?? task.actions?.length ?? 0) === 0,
+    canDelete: canDeleteTask(task, can(PERM.interventions.removeTask)),
+    canClose: canCloseTask(task.status, isElevated),
   };
 }
 
@@ -54,7 +57,7 @@ export default function TaskLine({
   onSaved, onStatusChange, onDeleted, onError,
 }) {
   const [hovered, setHovered] = useState(false);
-  const { locked, canSkip, canDelete } = useTaskRights(task, readOnly);
+  const { locked, canSkip, canDelete, canClose } = useTaskRights(task, readOnly);
   const cellProps = { taskId: task.id, onSaved, onError, readOnly: locked };
 
   return (
@@ -66,6 +69,9 @@ export default function TaskLine({
     >
       <TaskStatusBadge status={task.status} />
       <TaskLabel task={task} />
+      {!locked && canClose && (
+        <TaskCloseButtons taskId={task.id} onStatusChange={onStatusChange} onError={onError} />
+      )}
       {!locked && (
         <TaskActionButtons
           taskId={task.id}

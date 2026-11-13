@@ -83,10 +83,12 @@ def register_error_handlers(app: FastAPI):
     # Handler pour les erreurs de validation (400)
     @app.exception_handler(ValidationError)
     async def validation_error_handler(request: Request, exc: ValidationError):
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": exc.detail, "error_type": "ValidationError"},
-        )
+        content = {"detail": exc.detail, "error_type": "ValidationError"}
+        # AuditReasonRequiredError porte la demande de motif (champ `audit`)
+        audit = getattr(exc, "audit", None)
+        if audit is not None:
+            content["audit"] = audit
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=content)
 
     # Handler pour les erreurs de validation Pydantic
     @app.exception_handler(RequestValidationError)

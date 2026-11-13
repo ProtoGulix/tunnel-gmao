@@ -86,7 +86,7 @@ class AuditRepository:
 
                 cur.execute(
                     f"""
-                    SELECT id, code, label, category, color, description
+                    SELECT id, code, label, category, color, description, decision_types
                     FROM audit_reason_code
                     WHERE {where_sql}
                     ORDER BY category, label

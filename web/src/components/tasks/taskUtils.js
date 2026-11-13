@@ -30,3 +30,17 @@ export function canSkipTask(task, canSkipObligatory) {
   if (canSkipObligatory) return true;
   return !(task?.origin === 'plan' && !task?.optional);
 }
+
+/**
+ * « Terminé » et « Annuler » directs (ADR 0016) : RESP et ADMIN, sur une tâche à faire
+ * ou en cours. Règle d'affichage seulement : le backend vérifie le rôle.
+ */
+export function canCloseTask(status, isElevated) {
+  return Boolean(isElevated) && (status === 'todo' || status === 'in_progress');
+}
+
+/** Supprimer n'est proposé que pour une tâche à faire sans aucune action liée. */
+export function canDeleteTask(task, hasRemoveRight) {
+  const actionCount = task?.action_count ?? task?.actions?.length ?? 0;
+  return Boolean(hasRemoveRight) && task?.status === 'todo' && actionCount === 0;
+}

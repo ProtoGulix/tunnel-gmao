@@ -22,7 +22,7 @@ Un seul dépôt (ADR 0002, 0006), installé par docker compose :
 1. L'action est l'unité de travail réel. Temps, complexité et pièces sont tracés au niveau des actions, pas des interventions.
 2. Terrain first. L'outil reflète le travail réel sans imposer de méthode. Un technicien doit pouvoir saisir en moins d'une minute.
 3. Sobriété. Pas d'ERP déguisé, pas de complexité inutile. Le code ennuyeux et explicite gagne toujours sur le code astucieux.
-4. Traçabilité fiable. On enregistre ce qui s'est réellement passé, et qui l'a fait. Une trace qu'on peut falsifier ne vaut rien (section 6).
+4. Traçabilité fiable. On enregistre ce qui s'est réellement passé, et qui l'a fait. Une trace qu'on peut falsifier ne vaut rien (section 6). Tout changement hors du travail normal (clôture, annulation, correction ou décision qui ne vient pas d'une action) passe par l'audit avec un motif choisi selon les règles d'audit du système (audit_rule, audit_reason_code, fenêtre de motif commune du front) : jamais de motif codé en dur, jamais de saisie de raison maison à côté de ce mécanisme. Un motif manquant s'ajoute aux données de référence, il ne se contourne pas.
 5. Les données appartiennent à l'entreprise qui les produit. Aucune collecte, aucune transmission vers l'extérieur.
 
 ## 3. Priorités, dans l'ordre

@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Text, TextField } from '@radix-ui/themes';
+import { Badge, Box, Button, Callout, Flex, Separator, Text } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle2, Circle, ClipboardCheck, ExternalLink, MinusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePermissions } from '@/auth/usePermissions';
@@ -140,8 +140,6 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
   const [loadState, setLoadState] = useState('idle');
   const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(null);
-  const [skipTarget, setSkipTarget] = useState(null);
-  const [skipReason, setSkipReason] = useState('');
 
   const loadData = useCallback(async () => {
     setLoadState('loading');
@@ -164,20 +162,18 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
 
   useEffect(() => { loadData(); }, [loadData, refreshKey]);
 
-  const handleSkip = async () => {
-    if (!skipTarget || !skipReason.trim()) return;
+  const handleSkip = async (task) => {
     try {
-      setSaving(skipTarget.id);
-      await patchInterventionTask(skipTarget.id, {
-        status: 'skipped',
-        skip_reason: skipReason.trim(),
-      });
+      setSaving(task.id);
+      // Le motif est demandé par la fenêtre d'audit standard (intercepteur API).
+      await patchInterventionTask(task.id, { status: 'skipped' });
       await loadData();
       onProgressUpdate?.();
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien à signaler
+      throw err;
     } finally {
       setSaving(null);
-      setSkipTarget(null);
-      setSkipReason('');
     }
   };
 
@@ -236,32 +232,13 @@ export default function GammeProgressBlock({ mode, interventionId, occurrenceId,
         <StepRow
           key={task.id}
           task={task}
-          onSkipOpen={(s) => { setSkipTarget(s); setSkipReason(''); }}
+          onSkipOpen={handleSkip}
           saving={saving}
           readOnly={readOnly}
           canSkipObligatory={canSkipObligatory}
         />
       ))}
 
-      {!readOnly && (
-        <AlertDialog.Root open={!!skipTarget} onOpenChange={(open) => { if (!open) { setSkipTarget(null); setSkipReason(''); } }}>
-          <AlertDialog.Content maxWidth="420px">
-            <AlertDialog.Title>Ignorer l&apos;étape</AlertDialog.Title>
-            <AlertDialog.Description>{skipTarget?.label}</AlertDialog.Description>
-            <Box mt="2">
-              <TextField.Root
-                value={skipReason}
-                onChange={(e) => setSkipReason(e.target.value)}
-                placeholder="Raison de l'exclusion…"
-              />
-            </Box>
-            <Flex gap="3" mt="4" justify="end">
-              <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-              <Button color="orange" disabled={!skipReason.trim()} onClick={handleSkip}>Ignorer</Button>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Root>
-      )}
     </Box>
   );
 }

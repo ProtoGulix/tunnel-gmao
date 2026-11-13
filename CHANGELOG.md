@@ -15,6 +15,18 @@ mobile/CHANGELOG.md.
   liées à une action) et la vue direction technique, sans recharger l'application.
 
 ### Interventions
+- Les responsables et administrateurs ont sur chaque tâche à faire ou en cours deux
+  boutons « Terminé » et « Annuler », toujours visibles (onglet Tâches et page
+  Coordination). Chacun demande un motif d'audit avant d'enregistrer, dans la même
+  fenêtre que les autres décisions ; quatre motifs sont ajoutés : « Réalisée sans
+  action saisie », « Traitée dans une autre intervention », « Plus nécessaire »,
+  « Doublon ». Chaque bouton ne propose que les motifs qui le concernent, réglables dans
+  l'administration. Le texte libre n'est demandé que pour « Autre raison ».
+  Le motif « Changement historique », réservé aux journaux repris de l'ancienne
+  version, n'est plus proposé dans les fenêtres de motif. Ignorer une tâche
+  passe aussi par cette fenêtre, sur le web comme sur le mobile, au lieu d'une saisie de
+  raison à part. Le bouton Supprimer
+  n'est proposé que pour une tâche à faire sans action.
 - L'en-tête du détail, dans le panneau de droite, est plus compact (ADR 0013). Statut
   et priorité deviennent des propriétés discrètes qu'on change d'un clic. La demande
   liée tient sur une ligne et ouvre l'onglet Demande. Le titre est plus grand et coupé

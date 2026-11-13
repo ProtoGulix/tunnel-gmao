@@ -99,9 +99,6 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
   const [validateMode, setValidateMode] = useState(false);
   const [validateDuration, setValidateDuration] = useState('0.25');
 
-  const [skipMode, setSkipMode] = useState(false);
-  const [skipReason, setSkipReason] = useState('');
-
   const actionButtonsDisabled = task.status === 'done' || task.status === 'skipped' || saving;
 
   useEffect(() => {
@@ -191,12 +188,13 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
   };
 
   const handleSkip = async () => {
-    await onPatchTask(task.id, {
-      status: 'skipped',
-      skip_reason: skipReason || null,
-    });
-    setSkipMode(false);
-    setSkipReason('');
+    // Le motif est demandé par la fenêtre d'audit standard (intercepteur API).
+    try {
+      await onPatchTask(task.id, { status: 'skipped' });
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien à signaler
+      throw err;
+    }
   };
 
   return (
@@ -333,10 +331,10 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
 
         <Flex direction="column" gap="2">
           <Flex gap="2" wrap="wrap">
-            <Button color="green" disabled={actionButtonsDisabled} onClick={() => { setValidateMode((prev) => !prev); setSkipMode(false); }}>
+            <Button color="green" disabled={actionButtonsDisabled} onClick={() => { setValidateMode((prev) => !prev); }}>
               Valider
             </Button>
-            <Button color="orange" disabled={actionButtonsDisabled} onClick={() => { setSkipMode((prev) => !prev); setValidateMode(false); }}>
+            <Button color="orange" disabled={actionButtonsDisabled} onClick={() => { setValidateMode(false); handleSkip(); }}>
               Ignorer
             </Button>
           </Flex>
@@ -351,15 +349,6 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
             </Flex>
           )}
 
-          {skipMode && (
-            <Flex align="end" gap="2" wrap="wrap">
-              <Box style={{ minWidth: 360 }}>
-                <Text size="1" color="gray" mb="1" style={{ display: 'block' }}>Motif</Text>
-                <TextField.Root value={skipReason} onChange={(event) => setSkipReason(event.target.value)} placeholder="Raison de l'ignorance" />
-              </Box>
-              <Button color="orange" onClick={handleSkip} disabled={saving}>Confirmer ignoree</Button>
-            </Flex>
-          )}
         </Flex>
       </Flex>
     </Box>

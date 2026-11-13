@@ -98,15 +98,22 @@ export function createTask({ interventionId, label, assignedTo, dueDate, optiona
 
 /**
  * Met à jour une tâche (statut, libellé, assignation, échéance...).
- * `skip_reason` obligatoire si `updates.status === 'skipped'` (validé côté
- * backend) — à fournir par l'appelant, jamais envoyer status=skipped sans.
+ *
+ * Un passage vers `skipped` ou `done` n'est pas une modification routinière :
+ * on n'envoie donc pas ROUTINE, c'est le backend qui répond 400 avec la liste
+ * des motifs (`error.data.audit.reasons`) ; l'appelant renvoie alors la
+ * requête avec `audit` = { reason_code, reason_text? }. Les autres
+ * modifications gardent ROUTINE.
  *
  * @param {string} taskId
  * @param {Object} updates
+ * @param {{ reason_code: string, reason_text?: string }} [audit] motif choisi
  * @returns {Promise<Object>} la tâche mise à jour
  */
-export function updateTask(taskId, updates) {
-  return client.patch(`/intervention-tasks/${taskId}`, { ...updates, reason_code: 'ROUTINE' })
+export function updateTask(taskId, updates, audit) {
+  const closing = updates.status === 'skipped' || updates.status === 'done'
+  const reason = audit ?? (closing ? {} : { reason_code: 'ROUTINE' })
+  return client.patch(`/intervention-tasks/${taskId}`, { ...updates, ...reason })
 }
 
 /**

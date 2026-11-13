@@ -51,28 +51,17 @@ def resolve_reason_code(entity_type: str, fields: List[str]) -> Optional[Dict[st
     return default_rule
 
 
-def get_audit_rules(entity_type: str, fields: Optional[List[str]] = None) -> AuditRules:
-    """Retourne les règles d'audit pour une entité (et optionnellement des champs).
-
-    - Catégories manual + user → affichées dans le picker front
-    - Catégorie auto            → envoyée silencieusement (jamais dans le picker)
-    - Catégorie system          → réservée aux mutations internes
-    """
+def list_entity_reasons(entity_type: str) -> List[Dict[str, Any]]:
+    """Motifs actifs applicables à une entité, toutes catégories confondues."""
     # Import lazy pour éviter la circularité éventuelle avec audits.repo
     from api.audits.repo import AuditRepository
 
-    required = entity_type in _ENTITIES_WITH_REQUIRED_AUDIT
+    return AuditRepository().get_all_reasons(active_only=True, entity_type=entity_type)
 
-    routine_rule = resolve_reason_code(entity_type, fields or [])
-    silent = routine_rule is not None
 
-    repo = AuditRepository()
-    raw_reasons: List[Dict[str, Any]] = repo.get_all_reasons(
-        active_only=True,
-        entity_type=entity_type,
-    )
-
-    reasons = [
+def build_picker_reasons(raw_reasons: List[Dict[str, Any]]) -> List[AuditRuleReason]:
+    """Motifs proposés à l'utilisateur : catégories manual et user seulement."""
+    return [
         AuditRuleReason(
             code=r["code"],
             label=r["label"],
@@ -82,6 +71,21 @@ def get_audit_rules(entity_type: str, fields: Optional[List[str]] = None) -> Aud
         for r in raw_reasons
         if r.get("category") in ("manual", "user")
     ]
+
+
+def get_audit_rules(entity_type: str, fields: Optional[List[str]] = None) -> AuditRules:
+    """Retourne les règles d'audit pour une entité (et optionnellement des champs).
+
+    - Catégories manual + user → affichées dans le picker front
+    - Catégorie auto            → envoyée silencieusement (jamais dans le picker)
+    - Catégorie system          → réservée aux mutations internes
+    """
+    required = entity_type in _ENTITIES_WITH_REQUIRED_AUDIT
+
+    routine_rule = resolve_reason_code(entity_type, fields or [])
+    silent = routine_rule is not None
+
+    reasons = build_picker_reasons(list_entity_reasons(entity_type))
 
     return AuditRules(
         required=required,
