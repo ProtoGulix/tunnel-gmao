@@ -24,7 +24,6 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
 | en cours, à fusionner | Onglet Tâches et composants de tâche partagés | feat/web-onglet-taches-coordination (7 commits) | ADR 0015 (sur la branche) |
-| en cours, sans fiche (docs, agent principal) | Pilotage : ETAT.md, fiches de tâche, contrôle des subagents | docs/pilotage-etat-taches | CLAUDE.md sections 7, 9, 11 |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
 Onglet Tâches : la branche contient un commit « retours de relecture », mais le verdict
@@ -37,7 +36,7 @@ Aucune fiche ouverte. Le format est dans docs/taches/README.md.
 
 ## Dernière décision
 
-2026-11-13 : alignement de CLAUDE.md sur le schéma de pilotage éprouvé sur les projets
+2026-11-13 : fusionné dans develop (05f7cd0), alignement de CLAUDE.md sur le schéma de pilotage éprouvé sur les projets
 pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle des
 subagents, format de compte rendu imposé aux agents).
 
