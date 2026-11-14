@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from api.audits.events import ReasonCodeField, injected_reason_code
 from api.equipements.schemas import EquipementDetail
 from api.intervention_requests.schemas import InterventionRequestListItem
 from api.intervention_status_log.schemas import InterventionStatusLogOut
@@ -67,8 +68,9 @@ class InterventionActionIn(BaseModel):
         default=None,
         description="Tâches à tagger/valider en même temps que cette action",
     )
-    reason_code: str = Field(
-        ...,
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
         description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(
@@ -127,8 +129,9 @@ class InterventionActionPatch(BaseModel):
         default=None,
         description="Tâches à tagger/valider/skipper sur cette action",
     )
-    reason_code: str = Field(
-        ...,
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
         description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(

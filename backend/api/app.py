@@ -16,6 +16,7 @@ from api.api_keys.routes import router as api_keys_router
 from api.audits.middleware import AuditMiddleware
 from api.audits.routes import router as audit_router
 from api.auth.middleware import JWTMiddleware
+from api.auth.permission_middleware import PermissionMiddleware
 from api.auth.permissions import enforce_permission_matrix
 from api.auth.routes import router as auth_router
 from api.changelog.routes import router as changelog_router
@@ -53,6 +54,7 @@ from api.stock_sub_families.routes import router as stock_sub_family_router
 from api.supplier_order_lines.routes import router as supplier_order_line_router
 from api.supplier_orders.routes import router as supplier_order_router
 from api.suppliers.routes import router as supplier_router
+from api.transaction import TransactionMiddleware
 from api.users.routes import router as user_router
 
 
@@ -139,8 +141,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app.add_middleware(SecurityHeadersMiddleware)
-
 # Inclusion des routes métier (PostgreSQL)
 app.include_router(intervention_router)
 app.include_router(intervention_action_router)
@@ -216,15 +216,32 @@ async def ping_endpoint():
     return "pong"
 
 
-# Middleware JWT (appliqué à toutes les routes sauf exceptions publiques)
-# Vérifie que le JWT Directus est valide et extrait user_id + role
-app.add_middleware(JWTMiddleware)
+# Ordre des middlewares. add_middleware insère EN TÊTE : le dernier ajouté est le plus
+# externe. On ajoute donc de l'intérieur vers l'extérieur, pour obtenir à l'exécution
+# (ADR 0018, point 2) :
+#   CORS → en-têtes de sécurité → JWT → droits → transaction → audit → route
+# Seul l'audit (BaseHTTPMiddleware) doit rester sous la transaction : un second
+# BaseHTTPMiddleware sous elle laisserait la route envoyer son corps et lancer ses tâches de
+# fond avant la validation (voir api/transaction.py). Les en-têtes de sécurité sont donc
+# au-dessus, ce qui les ajoute aussi aux réponses 401 et 403.
 
-# Middleware Audit — s'exécute après JWT (user_id disponible dans request.state)
+# Audit : le plus interne des trois, il écrit dans la transaction de la requête.
 app.add_middleware(AuditMiddleware)
 
-# Middleware CORS — ajouté en dernier = plus externe = enveloppe tout,
-# y compris les réponses d'erreur de JWTMiddleware
+# Transaction par requête : valide ou annule mutation et audit ensemble.
+app.add_middleware(TransactionMiddleware)
+
+# Droits (matrice de permissions) : refus 403 avant la validation du motif d'audit.
+app.add_middleware(PermissionMiddleware)
+
+# JWT (routes publiques exceptées) : extrait user_id et role, refuse 401 sinon.
+app.add_middleware(JWTMiddleware)
+
+# En-têtes de sécurité HTTP sur toutes les réponses, refus de JWT et des droits compris.
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS : ajouté en dernier = le plus externe, il enveloppe tout, y compris les
+# réponses d'erreur de JWT, des droits et de la transaction.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

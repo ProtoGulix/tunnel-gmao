@@ -75,11 +75,14 @@ def test_l_auteur_trace_est_celui_du_jeton_pas_technician_id(appels):
     assert appel["new_value"] == {"status": "en_cours"}
 
 
-def test_une_panne_de_l_audit_ne_casse_pas_la_reponse(monkeypatch, appels):
+def test_une_panne_de_l_audit_fait_echouer_la_requete(monkeypatch, appels):
+    """ADR 0018 : l'audit est garanti, sa panne n'est plus avalée (inverse l'ancienne
+    règle de l'ADR 0017) ; la transaction de requête annule alors l'écriture."""
+
     class _AuditEnPanne:
         def call_fn_audit_log_decision(self, **kwargs):
             raise RuntimeError("audit indisponible")
 
     monkeypatch.setattr(audit_middleware, "AuditRepository", _AuditEnPanne)
     client = make_client(status_routes.router, user_id=TOKEN_USER, role="TECH")
-    assert client.post("/intervention-status-log", json=CORPS_MOBILE).status_code == 201
+    assert client.post("/intervention-status-log", json=CORPS_MOBILE).status_code == 500

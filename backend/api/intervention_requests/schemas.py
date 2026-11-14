@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from api.audits.events import ReasonCodeField, injected_reason_code
 from api.constants import INTERVENTION_TYPE_IDS
 from api.equipements.schemas import EquipementListItem
 from api.intervention_tasks.schemas import InterventionTaskOut
@@ -33,8 +34,9 @@ class InterventionRequestIn(BaseModel):
     suggested_type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention suggéré (pré-remplit l'acceptation)"
     )
-    reason_code: str = Field(
-        ...,
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
         description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(
@@ -118,8 +120,9 @@ class StatusTransitionIn(BaseModel):
     reported_date: Optional[str] = Field(
         default=None, description="Date de signalement (YYYY-MM-DD)"
     )
-    reason_code: str = Field(
-        ...,
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
         description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(

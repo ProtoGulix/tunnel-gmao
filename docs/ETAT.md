@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-13
+Dernière mise à jour : 2026-11-14
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
@@ -23,6 +23,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| en cours | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 et 1 fusionnées le 2026-11-14, étape 2 à ouvrir | à créer (étape 2) | ADR 0018 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
@@ -42,11 +43,15 @@ et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.
 
 ## Tâches
 
-Aucune fiche ouverte. Fiches closes : CLO-01 à CLO-06, AUD-01 à AUD-05.
+Aucune fiche ouverte. Fiches closes : CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
-2026-11-13 : l'audit est validé avant la mutation et ses erreurs ne sont plus masquées
+2026-11-14 : une intervention vient toujours d'une demande ; la supprimer rouvre sa
+demande, l'UI propose la cascade ; les interventions sans demande d'avant la séparation
+restent telles quelles (AUDC-plan.md, décision 7, ADR à écrire à l'étape 2).
+Avant : 2026-11-13, audit centralisé dans le middleware, une transaction par requête (ADR 0018).
+Avant : 2026-11-13 : l'audit est validé avant la mutation et ses erreurs ne sont plus masquées
 (ADR 0017). Avant : tout changement hors travail normal passe par les règles d'audit du système
 (CLAUDE.md section 2.4) ; clôture des tâches en coordination (ADR 0016).
 Avant : fusionné dans develop (05f7cd0), alignement de CLAUDE.md sur le schéma de pilotage éprouvé sur les projets
@@ -55,6 +60,8 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Audit centralisé : suivi complet dans docs/taches/AUDC-plan.md (plan validé le
+   2026-11-13) et docs/taches/AUDC-routes.md (inventaire généré des 125 routes).
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
 2. Chantier changements hors travail normal, décisions de l'utilisateur du 2026-11-13 :

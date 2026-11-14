@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
+from api.utils.status_log import skip_request_status_log
 
 logger = logging.getLogger(__name__)
 
@@ -761,23 +762,23 @@ class PreventiveOccurrenceRepository:
                     req_row = cur.fetchone()
                     if req_row:
                         req_id, req_statut = str(req_row[0]), req_row[1]
-                        cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-                        cur.execute(
-                            "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
-                            (req_id,),
-                        )
-                        cur.execute(
-                            """
-                            INSERT INTO request_status_log
-                                (request_id, status_from, status_to, changed_by, notes)
-                            VALUES (%s, %s, 'cloturee', NULL, %s)
-                            """,
-                            (
-                                req_id,
-                                req_statut,
-                                "Clôture automatique — procédure de réparation (bug cascade fermeture)",
-                            ),
-                        )
+                        with skip_request_status_log(cur):
+                            cur.execute(
+                                "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
+                                (req_id,),
+                            )
+                            cur.execute(
+                                """
+                                INSERT INTO request_status_log
+                                    (request_id, status_from, status_to, changed_by, notes)
+                                VALUES (%s, %s, 'cloturee', NULL, %s)
+                                """,
+                                (
+                                    req_id,
+                                    req_statut,
+                                    "Clôture automatique — procédure de réparation (bug cascade fermeture)",
+                                ),
+                            )
                         requests_closed += 1
                         details.append(
                             f"Bug 2 : demande {req_id} → 'cloturee' (liée à l'occurrence {occ_id})"

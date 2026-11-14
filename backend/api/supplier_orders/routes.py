@@ -6,6 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.constants import SUPPLIER_ORDER_STATUS_CONFIG
 from api.supplier_orders.repo import SupplierOrderRepository
@@ -120,7 +121,10 @@ def delete_supplier_order(order_id: str):
     return {"message": f"Commande fournisseur {order_id} supprimée"}
 
 
-@router.post("/{order_id}/export/csv")
+@router.post(
+    "/{order_id}/export/csv",
+    dependencies=[audit("supplier_order", id_from_path="order_id", table="supplier_order")],
+)
 def export_supplier_order_csv(order_id: str):
     """
     Exporte une commande fournisseur en CSV (lignes sélectionnées uniquement).

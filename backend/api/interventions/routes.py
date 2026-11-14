@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.constants import INTERVENTION_TYPES
 from api.equipements.schemas import EquipementDetail
@@ -140,7 +141,11 @@ def get_intervention_actions(intervention_id: str, request: Request):
     return single(repo.get_by_intervention(intervention_id))
 
 
-@router.post("", status_code=201)
+@router.post(
+    "",
+    status_code=201,
+    dependencies=[audit("intervention", id_from_created=True, table="intervention")],
+)
 def create_intervention(data: InterventionCreate, request: Request):
     """
     Crée une nouvelle intervention.
@@ -151,7 +156,9 @@ def create_intervention(data: InterventionCreate, request: Request):
     payload = data.model_dump(exclude_none=True)
     InterventionValidator.validate_request_required(payload)
     repo = InterventionRepository()
-    return single(repo.add(payload))
+    created = repo.add(payload)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
 @router.put("/{intervention_id}")
@@ -211,7 +218,10 @@ def request_pointage(intervention_id: str, data: RequestPointageIn, request: Req
     return RequestPointageOut(created=created)
 
 
-@router.delete("/{intervention_id}")
+@router.delete(
+    "/{intervention_id}",
+    dependencies=[audit("intervention", id_from_path="intervention_id", table="intervention")],
+)
 def delete_intervention(intervention_id: str, request: Request):
     """Supprime une intervention"""
     repo = InterventionRepository()

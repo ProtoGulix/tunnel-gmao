@@ -77,6 +77,27 @@ mobile/CHANGELOG.md.
   action ou d'une tâche est annulée au lieu de passer sans trace.
 - Une tâche modifiée n'apparaît plus deux fois dans l'historique d'audit.
 
+### Traçabilité (ADR 0018, étape 1)
+- L'import CSV des demandes d'achat refonctionne : le fichier envoyé n'est plus altéré.
+- Une modification est enregistrée en une seule fois avec sa trace d'audit, ou pas du
+  tout : plus jamais de succès affiché pour une écriture perdue.
+- La création d'une intervention est inscrite dans l'historique d'audit.
+- Supprimer une intervention demande un motif, inscrit dans l'historique avec l'état
+  supprimé.
+- L'export CSV d'une commande et la transition d'une demande n'ajoutent plus de fausses
+  lignes « modifié » dans l'historique.
+- Un appel non connecté reçoit « non authentifié », un rôle sans le droit « interdit »,
+  avant toute demande de motif.
+
+### [interne] Audit centralisé (ADR 0018, étape 1)
+- Transaction par requête portée par un middleware ASGI (api/transaction.py) ; droits
+  vérifiés par un middleware avant la transaction ; auth hors transaction.
+- Déclaration d'audit par route (api/audits/declaration.py) et test de couverture ;
+  inventaire généré docs/taches/AUDC-routes.md.
+- Événements d'audit pour les repos (api/audits/events.py).
+- Exclusions temporaires : génération préventive et import CSV gardent leur succès
+  partiel jusqu'à l'étape 2.
+
 ### [interne] Audit (ADR 0017)
 - Migration 0006 : fn_audit_log_decision ne masque plus ses erreurs (retour arrière :
   `alembic downgrade 0005_affectation_residu`).

@@ -1,0 +1,193 @@
+"""Routes qui modifient sans déclaration d'audit (ADR 0018, point 3).
+
+Liste explicite, une entrée par (méthode, chemin). Catégories :
+  - TO_DO     : à traiter à l'étape indiquée (2, 3 ou 4) ; la catégorie doit se vider.
+  - EXCLUDED  : exclue définitivement, la raison est obligatoire.
+  - NO_WRITE  : ne modifie rien malgré la méthode POST (aucune route pour l'instant :
+                les quatre candidats d'AUDC-14 restent TO_DO tant que non validés).
+
+Le test tests/test_audit_coverage.py échoue si une route n'est ni déclarée ni listée ici.
+Une route listée qui reçoit une déclaration doit être retirée de la liste.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
+TO_DO = "à traiter"
+EXCLUDED = "exclue"
+NO_WRITE = "ne modifie rien"
+
+
+@dataclass(frozen=True)
+class Exclusion:
+    category: str
+    step: Optional[int] = None
+    reason: str = ""
+
+
+# Étape du plan (docs/taches/AUDC-plan.md) selon le premier segment du chemin.
+STEP_BY_PREFIX = {
+    "interventions": 2,
+    "intervention-requests": 2,
+    "intervention-actions": 2,
+    "intervention-tasks": 2,
+    "intervention-status-log": 2,
+    "purchase-requests": 2,
+    "supplier-orders": 2,
+    "equipements": 2,
+    "preventive-occurrences": 2,
+    "preventive-plans": 3,
+    "parts": 3,
+    "part-templates": 3,
+    "stock-items": 3,
+    "stock-item-suppliers": 3,
+    "stock-families": 3,
+    "stock-sub-families": 3,
+    "supplier-order-lines": 3,
+    "suppliers": 3,
+    "manufacturer-items": 3,
+}
+DEFAULT_STEP = 4
+
+
+def step_for_path(path: str) -> int:
+    """Étape de traitement d'une route d'après son premier segment."""
+    return STEP_BY_PREFIX.get(path.strip("/").split("/")[0], DEFAULT_STEP)
+
+
+def _todo(step: int, reason: str = "") -> Exclusion:
+    return Exclusion(TO_DO, step=step, reason=reason)
+
+
+# Authentification : tracée dans security_log, pas dans audit_log (ADR 0018, point 1 quinquies).
+_SECURITY_LOG = "Trace dans security_log (ADR 0018, point 1 quinquies)"
+# POST sans écriture recensés par AUDC-14 : restent « à traiter » tant que non validés.
+_NO_WRITE_NOTE = "POST sans écriture (AUDC-14), à valider avec l'utilisateur"
+
+# Étape 2 : interventions, achats, équipements, préventif (occurrences) ; étape 3 : catalogues
+# et préventif (plans) ; étape 4 : le reste. Voir docs/taches/AUDC-plan.md.
+EXCLUSIONS: Dict[Tuple[str, str], Exclusion] = {
+    ("POST", "/auth/login"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
+    ("POST", "/auth/refresh"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
+    ("POST", "/auth/logout"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
+    ("POST", "/equipements"): _todo(2),
+    ("DELETE", "/equipements/{equipement_id}"): _todo(2),
+    ("PATCH", "/equipements/{equipement_id}"): _todo(2),
+    ("PUT", "/equipements/{equipement_id}"): _todo(2),
+    ("POST", "/intervention-actions"): _todo(2),
+    ("DELETE", "/intervention-actions/{action_id}"): _todo(2),
+    ("PATCH", "/intervention-actions/{action_id}"): _todo(2),
+    ("POST", "/intervention-requests"): _todo(2),
+    ("POST", "/intervention-requests/repair"): _todo(2),
+    ("DELETE", "/intervention-requests/{request_id}"): _todo(2),
+    ("POST", "/intervention-status-log"): _todo(2),
+    ("POST", "/intervention-tasks"): _todo(2),
+    ("DELETE", "/intervention-tasks/{task_id}"): _todo(2),
+    ("PATCH", "/intervention-tasks/{task_id}"): _todo(2),
+    ("PUT", "/interventions/{intervention_id}"): _todo(2),
+    ("POST", "/interventions/{intervention_id}/force-close-request"): _todo(2),
+    ("POST", "/interventions/{intervention_id}/request-pointage"): _todo(2),
+    ("POST", "/preventive-occurrences/generate"): _todo(2),
+    ("POST", "/preventive-occurrences/repair"): _todo(2),
+    ("PATCH", "/preventive-occurrences/{occurrence_id}/skip"): _todo(2),
+    ("POST", "/purchase-requests"): _todo(2),
+    ("POST", "/purchase-requests/dispatch"): _todo(2),
+    ("POST", "/purchase-requests/import"): _todo(2),
+    ("POST", "/purchase-requests/import/headers"): _todo(2, _NO_WRITE_NOTE),
+    ("DELETE", "/purchase-requests/{request_id}"): _todo(2),
+    ("PUT", "/purchase-requests/{request_id}"): _todo(2),
+    ("POST", "/supplier-orders"): _todo(2),
+    ("DELETE", "/supplier-orders/{order_id}"): _todo(2),
+    ("PUT", "/supplier-orders/{order_id}"): _todo(2),
+    ("POST", "/supplier-orders/{order_id}/export/email"): _todo(2, _NO_WRITE_NOTE),
+    ("POST", "/manufacturer-items"): _todo(3),
+    ("DELETE", "/manufacturer-items/{item_id}"): _todo(3),
+    ("PATCH", "/manufacturer-items/{item_id}"): _todo(3),
+    ("POST", "/part-templates"): _todo(3),
+    ("DELETE", "/part-templates/{template_id}"): _todo(3),
+    ("POST", "/part-templates/{template_id}/versions"): _todo(3),
+    ("POST", "/parts"): _todo(3),
+    ("DELETE", "/parts/manufacturer-refs/{mfr_ref_id}"): _todo(3),
+    ("PATCH", "/parts/manufacturer-refs/{mfr_ref_id}"): _todo(3),
+    ("POST", "/parts/manufacturer-refs/{mfr_ref_id}/set-preferred"): _todo(3),
+    ("POST", "/parts/manufacturer-refs/{mfr_ref_id}/supplier-refs"): _todo(3),
+    ("DELETE", "/parts/supplier-refs/{supplier_ref_id}"): _todo(3),
+    ("PATCH", "/parts/supplier-refs/{supplier_ref_id}"): _todo(3),
+    ("POST", "/parts/supplier-refs/{supplier_ref_id}/set-preferred"): _todo(3),
+    ("PATCH", "/parts/{part_id}"): _todo(3),
+    ("POST", "/parts/{part_id}/manufacturer-refs"): _todo(3),
+    ("POST", "/preventive-plans"): _todo(3),
+    ("DELETE", "/preventive-plans/{plan_id}"): _todo(3),
+    ("PUT", "/preventive-plans/{plan_id}"): _todo(3),
+    ("PATCH", "/preventive-plans/{plan_id}/steps"): _todo(3),
+    ("POST", "/stock-families"): _todo(3),
+    ("PATCH", "/stock-families/{family_code}"): _todo(3),
+    ("POST", "/stock-item-suppliers"): _todo(3),
+    ("DELETE", "/stock-item-suppliers/{ref_id}"): _todo(3),
+    ("PUT", "/stock-item-suppliers/{ref_id}"): _todo(3),
+    ("POST", "/stock-item-suppliers/{ref_id}/set-preferred"): _todo(3),
+    ("POST", "/stock-items"): _todo(3),
+    ("DELETE", "/stock-items/{item_id}"): _todo(3),
+    ("PUT", "/stock-items/{item_id}"): _todo(3),
+    ("PATCH", "/stock-items/{item_id}/quantity"): _todo(3),
+    ("POST", "/stock-sub-families"): _todo(3),
+    ("POST", "/stock-sub-families/{family_code}"): _todo(3),
+    ("PATCH", "/stock-sub-families/{family_code}/{sub_family_code}"): _todo(3),
+    ("POST", "/supplier-order-lines"): _todo(3),
+    ("DELETE", "/supplier-order-lines/{line_id}"): _todo(3),
+    ("PATCH", "/supplier-order-lines/{line_id}"): _todo(3),
+    ("PUT", "/supplier-order-lines/{line_id}"): _todo(3),
+    ("POST", "/supplier-order-lines/{line_id}/purchase-requests"): _todo(3),
+    ("DELETE", "/supplier-order-lines/{line_id}/purchase-requests/{purchase_request_id}"): _todo(3),
+    ("POST", "/suppliers"): _todo(3),
+    ("DELETE", "/suppliers/{supplier_id}"): _todo(3),
+    ("PUT", "/suppliers/{supplier_id}"): _todo(3),
+    ("PATCH", "/admin/action-categories/{category_id}"): _todo(4),
+    ("PATCH", "/admin/action-categories/{category_id}/active"): _todo(4),
+    ("POST", "/admin/action-subcategories"): _todo(4),
+    ("PATCH", "/admin/action-subcategories/{subcat_id}"): _todo(4),
+    ("PATCH", "/admin/action-subcategories/{subcat_id}/active"): _todo(4),
+    ("POST", "/admin/audit-reasons"): _todo(4),
+    ("PATCH", "/admin/audit-reasons/{reason_id}"): _todo(4),
+    ("PATCH", "/admin/audit-reasons/{reason_id}/active"): _todo(4),
+    ("POST", "/admin/audit-rules"): _todo(4),
+    ("PATCH", "/admin/audit-rules/{rule_id}"): _todo(4),
+    ("PATCH", "/admin/complexity-factors/{factor_id}"): _todo(4),
+    ("PATCH", "/admin/complexity-factors/{factor_id}/active"): _todo(4),
+    ("POST", "/admin/email-domain-rules"): _todo(4),
+    ("DELETE", "/admin/email-domain-rules/{rule_id}"): _todo(4),
+    ("POST", "/admin/endpoints/sync"): _todo(4),
+    ("PATCH", "/admin/endpoints/{endpoint_id}"): _todo(4),
+    ("PATCH", "/admin/intervention-statuses/{status_code}"): _todo(4),
+    ("POST", "/admin/intervention-types"): _todo(4),
+    ("PATCH", "/admin/intervention-types/{type_id}"): _todo(4),
+    ("PATCH", "/admin/intervention-types/{type_id}/active"): _todo(4),
+    ("POST", "/admin/ip-blocklist"): _todo(4),
+    ("DELETE", "/admin/ip-blocklist/{block_id}"): _todo(4),
+    ("PATCH", "/admin/permissions/{permission_id}"): _todo(4),
+    ("POST", "/admin/settings/mail/test"): _todo(4, _NO_WRITE_NOTE),
+    ("POST", "/admin/users"): _todo(4),
+    ("DELETE", "/admin/users/{user_id}"): _todo(4),
+    ("PUT", "/admin/users/{user_id}"): _todo(4),
+    ("PATCH", "/admin/users/{user_id}/active"): _todo(4),
+    ("POST", "/admin/users/{user_id}/reset-password"): _todo(4),
+    ("PATCH", "/admin/users/{user_id}/role"): _todo(4),
+    ("POST", "/api-keys"): _todo(4),
+    ("DELETE", "/api-keys/{key_id}"): _todo(4),
+    ("PATCH", "/api-keys/{key_id}"): _todo(4),
+    ("POST", "/audit/log"): _todo(4),
+    ("POST", "/equipement-class"): _todo(4),
+    ("DELETE", "/equipement-class/{class_id}"): _todo(4),
+    ("PATCH", "/equipement-class/{class_id}"): _todo(4),
+    ("DELETE", "/home-view/admin/assignments/{role_id}"): _todo(4),
+    ("PUT", "/home-view/admin/assignments/{role_id}"): _todo(4),
+    ("PATCH", "/notifications/read-all"): _todo(4),
+    ("PATCH", "/notifications/{notification_id}/read"): _todo(4),
+    ("POST", "/services"): _todo(4),
+    ("PATCH", "/services/{service_id}"): _todo(4),
+    ("PATCH", "/users/me/changelog-seen"): _todo(4),
+    ("POST", "/users/me/password"): _todo(4),
+    ("PATCH", "/users/me/profile"): _todo(4),
+}

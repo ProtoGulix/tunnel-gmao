@@ -12,6 +12,7 @@ from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError,
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.utils.search import build_search_clause
+from api.utils.status_log import skip_request_status_log
 
 logger = logging.getLogger(__name__)
 
@@ -872,14 +873,14 @@ class InterventionRepository:
             (request_id,),
         )
 
-        cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-        cur.execute(
-            """
-            INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-            VALUES (%s, %s, 'acceptee', NULL, %s)
-            """,
-            (request_id, current_statut, "Intervention créée manuellement"),
-        )
+        with skip_request_status_log(cur):
+            cur.execute(
+                """
+                INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
+                VALUES (%s, %s, 'acceptee', NULL, %s)
+                """,
+                (request_id, current_statut, "Intervention créée manuellement"),
+            )
 
         # Vérifier si la DI appartient à une occurrence préventive non encore liée
         cur.execute(

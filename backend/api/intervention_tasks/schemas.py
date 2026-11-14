@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from api.audits.events import ReasonCodeField, injected_reason_code
 from api.users.schemas import UserListItem
 
 
@@ -38,8 +39,10 @@ class InterventionTaskIn(BaseModel):
     assigned_to: Optional[UUID] = None
     due_date: Optional[date] = None
     sort_order: int = 0
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
+        description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(
         default=None, description="Texte libre obligatoire si reason_code=OTHER."
@@ -68,8 +71,10 @@ class InterventionTaskPatch(BaseModel):
     assigned_to: Optional[UUID] = None
     due_date: Optional[date] = None
     sort_order: Optional[int] = None
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
+        description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(
         default=None, description="Texte libre obligatoire si reason_code=OTHER."
@@ -79,8 +84,10 @@ class InterventionTaskPatch(BaseModel):
 
 
 class InterventionTaskDelete(BaseModel):
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    reason_code: ReasonCodeField = Field(
+        default_factory=injected_reason_code,
+        validate_default=True,
+        description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons.",
     )
     reason_text: Optional[str] = Field(
         default=None, description="Texte libre obligatoire si reason_code=OTHER."

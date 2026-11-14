@@ -1,6 +1,6 @@
 # 0017. Audit : motif validé avant la mutation, erreurs visibles
 
-- Statut : accepté
+- Statut : accepté ; point 3 remplacé par l'ADR 0018
 - Date : 2026-11-13
 - Affine : CLAUDE.md section 2 point 4 (traçabilité fiable), ADR 0016
 

@@ -82,3 +82,27 @@ def test_audit_qui_echoue_dans_le_repo_annule_la_creation(client, admin, instanc
         "SELECT count(*) FROM intervention_request WHERE description = %s", (description,)
     )[0][0]
     assert nb == 0
+
+
+@pytest.mark.parametrize("vide", ["", None])
+def test_motif_vide_ou_null_dans_le_corps_vaut_un_motif_absent(client, admin, instance, vide):
+    """Avec règle routinière : le schéma prend le motif injecté (jamais la chaîne vide) et
+    l'audit l'écrit."""
+    resp = client.post(
+        "/intervention-requests",
+        headers=admin.headers,
+        json={
+            "machine_id": _machine(instance),
+            "demandeur_nom": "Atelier",
+            "description": "Motif vide",
+            "reason_code": vide,
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    request_id = resp.json().get("data", resp.json())["id"]
+    motif = instance.sql(
+        "SELECT r.code FROM audit_log l JOIN audit_reason_code r ON r.id = l.reason_code_id "
+        "WHERE l.entity_id = %s",
+        (request_id,),
+    )
+    assert motif == [("ROUTINE",)]

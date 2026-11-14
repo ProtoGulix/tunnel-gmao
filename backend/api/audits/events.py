@@ -1,0 +1,131 @@
+"""Événements d'audit déposés par les repos (ADR 0018, points 4 et 6).
+
+Le middleware d'audit est le seul à écrire dans audit_log. Quand une requête touche
+d'autres entités que celle que la route déclare (acceptation d'une demande, action qui
+ferme des tâches, génération préventive), le repo dépose un événement avec
+`record_audit_event` ; le middleware le valide et l'écrit dans la transaction de la requête,
+avec le motif de la requête et l'auteur du jeton.
+
+Mécanisme : le middleware crée une `AuditUnit` avant d'appeler la route et la rend visible
+par un ContextVar. Un ContextVar posé PAR la route ne remonte pas au middleware (docs/spikes/
+0002) ; ici c'est le middleware qui le pose avant, et la route (y compris dans le threadpool,
+qui copie le contexte) dépose dans la liste partagée par référence.
+"""
+
+from __future__ import annotations
+
+import contextvars
+from dataclasses import dataclass, field
+from typing import Annotated, Any, Dict, List, Optional
+from uuid import UUID
+
+from pydantic import BeforeValidator
+
+
+@dataclass(frozen=True)
+class AuditEvent:
+    """Une décision à tracer : entité, type de décision, avant, après."""
+
+    entity_type: str
+    entity_id: UUID
+    decision_type: str
+    old_value: Optional[Dict[str, Any]] = None
+    new_value: Optional[Dict[str, Any]] = None
+    is_system: bool = False
+    # Obligatoire pour une mutation du système (motif de catégorie system : le motif de la
+    # requête est réservé aux décisions d'un utilisateur). Sinon, motif propre à l'événement
+    # quand la route l'a déjà résolu ; à défaut, celui de la requête.
+    reason_code: Optional[str] = None
+
+
+@dataclass
+class AuditUnit:
+    """Événements d'une requête. `closed` passe à vrai quand le middleware a fini de les écrire."""
+
+    events: List[AuditEvent] = field(default_factory=list)
+    closed: bool = False
+    # Motif de la règle routinière appliqué quand le client n'en a pas envoyé (voir
+    # injected_reason_code).
+    injected_reason_code: Optional[str] = None
+
+
+_current_unit: contextvars.ContextVar[Optional[AuditUnit]] = contextvars.ContextVar(
+    "audit_unit", default=None
+)
+
+
+def bind_audit_unit(unit: AuditUnit) -> contextvars.Token:
+    """Rend l'unité visible des repos dans le contexte courant (appelé par le middleware)."""
+    return _current_unit.set(unit)
+
+
+def unbind_audit_unit(token: contextvars.Token) -> None:
+    _current_unit.reset(token)
+
+
+def injected_reason_code() -> Optional[str]:
+    """Motif routinier appliqué à la requête en cours, ou None.
+
+    Sert de valeur par défaut aux schémas dont `reason_code` est obligatoire
+    (`Field(default_factory=injected_reason_code, validate_default=True)`) : sans motif dans le
+    corps, le middleware applique la règle routinière sans réécrire le corps, et le schéma la
+    reçoit d'ici. Sans motif ni règle routinière, None échoue à la validation (422), comme
+    un champ manquant. À retirer avec les repos qui lisent data.reason_code (étape 2).
+    """
+    unit = _current_unit.get()
+    return unit.injected_reason_code if unit else None
+
+
+def _empty_reason_as_injected(value: Any) -> Any:
+    """Un reason_code vide ou null vaut un motif absent : on prend le motif injecté.
+
+    Le middleware traite "" et null comme absents (règle routinière ou refus 400) ; le schéma
+    doit faire de même, sinon la chaîne vide atteindrait les repos. Sans motif injecté, None
+    échoue à la validation (422), comme un champ manquant.
+    """
+    if value is None or value == "":
+        return injected_reason_code()
+    return value
+
+
+# Type des champs `reason_code` obligatoires des schémas (avec default_factory=injected_reason_code).
+ReasonCodeField = Annotated[str, BeforeValidator(_empty_reason_as_injected)]
+
+
+def record_audit_event(
+    entity_type: str,
+    entity_id: Any,
+    decision_type: str,
+    old_value: Optional[Dict[str, Any]] = None,
+    new_value: Optional[Dict[str, Any]] = None,
+    is_system: bool = False,
+    reason_code: Optional[str] = None,
+) -> None:
+    """Dépose un événement d'audit dans la requête en cours (à appeler depuis un repo).
+
+    Le middleware l'écrit dans la même transaction que la mutation, avec l'auteur du jeton
+    et le motif de la requête. Pour une mutation du système (`is_system=True`), `reason_code`
+    est obligatoire et doit être un motif de catégorie system : la base le vérifie.
+
+    Lève RuntimeError hors requête qui modifie, ou une fois les événements écrits (tâche de
+    fond) : une trace perdue en silence vaudrait moins qu'une erreur visible.
+    """
+    unit = _current_unit.get()
+    if unit is None or unit.closed:
+        raise RuntimeError(
+            "Événement d'audit déposé hors d'une requête qui modifie : "
+            f"{entity_type} {entity_id} {decision_type}"
+        )
+    if is_system and not reason_code:
+        raise ValueError("Un événement du système exige un reason_code de catégorie system")
+    unit.events.append(
+        AuditEvent(
+            entity_type=entity_type,
+            entity_id=entity_id if isinstance(entity_id, UUID) else UUID(str(entity_id)),
+            decision_type=decision_type,
+            old_value=old_value,
+            new_value=new_value,
+            is_system=is_system,
+            reason_code=reason_code,
+        )
+    )

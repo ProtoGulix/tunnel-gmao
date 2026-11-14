@@ -73,16 +73,21 @@ def build_picker_reasons(raw_reasons: List[Dict[str, Any]]) -> List[AuditRuleRea
     ]
 
 
-def get_audit_rules(entity_type: str, fields: Optional[List[str]] = None) -> AuditRules:
+def get_audit_rules(
+    entity_type: str, fields: Optional[List[str]] = None, allow_silent: bool = True
+) -> AuditRules:
     """Retourne les règles d'audit pour une entité (et optionnellement des champs).
 
     - Catégories manual + user → affichées dans le picker front
     - Catégorie auto            → envoyée silencieusement (jamais dans le picker)
     - Catégorie system          → réservée aux mutations internes
+
+    `allow_silent=False` (suppressions) : jamais d'envoi silencieux, le motif est toujours
+    demandé à l'utilisateur même si la règle de l'entité est routinière.
     """
     required = entity_type in _ENTITIES_WITH_REQUIRED_AUDIT
 
-    routine_rule = resolve_reason_code(entity_type, fields or [])
+    routine_rule = resolve_reason_code(entity_type, fields or []) if allow_silent else None
     silent = routine_rule is not None
 
     reasons = build_picker_reasons(list_entity_reasons(entity_type))

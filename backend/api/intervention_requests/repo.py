@@ -13,6 +13,7 @@ from api.errors.exceptions import (
 )
 from api.intervention_requests.validators import InterventionRequestValidator
 from api.utils.search import build_search_clause
+from api.utils.status_log import skip_request_status_log
 
 # Sous-requête réutilisable pour l'ID du statut fermé
 _CLOSED_SQ = "(SELECT id FROM intervention_status_ref WHERE code = %s LIMIT 1)"
@@ -845,14 +846,14 @@ class InterventionRequestRepository:
                     )
 
             # Appliquer la transition (flag pour éviter double-trigger)
-            cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-            cur.execute(
-                """
-                INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                (request_id, current_statut, status_to, changed_by, notes),
-            )
+            with skip_request_status_log(cur):
+                cur.execute(
+                    """
+                    INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (request_id, current_statut, status_to, changed_by, notes),
+                )
 
             # Mettre à jour intervention_id si besoin
             if status_to == "acceptee" and intervention_id:
@@ -1072,23 +1073,23 @@ class InterventionRequestRepository:
             if row:
                 request_id, current_statut = row[0], row[1]
 
-                cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-                cur.execute(
-                    "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
-                    (str(request_id),),
-                )
-                cur.execute(
-                    """
-                    INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-                    VALUES (%s, %s, %s, NULL, %s)
-                    """,
-                    (
-                        str(request_id),
-                        current_statut,
-                        "cloturee",
-                        "Clôture automatique suite à la fermeture de l'intervention",
-                    ),
-                )
+                with skip_request_status_log(cur):
+                    cur.execute(
+                        "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
+                        (str(request_id),),
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
+                        VALUES (%s, %s, %s, NULL, %s)
+                        """,
+                        (
+                            str(request_id),
+                            current_statut,
+                            "cloturee",
+                            "Clôture automatique suite à la fermeture de l'intervention",
+                        ),
+                    )
                 logger.info(
                     "Demande %s automatiquement clôturée (intervention %s fermée)",
                     request_id,
@@ -1189,9 +1190,6 @@ class InterventionRequestRepository:
 
             repaired = []
 
-            # Empêche le trigger de créer un doublon dans request_status_log
-            cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-
             for request_id, di_code, machine_code in rows:
                 # Corriger intervention_id manquant (DIs auto-acceptées via occurrence)
                 cur.execute(
@@ -1205,23 +1203,26 @@ class InterventionRequestRepository:
                     """,
                     (str(request_id),),
                 )
-                cur.execute(
-                    "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
-                    (str(request_id),),
-                )
-                cur.execute(
-                    """
-                    INSERT INTO request_status_log
-                        (request_id, status_from, status_to, changed_by, notes)
-                    VALUES (%s, %s, %s, NULL, %s)
-                    """,
-                    (
-                        str(request_id),
-                        "acceptee",
-                        "cloturee",
-                        "Clôture manuelle via endpoint /repair",
-                    ),
-                )
+                # Le trigger de journal se tait le temps de l'UPDATE et de l'INSERT
+                # (sinon doublon dans request_status_log), puis est rétabli.
+                with skip_request_status_log(cur):
+                    cur.execute(
+                        "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
+                        (str(request_id),),
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO request_status_log
+                            (request_id, status_from, status_to, changed_by, notes)
+                        VALUES (%s, %s, %s, NULL, %s)
+                        """,
+                        (
+                            str(request_id),
+                            "acceptee",
+                            "cloturee",
+                            "Clôture manuelle via endpoint /repair",
+                        ),
+                    )
                 _audit_request(
                     cur=cur,
                     request_id=str(request_id),

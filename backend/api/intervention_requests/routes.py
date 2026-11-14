@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.intervention_requests.repo import InterventionRequestRepository
 from api.intervention_requests.schemas import (
@@ -142,7 +143,10 @@ def create_request(
     return single(created)
 
 
-@router.post("/{request_id}/transition")
+@router.post(
+    "/{request_id}/transition",
+    dependencies=[audit("request", id_from_path="request_id", table="intervention_request")],
+)
 def transition_request_status(request_id: UUID, body: StatusTransitionIn, request: Request):
     """
     Effectue une transition de statut sur une demande.

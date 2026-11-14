@@ -344,3 +344,40 @@ def test_gamme_incomplete_bloque_la_fermeture_puis_la_cloture_la_debloque(
     assert instance.sql(
         "SELECT status_actual FROM intervention WHERE id = %s", (intervention_id,)
     ) == [("ferme",)]
+
+
+@pytest.mark.parametrize("vide", ["", None])
+def test_motif_vide_ou_null_est_traite_comme_un_motif_absent(
+    client, admin, instance, make_user, vide
+):
+    """Sans règle routinière (clôture) : même 400 avec demande de motif qu'un motif absent."""
+    task_id = _tache(instance, _intervention(client, admin, instance))
+    headers = make_user("RESP").headers
+    absent = _cloturer(client, headers, task_id, reason_code=None)
+    r = client.patch(
+        f"/intervention-tasks/{task_id}",
+        json={"status": "done", "reason_code": vide},
+        headers=headers,
+    )
+    assert r.status_code == absent.status_code == 400
+    assert r.json() == absent.json()
+    assert _etat(instance, task_id) == ("todo", None)
+
+
+@pytest.mark.parametrize("vide", ["", None])
+def test_motif_vide_ou_null_sur_tache_avec_regle_routiniere_ecrit_le_motif_injecte(
+    client, admin, instance, make_user, vide
+):
+    task_id = _tache(instance, _intervention(client, admin, instance))
+    r = client.patch(
+        f"/intervention-tasks/{task_id}",
+        json={"sort_order": 7, "reason_code": vide},
+        headers=make_user("RESP").headers,
+    )
+    assert r.status_code == 200, r.text
+    motifs = instance.sql(
+        "SELECT DISTINCT r.code FROM audit_log l JOIN audit_reason_code r "
+        "ON r.id = l.reason_code_id WHERE l.entity_id = %s",
+        (task_id,),
+    )
+    assert motifs == [("ROUTINE",)]
