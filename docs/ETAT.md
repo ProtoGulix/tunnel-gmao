@@ -60,6 +60,10 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
+   badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
+   routinière, ADMIN et RESP), validée à l'écran ; bootstrap rejoué sur la base de dev
+   avec l'accord de l'utilisateur (2 droits ouverts).
 0. Audit centralisé : étape 3 fusionnée le 2026-11-14 (essai web de l'utilisateur :
    désactivation d'un plan, suppression de références fabricant et fournisseur, motif
    exigé puis accepté ; suppressions d'articles, liens fournisseur et fabricants couvertes

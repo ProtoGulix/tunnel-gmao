@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertDialog, Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
+import PlanInactiveBadge from '@/components/preventive/PlanInactiveBadge';
 import { ClipboardCheck, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
@@ -34,6 +35,7 @@ function PlanItem({ plan, isSelected, onClick }) {
           <Flex align="center" gap="2">
             <Badge variant="soft" color="blue" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{plan.code}</Badge>
             <Text size="2" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plan.label}</Text>
+            <PlanInactiveBadge plan={plan} />
           </Flex>
           <Text size="1" color="gray">{triggerLabel(plan)}</Text>
         </Flex>
@@ -53,7 +55,7 @@ export default function PreventivePage() {
   const [saving, setSaving] = useState(false);
   const [toDeactivate, setToDeactivate] = useState(null);
 
-  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
+  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, reactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
 
   // Sélectionner le plan depuis l'URL une fois les données chargées
@@ -101,6 +103,11 @@ export default function PreventivePage() {
     setToDeactivate(null);
   }, [toDeactivate, deactivatePlan, selectedPlan, selectPlan]);
 
+  const handleReactivate = useCallback(async (plan) => {
+    const updated = await reactivatePlan(plan.id);
+    if (selectedPlan?.id === plan.id) setSelectedPlan(updated ?? { ...plan, active: true });
+  }, [reactivatePlan, selectedPlan]);
+
   const handleSaveSteps = useCallback(async (id, steps) => {
     try {
       setSaving(true);
@@ -143,6 +150,7 @@ export default function PreventivePage() {
         plan={selectedPlan}
         onEdit={(p) => { setSelectedPlan(p); setMode('edit'); setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('plan', p.id); return n; }, { replace: true }); }}
         onDeactivate={setToDeactivate}
+        onReactivate={handleReactivate}
         onSaveSteps={handleSaveSteps}
         saving={saving}
       />

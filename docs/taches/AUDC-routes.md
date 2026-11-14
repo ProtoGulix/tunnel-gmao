@@ -3,7 +3,7 @@
 Généré par `backend/scripts/audit_routes.py` : ne pas éditer à la main, relancer le
 script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 
-125 routes.
+126 routes.
 
 | Étape | Préfixe | Méthode | Chemin | Fonction | Statut |
 | --- | --- | --- | --- | --- | --- |
@@ -60,6 +60,7 @@ script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 | 3 | preventive-plans | POST | `/preventive-plans` | create_preventive_plan | déclarée (preventive_plan) |
 | 3 | preventive-plans | DELETE | `/preventive-plans/{plan_id}` | delete_preventive_plan | déclarée (preventive_plan) |
 | 3 | preventive-plans | PUT | `/preventive-plans/{plan_id}` | update_preventive_plan | déclarée (preventive_plan) |
+| 3 | preventive-plans | POST | `/preventive-plans/{plan_id}/reactivate` | reactivate_preventive_plan | déclarée (preventive_plan) |
 | 3 | preventive-plans | PATCH | `/preventive-plans/{plan_id}/steps` | replace_plan_steps | déclarée (preventive_plan) |
 | 3 | stock-families | POST | `/stock-families` | create_stock_family | déclarée (stock_family) |
 | 3 | stock-families | PATCH | `/stock-families/{family_code}` | patch_stock_family | déclarée (stock_family) |

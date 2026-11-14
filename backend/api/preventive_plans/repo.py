@@ -285,6 +285,31 @@ class PreventivePlanRepository:
 
         return self.get_by_id(plan_id)
 
+    # ── Réactivation ──────────────────────────────────────────────
+
+    def reactivate(self, plan_id: str) -> Dict[str, Any]:
+        """Réactive un plan désactivé ; sans effet sur un plan déjà actif."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE preventive_plan SET active = true WHERE id = %s AND active = false",
+                (plan_id,),
+            )
+            cur.execute("SELECT 1 FROM preventive_plan WHERE id = %s", (plan_id,))
+            if cur.fetchone() is None:
+                raise NotFoundError(f"Plan préventif {plan_id} non trouvé")
+            conn.commit()
+        except NotFoundError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "réactivation du plan préventif")
+        finally:
+            release_connection(conn)
+        return self.get_by_id(plan_id)
+
     # ── Suppression ───────────────────────────────────────────────
 
     def soft_delete(self, plan_id: str) -> bool:

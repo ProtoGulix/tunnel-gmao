@@ -57,6 +57,16 @@ def replace_plan_steps(plan_id: str, steps: List[GammeStepIn]):
     return single(repo.replace_steps(plan_id, steps))
 
 
+@router.post(
+    "/{plan_id}/reactivate",
+    dependencies=[audit("preventive_plan", id_from_path="plan_id")],
+)
+def reactivate_preventive_plan(plan_id: str):
+    """Réactive un plan désactivé (changement routinier, tracé `active_changed`)"""
+    repo = PreventivePlanRepository()
+    return single(repo.reactivate(plan_id))
+
+
 @router.delete(
     "/{plan_id}",
     status_code=204,

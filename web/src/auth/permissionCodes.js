@@ -106,6 +106,7 @@ export const PERM = {
     createPlan: 'preventive_plans:create_preventive_plan',
     updatePlan: 'preventive_plans:update_preventive_plan',
     removePlan: 'preventive_plans:delete_preventive_plan',
+    reactivatePlan: 'preventive_plans:reactivate_preventive_plan',
     generate: 'preventive_occurrences:generate_occurrences',
     repair: 'preventive_occurrences:repair_occurrences',
     replaceSteps: 'preventive_plans:replace_plan_steps',

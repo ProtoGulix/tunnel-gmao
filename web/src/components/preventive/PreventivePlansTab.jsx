@@ -5,7 +5,9 @@
 
 import { useCallback, useState } from 'react';
 import { AlertDialog, Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
-import { CheckCircle2, ClipboardCheck, Pencil, Plus, Trash2 } from 'lucide-react';
+import PlanInactiveBadge from '@/components/preventive/PlanInactiveBadge';
+import PlanActivationButton from '@/components/preventive/PlanActivationButton';
+import { CheckCircle2, ClipboardCheck, Pencil, Plus } from 'lucide-react';
 import { usePreventivePlans } from '@/hooks/preventive/usePreventivePlans';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
@@ -19,7 +21,7 @@ import { PERM } from '@/auth/permissionCodes';
 export default function PreventivePlansTab() {
   const { can } = usePermissions();
   const [activeOnly, setActiveOnly] = useState(true);
-  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
+  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, reactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
   const [mode, setMode] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -63,7 +65,15 @@ export default function PreventivePlansTab() {
       key: 'code', header: 'Code', width: 100,
       render: (r) => <Badge variant="soft" color="blue" style={{ fontFamily: 'monospace' }}>{r.code}</Badge>,
     },
-    { key: 'label', header: 'Libellé', render: (r) => <Text size="2" weight="medium">{r.label}</Text> },
+    {
+      key: 'label', header: 'Libellé',
+      render: (r) => (
+        <Flex align="center" gap="2">
+          <Text size="2" weight="medium">{r.label}</Text>
+          <PlanInactiveBadge plan={r} />
+        </Flex>
+      ),
+    },
     {
       key: 'class', header: 'Classe', width: 130,
       render: (r) => <Text size="1" color="gray">{r.equipement_class_label || '—'}</Text>,
@@ -90,12 +100,12 @@ export default function PreventivePlansTab() {
               <CheckCircle2 size={12} />Étapes
             </Button>
           )}
-          {can(PERM.preventive.removePlan) && (
-            <Button size="1" variant="ghost" color="red" title="Désactiver"
-              onClick={() => setToDeactivate(r)}>
-              <Trash2 size={12} />
-            </Button>
-          )}
+          <PlanActivationButton
+            plan={r}
+            compact
+            onDeactivate={setToDeactivate}
+            onReactivate={(plan) => reactivatePlan(plan.id)}
+          />
         </Flex>
       ),
     },

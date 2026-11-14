@@ -1504,6 +1504,7 @@ Plan préventif → Génération → Occurrence → DI créée automatiquement
 | `PUT`    | `/preventive-plans/{id}`                  | Met à jour un plan (PATCH sémantique, code immuable)  |
 | `PATCH`  | `/preventive-plans/{id}/steps`            | Remplace entièrement les étapes d'un plan             |
 | `DELETE` | `/preventive-plans/{id}`                  | Désactive un plan (soft delete → `active = false`)    |
+| `POST`   | `/preventive-plans/{id}/reactivate`       | Réactive un plan désactivé (`active = true`)          |
 | `GET`    | `/preventive-occurrences`                 | Liste les occurrences (5 filtres)                     |
 | `GET`    | `/preventive-occurrences/{id}`            | Détail d'une occurrence                               |
 | `POST`   | `/preventive-occurrences/generate`        | Déclenche la génération pour tous les plans actifs    |

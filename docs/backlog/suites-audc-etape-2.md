@@ -46,3 +46,7 @@ Relevés pendant l'étape 2 (2026-11-14), hors de son périmètre :
 15. (Étape 3) Lint web des fichiers touchés : max-lines (PartsTab, StockItemsTab),
     complexité (SupplierRefRow), changePageSize inutilisé ; faux positif probable de la
     règle « _or » sur auditEntity.js. Préexistant ou non : non comparé.
+16. (Plans préventifs) Page Préventif et page d'administration des plans : un échec de
+    désactivation, de réactivation ou d'enregistrement des étapes (403, réseau) n'affiche
+    aucun message (promesse rejetée non gérée). Suppression réelle d'un plan écartée le
+    2026-11-14 : possible seulement avant toute occurrence générée, donc sans utilité.

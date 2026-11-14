@@ -59,6 +59,10 @@ mobile/CHANGELOG.md.
   ignorer une étape optionnelle ou une tâche hors gamme.
 
 ### Préventif
+- Un plan désactivé porte un badge « Inactif » dans les listes et dans son détail, et
+  propose « Réactiver » à la place de « Désactiver ». La réactivation se fait sans motif
+  et reste tracée dans l'historique d'audit avec son auteur (nouvelle route
+  `POST /preventive-plans/{id}/reactivate`, ouverte aux administrateurs et responsables).
 - Le filtre « Tous statuts » des occurrences ne fait plus planter l'écran.
 - Les occurrences en cours et clôturées affichent leur statut en français et en
   couleur (« En cours », « Clôturée ») au lieu du code brut.

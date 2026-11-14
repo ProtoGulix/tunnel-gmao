@@ -194,6 +194,23 @@ Pas de corps.
 | ---- | --------------------------- |
 | 404  | Plan préventif introuvable  |
 
+---
+
+## `POST /preventive-plans/{id}/reactivate`
+
+Réactive un plan désactivé (`active = true`). Sans corps, sans motif. Sans effet sur un
+plan déjà actif. Droits par défaut : ADMIN et RESP.
+
+### Réponse `200`
+
+Le plan, comme `GET /preventive-plans/{id}`.
+
+### Erreurs
+
+| Code | Cas                         |
+| ---- | --------------------------- |
+| 404  | Plan préventif introuvable  |
+
 ## Audit (ADR 0018, étape 3)
 
 Toutes les routes en écriture sont déclarées (`entity_type = preventive_plan`) :
@@ -201,6 +218,7 @@ Toutes les routes en écriture sont déclarées (`entity_type = preventive_plan`
 - `POST /preventive-plans` : ligne `created` (motif routinier injecté si absent).
 - `PUT /preventive-plans/{plan_id}` : une ligne `{champ}_changed` par champ modifié ; si les étapes changent, une ligne `steps_changed` (avant/après).
 - `PATCH /preventive-plans/{plan_id}/steps` : ligne `steps_changed` si les étapes diffèrent.
+- `POST /preventive-plans/{plan_id}/reactivate` : ligne `active_changed` (motif routinier injecté), aucune ligne si le plan était déjà actif.
 - `DELETE /preventive-plans/{plan_id}` : désactivation (`active = false`), ligne `deleted` avec l'état avant ; `reason_code` explicite obligatoire (400 sinon).
 
 L'auteur est celui du jeton (`changed_by`).
