@@ -44,6 +44,7 @@ export default function AdminReferentielTab() {
       await fn();
       notify(successMsg);
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été fait
       notify(extractApiErrorMessage(err, 'Erreur'), 'error');
     }
   }, [notify]);

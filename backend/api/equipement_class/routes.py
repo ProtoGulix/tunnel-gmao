@@ -1,7 +1,8 @@
 """Routes API pour les classes d'équipement"""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.utils.response import single
 
@@ -28,13 +29,19 @@ def get_equipement_class(class_id: str):
     return single(repo.get_by_id(class_id))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_equipement_class(data: EquipementClassCreate):
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[audit("equipement_class", id_from_created=True)],
+)
+def create_equipement_class(data: EquipementClassCreate, request: Request):
     """Crée une nouvelle classe d'équipement"""
-    return single(repo.create(code=data.code, label=data.label, description=data.description))
+    created = repo.create(code=data.code, label=data.label, description=data.description)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{class_id}")
+@router.patch("/{class_id}", dependencies=[audit("equipement_class", id_from_path="class_id")])
 def update_equipement_class(class_id: str, data: EquipementClassUpdate):
     """Met à jour une classe d'équipement"""
     return single(
@@ -44,7 +51,11 @@ def update_equipement_class(class_id: str, data: EquipementClassUpdate):
     )
 
 
-@router.delete("/{class_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{class_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[audit("equipement_class", id_from_path="class_id")],
+)
 def delete_equipement_class(class_id: str):
     """Supprime une classe d'équipement"""
     repo.delete(class_id)

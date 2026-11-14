@@ -246,26 +246,4 @@ Rapport synthétique de toutes les décisions sur une fenêtre temporelle. Usage
 
 ---
 
-## `POST /audit/log`
-
-Crée manuellement une entrée d'audit pour les cas non interceptés par le middleware (mutations système, scripts de migration, etc.).
-
-### Body
-
-```json
-{
-  "entity_type": "intervention",
-  "entity_id": "uuid",
-  "decision_type": "status_actual_changed",
-  "old_value": { "status_actual": "ouvert" },
-  "new_value": { "status_actual": "en_cours" },
-  "reason_code": "CLIENT_REQUEST",
-  "reason_text": null
-}
-```
-
-### Réponse `201`
-
-```json
-{ "id": "uuid-du-log-créé" }
-```
+> `POST /audit/log` (écriture libre d'une ligne d'audit) est supprimée : le middleware est le seul à écrire dans `audit_log` (ADR 0018).

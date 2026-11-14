@@ -128,3 +128,7 @@ Schema complet avec tous les champs publics.
 
 - `GET /users/me`
 - `GET /users/{id}`
+
+## Audit (ADR 0018, étape 4)
+
+`PATCH /users/me/profile` (`{champ}_changed`) et `POST /users/me/password` (`password_hash_changed`, empreinte masquée) sont tracés en routine sous l'identifiant du jeton (`entity_type` `user`).

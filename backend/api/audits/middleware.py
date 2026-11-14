@@ -67,7 +67,31 @@ _TABLE_MAP: Dict[str, str] = {
     "stock_item_supplier": "stock_item_supplier",
     "supplier": "supplier",
     "supplier_order_line": "supplier_order_line",
+    # Étape 4 : entités à clé uuid (celles à clé entière ou texte passent par des événements
+    # déposés par le repo, voir api/audits/entity_ids.py).
+    "user": "tunnel_user",
+    "permission": "tunnel_permission",
+    "endpoint": "tunnel_endpoint",
+    "ip_block": "ip_blocklist",
+    "email_domain_rule": "email_domain_rule",
+    "api_key": "api_key",
+    "equipement_class": "equipement_class",
+    "service": "service",
+    "role_home_view": "role_home_view",
 }
+
+# Colonnes dont la valeur ne doit jamais être écrite dans audit_log (lisible par RESP et MCP).
+SENSITIVE_COLUMNS = frozenset({"password_hash", "key_hash"})
+MASKED_VALUE = "***"
+
+
+def mask_sensitive(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Copie de l'état où la valeur de chaque colonne sensible est remplacée.
+
+    La clé reste présente : le diff `password_hash_changed` reste visible sans l'empreinte.
+    """
+    return {k: (MASKED_VALUE if k in SENSITIVE_COLUMNS else v) for k, v in state.items()}
+
 
 # Pattern : /interventions ou /interventions/{uuid} ou /interventions/{uuid}/sous-ressource
 _PATH_RE = re.compile(
@@ -476,6 +500,8 @@ def _write_audit_log(
 
     Une erreur n'est jamais avalée : elle remonte, la transaction est annulée avec la
     mutation (ADR 0018). Auteur : request.state.user_id (jeton), jamais le corps.
+    Point unique d'écriture : c'est ici que les colonnes sensibles sont masquées (created,
+    deleted, diffs, événements des repos), les diffs ayant été calculés sur les vraies valeurs.
     """
     if not reason_code or not entity_id_str:
         return
@@ -488,8 +514,8 @@ def _write_audit_log(
         entity_type=entity_type,
         entity_id=UUID(entity_id_str),
         decision_type=decision_type,
-        old_value=old_value,
-        new_value=new_value,
+        old_value=mask_sensitive(old_value) if old_value else old_value,
+        new_value=mask_sensitive(new_value) if new_value else new_value,
         reason_code=reason_code,
         reason_text=reason_text,
         changed_by=changed_by,

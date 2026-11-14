@@ -21,6 +21,9 @@ const URL_ENTITY_MAP = {
   'stock-item-suppliers': 'stock_item_supplier',
   'suppliers': 'supplier',
   'supplier-order-lines': 'supplier_order_line',
+  // Étape 4 : administration
+  'api-keys': 'api_key',
+  'equipement-class': 'equipement_class',
 };
 
 // Sous-ressources dont l'entité d'audit diffère de celle de leur préfixe (miroir des routes
@@ -28,6 +31,10 @@ const URL_ENTITY_MAP = {
 const SUB_ENTITY_MAP = {
   'parts/manufacturer-refs': 'part_manufacturer_ref',
   'parts/supplier-refs': 'part_supplier_ref',
+  'admin/users': 'user',
+  'admin/ip-blocklist': 'ip_block',
+  'admin/email-domain-rules': 'email_domain_rule',
+  'home-view/admin': 'role_home_view',
 };
 
 // Création d'une sous-ressource : l'entité auditée est celle créée, désignée par le

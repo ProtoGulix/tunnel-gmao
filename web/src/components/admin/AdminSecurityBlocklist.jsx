@@ -86,7 +86,7 @@ function UnblockConfirmModal({ open, onOpenChange, item, onConfirm, submitting }
       <Dialog.Content style={{ maxWidth: 380 }}>
         <Dialog.Title>Débloquer l'IP</Dialog.Title>
         <Text size="2" mt="3" as="p">
-          Débloquer l'adresse IP <Text weight="bold">{item.ip}</Text> ?
+          Débloquer l'adresse IP <Text weight="bold">{item.ip_address}</Text> ?
         </Text>
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close><Button variant="soft" color="gray">Annuler</Button></Dialog.Close>
@@ -126,7 +126,7 @@ export default function AdminSecurityBlocklist({ items, loading, onBlock, onUnbl
   };
 
   const columns = useMemo(() => [
-    { key: 'ip', header: 'IP', width: 140, render: (i) => <Text size="2" style={{ fontFamily: 'monospace' }}>{i.ip}</Text> },
+    { key: 'ip', header: 'IP', width: 140, render: (i) => <Text size="2" style={{ fontFamily: 'monospace' }}>{i.ip_address}</Text> },
     { key: 'reason', header: 'Raison', render: (i) => <Text size="2" color="gray">{i.reason || '—'}</Text> },
     {
       key: 'expires_at', header: 'Bloqué jusqu\'au', width: 160,

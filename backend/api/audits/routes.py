@@ -4,16 +4,15 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 
 from api.audits.repo import AuditRepository
 from api.audits.schemas import (
-    AuditLogCreate,
     AuditReasonOut,
     AuditRules,
     BriefingReport,
 )
-from api.auth.permissions import require_authenticated, require_role
+from api.auth.permissions import require_authenticated
 from api.utils.audit import get_audit_rules
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
@@ -104,30 +103,3 @@ def get_logs(
         offset=offset,
         include_facets=include_facets,
     )
-
-
-@router.post("/log", status_code=201, dependencies=[Depends(require_role("RESP", "ADMIN"))])
-def create_log(
-    request: Request,
-    payload: AuditLogCreate,
-    repo: AuditRepository = Depends(_repo),
-):
-    """
-    Crée manuellement une entrée d'audit (cas d'usage : mutations système non interceptées).
-    Réservé à RESP et ADMIN : les valeurs sont libres, l'auteur vient du jeton.
-    La validation métier est déléguée à fn_audit_log_decision() en base.
-    """
-    user_id: Optional[UUID] = getattr(request.state, "user_id", None)
-
-    log_id = repo.call_fn_audit_log_decision(
-        entity_type=payload.entity_type,
-        entity_id=payload.entity_id,
-        decision_type=payload.decision_type,
-        old_value=payload.old_value,
-        new_value=payload.new_value,
-        reason_code=payload.reason_code,
-        reason_text=payload.reason_text,
-        changed_by=user_id,
-        is_system=False,
-    )
-    return {"id": log_id}

@@ -95,3 +95,50 @@ def record_audit_event(
             reason_code=reason_code,
         )
     )
+
+
+def record_field_changes(
+    entity_type: str,
+    entity_id: Any,
+    before: Dict[str, Any],
+    after: Dict[str, Any],
+) -> None:
+    """Dépose une ligne `{champ}_changed` par champ de `after` dont la valeur a changé.
+
+    Pour les entités à clé entière ou texte : `entity_id` est l'uuid5 de la clé, et les états
+    complets avant et après (clé d'origine comprise) vont dans old_value et new_value, comme
+    pour les familles de stock. Aucun événement si rien n'a changé.
+    """
+    for column, new in after.items():
+        if before.get(column) != new:
+            record_audit_event(
+                entity_type,
+                entity_id,
+                f"{column}_changed",
+                old_value=before,
+                new_value=after,
+            )
+
+
+def record_column_changes(
+    entity_type: str,
+    entity_id: Any,
+    before: Dict[str, Any],
+    after: Dict[str, Any],
+) -> None:
+    """Dépose une ligne `{champ}_changed` par champ modifié, au format du middleware.
+
+    Pour une route à entité à clé uuid qui ne peut pas laisser le middleware lire l'état
+    (`events_only`, ex. /users/me ou un upsert) : old_value et new_value ne portent que le
+    champ concerné, comme les diffs calculés par le middleware. Aucun événement sans changement.
+    """
+    for column, new in after.items():
+        old = before.get(column)
+        if old != new:
+            record_audit_event(
+                entity_type,
+                entity_id,
+                f"{column}_changed",
+                old_value={column: old},
+                new_value={column: new},
+            )

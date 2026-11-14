@@ -133,3 +133,7 @@ Identique à `GET /services/{id}`.
 - Les services inactifs (`is_active = false`) n'apparaissent pas en `GET /services`
 - Une demande d'intervention liée à un service inactif conserve la référence, mais celle-ci ne sera plus visible dans les listes de services actifs
 - Pas de DELETE hard : utiliser le PATCH avec `is_active = false` pour désactiver
+
+## Audit (ADR 0018, étape 4)
+
+Création et modification sont tracées (`entity_type` `service`) en routine.

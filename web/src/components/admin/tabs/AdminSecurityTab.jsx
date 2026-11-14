@@ -48,6 +48,7 @@ export default function AdminSecurityTab() {
       await blocklistHook.unblockIp(id);
       notify('IP débloquée');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors du déblocage'), 'error');
       throw err;
     }
@@ -68,6 +69,7 @@ export default function AdminSecurityTab() {
       await domainsHook.removeDomain(id);
       notify('Domaine supprimé');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors de la suppression'), 'error');
       throw err;
     }
@@ -99,6 +101,7 @@ export default function AdminSecurityTab() {
       await apiKeysHook.revokeKey(id);
       notify('Cle API revoquee');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors de la revocation'), 'error');
       throw err;
     }

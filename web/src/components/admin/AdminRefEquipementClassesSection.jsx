@@ -5,11 +5,12 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text, TextField, Dialog, AlertDialog } from '@radix-ui/themes';
+import { Box, Button, Flex, Text, Dialog, AlertDialog } from '@radix-ui/themes';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
+import ClassForm from '@/components/admin/AdminRefEquipementClassForm';
 
 export function EquipementClassesSection({ items, loading, onCreate, onUpdate, onDelete }) {
   const { can } = usePermissions();
@@ -68,47 +69,6 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
     }
   }, [selected, onDelete]);
 
-  const ClassForm = ({ onSubmit, submitLabel }) => (
-    <form onSubmit={onSubmit}>
-      <Flex direction="column" gap="3" mt="4">
-        <label>
-          <Text size="2" weight="bold" mb="1" as="div">Code * (ex: ELEC)</Text>
-          <TextField.Root
-            value={form.code}
-            onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))}
-            placeholder="CODE"
-            required
-          />
-        </label>
-        <label>
-          <Text size="2" weight="bold" mb="1" as="div">Libellé *</Text>
-          <TextField.Root
-            value={form.label}
-            onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
-            placeholder="Ex : Électrique"
-            required
-          />
-        </label>
-        <label>
-          <Text size="2" weight="bold" mb="1" as="div">Description</Text>
-          <TextField.Root
-            value={form.description}
-            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-            placeholder="Description optionnelle"
-          />
-        </label>
-      </Flex>
-      <Flex gap="3" mt="4" justify="end">
-        <Dialog.Close>
-          <Button variant="soft" color="gray" type="button">Annuler</Button>
-        </Dialog.Close>
-        <Button type="submit" disabled={submitting}>
-          {submitting ? 'En cours...' : submitLabel}
-        </Button>
-      </Flex>
-    </form>
-  );
-
   const columns = useMemo(() => [
     {
       key: 'code',
@@ -154,7 +114,7 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
       <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
         <Dialog.Content style={{ maxWidth: 420 }}>
           <Dialog.Title>Nouvelle classe d'équipement</Dialog.Title>
-          <ClassForm onSubmit={handleCreate} submitLabel="Créer" />
+          <ClassForm form={form} setForm={setForm} submitting={submitting} onSubmit={handleCreate} submitLabel="Créer" />
         </Dialog.Content>
       </Dialog.Root>
 
@@ -162,7 +122,7 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
         <Dialog.Content style={{ maxWidth: 420 }}>
           <Dialog.Title>Modifier la classe</Dialog.Title>
-          <ClassForm onSubmit={handleEdit} submitLabel="Enregistrer" />
+          <ClassForm form={form} setForm={setForm} submitting={submitting} onSubmit={handleEdit} submitLabel="Enregistrer" />
         </Dialog.Content>
       </Dialog.Root>
 

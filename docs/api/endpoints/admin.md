@@ -267,3 +267,37 @@ Tous les champs sont optionnels.
 | ------- | --------------------------- | ------------------------------------------ |
 | GET     | `/admin/settings/mail`      | Config sans SMTP_PASSWORD                  |
 | POST    | `/admin/settings/mail/test` | Email de test à l'adresse du user connecté |
+
+---
+
+## Audit des référentiels (ADR 0018, étape 4)
+
+Clés entières ou texte, sans uuid : chaque entité est tracée sous un uuid déterministe de sa clé (uuid5, espace de noms constant par entité, `api/audits/entity_ids.py`). La clé d'origine (`id`, ou `code` pour un statut) est aussi écrite dans `old_value` et `new_value`. Le motif routinier est injecté si absent ; aucun `reason_code` n'est exigé dans le corps.
+
+| Route | `entity_type` | Lignes écrites |
+| ----- | ------------- | -------------- |
+| `PATCH /admin/action-categories/{id}` | `action_category` | `name_changed`, `color_changed` |
+| `POST`, `PATCH /admin/action-subcategories` | `action_subcategory` | `created`, `name_changed` |
+| `POST`, `PATCH /admin/intervention-types` (+ `/active`) | `intervention_type` | `created`, `label_changed`, `is_active_changed` |
+| `PATCH /admin/intervention-statuses/{code}` | `intervention_status` | `label_changed`, `color_changed` |
+| `POST`, `PATCH /admin/audit-reasons` (+ `/active`) | `audit_reason` | `created`, un `{champ}_changed` par champ |
+| `POST`, `PATCH /admin/audit-rules` | `audit_rule` | `created`, un `{champ}_changed` par champ |
+
+Une clé inconnue en PATCH reste un succès sans modification ni trace (comportement historique). Les quatre routes `/active` des catégories, sous-catégories et facteurs de complexité sont cassées (colonnes absentes) et exclues de l'audit (backlog `routes-referentiel-cassees`).
+
+---
+
+## Audit des utilisateurs, droits et sécurité (ADR 0018, étape 4)
+
+Tout est routinier (aucun `reason_code` requis, auteur = jeton), sauf les `DELETE` qui exigent un `reason_code` (400 sinon).
+
+| Route | `entity_type` | Lignes écrites |
+| ----- | ------------- | -------------- |
+| `POST`, `PUT /admin/users`, `PATCH .../role`, `PATCH .../active`, `POST .../reset-password`, `DELETE` | `user` | `created`, `{champ}_changed`, `deleted` ; `password_hash` masqué (`***`), le mot de passe provisoire n'est jamais écrit |
+| `PATCH /admin/permissions/{id}` | `permission` | `allowed_changed` (+ `permission_audit_log` conservé) |
+| `PATCH /admin/endpoints/{id}` | `endpoint` | `{champ}_changed` |
+| `POST /admin/ip-blocklist`, `DELETE .../{id}` | `ip_block` | upsert : `created` si nouvelle IP, sinon `reason_changed`, `blocked_until_changed` ; `deleted` |
+| `POST /admin/email-domain-rules`, `DELETE .../{id}` | `email_domain_rule` | upsert : `created`, ou `allowed_changed` ; `deleted` |
+
+`ROLE_CHANGE`, `USER_DEACTIVATED` et `PERMISSION_CHANGED` restent écrits dans `security_log`. Le cache des droits est rechargé après la validation de la transaction. `POST /admin/endpoints/sync` est exclu (resynchronisation technique).
+

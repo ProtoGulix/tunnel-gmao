@@ -44,6 +44,7 @@ export default function AdminRolesTab() {
       await setRoleHomeView(roleId, viewCode);
       notify('Vue d’accueil mise à jour');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : la vue reste inchangée
       notify(extractApiErrorMessage(err, 'Erreur lors de la mise à jour'), 'error');
     }
   }, [setRoleHomeView, notify]);

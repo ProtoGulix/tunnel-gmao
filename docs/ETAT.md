@@ -23,8 +23,9 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
-| en cours | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 3 fusionnées le 2026-11-14 ; étape 4 à planifier | à créer (étape 4) | ADR 0018, 0019 |
+| fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
+| à cadrer | Types et statuts d'intervention en base (écran Référentiel sans effet), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
 Onglet Tâches (ADR 0015) : fusionné dans develop le 2026-11-13, après validation à
@@ -68,9 +69,10 @@ subagents, format de compte rendu imposé aux agents).
    désactivation d'un plan, suppression de références fabricant et fournisseur, motif
    exigé puis accepté ; suppressions d'articles, liens fournisseur et fabricants couvertes
    par les tests d'intégration seulement). Base de dev : migrations 0007 à 0011 jouées ;
-   production : 0006 à 0011 à jouer à sa prochaine mise à jour. Suites :
-   docs/backlog/suites-audc-etape-2.md. Prochaine étape : 4 (docs/taches/AUDC-plan.md),
-   plan court à proposer à l'utilisateur, exclusions proposées une par une.
+   Suites :
+   docs/backlog/suites-audc-etape-2.md. Étape 4 fusionnée le 2026-11-14 (essai à l'écran
+   validé ; correctifs au passage : adresse IP des IP bloquées, saisie du formulaire de
+   classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
 2. Chantier changements hors travail normal, décisions de l'utilisateur du 2026-11-13 :

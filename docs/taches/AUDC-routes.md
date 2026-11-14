@@ -3,7 +3,7 @@
 Généré par `backend/scripts/audit_routes.py` : ne pas éditer à la main, relancer le
 script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 
-126 routes.
+125 routes.
 
 | Étape | Préfixe | Méthode | Chemin | Fonction | Statut |
 | --- | --- | --- | --- | --- | --- |
@@ -84,52 +84,51 @@ script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 | 3 | suppliers | POST | `/suppliers` | create_supplier | déclarée (supplier) |
 | 3 | suppliers | DELETE | `/suppliers/{supplier_id}` | delete_supplier | déclarée (supplier) |
 | 3 | suppliers | PUT | `/suppliers/{supplier_id}` | update_supplier | déclarée (supplier) |
-| 4 | admin | PATCH | `/admin/action-categories/{category_id}` | patch_action_category | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/action-categories/{category_id}/active` | patch_action_category_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/action-subcategories` | create_action_subcategory | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/action-subcategories/{subcat_id}` | patch_action_subcategory | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/action-subcategories/{subcat_id}/active` | patch_action_subcategory_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/audit-reasons` | create_audit_reason | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/audit-reasons/{reason_id}` | update_audit_reason | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/audit-reasons/{reason_id}/active` | patch_audit_reason_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/audit-rules` | create_audit_rule | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/audit-rules/{rule_id}` | update_audit_rule | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/complexity-factors/{factor_id}` | patch_complexity_factor | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/complexity-factors/{factor_id}/active` | patch_complexity_factor_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/email-domain-rules` | add_email_domain_rule | à traiter étape 4 |
-| 4 | admin | DELETE | `/admin/email-domain-rules/{rule_id}` | remove_email_domain_rule | à traiter étape 4 |
-| 4 | admin | POST | `/admin/endpoints/sync` | sync_endpoints | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/endpoints/{endpoint_id}` | patch_endpoint | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/intervention-statuses/{status_code}` | patch_intervention_status | à traiter étape 4 |
-| 4 | admin | POST | `/admin/intervention-types` | create_intervention_type | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/intervention-types/{type_id}` | patch_intervention_type | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/intervention-types/{type_id}/active` | patch_intervention_type_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/ip-blocklist` | add_ip_block | à traiter étape 4 |
-| 4 | admin | DELETE | `/admin/ip-blocklist/{block_id}` | remove_ip_block | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/permissions/{permission_id}` | patch_permission | à traiter étape 4 |
-| 4 | admin | POST | `/admin/settings/mail/test` | test_mail | à traiter étape 4 : POST sans écriture (AUDC-14), à valider avec l'utilisateur |
-| 4 | admin | POST | `/admin/users` | create_user | à traiter étape 4 |
-| 4 | admin | DELETE | `/admin/users/{user_id}` | delete_user | à traiter étape 4 |
-| 4 | admin | PUT | `/admin/users/{user_id}` | update_user | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/users/{user_id}/active` | patch_user_active | à traiter étape 4 |
-| 4 | admin | POST | `/admin/users/{user_id}/reset-password` | reset_password | à traiter étape 4 |
-| 4 | admin | PATCH | `/admin/users/{user_id}/role` | patch_user_role | à traiter étape 4 |
-| 4 | api-keys | POST | `/api-keys` | create_api_key | à traiter étape 4 |
-| 4 | api-keys | DELETE | `/api-keys/{key_id}` | delete_api_key | à traiter étape 4 |
-| 4 | api-keys | PATCH | `/api-keys/{key_id}` | update_api_key | à traiter étape 4 |
-| 4 | audit | POST | `/audit/log` | create_log | à traiter étape 4 |
+| 4 | admin | PATCH | `/admin/action-categories/{category_id}` | patch_action_category | déclarée (action_category) |
+| 4 | admin | PATCH | `/admin/action-categories/{category_id}/active` | patch_action_category_active | exclue : Route cassée (colonne absente en base), à réparer ou retirer : docs/backlog/routes-referentiel-cassees.md |
+| 4 | admin | POST | `/admin/action-subcategories` | create_action_subcategory | déclarée (action_subcategory) |
+| 4 | admin | PATCH | `/admin/action-subcategories/{subcat_id}` | patch_action_subcategory | déclarée (action_subcategory) |
+| 4 | admin | PATCH | `/admin/action-subcategories/{subcat_id}/active` | patch_action_subcategory_active | exclue : Route cassée (colonne absente en base), à réparer ou retirer : docs/backlog/routes-referentiel-cassees.md |
+| 4 | admin | POST | `/admin/audit-reasons` | create_audit_reason | déclarée (audit_reason) |
+| 4 | admin | PATCH | `/admin/audit-reasons/{reason_id}` | update_audit_reason | déclarée (audit_reason) |
+| 4 | admin | PATCH | `/admin/audit-reasons/{reason_id}/active` | patch_audit_reason_active | déclarée (audit_reason) |
+| 4 | admin | POST | `/admin/audit-rules` | create_audit_rule | déclarée (audit_rule) |
+| 4 | admin | PATCH | `/admin/audit-rules/{rule_id}` | update_audit_rule | déclarée (audit_rule) |
+| 4 | admin | PATCH | `/admin/complexity-factors/{factor_id}` | patch_complexity_factor | exclue : Route cassée (colonne absente en base), à réparer ou retirer : docs/backlog/routes-referentiel-cassees.md |
+| 4 | admin | PATCH | `/admin/complexity-factors/{factor_id}/active` | patch_complexity_factor_active | exclue : Route cassée (colonne absente en base), à réparer ou retirer : docs/backlog/routes-referentiel-cassees.md |
+| 4 | admin | POST | `/admin/email-domain-rules` | add_email_domain_rule | déclarée (email_domain_rule) |
+| 4 | admin | DELETE | `/admin/email-domain-rules/{rule_id}` | remove_email_domain_rule | déclarée (email_domain_rule) |
+| 4 | admin | POST | `/admin/endpoints/sync` | sync_endpoints | exclue : Resynchronisation technique du catalogue d'endpoints depuis le code, sans décision humaine ; les droits qui en dépendent sont tracés par permission_audit_log |
+| 4 | admin | PATCH | `/admin/endpoints/{endpoint_id}` | patch_endpoint | déclarée (endpoint) |
+| 4 | admin | PATCH | `/admin/intervention-statuses/{status_code}` | patch_intervention_status | déclarée (intervention_status) |
+| 4 | admin | POST | `/admin/intervention-types` | create_intervention_type | déclarée (intervention_type) |
+| 4 | admin | PATCH | `/admin/intervention-types/{type_id}` | patch_intervention_type | déclarée (intervention_type) |
+| 4 | admin | PATCH | `/admin/intervention-types/{type_id}/active` | patch_intervention_type_active | déclarée (intervention_type) |
+| 4 | admin | POST | `/admin/ip-blocklist` | add_ip_block | déclarée (ip_block) |
+| 4 | admin | DELETE | `/admin/ip-blocklist/{block_id}` | remove_ip_block | déclarée (ip_block) |
+| 4 | admin | PATCH | `/admin/permissions/{permission_id}` | patch_permission | déclarée (permission) |
+| 4 | admin | POST | `/admin/settings/mail/test` | test_mail | ne modifie rien : Envoie un courriel de test avec la configuration courante : aucune écriture en base |
+| 4 | admin | POST | `/admin/users` | create_user | déclarée (user) |
+| 4 | admin | DELETE | `/admin/users/{user_id}` | delete_user | déclarée (user) |
+| 4 | admin | PUT | `/admin/users/{user_id}` | update_user | déclarée (user) |
+| 4 | admin | PATCH | `/admin/users/{user_id}/active` | patch_user_active | déclarée (user) |
+| 4 | admin | POST | `/admin/users/{user_id}/reset-password` | reset_password | déclarée (user) |
+| 4 | admin | PATCH | `/admin/users/{user_id}/role` | patch_user_role | déclarée (user) |
+| 4 | api-keys | POST | `/api-keys` | create_api_key | déclarée (api_key) |
+| 4 | api-keys | DELETE | `/api-keys/{key_id}` | delete_api_key | déclarée (api_key) |
+| 4 | api-keys | PATCH | `/api-keys/{key_id}` | update_api_key | déclarée (api_key) |
 | 4 | auth | POST | `/auth/login` | login | exclue : Trace dans security_log (ADR 0018, point 1 quinquies) |
 | 4 | auth | POST | `/auth/logout` | logout | exclue : Trace dans security_log (ADR 0018, point 1 quinquies) |
 | 4 | auth | POST | `/auth/refresh` | refresh_token | exclue : Trace dans security_log (ADR 0018, point 1 quinquies) |
-| 4 | equipement-class | POST | `/equipement-class` | create_equipement_class | à traiter étape 4 |
-| 4 | equipement-class | DELETE | `/equipement-class/{class_id}` | delete_equipement_class | à traiter étape 4 |
-| 4 | equipement-class | PATCH | `/equipement-class/{class_id}` | update_equipement_class | à traiter étape 4 |
-| 4 | home-view | DELETE | `/home-view/admin/assignments/{role_id}` | delete_home_view_assignment | à traiter étape 4 |
-| 4 | home-view | PUT | `/home-view/admin/assignments/{role_id}` | upsert_home_view_assignment | à traiter étape 4 |
-| 4 | notifications | PATCH | `/notifications/read-all` | mark_all_read | à traiter étape 4 |
-| 4 | notifications | PATCH | `/notifications/{notification_id}/read` | mark_read | à traiter étape 4 |
-| 4 | services | POST | `/services` | create_service | à traiter étape 4 |
-| 4 | services | PATCH | `/services/{service_id}` | update_service | à traiter étape 4 |
-| 4 | users | PATCH | `/users/me/changelog-seen` | mark_my_changelog_seen | à traiter étape 4 |
-| 4 | users | POST | `/users/me/password` | change_my_password | à traiter étape 4 |
-| 4 | users | PATCH | `/users/me/profile` | update_my_profile | à traiter étape 4 |
+| 4 | equipement-class | POST | `/equipement-class` | create_equipement_class | déclarée (equipement_class) |
+| 4 | equipement-class | DELETE | `/equipement-class/{class_id}` | delete_equipement_class | déclarée (equipement_class) |
+| 4 | equipement-class | PATCH | `/equipement-class/{class_id}` | update_equipement_class | déclarée (equipement_class) |
+| 4 | home-view | DELETE | `/home-view/admin/assignments/{role_id}` | delete_home_view_assignment | déclarée (role_home_view) |
+| 4 | home-view | PUT | `/home-view/admin/assignments/{role_id}` | upsert_home_view_assignment | déclarée (role_home_view) |
+| 4 | notifications | PATCH | `/notifications/read-all` | mark_all_read | exclue : Marque lue une notification personnelle : état d'usage de l'utilisateur, pas une décision |
+| 4 | notifications | PATCH | `/notifications/{notification_id}/read` | mark_read | exclue : Marque lue une notification personnelle : état d'usage de l'utilisateur, pas une décision |
+| 4 | services | POST | `/services` | create_service | déclarée (service) |
+| 4 | services | PATCH | `/services/{service_id}` | update_service | déclarée (service) |
+| 4 | users | PATCH | `/users/me/changelog-seen` | mark_my_changelog_seen | exclue : Mémorise la dernière version des nouveautés vue par l'utilisateur : préférence d'affichage |
+| 4 | users | POST | `/users/me/password` | change_my_password | déclarée (user) |
+| 4 | users | PATCH | `/users/me/profile` | update_my_profile | déclarée (user) |

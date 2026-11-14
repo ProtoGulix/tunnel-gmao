@@ -50,3 +50,12 @@ Relevés pendant l'étape 2 (2026-11-14), hors de son périmètre :
     désactivation, de réactivation ou d'enregistrement des étapes (403, réseau) n'affiche
     aucun message (promesse rejetée non gérée). Suppression réelle d'un plan écartée le
     2026-11-14 : possible seulement avant toute occurrence générée, donc sans utilité.
+17. (Sécurité, constat du 2026-11-14) Une seule règle de domaine de courriel en base
+    restreint la connexion de tous les comptes aux domaines listés (auth/routes.py,
+    liste blanche dès qu'une règle existe), administrateur compris : un admin qui ajoute
+    une règle pour un seul domaine peut se bloquer. Comportement voulu ou non : à décider
+    (avertissement à l'écran, refus si le domaine de l'admin n'est pas couvert).
+18. (Étape 4) La synchronisation du catalogue (api/endpoints_catalog.py) ajoute et met à
+    jour les endpoints mais ne retire jamais ceux qui ont disparu du code : POST /audit/log,
+    supprimée à l'étape 4, reste dans tunnel_endpoint et ses lignes de droits restent
+    affichées dans l'écran des droits. À décider : marquer ou retirer les endpoints absents.

@@ -58,6 +58,19 @@ CLAUDE.md) avec docs/ETAT.md et la fiche de la tâche en cours.
    sous un uuid déterministe calculé depuis le code (uuid5), sans changement de schéma ;
    migrations 0010 et 0011 jouées sur la base de dev (accord de l'utilisateur).
 
+9. Étape 4 (2026-11-14) : comme l'étape 3, tout est routinier sauf la suppression (motif
+   explicite), y compris changement de rôle, désactivation d'utilisateur, réinitialisation
+   de mot de passe et changement de droits ; exclues (raison écrite) : lecture de
+   notification (2 routes), changelog vu, test d'envoi de mail (sans écriture),
+   synchronisation du catalogue des endpoints ; POST /audit/log supprimée (trace fabriquée
+   à la main, aucun appelant hors tests, changement d'API accepté) ; quatre routes cassées
+   (activation des catégories et sous-catégories d'action, modification et activation des
+   facteurs de complexité : colonnes absentes en base) exclues, correctif au backlog
+   docs/backlog/routes-referentiel-cassees.md. Empreintes de secrets (password_hash,
+   key_hash) masquées avant écriture d'audit ; clés int ou texte tracées sous un uuid5 par
+   entité (comme les familles de stock) ; traces de sécurité existantes (security_log,
+   permission_audit_log) conservées.
+
 ## Règles du chantier
 
 - Chaque tâche commence par des tests qui échouent (xfail strict), finit par le contrôle
@@ -76,7 +89,7 @@ CLAUDE.md) avec docs/ETAT.md et la fiche de la tâche en cours.
 | 1 | Socle : middleware après JWT et RBAC ; transaction par requête ; déclaration d'audit par route et test de couverture (liste d'exceptions qui doit se vider) ; événements d'audit déposés par les repos ; créations, suppressions, POST de sous-ressource, plus de réécriture du corps (test de l'import CSV) | fusionnée dans develop le 2026-11-14 |
 | 2 | Métier (34 routes) : interventions, demandes, actions, tâches, journal de statut, demandes d'achat, commandes, équipements, occurrences préventives (génération et acceptation automatique en mutations système) ; repos sans écriture d'audit ; fronts (motif à la suppression, motifs codés en dur retirés, auditGuard complété) ; intervention toujours issue d'une demande, suppression avec choix réouverture ou cascade de la demande (décision 7) | fusionnée dans develop le 2026-11-14 |
 | 3 | Plans préventifs, pièces, stock, fournisseurs, lignes de commande (42 routes, dont 3 de gabarits exclues) | fusionnée dans develop le 2026-11-14 |
-| 4 | Référentiels, admin (dont motifs et règles d'audit), clés d'API, utilisateurs, accueil, notifications, auth (49 routes, exclusions éventuelles à proposer une par une) | à faire |
+| 4 | Référentiels, admin (dont motifs et règles d'audit), clés d'API, utilisateurs, accueil, notifications, auth (49 routes : 36 déclarées, 12 exclues, 1 supprimée ; décision 9) | fusionnée dans develop le 2026-11-14 |
 | ensuite | Chantier « changements hors travail normal » (docs/ETAT.md) | à faire |
 
 ## Tâches
@@ -108,6 +121,12 @@ CLAUDE.md) avec docs/ETAT.md et la fiche de la tâche en cours.
 | faite | [AUDC-33 Préventifs, pièces](AUDC-33-preventifs-pieces.md) | backend-dev | AUDC-31, AUDC-32 |
 | faite | [AUDC-34 Stock, fournisseurs, lignes](AUDC-34-stock-fournisseurs-lignes.md) | backend-dev | AUDC-31, AUDC-32 |
 | faite | [AUDC-35 Fronts de l'étape 3](AUDC-35-fronts-etape-3.md) | frontend-dev | AUDC-33, AUDC-34 |
+| faite | [AUDC-41 Tests de l'étape 4](AUDC-41-tests-etape-4.md) | test-writer | décision 9 |
+| faite | [AUDC-42 Règles d'audit de l'étape 4](AUDC-42-regles-audit-etape-4.md) | db-dev | décision 9 |
+| faite | [AUDC-43 Socle de l'étape 4](AUDC-43-socle-etape-4.md) | backend-dev | AUDC-41 |
+| faite | [AUDC-44 Référentiels d'administration](AUDC-44-referentiels-admin.md) | backend-dev | AUDC-41 à 43 |
+| faite | [AUDC-45 Utilisateurs, droits, clés, sécurité, divers](AUDC-45-utilisateurs-droits-divers.md) | backend-dev | AUDC-41 à 44 |
+| faite | [AUDC-46 Fronts de l'étape 4](AUDC-46-fronts-etape-4.md) | frontend-dev | AUDC-44, AUDC-45 |
 | faite | [AUDC-28 Motif system](AUDC-28-motif-system.md) | db-dev | accord du 2026-11-14 |
 
 ## Constats de départ (état des lieux du 2026-11-13)
@@ -124,6 +143,9 @@ impossible), appel web mort PATCH /intervention-requests/{id}/amelioration.
 
 ## Prochaine action
 
-Étape 3 fusionnée le 2026-11-14 après l'essai à l'écran de l'utilisateur. Étape 4 :
-proposer le plan court à l'utilisateur (49 routes à recompter avec le script
-d'inventaire), exclusions proposées une par une, avant toute fiche ou tout code.
+Étapes 0 à 4 fusionnées dans develop (étape 4 le 2026-11-14, essai à l'écran validé par
+l'utilisateur). Toutes les routes qui modifient sont déclarées ou exclues avec leur raison.
+Production : migrations 0006 à 0012 à jouer à sa prochaine mise à jour. Suites :
+docs/backlog/suites-audc-etape-2.md, routes-referentiel-cassees.md,
+referentiel-types-statuts-en-base.md. Chantier suivant : « changements hors travail
+normal » (docs/ETAT.md).

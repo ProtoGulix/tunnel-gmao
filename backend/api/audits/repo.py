@@ -10,10 +10,31 @@ from uuid import UUID
 
 from psycopg2.extras import RealDictCursor
 
+from api.audits.entity_ids import entity_id_for
+from api.audits.events import record_audit_event, record_field_changes
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, ValidationError, raise_db_error
 
 logger = logging.getLogger(__name__)
+
+# Colonnes tracées dans l'audit des motifs et des règles (sans horodatages : jamais un diff).
+_REASON_AUDITED = (
+    "id",
+    "code",
+    "label",
+    "category",
+    "entity_types",
+    "decision_types",
+    "color",
+    "description",
+    "is_active",
+)
+_RULE_AUDITED = ("id", "entity_type", "field", "is_routine", "default_reason_code")
+
+
+def _audited(row: Dict[str, Any], columns) -> Dict[str, Any]:
+    """État tracé d'une ligne : seulement les colonnes de la liste (clé `id` comprise)."""
+    return {c: row[c] for c in columns}
 
 
 def _shape_log_row(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -169,6 +190,12 @@ class AuditRepository:
                     (code, label, category, entity_types, decision_types, color, description),
                 )
                 row = cur.fetchone()
+            record_audit_event(
+                "audit_reason",
+                entity_id_for("audit_reason", row["id"]),
+                "created",
+                new_value=_audited(row, _REASON_AUDITED),
+            )
             conn.commit()
             return dict(row)
         except Exception as e:
@@ -180,6 +207,28 @@ class AuditRepository:
         finally:
             if conn:
                 release_connection(conn)
+
+    @staticmethod
+    def _reason_state(cur, reason_id: int) -> Optional[Dict[str, Any]]:
+        """État tracé du motif avant modification (None si le motif n'existe pas)."""
+        cur.execute(
+            f"SELECT {', '.join(_REASON_AUDITED)} FROM audit_reason_code WHERE id = %s",
+            (reason_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+    @staticmethod
+    def _record_reason_changes(before: Optional[Dict[str, Any]], row) -> None:
+        """Une ligne d'audit par champ modifié, sous l'uuid5 de l'id du motif."""
+        if before is None or row is None:
+            return
+        record_field_changes(
+            "audit_reason",
+            entity_id_for("audit_reason", before["id"]),
+            before,
+            _audited(row, _REASON_AUDITED),
+        )
 
     def update_reason(
         self,
@@ -218,6 +267,7 @@ class AuditRepository:
         try:
             conn = self._get_connection()
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                before = self._reason_state(cur, reason_id)
                 cur.execute(
                     f"""
                     UPDATE audit_reason_code
@@ -229,6 +279,7 @@ class AuditRepository:
                     (*params, reason_id),
                 )
                 row = cur.fetchone()
+            self._record_reason_changes(before, row)
             conn.commit()
             return dict(row) if row else None
         except Exception as e:
@@ -245,6 +296,7 @@ class AuditRepository:
         try:
             conn = self._get_connection()
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                before = self._reason_state(cur, reason_id)
                 cur.execute(
                     """
                     UPDATE audit_reason_code
@@ -256,6 +308,7 @@ class AuditRepository:
                     (is_active, reason_id),
                 )
                 row = cur.fetchone()
+            self._record_reason_changes(before, row)
             conn.commit()
             return dict(row) if row else None
         except Exception as e:
@@ -662,6 +715,12 @@ class AuditRuleRepository:
                     (entity_type, field, is_routine, default_reason_code),
                 )
                 row = cur.fetchone()
+            record_audit_event(
+                "audit_rule",
+                entity_id_for("audit_rule", row["id"]),
+                "created",
+                new_value=_audited(row, _RULE_AUDITED),
+            )
             conn.commit()
             return dict(row)
         except Exception as e:
@@ -700,6 +759,10 @@ class AuditRuleRepository:
             conn = self._get_connection()
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
+                    f"SELECT {', '.join(_RULE_AUDITED)} FROM audit_rule WHERE id = %s", (rule_id,)
+                )
+                before = cur.fetchone()
+                cur.execute(
                     f"""
                     UPDATE audit_rule
                     SET {', '.join(sets)}
@@ -709,6 +772,13 @@ class AuditRuleRepository:
                     params,
                 )
                 row = cur.fetchone()
+            if before is not None and row is not None:
+                record_field_changes(
+                    "audit_rule",
+                    entity_id_for("audit_rule", rule_id),
+                    dict(before),
+                    _audited(row, _RULE_AUDITED),
+                )
             conn.commit()
             return dict(row) if row else None
         except Exception as e:

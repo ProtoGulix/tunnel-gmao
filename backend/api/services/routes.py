@@ -1,7 +1,8 @@
 """Routes API pour les services"""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.utils.response import single
 
@@ -26,13 +27,17 @@ def get_service(service_id: str):
     return single(repo.get_by_id(service_id))
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_service(data: ServiceCreate):
+@router.post(
+    "", status_code=status.HTTP_201_CREATED, dependencies=[audit("service", id_from_created=True)]
+)
+def create_service(data: ServiceCreate, request: Request):
     """Crée un nouveau service"""
-    return single(repo.create(code=data.code, label=data.label, is_active=data.is_active))
+    created = repo.create(code=data.code, label=data.label, is_active=data.is_active)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{service_id}")
+@router.patch("/{service_id}", dependencies=[audit("service", id_from_path="service_id")])
 def update_service(service_id: str, data: ServiceUpdate):
     """
     Met à jour un service

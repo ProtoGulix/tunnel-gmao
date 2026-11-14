@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Request, status
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated, require_role
 from api.utils.response import referentiel
 
@@ -45,7 +46,10 @@ def list_home_view_assignments():
 
 
 @router.put(
-    "/admin/assignments/{role_id}", response_model=HomeViewAssignmentOut, dependencies=[_admin_only]
+    "/admin/assignments/{role_id}",
+    response_model=HomeViewAssignmentOut,
+    # Le chemin porte role_id, pas l'id de la ligne : le repo dépose la trace.
+    dependencies=[_admin_only, audit("role_home_view", events_only=True)],
 )
 def upsert_home_view_assignment(role_id: str, data: HomeViewAssignmentIn, request: Request):
     """Assigne (ou remplace) la vue d'accueil d'un rôle (admin)."""
@@ -56,7 +60,7 @@ def upsert_home_view_assignment(role_id: str, data: HomeViewAssignmentIn, reques
 @router.delete(
     "/admin/assignments/{role_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[_admin_only],
+    dependencies=[_admin_only, audit("role_home_view", events_only=True)],
 )
 def delete_home_view_assignment(role_id: str):
     """Retire la configuration explicite d'un rôle — il retombe sur la vue par défaut (admin)."""

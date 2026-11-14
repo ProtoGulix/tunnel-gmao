@@ -2,8 +2,9 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 
+from api.admin.referentiel_repo import ReferentielRepository
 from api.admin.repo import (
     AdminEndpointRepository,
     AdminRoleRepository,
@@ -42,6 +43,7 @@ from api.admin.schemas import (
     RoleOut,
     SecurityLogOut,
 )
+from api.audits.declaration import audit, declare_created_id
 from api.audits.repo import AuditRepository, AuditRuleRepository
 from api.audits.schemas import (
     AuditReasonActivePatch,
@@ -52,7 +54,7 @@ from api.audits.schemas import (
     AuditRuleOut,
     AuditRuleUpdate,
 )
-from api.auth.permissions import require_role
+from api.auth.permissions import reload_permissions, require_role
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError
 from api.mail.service import MailError, send_mail
@@ -63,6 +65,10 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 _resp_admin = Depends(require_role("RESP", "ADMIN"))
 _admin_only = Depends(require_role("ADMIN"))
+
+
+def _referentiel_repo() -> ReferentielRepository:
+    return ReferentielRepository()
 
 
 def _get_user_id(request: Request) -> str:
@@ -84,9 +90,14 @@ def list_users(
     return AdminUserRepository().get_all(search=search, is_active=is_active, role_code=role_code)
 
 
-@router.post("/users", response_model=AdminUserOut, status_code=201, dependencies=[_admin_only])
-def create_user(payload: AdminUserCreate):
-    return AdminUserRepository().create(
+@router.post(
+    "/users",
+    response_model=AdminUserOut,
+    status_code=201,
+    dependencies=[_admin_only, audit("user", id_from_created=True)],
+)
+def create_user(payload: AdminUserCreate, request: Request):
+    created = AdminUserRepository().create(
         email=payload.email,
         password=payload.password,
         first_name=payload.first_name,
@@ -94,6 +105,8 @@ def create_user(payload: AdminUserCreate):
         initial=payload.initial,
         role_code=payload.role_code,
     )
+    declare_created_id(request, created["id"])
+    return created
 
 
 @router.get("/users/{user_id}", response_model=AdminUserOut, dependencies=[_resp_admin])
@@ -101,7 +114,11 @@ def get_user(user_id: str):
     return AdminUserRepository().get_by_id(user_id)
 
 
-@router.put("/users/{user_id}", response_model=AdminUserOut, dependencies=[_admin_only])
+@router.put(
+    "/users/{user_id}",
+    response_model=AdminUserOut,
+    dependencies=[_admin_only, audit("user", id_from_path="user_id")],
+)
 def update_user(user_id: str, payload: AdminUserUpdate):
     return AdminUserRepository().update(
         user_id=user_id,
@@ -112,19 +129,31 @@ def update_user(user_id: str, payload: AdminUserUpdate):
     )
 
 
-@router.patch("/users/{user_id}/role", status_code=200)
+@router.patch(
+    "/users/{user_id}/role",
+    status_code=200,
+    dependencies=[audit("user", id_from_path="user_id")],
+)
 def patch_user_role(user_id: str, payload: AdminUserRolePatch, request: Request, _=_admin_only):
     AdminUserRepository().set_role(user_id, payload.role_code, _get_user_id(request))
     return {"message": "Rôle mis à jour"}
 
 
-@router.patch("/users/{user_id}/active", status_code=200)
+@router.patch(
+    "/users/{user_id}/active",
+    status_code=200,
+    dependencies=[audit("user", id_from_path="user_id")],
+)
 def patch_user_active(user_id: str, payload: AdminUserActivePatch, request: Request, _=_admin_only):
     AdminUserRepository().set_active(user_id, payload.is_active, _get_user_id(request))
     return {"message": "Statut mis à jour"}
 
 
-@router.post("/users/{user_id}/reset-password", response_model=PasswordResetOut)
+@router.post(
+    "/users/{user_id}/reset-password",
+    response_model=PasswordResetOut,
+    dependencies=[audit("user", id_from_path="user_id")],
+)
 def reset_password(user_id: str, _=_admin_only):
     temp_pwd = AdminUserRepository().reset_password(user_id)
     return PasswordResetOut(
@@ -133,7 +162,11 @@ def reset_password(user_id: str, _=_admin_only):
     )
 
 
-@router.delete("/users/{user_id}", status_code=200)
+@router.delete(
+    "/users/{user_id}",
+    status_code=200,
+    dependencies=[audit("user", id_from_path="user_id")],
+)
 def delete_user(user_id: str, _=_admin_only):
     AdminUserRepository().soft_delete(user_id)
     return {"message": "Utilisateur supprimé"}
@@ -161,9 +194,23 @@ def get_role_permissions(role_id: str):
     return AdminRoleRepository().get_role_permissions(role_id)
 
 
-@router.patch("/permissions/{permission_id}", status_code=200)
-def patch_permission(permission_id: str, payload: PermissionPatch, request: Request, _=_admin_only):
+@router.patch(
+    "/permissions/{permission_id}",
+    status_code=200,
+    dependencies=[audit("permission", id_from_path="permission_id")],
+)
+def patch_permission(
+    permission_id: str,
+    payload: PermissionPatch,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    _=_admin_only,
+):
     AdminRoleRepository().patch_permission(permission_id, payload.allowed, _get_user_id(request))
+    # Rechargement du cache des droits APRÈS la validation de la transaction : les tâches de
+    # fond partent une fois la transaction validée. Avant, le cache aurait pu retenir un droit
+    # annulé par la suite (échec d'écriture d'audit).
+    background_tasks.add_task(reload_permissions)
     return {"message": "Permission mise à jour"}
 
 
@@ -196,7 +243,11 @@ def list_endpoint_modules():
     return AdminEndpointRepository().get_modules()
 
 
-@router.patch("/endpoints/{endpoint_id}", response_model=EndpointOut, dependencies=[_admin_only])
+@router.patch(
+    "/endpoints/{endpoint_id}",
+    response_model=EndpointOut,
+    dependencies=[_admin_only, audit("endpoint", id_from_path="endpoint_id")],
+)
 def patch_endpoint(endpoint_id: str, payload: EndpointPatch):
     return AdminEndpointRepository().patch(
         endpoint_id,
@@ -221,41 +272,21 @@ async def sync_endpoints(request: Request):
 
 
 @router.get("/action-categories", dependencies=[_resp_admin])
-def list_action_categories():
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM action_category ORDER BY name ASC")
-            cols = [d[0] for d in cur.description]
-            return [dict(zip(cols, r)) for r in cur.fetchall()]
-    finally:
-        if conn:
-            release_connection(conn)
+def list_action_categories(repo: ReferentielRepository = Depends(_referentiel_repo)):
+    return repo.list_action_categories()
 
 
-@router.patch("/action-categories/{category_id}", dependencies=[_resp_admin])
-def patch_action_category(category_id: int, payload: ActionCategoryPatch):
-    conn = None
-    try:
-        conn = get_connection()
-        sets, params = [], []
-        if payload.label is not None:
-            sets.append("name = %s")
-            params.append(payload.label)
-        if payload.color is not None:
-            sets.append("color = %s")
-            params.append(payload.color)
-        if not sets:
-            raise ValidationError("Rien à mettre à jour")
-        params.append(category_id)
-        with conn.cursor() as cur:
-            cur.execute(f"UPDATE action_category SET {', '.join(sets)} WHERE id = %s", params)
-        conn.commit()
-        return {"message": "Catégorie mise à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.patch(
+    "/action-categories/{category_id}",
+    dependencies=[_resp_admin, audit("action_category", events_only=True)],
+)
+def patch_action_category(
+    category_id: int,
+    payload: ActionCategoryPatch,
+    repo: ReferentielRepository = Depends(_referentiel_repo),
+):
+    repo.patch_action_category(category_id, payload.label, payload.color)
+    return {"message": "Catégorie mise à jour"}
 
 
 @router.patch("/action-categories/{category_id}/active", dependencies=[_resp_admin])
@@ -284,62 +315,34 @@ def patch_action_category_active(category_id: int, payload: ActionCategoryActive
 def list_action_subcategories(
     category_id: Optional[int] = Query(None),
     is_active: Optional[bool] = Query(None),
+    repo: ReferentielRepository = Depends(_referentiel_repo),
 ):
-    conn = None
-    try:
-        conn = get_connection()
-        wheres, params = [], []
-        if category_id is not None:
-            wheres.append("category_id = %s")
-            params.append(category_id)
-        if is_active is not None:
-            wheres.append("is_active = %s")
-            params.append(is_active)
-        where_sql = ("WHERE " + " AND ".join(wheres)) if wheres else ""
-        with conn.cursor() as cur:
-            cur.execute(f"SELECT * FROM action_subcategory {where_sql} ORDER BY name ASC", params)
-            cols = [d[0] for d in cur.description]
-            return [dict(zip(cols, r)) for r in cur.fetchall()]
-    finally:
-        if conn:
-            release_connection(conn)
+    return repo.list_action_subcategories(category_id, is_active)
 
 
-@router.post("/action-subcategories", status_code=201, dependencies=[_resp_admin])
-def create_action_subcategory(payload: ActionSubcategoryCreate):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO action_subcategory (code, name, category_id) VALUES (%s, %s, %s) RETURNING id",
-                (payload.code, payload.label, payload.category_id),
-            )
-            new_id = cur.fetchone()[0]
-        conn.commit()
-        return {"id": new_id, "message": "Sous-catégorie créée"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.post(
+    "/action-subcategories",
+    status_code=201,
+    dependencies=[_resp_admin, audit("action_subcategory", events_only=True)],
+)
+def create_action_subcategory(
+    payload: ActionSubcategoryCreate, repo: ReferentielRepository = Depends(_referentiel_repo)
+):
+    new_id = repo.create_action_subcategory(payload.code, payload.label, payload.category_id)
+    return {"id": new_id, "message": "Sous-catégorie créée"}
 
 
-@router.patch("/action-subcategories/{subcat_id}", dependencies=[_resp_admin])
-def patch_action_subcategory(subcat_id: int, payload: ActionSubcategoryPatch):
-    conn = None
-    try:
-        conn = get_connection()
-        if payload.label is None:
-            raise ValidationError("Rien à mettre à jour")
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE action_subcategory SET name = %s WHERE id = %s",
-                (payload.label, subcat_id),
-            )
-        conn.commit()
-        return {"message": "Sous-catégorie mise à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.patch(
+    "/action-subcategories/{subcat_id}",
+    dependencies=[_resp_admin, audit("action_subcategory", events_only=True)],
+)
+def patch_action_subcategory(
+    subcat_id: int,
+    payload: ActionSubcategoryPatch,
+    repo: ReferentielRepository = Depends(_referentiel_repo),
+):
+    repo.patch_action_subcategory(subcat_id, payload.label)
+    return {"message": "Sous-catégorie mise à jour"}
 
 
 @router.patch("/action-subcategories/{subcat_id}/active", dependencies=[_resp_admin])
@@ -425,71 +428,46 @@ def patch_complexity_factor_active(factor_id: int, payload: ComplexityFactorActi
 
 
 @router.get("/intervention-types", dependencies=[_resp_admin])
-def list_intervention_types():
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM intervention_type ORDER BY label ASC")
-            cols = [d[0] for d in cur.description]
-            return [dict(zip(cols, r)) for r in cur.fetchall()]
-    finally:
-        if conn:
-            release_connection(conn)
+def list_intervention_types(repo: ReferentielRepository = Depends(_referentiel_repo)):
+    return repo.list_intervention_types()
 
 
-@router.post("/intervention-types", status_code=201, dependencies=[_resp_admin])
-def create_intervention_type(payload: InterventionTypeCreate):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO intervention_type (code, label) VALUES (%s, %s) RETURNING id",
-                (payload.code, payload.label),
-            )
-            new_id = cur.fetchone()[0]
-        conn.commit()
-        return {"id": new_id, "message": "Type créé"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.post(
+    "/intervention-types",
+    status_code=201,
+    dependencies=[_resp_admin, audit("intervention_type", events_only=True)],
+)
+def create_intervention_type(
+    payload: InterventionTypeCreate, repo: ReferentielRepository = Depends(_referentiel_repo)
+):
+    new_id = repo.create_intervention_type(payload.code, payload.label)
+    return {"id": new_id, "message": "Type créé"}
 
 
-@router.patch("/intervention-types/{type_id}", dependencies=[_resp_admin])
-def patch_intervention_type(type_id: int, payload: InterventionTypePatch):
-    conn = None
-    try:
-        conn = get_connection()
-        if payload.label is None:
-            raise ValidationError("Rien à mettre à jour")
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE intervention_type SET label = %s WHERE id = %s",
-                (payload.label, type_id),
-            )
-        conn.commit()
-        return {"message": "Type mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.patch(
+    "/intervention-types/{type_id}",
+    dependencies=[_resp_admin, audit("intervention_type", events_only=True)],
+)
+def patch_intervention_type(
+    type_id: int,
+    payload: InterventionTypePatch,
+    repo: ReferentielRepository = Depends(_referentiel_repo),
+):
+    repo.patch_intervention_type(type_id, payload.label)
+    return {"message": "Type mis à jour"}
 
 
-@router.patch("/intervention-types/{type_id}/active", dependencies=[_resp_admin])
-def patch_intervention_type_active(type_id: int, payload: InterventionTypeActivePatch):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE intervention_type SET is_active = %s WHERE id = %s",
-                (payload.is_active, type_id),
-            )
-        conn.commit()
-        return {"message": "Statut mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.patch(
+    "/intervention-types/{type_id}/active",
+    dependencies=[_resp_admin, audit("intervention_type", events_only=True)],
+)
+def patch_intervention_type_active(
+    type_id: int,
+    payload: InterventionTypeActivePatch,
+    repo: ReferentielRepository = Depends(_referentiel_repo),
+):
+    repo.set_intervention_type_active(type_id, payload.is_active)
+    return {"message": "Statut mis à jour"}
 
 
 # ------------------------------------------------------------------ #
@@ -498,43 +476,21 @@ def patch_intervention_type_active(type_id: int, payload: InterventionTypeActive
 
 
 @router.get("/intervention-statuses", dependencies=[_resp_admin])
-def list_intervention_statuses():
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM intervention_status_ref ORDER BY code ASC")
-            cols = [d[0] for d in cur.description]
-            return [dict(zip(cols, r)) for r in cur.fetchall()]
-    finally:
-        if conn:
-            release_connection(conn)
+def list_intervention_statuses(repo: ReferentielRepository = Depends(_referentiel_repo)):
+    return repo.list_intervention_statuses()
 
 
-@router.patch("/intervention-statuses/{status_code}", dependencies=[_resp_admin])
-def patch_intervention_status(status_code: str, payload: InterventionStatusPatch):
-    conn = None
-    try:
-        conn = get_connection()
-        sets, params = [], []
-        if payload.label is not None:
-            sets.append("label = %s")
-            params.append(payload.label)
-        if payload.color is not None:
-            sets.append("color = %s")
-            params.append(payload.color)
-        if not sets:
-            raise ValidationError("Rien à mettre à jour")
-        params.append(status_code)
-        with conn.cursor() as cur:
-            cur.execute(
-                f"UPDATE intervention_status_ref SET {', '.join(sets)} WHERE code = %s", params
-            )
-        conn.commit()
-        return {"message": "Statut mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
+@router.patch(
+    "/intervention-statuses/{status_code}",
+    dependencies=[_resp_admin, audit("intervention_status", events_only=True)],
+)
+def patch_intervention_status(
+    status_code: str,
+    payload: InterventionStatusPatch,
+    repo: ReferentielRepository = Depends(_referentiel_repo),
+):
+    repo.patch_intervention_status(status_code, payload.label, payload.color)
+    return {"message": "Statut mis à jour"}
 
 
 # ------------------------------------------------------------------ #
@@ -566,7 +522,13 @@ def list_ip_blocklist():
     return AdminSecurityRepository().get_ip_blocklist()
 
 
-@router.post("/ip-blocklist", response_model=IpBlocklistOut, status_code=201)
+@router.post(
+    "/ip-blocklist",
+    response_model=IpBlocklistOut,
+    status_code=201,
+    # Upsert : created ou champs modifiés selon ce qui s'est passé, déposés par le repo.
+    dependencies=[audit("ip_block", events_only=True)],
+)
 def add_ip_block(payload: IpBlocklistCreate, request: Request, _=_admin_only):
     return AdminSecurityRepository().add_ip_block(
         ip_address=payload.ip_address,
@@ -576,7 +538,11 @@ def add_ip_block(payload: IpBlocklistCreate, request: Request, _=_admin_only):
     )
 
 
-@router.delete("/ip-blocklist/{block_id}", status_code=200, dependencies=[_admin_only])
+@router.delete(
+    "/ip-blocklist/{block_id}",
+    status_code=200,
+    dependencies=[_admin_only, audit("ip_block", id_from_path="block_id")],
+)
 def remove_ip_block(block_id: str):
     AdminSecurityRepository().remove_ip_block(block_id)
     return {"message": "Blocage supprimé"}
@@ -593,13 +559,18 @@ def list_email_domain_rules():
     "/email-domain-rules",
     response_model=EmailDomainRuleOut,
     status_code=201,
-    dependencies=[_admin_only],
+    # Upsert : created ou allowed_changed selon ce qui s'est passé, déposés par le repo.
+    dependencies=[_admin_only, audit("email_domain_rule", events_only=True)],
 )
 def add_email_domain_rule(payload: EmailDomainRuleCreate):
     return AdminSecurityRepository().add_email_domain_rule(payload.domain, payload.allowed)
 
 
-@router.delete("/email-domain-rules/{rule_id}", status_code=200, dependencies=[_admin_only])
+@router.delete(
+    "/email-domain-rules/{rule_id}",
+    status_code=200,
+    dependencies=[_admin_only, audit("email_domain_rule", id_from_path="rule_id")],
+)
 def remove_email_domain_rule(rule_id: str):
     AdminSecurityRepository().remove_email_domain_rule(rule_id)
     return {"message": "Règle supprimée"}
@@ -688,7 +659,10 @@ def list_audit_known_fields(
 
 
 @router.post(
-    "/audit-rules", response_model=AuditRuleOut, status_code=201, dependencies=[_admin_only]
+    "/audit-rules",
+    response_model=AuditRuleOut,
+    status_code=201,
+    dependencies=[_admin_only, audit("audit_rule", events_only=True)],
 )
 def create_audit_rule(
     payload: AuditRuleCreate,
@@ -702,7 +676,11 @@ def create_audit_rule(
     )
 
 
-@router.patch("/audit-rules/{rule_id}", response_model=AuditRuleOut, dependencies=[_admin_only])
+@router.patch(
+    "/audit-rules/{rule_id}",
+    response_model=AuditRuleOut,
+    dependencies=[_admin_only, audit("audit_rule", events_only=True)],
+)
 def update_audit_rule(
     rule_id: int,
     payload: AuditRuleUpdate,
@@ -739,7 +717,7 @@ def list_audit_reasons_admin(
     "/audit-reasons",
     response_model=AuditReasonAdminOut,
     status_code=201,
-    dependencies=[_admin_only],
+    dependencies=[_admin_only, audit("audit_reason", events_only=True)],
 )
 def create_audit_reason(
     payload: AuditReasonCreate,
@@ -757,7 +735,9 @@ def create_audit_reason(
 
 
 @router.patch(
-    "/audit-reasons/{reason_id}", response_model=AuditReasonAdminOut, dependencies=[_admin_only]
+    "/audit-reasons/{reason_id}",
+    response_model=AuditReasonAdminOut,
+    dependencies=[_admin_only, audit("audit_reason", events_only=True)],
 )
 def update_audit_reason(
     reason_id: int,
@@ -781,7 +761,7 @@ def update_audit_reason(
 @router.patch(
     "/audit-reasons/{reason_id}/active",
     response_model=AuditReasonAdminOut,
-    dependencies=[_admin_only],
+    dependencies=[_admin_only, audit("audit_reason", events_only=True)],
 )
 def patch_audit_reason_active(
     reason_id: int,

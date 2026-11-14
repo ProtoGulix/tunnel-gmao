@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Request, status
 
 from api.api_keys.repo import ApiKeyRepository
 from api.api_keys.schemas import ApiKeyCreate, ApiKeyCreated, ApiKeyListItem, ApiKeyPatch
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_role
 from api.limiter import limiter
 
@@ -23,19 +24,23 @@ def list_api_keys():
     "",
     response_model=ApiKeyCreated,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[_admin_only],
+    dependencies=[_admin_only, audit("api_key", id_from_created=True)],
 )
 @limiter.limit("20/minute")
 def create_api_key(request: Request, payload: ApiKeyCreate):
     """Crée une clé d'API MCP. Le secret brut est retourné une seule fois."""
     created_by = str(getattr(request.state, "user_id", None) or "")
-    return ApiKeyRepository().create(
-        name=payload.name,
-        created_by=created_by or None,
-    )
+    created = ApiKeyRepository().create(name=payload.name, created_by=created_by or None)
+    # Le secret brut reste dans la réponse seule : l'audit ne lit que la ligne (hash masqué).
+    declare_created_id(request, created["id"])
+    return created
 
 
-@router.patch("/{key_id}", response_model=ApiKeyListItem, dependencies=[_admin_only])
+@router.patch(
+    "/{key_id}",
+    response_model=ApiKeyListItem,
+    dependencies=[_admin_only, audit("api_key", id_from_path="key_id")],
+)
 def update_api_key(key_id: str, payload: ApiKeyPatch):
     return ApiKeyRepository().update(
         key_id=key_id,
@@ -44,6 +49,10 @@ def update_api_key(key_id: str, payload: ApiKeyPatch):
     )
 
 
-@router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[_admin_only])
+@router.delete(
+    "/{key_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[_admin_only, audit("api_key", id_from_path="key_id")],
+)
 def delete_api_key(key_id: str):
     ApiKeyRepository().delete(key_id)

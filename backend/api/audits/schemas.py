@@ -207,17 +207,3 @@ class AuditRuleUpdate(BaseModel):
 
     is_routine: Optional[bool] = None
     default_reason_code: Optional[str] = None
-
-
-class AuditLogCreate(BaseModel):
-    """Payload pour créer manuellement une entrée d'audit (via API directe)."""
-
-    entity_type: str = Field(
-        ..., description="Type d'entité : intervention, request, task, action, purchase_request"
-    )
-    entity_id: UUID
-    decision_type: str
-    old_value: Optional[Dict[str, Any]] = None
-    new_value: Optional[Dict[str, Any]] = None
-    reason_code: str
-    reason_text: Optional[str] = None

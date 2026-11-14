@@ -102,6 +102,14 @@ mobile/CHANGELOG.md.
 - Exclusions temporaires : génération préventive et import CSV gardent leur succès
   partiel jusqu'à l'étape 2.
 
+### Administration
+- La liste des IP bloquées affiche de nouveau l'adresse IP (la colonne restait vide).
+- Le formulaire de classe d'équipement ne perd plus le curseur à chaque lettre tapée.
+- Supprimer un utilisateur, une clé d'API, une IP bloquée, une règle de domaine email,
+  une classe d'équipement ou une vue d'accueil de rôle demande désormais un motif, choisi
+  dans la même fenêtre que les autres suppressions. Fermer la fenêtre annule la
+  suppression sans message d'erreur. Créer ou modifier ces éléments reste sans motif.
+
 ### Traçabilité (ADR 0018, étape 3)
 - Plans préventifs, pièces, références fabricant et fournisseur des pièces et références
   fabricant (`manufacturer-items`) passent sous l'audit centralisé : création, modification
@@ -186,6 +194,40 @@ mobile/CHANGELOG.md.
   sont tracées au nom du système (motif « cascade »). Créer, modifier et supprimer une demande
   d'achat, une commande fournisseur ou un équipement est tracé une seule fois ; la suppression
   exige un motif choisi.
+
+### [interne] Audit centralisé (ADR 0018, étape 4, socle)
+- `POST /audit/log` est supprimée (aucun appelant) : le middleware est le seul à écrire
+  dans `audit_log`. `GET /audit/logs` est inchangé.
+- Les colonnes `password_hash` et `key_hash` sont masquées (valeur remplacée, clé conservée)
+  dans toutes les lignes d'audit : création, suppression, diffs et événements.
+- Identifiants d'audit uuid5 pour les entités à clé entière ou texte (`entity_id_for`,
+  `api/audits/entity_ids.py`) ; `_TABLE_MAP` complété pour les entités à clé uuid.
+- Exclusions motivées de la décision 9 (notifications, changelog-seen, endpoints/sync,
+  test de courriel, quatre routes cassées renvoyées au backlog).
+
+### [interne] Audit centralisé (ADR 0018, étape 4, référentiels)
+- Catégories et sous-catégories d'action, types et statuts d'intervention, motifs et règles
+  d'audit (`/admin`) : création et modification tracées en routine sous l'uuid5 de leur clé
+  (clé d'origine dans les valeurs). Le SQL des référentiels passe dans
+  `api/admin/referentiel_repo.py` ; les erreurs de base passent par `raise_db_error`.
+
+### [interne] Audit centralisé (ADR 0018, étape 4, utilisateurs, droits et divers)
+- Utilisateurs (création, modification, rôle, activation, réinitialisation du mot de passe,
+  suppression), droits, description des endpoints, clés d'API, IP bloquées, règles de domaine
+  de courriel, classes d'équipement, services, vues d'accueil par rôle, et `/users/me/profile`
+  et `/users/me/password` (identifiant pris du jeton) : tracés en routine, auteur = jeton.
+  Aucune empreinte, mot de passe provisoire ni secret de clé dans `audit_log`.
+- Changement pour l'utilisateur : la suppression d'un utilisateur, d'une clé d'API, d'une IP
+  bloquée, d'une règle de domaine, d'une classe d'équipement ou d'une vue d'accueil demande
+  désormais un motif (`reason_code` dans le corps, 400 sinon).
+- `POST /admin/ip-blocklist`, `POST /admin/email-domain-rules` et `PUT /home-view/admin/
+  assignments/{role_id}` sont des upserts : `created` pour une nouvelle ligne, sinon
+  `{champ}_changed` ; une répétition à l'identique ne trace rien. La vue d'accueil est tracée
+  sous l'id de la ligne `role_home_view`, pas sous `role_id`.
+- `security_log` (ROLE_CHANGE, USER_DEACTIVATED) et `permission_audit_log` sont conservés.
+- Le cache des droits est rechargé après la validation de la transaction (tâche de fond),
+  plus avant : un échec d'écriture d'audit ne laisse plus un droit annulé dans le cache.
+- Plus aucune route « à traiter » dans l'inventaire (`docs/taches/AUDC-routes.md`).
 
 ### [interne] Audit centralisé (ADR 0018, étape 3)
 - `api/audits/entity_ids.py` : `stock_family_entity_id(code)`, uuid5 d'un espace de noms constant

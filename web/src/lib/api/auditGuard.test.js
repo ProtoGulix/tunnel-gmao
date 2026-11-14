@@ -12,6 +12,17 @@ test('auditGuard : les entités de l\'étape 2 sont reconnues', () => {
   assert.equal(type('/inconnu/abc'), null);
 });
 
+test('auditGuard : les entités de l\'étape 4 sont reconnues', () => {
+  const type = (url) => getAuditEntityType({ config: { url } });
+  assert.equal(type('/admin/users/u1'), 'user');
+  assert.equal(type('/api-keys/k1'), 'api_key');
+  assert.equal(type('/admin/ip-blocklist/1'), 'ip_block');
+  assert.equal(type('/admin/email-domain-rules/1'), 'email_domain_rule');
+  assert.equal(type('/equipement-class/c1'), 'equipement_class');
+  assert.equal(type('/home-view/admin/assignments/3'), 'role_home_view');
+  assert.equal(type('/admin/inconnu/1'), null);
+});
+
 test('auditGuard : les entités de l\'étape 3 sont reconnues', () => {
   const type = (url) => getAuditEntityType({ config: { url } });
   assert.equal(type('/preventive-plans/abc'), 'preventive_plan');
