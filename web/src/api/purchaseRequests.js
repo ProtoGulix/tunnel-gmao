@@ -88,10 +88,15 @@ export async function updatePurchaseRequest(id, updates) {
 /**
  * Delete a purchase request
  * @param {string} id
+ * @param {{reason_code: string, reason_text?: string}} [reason]
  * @returns {Promise<void>}
  */
-export async function deletePurchaseRequest(id) {
-  await api.delete(`/purchase-requests/${id}`);
+export async function deletePurchaseRequest(id, reason) {
+  // Sans motif fourni, le 400 du backend ouvre la fenêtre de motifs « deleted » (auditGuard).
+  const data = reason
+    ? { reason_code: reason.reason_code, ...(reason.reason_text ? { reason_text: reason.reason_text } : {}) }
+    : undefined;
+  await api.delete(`/purchase-requests/${id}`, { data });
 }
 
 

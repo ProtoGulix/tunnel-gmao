@@ -10,8 +10,8 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text } from '@radix-ui/themes';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
+import DeleteInterventionDialog from './DeleteInterventionDialog';
 import {
-  DeleteInterventionDialog,
   MoreActionsMenu,
   PropertySelect,
   RequestLink,
@@ -42,10 +42,11 @@ export default function InterventionPanelHeader({
   onOpenRequest,
   onCopyCode,
   canDelete,
-  isDeletable,
+  deleteBlockReason,
   onDelete,
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const request = intervention.request;
   const hasMenu = Boolean(onRequestPointage || intervention.code || canDelete);
 
@@ -55,6 +56,16 @@ export default function InterventionPanelHeader({
       onCopyCode?.(true);
     } catch {
       onCopyCode?.(false);
+    }
+  };
+
+  const handleConfirmDelete = async (choice) => {
+    setDeleting(true);
+    try {
+      await onDelete(choice);
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
     }
   };
 
@@ -77,7 +88,7 @@ export default function InterventionPanelHeader({
             onRequestPointage={onRequestPointage}
             onCopyCode={handleCopyCode}
             canDelete={canDelete}
-            isDeletable={isDeletable}
+            deleteBlockReason={deleteBlockReason}
             onAskDelete={() => setDeleteOpen(true)}
           />
         )}
@@ -113,9 +124,11 @@ export default function InterventionPanelHeader({
       {canDelete && (
         <DeleteInterventionDialog
           open={deleteOpen}
-          onOpenChange={setDeleteOpen}
           code={intervention.code}
-          onConfirm={onDelete}
+          request={request}
+          saving={deleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteOpen(false)}
         />
       )}
     </div>
@@ -133,6 +146,6 @@ InterventionPanelHeader.propTypes = {
   onOpenRequest: PropTypes.func,
   onCopyCode: PropTypes.func,
   canDelete: PropTypes.bool,
-  isDeletable: PropTypes.bool,
+  deleteBlockReason: PropTypes.string,
   onDelete: PropTypes.func,
 };

@@ -7,40 +7,40 @@ script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 
 | Étape | Préfixe | Méthode | Chemin | Fonction | Statut |
 | --- | --- | --- | --- | --- | --- |
-| 2 | equipements | POST | `/equipements` | create_equipement | à traiter étape 2 |
-| 2 | equipements | DELETE | `/equipements/{equipement_id}` | delete_equipement | à traiter étape 2 |
-| 2 | equipements | PATCH | `/equipements/{equipement_id}` | patch_equipement | à traiter étape 2 |
-| 2 | equipements | PUT | `/equipements/{equipement_id}` | update_equipement | à traiter étape 2 |
-| 2 | intervention-actions | POST | `/intervention-actions` | add_action | à traiter étape 2 |
-| 2 | intervention-actions | DELETE | `/intervention-actions/{action_id}` | delete_action | à traiter étape 2 |
-| 2 | intervention-actions | PATCH | `/intervention-actions/{action_id}` | patch_action | à traiter étape 2 |
-| 2 | intervention-requests | POST | `/intervention-requests` | create_request | à traiter étape 2 |
-| 2 | intervention-requests | POST | `/intervention-requests/repair` | repair_orphaned_requests | à traiter étape 2 |
-| 2 | intervention-requests | DELETE | `/intervention-requests/{request_id}` | delete_request | à traiter étape 2 |
+| 2 | equipements | POST | `/equipements` | create_equipement | déclarée (equipement) |
+| 2 | equipements | DELETE | `/equipements/{equipement_id}` | delete_equipement | déclarée (equipement) |
+| 2 | equipements | PATCH | `/equipements/{equipement_id}` | patch_equipement | déclarée (equipement) |
+| 2 | equipements | PUT | `/equipements/{equipement_id}` | update_equipement | déclarée (equipement) |
+| 2 | intervention-actions | POST | `/intervention-actions` | add_action | déclarée (action) |
+| 2 | intervention-actions | DELETE | `/intervention-actions/{action_id}` | delete_action | déclarée (action) |
+| 2 | intervention-actions | PATCH | `/intervention-actions/{action_id}` | patch_action | déclarée (action) |
+| 2 | intervention-requests | POST | `/intervention-requests` | create_request | déclarée (request) |
+| 2 | intervention-requests | POST | `/intervention-requests/repair` | repair_orphaned_requests | déclarée (request) |
+| 2 | intervention-requests | DELETE | `/intervention-requests/{request_id}` | delete_request | déclarée (request) |
 | 2 | intervention-requests | POST | `/intervention-requests/{request_id}/transition` | transition_request_status | déclarée (request) |
-| 2 | intervention-status-log | POST | `/intervention-status-log` | create_status_log | à traiter étape 2 |
-| 2 | intervention-tasks | POST | `/intervention-tasks` | create_task | à traiter étape 2 |
-| 2 | intervention-tasks | DELETE | `/intervention-tasks/{task_id}` | delete_task | à traiter étape 2 |
-| 2 | intervention-tasks | PATCH | `/intervention-tasks/{task_id}` | patch_task | à traiter étape 2 |
+| 2 | intervention-status-log | POST | `/intervention-status-log` | create_status_log | déclarée (intervention) |
+| 2 | intervention-tasks | POST | `/intervention-tasks` | create_task | déclarée (task) |
+| 2 | intervention-tasks | DELETE | `/intervention-tasks/{task_id}` | delete_task | déclarée (task) |
+| 2 | intervention-tasks | PATCH | `/intervention-tasks/{task_id}` | patch_task | déclarée (task) |
 | 2 | interventions | POST | `/interventions` | create_intervention | déclarée (intervention) |
 | 2 | interventions | DELETE | `/interventions/{intervention_id}` | delete_intervention | déclarée (intervention) |
-| 2 | interventions | PUT | `/interventions/{intervention_id}` | update_intervention | à traiter étape 2 |
-| 2 | interventions | POST | `/interventions/{intervention_id}/force-close-request` | force_close_linked_request | à traiter étape 2 |
-| 2 | interventions | POST | `/interventions/{intervention_id}/request-pointage` | request_pointage | à traiter étape 2 |
-| 2 | preventive-occurrences | POST | `/preventive-occurrences/generate` | generate_occurrences | à traiter étape 2 |
-| 2 | preventive-occurrences | POST | `/preventive-occurrences/repair` | repair_occurrences | à traiter étape 2 |
-| 2 | preventive-occurrences | PATCH | `/preventive-occurrences/{occurrence_id}/skip` | skip_occurrence | à traiter étape 2 |
-| 2 | purchase-requests | POST | `/purchase-requests` | create_purchase_request | à traiter étape 2 |
-| 2 | purchase-requests | POST | `/purchase-requests/dispatch` | dispatch_pending_requests | à traiter étape 2 |
-| 2 | purchase-requests | POST | `/purchase-requests/import` | import_purchase_requests_from_csv | à traiter étape 2 |
-| 2 | purchase-requests | POST | `/purchase-requests/import/headers` | get_csv_import_headers | à traiter étape 2 : POST sans écriture (AUDC-14), à valider avec l'utilisateur |
-| 2 | purchase-requests | DELETE | `/purchase-requests/{request_id}` | delete_purchase_request | à traiter étape 2 |
-| 2 | purchase-requests | PUT | `/purchase-requests/{request_id}` | update_purchase_request | à traiter étape 2 |
-| 2 | supplier-orders | POST | `/supplier-orders` | create_supplier_order | à traiter étape 2 |
-| 2 | supplier-orders | DELETE | `/supplier-orders/{order_id}` | delete_supplier_order | à traiter étape 2 |
-| 2 | supplier-orders | PUT | `/supplier-orders/{order_id}` | update_supplier_order | à traiter étape 2 |
+| 2 | interventions | PUT | `/interventions/{intervention_id}` | update_intervention | déclarée (intervention) |
+| 2 | interventions | POST | `/interventions/{intervention_id}/force-close-request` | force_close_linked_request | déclarée (intervention) |
+| 2 | interventions | POST | `/interventions/{intervention_id}/request-pointage` | request_pointage | déclarée (intervention) |
+| 2 | preventive-occurrences | POST | `/preventive-occurrences/generate` | generate_occurrences | déclarée (request) |
+| 2 | preventive-occurrences | POST | `/preventive-occurrences/repair` | repair_occurrences | déclarée (request) |
+| 2 | preventive-occurrences | PATCH | `/preventive-occurrences/{occurrence_id}/skip` | skip_occurrence | déclarée (preventive_occurrence) |
+| 2 | purchase-requests | POST | `/purchase-requests` | create_purchase_request | déclarée (purchase_request) |
+| 2 | purchase-requests | POST | `/purchase-requests/dispatch` | dispatch_pending_requests | déclarée (purchase_request) |
+| 2 | purchase-requests | POST | `/purchase-requests/import` | import_purchase_requests_from_csv | déclarée (purchase_request) |
+| 2 | purchase-requests | POST | `/purchase-requests/import/headers` | get_csv_import_headers | ne modifie rien : Lit le CSV envoyé et renvoie ses colonnes : n'ouvre aucune écriture en base (AUDC-25) |
+| 2 | purchase-requests | DELETE | `/purchase-requests/{request_id}` | delete_purchase_request | déclarée (purchase_request) |
+| 2 | purchase-requests | PUT | `/purchase-requests/{request_id}` | update_purchase_request | déclarée (purchase_request) |
+| 2 | supplier-orders | POST | `/supplier-orders` | create_supplier_order | déclarée (supplier_order) |
+| 2 | supplier-orders | DELETE | `/supplier-orders/{order_id}` | delete_supplier_order | déclarée (supplier_order) |
+| 2 | supplier-orders | PUT | `/supplier-orders/{order_id}` | update_supplier_order | déclarée (supplier_order) |
 | 2 | supplier-orders | POST | `/supplier-orders/{order_id}/export/csv` | export_supplier_order_csv | déclarée (supplier_order) |
-| 2 | supplier-orders | POST | `/supplier-orders/{order_id}/export/email` | export_supplier_order_email | à traiter étape 2 : POST sans écriture (AUDC-14), à valider avec l'utilisateur |
+| 2 | supplier-orders | POST | `/supplier-orders/{order_id}/export/email` | export_supplier_order_email | ne modifie rien : Compose le courriel depuis des SELECT (get_export_data) : aucune écriture (AUDC-25) |
 | 3 | manufacturer-items | POST | `/manufacturer-items` | create_manufacturer_item | à traiter étape 3 |
 | 3 | manufacturer-items | DELETE | `/manufacturer-items/{item_id}` | delete_manufacturer_item | à traiter étape 3 |
 | 3 | manufacturer-items | PATCH | `/manufacturer-items/{item_id}` | patch_manufacturer_item | à traiter étape 3 |

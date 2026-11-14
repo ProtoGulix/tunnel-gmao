@@ -499,7 +499,7 @@ Crée une nouvelle intervention.
 | `status_actual` | string | non     | `ouvert` | Code statut initial (géré par trigger)                                                                                                                                                                                                                      |
 | `printed_fiche` | bool   | non     | `false`  | Fiche imprimée ?                                                                                                                                                                                                                                            |
 | `reported_date` | date   | non     | null     | Date de signalement                                                                                                                                                                                                                                         |
-| `request_id`    | uuid   | non     | null     | UUID d'une demande existante à lier (statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
+| `request_id`    | uuid   | **oui** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
 
 ### Réponse `201`
 
@@ -550,7 +550,20 @@ Intervention complète mise à jour. La demande liée (`request`) est désormais
 
 Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions ou des demandes d'achat liées.
 
-> **`reason_code` obligatoire** — voir [Audit Log](audit-log.md#règle-commune--reason_code-obligatoire).
+> **`reason_code` obligatoire** (toujours explicite pour une suppression) — voir [Audit Log](audit-log.md#règle-commune--reason_code-obligatoire).
+
+### Paramètre de requête `request_outcome` (ADR 0019)
+
+Obligatoire quand l'intervention est liée à une demande ; sans lui la réponse est `400`. Une intervention ancienne sans demande se supprime sans paramètre.
+
+| Valeur   | Effet sur la demande liée |
+| -------- | ------------------------- |
+| `reopen` | La demande repasse à `nouvelle`, son lien est retiré, la transition est ajoutée à `status_log` et un `status_transitioned` est écrit dans `audit_log` |
+| `delete` | La demande est supprimée avec son historique ; une ligne `deleted` est écrite pour la demande et une pour l'intervention |
+
+Si la demande est liée à une occurrence préventive (`preventive_occurrence.di_id`), `delete` est refusé (`400`) : seule `reopen` est possible. Avec `reopen`, l'occurrence repasse à `generated` (lien vers l'intervention retiré) et un événement `status_changed` du système (entité `preventive_occurrence`, motif `SYSTEM_CASCADE`) est écrit au nom de l'utilisateur du jeton.
+
+Toute autre valeur est refusée (`422`). L'intervention et sa demande sont traitées dans la même transaction : si l'une échoue, rien n'est écrit.
 
 ### Réponse `200`
 
@@ -565,3 +578,6 @@ Supprime une intervention. La suppression est **interdite** si l'intervention po
 | 404  | Intervention introuvable                        |
 | 400  | Intervention possède des actions liées          |
 | 400  | Intervention possède des demandes d'achat liées |
+| 400  | Intervention liée à une demande, `request_outcome` absent |
+| 400  | `request_outcome=delete` sur une demande liée à une occurrence préventive |
+| 422  | `request_outcome` inconnu                       |

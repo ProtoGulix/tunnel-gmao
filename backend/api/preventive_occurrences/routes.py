@@ -3,6 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.notifications.mailer import send_di_a_traiter_mails
 from api.preventive_occurrences.repo import PreventiveOccurrenceRepository
@@ -50,11 +51,15 @@ def get_occurrence(occurrence_id: str):
     return single(repo.get_by_id(occurrence_id))
 
 
-@router.post("/generate")
+# generate et repair n'ont pas d'entité propre : événements seuls, motif de la règle routinière
+# de « request » (la plus proche : la demande est l'entité que ces routes créent ou réparent).
+@router.post("/generate", dependencies=[audit("request", events_only=True)])
 def generate_occurrences(background_tasks: BackgroundTasks):
     """
     Déclenche la génération des occurrences préventives pour tous les plans actifs.
-    Chaque machine est traitée indépendamment — un échec n'annule pas les autres.
+    Tout ou rien : les cas prévisibles (occurrence déjà générée, conflit de date, machine sans
+    compteur) sont rapportés sans erreur ; une erreur SQL annule toute la génération (500).
+    Chaque occurrence, demande et intervention créée écrit son événement `created` (système).
 
     Chaque DI système générée ici est d'origine 'signalee' (valeur par défaut,
     voir migration 023) : le trigger DB `fn_notify_di_a_traiter` a donc déjà
@@ -68,14 +73,19 @@ def generate_occurrences(background_tasks: BackgroundTasks):
     return single(result)
 
 
-@router.patch("/{occurrence_id}/skip")
+@router.patch(
+    "/{occurrence_id}/skip",
+    dependencies=[
+        audit("preventive_occurrence", id_from_path="occurrence_id", table="preventive_occurrence")
+    ],
+)
 def skip_occurrence(occurrence_id: str, data: OccurrenceSkipIn):
     """Ignore une occurrence en statut 'pending'"""
     repo = PreventiveOccurrenceRepository()
     return single(repo.skip_occurrence(occurrence_id, data.skip_reason))
 
 
-@router.post("/repair")
+@router.post("/repair", dependencies=[audit("request", events_only=True)])
 def repair_occurrences():
     """
     Répare les données corrompues par deux bugs désormais corrigés (fix 2026-04-15).

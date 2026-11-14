@@ -351,8 +351,8 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
   };
 
   const handleDelete = async () => {
-    await doDelete();
-    onDeleted?.();
+    const done = await doDelete();
+    if (done) onDeleted?.();
   };
 
   if (loading) return <LoadingState message="Chargement de la demande..." />;

@@ -16,10 +16,8 @@ from __future__ import annotations
 
 import contextvars
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
-
-from pydantic import BeforeValidator
 
 
 @dataclass(frozen=True)
@@ -44,9 +42,6 @@ class AuditUnit:
 
     events: List[AuditEvent] = field(default_factory=list)
     closed: bool = False
-    # Motif de la règle routinière appliqué quand le client n'en a pas envoyé (voir
-    # injected_reason_code).
-    injected_reason_code: Optional[str] = None
 
 
 _current_unit: contextvars.ContextVar[Optional[AuditUnit]] = contextvars.ContextVar(
@@ -61,35 +56,6 @@ def bind_audit_unit(unit: AuditUnit) -> contextvars.Token:
 
 def unbind_audit_unit(token: contextvars.Token) -> None:
     _current_unit.reset(token)
-
-
-def injected_reason_code() -> Optional[str]:
-    """Motif routinier appliqué à la requête en cours, ou None.
-
-    Sert de valeur par défaut aux schémas dont `reason_code` est obligatoire
-    (`Field(default_factory=injected_reason_code, validate_default=True)`) : sans motif dans le
-    corps, le middleware applique la règle routinière sans réécrire le corps, et le schéma la
-    reçoit d'ici. Sans motif ni règle routinière, None échoue à la validation (422), comme
-    un champ manquant. À retirer avec les repos qui lisent data.reason_code (étape 2).
-    """
-    unit = _current_unit.get()
-    return unit.injected_reason_code if unit else None
-
-
-def _empty_reason_as_injected(value: Any) -> Any:
-    """Un reason_code vide ou null vaut un motif absent : on prend le motif injecté.
-
-    Le middleware traite "" et null comme absents (règle routinière ou refus 400) ; le schéma
-    doit faire de même, sinon la chaîne vide atteindrait les repos. Sans motif injecté, None
-    échoue à la validation (422), comme un champ manquant.
-    """
-    if value is None or value == "":
-        return injected_reason_code()
-    return value
-
-
-# Type des champs `reason_code` obligatoires des schémas (avec default_factory=injected_reason_code).
-ReasonCodeField = Annotated[str, BeforeValidator(_empty_reason_as_injected)]
 
 
 def record_audit_event(

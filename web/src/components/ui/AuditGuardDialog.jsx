@@ -11,7 +11,7 @@ import AuditReasonDialog from './AuditReasonDialog';
  *   const { withAudit, auditProps } = useAuditGuard();
  *   <AuditGuardDialog {...auditProps} />
  */
-export default function AuditGuardDialog({ open, entityType, reasons, saving, onConfirm, onCancel }) {
+export default function AuditGuardDialog({ open, entityType, decisionType, reasons, saving, onConfirm, onCancel }) {
   if (!open || !entityType) return null;
 
   return (
@@ -19,7 +19,8 @@ export default function AuditGuardDialog({ open, entityType, reasons, saving, on
       open={open}
       entityType={entityType}
       reasons={reasons}
-      title="Raison de la modification"
+      decisionType={decisionType}
+      title={decisionType === 'deleted' ? 'Raison de la suppression' : 'Raison de la modification'}
       description="Cette action nécessite une raison d'audit."
       saving={saving}
       onConfirm={onConfirm}
@@ -31,6 +32,7 @@ export default function AuditGuardDialog({ open, entityType, reasons, saving, on
 AuditGuardDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   entityType: PropTypes.string,
+  decisionType: PropTypes.string,
   reasons: PropTypes.array,
   saving: PropTypes.bool,
   onConfirm: PropTypes.func.isRequired,

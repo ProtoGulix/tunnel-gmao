@@ -4,8 +4,10 @@ import logging
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import JSONResponse
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.constants import DERIVED_STATUS_CONFIG
 from api.errors.exceptions import ValidationError
@@ -201,7 +203,7 @@ def preview_dispatch():
     return repo.preview_dispatch()
 
 
-@router.post("/dispatch")
+@router.post("/dispatch", dependencies=[audit("purchase_request", events_only=True)])
 def dispatch_pending_requests(payload: Optional[DispatchIn] = None):
     """
     [v1.2.12] Dispatch automatique des demandes PENDING_DISPATCH.
@@ -241,7 +243,12 @@ async def get_csv_import_headers(
     return {"headers": headers, "separator": sep, "header_row_index": header_line_idx}
 
 
-@router.post("/import", response_model=ImportResult, status_code=201)
+@router.post(
+    "/import",
+    response_model=ImportResult,
+    status_code=201,
+    dependencies=[audit("purchase_request", events_only=True)],
+)
 async def import_purchase_requests_from_csv(
     file: UploadFile = File(..., description="Fichier CSV"),
     intervention_id: str = Form(..., description="UUID de l'intervention cible"),
@@ -262,6 +269,10 @@ async def import_purchase_requests_from_csv(
 
     En mode dry_run=True, retourne une analyse sans créer de DA (status='preview').
     Les lignes listées dans excluded_rows sont ignorées lors de l'import réel.
+
+    Tout ou rien (ADR 0018, 1 quinquies) : toutes les lignes sont validées avant d'écrire. Si
+    une seule est invalide, rien n'est créé et la réponse 422 porte le rapport complet (toutes
+    les lignes en erreur ; les lignes valides restent en status='preview').
     """
     if not file.filename or not file.filename.lower().endswith('.csv'):
         raise ValidationError("Le fichier doit être un CSV (.csv)")
@@ -297,6 +308,15 @@ async def import_purchase_requests_from_csv(
         dry_run=dry_run,
         excluded_rows=excluded_list,
     )
+    if result['errors'] and not dry_run:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Import refusé : corrigez les lignes en erreur, aucune demande créée",
+                "error_type": "ImportRejected",
+                **result,
+            },
+        )
     logger.info(
         "Import CSV (%s) : %d créées, %d ignorées, %d erreurs sur %d lignes (intervention=%s)",
         "aperçu" if dry_run else "réel",
@@ -354,8 +374,11 @@ def get_purchase_request(request_id: str) -> Dict[str, Any]:
     return single(data, audit_entity="purchase_request")
 
 
-@router.post("")
-def create_purchase_request(purchase_request: PurchaseRequestIn):
+@router.post(
+    "",
+    dependencies=[audit("purchase_request", id_from_created=True, table="purchase_request")],
+)
+def create_purchase_request(purchase_request: PurchaseRequestIn, request: Request):
     """
     Crée une nouvelle demande d'achat.
 
@@ -363,13 +386,18 @@ def create_purchase_request(purchase_request: PurchaseRequestIn):
     `reason_text` est obligatoire si `reason_code=OTHER`.
     """
     repo = PurchaseRequestRepository()
-    return single(repo.add(purchase_request.model_dump()))
+    created = repo.add(purchase_request.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
 EDITABLE_STATUSES = {'TO_QUALIFY', 'NO_SUPPLIER_REF', 'PENDING_DISPATCH'}
 
 
-@router.put("/{request_id}")
+@router.put(
+    "/{request_id}",
+    dependencies=[audit("purchase_request", id_from_path="request_id", table="purchase_request")],
+)
 def update_purchase_request(request_id: str, purchase_request: PurchaseRequestIn):
     """
     Met à jour une demande d'achat existante.
@@ -390,7 +418,10 @@ def update_purchase_request(request_id: str, purchase_request: PurchaseRequestIn
     return single(repo.update(request_id, purchase_request.model_dump(exclude_unset=True)))
 
 
-@router.delete("/{request_id}")
+@router.delete(
+    "/{request_id}",
+    dependencies=[audit("purchase_request", id_from_path="request_id", table="purchase_request")],
+)
 def delete_purchase_request(request_id: str):
     """Supprime une demande d'achat"""
     repo = PurchaseRequestRepository()

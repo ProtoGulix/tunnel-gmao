@@ -5,6 +5,8 @@ Tâches attachées à une intervention. Une tâche représente **quoi faire** �
 > Voir aussi : [Preventive Plans](preventive-plans.md) | [Preventive Occurrences](preventive-occurrences.md) | [Interventions](interventions.md) | [Intervention Actions](intervention-actions.md)
 
 > **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+>
+> **Écriture de l'audit** (ADR 0018) : le middleware est seul à écrire `audit_log`, dans la transaction de la requête, au nom de l'utilisateur du jeton : `created` à la création, une ligne `{champ}_changed` par champ réellement modifié (`status_changed`, `closed_by_changed`, `assigned_to_changed`...), `deleted` à la suppression. Une panne de l'audit annule la requête (500).
 
 ---
 

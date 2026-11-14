@@ -5,6 +5,8 @@ Actions réalisées sur une intervention (réparation, diagnostic, etc.). Chaque
 > Voir aussi : [Interventions](interventions.md) | [Action Categories](action-categories.md) | [Complexity Factors](complexity-factors.md) | [Purchase Requests](purchase-requests.md)
 
 > **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+>
+> **Écriture de l'audit** (ADR 0018) : le middleware est seul à écrire `audit_log`, au nom de l'utilisateur du jeton (`created`, une ligne `{champ}_changed` par champ modifié, `deleted`). `DELETE` exige toujours un `reason_code` explicite (`400` sinon, jamais de motif routinier injecté). Quand une action change le statut de tâches (`todo`→`in_progress`, `done`, `skipped`), un événement `updated` du système (motif `SYSTEM_CASCADE`, `is_system = true`, `triggered_by_action` dans `old_value` et `new_value`) est écrit par tâche dans la même transaction.
 
 ---
 

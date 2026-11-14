@@ -92,18 +92,16 @@ export function createTask({ interventionId, label, assignedTo, dueDate, optiona
     assigned_to: assignedTo || undefined,
     due_date: dueDate || undefined,
     optional: optional ?? false,
-    reason_code: 'ROUTINE',
   })
 }
 
 /**
  * Met à jour une tâche (statut, libellé, assignation, échéance...).
  *
- * Un passage vers `skipped` ou `done` n'est pas une modification routinière :
- * on n'envoie donc pas ROUTINE, c'est le backend qui répond 400 avec la liste
- * des motifs (`error.data.audit.reasons`) ; l'appelant renvoie alors la
- * requête avec `audit` = { reason_code, reason_text? }. Les autres
- * modifications gardent ROUTINE.
+ * Aucun motif n'est codé ici : le backend applique seul la règle routinière.
+ * Quand un motif est exigé (ex. passage vers `skipped`), il répond 400 avec la
+ * liste des motifs (`error.data.audit.reasons`) ; l'appelant renvoie alors la
+ * requête avec `audit` = { reason_code, reason_text? } choisi dans la feuille.
  *
  * @param {string} taskId
  * @param {Object} updates
@@ -111,15 +109,16 @@ export function createTask({ interventionId, label, assignedTo, dueDate, optiona
  * @returns {Promise<Object>} la tâche mise à jour
  */
 export function updateTask(taskId, updates, audit) {
-  const closing = updates.status === 'skipped' || updates.status === 'done'
-  const reason = audit ?? (closing ? {} : { reason_code: 'ROUTINE' })
-  return client.patch(`/intervention-tasks/${taskId}`, { ...updates, ...reason })
+  return client.patch(`/intervention-tasks/${taskId}`, { ...updates, ...(audit ?? {}) })
 }
 
 /**
- * Supprime une tâche.
+ * Supprime une tâche. Un motif de suppression est obligatoire : il vient de
+ * AuditReasonSheet (motifs `deleted`), jamais d'une valeur codée en dur.
+ *
  * @param {string} taskId
+ * @param {{ reason_code: string, reason_text?: string }} audit motif choisi
  */
-export function deleteTask(taskId) {
-  return client.delete(`/intervention-tasks/${taskId}`, { body: JSON.stringify({ reason_code: 'ROUTINE' }) })
+export function deleteTask(taskId, audit) {
+  return client.delete(`/intervention-tasks/${taskId}`, { body: JSON.stringify(audit) })
 }

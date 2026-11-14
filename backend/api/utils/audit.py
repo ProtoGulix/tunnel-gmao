@@ -67,6 +67,7 @@ def build_picker_reasons(raw_reasons: List[Dict[str, Any]]) -> List[AuditRuleRea
             label=r["label"],
             color=r.get("color"),
             requires_text=(r["code"] == "OTHER"),
+            decision_types=r.get("decision_types"),
         )
         for r in raw_reasons
         if r.get("category") in ("manual", "user")

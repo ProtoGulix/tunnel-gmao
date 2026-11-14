@@ -327,3 +327,32 @@ INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, d
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_NO_LONGER_NEEDED', 'Plus nécessaire', 'user', '{task}', '{task_skipped}', '#d97706', 'Le besoin a disparu : situation résolue, équipement remplacé ou arrêté.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_DUPLICATE', 'Doublon', 'user', '{task}', '{task_skipped}', '#6b7280', 'La même tâche existe déjà.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Motif des mutations du système (ADR 0018, point 6), cohérent avec la migration 0007 :
+-- catégorie system, toutes entités et toutes décisions. Identifiant calculé et
+-- ON CONFLICT (code) : idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'SYSTEM_CASCADE', 'Mutation automatique du système', 'system', NULL, NULL, '#64748b', 'Mutation produite par le système lui-même (cascade, génération, acceptation automatique), sans décision d''un utilisateur.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Règle d'audit de l'occurrence préventive (AUDC-29), cohérente avec la migration 0008 :
+-- règle routinière et entité ajoutée aux entity_types de ROUTINE. Idempotent.
+--
+
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'preventive_occurrence') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('preventive_occurrence' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'preventive_occurrence', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'preventive_occurrence' AND field IS NULL);
+SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
+
+--
+-- Motifs de suppression (ADR 0018, point 5 ; AUDC-30), cohérents avec la migration 0009 :
+-- toutes entités, décision deleted ; OTHER applicable à toutes les entités et à deleted.
+-- Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'DELETE_CREATED_BY_MISTAKE', 'Créé par erreur', 'user', NULL, '{deleted}', '#dc2626', 'L''élément a été créé par erreur et n''aurait pas dû exister.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'DELETE_CREATED_BY_MISTAKE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'DELETE_DUPLICATE', 'Doublon', 'user', NULL, '{deleted}', '#6b7280', 'L''élément existe déjà ailleurs ; on supprime le doublon.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'DELETE_DUPLICATE') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET entity_types = NULL, decision_types = '{task_done,task_skipped,deleted}' WHERE code = 'OTHER' AND (entity_types IS NOT NULL OR decision_types IS DISTINCT FROM '{task_done,task_skipped,deleted}');
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;

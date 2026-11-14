@@ -65,12 +65,6 @@ _PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Mutations dont le repo écrit lui-même l'audit, dans la transaction et avec l'auteur du
-# jeton (AUD-04) : le middleware valide leur motif avant la route mais n'écrit plus après,
-# sinon chaque champ serait tracé deux fois. Toute autre mutation reste tracée ici.
-# (entity_type, méthode) : intervention_tasks PATCH et DELETE (le POST n'a pas d'id d'URL).
-_AUDITED_BY_REPO = frozenset({("task", "PATCH"), ("task", "DELETE")})
-
 # Champs ignorés dans le calcul du diff (méta-données techniques)
 _DIFF_IGNORE = frozenset(
     {"id", "created_at", "updated_at", "updated_by", "reason_code", "reason_text"}
@@ -140,6 +134,7 @@ class _Target:
     table: Optional[str]
     declared: bool
     created: bool = False
+    events_only: bool = False
 
 
 def _resolve_target(request: Request) -> Optional[_Target]:
@@ -165,6 +160,7 @@ def _resolve_target(request: Request) -> Optional[_Target]:
             table=declaration.table or _TABLE_MAP.get(declaration.entity_type),
             declared=True,
             created=declaration.id_from_created,
+            events_only=declaration.events_only,
         )
     info = _extract_entity(request.url.path)
     if not info:
@@ -273,11 +269,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             )
             if refusal is not None:
                 return refusal
-            if not payload.get("reason_code"):
-                unit.injected_reason_code = reason_code
 
-        # Mutation déjà auditée par son repo : rien à écrire ici (AUD-04)
-        if not target.declared and (target.entity_type, request.method) in _AUDITED_BY_REPO:
+        if target.events_only:
+            # Aucune entité propre : seuls les événements déposés par le repo sont écrits.
             response = await call_next(request)
             await self._write_events(request, response, unit)
             return response

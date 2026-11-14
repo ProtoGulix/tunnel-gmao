@@ -409,7 +409,7 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
           className="flex-1 py-2 rounded-lg border border-tunnel-border text-xs font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
           Annuler
         </button>
-        <button type="button" disabled={loading} onClick={handleSubmit}
+        <button type="button" disabled={loading || !di} onClick={handleSubmit}
           className="flex-1 py-2 rounded-lg bg-tunnel-accent text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">
           {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
           Créer l'intervention
@@ -749,13 +749,6 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
                         <button type="button" onClick={() => { setShowDIForm(true) }}
                           className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-tunnel-border text-tunnel-muted text-xs font-medium active:bg-tunnel-bg">
                           <Plus size={12} /> Nouvelle DI
-                        </button>
-                      )}
-                      {availableDIs.length > 0 && !showInterForm && can(PERM.actions.createIntervention) && (
-                        <button type="button"
-                          onClick={() => { setShowInterForm(true); setShowDIForm(false); setSelectedDI(null) }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-tunnel-accent text-white text-xs font-semibold active:opacity-90">
-                          <Hammer size={13} /> Créer l'intervention
                         </button>
                       )}
                     </div>

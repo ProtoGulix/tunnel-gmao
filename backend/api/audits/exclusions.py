@@ -3,8 +3,9 @@
 Liste explicite, une entrée par (méthode, chemin). Catégories :
   - TO_DO     : à traiter à l'étape indiquée (2, 3 ou 4) ; la catégorie doit se vider.
   - EXCLUDED  : exclue définitivement, la raison est obligatoire.
-  - NO_WRITE  : ne modifie rien malgré la méthode POST (aucune route pour l'instant :
-                les quatre candidats d'AUDC-14 restent TO_DO tant que non validés).
+  - NO_WRITE  : ne modifie rien malgré la méthode POST, la raison dit pourquoi (vérifié dans
+                le code). Deux candidats d'AUDC-14 validés par l'utilisateur (2026-11-14) ;
+                les autres restent TO_DO tant que non validés.
 
 Le test tests/test_audit_coverage.py échoue si une route n'est ni déclarée ni listée ici.
 Une route listée qui reçoit une déclaration doit être retirée de la liste.
@@ -72,36 +73,14 @@ EXCLUSIONS: Dict[Tuple[str, str], Exclusion] = {
     ("POST", "/auth/login"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
     ("POST", "/auth/refresh"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
     ("POST", "/auth/logout"): Exclusion(EXCLUDED, reason=_SECURITY_LOG),
-    ("POST", "/equipements"): _todo(2),
-    ("DELETE", "/equipements/{equipement_id}"): _todo(2),
-    ("PATCH", "/equipements/{equipement_id}"): _todo(2),
-    ("PUT", "/equipements/{equipement_id}"): _todo(2),
-    ("POST", "/intervention-actions"): _todo(2),
-    ("DELETE", "/intervention-actions/{action_id}"): _todo(2),
-    ("PATCH", "/intervention-actions/{action_id}"): _todo(2),
-    ("POST", "/intervention-requests"): _todo(2),
-    ("POST", "/intervention-requests/repair"): _todo(2),
-    ("DELETE", "/intervention-requests/{request_id}"): _todo(2),
-    ("POST", "/intervention-status-log"): _todo(2),
-    ("POST", "/intervention-tasks"): _todo(2),
-    ("DELETE", "/intervention-tasks/{task_id}"): _todo(2),
-    ("PATCH", "/intervention-tasks/{task_id}"): _todo(2),
-    ("PUT", "/interventions/{intervention_id}"): _todo(2),
-    ("POST", "/interventions/{intervention_id}/force-close-request"): _todo(2),
-    ("POST", "/interventions/{intervention_id}/request-pointage"): _todo(2),
-    ("POST", "/preventive-occurrences/generate"): _todo(2),
-    ("POST", "/preventive-occurrences/repair"): _todo(2),
-    ("PATCH", "/preventive-occurrences/{occurrence_id}/skip"): _todo(2),
-    ("POST", "/purchase-requests"): _todo(2),
-    ("POST", "/purchase-requests/dispatch"): _todo(2),
-    ("POST", "/purchase-requests/import"): _todo(2),
-    ("POST", "/purchase-requests/import/headers"): _todo(2, _NO_WRITE_NOTE),
-    ("DELETE", "/purchase-requests/{request_id}"): _todo(2),
-    ("PUT", "/purchase-requests/{request_id}"): _todo(2),
-    ("POST", "/supplier-orders"): _todo(2),
-    ("DELETE", "/supplier-orders/{order_id}"): _todo(2),
-    ("PUT", "/supplier-orders/{order_id}"): _todo(2),
-    ("POST", "/supplier-orders/{order_id}/export/email"): _todo(2, _NO_WRITE_NOTE),
+    ("POST", "/purchase-requests/import/headers"): Exclusion(
+        NO_WRITE,
+        reason="Lit le CSV envoyé et renvoie ses colonnes : n'ouvre aucune écriture en base (AUDC-25)",
+    ),
+    ("POST", "/supplier-orders/{order_id}/export/email"): Exclusion(
+        NO_WRITE,
+        reason="Compose le courriel depuis des SELECT (get_export_data) : aucune écriture (AUDC-25)",
+    ),
     ("POST", "/manufacturer-items"): _todo(3),
     ("DELETE", "/manufacturer-items/{item_id}"): _todo(3),
     ("PATCH", "/manufacturer-items/{item_id}"): _todo(3),

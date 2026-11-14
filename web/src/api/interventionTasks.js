@@ -61,7 +61,7 @@ export async function createInterventionTask(data) {
 }
 
 export async function deleteInterventionTask(id) {
-  // Le body est requis pour le reason_code (géré par auditGuard sur 422)
+  // Le body porte le reason_code : demandé par auditGuard (fenêtre de motifs « deleted »)
   await api.delete(`/intervention-tasks/${id}`, { data: {} });
 }
 

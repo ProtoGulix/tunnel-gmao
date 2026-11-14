@@ -18,6 +18,15 @@ Système de traçabilité centralisée de toutes les mutations métier.
 | Tâche | `POST /intervention-tasks`, `PATCH /intervention-tasks/{id}`, `DELETE /intervention-tasks/{id}` |
 | Action | `POST /intervention-actions`, `PATCH /intervention-actions/{id}` |
 
+> **Lecture du motif (AUDC-26)** : le motif est lu et validé par le middleware d'audit seul ;
+> les schémas des routes ne déclarent plus `reason_code` (ni `reason_text`, sauf le texte du
+> rejet d'une demande et celui de la clôture de tâche). Un corps sans `reason_code` passe
+> quand la règle d'audit de la mutation est routinière (le middleware applique alors le motif
+> par défaut) ; sinon il est refusé en `400` avec la liste des motifs. Un corps qui envoie
+> `reason_code` continue de fonctionner. Une suppression exige toujours un motif explicite.
+> Les mentions « obligatoire » des tableaux par ressource valent donc pour les mutations sans
+> règle routinière.
+
 ### Champs audit dans le body
 
 ```json

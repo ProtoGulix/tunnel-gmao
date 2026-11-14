@@ -95,6 +95,7 @@ export default function TaskActionButtons({
       await deleteInterventionTask(taskId);
       onDeleted?.(taskId);
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       onError?.(extractApiErrorMessage(err, 'Impossible de supprimer la tâche'));
     } finally { setDeleting(false); }
   }

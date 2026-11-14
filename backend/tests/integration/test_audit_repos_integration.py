@@ -1,4 +1,5 @@
-"""Audit écrit par les repos dans la transaction de la mutation (ADR 0017 point 3, AUD-05).
+"""Audit des demandes dans la transaction de la mutation (AUD-05, écrit par le middleware
+depuis l'ADR 0018).
 
 L'auteur de la ligne d'audit est l'utilisateur du jeton, et un audit qui échoue annule
 toute la mutation : aucune demande sans trace."""
@@ -7,8 +8,7 @@ import secrets
 
 import pytest
 
-from api.errors.exceptions import DatabaseError
-from api.intervention_requests.repo import InterventionRequestRepository
+from api.audits import middleware as audit_middleware
 
 pytestmark = pytest.mark.integration
 
@@ -64,20 +64,27 @@ def test_creation_sans_motif_envoie_le_motif_routine_du_middleware(client, admin
     assert motif == [("ROUTINE",)]
 
 
-def test_audit_qui_echoue_dans_le_repo_annule_la_creation(client, admin, instance):
-    """Appel direct au repo avec un motif inconnu, comme si le motif avait disparu entre la
-    validation du middleware et l'écriture : la demande ne doit pas exister."""
+def test_audit_qui_echoue_annule_la_creation(client, admin, instance, monkeypatch):
+    """ADR 0018 : l'audit n'est plus écrit par le repo mais par le middleware, dans la même
+    transaction. S'il échoue à l'écriture, la demande ne doit pas exister."""
+
+    def _audit_en_panne(self, **kwargs):
+        raise RuntimeError("audit indisponible")
+
+    monkeypatch.setattr(
+        audit_middleware.AuditRepository, "call_fn_audit_log_decision", _audit_en_panne
+    )
     description = f"Demande orpheline {secrets.token_hex(4)}"
-    with pytest.raises(DatabaseError):
-        InterventionRequestRepository().create(
-            {
-                "machine_id": _machine(instance),
-                "demandeur_nom": "Atelier",
-                "description": description,
-                "reason_code": "MOTIF_INEXISTANT",
-            },
-            created_by=admin.id,
-        )
+    resp = client.post(
+        "/intervention-requests",
+        headers=admin.headers,
+        json={
+            "machine_id": _machine(instance),
+            "demandeur_nom": "Atelier",
+            "description": description,
+        },
+    )
+    assert resp.status_code == 500
     nb = instance.sql(
         "SELECT count(*) FROM intervention_request WHERE description = %s", (description,)
     )[0][0]

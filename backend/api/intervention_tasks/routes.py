@@ -2,11 +2,12 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 
+from api.audits.declaration import audit, declare_created_id
+from api.audits.middleware import REASON_CODE_ATTR
 from api.auth.permissions import require_authenticated
 from api.errors.exceptions import ValidationError
 from api.intervention_tasks.repo import InterventionTaskRepository
 from api.intervention_tasks.schemas import (
-    InterventionTaskDelete,
     InterventionTaskIn,
     InterventionTaskPatch,
 )
@@ -99,22 +100,29 @@ def get_task(task_id: str) -> Dict[str, Any]:
     return single(data, audit_entity="task")
 
 
-@router.post("", status_code=201)
+@router.post(
+    "",
+    status_code=201,
+    dependencies=[audit("task", id_from_created=True, table="intervention_task")],
+)
 def create_task(request: Request, data: InterventionTaskIn):
     """
     Crée une tâche manuelle (origin `resp` ou `tech` uniquement).
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    Si la mutation est couverte par une règle routine, AuditMiddleware l'injecte
-    silencieusement — l'appelant peut alors omettre `reason_code`. `reason_text` est
-    obligatoire si `reason_code=OTHER`.
+    **Audit** : le motif est validé par AuditMiddleware (`reason_code` du corps, voir
+    `GET /audit/reasons`) ; une règle routine s'applique si le corps n'en porte pas.
     """
     user_id = str(getattr(request.state, "user_id", None) or "")
     repo = InterventionTaskRepository()
-    return single(repo.create(data, created_by=user_id or None))
+    created = repo.create(data, created_by=user_id or None)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{task_id}")
+@router.patch(
+    "/{task_id}",
+    dependencies=[audit("task", id_from_path="task_id", table="intervention_task")],
+)
 def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
     """
     Met à jour partiellement une tâche.
@@ -131,9 +139,9 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
 
     Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    Si les champs modifiés sont couverts par une règle routine, AuditMiddleware
-    l'injecte silencieusement. `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : le motif est validé par AuditMiddleware (`reason_code` du corps) ; une règle
+    routine s'applique si les champs modifiés en ont une. `reason_text` est obligatoire si
+    `reason_code=OTHER`.
     """
     user_id = str(getattr(request.state, "user_id", None) or "")
     repo = InterventionTaskRepository()
@@ -143,7 +151,10 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
         ensure_can_skip(repo.get_by_id(task_id), getattr(request.state, "role", None))
     if data.status in ("done", "skipped"):
         label = ensure_explicit_close_reason(
-            data.reason_code, data.reason_text, list_entity_reasons("task"), data.status
+            data.reason_code or getattr(request.state, REASON_CODE_ATTR, None),
+            data.reason_text,
+            list_entity_reasons("task"),
+            data.status,
         )
         if data.status == "skipped" and not (data.skip_reason or "").strip():
             # Le motif choisi tient lieu de raison d'abandon (ADR 0016)
@@ -155,15 +166,19 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
     return single(repo.patch(task_id, data, closed_by=user_id or None))
 
 
-@router.delete("/{task_id}", status_code=204)
-def delete_task(request: Request, task_id: str, data: InterventionTaskDelete):
+@router.delete(
+    "/{task_id}",
+    status_code=204,
+    dependencies=[audit("task", id_from_path="task_id", table="intervention_task")],
+)
+def delete_task(task_id: str):
     """
     Supprime une tâche.
 
     Conditions : statut `todo` ET aucune action liée.
     La suppression est tracée dans l'audit log avec le `reason_code` fourni.
     """
-    user_id = str(getattr(request.state, "user_id", None) or "")
+    # Le middleware exige le motif et écrit la ligne `deleted`.
     repo = InterventionTaskRepository()
-    repo.delete(task_id, deleted_by=user_id or None, reason_code=data.reason_code)
+    repo.delete(task_id)
     return Response(status_code=204)

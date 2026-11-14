@@ -3,6 +3,8 @@
 Historique des changements de statut des interventions. Chaque entrée trace la transition d'un statut à un autre, avec le technicien et la date.
 
 > Voir aussi : [Interventions](interventions.md) | [Intervention Status](intervention-status.md)
+>
+> **Audit** (ADR 0018) : `POST` écrit une ligne `status_changed` sur l'intervention dans `audit_log`, par le middleware, dans la transaction de la requête. Le motif est celui du corps (`reason_code`) ou, à défaut, la règle routinière de l'entité `intervention` (le mobile n'en envoie pas) ; l'auteur est l'utilisateur du jeton, `technician_id` reste déclaratif. Une panne de l'audit annule l'écriture (500). Quand `status_to` est `ferme`, la clôture de la demande liée est tracée au nom du système.
 
 ---
 

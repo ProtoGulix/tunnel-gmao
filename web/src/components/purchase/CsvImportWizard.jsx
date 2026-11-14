@@ -30,6 +30,8 @@ import {
   X,
 } from 'lucide-react';
 import { importPurchaseRequestsCsv, fetchCsvImportHeaders } from '@/api/purchaseRequests';
+import CsvImportRejectedReport from './CsvImportRejectedReport';
+import { extractRejectedImportReport } from './csvImportReport';
 import { searchOpenInterventions } from '@/api/interventions';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import StatusCallout from '@/components/ui/StatusCallout';
@@ -592,6 +594,7 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [rejectedReport, setRejectedReport] = useState(null);
 
   const errorLines = preview.lines.filter((l) => l.status === 'error');
   const allValidRows = validLines.map((l) => l.row);
@@ -616,6 +619,7 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
 
   const handleImport = async () => {
     setError(null);
+    setRejectedReport(null);
     setLoading(true);
     const excludedRows = allValidRows.filter((r) => !selected.has(r));
     try {
@@ -630,7 +634,10 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
       );
       onDone(result);
     } catch (e) {
-      setError(extractApiErrorMessage(e, "Erreur lors de l'import"));
+      // 422 : import tout ou rien refusé, le rapport ligne par ligne remplace le message générique
+      const report = extractRejectedImportReport(e);
+      if (report) setRejectedReport(report);
+      else setError(extractApiErrorMessage(e, "Erreur lors de l'import"));
     } finally {
       setLoading(false);
     }
@@ -641,13 +648,14 @@ function Step3Review({ file, intervention, urgency, colRef, colQty, preview, onB
   return (
     <Flex direction="column" gap="4">
       {error && <StatusCallout type="error">{error}</StatusCallout>}
+      {rejectedReport && <CsvImportRejectedReport report={rejectedReport} />}
 
       {/* Résumé aperçu */}
       <Flex gap="3" wrap="wrap" align="center">
         <Text size="2" color="gray">{preview.total} ligne{preview.total > 1 ? 's' : ''} détectée{preview.total > 1 ? 's' : ''}</Text>
         {errorLines.length > 0 && (
           <Badge size="2" color="red" variant="surface">
-            {errorLines.length} erreur{errorLines.length > 1 ? 's' : ''} (ignorée{errorLines.length > 1 ? 's' : ''})
+            {errorLines.length} erreur{errorLines.length > 1 ? 's' : ''} : l&apos;import sera refusé
           </Badge>
         )}
         <Badge size="2" color="blue" variant="surface">

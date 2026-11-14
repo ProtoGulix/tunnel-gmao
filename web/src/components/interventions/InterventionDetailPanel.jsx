@@ -17,6 +17,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
 import InterventionPanelHeader from '@/components/interventions/InterventionPanelHeader';
+import { getDeleteBlockReason } from '@/components/interventions/deleteInterventionRules';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { usePermissions } from '@/auth/usePermissions';
@@ -150,10 +151,10 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
     refetch();
   }, [refetch]);
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(async ({ reason, outcome }) => {
     try {
       setMutationError('');
-      await deleteIntervention();
+      await deleteIntervention(reason, outcome);
       onDeleted?.();
       onRefreshList?.();
     } catch (err) {
@@ -165,9 +166,9 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
   if (loading && !intervention) return <LoadingState message="Chargement de l'intervention..." />;
   if (!intervention) return null;
 
-  const stats = intervention.stats || {};
-  const isDeletable = !stats.actionCount && !stats.purchaseCount;
-  const isLocked = ['ferme', 'cancelled'].includes(mapDtoStatusToConfigKey(intervention?.status));
+  const statusKey = mapDtoStatusToConfigKey(intervention?.status);
+  const deleteBlockReason = getDeleteBlockReason(intervention, statusKey);
+  const isLocked = ['ferme', 'cancelled'].includes(statusKey);
 
   const tabsContent = (
     <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -286,7 +287,7 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
         onOpenRequest={() => handleTabChange('demande')}
         onCopyCode={(ok) => notify(ok ? 'Code copié' : 'Copie impossible', ok ? 'success' : 'error')}
         canDelete={can(PERM.interventions.remove)}
-        isDeletable={isDeletable}
+        deleteBlockReason={deleteBlockReason}
         onDelete={handleDelete}
       />
       {notificationToast && <Box px="4" style={{ flexShrink: 0 }}>{notificationToast}</Box>}

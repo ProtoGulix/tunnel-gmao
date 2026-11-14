@@ -85,7 +85,7 @@ export function useInterventionRequestDetail(requestId) {
 
   /**
    * Supprime définitivement la demande (erreur de saisie, doublon).
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} false si l'utilisateur a abandonné la fenêtre de motif
    */
   const doDelete = useCallback(async () => {
     setDeleting(true);
@@ -93,7 +93,10 @@ export function useInterventionRequestDetail(requestId) {
 
     try {
       await deleteInterventionRequest(requestId);
+      return true;
     } catch (err) {
+      // Fenêtre de motif fermée sans choix : rien n'a été supprimé, rien à signaler.
+      if (err?.isAuditCancelled) return false;
       const msg = extractApiErrorMessage(err, 'Suppression impossible');
       setDeleteError(msg);
       throw new Error(msg);

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createIntervention } from '@/api/interventions';
+import { createInterventionRequest } from '@/api/intervention-requests';
 import { fetchEquipements } from '@/api/equipements';
 import { fetchActiveUsers } from '@/api/planning';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
@@ -62,8 +63,23 @@ export function useInterventionCreate({ navigate }) {
       }
       try {
         setSaving(true);
+        // Une intervention vient toujours d'une demande (ADR 0019) : sans demande choisie,
+        // une demande directe est créée avec l'intervention, comme dans la fenêtre de création.
+        let requestId = formData.requestId;
+        if (!requestId) {
+          const tech = users.find((u) => u.id === formData.techId);
+          const techName = tech ? `${tech.first_name ?? ''} ${tech.last_name ?? ''}`.trim() : '';
+          const request = await createInterventionRequest({
+            machineId: formData.equipementId,
+            demandeurNom: formData.reportedBy?.trim() || techName || 'Système',
+            description: formData.title.trim(),
+            origine: 'directe',
+          });
+          requestId = request.id;
+        }
         const created = await createIntervention({
           ...formData,
+          requestId,
           reportedDate: formData.reportedDate
             ? new Date(formData.reportedDate).toISOString()
             : undefined,
@@ -75,7 +91,7 @@ export function useInterventionCreate({ navigate }) {
         setSaving(false);
       }
     },
-    [formData, validate, navigate]
+    [formData, users, validate, navigate]
   );
 
   return { formData, setFormData, users, fetchEquipementsFn, saving, error, handleSubmit };

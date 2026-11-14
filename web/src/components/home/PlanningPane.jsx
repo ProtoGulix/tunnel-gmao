@@ -88,6 +88,7 @@ export function PlanningPane({ onAddAction, onDataRefreshed, planningHook, hideC
       retry();
       onDataRefreshed?.();
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       setDeleteError(extractApiErrorMessage(err, "Erreur lors de la suppression de l'action"));
       throw err;
     }

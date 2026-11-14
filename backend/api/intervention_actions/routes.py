@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_actions.schemas import InterventionActionIn, InterventionActionPatch
@@ -50,7 +51,10 @@ def get_action(action_id: str) -> Dict[str, Any]:
     return single(data, audit_entity="action")
 
 
-@router.post("")
+@router.post(
+    "",
+    dependencies=[audit("action", id_from_created=True, table="intervention_action")],
+)
 def add_action(action: InterventionActionIn, request: Request):
     """
     Ajoute une action à une intervention.
@@ -63,13 +67,15 @@ def add_action(action: InterventionActionIn, request: Request):
     Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
     """
     repo = InterventionActionRepository()
-    user_id = str(getattr(request.state, "user_id", None) or "") or None
-    return single(
-        repo.add(action.model_dump(), role=getattr(request.state, "role", None), user_id=user_id)
-    )
+    created = repo.add(action.model_dump(), role=getattr(request.state, "role", None))
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{action_id}")
+@router.patch(
+    "/{action_id}",
+    dependencies=[audit("action", id_from_path="action_id", table="intervention_action")],
+)
 def patch_action(action_id: str, patch: InterventionActionPatch, request: Request):
     """
     Met à jour partiellement une action d'intervention.
@@ -79,16 +85,19 @@ def patch_action(action_id: str, patch: InterventionActionPatch, request: Reques
     """
     repo = InterventionActionRepository()
     role = getattr(request.state, "role", None)
-    user_id = str(getattr(request.state, "user_id", None) or "") or None
-    return single(
-        repo.update(action_id, patch.model_dump(exclude_none=True), role=role, user_id=user_id)
-    )
+    return single(repo.update(action_id, patch.model_dump(exclude_none=True), role=role))
 
 
-@router.delete("/{action_id}", status_code=204)
+@router.delete(
+    "/{action_id}",
+    status_code=204,
+    dependencies=[audit("action", id_from_path="action_id", table="intervention_action")],
+)
 def delete_action(action_id: str):
     """
     Supprime une action d'intervention.
+
+    **Audit obligatoire** : un motif explicite (`reason_code` dans le corps) est toujours exigé.
 
     Bloqué si l'intervention parente est fermée, ou si une demande d'achat
     liée à l'action a déjà été dispatchée (statut dérivé hors "à dispatcher").

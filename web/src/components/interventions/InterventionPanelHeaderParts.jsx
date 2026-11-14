@@ -3,7 +3,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { AlertDialog, Button, DropdownMenu, Flex, IconButton, Text } from '@radix-ui/themes';
+import { Button, DropdownMenu, IconButton, Text } from '@radix-ui/themes';
 import { CalendarCheck, ChevronDown, ClipboardList, Copy, MoreHorizontal, Trash2 } from 'lucide-react';
 
 function formatShortDate(iso) {
@@ -51,7 +51,7 @@ PropertySelect.propTypes = {
 };
 
 /** Menu « ⋯ » : actions rares de l'intervention. */
-export function MoreActionsMenu({ code, onRequestPointage, onCopyCode, canDelete, isDeletable, onAskDelete }) {
+export function MoreActionsMenu({ code, onRequestPointage, onCopyCode, canDelete, deleteBlockReason, onAskDelete }) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
@@ -75,13 +75,13 @@ export function MoreActionsMenu({ code, onRequestPointage, onCopyCode, canDelete
         {canDelete && (
           <>
             <DropdownMenu.Separator />
-            <DropdownMenu.Item color="red" disabled={!isDeletable} onSelect={onAskDelete}>
+            <DropdownMenu.Item color="red" disabled={!!deleteBlockReason} onSelect={onAskDelete}>
               <Trash2 size={14} />
               Supprimer
             </DropdownMenu.Item>
-            {!isDeletable && (
+            {deleteBlockReason && (
               <Text as="div" size="1" color="gray" style={{ padding: '0 12px 4px' }}>
-                Impossible : l&apos;intervention a des actions ou des achats
+                {deleteBlockReason}
               </Text>
             )}
           </>
@@ -96,7 +96,7 @@ MoreActionsMenu.propTypes = {
   onRequestPointage: PropTypes.func,
   onCopyCode: PropTypes.func.isRequired,
   canDelete: PropTypes.bool,
-  isDeletable: PropTypes.bool,
+  deleteBlockReason: PropTypes.string,
   onAskDelete: PropTypes.func.isRequired,
 };
 
@@ -133,28 +133,3 @@ export function WorkSummary({ stats }) {
 }
 
 WorkSummary.propTypes = { stats: PropTypes.object };
-
-/** Confirmation de suppression, ouverte depuis le menu « ⋯ ». */
-export function DeleteInterventionDialog({ open, onOpenChange, code, onConfirm }) {
-  return (
-    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
-      <AlertDialog.Content maxWidth="420px">
-        <AlertDialog.Title>Supprimer l&apos;intervention</AlertDialog.Title>
-        <AlertDialog.Description>
-          Confirmer la suppression de <strong>{code}</strong> ? Cette action est irréversible.
-        </AlertDialog.Description>
-        <Flex gap="3" mt="4" justify="end">
-          <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
-          <AlertDialog.Action><Button color="red" onClick={onConfirm}>Supprimer</Button></AlertDialog.Action>
-        </Flex>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
-  );
-}
-
-DeleteInterventionDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onOpenChange: PropTypes.func.isRequired,
-  code: PropTypes.string,
-  onConfirm: PropTypes.func,
-};

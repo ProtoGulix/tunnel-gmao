@@ -1,5 +1,4 @@
 import hashlib
-import json
 import logging
 import math
 from datetime import datetime
@@ -13,45 +12,6 @@ from api.intervention_tasks.schemas import InterventionTaskIn, InterventionTaskP
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
-
-
-def _audit_task(
-    cur,
-    task_id: str,
-    decision_type: str,
-    old_value: Optional[Dict],
-    new_value: Optional[Dict],
-    reason_code: str,
-    changed_by: Optional[str] = None,
-    is_system: bool = False,
-    reason_text: Optional[str] = None,
-) -> None:
-    """Insère une entrée d'audit pour une tâche via fn_audit_log_decision().
-
-    Appelée dans la transaction de la mutation : une erreur remonte à l'appelant, qui
-    annule alors toute la mutation (ADR 0017 point 3). Aucune trace ne doit manquer.
-    """
-    cur.execute(
-        """
-        SELECT public.fn_audit_log_decision(
-            %s::varchar, %s::uuid, %s::varchar,
-            %s::jsonb, %s::jsonb,
-            %s::varchar, %s::text,
-            %s::uuid, %s::boolean
-        )
-        """,
-        (
-            "task",
-            task_id,
-            decision_type,
-            json.dumps(old_value) if old_value is not None else None,
-            json.dumps(new_value) if new_value is not None else None,
-            reason_code,
-            reason_text,
-            changed_by,
-            is_system,
-        ),
-    )
 
 
 _TASK_SELECT = """
@@ -363,37 +323,6 @@ class InterventionTaskRepository:
                     created_by,
                 ),
             )
-            assigned_to_info = None
-            if assigned_to:
-                cur.execute(
-                    "SELECT id, initial, first_name, last_name FROM tunnel_user WHERE id = %s::uuid",
-                    (assigned_to,),
-                )
-                u = cur.fetchone()
-                if u:
-                    assigned_to_info = {
-                        "id": str(u[0]),
-                        "initials": u[1],
-                        "first_name": u[2],
-                        "last_name": u[3],
-                    }
-            _audit_task(
-                cur,
-                task_id,
-                "created",
-                None,
-                {
-                    "intervention_id": str(data.intervention_id),
-                    "label": data.label,
-                    "origin": data.origin,
-                    "status": "todo",
-                    "optional": data.optional,
-                    "assigned_to": assigned_to_info,
-                    "due_date": str(data.due_date) if data.due_date else None,
-                },
-                data.reason_code,
-                created_by,
-            )
             conn.commit()
         except (NotFoundError, ValidationError):
             conn.rollback()
@@ -441,68 +370,27 @@ class InterventionTaskRepository:
 
             set_parts: List[str] = []
             params: List[Any] = []
-            # Suivi des champs modifiés pour l'audit
-            old_vals: Dict[str, Any] = {}
-            new_vals: Dict[str, Any] = {}
-
             if data.label is not None and data.label != old_label:
                 set_parts.append("label = %s")
                 params.append(data.label)
-                old_vals["label"] = old_label
-                new_vals["label"] = data.label
             if data.status is not None and data.status != old_status:
                 set_parts.append("status = %s")
                 params.append(data.status)
-                old_vals["status"] = old_status
-                new_vals["status"] = data.status
                 if data.status in ("done", "skipped"):
                     set_parts.append("closed_by = %s")
                     params.append(closed_by)
-                    # Le repo est la seule source d'audit d'une tâche (AUD-04) : closed_by,
-                    # que le middleware tracait aussi, reste donc tracé ici.
-                    if str(closed_by or "") != str(old_closed_by or ""):
-                        old_vals["closed_by"] = str(old_closed_by) if old_closed_by else None
-                        new_vals["closed_by"] = str(closed_by) if closed_by else None
             if data.skip_reason is not None and data.skip_reason != old_skip:
                 set_parts.append("skip_reason = %s")
                 params.append(data.skip_reason)
-                old_vals["skip_reason"] = old_skip
-                new_vals["skip_reason"] = data.skip_reason
             if data.assigned_to is not None and str(data.assigned_to) != str(old_assigned or ""):
                 set_parts.append("assigned_to = %s")
                 params.append(str(data.assigned_to))
-                ids_to_resolve = [
-                    i
-                    for i in [str(old_assigned) if old_assigned else None, str(data.assigned_to)]
-                    if i
-                ]
-                cur.execute(
-                    "SELECT id, initial, first_name, last_name FROM tunnel_user WHERE id = ANY(%s::uuid[])",
-                    (ids_to_resolve,),
-                )
-                users_by_id = {
-                    str(r[0]): {
-                        "id": str(r[0]),
-                        "initials": r[1],
-                        "first_name": r[2],
-                        "last_name": r[3],
-                    }
-                    for r in cur.fetchall()
-                }
-                old_vals["assigned_to"] = (
-                    users_by_id.get(str(old_assigned)) if old_assigned else None
-                )
-                new_vals["assigned_to"] = users_by_id.get(str(data.assigned_to))
             if data.due_date is not None and data.due_date != old_due_date:
                 set_parts.append("due_date = %s")
                 params.append(data.due_date)
-                old_vals["due_date"] = str(old_due_date) if old_due_date else None
-                new_vals["due_date"] = str(data.due_date)
             if data.sort_order is not None and data.sort_order != old_sort:
                 set_parts.append("sort_order = %s")
                 params.append(data.sort_order)
-                old_vals["sort_order"] = old_sort
-                new_vals["sort_order"] = data.sort_order
 
             if not set_parts:
                 return self.get_by_id(task_id)
@@ -514,22 +402,6 @@ class InterventionTaskRepository:
                 f"UPDATE intervention_task SET {', '.join(set_parts)} WHERE id = %s",
                 params,
             )
-
-            # Un log par champ modifié pour granularité (source unique, AUD-04)
-            for field in old_vals:
-                _audit_task(
-                    cur,
-                    task_id,
-                    f"{field}_changed",
-                    {field: old_vals[field]},
-                    {field: new_vals[field]},
-                    data.reason_code,
-                    closed_by,
-                    # La raison saisie (clôture en coordination, ADR 0016) doit figurer
-                    # sur chaque ligne d'audit de la mutation, pas seulement sur celles
-                    # du middleware.
-                    reason_text=data.reason_text,
-                )
 
             conn.commit()
         except (NotFoundError, ValidationError, ConflictError):
@@ -545,9 +417,7 @@ class InterventionTaskRepository:
 
     # ── Suppression ───────────────────────────────────────────────
 
-    def delete(
-        self, task_id: str, deleted_by: Optional[str] = None, reason_code: str = "TASK_DELETED"
-    ) -> None:
+    def delete(self, task_id: str) -> None:
         """Supprime une tâche si aucune action n'y est liée."""
         conn = self._get_connection()
         try:
@@ -573,15 +443,6 @@ class InterventionTaskRepository:
                     f"Cette tâche est liée à {action_count} action{'s' if action_count > 1 else ''} — suppression impossible"
                 )
 
-            _audit_task(
-                cur,
-                task_id,
-                "deleted",
-                {"label": label, "status": status},
-                None,
-                reason_code,
-                deleted_by,
-            )
             cur.execute("DELETE FROM intervention_task WHERE id = %s", (task_id,))
             conn.commit()
         except (NotFoundError, ValidationError, ConflictError):

@@ -89,7 +89,12 @@ export default function SupplierOrdersTab() {
 
   const handleDelete = async () => {
     if (!selectedId) return;
-    await removeOrder(selectedId);
+    try {
+      await removeOrder(selectedId);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.delete('order_id');

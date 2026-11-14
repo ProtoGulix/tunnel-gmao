@@ -125,7 +125,12 @@ export default function InterventionPurchaseTab({ interventionId, isLocked = fal
 
   const handleDelete = async () => {
     if (!selected) return;
-    await deletePurchaseRequest(selected.id);
+    try {
+      await deletePurchaseRequest(selected.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setSelected(null);
     setExpandedRowId(null);
     load();

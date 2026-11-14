@@ -293,6 +293,7 @@ export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreat
     e.preventDefault();
     setError(null);
     if (!formData.title.trim()) { setError('Le titre est obligatoire'); return; }
+    if (!formData.requestId) { setError("Sélectionnez la demande d'intervention à l'origine"); return; }
     if (!formData.techId) { setError('Veuillez sélectionner un technicien'); return; }
     setSaving(true);
     try {

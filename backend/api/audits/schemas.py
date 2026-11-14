@@ -20,6 +20,9 @@ class AuditReasonOut(BaseModel):
     category: str
     color: Optional[str] = None
     description: Optional[str] = None
+    # Décisions auxquelles le motif s'applique (ex. deleted, task_done) : la fenêtre de
+    # motif des fronts filtre dessus. Absent de la réponse avant 2026-11-14 (lu en base).
+    decision_types: Optional[List[str]] = None
 
 
 class AuditReasonAdminOut(BaseModel):
@@ -157,6 +160,8 @@ class AuditRuleReason(BaseModel):
     label: str
     color: Optional[str] = None
     requires_text: bool = False
+    # Décisions auxquelles le motif s'applique : la fenêtre de motif filtre dessus (ex. deleted).
+    decision_types: Optional[List[str]] = None
 
 
 class AuditRules(BaseModel):

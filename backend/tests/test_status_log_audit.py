@@ -3,10 +3,12 @@
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI, Request
+from fastapi.testclient import TestClient
 
 from api.audits import middleware as audit_middleware
+from api.errors.handlers import register_error_handlers
 from api.intervention_status_log import routes as status_routes
-from tests.helpers import make_client
 
 TOKEN_USER = "11111111-1111-1111-1111-111111111111"
 AUTRE_TECH = "55555555-5555-5555-5555-555555555555"
@@ -51,12 +53,30 @@ def appels(monkeypatch):
 
     monkeypatch.setattr(status_routes, "InterventionStatusLogRepository", _FauxStatusRepo)
     monkeypatch.setattr(audit_middleware, "AuditRepository", _FauxAuditRepo)
+    # Le motif routinier et l'état de la ligne viennent de la base : neutralisés ici.
     monkeypatch.setattr(
-        status_routes,
-        "resolve_reason_code",
+        "api.utils.audit.resolve_reason_code",
         lambda entity_type, fields: {"default_reason_code": "ROUTINE"},
     )
+    monkeypatch.setattr(audit_middleware, "_fetch_entity_state", lambda table, entity_id: {})
     return captures
+
+
+def make_client(router, user_id, role):
+    """Mini-app avec l'AuditMiddleware réel : c'est lui qui écrit désormais l'audit (ADR 0018)."""
+    app = FastAPI()
+    app.add_middleware(audit_middleware.AuditMiddleware)
+
+    @app.middleware("http")
+    async def _fake_auth(request: Request, call_next):
+        request.state.user_id = user_id
+        request.state.role = role
+        request.state.api_key_id = None
+        return await call_next(request)
+
+    register_error_handlers(app)
+    app.include_router(router)
+    return TestClient(app, raise_server_exceptions=False)
 
 
 def test_l_auteur_trace_est_celui_du_jeton_pas_technician_id(appels):

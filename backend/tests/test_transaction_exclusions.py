@@ -4,13 +4,8 @@ from api import transaction
 
 
 def test_exclusions_temporaires_figees():
-    """Seules generate et import sont exclues provisoirement ; toute autre entrée est refusée."""
-    assert transaction._TEMPORARY_EXCLUSIONS == frozenset(
-        {
-            ("POST", "/preventive-occurrences/generate"),
-            ("POST", "/purchase-requests/import"),
-        }
-    )
+    """Plus aucune exclusion provisoire (AUDC-25) ; toute entrée ajoutée est refusée."""
+    assert transaction._TEMPORARY_EXCLUSIONS == frozenset()
 
 
 def test_exclusions_permanentes_d_auth_inchangees():

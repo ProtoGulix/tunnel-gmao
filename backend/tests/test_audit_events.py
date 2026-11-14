@@ -7,7 +7,6 @@ import pytest
 from api.audits.events import (
     AuditUnit,
     bind_audit_unit,
-    injected_reason_code,
     record_audit_event,
     unbind_audit_unit,
 )
@@ -47,14 +46,5 @@ def test_un_evenement_du_systeme_exige_un_motif():
     try:
         with pytest.raises(ValueError):
             record_audit_event("intervention", uuid4(), "auto", is_system=True)
-    finally:
-        unbind_audit_unit(token)
-
-
-def test_le_motif_injecte_est_lisible_par_les_schemas():
-    assert injected_reason_code() is None
-    token = bind_audit_unit(AuditUnit(injected_reason_code="ROUTINE"))
-    try:
-        assert injected_reason_code() == "ROUTINE"
     finally:
         unbind_audit_unit(token)

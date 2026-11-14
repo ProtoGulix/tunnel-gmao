@@ -4,7 +4,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 
-from api.audits.declaration import audit
+from api.audits.declaration import audit, declare_created_id
+from api.audits.middleware import REASON_CODE_ATTR
 from api.auth.permissions import require_authenticated
 from api.intervention_requests.repo import InterventionRequestRepository
 from api.intervention_requests.schemas import (
@@ -112,7 +113,11 @@ def get_request(request_id: UUID) -> Dict[str, Any]:
     return single(data, audit_entity="request")
 
 
-@router.post("", status_code=201)
+@router.post(
+    "",
+    status_code=201,
+    dependencies=[audit("request", id_from_created=True, table="intervention_request")],
+)
 def create_request(
     data: InterventionRequestIn, background_tasks: BackgroundTasks, request: Request
 ):
@@ -139,6 +144,7 @@ def create_request(
     """
     user_id = str(getattr(request.state, "user_id", None) or "") or None
     created = repo.create(data.model_dump(), created_by=user_id)
+    declare_created_id(request, created["id"])
     background_tasks.add_task(send_di_a_traiter_mails, str(created["id"]))
     return single(created)
 
@@ -161,7 +167,8 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
     Pour le statut `acceptee`, les champs `type_inter` et `tech_initials` sont obligatoires :
     ils servent à créer automatiquement l'intervention liée.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
+    **Audit** : le motif est validé par AuditMiddleware (`reason_code` du corps, voir
+    `GET /audit/reasons`) ; une règle routine s'applique si le corps n'en porte pas.
     Pour le statut `rejetee`, le motif est porté par `reason_text` (pas de champ `notes`
     séparé) : le motif de rejet EST la raison d'audit, saisie une seule fois via le picker
     de raisons. `reason_text` est copié dans l'historique (request_status_log.notes).
@@ -191,14 +198,16 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
             notes=notes,
             changed_by=str(body.changed_by) if body.changed_by else None,
             intervention_data=intervention_data,
-            reason_code=body.reason_code,
-            reason_text=body.reason_text,
-            audit_user_id=str(getattr(request.state, "user_id", None) or "") or None,
+            reason_code=getattr(request.state, REASON_CODE_ATTR, None),
         )
     )
 
 
-@router.delete("/{request_id}", status_code=204)
+@router.delete(
+    "/{request_id}",
+    status_code=204,
+    dependencies=[audit("request", id_from_path="request_id", table="intervention_request")],
+)
 def delete_request(request_id: UUID):
     """
     Supprime définitivement une demande d'intervention.
@@ -209,7 +218,9 @@ def delete_request(request_id: UUID):
     repo.delete(str(request_id))
 
 
-@router.post("/repair")
+# Traitement de masse sans entité propre : seuls les événements du système déposés par le repo
+# pour chaque demande réparée sont écrits.
+@router.post("/repair", dependencies=[audit("request", events_only=True)])
 def repair_orphaned_requests(request: Request):
     """
     Passe à `cloturee` toutes les DIs en statut `acceptee` dont l'intervention
@@ -219,8 +230,4 @@ def repair_orphaned_requests(request: Request):
     automatique n'a pas été déclenchée.
     Idémpotent.
     """
-    return single(
-        repo.repair_orphaned_requests(
-            audit_user_id=str(getattr(request.state, "user_id", None) or "") or None
-        )
-    )
+    return single(repo.repair_orphaned_requests())

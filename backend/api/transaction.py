@@ -48,22 +48,11 @@ _MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 # Elle est tenue dans security_log, hors audit_log.
 _EXCLUDED_PATHS = frozenset({"/auth/login", "/auth/refresh", "/auth/logout"})
 
-# Exclusions TEMPORAIRES (AUDC-15), distinctes des exclusions permanentes ci-dessus : ces
-# routes tolèrent un succès partiel (une machine ou une ligne en échec n'annule pas les
-# autres) et gardent exactement leur comportement d'avant AUDC-11 (connexions propres du
-# pool, une validation par unité). Chaque entrée disparaît à l'étape 2 (décision : tout ou
-# rien, valider puis écrire). Un test fige cette liste : toute entrée en plus est refusée.
-#   - POST /preventive-occurrences/generate : un conflit d'occurrence fait un rollback de flux
-#     normal par machine. Retrait : tâche d'étape 2
-#     « génération tout ou rien » (AUDC-plan.md, point 6).
-#   - POST /purchase-requests/import : une ligne fautive n'arrête pas les autres.
-#     Retrait : tâche d'étape 2 « achats en masse : valider puis écrire » (AUDC-plan.md, point 6).
-_TEMPORARY_EXCLUSIONS = frozenset(
-    {
-        ("POST", "/preventive-occurrences/generate"),
-        ("POST", "/purchase-requests/import"),
-    }
-)
+# Exclusions TEMPORAIRES (AUDC-15), distinctes des exclusions permanentes ci-dessus : une route
+# y tolérerait un succès partiel avec ses propres connexions. La liste est vide depuis AUDC-25
+# (import CSV : tout ou rien) ; le mécanisme reste, un test fige son contenu : toute entrée
+# ajoutée est refusée.
+_TEMPORARY_EXCLUSIONS: frozenset = frozenset()
 
 
 class _RequestAborted(Exception):

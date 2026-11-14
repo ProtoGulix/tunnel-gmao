@@ -88,13 +88,13 @@ export function ContextSection({
     e?.preventDefault?.();
     setCreateError(null);
     if (!formData?.title?.trim()) { setCreateError('Le titre est obligatoire'); return; }
+    if (!formData?.requestId) { setCreateError("Sélectionnez la demande d'intervention à l'origine"); return; }
     if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; }
     setSaving(true);
     try {
       const created = await createIntervention({
         ...formData,
         reportedDate: formData.reportedDate ? new Date(formData.reportedDate).toISOString() : undefined,
-        reasonCode: 'ROUTINE',
       });
       onInterventionChange(created);
       setShowInterventionCreate(false);

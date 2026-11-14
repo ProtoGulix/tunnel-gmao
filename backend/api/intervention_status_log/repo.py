@@ -1,8 +1,10 @@
+from contextlib import nullcontext
 from typing import Any, Dict, List
 from uuid import uuid4
 
 import psycopg2
 
+from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, DatabaseError, NotFoundError, raise_db_error
 from api.intervention_status_log.validators import InterventionStatusLogValidator
@@ -199,6 +201,17 @@ class InterventionStatusLogRepository:
         """Récupère tous les logs d'une intervention, triés par date DESC"""
         return self.get_all(intervention_id=intervention_id, limit=1000, offset=0)
 
+    @staticmethod
+    def _watch_closure_cascade(validated_data: Dict[str, Any]):
+        """Contexte qui trace la clôture automatique de la demande quand status_to = fermé."""
+        if validated_data["status_to"] != CLOSED_STATUS_CODE:
+            return nullcontext()
+        from api.intervention_requests.repo import InterventionRequestRepository
+
+        return InterventionRequestRepository().watch_trigger_closure(
+            str(validated_data["intervention_id"])
+        )
+
     def add(self, log_data: Dict[str, Any]) -> Dict[str, Any]:
         """Crée un nouveau log de changement de statut.
 
@@ -215,23 +228,26 @@ class InterventionStatusLogRepository:
             cur = conn.cursor()
             log_id = str(uuid4())
 
-            cur.execute(
-                """
-                INSERT INTO intervention_status_log
-                (id, intervention_id, status_from, status_to, technician_id, date, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    log_id,
-                    str(validated_data['intervention_id']),
-                    validated_data.get('status_from'),
-                    validated_data['status_to'],
-                    str(validated_data['technician_id']),
-                    validated_data['date'],
-                    validated_data.get('notes'),
-                ),
-            )
+            # La clôture de la demande liée est faite par le trigger : on en dépose la trace
+            # (événement du système, ADR 0018 point 6) quand la fermeture la déclenche.
+            with self._watch_closure_cascade(validated_data):
+                cur.execute(
+                    """
+                    INSERT INTO intervention_status_log
+                    (id, intervention_id, status_from, status_to, technician_id, date, notes)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        log_id,
+                        str(validated_data['intervention_id']),
+                        validated_data.get('status_from'),
+                        validated_data['status_to'],
+                        str(validated_data['technician_id']),
+                        validated_data['date'],
+                        validated_data.get('notes'),
+                    ),
+                )
 
             conn.commit()
 

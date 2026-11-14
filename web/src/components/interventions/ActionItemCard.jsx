@@ -235,9 +235,10 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
       await actionsApi.deleteAction(localAction.id);
       onActionDeleted?.(localAction.id);
     } catch (error) {
-      setDeleteError(extractApiErrorMessage(error, "Erreur lors de la suppression de l'action"));
       setDeleting(false);
       setConfirmingDelete(false);
+      if (error?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      setDeleteError(extractApiErrorMessage(error, "Erreur lors de la suppression de l'action"));
     }
   }, [localAction.id, onActionDeleted]);
 

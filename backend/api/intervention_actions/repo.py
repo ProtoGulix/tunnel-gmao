@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
@@ -6,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from api.audits.events import record_audit_event
 from api.constants import CLOSED_STATUS_CODE, NON_DISPATCHED_PR_STATUSES
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
@@ -16,31 +16,25 @@ from api.utils.sanitizer import strip_html
 logger = logging.getLogger(__name__)
 
 
-def _audit_task_from_action(
-    cur, task_id: str, old_status: str, new_status: str, action_id: str, user_id: Optional[str]
-) -> None:
-    """Audite une transition de statut de tâche déclenchée par une action.
+# Motif de catégorie system des mutations faites par le système (même valeur que la cascade des demandes).
+SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
 
-    user_id est l'auteur réel (jeton, jamais un champ déclaratif). L'écriture se fait dans
-    la transaction de l'action : une erreur remonte et annule toute la mutation (ADR 0017).
+
+def _audit_task_from_action(task_id: str, old_status: str, new_status: str, action_id: str) -> None:
+    """Dépose l'événement d'audit d'une tâche dont une action change le statut.
+
+    Le changement n'est pas la décision de l'utilisateur sur la tâche mais la conséquence de
+    son action : événement du système (motif SYSTEM_CASCADE), l'auteur est l'utilisateur du
+    jeton, ajouté par le middleware (ADR 0018 points 4 et 6).
     """
-    cur.execute(
-        """
-        SELECT public.fn_audit_log_decision(
-            %s, %s::uuid, %s, %s::jsonb, %s::jsonb, %s, %s, %s::uuid, %s
-        )
-        """,
-        (
-            "task",
-            task_id,
-            "updated",
-            json.dumps({"status": old_status, "triggered_by_action": action_id}),
-            json.dumps({"status": new_status, "triggered_by_action": action_id}),
-            "TASK_STATUS",
-            None,
-            user_id,
-            True,
-        ),
+    record_audit_event(
+        "task",
+        task_id,
+        "updated",
+        old_value={"status": old_status, "triggered_by_action": action_id},
+        new_value={"status": new_status, "triggered_by_action": action_id},
+        is_system=True,
+        reason_code=SYSTEM_CASCADE_REASON,
     )
 
 
@@ -634,7 +628,6 @@ class InterventionActionRepository:
         self,
         action_data: Dict[str, Any],
         role: Optional[str] = None,
-        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Ajoute une nouvelle action à une intervention.
 
@@ -750,7 +743,7 @@ class InterventionActionRepository:
                         """,
                         (task_req_data.get('skip_reason'), tid),
                     )
-                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id, user_id)
+                    _audit_task_from_action(tid, task_status, 'skipped', action_id)
                 else:
                     if task_status in ('done', 'skipped'):
                         raise ValidationError(
@@ -761,7 +754,7 @@ class InterventionActionRepository:
                             "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
                             (tid,),
                         )
-                        _audit_task_from_action(cur, tid, task_status, 'done', action_id, user_id)
+                        _audit_task_from_action(tid, task_status, 'done', action_id)
                     else:
                         new_status = 'in_progress' if task_status == 'todo' else task_status
                         cur.execute(
@@ -774,9 +767,7 @@ class InterventionActionRepository:
                             (tid,),
                         )
                         if new_status != task_status:
-                            _audit_task_from_action(
-                                cur, tid, task_status, new_status, action_id, user_id
-                            )
+                            _audit_task_from_action(tid, task_status, new_status, action_id)
 
             conn.commit()
             return self.get_by_id(action_id)
@@ -797,7 +788,6 @@ class InterventionActionRepository:
         action_id: str,
         patch_data: Dict[str, Any],
         role: Optional[str] = None,
-        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Met à jour partiellement une action existante"""
         tasks = patch_data.pop('tasks', None) or []
@@ -939,7 +929,7 @@ class InterventionActionRepository:
                         """,
                         (task_req_data.get('skip_reason'), tid),
                     )
-                    _audit_task_from_action(cur, tid, task_status, 'skipped', action_id, user_id)
+                    _audit_task_from_action(tid, task_status, 'skipped', action_id)
                 else:
                     if task_status in ('done', 'skipped'):
                         raise ValidationError(
@@ -950,7 +940,7 @@ class InterventionActionRepository:
                             "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
                             (tid,),
                         )
-                        _audit_task_from_action(cur, tid, task_status, 'done', action_id, user_id)
+                        _audit_task_from_action(tid, task_status, 'done', action_id)
                     else:
                         new_status = 'in_progress' if task_status == 'todo' else task_status
                         cur.execute(
@@ -963,9 +953,7 @@ class InterventionActionRepository:
                             (tid,),
                         )
                         if new_status != task_status:
-                            _audit_task_from_action(
-                                cur, tid, task_status, new_status, action_id, user_id
-                            )
+                            _audit_task_from_action(tid, task_status, new_status, action_id)
 
             conn.commit()
         except (ValidationError, NotFoundError):

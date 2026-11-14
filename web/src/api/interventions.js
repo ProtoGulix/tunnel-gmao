@@ -85,7 +85,6 @@ export async function createIntervention(data) {
   };
   if (data.reportedBy) payload.reported_by = data.reportedBy;
   if (data.requestId) payload.request_id = data.requestId;
-  if (data.reasonCode) payload.reason_code = data.reasonCode;
   const response = await api.post('/interventions', payload);
   return mapInterventionResponse(response.data?.data ?? response.data);
 }
@@ -107,8 +106,17 @@ export async function updateInterventionStatus(id, newStatus, reasonCode, reason
   return updateIntervention(id, { status: newStatus, reason_code: reasonCode, reason_text: reasonText });
 }
 
-export async function deleteIntervention(id) {
-  await api.delete(`/interventions/${id}`);
+/**
+ * Supprime une intervention (ADR 0019) : motif « deleted » obligatoire dans le corps,
+ * issue de la demande liée (reopen | delete) en paramètre quand une demande est liée.
+ */
+export async function deleteIntervention(id, reason, requestOutcome) {
+  const data = { reason_code: reason.reason_code };
+  if (reason.reason_text) data.reason_text = reason.reason_text;
+  await api.delete(`/interventions/${id}`, {
+    data,
+    params: requestOutcome ? { request_outcome: requestOutcome } : undefined,
+  });
 }
 
 export async function fetchInterventionPdf(id) {

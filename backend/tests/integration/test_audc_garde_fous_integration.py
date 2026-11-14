@@ -64,12 +64,14 @@ def test_generation_avec_conflit_garde_le_succes_partiel(instance, client, admin
     assert cree == 1
 
 
-def test_import_csv_avec_ligne_fautive_garde_le_succes_partiel(instance, client, admin):
-    """Une ligne en erreur SQL (entier hors limites) est rapportée, les autres sont créées.
+def test_import_csv_avec_ligne_fautive_n_ecrit_rien(instance, client, admin):
+    """Une ligne fautive (entier hors limites) est rapportée et rien n'est écrit : import
+    tout ou rien (décision de l'utilisateur, ADR 0018 point 1 quinquies ; avant AUDC-25,
+    les autres lignes étaient créées).
 
     Vrai POST multipart sur la vraie route : le middleware d'audit ne réécrit plus le corps
-    (AUDC-13), la route jetable de l'étape AUDC-15 n'est plus nécessaire. La réponse de la
-    vraie route est 201 (response_model ImportResult).
+    (AUDC-13), la route jetable de l'étape AUDC-15 n'est plus nécessaire. Un import rejeté
+    répond 422 avec le rapport complet.
     """
     suffixe = secrets.token_hex(3)
     csv = (f"ref;qte\nOK1-{suffixe};2\nKO-{suffixe};99999999999\nOK2-{suffixe};3\n").encode()
@@ -85,12 +87,12 @@ def test_import_csv_avec_ligne_fautive_garde_le_succes_partiel(instance, client,
         },
     )
 
-    assert resp.status_code == 201, resp.text
+    assert resp.status_code == 422, resp.text
     body = resp.json()
-    assert (body["created"], body["errors"], body["total"]) == (2, 1, 3)
+    assert (body["created"], body["errors"], body["total"]) == (0, 1, 3)
     statuts = {ligne["row"]: ligne["status"] for ligne in body["lines"]}
-    assert statuts == {1: "created", 2: "error", 3: "created"}
-    for libelle, attendu in ((f"OK1-{suffixe}", 1), (f"KO-{suffixe}", 0), (f"OK2-{suffixe}", 1)):
+    assert statuts == {1: "preview", 2: "error", 3: "preview"}
+    for libelle, attendu in ((f"OK1-{suffixe}", 0), (f"KO-{suffixe}", 0), (f"OK2-{suffixe}", 0)):
         n = instance.sql("SELECT count(*) FROM purchase_request WHERE item_label = %s", (libelle,))
         assert n[0][0] == attendu
 
@@ -140,7 +142,6 @@ def test_changement_de_statut_apres_un_passage_qui_regle_le_journal_est_journali
             "Mise en attente",
             admin.id,
             reason_code="ROUTINE",
-            audit_user_id=admin.id,
         )
         conn = get_connection()
         try:
