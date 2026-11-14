@@ -140,3 +140,10 @@ Met à jour. Même body, tous champs optionnels.
 ## `DELETE /suppliers/{id}`
 
 Supprime. Réponse `204`.
+
+## Audit (ADR 0018, étape 3)
+
+`entity_type = supplier`, motif routinier injecté si absent.
+
+- `POST /suppliers` : `created`. `PUT /suppliers/{supplier_id}` : `{champ}_changed`.
+- `DELETE /suppliers/{supplier_id}` : `deleted` avec l'état avant ; `reason_code` explicite obligatoire.

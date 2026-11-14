@@ -2,12 +2,18 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
 from api.stock_items.template_schemas import PartTemplate, StockSubFamily
 from api.stock_items.template_service import TemplateService
 
 logger = logging.getLogger(__name__)
+
+
+def _text(value) -> Optional[str]:
+    """Uuid ou None sous forme de texte, comparable et sérialisable pour l'audit."""
+    return str(value) if value is not None else None
 
 
 class StockSubFamilyRepository:
@@ -177,8 +183,20 @@ class StockSubFamilyRepository:
                 """
                 INSERT INTO stock_sub_family (family_code, code, label, template_id)
                 VALUES (%s, %s, %s, %s)
+                RETURNING id
                 """,
                 (family_code, code, label, str(template_id) if template_id else None),
+            )
+            record_audit_event(
+                "stock_sub_family",
+                cur.fetchone()[0],
+                "created",
+                new_value={
+                    "family_code": family_code,
+                    "code": code,
+                    "label": label,
+                    "template_id": str(template_id) if template_id else None,
+                },
             )
             conn.commit()
             logger.info("Sous-famille %s/%s créée", family_code, code)
@@ -215,12 +233,14 @@ class StockSubFamilyRepository:
         try:
             cur = conn.cursor()
 
-            # Vérifier que la sous-famille existe
+            # Vérifier que la sous-famille existe (état avant gardé pour l'audit)
             cur.execute(
-                "SELECT 1 FROM stock_sub_family WHERE family_code = %s AND code = %s",
+                "SELECT id, label, template_id FROM stock_sub_family "
+                "WHERE family_code = %s AND code = %s",
                 (family_code, sub_family_code),
             )
-            if not cur.fetchone():
+            existing = cur.fetchone()
+            if not existing:
                 raise NotFoundError(f"Sous-famille {family_code}/{sub_family_code} non trouvée")
 
             # Construire la requête UPDATE dynamiquement
@@ -249,6 +269,22 @@ class StockSubFamilyRepository:
             """
 
             cur.execute(query, params)
+            # Identifiant de chemin = codes : l'événement porte l'uuid lu en base.
+            sub_family_id, old_label, old_template_id = existing
+            old = {"label": old_label, "template_id": _text(old_template_id)}
+            new = {
+                "label": label if label is not None else old_label,
+                "template_id": _text(template_id) if template_id else old["template_id"],
+            }
+            for field in ("label", "template_id"):
+                if old[field] != new[field]:
+                    record_audit_event(
+                        "stock_sub_family",
+                        sub_family_id,
+                        f"{field}_changed",
+                        old_value={field: old[field]},
+                        new_value={field: new[field]},
+                    )
             conn.commit()
 
             logger.info("Sous-famille %s/%s mise à jour", family_code, sub_family_code)

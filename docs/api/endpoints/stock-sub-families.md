@@ -487,3 +487,10 @@ sequenceDiagram
 - [stock-items.md](stock-items.md) — Création pièces avec/sans template
 - [part-templates.md](part-templates.md) — Gestion des templates
 - [shared-schemas.md](shared-schemas.md) — Schémas partagés
+
+## Audit (ADR 0018, étape 3)
+
+`entity_type = stock_sub_family`, tracée sous son `id` (lu en base, les routes adressent par codes). Motif routinier injecté si absent.
+
+- `POST /stock-sub-families` et `POST /stock-sub-families/{family_code}` : `created`.
+- `PATCH /stock-sub-families/{family_code}/{sub_family_code}` : `label_changed` et/ou `template_id_changed`.

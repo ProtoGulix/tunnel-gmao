@@ -187,7 +187,12 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
   };
 
   const handleDelete = async () => {
-    await removeItem(selected.id);
+    try {
+      await removeItem(selected.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setSelected(null);
     setMode(null);
   };

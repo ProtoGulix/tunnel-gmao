@@ -91,7 +91,12 @@ export default function PreventivePage() {
 
   const handleDeactivate = useCallback(async () => {
     if (!toDeactivate) return;
-    await deactivatePlan(toDeactivate.id);
+    try {
+      await deactivatePlan(toDeactivate.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     if (selectedPlan?.id === toDeactivate.id) selectPlan(null);
     setToDeactivate(null);
   }, [toDeactivate, deactivatePlan, selectedPlan, selectPlan]);

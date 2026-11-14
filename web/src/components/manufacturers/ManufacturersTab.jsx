@@ -176,7 +176,12 @@ export default function ManufacturersTab() {
   };
 
   const handleDelete = async () => {
-    await removeManufacturer(selected.id);
+    try {
+      await removeManufacturer(selected.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setSelected(null);
   };
 

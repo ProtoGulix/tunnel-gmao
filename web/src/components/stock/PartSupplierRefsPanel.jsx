@@ -105,7 +105,10 @@ export default function PartSupplierRefsPanel({ mfrRef, onRefresh }) {
   const handleDelete = useCallback(async (id) => {
     setActionError(null);
     try { await deleteSupplierRef(id); onRefresh(); }
-    catch (e) { setActionError(e?.response?.data?.detail || 'Erreur'); }
+    catch (e) {
+      if (e?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      setActionError(e?.response?.data?.detail || 'Erreur');
+    }
   }, [onRefresh]);
 
   const supplierRefs = mfrRef.supplier_refs || [];

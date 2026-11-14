@@ -3,6 +3,8 @@
 import logging
 from typing import List
 
+from api.audits.entity_ids import stock_family_entity_id
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
 from api.stock_families.schemas import StockFamilyDetail, StockFamilyIn, StockFamilyListItem
@@ -165,8 +167,8 @@ class StockFamilyRepository:
             NotFoundError: Si la famille n'existe pas
             DatabaseError: Si le nouveau code est déjà utilisé
         """
-        # Vérifier que la famille existe
-        self.get_by_code(old_code)
+        # Vérifier que la famille existe (et garder son libellé pour l'audit)
+        old_label = self.get_by_code(old_code).label
 
         if new_code != old_code:
             conn_check = self._get_connection()
@@ -203,6 +205,19 @@ class StockFamilyRepository:
                     (new_code, old_code),
                 )
 
+            # Famille tracée sous l'uuid de son code AVANT la requête (celui de old_code) ;
+            # le code est aussi dans les valeurs, avant comme après.
+            before = {"code": old_code, "label": old_label}
+            after = {"code": new_code, "label": label if label is not None else old_label}
+            for field in ("code", "label"):
+                if before[field] != after[field]:
+                    record_audit_event(
+                        "stock_family",
+                        stock_family_entity_id(old_code),
+                        f"{field}_changed",
+                        old_value=before,
+                        new_value=after,
+                    )
             conn.commit()
             logger.info("Famille %s mise à jour (new_code=%s, label=%s)", old_code, new_code, label)
         except ValidationError:
@@ -231,6 +246,12 @@ class StockFamilyRepository:
                 raise ValidationError(f"La famille '{data.code}' existe déjà")
             cur.execute(
                 "INSERT INTO stock_family (code, label) VALUES (%s, %s)", (data.code, data.label)
+            )
+            record_audit_event(
+                "stock_family",
+                stock_family_entity_id(data.code),
+                "created",
+                new_value={"code": data.code, "label": data.label},
             )
             conn.commit()
             logger.info("Famille %s créée", data.code)

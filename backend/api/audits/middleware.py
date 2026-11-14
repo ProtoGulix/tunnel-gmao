@@ -57,6 +57,16 @@ _TABLE_MAP: Dict[str, str] = {
     "action": "intervention_action",
     "supplier_order": "supplier_order",
     "equipement": "machine",
+    "preventive_plan": "preventive_plan",
+    "part": "part",
+    "part_manufacturer_ref": "part_manufacturer_ref",
+    "part_supplier_ref": "part_supplier_ref",
+    "manufacturer_item": "manufacturer_item",
+    "stock_item": "stock_item",
+    "stock_sub_family": "stock_sub_family",
+    "stock_item_supplier": "stock_item_supplier",
+    "supplier": "supplier",
+    "supplier_order_line": "supplier_order_line",
 }
 
 # Pattern : /interventions ou /interventions/{uuid} ou /interventions/{uuid}/sous-ressource

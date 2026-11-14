@@ -206,3 +206,12 @@ Si la référence est `is_preferred = true` et que d'autres références existen
 | `400` | Préféré avec d'autres références | `Définissez un autre fournisseur préféré avant de supprimer` |
 
 ### Réponse `204`
+
+## Audit (ADR 0018, étape 3)
+
+`entity_type = stock_item_supplier`, motif routinier injecté si absent.
+
+- `POST /stock-item-suppliers` : `created`.
+- `PUT /stock-item-suppliers/{ref_id}` : `{champ}_changed`.
+- `POST /stock-item-suppliers/{ref_id}/set-preferred` : `is_preferred_changed` pour la référence visée et pour chaque référence sœur qui perd le statut.
+- `DELETE /stock-item-suppliers/{ref_id}` : `deleted` avec l'état avant ; `reason_code` explicite obligatoire.

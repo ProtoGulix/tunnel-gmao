@@ -1,7 +1,8 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.stock_item_suppliers.repo import StockItemSupplierRepository
 from api.stock_item_suppliers.schemas import (
@@ -64,18 +65,16 @@ def get_stock_items_by_supplier(supplier_id: str):
     return repo.get_by_supplier(supplier_id)
 
 
-@router.post(
-    "",
-)
-def create_stock_item_supplier(ref: StockItemSupplierIn):
+@router.post("", dependencies=[audit("stock_item_supplier", id_from_created=True)])
+def create_stock_item_supplier(ref: StockItemSupplierIn, request: Request):
     """Crée une nouvelle référence fournisseur"""
     repo = StockItemSupplierRepository()
-    return single(repo.add(ref.model_dump()))
+    created = repo.add(ref.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put(
-    "/{ref_id}",
-)
+@router.put("/{ref_id}", dependencies=[audit("stock_item_supplier", id_from_path="ref_id")])
 def update_stock_item_supplier(ref_id: str, ref: StockItemSupplierUpdate):
     """Met à jour une référence fournisseur existante"""
     repo = StockItemSupplierRepository()
@@ -84,6 +83,7 @@ def update_stock_item_supplier(ref_id: str, ref: StockItemSupplierUpdate):
 
 @router.post(
     "/{ref_id}/set-preferred",
+    dependencies=[audit("stock_item_supplier", id_from_path="ref_id")],
 )
 def set_preferred_supplier(ref_id: str):
     """Définit cette référence comme fournisseur préféré pour l'article"""
@@ -91,7 +91,11 @@ def set_preferred_supplier(ref_id: str):
     return single(repo.set_preferred(ref_id))
 
 
-@router.delete("/{ref_id}", status_code=204)
+@router.delete(
+    "/{ref_id}",
+    status_code=204,
+    dependencies=[audit("stock_item_supplier", id_from_path="ref_id")],
+)
 def delete_stock_item_supplier(ref_id: str):
     """Supprime une référence fournisseur"""
     repo = StockItemSupplierRepository()

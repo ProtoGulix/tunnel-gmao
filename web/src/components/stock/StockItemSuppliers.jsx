@@ -33,6 +33,7 @@ export function SuppliersSection({ suppliers, stockItemId, stockItemLabel, onRef
       await deleteSupplierItemLink(row.id);
       onRefresh();
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       setActionError(err.message || 'Impossible de supprimer ce fournisseur');
     }
   }, [onRefresh]);

@@ -41,48 +41,48 @@ script. Plan et décisions : [AUDC-plan.md](AUDC-plan.md).
 | 2 | supplier-orders | PUT | `/supplier-orders/{order_id}` | update_supplier_order | déclarée (supplier_order) |
 | 2 | supplier-orders | POST | `/supplier-orders/{order_id}/export/csv` | export_supplier_order_csv | déclarée (supplier_order) |
 | 2 | supplier-orders | POST | `/supplier-orders/{order_id}/export/email` | export_supplier_order_email | ne modifie rien : Compose le courriel depuis des SELECT (get_export_data) : aucune écriture (AUDC-25) |
-| 3 | manufacturer-items | POST | `/manufacturer-items` | create_manufacturer_item | à traiter étape 3 |
-| 3 | manufacturer-items | DELETE | `/manufacturer-items/{item_id}` | delete_manufacturer_item | à traiter étape 3 |
-| 3 | manufacturer-items | PATCH | `/manufacturer-items/{item_id}` | patch_manufacturer_item | à traiter étape 3 |
-| 3 | part-templates | POST | `/part-templates` | create_template | à traiter étape 3 |
-| 3 | part-templates | DELETE | `/part-templates/{template_id}` | delete_template | à traiter étape 3 |
-| 3 | part-templates | POST | `/part-templates/{template_id}/versions` | create_template_version | à traiter étape 3 |
-| 3 | parts | POST | `/parts` | create_part | à traiter étape 3 |
-| 3 | parts | DELETE | `/parts/manufacturer-refs/{mfr_ref_id}` | delete_manufacturer_ref | à traiter étape 3 |
-| 3 | parts | PATCH | `/parts/manufacturer-refs/{mfr_ref_id}` | update_manufacturer_ref | à traiter étape 3 |
-| 3 | parts | POST | `/parts/manufacturer-refs/{mfr_ref_id}/set-preferred` | set_preferred_manufacturer_ref | à traiter étape 3 |
-| 3 | parts | POST | `/parts/manufacturer-refs/{mfr_ref_id}/supplier-refs` | add_supplier_ref | à traiter étape 3 |
-| 3 | parts | DELETE | `/parts/supplier-refs/{supplier_ref_id}` | delete_supplier_ref | à traiter étape 3 |
-| 3 | parts | PATCH | `/parts/supplier-refs/{supplier_ref_id}` | update_supplier_ref | à traiter étape 3 |
-| 3 | parts | POST | `/parts/supplier-refs/{supplier_ref_id}/set-preferred` | set_preferred_supplier_ref | à traiter étape 3 |
-| 3 | parts | PATCH | `/parts/{part_id}` | update_part | à traiter étape 3 |
-| 3 | parts | POST | `/parts/{part_id}/manufacturer-refs` | add_manufacturer_ref | à traiter étape 3 |
-| 3 | preventive-plans | POST | `/preventive-plans` | create_preventive_plan | à traiter étape 3 |
-| 3 | preventive-plans | DELETE | `/preventive-plans/{plan_id}` | delete_preventive_plan | à traiter étape 3 |
-| 3 | preventive-plans | PUT | `/preventive-plans/{plan_id}` | update_preventive_plan | à traiter étape 3 |
-| 3 | preventive-plans | PATCH | `/preventive-plans/{plan_id}/steps` | replace_plan_steps | à traiter étape 3 |
-| 3 | stock-families | POST | `/stock-families` | create_stock_family | à traiter étape 3 |
-| 3 | stock-families | PATCH | `/stock-families/{family_code}` | patch_stock_family | à traiter étape 3 |
-| 3 | stock-item-suppliers | POST | `/stock-item-suppliers` | create_stock_item_supplier | à traiter étape 3 |
-| 3 | stock-item-suppliers | DELETE | `/stock-item-suppliers/{ref_id}` | delete_stock_item_supplier | à traiter étape 3 |
-| 3 | stock-item-suppliers | PUT | `/stock-item-suppliers/{ref_id}` | update_stock_item_supplier | à traiter étape 3 |
-| 3 | stock-item-suppliers | POST | `/stock-item-suppliers/{ref_id}/set-preferred` | set_preferred_supplier | à traiter étape 3 |
-| 3 | stock-items | POST | `/stock-items` | create_stock_item | à traiter étape 3 |
-| 3 | stock-items | DELETE | `/stock-items/{item_id}` | delete_stock_item | à traiter étape 3 |
-| 3 | stock-items | PUT | `/stock-items/{item_id}` | update_stock_item | à traiter étape 3 |
-| 3 | stock-items | PATCH | `/stock-items/{item_id}/quantity` | update_stock_quantity | à traiter étape 3 |
-| 3 | stock-sub-families | POST | `/stock-sub-families` | create_stock_sub_family | à traiter étape 3 |
-| 3 | stock-sub-families | POST | `/stock-sub-families/{family_code}` | create_stock_sub_family_in_family | à traiter étape 3 |
-| 3 | stock-sub-families | PATCH | `/stock-sub-families/{family_code}/{sub_family_code}` | update_stock_sub_family | à traiter étape 3 |
-| 3 | supplier-order-lines | POST | `/supplier-order-lines` | create_supplier_order_line | à traiter étape 3 |
-| 3 | supplier-order-lines | DELETE | `/supplier-order-lines/{line_id}` | delete_supplier_order_line | à traiter étape 3 |
-| 3 | supplier-order-lines | PATCH | `/supplier-order-lines/{line_id}` | patch_supplier_order_line | à traiter étape 3 |
-| 3 | supplier-order-lines | PUT | `/supplier-order-lines/{line_id}` | update_supplier_order_line | à traiter étape 3 |
-| 3 | supplier-order-lines | POST | `/supplier-order-lines/{line_id}/purchase-requests` | link_purchase_request | à traiter étape 3 |
-| 3 | supplier-order-lines | DELETE | `/supplier-order-lines/{line_id}/purchase-requests/{purchase_request_id}` | unlink_purchase_request | à traiter étape 3 |
-| 3 | suppliers | POST | `/suppliers` | create_supplier | à traiter étape 3 |
-| 3 | suppliers | DELETE | `/suppliers/{supplier_id}` | delete_supplier | à traiter étape 3 |
-| 3 | suppliers | PUT | `/suppliers/{supplier_id}` | update_supplier | à traiter étape 3 |
+| 3 | manufacturer-items | POST | `/manufacturer-items` | create_manufacturer_item | déclarée (manufacturer_item) |
+| 3 | manufacturer-items | DELETE | `/manufacturer-items/{item_id}` | delete_manufacturer_item | déclarée (manufacturer_item) |
+| 3 | manufacturer-items | PATCH | `/manufacturer-items/{item_id}` | patch_manufacturer_item | déclarée (manufacturer_item) |
+| 3 | part-templates | POST | `/part-templates` | create_template | exclue : Fonctionnalité abandonnée, retrait au backlog (docs/backlog/gabarits-de-pieces-a-retirer.md) |
+| 3 | part-templates | DELETE | `/part-templates/{template_id}` | delete_template | exclue : Fonctionnalité abandonnée, retrait au backlog (docs/backlog/gabarits-de-pieces-a-retirer.md) |
+| 3 | part-templates | POST | `/part-templates/{template_id}/versions` | create_template_version | exclue : Fonctionnalité abandonnée, retrait au backlog (docs/backlog/gabarits-de-pieces-a-retirer.md) |
+| 3 | parts | POST | `/parts` | create_part | déclarée (part) |
+| 3 | parts | DELETE | `/parts/manufacturer-refs/{mfr_ref_id}` | delete_manufacturer_ref | déclarée (part_manufacturer_ref) |
+| 3 | parts | PATCH | `/parts/manufacturer-refs/{mfr_ref_id}` | update_manufacturer_ref | déclarée (part_manufacturer_ref) |
+| 3 | parts | POST | `/parts/manufacturer-refs/{mfr_ref_id}/set-preferred` | set_preferred_manufacturer_ref | déclarée (part_manufacturer_ref) |
+| 3 | parts | POST | `/parts/manufacturer-refs/{mfr_ref_id}/supplier-refs` | add_supplier_ref | déclarée (part_supplier_ref) |
+| 3 | parts | DELETE | `/parts/supplier-refs/{supplier_ref_id}` | delete_supplier_ref | déclarée (part_supplier_ref) |
+| 3 | parts | PATCH | `/parts/supplier-refs/{supplier_ref_id}` | update_supplier_ref | déclarée (part_supplier_ref) |
+| 3 | parts | POST | `/parts/supplier-refs/{supplier_ref_id}/set-preferred` | set_preferred_supplier_ref | déclarée (part_supplier_ref) |
+| 3 | parts | PATCH | `/parts/{part_id}` | update_part | déclarée (part) |
+| 3 | parts | POST | `/parts/{part_id}/manufacturer-refs` | add_manufacturer_ref | déclarée (part_manufacturer_ref) |
+| 3 | preventive-plans | POST | `/preventive-plans` | create_preventive_plan | déclarée (preventive_plan) |
+| 3 | preventive-plans | DELETE | `/preventive-plans/{plan_id}` | delete_preventive_plan | déclarée (preventive_plan) |
+| 3 | preventive-plans | PUT | `/preventive-plans/{plan_id}` | update_preventive_plan | déclarée (preventive_plan) |
+| 3 | preventive-plans | PATCH | `/preventive-plans/{plan_id}/steps` | replace_plan_steps | déclarée (preventive_plan) |
+| 3 | stock-families | POST | `/stock-families` | create_stock_family | déclarée (stock_family) |
+| 3 | stock-families | PATCH | `/stock-families/{family_code}` | patch_stock_family | déclarée (stock_family) |
+| 3 | stock-item-suppliers | POST | `/stock-item-suppliers` | create_stock_item_supplier | déclarée (stock_item_supplier) |
+| 3 | stock-item-suppliers | DELETE | `/stock-item-suppliers/{ref_id}` | delete_stock_item_supplier | déclarée (stock_item_supplier) |
+| 3 | stock-item-suppliers | PUT | `/stock-item-suppliers/{ref_id}` | update_stock_item_supplier | déclarée (stock_item_supplier) |
+| 3 | stock-item-suppliers | POST | `/stock-item-suppliers/{ref_id}/set-preferred` | set_preferred_supplier | déclarée (stock_item_supplier) |
+| 3 | stock-items | POST | `/stock-items` | create_stock_item | déclarée (stock_item) |
+| 3 | stock-items | DELETE | `/stock-items/{item_id}` | delete_stock_item | déclarée (stock_item) |
+| 3 | stock-items | PUT | `/stock-items/{item_id}` | update_stock_item | déclarée (stock_item) |
+| 3 | stock-items | PATCH | `/stock-items/{item_id}/quantity` | update_stock_quantity | déclarée (stock_item) |
+| 3 | stock-sub-families | POST | `/stock-sub-families` | create_stock_sub_family | déclarée (stock_sub_family) |
+| 3 | stock-sub-families | POST | `/stock-sub-families/{family_code}` | create_stock_sub_family_in_family | déclarée (stock_sub_family) |
+| 3 | stock-sub-families | PATCH | `/stock-sub-families/{family_code}/{sub_family_code}` | update_stock_sub_family | déclarée (stock_sub_family) |
+| 3 | supplier-order-lines | POST | `/supplier-order-lines` | create_supplier_order_line | déclarée (supplier_order_line) |
+| 3 | supplier-order-lines | DELETE | `/supplier-order-lines/{line_id}` | delete_supplier_order_line | déclarée (supplier_order_line) |
+| 3 | supplier-order-lines | PATCH | `/supplier-order-lines/{line_id}` | patch_supplier_order_line | déclarée (supplier_order_line) |
+| 3 | supplier-order-lines | PUT | `/supplier-order-lines/{line_id}` | update_supplier_order_line | déclarée (supplier_order_line) |
+| 3 | supplier-order-lines | POST | `/supplier-order-lines/{line_id}/purchase-requests` | link_purchase_request | déclarée (supplier_order_line) |
+| 3 | supplier-order-lines | DELETE | `/supplier-order-lines/{line_id}/purchase-requests/{purchase_request_id}` | unlink_purchase_request | déclarée (supplier_order_line) |
+| 3 | suppliers | POST | `/suppliers` | create_supplier | déclarée (supplier) |
+| 3 | suppliers | DELETE | `/suppliers/{supplier_id}` | delete_supplier | déclarée (supplier) |
+| 3 | suppliers | PUT | `/suppliers/{supplier_id}` | update_supplier | déclarée (supplier) |
 | 4 | admin | PATCH | `/admin/action-categories/{category_id}` | patch_action_category | à traiter étape 4 |
 | 4 | admin | PATCH | `/admin/action-categories/{category_id}/active` | patch_action_category_active | à traiter étape 4 |
 | 4 | admin | POST | `/admin/action-subcategories` | create_action_subcategory | à traiter étape 4 |

@@ -23,7 +23,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
-| en cours | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0, 1 et 2 fusionnées le 2026-11-14 ; étape 3 à planifier | à créer (étape 3) | ADR 0018, 0019 |
+| en cours | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 3 fusionnées le 2026-11-14 ; étape 4 à planifier | à créer (étape 4) | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
@@ -60,11 +60,13 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Audit centralisé : étape 2 fusionnée le 2026-11-14 (essai web validé, essai mobile
-   reporté, docs/backlog/websocket-hmr-proxy-dev.md). Base de dev : migrations 0007 à 0009
-   jouées ; production : 0006 à 0009 à jouer à sa prochaine mise à jour. Suites :
-   docs/backlog/suites-audc-etape-2.md. Prochaine étape : 3 (docs/taches/AUDC-plan.md),
-   plan court à proposer à l'utilisateur.
+0. Audit centralisé : étape 3 fusionnée le 2026-11-14 (essai web de l'utilisateur :
+   désactivation d'un plan, suppression de références fabricant et fournisseur, motif
+   exigé puis accepté ; suppressions d'articles, liens fournisseur et fabricants couvertes
+   par les tests d'intégration seulement). Base de dev : migrations 0007 à 0011 jouées ;
+   production : 0006 à 0011 à jouer à sa prochaine mise à jour. Suites :
+   docs/backlog/suites-audc-etape-2.md. Prochaine étape : 4 (docs/taches/AUDC-plan.md),
+   plan court à proposer à l'utilisateur, exclusions proposées une par une.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
 2. Chantier changements hors travail normal, décisions de l'utilisateur du 2026-11-13 :

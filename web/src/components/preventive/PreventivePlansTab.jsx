@@ -39,7 +39,12 @@ export default function PreventivePlansTab() {
 
   const handleDeactivate = useCallback(async () => {
     if (!toDeactivate) return;
-    await deactivatePlan(toDeactivate.id);
+    try {
+      await deactivatePlan(toDeactivate.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setToDeactivate(null);
   }, [toDeactivate, deactivatePlan]);
 

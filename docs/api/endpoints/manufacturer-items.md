@@ -179,3 +179,13 @@ Retourné par `GET /manufacturer-items/{id}`. Hérite de `ManufacturerItemOut` e
 ```
 
 Trié par `supplier_name` ASC, `supplier_ref` ASC.
+
+## Audit (ADR 0018, étape 3)
+
+Routes en écriture déclarées (`entity_type = manufacturer_item`) :
+
+- `POST /manufacturer-items` : ligne `created` (motif routinier injecté si absent).
+- `PATCH /manufacturer-items/{item_id}` : une ligne `{champ}_changed` par champ modifié.
+- `DELETE /manufacturer-items/{item_id}` : ligne `deleted` avec l'état avant ; `reason_code` explicite obligatoire (400 sinon).
+
+Les erreurs de base ne sont plus renvoyées brutes au client.

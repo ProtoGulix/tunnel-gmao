@@ -64,6 +64,11 @@ def _todo(step: int, reason: str = "") -> Exclusion:
 
 # Authentification : tracée dans security_log, pas dans audit_log (ADR 0018, point 1 quinquies).
 _SECURITY_LOG = "Trace dans security_log (ADR 0018, point 1 quinquies)"
+# Gabarits de pièces : fonctionnalité abandonnée, retrait prévu (décision de l'utilisateur,
+# 2026-11-14) ; pas d'audit sur du code voué à disparaître.
+_ABANDONED = (
+    "Fonctionnalité abandonnée, retrait au backlog (docs/backlog/gabarits-de-pieces-a-retirer.md)"
+)
 # POST sans écriture recensés par AUDC-14 : restent « à traiter » tant que non validés.
 _NO_WRITE_NOTE = "POST sans écriture (AUDC-14), à valider avec l'utilisateur"
 
@@ -81,48 +86,9 @@ EXCLUSIONS: Dict[Tuple[str, str], Exclusion] = {
         NO_WRITE,
         reason="Compose le courriel depuis des SELECT (get_export_data) : aucune écriture (AUDC-25)",
     ),
-    ("POST", "/manufacturer-items"): _todo(3),
-    ("DELETE", "/manufacturer-items/{item_id}"): _todo(3),
-    ("PATCH", "/manufacturer-items/{item_id}"): _todo(3),
-    ("POST", "/part-templates"): _todo(3),
-    ("DELETE", "/part-templates/{template_id}"): _todo(3),
-    ("POST", "/part-templates/{template_id}/versions"): _todo(3),
-    ("POST", "/parts"): _todo(3),
-    ("DELETE", "/parts/manufacturer-refs/{mfr_ref_id}"): _todo(3),
-    ("PATCH", "/parts/manufacturer-refs/{mfr_ref_id}"): _todo(3),
-    ("POST", "/parts/manufacturer-refs/{mfr_ref_id}/set-preferred"): _todo(3),
-    ("POST", "/parts/manufacturer-refs/{mfr_ref_id}/supplier-refs"): _todo(3),
-    ("DELETE", "/parts/supplier-refs/{supplier_ref_id}"): _todo(3),
-    ("PATCH", "/parts/supplier-refs/{supplier_ref_id}"): _todo(3),
-    ("POST", "/parts/supplier-refs/{supplier_ref_id}/set-preferred"): _todo(3),
-    ("PATCH", "/parts/{part_id}"): _todo(3),
-    ("POST", "/parts/{part_id}/manufacturer-refs"): _todo(3),
-    ("POST", "/preventive-plans"): _todo(3),
-    ("DELETE", "/preventive-plans/{plan_id}"): _todo(3),
-    ("PUT", "/preventive-plans/{plan_id}"): _todo(3),
-    ("PATCH", "/preventive-plans/{plan_id}/steps"): _todo(3),
-    ("POST", "/stock-families"): _todo(3),
-    ("PATCH", "/stock-families/{family_code}"): _todo(3),
-    ("POST", "/stock-item-suppliers"): _todo(3),
-    ("DELETE", "/stock-item-suppliers/{ref_id}"): _todo(3),
-    ("PUT", "/stock-item-suppliers/{ref_id}"): _todo(3),
-    ("POST", "/stock-item-suppliers/{ref_id}/set-preferred"): _todo(3),
-    ("POST", "/stock-items"): _todo(3),
-    ("DELETE", "/stock-items/{item_id}"): _todo(3),
-    ("PUT", "/stock-items/{item_id}"): _todo(3),
-    ("PATCH", "/stock-items/{item_id}/quantity"): _todo(3),
-    ("POST", "/stock-sub-families"): _todo(3),
-    ("POST", "/stock-sub-families/{family_code}"): _todo(3),
-    ("PATCH", "/stock-sub-families/{family_code}/{sub_family_code}"): _todo(3),
-    ("POST", "/supplier-order-lines"): _todo(3),
-    ("DELETE", "/supplier-order-lines/{line_id}"): _todo(3),
-    ("PATCH", "/supplier-order-lines/{line_id}"): _todo(3),
-    ("PUT", "/supplier-order-lines/{line_id}"): _todo(3),
-    ("POST", "/supplier-order-lines/{line_id}/purchase-requests"): _todo(3),
-    ("DELETE", "/supplier-order-lines/{line_id}/purchase-requests/{purchase_request_id}"): _todo(3),
-    ("POST", "/suppliers"): _todo(3),
-    ("DELETE", "/suppliers/{supplier_id}"): _todo(3),
-    ("PUT", "/suppliers/{supplier_id}"): _todo(3),
+    ("POST", "/part-templates"): Exclusion(EXCLUDED, reason=_ABANDONED),
+    ("DELETE", "/part-templates/{template_id}"): Exclusion(EXCLUDED, reason=_ABANDONED),
+    ("POST", "/part-templates/{template_id}/versions"): Exclusion(EXCLUDED, reason=_ABANDONED),
     ("PATCH", "/admin/action-categories/{category_id}"): _todo(4),
     ("PATCH", "/admin/action-categories/{category_id}/active"): _todo(4),
     ("POST", "/admin/action-subcategories"): _todo(4),

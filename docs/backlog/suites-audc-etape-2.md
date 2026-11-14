@@ -30,3 +30,19 @@ Relevés pendant l'étape 2 (2026-11-14), hors de son périmètre :
    absent de GET /audit/reasons et de la liste jointe au 400) : aucun test ne relie la
    réponse de l'API à la fenêtre de motif du web. Piste : tests de contrat (forme des
    motifs attendue par le front) côté backend, ou tests de bout en bout.
+10. (Étape 3) Le web appelle `DELETE /parts/{id}` (web/src/api/parts.js:65, via
+    useParts) alors que le backend n'a aucune route de suppression de pièce : le bouton
+    Supprimer de l'onglet Pièces échoue (405), indépendamment de l'audit. À trancher :
+    retirer le bouton, ou ajouter la route (avec motif, règles de suppression à définir).
+11. (Étape 3) Fonctions web sans appelant : deleteSupplier, deleteSupplierOrderLine,
+    suppression d'un lien demande d'achat ↔ ligne de commande.
+12. (Étape 3) Désactivation d'un plan préventif : la confirmation « Désactiver » reste
+    ouverte derrière la fenêtre de motif (signalé par l'agent, à voir à l'écran).
+13. (Étape 3) Hooks web sans gestion de l'annulation de la fenêtre de motif
+    (isAuditCancelled) : useSupplierDetail removeLink et removeSupplier, sans appelant
+    aujourd'hui ; à traiter si une interface les appelle.
+14. (Étape 3) Renommage d'une famille de stock : historique rangé sous l'uuid de l'ancien
+    code ; le changement de family_code des sous-familles n'est pas tracé à part.
+15. (Étape 3) Lint web des fichiers touchés : max-lines (PartsTab, StockItemsTab),
+    complexité (SupplierRefRow), changePageSize inutilisé ; faux positif probable de la
+    règle « _or » sur auditEntity.js. Préexistant ou non : non comparé.

@@ -1,9 +1,41 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, raise_db_error
 from api.utils.sanitizer import strip_html
 from api.utils.search import build_search_clause
+
+
+def _unset_preferred(cur, entity_type: str, parent_id: str, exclude_id: str | None = None) -> None:
+    """Retire le statut « préférée » des références sœurs et dépose l'événement d'audit de chacune.
+
+    La route audite la référence visée ; les sœurs qui perdent le statut sont des entités
+    touchées en plus, tracées par événement. `exclude_id` : la référence visée, laissée hors
+    de la remise à false (sinon un faux événement true → false précède le diff de la route).
+    Table et colonne viennent d'une liste blanche.
+    """
+    table, parent_col = _PREFERRED_SCOPE[entity_type]
+    cur.execute(
+        f"UPDATE {table} SET is_preferred = false "
+        f"WHERE {parent_col} = %s AND is_preferred AND id IS DISTINCT FROM %s RETURNING id",
+        (parent_id, exclude_id),
+    )
+    for (sibling_id,) in cur.fetchall():
+        record_audit_event(
+            entity_type,
+            sibling_id,
+            "is_preferred_changed",
+            old_value={"is_preferred": True},
+            new_value={"is_preferred": False},
+        )
+
+
+# Liste blanche : entité tracée → (table, colonne du parent qui délimite « la préférée »).
+_PREFERRED_SCOPE = {
+    "part_manufacturer_ref": ("part_manufacturer_ref", "part_id"),
+    "part_supplier_ref": ("part_supplier_ref", "part_manufacturer_ref_id"),
+}
 
 
 class PartRepository:
@@ -377,17 +409,28 @@ class PartRepository:
                     label = mfr.get("label")
                     is_preferred = mfr.get("is_preferred", False)
                     if is_preferred:
-                        cur.execute(
-                            "UPDATE part_manufacturer_ref SET is_preferred = false WHERE part_id = %s",
-                            (part_id,),
-                        )
+                        _unset_preferred(cur, "part_manufacturer_ref", part_id)
                     cur.execute(
                         """
                         INSERT INTO part_manufacturer_ref
                             (part_id, manufacturer_name, manufacturer_ref, label, is_preferred)
                         VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id
                         """,
                         (part_id, manufacturer_name, manufacturer_ref, label, is_preferred),
+                    )
+                    # Référence créée avec la pièce : entité à part entière, tracée par événement.
+                    record_audit_event(
+                        "part_manufacturer_ref",
+                        cur.fetchone()[0],
+                        "created",
+                        new_value={
+                            "part_id": part_id,
+                            "manufacturer_name": manufacturer_name,
+                            "manufacturer_ref": manufacturer_ref,
+                            "label": label,
+                            "is_preferred": is_preferred,
+                        },
                     )
 
             conn.commit()
@@ -436,8 +479,10 @@ class PartRepository:
             if conn:
                 release_connection(conn)
 
-    def add_manufacturer_ref(self, part_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Ajoute une référence fabricant à une pièce"""
+    def add_manufacturer_ref(
+        self, part_id: str, data: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
+        """Ajoute une référence fabricant à une pièce ; retourne (id créé, pièce détaillée)"""
         self.get_by_id(part_id)
 
         conn = None
@@ -445,10 +490,7 @@ class PartRepository:
             conn = get_connection()
             with conn.cursor() as cur:
                 if data.get("is_preferred"):
-                    cur.execute(
-                        "UPDATE part_manufacturer_ref SET is_preferred = false WHERE part_id = %s",
-                        (part_id,),
-                    )
+                    _unset_preferred(cur, "part_manufacturer_ref", part_id)
                 cur.execute(
                     """
                     INSERT INTO part_manufacturer_ref
@@ -464,8 +506,9 @@ class PartRepository:
                         data.get("is_preferred", False),
                     ),
                 )
+                new_id = str(cur.fetchone()[0])
             conn.commit()
-            return self.get_by_id(part_id)
+            return new_id, self.get_by_id(part_id)
         except Exception as e:
             if conn:
                 conn.rollback()
@@ -499,10 +542,7 @@ class PartRepository:
                         params.append(value)
 
                 if data.get("is_preferred"):
-                    cur.execute(
-                        "UPDATE part_manufacturer_ref SET is_preferred = false WHERE part_id = %s",
-                        (part_id,),
-                    )
+                    _unset_preferred(cur, "part_manufacturer_ref", part_id, exclude_id=mfr_ref_id)
 
                 if set_clauses:
                     params.append(mfr_ref_id)
@@ -537,6 +577,25 @@ class PartRepository:
                     raise NotFoundError(f"Référence fabricant {mfr_ref_id} non trouvée")
                 part_id = str(row[0])
 
+                # La suppression emporte les références fournisseur (cascade) : chacune est
+                # une entité supprimée, tracée par événement avec son état avant.
+                cur.execute(
+                    "SELECT id, supplier_id, supplier_ref, min_order_quantity, "
+                    "delivery_time_days, is_preferred, product_url "
+                    "FROM part_supplier_ref WHERE part_manufacturer_ref_id = %s",
+                    (mfr_ref_id,),
+                )
+                columns = [d[0] for d in cur.description]
+                for supplier_row in cur.fetchall():
+                    old = dict(zip(columns, supplier_row))
+                    old["part_manufacturer_ref_id"] = mfr_ref_id
+                    record_audit_event(
+                        "part_supplier_ref",
+                        old.pop("id"),
+                        "deleted",
+                        old_value=old,
+                    )
+
                 cur.execute(
                     "DELETE FROM part_manufacturer_ref WHERE id = %s",
                     (mfr_ref_id,),
@@ -568,10 +627,7 @@ class PartRepository:
                     raise NotFoundError(f"Référence fabricant {mfr_ref_id} non trouvée")
                 part_id = str(row[0])
 
-                cur.execute(
-                    "UPDATE part_manufacturer_ref SET is_preferred = false WHERE part_id = %s",
-                    (part_id,),
-                )
+                _unset_preferred(cur, "part_manufacturer_ref", part_id, exclude_id=mfr_ref_id)
                 cur.execute(
                     "UPDATE part_manufacturer_ref SET is_preferred = true WHERE id = %s",
                     (mfr_ref_id,),
@@ -588,8 +644,8 @@ class PartRepository:
             if conn:
                 release_connection(conn)
 
-    def add_supplier_ref(self, mfr_ref_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Ajoute une référence fournisseur à une référence fabricant"""
+    def add_supplier_ref(self, mfr_ref_id: str, data: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        """Ajoute une référence fournisseur à une référence fabricant ; retourne (id créé, pièce)"""
         conn = None
         try:
             conn = get_connection()
@@ -604,10 +660,7 @@ class PartRepository:
                 part_id = str(row[0])
 
                 if data.get("is_preferred"):
-                    cur.execute(
-                        "UPDATE part_supplier_ref SET is_preferred = false WHERE part_manufacturer_ref_id = %s",
-                        (mfr_ref_id,),
-                    )
+                    _unset_preferred(cur, "part_supplier_ref", mfr_ref_id)
 
                 cur.execute(
                     """
@@ -615,6 +668,7 @@ class PartRepository:
                         (part_manufacturer_ref_id, supplier_id, supplier_ref,
                          min_order_quantity, delivery_time_days, is_preferred, product_url)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
                     """,
                     (
                         mfr_ref_id,
@@ -626,8 +680,9 @@ class PartRepository:
                         data.get("product_url"),
                     ),
                 )
+                new_id = str(cur.fetchone()[0])
             conn.commit()
-            return self.get_by_id(part_id)
+            return new_id, self.get_by_id(part_id)
         except NotFoundError:
             raise
         except Exception as e:
@@ -670,9 +725,8 @@ class PartRepository:
                         params.append(data[field])
 
                 if data.get("is_preferred"):
-                    cur.execute(
-                        "UPDATE part_supplier_ref SET is_preferred = false WHERE part_manufacturer_ref_id = %s",
-                        (mfr_ref_id,),
+                    _unset_preferred(
+                        cur, "part_supplier_ref", mfr_ref_id, exclude_id=supplier_ref_id
                     )
 
                 if set_clauses:
@@ -710,10 +764,7 @@ class PartRepository:
                     raise NotFoundError(f"Référence fournisseur {supplier_ref_id} non trouvée")
                 mfr_ref_id, part_id = str(row[0]), str(row[1])
 
-                cur.execute(
-                    "UPDATE part_supplier_ref SET is_preferred = false WHERE part_manufacturer_ref_id = %s",
-                    (mfr_ref_id,),
-                )
+                _unset_preferred(cur, "part_supplier_ref", mfr_ref_id, exclude_id=supplier_ref_id)
                 cur.execute(
                     "UPDATE part_supplier_ref SET is_preferred = true WHERE id = %s",
                     (supplier_ref_id,),

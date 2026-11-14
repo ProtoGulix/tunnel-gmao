@@ -98,6 +98,29 @@ mobile/CHANGELOG.md.
 - Exclusions temporaires : génération préventive et import CSV gardent leur succès
   partiel jusqu'à l'étape 2.
 
+### Traçabilité (ADR 0018, étape 3)
+- Plans préventifs, pièces, références fabricant et fournisseur des pièces et références
+  fabricant (`manufacturer-items`) passent sous l'audit centralisé : création, modification
+  champ par champ, suppression avec motif explicite, auteur pris du jeton.
+- Le remplacement des étapes d'un plan préventif est tracé (`steps_changed`, avant/après).
+- Une référence « préférée » qui en remplace une autre trace aussi la référence qui perd le
+  statut ; supprimer une référence fabricant trace les références fournisseur qu'elle emporte.
+- Une erreur de base lors de la modification ou de la suppression d'une référence fabricant
+  n'est plus renvoyée brute au client.
+- Articles de stock, sous-familles, liens article-fournisseur, fournisseurs et lignes de
+  commande fournisseur passent sous l'audit centralisé (création, modification champ par
+  champ, suppression avec motif explicite, auteur pris du jeton). Sélectionner une ligne de
+  commande trace les lignes qu'elle désélectionne ; changer le fournisseur préféré d'un article
+  trace le lien qui perd le statut ; les liens d'une ligne aux demandes d'achat sont tracés
+  (`purchase_requests_changed`).
+- Familles de stock : création et modification tracées sous un identifiant déterministe calculé
+  depuis leur code, le code figurant aussi dans les valeurs (migration 0011, règle routinière
+  de `stock_family`).
+- Web : supprimer un plan préventif (désactivation), une pièce, une référence fabricant ou
+  fournisseur d'une pièce, un fabricant, un article de stock ou un lien article-fournisseur
+  demande un motif de suppression dans la fenêtre de motif commune ; fermer la fenêtre
+  n'affiche aucune erreur et ne supprime rien.
+
 ### Traçabilité (ADR 0018 et 0019, étape 2)
 - La fenêtre de motif propose de nouveau les motifs de suppression : la liste des motifs
   renvoie les décisions auxquelles chacun s'applique.
@@ -159,6 +182,11 @@ mobile/CHANGELOG.md.
   sont tracées au nom du système (motif « cascade »). Créer, modifier et supprimer une demande
   d'achat, une commande fournisseur ou un équipement est tracé une seule fois ; la suppression
   exige un motif choisi.
+
+### [interne] Audit centralisé (ADR 0018, étape 3)
+- `api/audits/entity_ids.py` : `stock_family_entity_id(code)`, uuid5 d'un espace de noms constant
+  (à ne jamais changer). Migration `0011_audit_famille_stock` (idempotente) et seed alignés ;
+  bootstrap à 0011. Plus aucune route « à traiter étape 3 » dans l'inventaire.
 
 ### [interne] Audit centralisé (ADR 0018 et 0019, étape 2)
 - Migration 0007 : motif SYSTEM_CASCADE (catégorie system) pour les mutations du système

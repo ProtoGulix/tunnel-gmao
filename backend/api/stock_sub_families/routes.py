@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.stock_items.template_schemas import StockSubFamily
 from api.stock_sub_families.repo import StockSubFamilyRepository
@@ -33,7 +34,8 @@ def list_stock_sub_families():
     return repo.get_all_with_templates()
 
 
-@router.post("", status_code=201)
+# Sous-famille adressée par ses codes : l'événement `created` / `*_changed` vient du repo.
+@router.post("", status_code=201, dependencies=[audit("stock_sub_family", events_only=True)])
 def create_stock_sub_family(data: StockSubFamilyCreate):
     """Crée une nouvelle sous-famille de stock (family_code dans le body)"""
     repo = StockSubFamilyRepository()
@@ -47,7 +49,9 @@ def create_stock_sub_family(data: StockSubFamilyCreate):
     )
 
 
-@router.post("/{family_code}", status_code=201)
+@router.post(
+    "/{family_code}", status_code=201, dependencies=[audit("stock_sub_family", events_only=True)]
+)
 def create_stock_sub_family_in_family(family_code: str, data: StockSubFamilyCreateInFamily):
     """Crée une nouvelle sous-famille sous la famille donnée dans l'URL"""
     repo = StockSubFamilyRepository()
@@ -65,7 +69,10 @@ def get_stock_sub_family(family_code: str, sub_family_code: str):
     return single(repo.get_by_codes_with_template(family_code, sub_family_code))
 
 
-@router.patch("/{family_code}/{sub_family_code}")
+@router.patch(
+    "/{family_code}/{sub_family_code}",
+    dependencies=[audit("stock_sub_family", events_only=True)],
+)
 def update_stock_sub_family(family_code: str, sub_family_code: str, data: StockSubFamilyUpdate):
     """
     Met à jour une sous-famille de stock

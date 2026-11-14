@@ -65,7 +65,10 @@ export default function MfrRefRow({ mfrRef, partId, onRefresh }) {
   const handleDelete = useCallback(async () => {
     setActionError(null);
     try { await deleteManufacturerRef(mfrRef.id); onRefresh(); }
-    catch (e) { setActionError(e?.response?.data?.detail || 'Impossible de supprimer (dernière référence?)'); }
+    catch (e) {
+      if (e?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      setActionError(e?.response?.data?.detail || 'Impossible de supprimer (dernière référence?)');
+    }
   }, [mfrRef.id, onRefresh]);
 
   return (
