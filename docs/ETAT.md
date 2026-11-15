@@ -7,14 +7,14 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.3.1** (tag du 2026-11-15) : test de santé du front web
-  derrière Cloudflare Access, bascule depuis la 3.57.0 (migration 0013,
-  deploy/basculer-production.sh). Production basculée en 5.3.1 le 2026-11-15 (révision
-  0013, 411 interventions retrouvées) ; clone dans ~/DEV/tunnel-gmao sur main, mises à
-  jour par git pull et docker compose up -d --build. Restent à la main : domaine mobile
-  vers /m, Grafana, clients MCP, cache des postes, puis suppression des anciens
-  conteneurs et de l'archive après validation.
-- develop contient depuis : export de masse des fiches des interventions fermées (EXPM-01, EXPM-02).
+- Dernière version publiée : **v5.4.0** (tag du 2026-11-16) : export de masse des fiches
+  des interventions fermées (ZIP ou PDF unique, plafond 100, ADMIN et RESP).
+  Production en 5.3.1 (basculée le 2026-11-15, révision 0013) ; clone dans
+  ~/DEV/tunnel-gmao sur main, mises à jour par git pull et docker compose up -d --build
+  (le redémarrage de l'API rejoue le bootstrap et crée le droit d'export). Restent à la
+  main : domaine mobile vers /m, Grafana, clients MCP, cache des postes, puis suppression
+  des anciens conteneurs et de l'archive après validation.
+- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
 
