@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.4.0** (tag du 2026-11-16) : export de masse des fiches
+- Version en cours de publication : **v5.4.0** (préparée dans develop le 2026-11-16) : export de masse des fiches
   des interventions fermées (ZIP ou PDF unique, plafond 100, ADMIN et RESP).
   Production en 5.3.1 (basculée le 2026-11-15, révision 0013) ; clone dans
   ~/DEV/tunnel-gmao sur main, mises à jour par git pull et docker compose up -d --build
@@ -72,6 +72,11 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
+
+0. Publication de la 5.4.0 : l'utilisateur ouvre et fusionne la PR develop → main
+   (« Create a merge commit », gh absent de la machine) ; ensuite l'agent principal pose
+   le tag annoté v5.4.0 sur main, le pousse (TUNNEL_RELEASE=1), refusionne main dans
+   develop, et remet « Dernière version publiée : v5.4.0 » ci-dessus.
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
