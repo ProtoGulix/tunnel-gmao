@@ -7,12 +7,11 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.3.0** (tag du 2026-11-15) : audit centralisé, onglet
-  Tâches, clôture en coordination, suites avant version. Production : migrations 0006 à
-  0012 à jouer à sa prochaine mise à jour (bootstrap).
-- develop contient depuis : correctif du test de santé du front web derrière Cloudflare
-  Access (SANTE-01) ; bascule depuis la 3.57.0 (migration 0013, script
-  deploy/basculer-production.sh).
+- Dernière version publiée : **v5.3.1** (tag du 2026-11-15) : test de santé du front web
+  derrière Cloudflare Access, bascule depuis la 3.57.0 (migration 0013,
+  deploy/basculer-production.sh). Production : bascule depuis la 3.57.0 à faire à
+  partir de ce tag (deploy/MIGRATION-v4.md, section « Bascule automatique »).
+- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
 

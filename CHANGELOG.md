@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.3.1] — 2026-11-15
 
 ### Corrigé
 - Derrière un proxy d'authentification (Cloudflare Access), le bandeau « serveur
@@ -17,8 +17,9 @@ mobile/CHANGELOG.md.
   deploy/bascule.conf, modèle bascule.conf.example). Sauvegarde, archive des
   configurations des anciens conteneurs, reprise des clés (JWT, SMTP), coupure par arrêt,
   migration, démarrage, contrôles, rapport ; retour arrière automatique après la coupure
-  et option `--retour-arriere`. Essayé sur une fausse production, réussite et échec
-  provoqué.
+  et option `--retour-arriere`. Refus avant la coupure d'une clé JWT de moins de 32
+  caractères (l'API v5 ne démarrerait pas). Essayé sur une fausse production, réussite
+  et échec provoqué.
 - migrate-from-v4.sh accepte une source à la révision 029 (`002_create_missing_tables` et
   `029_home_view`) en plus de la 030 : deploy/rattrapage-029.sql est appliqué à la base
   cible (jamais à la source) après la restauration. Il ne supprime ni index ni donnée,
