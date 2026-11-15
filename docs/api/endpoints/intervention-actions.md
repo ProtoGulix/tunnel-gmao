@@ -4,7 +4,7 @@ Actions réalisées sur une intervention (réparation, diagnostic, etc.). Chaque
 
 > Voir aussi : [Interventions](interventions.md) | [Action Categories](action-categories.md) | [Complexity Factors](complexity-factors.md) | [Purchase Requests](purchase-requests.md)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST` et `PATCH` sont routiniers (règle d'audit `action`) : aucun motif demandé, le middleware injecte `ROUTINE`. Seul `DELETE` exige un `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 >
 > **Écriture de l'audit** (ADR 0018) : le middleware est seul à écrire `audit_log`, au nom de l'utilisateur du jeton (`created`, une ligne `{champ}_changed` par champ modifié, `deleted`). `DELETE` exige toujours un `reason_code` explicite (`400` sinon, jamais de motif routinier injecté). Quand une action change le statut de tâches (`todo`→`in_progress`, `done`, `skipped`), un événement `updated` du système (motif `SYSTEM_CASCADE`, `is_system = true`, `triggered_by_action` dans `old_value` et `new_value`) est écrit par tâche dans la même transaction.
 
@@ -553,7 +553,7 @@ Fournissez `tasks` (liste) pour tagger une ou plusieurs tâches de l'interventio
 | `complexity_factor`  | string   | conditionnel | **Requis si score > 5**. Code existant dans [complexity_factors](complexity-factors.md)                                 |
 | `created_at`         | datetime | non          | Défaut: `now()`. Permet le backdating                                                                                   |
 | `tasks`              | array    | non          | Liste de tâches à tagger (voir tableau ci-dessus). Liste vide interdite                                                 |
-| `reason_code`        | string   | **oui**      | Code raison obligatoire pour l'audit. Voir `GET /audit/reasons`                                                         |
+| `reason_code`        | string   | non          | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons`                                         |
 | `reason_text`        | string   | conditionnel | Texte libre obligatoire si `reason_code = "OTHER"`                                                                      |
 
 ### Réponse `201`
@@ -608,7 +608,7 @@ Met à jour partiellement une action existante. Seuls les champs fournis sont mo
 | `complexity_score`   | int      | non          | Score 1-10                                                                                                   |
 | `complexity_factor`  | string   | non          | **Obligatoire si le score résultant > 5**. Code dans [complexity_factors](complexity-factors.md)             |
 | `created_at`         | datetime | non          | Date de l'action. Modifiable pour corriger une erreur de saisie (backdating)                                 |
-| `reason_code`        | string   | **oui**      | Code raison obligatoire pour l'audit. Voir `GET /audit/reasons`                                              |
+| `reason_code`        | string   | non          | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons`                              |
 | `reason_text`        | string   | conditionnel | Texte libre obligatoire si `reason_code = "OTHER"`                                                           |
 
 > Les règles métier s'appliquent également sur les champs partiels : si `complexity_score > 5` (valeur finale), `complexity_factor` doit être renseigné (valeur courante ou fournie).

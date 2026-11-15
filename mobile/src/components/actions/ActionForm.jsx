@@ -342,6 +342,8 @@ function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
       const inter = await createIntervention({
         machine_id: equip.id,
         type_inter: typeInter,
+        // tech_id est exigé par POST /interventions ; les initiales seules étaient refusées (422).
+        tech_id: user?.id,
         tech_initials: techInitials,
         title: title.trim() || undefined,
         priority,

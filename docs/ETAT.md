@@ -26,6 +26,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
+| à cadrer | Harmoniser la création des interventions (trois formulaires web, deux appels non atomiques), [backlog](backlog/creation-interventions-harmonisation.md) | à créer | inventaire du 2026-11-15 |
 | à cadrer | Types et statuts d'intervention en base (écran Référentiel sans effet), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
@@ -45,7 +46,7 @@ et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : SUIT-01, SUIT-02. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 

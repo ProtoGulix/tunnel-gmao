@@ -4,7 +4,7 @@ Tâches attachées à une intervention. Une tâche représente **quoi faire** �
 
 > Voir aussi : [Preventive Plans](preventive-plans.md) | [Preventive Occurrences](preventive-occurrences.md) | [Interventions](interventions.md) | [Intervention Actions](intervention-actions.md)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : la règle d'audit `task` est routinière (`ROUTINE` injecté, aucun motif demandé), sauf si le corps porte `assigned_to` ou `due_date` (règles non routinières, motif exigé), pour un passage direct vers `done` ou `skipped` (motif explicite, ADR 0016) et pour `DELETE` (toujours explicite). Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 >
 > **Écriture de l'audit** (ADR 0018) : le middleware est seul à écrire `audit_log`, dans la transaction de la requête, au nom de l'utilisateur du jeton : `created` à la création, une ligne `{champ}_changed` par champ réellement modifié (`status_changed`, `closed_by_changed`, `assigned_to_changed`...), `deleted` à la suppression. Une panne de l'audit annule la requête (500).
 
@@ -270,7 +270,7 @@ Crée une tâche manuelle. `origin` doit être `resp` ou `tech` — `plan` est r
 | `assigned_to`     | uuid   | non          | Technicien assigné                                  |
 | `due_date`        | date   | non          | Échéance (format `YYYY-MM-DD`)                      |
 | `sort_order`      | int    | non          | Ordre d'affichage, défaut `0`                       |
-| `reason_code`     | string | **oui**      | Code raison pour l'audit. Voir `GET /audit/reasons` |
+| `reason_code`     | string | conditionnel | Requis seulement si `assigned_to` ou `due_date` est fourni (sinon routinier, `ROUTINE` injecté). Voir `GET /audit/reasons` |
 | `reason_text`     | string | conditionnel | Obligatoire si `reason_code = "OTHER"`              |
 
 ### Réponse `201`
@@ -309,7 +309,7 @@ Met à jour partiellement une tâche. Seuls les champs fournis sont modifiés.
 | `assigned_to` | uuid   | non          | Technicien assigné                       |
 | `due_date`    | date   | non          | Échéance                                 |
 | `sort_order`  | int    | non          | Ordre d'affichage                        |
-| `reason_code` | string | **oui**      | Code raison pour l'audit. Voir `GET /audit/reasons` |
+| `reason_code` | string | conditionnel | Requis si le corps porte `assigned_to` ou `due_date`, ou un `status` `done` ou `skipped` (voir ci-dessous) ; sinon routinier, `ROUTINE` injecté. Voir `GET /audit/reasons` |
 | `reason_text` | string | conditionnel | Obligatoire si `reason_code = "OTHER"`   |
 
 > **Motif explicite pour `done` et `skipped`** (ADR 0016) : un passage direct vers `done` ou `skipped` n'est jamais routinier. Le `reason_code` doit être un motif de catégorie `manual` ou `user` applicable à l'entité `task` **et dont `decision_types` contient le décideur du bouton** : `task_done` pour `done` (`TASK_DONE_UNRECORDED`, `TASK_HANDLED_ELSEWHERE`, `OTHER` sur une base neuve), `task_skipped` pour `skipped` (`TASK_NO_LONGER_NEEDED`, `TASK_DUPLICATE`, `TASK_HANDLED_ELSEWHERE`, `OTHER`). Un motif sans `decision_types` est exclu. La même liste filtrée sert à la demande de motif (`audit.reasons`) et au contrôle du motif reçu. Si le motif est absent (le middleware injecte alors `ROUTINE`) ou de catégorie `auto` ou `system`, la réponse est la demande de motif standard : `400`, `error_type = "ValidationError"`, `detail = "reason_code obligatoire pour cette mutation"` et un champ `audit` (`required`, `silent = false`, `reasons` = motifs proposables). Le front rejoue la requête avec le motif choisi.

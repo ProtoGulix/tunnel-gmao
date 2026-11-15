@@ -139,6 +139,7 @@ export default function AdminReferentielTab() {
                 loading={categories.loading}
                 error={categories.error}
                 onUpdate={handleUpdateCategory}
+                onNotify={notify}
               />
               <ComplexityFactorsSection
                 items={factors.items}

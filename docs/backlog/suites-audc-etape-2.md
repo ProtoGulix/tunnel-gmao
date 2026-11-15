@@ -20,9 +20,11 @@ Relevés pendant l'étape 2 (2026-11-14), hors de son périmètre :
    (le geste qui la vérifiait est retiré) ; le backend reste le garde.
 6. Migration 0004 : même forme `SELECT MAX(id)+1 FROM t WHERE NOT EXISTS` que le défaut
    corrigé dans 0008 ; sans effet aujourd'hui (jouée une fois, règle absente de la seed).
-7. Docstrings et tableaux de docs/api/endpoints qui disent encore « reason_code
-   obligatoire » pour des routes routinières (AUDC-26).
-8. check.sh n'a pas vu un import manquant (`Button` retiré d'InterventionPanelHeaderParts,
+7. [Traité 2026-11-15 : docstrings des routes et tableaux de docs/api/endpoints alignés
+   sur la règle d'audit ; section commune d'audit-log.md réécrite] Docstrings et
+   tableaux de docs/api/endpoints qui disent encore « reason_code obligatoire » pour des
+   routes routinières (AUDC-26).
+8. [Traité 2026-11-15, SUIT-03 : eslint limité aux noms non définis dans check.sh, web et mobile] check.sh n'a pas vu un import manquant (`Button` retiré d'InterventionPanelHeaderParts,
    erreur à l'exécution vue par l'utilisateur le 2026-11-14) : le build vite ne vérifie
    pas les noms non définis. Piste : lancer dans check.sh eslint limité aux règles
    no-undef et react/jsx-no-undef (eslint complet : 338 erreurs préexistantes).

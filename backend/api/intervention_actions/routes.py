@@ -59,8 +59,8 @@ def add_action(action: InterventionActionIn, request: Request):
     """
     Ajoute une action à une intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `action`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
 
     Les tâches listées dans `tasks` sont liées à l'action via la table M2M
     et leur statut est mis à jour (todo→in_progress, ou done/skipped selon les flags).
@@ -80,8 +80,8 @@ def patch_action(action_id: str, patch: InterventionActionPatch, request: Reques
     """
     Met à jour partiellement une action d'intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `action`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = InterventionActionRepository()
     role = getattr(request.state, "role", None)

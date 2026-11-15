@@ -125,8 +125,8 @@ def create_request(
     Crée une nouvelle demande d'intervention.
     Le code DI-YYYY-NNNN et le statut initial (nouvelle) sont générés automatiquement.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `request`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
 
     Toute DI créée par cette route est d'origine 'signalee' (valeur par défaut
     de `intervention_request.origine` — ce schéma d'entrée n'expose pas de champ

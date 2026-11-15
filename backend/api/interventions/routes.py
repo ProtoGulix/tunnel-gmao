@@ -150,8 +150,8 @@ def create_intervention(data: InterventionCreate, request: Request):
     """
     Crée une nouvelle intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     payload = data.model_dump(exclude_none=True)
     InterventionValidator.validate_request_required(payload)
@@ -170,8 +170,8 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
     """
     Met à jour une intervention existante.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = InterventionRepository()
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))

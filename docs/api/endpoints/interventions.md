@@ -8,7 +8,7 @@ Une intervention peut aussi être liée à un **plan de maintenance préventive*
 
 > Voir aussi : [Actions](intervention-actions.md) | [Status Logs](intervention-status-log.md) | [Purchase Requests](purchase-requests.md) | [Intervention Requests](intervention-requests.md) | [Preventive Plans](preventive-plans.md) | [Intervention Tasks](intervention-tasks.md)
 
-> **Audit log** : tout `POST`, `PUT` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST` et `PUT` sont routiniers (règle d'audit `intervention`) : aucun motif demandé, le middleware injecte `ROUTINE`. Seul `DELETE` exige un `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 ---
 
@@ -511,7 +511,7 @@ Intervention complète avec equipement, `request` (objet demande si liée), stat
 
 Met à jour une intervention. Même body que POST, tous les champs sont optionnels.
 
-> **`reason_code` obligatoire** — voir [Audit Log](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Motif** : routinier, aucun `reason_code` requis (`ROUTINE` injecté) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 > **Clôture automatique de la demande liée** : si `status_actual` est mis à jour vers le code `ferme` et qu'une demande d'intervention est liée (`request` non null), cette demande passe automatiquement à `cloturee`. En cas d'échec de la cascade (demande restée en `acceptee`), utiliser `POST /interventions/{id}/force-close-request`.
 
@@ -550,7 +550,7 @@ Intervention complète mise à jour. La demande liée (`request`) est désormais
 
 Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions ou des demandes d'achat liées.
 
-> **`reason_code` obligatoire** (toujours explicite pour une suppression) — voir [Audit Log](audit-log.md#règle-commune--reason_code-obligatoire).
+> **`reason_code` obligatoire** (toujours explicite pour une suppression) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 ### Paramètre de requête `request_outcome` (ADR 0019)
 

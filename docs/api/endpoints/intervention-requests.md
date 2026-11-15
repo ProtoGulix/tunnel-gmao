@@ -6,7 +6,7 @@ Lors de l'acceptation, une **intervention est automatiquement créée** et liée
 
 > Voir aussi : [Interventions](interventions.md) | [Équipements](equipements.md) | [Services](services.md)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST /intervention-requests` est routinier (règle d'audit `request`) : aucun motif demandé, `ROUTINE` est injecté. `POST /{id}/transition` exige un `reason_code` (le champ `status_to` a une règle non routinière) et `DELETE` aussi. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 ---
 
@@ -422,7 +422,7 @@ Crée une nouvelle demande d'intervention. Le code (`DI-YYYY-NNNN`) et le statut
 | `service_id`           | uuid    | non          | UUID du service/département du demandeur                               |
 | `is_system`            | boolean | non          | `true` si DI générée par le système. Défaut : `false`                  |
 | `suggested_type_inter` | string  | non          | Type suggéré parmi `CUR`, `PRE`, `REA`, `BAT`, `PRO`, `COF`, `PIL`, `MES`. `null` par défaut |
-| `reason_code`          | string  | **oui**      | Code raison obligatoire pour l'audit. Voir `GET /audit/reasons`        |
+| `reason_code`          | string  | non          | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons` |
 | `reason_text`          | string  | conditionnel | Texte libre obligatoire si `reason_code = "OTHER"`                     |
 
 ### Réponse `201` — `InterventionRequestDetail`

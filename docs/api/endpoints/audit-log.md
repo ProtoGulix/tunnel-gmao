@@ -6,26 +6,29 @@ Système de traçabilité centralisée de toutes les mutations métier.
 
 ---
 
-## Règle commune — `reason_code` obligatoire
+## Règle commune — motif selon la règle d'audit
 
-**Toute mutation** (`POST`, `PUT`, `PATCH`, `DELETE`) sur les entités suivantes **doit** inclure un `reason_code` dans le body JSON :
+Le motif d'une mutation (`POST`, `PUT`, `PATCH`, `DELETE`) dépend de sa **règle d'audit** (table `audit_rule`, par entité et éventuellement par champ du corps) :
 
-| Entité | Routes concernées |
-|--------|------------------|
-| Intervention | `POST /interventions`, `PUT /interventions/{id}`, `DELETE /interventions/{id}` |
-| Demande d'intervention (DI) | `POST /intervention-requests`, `POST /intervention-requests/{id}/transition`, `DELETE /intervention-requests/{id}` |
-| Demande d'achat (DA) | `POST /purchase-requests`, `PUT /purchase-requests/{id}`, `DELETE /purchase-requests/{id}` |
-| Tâche | `POST /intervention-tasks`, `PATCH /intervention-tasks/{id}`, `DELETE /intervention-tasks/{id}` |
-| Action | `POST /intervention-actions`, `PATCH /intervention-actions/{id}` |
+- **Règle routinière** (`is_routine = true`) : aucun `reason_code` n'est demandé. Le middleware injecte le motif par défaut de la règle, `ROUTINE`. C'est le cas de la création et de la modification de presque toutes les entités.
+- **Règle non routinière**, ou champ du corps à règle non routinière : le corps doit porter un `reason_code`, sinon `400` avec la liste des motifs proposables.
+- **Suppression** (`DELETE`) : motif explicite toujours exigé, jamais de motif routinier injecté. Les clôtures, annulations et décisions qui ne viennent pas d'une action en exigent un aussi (ADR 0018).
+
+Un corps qui envoie `reason_code` est toujours validé et utilisé, même quand la règle est routinière.
+
+| Entité | Routine | Motif exigé |
+|--------|---------|-------------|
+| Intervention | `POST /interventions`, `PUT /interventions/{id}` | `DELETE /interventions/{id}` |
+| Demande d'intervention (DI) | `POST /intervention-requests` | `POST /intervention-requests/{id}/transition` (champ `status_to`), `DELETE /intervention-requests/{id}` |
+| Demande d'achat (DA) | `POST /purchase-requests`, `PUT /purchase-requests/{id}` | `DELETE /purchase-requests/{id}` |
+| Tâche | `POST` et `PATCH /intervention-tasks`, sauf cas de la colonne suivante | corps avec `assigned_to` ou `due_date` ; `status` `done` ou `skipped` ; `DELETE` |
+| Action | `POST /intervention-actions`, `PATCH /intervention-actions/{id}` | `DELETE /intervention-actions/{id}` |
 
 > **Lecture du motif (AUDC-26)** : le motif est lu et validé par le middleware d'audit seul ;
 > les schémas des routes ne déclarent plus `reason_code` (ni `reason_text`, sauf le texte du
-> rejet d'une demande et celui de la clôture de tâche). Un corps sans `reason_code` passe
-> quand la règle d'audit de la mutation est routinière (le middleware applique alors le motif
-> par défaut) ; sinon il est refusé en `400` avec la liste des motifs. Un corps qui envoie
-> `reason_code` continue de fonctionner. Une suppression exige toujours un motif explicite.
-> Les mentions « obligatoire » des tableaux par ressource valent donc pour les mutations sans
-> règle routinière.
+> rejet d'une demande et celui de la clôture de tâche). Les entités des autres domaines
+> (stock, fournisseurs, préventif, administration…) sont routinières sauf `DELETE` : voir
+> leur page.
 
 ### Champs audit dans le body
 
@@ -38,14 +41,14 @@ Système de traçabilité centralisée de toutes les mutations métier.
 
 | Champ | Type | Requis | Description |
 |-------|------|--------|-------------|
-| `reason_code` | string | **oui** | Code raison depuis `GET /audit/reasons` |
+| `reason_code` | string | selon la règle | Code raison depuis `GET /audit/reasons`. Absent : `ROUTINE` si la règle est routinière, sinon `400` |
 | `reason_text` | string | conditionnel | Obligatoire si `reason_code = "OTHER"`, optionnel sinon |
 
 ### Erreurs
 
 | Code | Cas |
 |------|-----|
-| `400` | `reason_code` absent du body |
+| `400` | `reason_code` absent du body alors que la règle d'audit n'est pas routinière (ou pour un `DELETE`) |
 | `400` | `reason_code` inconnu ou inactif |
 | `400` | `reason_code = "OTHER"` sans `reason_text` |
 

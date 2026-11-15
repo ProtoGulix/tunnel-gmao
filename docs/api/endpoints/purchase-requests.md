@@ -6,7 +6,7 @@ Deux modes de création :
 - **Liée à une action** (`intervention_action_id`) — l'intervention est déduite via la table de jonction `intervention_action_purchase_request`
 - **Autonome** — DA spontanée sans aucune relation (réappro consommable atelier, etc.)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST` et `PUT` sont routiniers (règle d'audit `purchase_request`) : aucun motif demandé, `ROUTINE` est injecté. Seul `DELETE` exige un `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 > Voir aussi : [Interventions](interventions.md) | [Stock Items](stock-items.md) | [Supplier Orders](supplier-orders.md) | [Supplier Order Lines](supplier-order-lines.md)
 
@@ -407,7 +407,7 @@ Crée une demande d’achat. Deux modes selon le contexte :
 | `reason`                 | string | non          | null     | Raison de la demande                                                                 |
 | `notes`                  | string | non          | null     | Notes complémentaires                                                                |
 | `workshop`               | string | non          | null     | Atelier concerné                                                                     |
-| `reason_code`            | string | **oui**      | —        | Code raison obligatoire pour l’audit. Voir `GET /audit/reasons`                      |
+| `reason_code`            | string | non          | —        | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons`      |
 | `reason_text`            | string | conditionnel | null     | Texte libre obligatoire si `reason_code = "OTHER"`                                   |
 
 ### Règles métier

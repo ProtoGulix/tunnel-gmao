@@ -19,6 +19,12 @@ mobile/CHANGELOG.md.
   sont retirées.
 
 ### [interne] Suites avant version
+- check.sh contrôle les noms non définis des deux fronts (eslint limité à no-undef et
+  react/jsx-no-undef) : un composant utilisé sans import fait échouer la vérification.
+- Documentation d'audit : les docstrings des routes et les pages docs/api/endpoints
+  (interventions, demandes, tâches, actions, demandes d'achat) ne disent plus « reason_code
+  obligatoire » pour les mutations routinières (`ROUTINE` injecté) ; la section commune
+  d'audit-log.md explique la règle (motif exigé selon la règle d'audit).
 - Le catalogue des endpoints retire, à chaque démarrage, les endpoints disparus du code et
   leurs lignes de droits (le nombre retiré est écrit dans les logs).
 
@@ -209,7 +215,13 @@ mobile/CHANGELOG.md.
   d'achat, une commande fournisseur ou un équipement est tracé une seule fois ; la suppression
   exige un motif choisi.
 
+### Mobile
+- Création d'une intervention depuis une action : le mobile envoie l'identifiant du
+  technicien connecté, qu'exige l'API (la création était refusée).
+
 ### Administration et stock (suites de l'audit)
+- Référentiel d'administration : un échec à la création ou à la modification d'une
+  sous-catégorie d'action affiche un message (rien ne s'affichait).
 - Onglet Pièces : le bouton Supprimer est retiré (le backend n'a aucune route de
   suppression de pièce, le bouton échouait).
 - Référentiel d'administration : les boutons d'activation des catégories et sous-catégories

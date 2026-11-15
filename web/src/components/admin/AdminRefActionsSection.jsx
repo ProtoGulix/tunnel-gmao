@@ -9,6 +9,7 @@ import { Badge, Box, Button, Flex, Spinner, Table, Text, TextField, Dialog } fro
 import { ChevronDown, ChevronRight, Lock, Plus, Pencil } from 'lucide-react';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import DataTable from '@/components/ui/DataTable';
 import ExpandableDetailsRow from '@/components/ui/ExpandableDetailsRow';
 import {
@@ -101,7 +102,7 @@ EditLabelColorModal.propTypes = {
 };
 
 // ---- Section catégories d'actions (sous-catégories en dropdown, chargement lazy) ----
-export function ActionCategoriesSection({ items, loading, onUpdate }) {
+export function ActionCategoriesSection({ items, loading, onUpdate, onNotify }) {
   const { can } = usePermissions();
   // Edition catégorie
   const [editCatOpen, setEditCatOpen] = useState(false);
@@ -158,8 +159,10 @@ export function ActionCategoriesSection({ items, loading, onUpdate }) {
       const newSub = await createActionSubcategory(form);
       setAllSubs((p) => [...p, newSub]);
       setCreateSubForCat(null);
+    } catch (err) {
+      onNotify(extractApiErrorMessage(err, 'Erreur lors de la création'), 'error');
     } finally { setSubCreateSubmitting(false); }
-  }, []);
+  }, [onNotify]);
 
   const handleEditSub = useCallback(async (id, payload) => {
     setSubEditSubmitting(true);
@@ -167,8 +170,10 @@ export function ActionCategoriesSection({ items, loading, onUpdate }) {
       const updated = await updateActionSubcategory(id, payload);
       setAllSubs((p) => p.map((s) => s.id === id ? { ...s, ...updated } : s));
       setEditSubOpen(false);
+    } catch (err) {
+      onNotify(extractApiErrorMessage(err, 'Erreur lors de la modification'), 'error');
     } finally { setSubEditSubmitting(false); }
-  }, []);
+  }, [onNotify]);
 
   return (
     <Box mb="6">
@@ -359,6 +364,7 @@ ActionCategoriesSection.propTypes = {
   items: PropTypes.array.isRequired,
   loading: PropTypes.bool,
   onUpdate: PropTypes.func.isRequired,
+  onNotify: PropTypes.func.isRequired,
 };
 
 ComplexityFactorsSection.propTypes = {

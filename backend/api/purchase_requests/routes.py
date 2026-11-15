@@ -382,8 +382,8 @@ def create_purchase_request(purchase_request: PurchaseRequestIn, request: Reques
     """
     Crée une nouvelle demande d'achat.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `purchase_request`), aucun motif demandé : le
+    middleware injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = PurchaseRequestRepository()
     created = repo.add(purchase_request.model_dump())
@@ -404,8 +404,8 @@ def update_purchase_request(request_id: str, purchase_request: PurchaseRequestIn
 
     Modification autorisée uniquement pour les statuts : TO_QUALIFY, NO_SUPPLIER_REF, PENDING_DISPATCH.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `purchase_request`), aucun motif demandé : le
+    middleware injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = PurchaseRequestRepository()
     current = repo.get_detail(request_id)
