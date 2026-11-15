@@ -56,25 +56,6 @@ export default function AdminReferentielTab() {
       categories.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Catégorie modifiée'), [categories, wrap]);
 
-  const handleToggleCategoryActive = useCallback((id, is_active) =>
-    wrap(async () => {
-      const updated = await refApi.toggleActionCategoryActive(id, is_active);
-      categories.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
-    }, is_active ? 'Catégorie activée' : 'Catégorie désactivée'), [categories, wrap]);
-
-  // Facteurs
-  const handleUpdateFactor = useCallback((id, payload) =>
-    wrap(async () => {
-      const updated = await refApi.updateComplexityFactor(id, payload);
-      factors.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
-    }, 'Facteur modifié'), [factors, wrap]);
-
-  const handleToggleFactorActive = useCallback((id, is_active) =>
-    wrap(async () => {
-      const updated = await refApi.toggleComplexityFactorActive(id, is_active);
-      factors.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
-    }, is_active ? 'Activé' : 'Désactivé'), [factors, wrap]);
-
   // Types intervention
   const handleCreateIntType = useCallback((payload) =>
     wrap(async () => {
@@ -140,7 +121,7 @@ export default function AdminReferentielTab() {
             <Flex align="center" gap="2"><Wrench size={13} /><Text>Interventions</Text></Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="equipement-classes">
-            <Flex align="center" gap="2"><Cpu size={13} /><Text>Classes d'équipement</Text></Flex>
+            <Flex align="center" gap="2"><Cpu size={13} /><Text>Classes d&apos;équipement</Text></Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="families">
             <Flex align="center" gap="2"><Package size={13} /><Text>Familles de pièces</Text></Flex>
@@ -163,8 +144,6 @@ export default function AdminReferentielTab() {
                 items={factors.items}
                 categories={categories.items}
                 loading={factors.loading}
-                onUpdate={handleUpdateFactor}
-                onToggleActive={handleToggleFactorActive}
               />
             </>
           )}

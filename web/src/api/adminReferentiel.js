@@ -14,10 +14,6 @@ export async function updateActionCategory(id, data) {
   const r = await api.patch(`/admin/action-categories/${id}`, data);
   return r.data?.data || r.data;
 }
-export async function toggleActionCategoryActive(id, is_active) {
-  const r = await api.patch(`/admin/action-categories/${id}/active`, { is_active });
-  return r.data?.data || r.data;
-}
 
 // --- Sous-catégories d'actions ---
 export async function fetchActionSubcategories() {
@@ -32,22 +28,10 @@ export async function updateActionSubcategory(id, data) {
   const r = await api.patch(`/admin/action-subcategories/${id}`, data);
   return r.data?.data || r.data;
 }
-export async function toggleActionSubcategoryActive(id, is_active) {
-  const r = await api.patch(`/admin/action-subcategories/${id}/active`, { is_active });
-  return r.data?.data || r.data;
-}
 
 // --- Facteurs de complexité ---
 export async function fetchComplexityFactors() {
   const r = await api.get('/admin/complexity-factors');
-  return r.data?.data || r.data;
-}
-export async function updateComplexityFactor(id, data) {
-  const r = await api.patch(`/admin/complexity-factors/${id}`, data);
-  return r.data?.data || r.data;
-}
-export async function toggleComplexityFactorActive(id, is_active) {
-  const r = await api.patch(`/admin/complexity-factors/${id}/active`, { is_active });
   return r.data?.data || r.data;
 }
 

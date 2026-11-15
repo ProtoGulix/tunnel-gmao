@@ -12,9 +12,7 @@ from api.admin.repo import (
     AdminUserRepository,
 )
 from api.admin.schemas import (
-    ActionCategoryActivePatch,
     ActionCategoryPatch,
-    ActionSubcategoryActivePatch,
     ActionSubcategoryCreate,
     ActionSubcategoryPatch,
     AdminUserActivePatch,
@@ -24,8 +22,6 @@ from api.admin.schemas import (
     AdminUserRolePatch,
     AdminUserUpdate,
     AuditLogOut,
-    ComplexityFactorActivePatch,
-    ComplexityFactorPatch,
     EmailDomainRuleCreate,
     EmailDomainRuleOut,
     EndpointOut,
@@ -56,7 +52,7 @@ from api.audits.schemas import (
 )
 from api.auth.permissions import reload_permissions, require_role
 from api.db import get_connection, release_connection
-from api.errors.exceptions import NotFoundError, ValidationError
+from api.errors.exceptions import NotFoundError
 from api.mail.service import MailError, send_mail
 from api.settings import settings
 
@@ -289,23 +285,6 @@ def patch_action_category(
     return {"message": "Catégorie mise à jour"}
 
 
-@router.patch("/action-categories/{category_id}/active", dependencies=[_resp_admin])
-def patch_action_category_active(category_id: int, payload: ActionCategoryActivePatch):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE action_category SET is_active = %s WHERE id = %s",
-                (payload.is_active, category_id),
-            )
-        conn.commit()
-        return {"message": "Statut mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
-
-
 # ------------------------------------------------------------------ #
 # Référentiel actions — sous-catégories                              #
 # ------------------------------------------------------------------ #
@@ -345,23 +324,6 @@ def patch_action_subcategory(
     return {"message": "Sous-catégorie mise à jour"}
 
 
-@router.patch("/action-subcategories/{subcat_id}/active", dependencies=[_resp_admin])
-def patch_action_subcategory_active(subcat_id: int, payload: ActionSubcategoryActivePatch):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE action_subcategory SET is_active = %s WHERE id = %s",
-                (payload.is_active, subcat_id),
-            )
-        conn.commit()
-        return {"message": "Statut mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
-
-
 # ------------------------------------------------------------------ #
 # Référentiel actions — facteurs de complexité                        #
 # ------------------------------------------------------------------ #
@@ -376,47 +338,6 @@ def list_complexity_factors():
             cur.execute("SELECT * FROM complexity_factor ORDER BY label ASC")
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, r)) for r in cur.fetchall()]
-    finally:
-        if conn:
-            release_connection(conn)
-
-
-@router.patch("/complexity-factors/{factor_id}", dependencies=[_resp_admin])
-def patch_complexity_factor(factor_id: int, payload: ComplexityFactorPatch):
-    conn = None
-    try:
-        conn = get_connection()
-        sets, params = [], []
-        if payload.label is not None:
-            sets.append("label = %s")
-            params.append(payload.label)
-        if payload.category is not None:
-            sets.append("category = %s")
-            params.append(payload.category)
-        if not sets:
-            raise ValidationError("Rien à mettre à jour")
-        params.append(factor_id)
-        with conn.cursor() as cur:
-            cur.execute(f"UPDATE complexity_factor SET {', '.join(sets)} WHERE id = %s", params)
-        conn.commit()
-        return {"message": "Facteur mis à jour"}
-    finally:
-        if conn:
-            release_connection(conn)
-
-
-@router.patch("/complexity-factors/{factor_id}/active", dependencies=[_resp_admin])
-def patch_complexity_factor_active(factor_id: int, payload: ComplexityFactorActivePatch):
-    conn = None
-    try:
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE complexity_factor SET is_active = %s WHERE id = %s",
-                (payload.is_active, factor_id),
-            )
-        conn.commit()
-        return {"message": "Statut mis à jour"}
     finally:
         if conn:
             release_connection(conn)
@@ -562,8 +483,10 @@ def list_email_domain_rules():
     # Upsert : created ou allowed_changed selon ce qui s'est passé, déposés par le repo.
     dependencies=[_admin_only, audit("email_domain_rule", events_only=True)],
 )
-def add_email_domain_rule(payload: EmailDomainRuleCreate):
-    return AdminSecurityRepository().add_email_domain_rule(payload.domain, payload.allowed)
+def add_email_domain_rule(payload: EmailDomainRuleCreate, request: Request):
+    return AdminSecurityRepository().add_email_domain_rule(
+        payload.domain, payload.allowed, actor_id=_get_user_id(request)
+    )
 
 
 @router.delete(
@@ -571,8 +494,8 @@ def add_email_domain_rule(payload: EmailDomainRuleCreate):
     status_code=200,
     dependencies=[_admin_only, audit("email_domain_rule", id_from_path="rule_id")],
 )
-def remove_email_domain_rule(rule_id: str):
-    AdminSecurityRepository().remove_email_domain_rule(rule_id)
+def remove_email_domain_rule(rule_id: str, request: Request):
+    AdminSecurityRepository().remove_email_domain_rule(rule_id, actor_id=_get_user_id(request))
     return {"message": "Règle supprimée"}
 
 

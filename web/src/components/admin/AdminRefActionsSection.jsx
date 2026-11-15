@@ -5,7 +5,7 @@
 
 import { Fragment, useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Spinner, Table, Text, TextField, Select, Dialog } from '@radix-ui/themes';
+import { Badge, Box, Button, Flex, Spinner, Table, Text, TextField, Dialog } from '@radix-ui/themes';
 import { ChevronDown, ChevronRight, Lock, Plus, Pencil } from 'lucide-react';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
@@ -329,90 +329,8 @@ CreateSubcategoryModal.propTypes = {
   submitting: PropTypes.bool,
 };
 
-// ---- Section sous-catégories d'actions (conservée pour compatibilité éventuelle) ----
-function ActionSubcategoriesSection({ items, categories, loading, onCreate, onUpdate }) {
-  const { can } = usePermissions();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleCreate = useCallback(async (payload) => {
-    setSubmitting(true);
-    try { await onCreate(payload); setCreateOpen(false); }
-    finally { setSubmitting(false); }
-  }, [onCreate]);
-
-  const handleEdit = useCallback(async (id, payload) => {
-    setSubmitting(true);
-    try { await onUpdate(id, payload); setEditOpen(false); }
-    finally { setSubmitting(false); }
-  }, [onUpdate]);
-
-  const getCategoryLabel = useCallback((id) => {
-    const cat = categories.find((c) => c.id === id);
-    return cat ? `${cat.code} — ${cat.name}` : id;
-  }, [categories]);
-
-  const columns = useMemo(() => [
-    { key: 'code', header: 'Code', width: 140, render: (i) => <ImmutableCode code={i.code} /> },
-    { key: 'name', header: 'Nom', render: (i) => <Text size="2" weight="medium">{i.name}</Text> },
-    { key: 'category', header: 'Catégorie parente', width: 180, render: (i) => <Text size="2" color="gray">{getCategoryLabel(i.category_id)}</Text> },
-    {
-      key: 'actions', header: '', align: 'end', width: 80,
-      render: (i) => (
-        can(PERM.adminRef.patchSubcategory)
-          ? <Button size="1" variant="soft" onClick={() => { setSelected(i); setEditOpen(true); }}><Pencil size={12} /></Button>
-          : null
-      ),
-    },
-  ], [getCategoryLabel, can]);
-
-  return (
-    <Box mb="6">
-      <CreateSubcategoryModal open={createOpen} onOpenChange={setCreateOpen} categories={categories} onSubmit={handleCreate} submitting={submitting} />
-      <EditLabelColorModal open={editOpen} onOpenChange={setEditOpen} item={selected} onSubmit={handleEdit} submitting={submitting} showColor={false} />
-      <DataTable
-        headerProps={{
-          title: "Sous-catégories d'actions",
-          count: items.length,
-          showSearchInput: false,
-          actions: (
-            can(PERM.adminRef.createSubcategory)
-              ? <Button size="2" onClick={() => setCreateOpen(true)}><Plus size={14} /> Nouvelle sous-catégorie</Button>
-              : null
-          ),
-        }}
-        columns={columns}
-        data={items}
-        loading={loading}
-        emptyState={{ title: 'Aucune sous-catégorie', description: '' }}
-      />
-    </Box>
-  );
-}
-
-// ---- Section facteurs de complexité ----
-export function ComplexityFactorsSection({ items, categories, loading, onUpdate, onToggleActive }) {
-  const { can } = usePermissions();
-  const [editOpen, setEditOpen] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [editForm, setEditForm] = useState({ label: '', category_id: '' });
-
-  const openEdit = useCallback((item) => {
-    setSelected(item);
-    setEditForm({ label: item.label || item.name || '', category_id: item.category_id || '' });
-    setEditOpen(true);
-  }, []);
-
-  const handleEdit = useCallback(async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try { await onUpdate(selected.id, editForm); setEditOpen(false); }
-    finally { setSubmitting(false); }
-  }, [selected, editForm, onUpdate]);
-
+// ---- Section facteurs de complexité (lecture seule : aucune route de modification) ----
+export function ComplexityFactorsSection({ items, categories, loading }) {
   const getCategoryLabel = useCallback((id) => {
     const cat = categories.find((c) => c.id === id);
     return cat ? `${cat.code} — ${cat.name}` : id;
@@ -422,46 +340,10 @@ export function ComplexityFactorsSection({ items, categories, loading, onUpdate,
     { key: 'code', header: 'Code', width: 120, render: (i) => <ImmutableCode code={i.code} /> },
     { key: 'label', header: 'Libellé', render: (i) => <Text size="2" weight="medium">{i.label || i.name}</Text> },
     { key: 'category', header: 'Catégorie', width: 180, render: (i) => <Text size="2" color="gray">{getCategoryLabel(i.category_id)}</Text> },
-    {
-      key: 'actions', header: '', align: 'end', width: 80,
-      render: (i) => (
-        can(PERM.adminRef.patchFactor)
-          ? <Button size="1" variant="soft" onClick={() => openEdit(i)}><Pencil size={12} /></Button>
-          : null
-      ),
-    },
-  ], [getCategoryLabel, openEdit, can]);
+  ], [getCategoryLabel]);
 
   return (
     <Box mb="6">
-      <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
-        <Dialog.Content style={{ maxWidth: 400 }}>
-          <Dialog.Title>Modifier le facteur</Dialog.Title>
-          <form onSubmit={handleEdit}>
-            <Flex direction="column" gap="3" mt="4">
-              <label>
-                <Text size="2" weight="bold" mb="1" as="div">Libellé *</Text>
-                <TextField.Root value={editForm.label} onChange={(e) => setEditForm((p) => ({ ...p, label: e.target.value }))} required />
-              </label>
-              <label>
-                <Text size="2" weight="bold" mb="1" as="div">Catégorie</Text>
-                <Select.Root value={editForm.category_id ? String(editForm.category_id) : '__none__'} onValueChange={(v) => setEditForm((p) => ({ ...p, category_id: v === '__none__' ? '' : Number(v) }))}>
-                  <Select.Trigger style={{ width: '100%' }} />
-                  <Select.Content>
-                    <Select.Item value="__none__">— Aucune —</Select.Item>
-                    {categories.map((c) => <Select.Item key={c.id} value={String(c.id)}>{c.code} — {c.name}</Select.Item>)}
-                  </Select.Content>
-                </Select.Root>
-              </label>
-            </Flex>
-            <Flex gap="3" mt="4" justify="end">
-              <Dialog.Close><Button variant="soft" color="gray" type="button">Annuler</Button></Dialog.Close>
-              <Button type="submit" disabled={submitting}>{submitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
-            </Flex>
-          </form>
-        </Dialog.Content>
-      </Dialog.Root>
-
       <DataTable
         headerProps={{ title: 'Facteurs de complexité', count: items.length, showSearchInput: false }}
         columns={columns}
@@ -483,6 +365,4 @@ ComplexityFactorsSection.propTypes = {
   items: PropTypes.array.isRequired,
   categories: PropTypes.array.isRequired,
   loading: PropTypes.bool,
-  onUpdate: PropTypes.func.isRequired,
-  onToggleActive: PropTypes.func,
 };

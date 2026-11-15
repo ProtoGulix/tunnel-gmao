@@ -690,7 +690,15 @@ class AdminSecurityRepository:
             conn = get_connection()
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, ip_address, reason, blocked_until, created_by, created_at FROM ip_blocklist ORDER BY created_at DESC"
+                    """
+                    SELECT b.id, b.ip_address, b.reason, b.blocked_until, b.created_by,
+                           COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
+                                    u.email) AS created_by_name,
+                           b.created_at
+                    FROM ip_blocklist b
+                    LEFT JOIN tunnel_user u ON u.id = b.created_by
+                    ORDER BY b.created_at DESC
+                    """
                 )
                 cols = [d[0] for d in cur.description]
                 return [dict(zip(cols, r)) for r in cur.fetchall()]
@@ -778,9 +786,38 @@ class AdminSecurityRepository:
             if conn:
                 release_connection(conn)
 
-    def add_email_domain_rule(self, domain: str, allowed: bool) -> Dict[str, Any]:
+    @staticmethod
+    def _assert_actor_can_still_login(cur, actor_id: str) -> None:
+        """Refuse (409) un état des règles de domaine qui exclurait l'auteur du changement.
+
+        Reprend la logique de api/auth/routes.py (login) : sans aucune règle, tout domaine
+        passe ; sinon le domaine du courriel doit avoir une règle autorisée. À appeler
+        après le changement, dans la même transaction : l'appelant annule si ça lève."""
+        # Auteur inconnu : on refuse plutôt que de laisser passer sans contrôle.
+        row = None
+        if actor_id:
+            cur.execute("SELECT email FROM tunnel_user WHERE id = %s::uuid", (actor_id,))
+            row = cur.fetchone()
+        if row is None:
+            raise ConflictError("Auteur du changement inconnu : modification refusée.")
+        cur.execute("SELECT COUNT(*) FROM email_domain_rule")
+        if cur.fetchone()[0] == 0:
+            return
+        domain = row[0].split("@")[-1].lower()
+        cur.execute("SELECT allowed FROM email_domain_rule WHERE domain = %s", (domain,))
+        rule = cur.fetchone()
+        if rule is None or not rule[0]:
+            raise ConflictError(
+                "Cette règle empêcherait votre propre compte de se connecter "
+                f"(domaine {domain}) : modification refusée."
+            )
+
+    def add_email_domain_rule(
+        self, domain: str, allowed: bool, actor_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Ajoute une règle de domaine (upsert). Trace `created` ou `allowed_changed` selon
-        ce qui s'est réellement passé."""
+        ce qui s'est réellement passé. Refuse (409, sans écriture) si l'auteur ne pourrait
+        plus se connecter après le changement."""
         conn = None
         try:
             conn = get_connection()
@@ -800,6 +837,7 @@ class AdminSecurityRepository:
                     (domain.lower(), allowed),
                 )
                 row = cur.fetchone()
+                self._assert_actor_can_still_login(cur, actor_id)
             cols = ["id", "domain", "allowed", "created_at"]
             result = dict(zip(cols, row))
             if previous is None:
@@ -813,6 +851,9 @@ class AdminSecurityRepository:
                 )
             conn.commit()
             return result
+        except ConflictError:
+            conn.rollback()
+            raise
         except Exception as e:
             if conn:
                 conn.rollback()
@@ -821,13 +862,19 @@ class AdminSecurityRepository:
             if conn:
                 release_connection(conn)
 
-    def remove_email_domain_rule(self, rule_id: str) -> None:
+    def remove_email_domain_rule(self, rule_id: str, actor_id: Optional[str] = None) -> None:
+        """Supprime une règle de domaine. Refuse (409, sans écriture) si l'auteur ne
+        pourrait plus se connecter après la suppression."""
         conn = None
         try:
             conn = get_connection()
             with conn.cursor() as cur:
                 cur.execute("DELETE FROM email_domain_rule WHERE id = %s::uuid", (rule_id,))
+                self._assert_actor_can_still_login(cur, actor_id)
             conn.commit()
+        except ConflictError:
+            conn.rollback()
+            raise
         except Exception as e:
             if conn:
                 conn.rollback()

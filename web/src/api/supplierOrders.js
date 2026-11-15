@@ -149,12 +149,3 @@ export async function updateSupplierOrderLine(id, updates) {
   const response = await api.patch(`/supplier-order-lines/${id}`, updates);
   return response.data;
 }
-
-/**
- * Delete a supplier order line
- * @param {string} id
- * @returns {Promise<void>}
- */
-export async function deleteSupplierOrderLine(id) {
-  await api.delete(`/supplier-order-lines/${id}`);
-}

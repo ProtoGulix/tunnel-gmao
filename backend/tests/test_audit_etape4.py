@@ -68,9 +68,8 @@ ROUTES_AUDC_45 = [
 ]
 
 # Exclusions de la décision 9 (hors authentification, déjà excluse) : route -> catégorie.
-# Les quatre routes cassées (colonnes absentes en base) renvoient au backlog.
-BACKLOG_ROUTES_CASSEES = "routes-referentiel-cassees"
-ROUTES_CASSEES = [
+# Les quatre routes cassées (colonnes absentes en base) ont été retirées (SUIT-01).
+ROUTES_RETIREES = [
     ("PATCH", "/admin/action-categories/{category_id}/active"),
     ("PATCH", "/admin/action-subcategories/{subcat_id}/active"),
     ("PATCH", "/admin/complexity-factors/{factor_id}"),
@@ -82,7 +81,6 @@ EXCLUSIONS_DECISION_9 = [
     ("PATCH", "/users/me/changelog-seen"),
     ("POST", "/admin/settings/mail/test"),
     ("POST", "/admin/endpoints/sync"),
-    *ROUTES_CASSEES,
 ]
 
 
@@ -127,9 +125,10 @@ def test_test_d_envoi_de_mail_est_classe_sans_ecriture():
     assert EXCLUSIONS[("POST", "/admin/settings/mail/test")].category == NO_WRITE
 
 
-@pytest.mark.parametrize("methode, chemin", ROUTES_CASSEES)
-def test_route_cassee_renvoie_au_backlog(methode, chemin):
-    assert BACKLOG_ROUTES_CASSEES in EXCLUSIONS[(methode, chemin)].reason
+@pytest.mark.parametrize("methode, chemin", ROUTES_RETIREES)
+def test_route_cassee_est_retiree(methode, chemin):
+    assert (methode, chemin) not in _routes()
+    assert (methode, chemin) not in EXCLUSIONS
 
 
 # --- Fin de POST /audit/log ---

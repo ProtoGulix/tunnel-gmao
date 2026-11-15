@@ -129,10 +129,6 @@ class ActionCategoryPatch(BaseModel):
     color: Optional[str] = None
 
 
-class ActionCategoryActivePatch(BaseModel):
-    is_active: bool
-
-
 class ActionSubcategoryCreate(BaseModel):
     code: str
     label: str
@@ -141,19 +137,6 @@ class ActionSubcategoryCreate(BaseModel):
 
 class ActionSubcategoryPatch(BaseModel):
     label: Optional[str] = None
-
-
-class ActionSubcategoryActivePatch(BaseModel):
-    is_active: bool
-
-
-class ComplexityFactorPatch(BaseModel):
-    label: Optional[str] = None
-    category: Optional[str] = None
-
-
-class ComplexityFactorActivePatch(BaseModel):
-    is_active: bool
 
 
 # --- Référentiel interventions ---
@@ -203,6 +186,7 @@ class IpBlocklistOut(BaseModel):
     reason: Optional[str] = None
     blocked_until: Optional[datetime] = None
     created_by: Optional[UUID] = None
+    created_by_name: Optional[str] = None
     created_at: datetime
 
 

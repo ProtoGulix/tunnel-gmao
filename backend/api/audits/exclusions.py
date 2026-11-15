@@ -89,26 +89,6 @@ EXCLUSIONS: Dict[Tuple[str, str], Exclusion] = {
     ("POST", "/part-templates"): Exclusion(EXCLUDED, reason=_ABANDONED),
     ("DELETE", "/part-templates/{template_id}"): Exclusion(EXCLUDED, reason=_ABANDONED),
     ("POST", "/part-templates/{template_id}/versions"): Exclusion(EXCLUDED, reason=_ABANDONED),
-    ("PATCH", "/admin/action-categories/{category_id}/active"): Exclusion(
-        EXCLUDED,
-        reason="Route cassée (colonne absente en base), à réparer ou retirer : "
-        "docs/backlog/routes-referentiel-cassees.md",
-    ),
-    ("PATCH", "/admin/action-subcategories/{subcat_id}/active"): Exclusion(
-        EXCLUDED,
-        reason="Route cassée (colonne absente en base), à réparer ou retirer : "
-        "docs/backlog/routes-referentiel-cassees.md",
-    ),
-    ("PATCH", "/admin/complexity-factors/{factor_id}"): Exclusion(
-        EXCLUDED,
-        reason="Route cassée (colonne absente en base), à réparer ou retirer : "
-        "docs/backlog/routes-referentiel-cassees.md",
-    ),
-    ("PATCH", "/admin/complexity-factors/{factor_id}/active"): Exclusion(
-        EXCLUDED,
-        reason="Route cassée (colonne absente en base), à réparer ou retirer : "
-        "docs/backlog/routes-referentiel-cassees.md",
-    ),
     ("POST", "/admin/endpoints/sync"): Exclusion(
         EXCLUDED,
         reason="Resynchronisation technique du catalogue d'endpoints depuis le code, sans "

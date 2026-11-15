@@ -508,6 +508,21 @@ def domaine_de_test(instance):
     instance.sql("DELETE FROM email_domain_rule WHERE domain = %s", (domaine,))
 
 
+@pytest.fixture
+def domaine_admin_couvert(instance):
+    """Règle autorisant le domaine de l'administrateur de test, posée en SQL : depuis
+    SUIT-01, une règle qui exclurait l'auteur de la connexion est refusée (409)."""
+    domaine = instance.admin_email.split("@")[-1].lower()
+    deja = instance.sql("SELECT 1 FROM email_domain_rule WHERE domain = %s", (domaine,))
+    if not deja:
+        instance.sql(
+            "INSERT INTO email_domain_rule (domain, allowed) VALUES (%s, true)", (domaine,)
+        )
+    yield domaine
+    if not deja:
+        instance.sql("DELETE FROM email_domain_rule WHERE domain = %s", (domaine,))
+
+
 def test_blocage_d_ip_cree_puis_remplace_ne_fausse_pas_la_creation(
     instance, client, admin, ip_de_test
 ):
@@ -537,7 +552,7 @@ def test_blocage_d_ip_cree_puis_remplace_ne_fausse_pas_la_creation(
 
 
 def test_regle_de_domaine_creee_puis_remplacee_ne_fausse_pas_la_creation(
-    instance, client, admin, domaine_de_test
+    instance, client, admin, domaine_admin_couvert, domaine_de_test
 ):
     domaine = domaine_de_test
     resp = client.post(

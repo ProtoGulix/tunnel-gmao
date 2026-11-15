@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-14
+Dernière mise à jour : 2026-11-15
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
@@ -23,6 +23,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
 | à cadrer | Types et statuts d'intervention en base (écran Référentiel sans effet), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
@@ -44,11 +45,12 @@ et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.
 
 ## Tâches
 
-Fiches ouvertes : aucune. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : SUIT-01, SUIT-02. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
-2026-11-14 : étape 2 de l'audit centralisé fusionnée. Avant : une intervention vient toujours d'une demande ; la supprimer fait choisir
+2026-11-15 : avant la version 5.3.0, retirer les quatre routes de référentiel cassées et leurs boutons, retirer le bouton Supprimer de l'onglet Pièces, refuser une règle de domaine de courriel qui exclurait l'admin qui la pose, retirer du catalogue des droits au démarrage les endpoints disparus du code. Types et statuts en base hors de cette version.
+Avant : 2026-11-14 : étape 2 de l'audit centralisé fusionnée. Avant : une intervention vient toujours d'une demande ; la supprimer fait choisir
 entre rouvrir sa demande et la supprimer en cascade ; les interventions sans demande d'avant la séparation
 restent telles quelles (ADR 0019).
 Avant : 2026-11-13, audit centralisé dans le middleware, une transaction par requête (ADR 0018).

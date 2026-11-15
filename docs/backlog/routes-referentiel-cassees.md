@@ -1,3 +1,5 @@
+**TRAITÉ (SUIT-01, 2026-11-15) : les quatre routes ont été retirées du backend.**
+
 # Routes de référentiel d'administration cassées
 
 Constat du 2026-11-14 (inventaire de l'étape 4 de l'audit centralisé, vérifié sur la base de

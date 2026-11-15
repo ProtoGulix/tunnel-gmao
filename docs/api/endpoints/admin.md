@@ -149,25 +149,15 @@ Tous les champs sont optionnels.
 | ------- | ----------------------------------------- | ----------- |
 | GET     | `/admin/action-categories`                | RESP, ADMIN |
 | PATCH   | `/admin/action-categories/{id}`           | RESP, ADMIN |
-| PATCH   | `/admin/action-categories/{id}/active`    | RESP, ADMIN |
 | GET     | `/admin/action-subcategories`             | RESP, ADMIN |
 | POST    | `/admin/action-subcategories`             | RESP, ADMIN |
 | PATCH   | `/admin/action-subcategories/{id}`        | RESP, ADMIN |
-| PATCH   | `/admin/action-subcategories/{id}/active` | RESP, ADMIN |
 | GET     | `/admin/complexity-factors`               | RESP, ADMIN |
-| PATCH   | `/admin/complexity-factors/{id}`          | RESP, ADMIN |
-| PATCH   | `/admin/complexity-factors/{id}/active`   | RESP, ADMIN |
 
 ### PATCH `/admin/action-categories/{id}` — corps
 
 ```json
 { "label": "Nouveau libellé", "color": "#FF5733" }
-```
-
-### PATCH `/admin/action-categories/{id}/active` — corps
-
-```json
-{ "is_active": false }
 ```
 
 ### POST `/admin/action-subcategories` — corps
@@ -180,12 +170,6 @@ Tous les champs sont optionnels.
 
 ```json
 { "label": "Nouveau libellé" }
-```
-
-### PATCH `/admin/complexity-factors/{id}` — corps
-
-```json
-{ "label": "Nouveau libellé", "category": "catégorie" }
 ```
 
 ---
@@ -283,7 +267,7 @@ Clés entières ou texte, sans uuid : chaque entité est tracée sous un uuid d�
 | `POST`, `PATCH /admin/audit-reasons` (+ `/active`) | `audit_reason` | `created`, un `{champ}_changed` par champ |
 | `POST`, `PATCH /admin/audit-rules` | `audit_rule` | `created`, un `{champ}_changed` par champ |
 
-Une clé inconnue en PATCH reste un succès sans modification ni trace (comportement historique). Les quatre routes `/active` des catégories, sous-catégories et facteurs de complexité sont cassées (colonnes absentes) et exclues de l'audit (backlog `routes-referentiel-cassees`).
+Une clé inconnue en PATCH reste un succès sans modification ni trace (comportement historique). Les quatre routes cassées (`/active` des catégories et sous-catégories d'action, PATCH et `/active` des facteurs de complexité) ont été retirées (SUIT-01).
 
 ---
 

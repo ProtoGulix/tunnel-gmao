@@ -30,32 +30,32 @@ Relevés pendant l'étape 2 (2026-11-14), hors de son périmètre :
    absent de GET /audit/reasons et de la liste jointe au 400) : aucun test ne relie la
    réponse de l'API à la fenêtre de motif du web. Piste : tests de contrat (forme des
    motifs attendue par le front) côté backend, ou tests de bout en bout.
-10. (Étape 3) Le web appelle `DELETE /parts/{id}` (web/src/api/parts.js:65, via
+10. [Traité 2026-11-15, SUIT-02 : bouton retiré] (Étape 3) Le web appelle `DELETE /parts/{id}` (web/src/api/parts.js:65, via
     useParts) alors que le backend n'a aucune route de suppression de pièce : le bouton
     Supprimer de l'onglet Pièces échoue (405), indépendamment de l'audit. À trancher :
     retirer le bouton, ou ajouter la route (avec motif, règles de suppression à définir).
-11. (Étape 3) Fonctions web sans appelant : deleteSupplier, deleteSupplierOrderLine,
+11. [Traité 2026-11-15, SUIT-02 : fonctions retirées] (Étape 3) Fonctions web sans appelant : deleteSupplier, deleteSupplierOrderLine,
     suppression d'un lien demande d'achat ↔ ligne de commande.
-12. (Étape 3) Désactivation d'un plan préventif : la confirmation « Désactiver » reste
+12. [Traité 2026-11-15, SUIT-02 : confirmation fermée avant la fenêtre de motif] (Étape 3) Désactivation d'un plan préventif : la confirmation « Désactiver » reste
     ouverte derrière la fenêtre de motif (signalé par l'agent, à voir à l'écran).
-13. (Étape 3) Hooks web sans gestion de l'annulation de la fenêtre de motif
+13. [Traité 2026-11-15, SUIT-02 : hooks retirés] (Étape 3) Hooks web sans gestion de l'annulation de la fenêtre de motif
     (isAuditCancelled) : useSupplierDetail removeLink et removeSupplier, sans appelant
     aujourd'hui ; à traiter si une interface les appelle.
 14. (Étape 3) Renommage d'une famille de stock : historique rangé sous l'uuid de l'ancien
     code ; le changement de family_code des sous-familles n'est pas tracé à part.
-15. (Étape 3) Lint web des fichiers touchés : max-lines (PartsTab, StockItemsTab),
+15. [Partiellement traité 2026-11-15, SUIT-02 : restent max-lines de PartsTab et de StockItemsTab, complexité de useParts ; les autres constats étaient préexistants ou corrigés] (Étape 3) Lint web des fichiers touchés : max-lines (PartsTab, StockItemsTab),
     complexité (SupplierRefRow), changePageSize inutilisé ; faux positif probable de la
     règle « _or » sur auditEntity.js. Préexistant ou non : non comparé.
-16. (Plans préventifs) Page Préventif et page d'administration des plans : un échec de
+16. [Traité 2026-11-15, SUIT-02 : message affiché] (Plans préventifs) Page Préventif et page d'administration des plans : un échec de
     désactivation, de réactivation ou d'enregistrement des étapes (403, réseau) n'affiche
     aucun message (promesse rejetée non gérée). Suppression réelle d'un plan écartée le
     2026-11-14 : possible seulement avant toute occurrence générée, donc sans utilité.
-17. (Sécurité, constat du 2026-11-14) Une seule règle de domaine de courriel en base
+17. TRAITÉ (SUIT-01, 2026-11-15 : refus 409 si l'auteur ne peut plus se connecter). (Sécurité, constat du 2026-11-14) Une seule règle de domaine de courriel en base
     restreint la connexion de tous les comptes aux domaines listés (auth/routes.py,
     liste blanche dès qu'une règle existe), administrateur compris : un admin qui ajoute
     une règle pour un seul domaine peut se bloquer. Comportement voulu ou non : à décider
     (avertissement à l'écran, refus si le domaine de l'admin n'est pas couvert).
-18. (Étape 4) La synchronisation du catalogue (api/endpoints_catalog.py) ajoute et met à
+18. TRAITÉ (SUIT-01, 2026-11-15 : purge au démarrage des endpoints disparus). (Étape 4) La synchronisation du catalogue (api/endpoints_catalog.py) ajoute et met à
     jour les endpoints mais ne retire jamais ceux qui ont disparu du code : POST /audit/log,
     supprimée à l'étape 4, reste dans tunnel_endpoint et ses lignes de droits restent
     affichées dans l'écran des droits. À décider : marquer ou retirer les endpoints absents.

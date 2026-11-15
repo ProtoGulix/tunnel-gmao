@@ -13,6 +13,7 @@ from api.errors.handlers import register_error_handlers
 class _FauxCurseur:
     def __init__(self, codes):
         self._codes = codes
+        self.rowcount = 0
 
     def __enter__(self):
         return self

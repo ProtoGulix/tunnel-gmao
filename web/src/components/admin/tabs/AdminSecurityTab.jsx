@@ -55,13 +55,9 @@ export default function AdminSecurityTab() {
   }, [blocklistHook, notify]);
 
   const handleAddDomain = useCallback(async (payload) => {
-    try {
-      await domainsHook.addDomain(payload);
-      notify('Domaine ajouté');
-    } catch (err) {
-      notify(extractApiErrorMessage(err, 'Erreur lors de l\'ajout'), 'error');
-      throw err;
-    }
+    // Une erreur (refus 409 compris) remonte à la fenêtre d'ajout, qui l'affiche.
+    await domainsHook.addDomain(payload);
+    notify('Domaine ajouté');
   }, [domainsHook, notify]);
 
   const handleRemoveDomain = useCallback(async (id) => {

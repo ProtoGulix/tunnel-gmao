@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchParts, createPartWithSupplierRef, updatePart, deletePart } from '@/api/parts';
+import { fetchParts, createPartWithSupplierRef, updatePart } from '@/api/parts';
 import { useDebounce } from '@/hooks/useDebounce';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
@@ -80,11 +80,6 @@ export function useParts({ initialSearch = '' } = {}) {
     return updated;
   }, []);
 
-  const removeItem = useCallback(async (id) => {
-    await deletePart(id);
-    setItems((prev) => prev.filter((it) => it.id !== id));
-  }, []);
-
   return {
     items, loading, error,
     search, setSearch,
@@ -94,6 +89,6 @@ export function useParts({ initialSearch = '' } = {}) {
     pagination: { total, page, pageSize, totalPages },
     goToPage: setPage,
     refresh,
-    createItem, editItem, removeItem,
+    createItem, editItem,
   };
 }

@@ -8,6 +8,20 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Administration (suites avant version)
+- Une règle de domaine de courriel est refusée (message clair, rien n'est enregistré) si,
+  une fois posée, modifiée ou supprimée, elle empêcherait votre propre compte de vous
+  connecter.
+- La liste des adresses IP bloquées affiche le nom de la personne qui a posé le blocage
+  (champ `created_by_name`) au lieu de son identifiant.
+- Les quatre routes de référentiel qui répondaient en erreur (activation des catégories
+  et sous-catégories d'action, modification et activation des facteurs de complexité)
+  sont retirées.
+
+### [interne] Suites avant version
+- Le catalogue des endpoints retire, à chaque démarrage, les endpoints disparus du code et
+  leurs lignes de droits (le nombre retiré est écrit dans les logs).
+
 ### Accueil
 - Les codes d'intervention et de demande d'achat portent une petite icône de lien :
   un clic ouvre l'intervention (dans la liste des interventions) ou la demande d'achat.
@@ -194,6 +208,21 @@ mobile/CHANGELOG.md.
   sont tracées au nom du système (motif « cascade »). Créer, modifier et supprimer une demande
   d'achat, une commande fournisseur ou un équipement est tracé une seule fois ; la suppression
   exige un motif choisi.
+
+### Administration et stock (suites de l'audit)
+- Onglet Pièces : le bouton Supprimer est retiré (le backend n'a aucune route de
+  suppression de pièce, le bouton échouait).
+- Référentiel d'administration : les boutons d'activation des catégories et sous-catégories
+  d'action, de modification et d'activation des facteurs de complexité sont retirés (routes
+  retirées côté backend, elles répondaient 500). Les facteurs sont affichés en lecture seule.
+- Préventif : un échec de désactivation, de réactivation ou d'enregistrement des étapes d'un
+  plan affiche maintenant un message ; la confirmation de désactivation se ferme avant la
+  fenêtre de motif.
+- IP bloquées : la colonne « Créé par » affiche le nom de l'auteur du blocage.
+- Domaines de courriel : l'écran explique qu'une règle restreint la connexion de tous les
+  comptes aux domaines autorisés, et affiche le refus quand la règle exclurait l'administrateur.
+- [interne] Fonctions et hooks web sans appelant retirés (suppression de fournisseur, de ligne
+  de commande, de pièce ; doublons de api/equipementClasses.js).
 
 ### [interne] Audit centralisé (ADR 0018, étape 4, socle)
 - `POST /audit/log` est supprimée (aucun appelant) : le middleware est le seul à écrire
