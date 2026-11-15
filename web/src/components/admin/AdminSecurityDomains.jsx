@@ -8,8 +8,10 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Button, Callout, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
 import { Globe, Plus, Trash2, Info } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
+import StatusCallout from '@/components/ui/StatusCallout';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
-function AddDomainModal({ open, onOpenChange, onSubmit, submitting }) {
+function AddDomainModal({ open, onOpenChange, onSubmit, submitting, error }) {
   const [form, setForm] = useState({ domain: '', allowed: true });
 
   const handleSubmit = async (e) => {
@@ -22,6 +24,11 @@ function AddDomainModal({ open, onOpenChange, onSubmit, submitting }) {
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 380 }}>
         <Dialog.Title>Ajouter un domaine</Dialog.Title>
+        <Text size="2" color="gray" as="p" mt="2">
+          Dès qu&apos;une règle existe, seuls les domaines autorisés peuvent se connecter : la
+          restriction s&apos;applique à tous les comptes, le vôtre compris.
+        </Text>
+        {error && <Box mt="3"><StatusCallout type="error">{error}</StatusCallout></Box>}
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3" mt="4">
             <label>
@@ -45,6 +52,7 @@ AddDomainModal.propTypes = {
   onOpenChange: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   submitting: PropTypes.bool,
+  error: PropTypes.string,
 };
 
 function DeleteConfirmModal({ open, onOpenChange, item, onConfirm, submitting }) {
@@ -81,15 +89,27 @@ export default function AdminSecurityDomains({ items, loading, onAdd, onRemove }
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [addError, setAddError] = useState(null);
+
+  const openAdd = (open) => { setAddError(null); setAddOpen(open); };
+
   const handleAdd = async (payload) => {
     setSubmitting(true);
-    try { await onAdd(payload); setAddOpen(false); }
-    finally { setSubmitting(false); }
+    setAddError(null);
+    try {
+      await onAdd(payload);
+      setAddOpen(false);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été ajouté
+      // Refus du backend (409 : la règle exclurait l'admin) : on garde la fenêtre ouverte.
+      setAddError(extractApiErrorMessage(err, "Erreur lors de l'ajout"));
+    } finally { setSubmitting(false); }
   };
 
   const handleDelete = async () => {
     setSubmitting(true);
     try { await onRemove(selected.id); setDeleteOpen(false); }
+    catch { setDeleteOpen(false); } // refus (409) déjà notifié par l'onglet
     finally { setSubmitting(false); }
   };
 
@@ -115,13 +135,13 @@ export default function AdminSecurityDomains({ items, loading, onAdd, onRemove }
 
   return (
     <Box>
-      <AddDomainModal open={addOpen} onOpenChange={setAddOpen} onSubmit={handleAdd} submitting={submitting} />
+      <AddDomainModal open={addOpen} onOpenChange={openAdd} onSubmit={handleAdd} submitting={submitting} error={addError} />
       <DeleteConfirmModal open={deleteOpen} onOpenChange={setDeleteOpen} item={selected} onConfirm={handleDelete} submitting={submitting} />
 
       {items.length === 0 && !loading && (
         <Callout.Root color="blue" mb="3" size="1">
           <Callout.Icon><Info size={14} /></Callout.Icon>
-          <Callout.Text>Si la liste est vide, tous les domaines sont acceptés.</Callout.Text>
+          <Callout.Text>Si la liste est vide, tous les domaines sont acceptés. Dès qu&apos;une règle existe, la connexion de tous les comptes est restreinte aux domaines autorisés.</Callout.Text>
         </Callout.Root>
       )}
 
@@ -132,7 +152,7 @@ export default function AdminSecurityDomains({ items, loading, onAdd, onRemove }
           count: items.length,
           showSearchInput: false,
           actions: (
-            <Button size="2" onClick={() => setAddOpen(true)}>
+            <Button size="2" onClick={() => openAdd(true)}>
               <Plus size={14} /> Ajouter un domaine
             </Button>
           ),

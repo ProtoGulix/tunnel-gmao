@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
 
@@ -395,15 +396,25 @@ class StockItemSupplierRepository:
         try:
             cur = conn.cursor()
 
-            # Désactive tous les préférés pour cet article
+            # Désactive les autres préférés de cet article ; chacun est tracé (la référence
+            # visée par la route l'est par le diff du middleware).
             cur.execute(
                 """
                 UPDATE stock_item_supplier
                 SET is_preferred = false
-                WHERE stock_item_id = %s
+                WHERE stock_item_id = %s AND is_preferred AND id != %s
+                RETURNING id
                 """,
-                (str(existing['stock_item_id']),),
+                (str(existing['stock_item_id']), ref_id),
             )
+            for (sibling_id,) in cur.fetchall():
+                record_audit_event(
+                    "stock_item_supplier",
+                    sibling_id,
+                    "is_preferred_changed",
+                    old_value={"is_preferred": True},
+                    new_value={"is_preferred": False},
+                )
 
             # Active le préféré pour cette référence
             cur.execute(

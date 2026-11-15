@@ -4,10 +4,10 @@
  */
 
 import { Badge, Box, Button, Flex, Select, Text } from '@radix-ui/themes';
-import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, MinusCircle, Package, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
+import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, MinusCircle, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { EntityCodeLink } from '@/components/shared/EntityCodeLink';
 import {
   actionDurationMinutes,
   formatDayHeader,
@@ -82,7 +82,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
   const durationMin = actionDurationMinutes(action);
   const subcatColor = action.subcategory?.category?.color ?? '#6b7280';
   const subcatCode = action.subcategory?.code ?? action.subcategory?.name ?? '—';
-  const interventionCode = action.intervention?.code ?? '—';
+  const interventionCode = action.intervention?.code ?? null;
   const interventionId = action.intervention?.id;
   const interventionTitle = action.intervention?.title ?? null;
   const description = action.description ?? '';
@@ -128,12 +128,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
       >
         {/* ── En-tête : code · titre · statut · bouton achat ── */}
         {!hideInterventionHeader && <Flex align="center" gap="2" style={{ padding: '8px 10px 6px', borderBottom: '1px solid var(--gray-4)' }}>
-          {interventionId
-            ? <Link to={`/intervention/${interventionId}`} onClick={(e) => e.stopPropagation()} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13 }}>{interventionCode}</Badge>
-              </Link>
-            : <Badge variant="outline" color="gray" size="2" style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>{interventionCode}</Badge>
-          }
+          <EntityCodeLink type="intervention" id={interventionId} code={interventionCode} size={3} />
           {interventionTitle && (
             <Text size="2" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray-11)', fontStyle: 'italic' }}>
               {interventionTitle}
@@ -192,7 +187,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
             <Flex direction="column" gap="1" mt="2" style={{ borderTop: '1px solid var(--orange-4)', paddingTop: 6 }}>
               {action.purchase_requests.map((pr) => (
                 <Flex key={pr.id} align="center" gap="2">
-                  <Package size={12} color="var(--orange-9)" style={{ flexShrink: 0 }} />
+                  <EntityCodeLink type="purchase_request" id={pr.id} code={pr.code} size={1} />
                   <Text size="2" color="gray" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {pr.item_label}
                   </Text>
@@ -224,10 +219,7 @@ export function ActionItem({ action, compact = false, inline = false, onAddPurch
     >
       {/* En-tête : code intervention + titre */}
       <Box px="2" pt="2" pb="1">
-        {interventionId
-          ? <Link to={`/intervention/${interventionId}`}><Badge variant="soft" color="gray" size="1">{interventionCode}</Badge></Link>
-          : <Badge variant="soft" color="gray" size="1">{interventionCode}</Badge>
-        }
+        <EntityCodeLink type="intervention" id={interventionId} code={interventionCode} size={1} />
         {interventionTitle && (
           <Text size="1" style={{ display: 'block', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#1a1a1a' }}>
             {interventionTitle}

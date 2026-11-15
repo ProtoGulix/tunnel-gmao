@@ -2,8 +2,9 @@ from datetime import date
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_actions.schemas import InterventionActionIn, InterventionActionPatch
@@ -50,37 +51,53 @@ def get_action(action_id: str) -> Dict[str, Any]:
     return single(data, audit_entity="action")
 
 
-@router.post("")
-def add_action(action: InterventionActionIn):
+@router.post(
+    "",
+    dependencies=[audit("action", id_from_created=True, table="intervention_action")],
+)
+def add_action(action: InterventionActionIn, request: Request):
     """
     Ajoute une action à une intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `action`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
 
     Les tâches listées dans `tasks` sont liées à l'action via la table M2M
     et leur statut est mis à jour (todo→in_progress, ou done/skipped selon les flags).
+    Ignorer une étape obligatoire de gamme est réservé aux rôles RESP et ADMIN (403).
     """
     repo = InterventionActionRepository()
-    return single(repo.add(action.model_dump()))
+    created = repo.add(action.model_dump(), role=getattr(request.state, "role", None))
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{action_id}")
-def patch_action(action_id: str, patch: InterventionActionPatch):
+@router.patch(
+    "/{action_id}",
+    dependencies=[audit("action", id_from_path="action_id", table="intervention_action")],
+)
+def patch_action(action_id: str, patch: InterventionActionPatch, request: Request):
     """
     Met à jour partiellement une action d'intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `action`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = InterventionActionRepository()
-    return single(repo.update(action_id, patch.model_dump(exclude_none=True)))
+    role = getattr(request.state, "role", None)
+    return single(repo.update(action_id, patch.model_dump(exclude_none=True), role=role))
 
 
-@router.delete("/{action_id}", status_code=204)
+@router.delete(
+    "/{action_id}",
+    status_code=204,
+    dependencies=[audit("action", id_from_path="action_id", table="intervention_action")],
+)
 def delete_action(action_id: str):
     """
     Supprime une action d'intervention.
+
+    **Audit obligatoire** : un motif explicite (`reason_code` dans le corps) est toujours exigé.
 
     Bloqué si l'intervention parente est fermée, ou si une demande d'achat
     liée à l'action a déjà été dispatchée (statut dérivé hors "à dispatcher").

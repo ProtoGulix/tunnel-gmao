@@ -187,14 +187,6 @@ def test_mcp_n_ecrit_jamais(method):
 # --- Cas ambigus (le plus restrictif est choisi) -------------------------------------
 
 
-def test_ambigu_journal_d_audit_manuel_reserve_a_resp():
-    """POST /audit/log : valeurs libres, déjà RESP/ADMIN dans le code."""
-    audit = ep("POST", "/audit/log", "Audit")
-    assert default_allowed("RESP", audit)
-    assert not default_allowed("TECH", audit)
-    assert not default_allowed("ACHETEUR", audit)
-
-
 def test_ambigu_regles_et_motifs_d_audit_en_ecriture_admin_seul():
     """/admin/audit-rules et audit-reasons : RESP les lit, l'écriture est ADMIN seul dans le code."""
     assert default_allowed("RESP", ep("GET", "/admin/audit-rules", "admin"))

@@ -4,6 +4,7 @@ import {
   createPreventivePlan,
   updatePreventivePlan,
   deletePreventivePlan,
+  reactivatePreventivePlan,
   patchPreventivePlanSteps,
 } from '@/api/preventivePlans';
 import { useFetchList } from '@/hooks/shared/useFetchList';
@@ -33,11 +34,17 @@ export function usePreventivePlans({ active_only = true } = {}) {
     await refresh();
   }, [refresh]);
 
+  const reactivatePlan = useCallback(async (id) => {
+    const updated = await reactivatePreventivePlan(id);
+    await refresh();
+    return updated;
+  }, [refresh]);
+
   const saveSteps = useCallback(async (id, steps) => {
     const updated = await patchPreventivePlanSteps(id, steps);
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, steps: updated } : p)));
     return updated;
   }, [setPlans]);
 
-  return { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps };
+  return { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, reactivatePlan, saveSteps };
 }

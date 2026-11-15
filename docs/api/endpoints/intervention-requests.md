@@ -6,7 +6,7 @@ Lors de l'acceptation, une **intervention est automatiquement créée** et liée
 
 > Voir aussi : [Interventions](interventions.md) | [Équipements](equipements.md) | [Services](services.md)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST /intervention-requests` est routinier (règle d'audit `request`) : aucun motif demandé, `ROUTINE` est injecté. `POST /{id}/transition` exige un `reason_code` (le champ `status_to` a une règle non routinière) et `DELETE` aussi. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 ---
 
@@ -14,17 +14,20 @@ Lors de l'acceptation, une **intervention est automatiquement créée** et liée
 
 ### Couverture
 
-| Endpoint                              | Loggué par       | `decision_type`         | `is_system` |
-| ------------------------------------- | ---------------- | ----------------------- | ----------- |
-| `POST /intervention-requests`         | repo (`create`)  | `created`               | selon `is_system` du payload |
-| `POST /{id}/transition`               | repo (`transition_status`) | `status_transitioned` | `false` |
-| `POST /repair`                        | repo (`repair_orphaned_requests`) | `status_transitioned` | `true` |
+Le middleware d'audit est le seul à écrire dans `audit_log` (ADR 0018) ; les routes sont déclarées avec `audit(...)`. Le repo ne fait que déposer des événements pour les autres entités touchées.
 
-> Le middleware `AuditMiddleware` couvre également `POST /{id}/transition` (path avec UUID) et produit un diff `statut_changed` — il peut donc y avoir deux entrées d'audit pour une transition. Le log repo est plus sémantique (`status_transitioned` avec before/after explicites).
+| Endpoint                       | Entité auditée            | `decision_type` écrits          | `is_system` |
+| ------------------------------ | ------------------------- | ------------------------------- | ----------- |
+| `POST /intervention-requests`  | demande (id créé)         | `created`                       | `false` |
+| `POST /{id}/transition`        | demande (id du chemin)    | `statut_changed`, et `intervention_id_changed` à l'acceptation ; à l'acceptation, ligne `created` de l'intervention créée (motif de la règle d'audit de l'entité intervention) | `false` |
+| `DELETE /{id}`                 | demande (id du chemin)    | `deleted` (motif obligatoire)   | `false` |
+| `POST /repair`                 | aucune (`events_only`) : les demandes réparées | `status_transitioned`, motif `SYSTEM_CASCADE` | `true` |
+
+La clôture automatique d'une demande (fermeture de son intervention) écrit aussi un `status_transitioned` du système (`SYSTEM_CASCADE`), au nom de l'utilisateur du jeton. La réouverture d'une demande par la suppression de son intervention écrit un `status_transitioned` de l'utilisateur (voir `DELETE /interventions/{id}`).
 
 ### Validation `reason_code`
 
-Le middleware valide la présence et l'existence du `reason_code` **avant** l'exécution de la route pour tous les `POST` avec UUID dans le path. Pour `POST /intervention-requests` (création) et `POST /repair` (pas d'UUID dans le path), la validation est gérée par les validators Pydantic et la fonction DB `fn_audit_log_decision`.
+Le middleware valide le motif **avant** la route, y compris pour `POST /intervention-requests` et `POST /repair`. Sans motif dans le corps, la règle routinière de l'entité est appliquée si elle existe ; une suppression exige toujours un motif explicite.
 
 ---
 
@@ -419,7 +422,7 @@ Crée une nouvelle demande d'intervention. Le code (`DI-YYYY-NNNN`) et le statut
 | `service_id`           | uuid    | non          | UUID du service/département du demandeur                               |
 | `is_system`            | boolean | non          | `true` si DI générée par le système. Défaut : `false`                  |
 | `suggested_type_inter` | string  | non          | Type suggéré parmi `CUR`, `PRE`, `REA`, `BAT`, `PRO`, `COF`, `PIL`, `MES`. `null` par défaut |
-| `reason_code`          | string  | **oui**      | Code raison obligatoire pour l'audit. Voir `GET /audit/reasons`        |
+| `reason_code`          | string  | non          | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons` |
 | `reason_text`          | string  | conditionnel | Texte libre obligatoire si `reason_code = "OTHER"`                     |
 
 ### Réponse `201` — `InterventionRequestDetail`
@@ -485,7 +488,7 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
 
 Retourne la demande mise à jour. Si `acceptee`, les champs `intervention_id` et `intervention` sont désormais renseignés.
 
-**Audit** : log `status_transitioned` inséré dans `audit_log` avec `old_value = {"statut": "<ancien>"}` et `new_value = {"statut": "<nouveau>", "notes": "..."}`.
+**Audit** : une ligne `statut_changed` (ancien et nouveau statut) écrite par le middleware ; les notes restent dans `status_log`. À l'acceptation, une ligne `intervention_id_changed` s'y ajoute.
 
 ### Erreurs
 
@@ -508,7 +511,7 @@ Utile pour corriger des données historiques où la cascade de clôture automati
 
 **Idempotent** : peut être appelé plusieurs fois sans effet secondaire.
 
-**Audit** : un log `status_transitioned` (`is_system = true`) est inséré dans `audit_log` pour chaque DI réparée.
+**Audit** : un événement `status_transitioned` du système (`is_system = true`, motif `SYSTEM_CASCADE`, auteur : le jeton) est écrit dans `audit_log` pour chaque DI réparée, dans la même transaction. Une erreur annule toute la réparation.
 
 ### Réponse `200` — `RepairResult`
 

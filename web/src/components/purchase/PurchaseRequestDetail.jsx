@@ -17,6 +17,7 @@ import { formatPrice } from '@/utils/formatPrice';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
 import PurchaseEntityHistoryTab, { PURCHASE_ENTITY_TYPES } from '@/components/purchase/PurchaseEntityHistoryTab';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 function DetailRow({ label, children }) {
   return (
@@ -113,7 +114,7 @@ function InterventionDetails({ intervention }) {
     <Flex direction="column" gap="1">
       <Flex align="center" gap="2" mb="1">
         <Badge size="1" variant="soft" color={priorityColor}>{intervention.code}</Badge>
-        <Link to={`/intervention/${intervention.id}`} style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to={entityCodeUrl('intervention', intervention.id)} style={{ display: 'flex', alignItems: 'center' }}>
           <ExternalLink size={12} color="var(--blue-9)" />
         </Link>
       </Flex>

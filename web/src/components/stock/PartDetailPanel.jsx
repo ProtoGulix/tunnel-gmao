@@ -5,7 +5,7 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Separator, Text } from '@radix-ui/themes';
-import { Edit2, Factory, PackageSearch, ShoppingCart, Star, Trash2, X } from 'lucide-react';
+import { Edit2, Factory, PackageSearch, ShoppingCart, Star, X } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import PartManufacturerRefsPanel from '@/components/stock/PartManufacturerRefsPanel';
 import { usePermissions } from '@/auth/usePermissions';
@@ -96,7 +96,7 @@ PartMeta.propTypes = { part: PropTypes.object.isRequired };
 
 // ─── Panel principal ──────────────────────────────────────────────────────────
 
-export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onClose }) {
+export default function PartDetailPanel({ part, onEdit, onRefresh, onClose }) {
   const { can } = usePermissions();
   if (!part) return null;
 
@@ -113,9 +113,6 @@ export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onC
           {can(PERM.parts.update) && (
             <Button size="1" variant="soft" color="gray" onClick={onEdit}><Edit2 size={12} /> Modifier</Button>
           )}
-          {can(PERM.parts.update) && (
-            <Button size="1" variant="soft" color="red" onClick={onDelete}><Trash2 size={12} /></Button>
-          )}
           <Button size="1" variant="ghost" color="gray" onClick={onClose}><X size={14} /></Button>
         </Flex>
       </Flex>
@@ -130,7 +127,7 @@ export default function PartDetailPanel({ part, onEdit, onDelete, onRefresh, onC
 
       <Separator size="4" />
       <Button size="2" variant="soft" color="blue" disabled>
-        <ShoppingCart size={14} /> Créer une demande d'achat
+        <ShoppingCart size={14} /> Créer une demande d&apos;achat
       </Button>
     </Flex>
   );
@@ -149,7 +146,6 @@ PartDetailPanel.propTypes = {
     manufacturer_refs: PropTypes.array,
   }),
   onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
   onRefresh: PropTypes.func,
   onClose: PropTypes.func.isRequired,
 };

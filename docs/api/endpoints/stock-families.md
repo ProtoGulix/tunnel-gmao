@@ -249,3 +249,11 @@ La famille avec le nouveau code et toutes ses sous-familles.
 ## Notes
 
 - Pour gérer les sous-familles, voir [Stock Sub-Families](stock-sub-families.md).
+
+## Audit (ADR 0018, étape 3)
+
+Pas d'uuid : la famille est tracée sous un uuid déterministe de son code (uuid5, espace de noms constant, `api/audits/entity_ids.py`). Le même code donne toujours le même `entity_id` ; le code est aussi écrit dans `old_value` et `new_value`. `entity_type = stock_family`, motif routinier injecté si absent.
+
+- `POST /stock-families` : `created` (`new_value` = code et libellé).
+- `PATCH /stock-families/{family_code}` : `code_changed` et/ou `label_changed`, sous l'uuid de l'**ancien** code (l'identité avant la requête) ; `old_value` et `new_value` portent le code et le libellé avant et après. Après un renommage, l'historique suivant se range sous l'uuid du nouveau code.
+- Pas de suppression de famille.

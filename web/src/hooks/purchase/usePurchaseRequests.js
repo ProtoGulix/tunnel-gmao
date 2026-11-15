@@ -99,11 +99,19 @@ export function usePurchaseRequests({ initialStatus = '', initialUrgency = '', i
     await loadStats();
   }, [loadStats]);
 
-  const removeItems = useCallback(async (ids) => {
-    await Promise.all(ids.map((id) => deletePurchaseRequest(id)));
-    const idSet = new Set(ids);
-    setItems((prev) => prev.filter((item) => !idSet.has(item.id)));
-    await loadStats();
+  // Un motif commun à tout le lot, envoyé demande par demande : chaque suppression reste
+  // atomique et tracée ; on garde en liste celles qui n'ont pas pu être supprimées.
+  const removeItems = useCallback(async (ids, reason) => {
+    const deleted = new Set();
+    try {
+      for (const id of ids) {
+        await deletePurchaseRequest(id, reason);
+        deleted.add(id);
+      }
+    } finally {
+      setItems((prev) => prev.filter((item) => !deleted.has(item.id)));
+      await loadStats();
+    }
   }, [loadStats]);
 
   const dispatch = useCallback(async (excludedIds = []) => {

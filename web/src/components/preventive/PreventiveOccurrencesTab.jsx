@@ -19,6 +19,7 @@ import {
   OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS,
   STEP_STATUS_COLORS, STEP_STATUS_LABELS,
 } from '@/config/preventiveConfig';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 const stepColumns = [
   { key: 'order', header: '#', width: 36, render: (s) => <Text size="1" color="gray">{s.sort_order}</Text> },
@@ -163,7 +164,7 @@ export default function PreventiveOccurrencesTab() {
       render: (r) => r.intervention_id
         ? (
           <Button size="1" variant="ghost" asChild>
-            <Link to={`/intervention/${r.intervention_id}`}><ExternalLink size={11} />Voir</Link>
+            <Link to={entityCodeUrl('intervention', r.intervention_id)}><ExternalLink size={11} />Voir</Link>
           </Button>
         )
         : <Text size="1" color="gray">—</Text>,
@@ -228,7 +229,7 @@ export default function PreventiveOccurrencesTab() {
           <Select.Trigger style={{ minWidth: 130 }} placeholder="Tous statuts" />
           <Select.Content>
             <Select.Item value="__all__">Tous statuts</Select.Item>
-            {Object.entries(STATUS_LABELS).map(([k, v]) => <Select.Item key={k} value={k}>{v}</Select.Item>)}
+            {Object.entries(OCCURRENCE_STATUS_LABELS).map(([k, v]) => <Select.Item key={k} value={k}>{v}</Select.Item>)}
           </Select.Content>
         </Select.Root>
         <TextField.Root type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />

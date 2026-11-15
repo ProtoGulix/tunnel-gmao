@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Flex, Select, Text, TextArea, Spinner } from '@radix-ui/themes';
 import { fetchAuditReasons } from '@/api/auditReasons';
+import { filterReasonsByDecision } from '@/lib/api/auditReasonFilter';
 
 /**
  * @param {Object}   props
  * @param {string}   props.entityType  - Type d'entité (pour le fetch fallback)
  * @param {Array}    [props.reasons]   - Reasons pré-chargées depuis audit.reasons du GET.
  *                                       Si fourni, le fetch /audit/reasons est ignoré.
+ * @param {string}   [props.decisionType] - ne propose que les motifs de cette décision (ex : deleted)
  * @param {Object}   props.value
  * @param {Function} props.onChange
  * @param {boolean}  [props.required]
  */
-export default function AuditReasonPicker({ entityType, reasons: reasonsProp, value, onChange, required = true }) {
+export default function AuditReasonPicker({ entityType, reasons: reasonsProp, decisionType, value, onChange, required = true }) {
   const [fetchedReasons, setFetchedReasons] = useState([]);
   const [loading, setLoading] = useState(!reasonsProp);
   const [error, setError] = useState(null);
@@ -28,7 +30,7 @@ export default function AuditReasonPicker({ entityType, reasons: reasonsProp, va
     return () => { cancelled = true; };
   }, [entityType, reasonsProp]);
 
-  const reasons = reasonsProp ?? fetchedReasons;
+  const reasons = filterReasonsByDecision(reasonsProp ?? fetchedReasons, decisionType);
   const selectedReason = reasons.find((r) => r.code === value.reason_code);
   const requiresText = selectedReason?.requires_text ?? false;
 
@@ -50,6 +52,14 @@ export default function AuditReasonPicker({ entityType, reasons: reasonsProp, va
     return (
       <Box style={{ background: 'var(--red-3)', border: '1px solid var(--red-7)', borderRadius: 6, padding: '8px 12px' }}>
         <Text size="1" color="red">{error}</Text>
+      </Box>
+    );
+  }
+
+  if (decisionType && reasons.length === 0) {
+    return (
+      <Box style={{ background: 'var(--amber-3)', border: '1px solid var(--amber-7)', borderRadius: 6, padding: '8px 12px' }}>
+        <Text size="1" color="amber">Aucun motif disponible pour cette décision. Un administrateur doit en ajouter.</Text>
       </Box>
     );
   }
@@ -105,8 +115,9 @@ export default function AuditReasonPicker({ entityType, reasons: reasonsProp, va
 }
 
 AuditReasonPicker.propTypes = {
-  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action']).isRequired,
+  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action', 'supplier_order', 'equipement', 'preventive_occurrence']).isRequired,
   reasons: PropTypes.array,
+  decisionType: PropTypes.string,
   value: PropTypes.shape({
     reason_code: PropTypes.string,
     reason_text: PropTypes.string,

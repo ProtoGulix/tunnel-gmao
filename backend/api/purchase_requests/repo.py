@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from api.audits.events import record_audit_event
 from api.constants import (
     CLOSED_STATUS_CODE,
     DERIVED_STATUS_CONFIG,
@@ -1224,6 +1225,69 @@ class PurchaseRequestRepository:
         existing_qty = row[0] if row and row[0] is not None else None
         return int(existing_qty) if existing_qty else None
 
+    # Plus grande quantité acceptée par la colonne integer de purchase_request.
+    _MAX_QUANTITY = 2_147_483_647
+
+    @staticmethod
+    def _import_line(row_num, raw_ref, raw_qty, status, **extra) -> Dict[str, Any]:
+        """Ligne du rapport d'import, avec les valeurs par défaut du contrat ImportLineResult."""
+        line = {
+            'row': row_num,
+            'raw_ref': raw_ref,
+            'raw_qty': raw_qty,
+            'part_id': None,
+            'display_name': None,
+            'internal_ref': None,
+            'status': status,
+            'da_status': None,
+            'duplicate_warning': False,
+            'existing_qty': None,
+            'existing_to_qualify': 0,
+            'error': None,
+        }
+        line.update(extra)
+        return line
+
+    def _validate_import_row(self, row_num, raw_ref, raw_qty) -> tuple:
+        """Valide une ligne sans rien lire en base. Retourne (quantité, ligne en erreur ou None)."""
+        if not raw_ref:
+            return None, self._import_line(
+                row_num, raw_ref, raw_qty, 'error', error='Référence vide'
+            )
+        try:
+            qty = int(float(raw_qty))
+            if qty <= 0 or qty > self._MAX_QUANTITY:
+                raise ValueError
+        except (ValueError, TypeError, OverflowError):
+            return None, self._import_line(
+                row_num, raw_ref, raw_qty, 'error', error=f"Quantité invalide : '{raw_qty}'"
+            )
+        return qty, None
+
+    def _analyse_import_row(self, cur, row_num, raw_ref, raw_qty, intervention_id) -> tuple:
+        """Analyse (lecture seule) d'une ligne valide : pièce, doublon, DA à qualifier."""
+        part = self._search_part(cur, raw_ref)
+        part_id_str = str(part['id']) if part else None
+        display_name = part.get('display_name') if part else None
+        existing_qty = self._check_duplicate_on_intervention(
+            cur, part_id_str, raw_ref, intervention_id
+        )
+        line = self._import_line(
+            row_num,
+            raw_ref,
+            raw_qty,
+            'preview',
+            part_id=part_id_str,
+            display_name=display_name,
+            internal_ref=part.get('internal_ref') if part else None,
+            duplicate_warning=existing_qty is not None,
+            existing_qty=existing_qty,
+            existing_to_qualify=self._count_existing_to_qualify(
+                cur, part_id_str, display_name or raw_ref
+            ),
+        )
+        return line
+
     def import_from_csv(
         self,
         rows: List[Dict[str, str]],
@@ -1231,192 +1295,57 @@ class PurchaseRequestRepository:
         col_ref: str,
         col_qty: str,
         urgency: str = 'normal',
-        reason_code: str = 'IMPORT_CSV',
         dry_run: bool = False,
         excluded_rows: Optional[List[int]] = None,
     ) -> Dict[str, Any]:
         """
-        Importe des DA en masse depuis les lignes d'un CSV.
+        Importe des DA en masse depuis les lignes d'un CSV, tout ou rien (ADR 0018, 1 quinquies).
 
-        Pour chaque ligne :
-        1. Tente de matcher la ref via recherche dans le catalogue part
-        2. Vérifie les doublons sur l'intervention (warning non bloquant)
-        3. Compte les DA À qualifier existantes pour cette référence
-        4. Si dry_run=True : analyse sans créer (status='preview')
-        5. Si excluded_rows contient le numéro de ligne : ignore (status='skipped')
-        6. Sinon : crée la DA via la même mécanique que add()
+        Phase 1, lecture seule : chaque ligne est validée et analysée (référence, quantité,
+        pièce du catalogue, doublon sur l'intervention, DA à qualifier). Toutes les lignes
+        passent, le rapport est donc complet même avec plusieurs erreurs.
+        Phase 2, écriture : seulement si aucune ligne n'est en erreur et hors dry_run, les
+        DA sont créées (même mécanique que add()) et chacune dépose sa ligne d'audit `created`.
+
+        Sans écriture (dry_run ou au moins une erreur), les lignes valides restent en
+        status='preview' ; une ligne listée dans excluded_rows est 'skipped' (import réel).
+        Une erreur SQL n'est pas absorbée : elle annule la requête entière.
         """
         excluded_set = set(excluded_rows or [])
-        lines = []
-        created = 0
-        skipped = 0
-        errors = 0
+        lines: List[Dict[str, Any]] = []
+        to_create: List[tuple] = []  # (index dans lines, quantité) des lignes à écrire
 
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-
             for idx, raw_row in enumerate(rows):
                 row_num = idx + 1
                 raw_ref = str(raw_row.get(col_ref, '') or '').strip()
                 raw_qty = str(raw_row.get(col_qty, '') or '').strip()
 
-                if not raw_ref:
-                    errors += 1
-                    lines.append(
-                        {
-                            'row': row_num,
-                            'raw_ref': raw_ref,
-                            'raw_qty': raw_qty,
-                            'part_id': None,
-                            'display_name': None,
-                            'internal_ref': None,
-                            'status': 'error',
-                            'da_status': None,
-                            'duplicate_warning': False,
-                            'existing_qty': None,
-                            'existing_to_qualify': 0,
-                            'error': 'Référence vide',
-                        }
-                    )
+                qty, error_line = self._validate_import_row(row_num, raw_ref, raw_qty)
+                if error_line:
+                    lines.append(error_line)
                     continue
 
-                try:
-                    qty = int(float(raw_qty))
-                    if qty <= 0:
-                        raise ValueError
-                except (ValueError, TypeError):
-                    errors += 1
-                    lines.append(
-                        {
-                            'row': row_num,
-                            'raw_ref': raw_ref,
-                            'raw_qty': raw_qty,
-                            'part_id': None,
-                            'display_name': None,
-                            'internal_ref': None,
-                            'status': 'error',
-                            'da_status': None,
-                            'duplicate_warning': False,
-                            'existing_qty': None,
-                            'existing_to_qualify': 0,
-                            'error': f"Quantité invalide : '{raw_qty}'",
-                        }
-                    )
-                    continue
+                line = self._analyse_import_row(cur, row_num, raw_ref, raw_qty, intervention_id)
+                if not dry_run and row_num in excluded_set:
+                    line['status'] = 'skipped'
+                elif not dry_run:
+                    to_create.append((len(lines), qty))
+                lines.append(line)
 
-                try:
-                    # Recherche dans le catalogue
-                    part = self._search_part(cur, raw_ref)
-                    part_id_str = str(part['id']) if part else None
-                    display_name = part.get('display_name') if part else None
-                    internal_ref = part.get('internal_ref') if part else None
-
-                    # Vérification doublon sur l'intervention
-                    existing_qty = self._check_duplicate_on_intervention(
-                        cur, part_id_str, raw_ref, intervention_id
-                    )
-                    duplicate_warning = existing_qty is not None
-
-                    # Compte les DA À qualifier existantes pour cette référence
-                    existing_to_qualify = self._count_existing_to_qualify(
-                        cur, part_id_str, display_name or raw_ref
-                    )
-
-                    # Ligne exclue par l'utilisateur (dry_run=False requis)
-                    if not dry_run and row_num in excluded_set:
-                        skipped += 1
-                        lines.append(
-                            {
-                                'row': row_num,
-                                'raw_ref': raw_ref,
-                                'raw_qty': raw_qty,
-                                'part_id': part_id_str,
-                                'display_name': display_name,
-                                'internal_ref': internal_ref,
-                                'status': 'skipped',
-                                'da_status': None,
-                                'duplicate_warning': duplicate_warning,
-                                'existing_qty': existing_qty,
-                                'existing_to_qualify': existing_to_qualify,
-                                'error': None,
-                            }
-                        )
-                        continue
-
-                    if dry_run:
-                        # Mode aperçu : analyse sans création
-                        lines.append(
-                            {
-                                'row': row_num,
-                                'raw_ref': raw_ref,
-                                'raw_qty': raw_qty,
-                                'part_id': part_id_str,
-                                'display_name': display_name,
-                                'internal_ref': internal_ref,
-                                'status': 'preview',
-                                'da_status': None,
-                                'duplicate_warning': duplicate_warning,
-                                'existing_qty': existing_qty,
-                                'existing_to_qualify': existing_to_qualify,
-                                'error': None,
-                            }
-                        )
-                        continue
-
-                    # Préparation du payload DA
-                    da_data = {
-                        'item_label': display_name or raw_ref,
-                        'quantity': qty,
-                        'urgency': urgency,
-                        'reason_code': reason_code,
-                    }
-                    if part_id_str:
-                        da_data['part_id'] = part_id_str
-
-                    # Création via la mécanique existante (sans intervention_action_id car DA autonome)
-                    created_da = self.add(da_data)
-
-                    da_status_code = created_da.get('derived_status', {}).get('code')
+            errors = sum(1 for line in lines if line['status'] == 'error')
+            skipped = sum(1 for line in lines if line['status'] == 'skipped')
+            created = 0
+            if not dry_run and errors == 0:
+                for line_idx, qty in to_create:
+                    self._create_imported_request(lines[line_idx], qty, urgency)
                     created += 1
-
-                    lines.append(
-                        {
-                            'row': row_num,
-                            'raw_ref': raw_ref,
-                            'raw_qty': raw_qty,
-                            'part_id': part_id_str,
-                            'display_name': display_name,
-                            'internal_ref': internal_ref,
-                            'status': 'created',
-                            'da_status': da_status_code,
-                            'duplicate_warning': duplicate_warning,
-                            'existing_qty': existing_qty,
-                            'existing_to_qualify': existing_to_qualify,
-                            'error': None,
-                        }
-                    )
-
-                except Exception as e:
-                    logger.error("Erreur import ligne %d ('%s'): %s", row_num, raw_ref, str(e))
-                    errors += 1
-                    lines.append(
-                        {
-                            'row': row_num,
-                            'raw_ref': raw_ref,
-                            'raw_qty': raw_qty,
-                            'part_id': None,
-                            'display_name': None,
-                            'internal_ref': None,
-                            'status': 'error',
-                            'da_status': None,
-                            'duplicate_warning': False,
-                            'existing_qty': None,
-                            'existing_to_qualify': 0,
-                            'error': str(e),
-                        }
-                    )
-
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise_db_error(e, "import CSV")
         finally:
             release_connection(conn)
 
@@ -1427,6 +1356,31 @@ class PurchaseRequestRepository:
             'errors': errors,
             'lines': lines,
         }
+
+    def _create_imported_request(self, line: Dict[str, Any], qty: int, urgency: str) -> None:
+        """Crée la DA d'une ligne validée et dépose son événement d'audit `created`."""
+        da_data = {
+            'item_label': line['display_name'] or line['raw_ref'],
+            'quantity': qty,
+            'urgency': urgency,
+        }
+        if line['part_id']:
+            da_data['part_id'] = line['part_id']
+        # DA autonome : pas d'intervention_action_id.
+        created_da = self.add(da_data)
+        line['status'] = 'created'
+        line['da_status'] = created_da.get('derived_status', {}).get('code')
+        record_audit_event(
+            'purchase_request',
+            created_da['id'],
+            'created',
+            new_value={
+                'item_label': da_data['item_label'],
+                'quantity': qty,
+                'urgency': urgency,
+                'part_id': line['part_id'],
+            },
+        )
 
     def preview_dispatch(self) -> Dict[str, Any]:
         """
@@ -1553,6 +1507,80 @@ class PurchaseRequestRepository:
         planned_new_orders.add(supplier_id_str)
         return True
 
+    def _supplier_rows_for_dispatch(self, cur, req: Dict[str, Any]) -> tuple:
+        """Fournisseurs référencés d'une demande. Retourne (lignes, motif de refus ou None).
+
+        Lecture seule : sert à décider, avant toute écriture, si la demande est répartissable.
+        """
+        stock_item_id = req.get('stock_item_id')
+        part_id = req.get('part_id')
+        if not stock_item_id and not part_id:
+            return [], "Pièce catalogue non liée — qualifier la demande d'abord"
+
+        # Via part_supplier_ref si part_id, sinon stock_item_supplier (ancien modèle).
+        if part_id:
+            cur.execute(
+                """
+                SELECT psr.supplier_id, psr.supplier_ref, psr.unit_price,
+                       psr.is_preferred, s.name AS supplier_name
+                FROM part_supplier_ref psr
+                JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
+                LEFT JOIN supplier s ON s.id = psr.supplier_id
+                WHERE pmr.part_id = %s
+                ORDER BY psr.is_preferred DESC, s.name ASC
+                """,
+                (str(part_id),),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT sis.supplier_id, sis.supplier_ref, sis.unit_price,
+                       sis.is_preferred, s.name AS supplier_name
+                FROM stock_item_supplier sis
+                LEFT JOIN supplier s ON s.id = sis.supplier_id
+                WHERE sis.stock_item_id = %s
+                ORDER BY sis.is_preferred DESC, s.name ASC
+                """,
+                (str(stock_item_id),),
+            )
+        rows = cur.fetchall()
+        if not rows:
+            return [], 'Aucun fournisseur référencé pour cette pièce'
+        return rows, None
+
+    def _dispatch_one(self, cur, req: Dict[str, Any], supplier_rows, orders_cache: dict) -> tuple:
+        """Écrit la répartition d'une demande. Retourne (détail, ids des commandes créées)."""
+        req_id_str = str(req['id'])
+        stock_item_id = req.get('stock_item_id')
+        part_id = req.get('part_id')
+        new_orders = []
+        consultation_orders = []
+        # Mode CONSULTATION : un panier par fournisseur référencé. is_preferred (ORDER BY) ne
+        # pilote que l'ordre de traitement, pas le nombre de paniers générés.
+        for supplier_id, supplier_ref, unit_price, _, supplier_name in supplier_rows:
+            order_id, was_created = self._find_or_create_order(cur, str(supplier_id), orders_cache)
+            if was_created:
+                new_orders.append(order_id)
+            self._dispatch_to_supplier(
+                cur,
+                order_id,
+                str(stock_item_id) if stock_item_id else None,
+                supplier_ref,
+                unit_price,
+                req_id_str,
+                req.get('quantity', 1),
+                part_id=str(part_id) if part_id else None,
+            )
+            consultation_orders.append(
+                {'supplier_order_id': order_id, 'supplier_name': supplier_name}
+            )
+        detail = {
+            'purchase_request_id': req_id_str,
+            'mode': 'consultation',
+            'supplier_orders': consultation_orders,
+        }
+        return detail, new_orders
+
     def dispatch_all(self, excluded_ids: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Dispatch toutes les demandes PENDING_DISPATCH vers des supplier_orders.
@@ -1560,8 +1588,12 @@ class PurchaseRequestRepository:
         Règles métier :
         - 1 commande par fournisseur référencé pour la référence fabricant (mode CONSULTATION)
         - is_preferred n'influence que l'ordre de traitement, pas le nombre de paniers
-        - Aucun fournisseur → erreur remontée dans errors[]
         - Invariant : une demande déjà liée à une supplier_order_line est ignorée
+
+        Valider puis écrire (ADR 0018, 1 quinquies) : toutes les demandes sont d'abord
+        examinées en lecture seule ; celles qui ne sont pas répartissables (pièce non liée,
+        aucun fournisseur) sont signalées dans errors[] sans aucune écriture, les autres sont
+        réparties. Une erreur SQL n'est pas absorbée : elle annule la requête entière.
 
         excluded_ids : demandes explicitement exclues par l'utilisateur depuis l'écran
         de prévisualisation (cf. preview_dispatch) — restent en PENDING_DISPATCH.
@@ -1575,10 +1607,8 @@ class PurchaseRequestRepository:
             if req.get('derived_status', {}).get('code') == 'PENDING_DISPATCH'
             and str(req['id']) not in excluded_set
         ]
-
         logger.info("Found %d requests to dispatch", len(pending_requests))
 
-        dispatched_count = 0
         created_orders = 0
         errors = []
         details = []
@@ -1588,156 +1618,67 @@ class PurchaseRequestRepository:
         try:
             cur = conn.cursor()
 
+            # Phase 1 : examen en lecture seule.
+            dispatchable = []
             for req in pending_requests:
-                req_id_str = str(req['id'])
-                savepoint_name = f"sp_{req_id_str.replace('-', '_')[:8]}"
-
-                try:
-                    cur.execute(f"SAVEPOINT {savepoint_name}")
-
-                    stock_item_id = req.get('stock_item_id')
-                    part_id = req.get('part_id')
-                    if not stock_item_id and not part_id:
-                        cur.execute(f"ROLLBACK TO SAVEPOINT {savepoint_name}")
-                        errors.append(
-                            {
-                                'purchase_request_id': req_id_str,
-                                'item_label': req.get('item_label', ''),
-                                'error': "Pièce catalogue non liée — qualifier la demande d'abord",
-                            }
-                        )
-                        continue
-
-                    req_quantity = req.get('quantity', 1)
-                    stock_item_id_str = str(stock_item_id) if stock_item_id else None
-                    part_id_str = str(part_id) if part_id else None
-
-                    # Récupère les fournisseurs : via part_supplier_ref si part_id, sinon stock_item_supplier
-                    if part_id_str:
-                        cur.execute(
-                            """
-                            SELECT psr.supplier_id, psr.supplier_ref, psr.unit_price,
-                                   psr.is_preferred, s.name AS supplier_name
-                            FROM part_supplier_ref psr
-                            JOIN part_manufacturer_ref pmr ON pmr.id = psr.part_manufacturer_ref_id
-                            LEFT JOIN supplier s ON s.id = psr.supplier_id
-                            WHERE pmr.part_id = %s
-                            ORDER BY psr.is_preferred DESC, s.name ASC
-                            """,
-                            (part_id_str,),
-                        )
-                    else:
-                        cur.execute(
-                            """
-                            SELECT sis.supplier_id, sis.supplier_ref, sis.unit_price,
-                                   sis.is_preferred, s.name AS supplier_name
-                            FROM stock_item_supplier sis
-                            LEFT JOIN supplier s ON s.id = sis.supplier_id
-                            WHERE sis.stock_item_id = %s
-                            ORDER BY sis.is_preferred DESC, s.name ASC
-                            """,
-                            (stock_item_id_str,),
-                        )
-                    supplier_rows = cur.fetchall()
-
-                    if not supplier_rows:
-                        cur.execute(f"ROLLBACK TO SAVEPOINT {savepoint_name}")
-                        errors.append(
-                            {
-                                'purchase_request_id': req_id_str,
-                                'item_label': req.get('item_label', ''),
-                                'error': 'Aucun fournisseur référencé pour cette pièce',
-                            }
-                        )
-                        continue
-
-                    # Mode CONSULTATION : un panier par fournisseur référencé.
-                    # is_preferred (utilisé dans le ORDER BY) ne pilote que l'ordre de
-                    # traitement, pas le nombre de paniers générés.
-                    consultation_orders = []
-                    for sup_row in supplier_rows:
-                        supplier_id_str, supplier_ref, unit_price, _, supplier_name = sup_row
-                        supplier_id_str = str(supplier_id_str)
-
-                        order_id, was_created = self._find_or_create_order(
-                            cur, supplier_id_str, orders_cache
-                        )
-                        if was_created:
-                            created_orders += 1
-
-                        self._dispatch_to_supplier(
-                            cur,
-                            order_id,
-                            stock_item_id_str,
-                            supplier_ref,
-                            unit_price,
-                            req_id_str,
-                            req_quantity,
-                            part_id=part_id_str,
-                        )
-
-                        consultation_orders.append(
-                            {'supplier_order_id': order_id, 'supplier_name': supplier_name}
-                        )
-
-                    details.append(
-                        {
-                            'purchase_request_id': req_id_str,
-                            'mode': 'consultation',
-                            'supplier_orders': consultation_orders,
-                        }
-                    )
-
-                    cur.execute(f"RELEASE SAVEPOINT {savepoint_name}")
-                    dispatched_count += 1
-                    logger.debug("Dispatched request %s", req['id'])
-
-                except Exception as e:
-                    try:
-                        cur.execute(f"ROLLBACK TO SAVEPOINT {savepoint_name}")
-                    except Exception:
-                        pass
-                    raw = str(e)
-                    if 'supplier_order_seq' in raw:
-                        user_msg = (
-                            "Séquence de numérotation des commandes manquante (contacter l'admin)"
-                        )
-                    elif 'not-null constraint' in raw and 'stock_item_id' in raw:
-                        user_msg = "Référence article manquante sur la ligne de commande"
-                    elif 'unique constraint' in raw or 'UniqueViolation' in raw:
-                        user_msg = "Cette demande est déjà présente dans un panier fournisseur"
-                    elif 'Aucun fournisseur' in raw:
-                        user_msg = raw
-                    else:
-                        user_msg = "Erreur technique lors du dispatch"
+                supplier_rows, refusal = self._supplier_rows_for_dispatch(cur, req)
+                if refusal:
                     errors.append(
                         {
-                            'purchase_request_id': req_id_str,
+                            'purchase_request_id': str(req['id']),
                             'item_label': req.get('item_label', ''),
-                            'error': user_msg,
-                            'error_detail': raw,
+                            'error': refusal,
                         }
                     )
-                    logger.error("Error dispatching request %s: %s", req['id'], raw)
+                else:
+                    dispatchable.append((req, supplier_rows))
 
-            conn.commit()
-            logger.info(
-                "Dispatch completed: %d dispatched, %d orders created, %d errors",
-                dispatched_count,
-                created_orders,
-                len(errors),
-            )
-
-            return {
-                'dispatched_count': dispatched_count,
-                'created_orders': created_orders,
-                'errors': errors,
-                'details': details,
-            }
-
+            # Phase 2 : écriture des seules demandes répartissables.
+            for req, supplier_rows in dispatchable:
+                detail, new_orders = self._dispatch_one(cur, req, supplier_rows, orders_cache)
+                details.append(detail)
+                created_orders += len(new_orders)
+                self._record_dispatch_events(cur, req, detail, new_orders)
+        except HTTPException:
+            raise
         except Exception as e:
-            conn.rollback()
-            logger.error("Dispatch failed: %s", str(e))
-            raise DatabaseError(f"Erreur lors du dispatch: {str(e)}") from e
+            raise_db_error(e, "répartition des demandes d'achat")
         finally:
             release_connection(conn)
+
+        logger.info(
+            "Dispatch completed: %d dispatched, %d orders created, %d errors",
+            len(details),
+            created_orders,
+            len(errors),
+        )
+        return {
+            'dispatched_count': len(details),
+            'created_orders': created_orders,
+            'errors': errors,
+            'details': details,
+        }
+
+    def _record_dispatch_events(self, cur, req, detail, new_orders: List[str]) -> None:
+        """Événements d'audit d'une répartition : commandes créées (système), demande répartie."""
+        for order_id in new_orders:
+            cur.execute("SELECT row_to_json(t) FROM supplier_order t WHERE id = %s", (order_id,))
+            created = cur.fetchone()[0]
+            for technical in ('id', 'created_at', 'updated_at'):
+                created.pop(technical, None)
+            record_audit_event(
+                'supplier_order',
+                order_id,
+                'created',
+                new_value=created,
+                is_system=True,
+                reason_code='SYSTEM_CASCADE',
+            )
+        record_audit_event(
+            'purchase_request',
+            detail['purchase_request_id'],
+            'dispatched',
+            new_value={
+                'supplier_order_ids': [o['supplier_order_id'] for o in detail['supplier_orders']]
+            },
+        )

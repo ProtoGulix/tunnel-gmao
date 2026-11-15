@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.constants import INTERVENTION_TYPES
 from api.equipements.schemas import EquipementDetail
@@ -140,33 +141,46 @@ def get_intervention_actions(intervention_id: str, request: Request):
     return single(repo.get_by_intervention(intervention_id))
 
 
-@router.post("", status_code=201)
+@router.post(
+    "",
+    status_code=201,
+    dependencies=[audit("intervention", id_from_created=True, table="intervention")],
+)
 def create_intervention(data: InterventionCreate, request: Request):
     """
     Crée une nouvelle intervention.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     payload = data.model_dump(exclude_none=True)
     InterventionValidator.validate_request_required(payload)
     repo = InterventionRepository()
-    return single(repo.add(payload))
+    user_id = getattr(request.state, "user_id", None)
+    created = repo.add(payload, user_id=str(user_id) if user_id else None)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put("/{intervention_id}")
+@router.put(
+    "/{intervention_id}",
+    dependencies=[audit("intervention", id_from_path="intervention_id", table="intervention")],
+)
 def update_intervention(intervention_id: str, data: InterventionIn, request: Request):
     """
     Met à jour une intervention existante.
 
-    **Audit obligatoire** : le champ `reason_code` est requis (voir `GET /audit/reasons`).
-    `reason_text` est obligatoire si `reason_code=OTHER`.
+    **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
+    injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
     repo = InterventionRepository()
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))
 
 
-@router.post("/{intervention_id}/force-close-request")
+@router.post(
+    "/{intervention_id}/force-close-request",
+    dependencies=[audit("intervention", id_from_path="intervention_id", table="intervention")],
+)
 def force_close_linked_request(intervention_id: str, request: Request):
     """
     Force la clôture de la demande d'intervention liée quand la cascade automatique a échoué.
@@ -181,7 +195,11 @@ def force_close_linked_request(intervention_id: str, request: Request):
     return single(repo.force_close_request(intervention_id))
 
 
-@router.post("/{intervention_id}/request-pointage", response_model=RequestPointageOut)
+@router.post(
+    "/{intervention_id}/request-pointage",
+    response_model=RequestPointageOut,
+    dependencies=[audit("intervention", id_from_path="intervention_id", table="intervention")],
+)
 def request_pointage(intervention_id: str, data: RequestPointageIn, request: Request):
     """
     Demande un pointage à une liste de techniciens sur cette intervention.
@@ -211,9 +229,23 @@ def request_pointage(intervention_id: str, data: RequestPointageIn, request: Req
     return RequestPointageOut(created=created)
 
 
-@router.delete("/{intervention_id}")
-def delete_intervention(intervention_id: str, request: Request):
-    """Supprime une intervention"""
+@router.delete(
+    "/{intervention_id}",
+    dependencies=[audit("intervention", id_from_path="intervention_id", table="intervention")],
+)
+def delete_intervention(
+    intervention_id: str,
+    request: Request,
+    request_outcome: Optional[Literal["reopen", "delete"]] = Query(
+        None,
+        description=(
+            "Issue de la demande liée, obligatoire si l'intervention en a une : "
+            "`reopen` rouvre la demande (retour à « nouvelle »), `delete` la supprime aussi."
+        ),
+    ),
+):
+    """Supprime une intervention. **Motif obligatoire** (`reason_code`, voir `GET /audit/reasons`)."""
     repo = InterventionRepository()
-    repo.delete(intervention_id)
+    user_id = getattr(request.state, "user_id", None)
+    repo.delete(intervention_id, request_outcome, str(user_id) if user_id else None)
     return {"detail": "Intervention supprimée"}

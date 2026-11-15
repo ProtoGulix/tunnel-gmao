@@ -71,10 +71,10 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
     });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = async (reason) => {
     setBulkDeleting(true);
     try {
-      await removeItems(Array.from(checkedIds));
+      await removeItems(Array.from(checkedIds), reason);
       setCheckedIds(new Set());
       setBulkDeleteConfirm(false);
     } finally {
@@ -125,7 +125,12 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
 
   const handleDelete = async () => {
     if (!selected) return;
-    await removeItem(selected.id);
+    try {
+      await removeItem(selected.id);
+    } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      throw err;
+    }
     setIsEditDirty(false);
     setRequestIdRaw(null);
     setMode(null);
@@ -194,7 +199,7 @@ export default function PurchaseRequestsTab({ refreshSignal, onDispatchStateChan
 
       <BulkDeleteDialog
         open={bulkDeleteConfirm}
-        onOpenChange={setBulkDeleteConfirm}
+        onCancel={() => setBulkDeleteConfirm(false)}
         labels={items.filter((i) => checkedIds.has(i.id)).map((i) => i.code || i.item_label)}
         onConfirm={handleBulkDelete}
         deleting={bulkDeleting}

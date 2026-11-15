@@ -5,21 +5,24 @@
  */
 
 import { api } from '@/lib/api/client';
+import { selectableReasons } from '@/lib/api/auditReasonFilter';
 
 const _cache = {};
 
 /**
- * @param {'intervention'|'request'|'purchase_request'|'task'|'action'} entityType
+ * @param {'intervention'|'request'|'purchase_request'|'task'|'action'|'supplier_order'|'equipement'|'preventive_occurrence'} entityType
  * @returns {Promise<Array<{code: string, label: string, color: string}>>}
  */
 export async function fetchAuditReasons(entityType) {
   if (_cache[entityType]) return _cache[entityType];
 
+  // Toutes catégories, puis filtre : les motifs « user » (OTHER, motifs de clôture et de
+  // suppression) étaient exclus par l'ancien filtre category=manual.
   const response = await api.get('/audit/reasons', {
-    params: { entity_type: entityType, category: 'manual' },
+    params: { entity_type: entityType },
   });
 
-  const reasons = response.data;
+  const reasons = selectableReasons(response.data);
   // OTHER toujours en dernier
   const sorted = [
     ...reasons.filter((r) => r.code !== 'OTHER'),

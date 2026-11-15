@@ -62,10 +62,6 @@ export async function updatePart(id, updates) {
   return response.data || null;
 }
 
-export async function deletePart(id) {
-  await api.delete(`/parts/${id}`);
-}
-
 // ─── Références fabricant ─────────────────────────────────────────────────────
 
 export async function addManufacturerRef(partId, payload) {

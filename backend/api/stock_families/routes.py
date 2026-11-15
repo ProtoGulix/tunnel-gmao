@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.stock_families.repo import StockFamilyRepository
 from api.stock_families.schemas import (
@@ -51,14 +52,24 @@ def get_stock_family(
     return single(repo.get_by_code(family_code, search=search))
 
 
-@router.post("", status_code=201, response_model=StockFamilySingleResponse)
+# Famille sans uuid : tracée par événements du repo, sous l'uuid déterministe de son code.
+@router.post(
+    "",
+    status_code=201,
+    response_model=StockFamilySingleResponse,
+    dependencies=[audit("stock_family", events_only=True)],
+)
 def create_stock_family(data: StockFamilyIn):
     """Crée une nouvelle famille de stock"""
     repo = StockFamilyRepository()
     return single(repo.create(data))
 
 
-@router.patch("/{family_code}", response_model=StockFamilySingleResponse)
+@router.patch(
+    "/{family_code}",
+    response_model=StockFamilySingleResponse,
+    dependencies=[audit("stock_family", events_only=True)],
+)
 def patch_stock_family(family_code: str, data: StockFamilyPatch):
     """Renomme une famille de stock (met à jour family_code sur toutes les sous-familles)"""
     repo = StockFamilyRepository()

@@ -257,6 +257,7 @@ Crée une commande.
 ### Règles métier
 
 - `order_number` est auto-généré par trigger
+- Audit : une ligne `created` (auteur = jeton, motif routinier), sans doublon
 - `total_amount` est recalculé automatiquement par trigger (`trg_recalculate_supplier_order_total`) à chaque INSERT/UPDATE/DELETE sur `supplier_order_line` — somme des `total_price` des lignes. Aucun calcul côté API ou frontend nécessaire.
 
 ---
@@ -369,11 +370,15 @@ Consultations non résolues :
 
 Met à jour. `order_number` non modifiable. Tous champs optionnels (schema `SupplierOrderUpdate`).
 
+**Audit** : une ligne `*_changed` par champ modifié, auteur = jeton (middleware, motif routinier).
+
 ---
 
 ## `DELETE /supplier-orders/{id}`
 
-Supprime (cascade sur les lignes). Réponse `204`.
+Supprime (cascade sur les lignes). Réponse `200`.
+
+**Audit** : motif explicite exigé dans le corps (`reason_code`) ; ligne `deleted` écrite par le middleware.
 
 ---
 

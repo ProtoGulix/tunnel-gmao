@@ -95,3 +95,7 @@ Le rôle `MCP` donne accès en lecture seule (`GET`) à tous les endpoints non-s
 - Une clé expirée (`expires_at` dépassé) est rejetée avec 401.
 - Une clé inactive (`is_active: false`) est rejetée avec 401.
 - Délai aléatoire anti-timing sur les 401 (identique au comportement JWT).
+
+## Audit (ADR 0018, étape 4)
+
+Création, modification et suppression sont tracées (`entity_type` `api_key`) en routine, sauf `DELETE` qui exige un `reason_code` (400 sinon). `key_hash` est masqué ; le secret brut n'est jamais écrit.

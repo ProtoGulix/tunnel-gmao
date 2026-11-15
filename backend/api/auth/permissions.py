@@ -221,12 +221,20 @@ def enforce_permission_matrix(request: Request) -> None:
     Fonction synchrone : FastAPI l'exécute dans un thread, le rechargement du cache
     (accès base) ne bloque donc pas la boucle d'événements.
     """
+    check_matrix(request, request.scope.get("route"))
+
+
+def check_matrix(request: Request, route) -> None:
+    """Contrôle de la matrice pour une route donnée (lève ForbiddenError si refusé).
+
+    Partagé par la dépendance globale et par PermissionMiddleware, qui doit refuser avant
+    que le middleware d'audit ne valide le motif (ADR 0018, point 2).
+    """
     if request.method == "OPTIONS" or not _is_authenticated(request):
         return
     role = getattr(request.state, "role", None)
     if role == "ADMIN":
         return
-    route = request.scope.get("route")
     if route is None or not hasattr(route, "path") or not getattr(route, "methods", None):
         # Route inconnue : ne pas deviner un code, refuser.
         raise ForbiddenError("Accès refusé")

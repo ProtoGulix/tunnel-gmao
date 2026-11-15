@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import NotFoundError, raise_db_error
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -195,7 +195,7 @@ class ManufacturerItemRepository:
             logger.info("Référence fabricant %s mise à jour", item_id)
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "mise à jour de la référence fabricant")
         finally:
             release_connection(conn)
 
@@ -213,6 +213,6 @@ class ManufacturerItemRepository:
             logger.info("Référence fabricant %s supprimée", item_id)
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "suppression de la référence fabricant")
         finally:
             release_connection(conn)

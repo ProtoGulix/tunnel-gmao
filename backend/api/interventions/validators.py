@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from api.constants import INTERVENTION_TYPE_IDS
+from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, ValidationError
 
@@ -70,7 +70,7 @@ class InterventionValidator:
     def validate_deletable(intervention_id: str) -> None:
         """
         RÈGLE MÉTIER : Une intervention ne peut être supprimée que si elle
-        n'a ni action ni demande d'achat liée.
+        n'est pas fermée et n'a ni action ni demande d'achat liée.
         """
         conn = get_connection()
         try:
@@ -78,18 +78,26 @@ class InterventionValidator:
             cur.execute(
                 """
                 SELECT
+                    i.status_actual,
                     COUNT(DISTINCT ia.id) AS action_count,
                     COUNT(DISTINCT iapr.purchase_request_id) AS purchase_count
                 FROM intervention i
                 LEFT JOIN intervention_action ia ON ia.intervention_id = i.id
                 LEFT JOIN intervention_action_purchase_request iapr ON iapr.intervention_action_id = ia.id
                 WHERE i.id = %s
+                GROUP BY i.status_actual
                 """,
                 (intervention_id,),
             )
             row = cur.fetchone()
-            action_count = row[0] or 0
-            purchase_count = row[1] or 0
+            if row is None:
+                return
+            status_actual, action_count, purchase_count = row[0], row[1] or 0, row[2] or 0
+
+            if status_actual == CLOSED_STATUS_CODE:
+                raise ValidationError(
+                    "Impossible de supprimer cette intervention : elle est fermée."
+                )
 
             if action_count > 0:
                 raise ValidationError(

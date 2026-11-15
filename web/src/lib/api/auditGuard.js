@@ -19,21 +19,9 @@
  */
 
 import { api } from '@/lib/api/client';
+import { getAuditEntityType, getAuditDecisionType } from '@/lib/api/auditEntity';
 
-// Map URL prefix → entity_type (miroir du _ENTITY_MAP backend)
-const _URL_ENTITY_MAP = {
-  'intervention-actions':  'action',
-  'intervention-requests': 'request',
-  'intervention-tasks':    'task',
-  'interventions':         'intervention',
-  'purchase-requests':     'purchase_request',
-};
-
-export function getAuditEntityType(error) {
-  const url = error?.config?.url ?? '';
-  const segment = url.replace(/^\//, '').split('/')[0];
-  return _URL_ENTITY_MAP[segment] ?? null;
-}
+export { getAuditEntityType, getAuditDecisionType };
 
 /**
  * Retourne true si l'erreur signifie que reason_code est manquant/invalide
@@ -67,7 +55,7 @@ const _subscribers = new Set();
 
 /**
  * S'abonner aux demandes d'audit.
- * Le callback reçoit { entityType, reasons, resolve, reject }.
+ * Le callback reçoit { entityType, decisionType, reasons, resolve, reject }.
  * @returns {Function} unsubscribe
  */
 export function onAuditRequired(callback) {
@@ -79,6 +67,7 @@ export function onAuditRequired(callback) {
 
 export function handleAuditError(error) {
   const entityType = getAuditEntityType(error);
+  const decisionType = getAuditDecisionType(error);
 
   // Le backend inclut toujours le champ `audit` dans le corps du 400/422 :
   // à ce stade la mutation est nécessairement sensible (sinon le backend
@@ -94,6 +83,7 @@ export function handleAuditError(error) {
     _subscribers.forEach((cb) =>
       cb({
         entityType,
+        decisionType,
         reasons,
         resolve: async (reason) => {
           try {

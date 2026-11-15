@@ -1,7 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.parts.repo import PartRepository
 from api.parts.schemas import (
@@ -96,16 +97,25 @@ def get_part(part_id: str):
 
 
 @router.post(
-    "", response_model=SingleResponse[PartDetail], status_code=201, response_model_exclude_none=True
+    "",
+    response_model=SingleResponse[PartDetail],
+    status_code=201,
+    response_model_exclude_none=True,
+    dependencies=[audit("part", id_from_created=True)],
 )
-def create_part(data: PartCreate):
+def create_part(data: PartCreate, request: Request):
     """Crée une nouvelle pièce (internal_ref P000001 générée automatiquement)"""
     repo = PartRepository()
-    return single(repo.create(data.model_dump()))
+    created = repo.create(data.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
 @router.patch(
-    "/{part_id}", response_model=SingleResponse[PartDetail], response_model_exclude_none=True
+    "/{part_id}",
+    response_model=SingleResponse[PartDetail],
+    response_model_exclude_none=True,
+    dependencies=[audit("part", id_from_path="part_id")],
 )
 def update_part(part_id: str, data: PartUpdate):
     """Met à jour une pièce (modification partielle)"""
@@ -118,17 +128,21 @@ def update_part(part_id: str, data: PartUpdate):
     response_model=SingleResponse[PartDetail],
     status_code=201,
     response_model_exclude_none=True,
+    dependencies=[audit("part_manufacturer_ref", id_from_created=True)],
 )
-def add_manufacturer_ref(part_id: str, data: PartManufacturerRefCreate):
+def add_manufacturer_ref(part_id: str, data: PartManufacturerRefCreate, request: Request):
     """Ajoute une référence fabricant à une pièce"""
     repo = PartRepository()
-    return single(repo.add_manufacturer_ref(part_id, data.model_dump()))
+    new_id, part = repo.add_manufacturer_ref(part_id, data.model_dump())
+    declare_created_id(request, new_id)
+    return single(part)
 
 
 @router.patch(
     "/manufacturer-refs/{mfr_ref_id}",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_manufacturer_ref", id_from_path="mfr_ref_id")],
 )
 def update_manufacturer_ref(mfr_ref_id: str, data: PartManufacturerRefUpdate):
     """Met à jour une référence fabricant (modification partielle)"""
@@ -140,6 +154,7 @@ def update_manufacturer_ref(mfr_ref_id: str, data: PartManufacturerRefUpdate):
     "/manufacturer-refs/{mfr_ref_id}",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_manufacturer_ref", id_from_path="mfr_ref_id")],
 )
 def delete_manufacturer_ref(mfr_ref_id: str):
     """Supprime une référence fabricant"""
@@ -151,6 +166,7 @@ def delete_manufacturer_ref(mfr_ref_id: str):
     "/manufacturer-refs/{mfr_ref_id}/set-preferred",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_manufacturer_ref", id_from_path="mfr_ref_id")],
 )
 def set_preferred_manufacturer_ref(mfr_ref_id: str):
     """Définit une référence fabricant comme préférée"""
@@ -163,17 +179,21 @@ def set_preferred_manufacturer_ref(mfr_ref_id: str):
     response_model=SingleResponse[PartDetail],
     status_code=201,
     response_model_exclude_none=True,
+    dependencies=[audit("part_supplier_ref", id_from_created=True)],
 )
-def add_supplier_ref(mfr_ref_id: str, data: PartSupplierRefCreate):
+def add_supplier_ref(mfr_ref_id: str, data: PartSupplierRefCreate, request: Request):
     """Ajoute une référence fournisseur à une référence fabricant"""
     repo = PartRepository()
-    return single(repo.add_supplier_ref(mfr_ref_id, data.model_dump()))
+    new_id, part = repo.add_supplier_ref(mfr_ref_id, data.model_dump())
+    declare_created_id(request, new_id)
+    return single(part)
 
 
 @router.patch(
     "/supplier-refs/{supplier_ref_id}",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_supplier_ref", id_from_path="supplier_ref_id")],
 )
 def update_supplier_ref(supplier_ref_id: str, data: PartSupplierRefUpdate):
     """Met à jour une référence fournisseur (modification partielle)"""
@@ -185,6 +205,7 @@ def update_supplier_ref(supplier_ref_id: str, data: PartSupplierRefUpdate):
     "/supplier-refs/{supplier_ref_id}/set-preferred",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_supplier_ref", id_from_path="supplier_ref_id")],
 )
 def set_preferred_supplier_ref(supplier_ref_id: str):
     """Définit une référence fournisseur comme préférée"""
@@ -196,6 +217,7 @@ def set_preferred_supplier_ref(supplier_ref_id: str):
     "/supplier-refs/{supplier_ref_id}",
     response_model=SingleResponse[PartDetail],
     response_model_exclude_none=True,
+    dependencies=[audit("part_supplier_ref", id_from_path="supplier_ref_id")],
 )
 def delete_supplier_ref(supplier_ref_id: str):
     """Supprime une référence fournisseur"""

@@ -1,7 +1,8 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.suppliers.repo import SupplierRepository
 from api.suppliers.schemas import SupplierIn, SupplierListItem
@@ -38,21 +39,23 @@ def get_supplier_by_code(code: str):
     return single(repo.get_by_code(code))
 
 
-@router.post("")
-def create_supplier(supplier: SupplierIn):
+@router.post("", dependencies=[audit("supplier", id_from_created=True)])
+def create_supplier(supplier: SupplierIn, request: Request):
     """Crée un nouveau fournisseur"""
     repo = SupplierRepository()
-    return single(repo.add(supplier.model_dump()))
+    created = repo.add(supplier.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put("/{supplier_id}")
+@router.put("/{supplier_id}", dependencies=[audit("supplier", id_from_path="supplier_id")])
 def update_supplier(supplier_id: str, supplier: SupplierIn):
     """Met à jour un fournisseur existant"""
     repo = SupplierRepository()
     return single(repo.update(supplier_id, supplier.model_dump(exclude_unset=True)))
 
 
-@router.delete("/{supplier_id}")
+@router.delete("/{supplier_id}", dependencies=[audit("supplier", id_from_path="supplier_id")])
 def delete_supplier(supplier_id: str):
     """Supprime un fournisseur"""
     repo = SupplierRepository()

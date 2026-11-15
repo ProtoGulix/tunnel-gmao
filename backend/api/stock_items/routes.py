@@ -1,8 +1,9 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.stock_items.repo import StockItemRepository
 from api.stock_items.schemas import StockItemIn
@@ -72,28 +73,30 @@ def get_stock_item(item_id: str):
     return single(repo.get_by_id(item_id))
 
 
-@router.post("")
-def create_stock_item(item: StockItemIn):
+@router.post("", dependencies=[audit("stock_item", id_from_created=True)])
+def create_stock_item(item: StockItemIn, request: Request):
     """Crée un nouvel article en stock (legacy ou template-based)"""
     service = StockItemService()
-    return single(service.create_stock_item(item.model_dump()))
+    created = service.create_stock_item(item.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put("/{item_id}")
+@router.put("/{item_id}", dependencies=[audit("stock_item", id_from_path="item_id")])
 def update_stock_item(item_id: str, item: StockItemIn):
     """Met à jour un article existant (respect immutabilité template)"""
     service = StockItemService()
     return single(service.update_stock_item(item_id, item.model_dump(exclude_unset=True)))
 
 
-@router.patch("/{item_id}/quantity")
+@router.patch("/{item_id}/quantity", dependencies=[audit("stock_item", id_from_path="item_id")])
 def update_stock_quantity(item_id: str, data: QuantityUpdate):
     """Met à jour uniquement la quantité d'un article"""
     repo = StockItemRepository()
     return single(repo.update_quantity(item_id, data.quantity))
 
 
-@router.delete("/{item_id}")
+@router.delete("/{item_id}", dependencies=[audit("stock_item", id_from_path="item_id")])
 def delete_stock_item(item_id: str):
     """Supprime un article"""
     repo = StockItemRepository()

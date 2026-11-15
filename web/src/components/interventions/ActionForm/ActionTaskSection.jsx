@@ -15,6 +15,8 @@ import PropTypes from 'prop-types';
 import { Box, Badge, Button, Flex, IconButton, Spinner, Text, TextField } from '@radix-ui/themes';
 import { CalendarClock, CheckSquare, Plus, User, Wrench, X } from 'lucide-react';
 import TaskActionButtons from '@/components/tasks/TaskActionButtons';
+import { canSkipTask } from '@/components/tasks/taskUtils';
+import { usePermissions } from '@/auth/usePermissions';
 import { fetchInterventionTasks, fetchOpenTasksByMachine } from '@/api/interventionTasks';
 import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { useTaskCreate } from '@/hooks/tasks/useTaskCreate';
@@ -77,6 +79,7 @@ function normalizeSelectedTask(task) {
 
 function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskActionStatusChange, onSkipReasonChange, accentColor }) {
   const [hovered, setHovered] = useState(false);
+  const { canSkipObligatory } = usePermissions();
   const dueDate = item.dueDate || item.due_date || null;
   const assigneeLabel = getAssigneeLabel(item);
   const isSkipped = isSelected && selectedTask?.taskActionStatus === 'skipped';
@@ -143,6 +146,7 @@ function TaskRow({ item, selectedTask, isSelected, isDisabled, onSelect, onTaskA
           status={selectedTask?.taskActionStatus ?? 'in_progress'}
           visible={hovered}
           mode="form"
+          canSkip={canSkipTask(item, canSkipObligatory)}
           onStatusChange={onTaskActionStatusChange}
         />
       )}

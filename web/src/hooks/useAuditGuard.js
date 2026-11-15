@@ -20,6 +20,7 @@ export function useAuditGuard() {
   const [dialogState, setDialogState] = useState({
     open: false,
     entityType: null,
+    decisionType: undefined,
     reasons: undefined,
     saving: false,
   });
@@ -27,9 +28,9 @@ export function useAuditGuard() {
   const pendingRef = useRef(null);
 
   useEffect(() => {
-    return onAuditRequired(({ entityType, reasons, resolve, reject }) => {
+    return onAuditRequired(({ entityType, decisionType, reasons, resolve, reject }) => {
       pendingRef.current = { resolve, reject };
-      setDialogState({ open: true, entityType, reasons, saving: false });
+      setDialogState({ open: true, entityType, decisionType, reasons, saving: false });
     });
   }, []);
 
@@ -38,7 +39,7 @@ export function useAuditGuard() {
     setDialogState((s) => ({ ...s, saving: true }));
     pendingRef.current.resolve(reason);
     pendingRef.current = null;
-    setDialogState({ open: false, entityType: null, reasons: undefined, saving: false });
+    setDialogState({ open: false, entityType: null, decisionType: undefined, reasons: undefined, saving: false });
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -46,13 +47,14 @@ export function useAuditGuard() {
       pendingRef.current.reject();
       pendingRef.current = null;
     }
-    setDialogState({ open: false, entityType: null, reasons: undefined, saving: false });
+    setDialogState({ open: false, entityType: null, decisionType: undefined, reasons: undefined, saving: false });
   }, []);
 
   return {
     auditProps: {
       open: dialogState.open,
       entityType: dialogState.entityType,
+      decisionType: dialogState.decisionType,
       reasons: dialogState.reasons,
       saving: dialogState.saving,
       onConfirm: handleConfirm,

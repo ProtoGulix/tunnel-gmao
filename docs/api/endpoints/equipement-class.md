@@ -74,3 +74,7 @@ Supprime une classe.
 ### Réponse `204`
 
 Pas de contenu.
+
+## Audit (ADR 0018, étape 4)
+
+Création, modification et suppression sont tracées (`entity_type` `equipement_class`) en routine, sauf `DELETE` qui exige un `reason_code` (400 sinon).

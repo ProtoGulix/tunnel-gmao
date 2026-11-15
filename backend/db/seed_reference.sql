@@ -160,7 +160,7 @@ INSERT INTO public.audit_reason_code VALUES (6, 'TECHNICIAN_UNAVAILABLE', 'Techn
 INSERT INTO public.audit_reason_code VALUES (7, 'SUPPLIER_DELAY', 'Délai fournisseur', 'manual', '{purchase_request}', NULL, '#f97316', 'Dépassement délai', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (8, 'PRIORITY_BOOST', 'Accélération demandée', 'manual', '{intervention,task}', NULL, '#06b6d4', 'Nécessite plus vite', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (9, 'RESOURCE_CONSTRAINT', 'Contrainte ressource', 'manual', '{task,intervention}', NULL, '#a855f7', 'Manque de ressource', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.audit_reason_code VALUES (11, 'LEGACY_STATUS_CHANGE', 'Changement historique', 'manual', NULL, NULL, '#d1d5db', 'Logs migrés depuis les anciennes tables de statut', true, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.audit_reason_code VALUES (11, 'LEGACY_STATUS_CHANGE', 'Changement historique', 'manual', NULL, NULL, '#d1d5db', 'Logs migrés depuis les anciennes tables de statut', false, '2026-05-18 09:20:59.449181+00', '2026-05-18 09:20:59.449181+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (12, 'TASK_CREATED', 'Tâche créée', 'system', '{task}', NULL, '#10b981', 'Création automatique ou manuelle d''une tâche', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (13, 'TASK_UPDATED', 'Tâche modifiée', 'system', '{task}', NULL, '#6366f1', 'Modification d''un champ de la tâche (label, date, affectation…)', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (14, 'TASK_STATUS', 'Changement de statut tâche', 'system', '{task}', NULL, '#f59e0b', 'Transition de statut : todo → in_progress → done / skipped', true, '2026-05-18 09:21:00.069731+00', '2026-05-18 09:21:00.069731+00') ON CONFLICT DO NOTHING;
@@ -168,7 +168,7 @@ INSERT INTO public.audit_reason_code VALUES (15, 'TASK_DELETED', 'Tâche supprim
 INSERT INTO public.audit_reason_code VALUES (17, 'PLANNING_CHANGE', 'Changement de planning', 'user', '{task}', NULL, '#3b82f6', 'La date ou le technicien a ete modifie suite a une reorganisation du planning', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (18, 'TECH_UNAVAILABLE', 'Technicien indisponible', 'user', '{task}', NULL, '#f97316', 'Le technicien assigne nest plus disponible (absence, surcharge)', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (19, 'PRIORITY_CHANGE', 'Changement de priorite', 'user', '{task}', NULL, '#8b5cf6', 'La tache est reprogrammee ou reassignee suite a une nouvelle priorite', true, '2026-06-02 19:29:20.902622+00', '2026-06-02 19:29:20.902622+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.audit_reason_code VALUES (10, 'OTHER', 'Autre raison', 'user', '{task,request,purchase_request,intervention}', NULL, '#9ca3af', 'À justifier en texte libre', true, '2026-05-18 09:20:59.449181+00', '2026-07-24 04:49:31.671453+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.audit_reason_code VALUES (10, 'OTHER', 'Autre raison', 'user', '{task,request,purchase_request,intervention}', '{task_done,task_skipped}', '#9ca3af', 'À justifier en texte libre', true, '2026-05-18 09:20:59.449181+00', '2026-07-24 04:49:31.671453+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_reason_code VALUES (16, 'ROUTINE', 'Opération courante', 'auto', '{task,action,request,intervention,purchase_request,supplier_order}', NULL, '#94a3b8', 'Envoyée silencieusement par le front pour les mutations courantes (création tâche, saisie action). Jamais affichée à l''utilisateur.', true, '2026-05-18 15:24:14.768244+00', '2026-05-18 15:24:14.768244+00') ON CONFLICT DO NOTHING;
 
 
@@ -314,3 +314,111 @@ SELECT setval(pg_get_serial_sequence('public.anomaly_threshold','id'), COALESCE(
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
 SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
 SELECT setval(pg_get_serial_sequence('public.equipement_statuts','id'), COALESCE(MAX(id),0)+1, false) FROM public.equipement_statuts;
+
+--
+-- Motifs de clôture ou d'annulation d'une tâche sans action (ADR 0016), proposés dans
+-- le choix de motif d'audit. decision_types : task_done pour Terminé, task_skipped pour
+-- Annuler et Ignorer ; seuls les motifs qui portent la valeur sont proposés. Identifiant calculé et ON CONFLICT (code) : idempotent,
+-- sans collision avec les motifs ajoutés depuis l'administration.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_DONE_UNRECORDED', 'Réalisée sans action saisie', 'user', '{task}', '{task_done}', '#16a34a', 'Le travail a été fait mais aucune action n''a été saisie ; constaté en réunion de coordination.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_HANDLED_ELSEWHERE', 'Traitée dans une autre intervention', 'user', '{task}', '{task_done,task_skipped}', '#0ea5e9', 'Le besoin a été traité par une autre intervention ou une autre tâche.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_NO_LONGER_NEEDED', 'Plus nécessaire', 'user', '{task}', '{task_skipped}', '#d97706', 'Le besoin a disparu : situation résolue, équipement remplacé ou arrêté.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'TASK_DUPLICATE', 'Doublon', 'user', '{task}', '{task_skipped}', '#6b7280', 'La même tâche existe déjà.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Motif des mutations du système (ADR 0018, point 6), cohérent avec la migration 0007 :
+-- catégorie system, toutes entités et toutes décisions. Identifiant calculé et
+-- ON CONFLICT (code) : idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'SYSTEM_CASCADE', 'Mutation automatique du système', 'system', NULL, NULL, '#64748b', 'Mutation produite par le système lui-même (cascade, génération, acceptation automatique), sans décision d''un utilisateur.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Règle d'audit de l'occurrence préventive (AUDC-29), cohérente avec la migration 0008 :
+-- règle routinière et entité ajoutée aux entity_types de ROUTINE. Idempotent.
+--
+
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'preventive_occurrence') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('preventive_occurrence' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'preventive_occurrence', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'preventive_occurrence' AND field IS NULL);
+SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
+
+--
+-- Motifs de suppression (ADR 0018, point 5 ; AUDC-30), cohérents avec la migration 0009 :
+-- toutes entités, décision deleted ; OTHER applicable à toutes les entités et à deleted.
+-- Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'DELETE_CREATED_BY_MISTAKE', 'Créé par erreur', 'user', NULL, '{deleted}', '#dc2626', 'L''élément a été créé par erreur et n''aurait pas dû exister.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'DELETE_CREATED_BY_MISTAKE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'DELETE_DUPLICATE', 'Doublon', 'user', NULL, '{deleted}', '#6b7280', 'L''élément existe déjà ailleurs ; on supprime le doublon.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'DELETE_DUPLICATE') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET entity_types = NULL, decision_types = '{task_done,task_skipped,deleted}' WHERE code = 'OTHER' AND (entity_types IS NOT NULL OR decision_types IS DISTINCT FROM '{task_done,task_skipped,deleted}');
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Règles d'audit des entités de l'étape 3 (AUDC-32, AUDC-34), cohérentes avec les migrations
+-- 0010 et 0011 (stock_family) :
+-- règle routinière et entité ajoutée aux entity_types de ROUTINE. Idempotent.
+--
+
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'preventive_plan') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('preventive_plan' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'preventive_plan', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'preventive_plan' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'part') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('part' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'part', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'part' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'part_manufacturer_ref') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('part_manufacturer_ref' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'part_manufacturer_ref', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'part_manufacturer_ref' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'part_supplier_ref') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('part_supplier_ref' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'part_supplier_ref', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'part_supplier_ref' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'manufacturer_item') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('manufacturer_item' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'manufacturer_item', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'manufacturer_item' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'stock_item') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('stock_item' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'stock_item', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'stock_item' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'stock_sub_family') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('stock_sub_family' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'stock_sub_family', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'stock_sub_family' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'stock_item_supplier') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('stock_item_supplier' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'stock_item_supplier', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'stock_item_supplier' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'supplier') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('supplier' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'supplier', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'supplier' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'supplier_order_line') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('supplier_order_line' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'supplier_order_line', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'supplier_order_line' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'stock_family') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('stock_family' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'stock_family', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'stock_family' AND field IS NULL);
+
+--
+-- Règles d'audit des entités de l'étape 4 (AUDC-42), cohérentes avec la migration 0012 :
+-- règle routinière et entité ajoutée aux entity_types de ROUTINE. Idempotent.
+--
+
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'user') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('user' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'user', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'user' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'permission') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('permission' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'permission', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'permission' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'endpoint') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('endpoint' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'endpoint', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'endpoint' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'ip_block') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('ip_block' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'ip_block', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'ip_block' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'email_domain_rule') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('email_domain_rule' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'email_domain_rule', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'email_domain_rule' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'api_key') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('api_key' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'api_key', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'api_key' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'equipement_class') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('equipement_class' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'equipement_class', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'equipement_class' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'service') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('service' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'service', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'service' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'role_home_view') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('role_home_view' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'role_home_view', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'role_home_view' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'action_category') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('action_category' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'action_category', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'action_category' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'action_subcategory') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('action_subcategory' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'action_subcategory', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'action_subcategory' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'intervention_type') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('intervention_type' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'intervention_type', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'intervention_type' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'intervention_status') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('intervention_status' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'intervention_status', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'intervention_status' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'audit_reason') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('audit_reason' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'audit_reason', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'audit_reason' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'audit_rule') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('audit_rule' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'audit_rule', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'audit_rule' AND field IS NULL);
+SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;

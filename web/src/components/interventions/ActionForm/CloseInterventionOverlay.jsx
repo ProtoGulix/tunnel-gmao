@@ -39,9 +39,10 @@ export default function CloseInterventionOverlay({
 
   const tryClose = useCallback(async () => {
     try {
-      await updateInterventionStatus(String(interventionId), 'ferme', 'ROUTINE');
+      await updateInterventionStatus(String(interventionId), 'ferme');
       return null;
     } catch (err) {
+      if (err?.isAuditCancelled) return 'Clôture annulée : aucun motif choisi';
       if (err?.response?.status === 409) return 'GAMME_BLOCKED';
       return extractApiErrorMessage(err, "Impossible de clôturer l'intervention");
     }

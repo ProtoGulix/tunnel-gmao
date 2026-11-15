@@ -203,3 +203,13 @@ Lie une demande d'achat à cette ligne.
 ## `DELETE /supplier-order-lines/{id}/purchase-requests/{purchase_request_id}`
 
 Supprime le lien avec une demande d'achat.
+
+## Audit (ADR 0018, étape 3)
+
+`entity_type = supplier_order_line`, motif routinier injecté si absent.
+
+- `POST /supplier-order-lines` : `created` ; les liens aux demandes d'achat fournis à la création donnent une ligne `purchase_requests_changed`.
+- `PUT` et `PATCH /supplier-order-lines/{line_id}` : `{champ}_changed` ; remplacement des liens : `purchase_requests_changed` (avant/après). Sélectionner une ligne désélectionne les autres lignes liées aux mêmes demandes : chacune reçoit `is_selected_changed`.
+- `POST /supplier-order-lines/{line_id}/purchase-requests` : `purchase_requests_changed` (avant/après les liens).
+- `DELETE /supplier-order-lines/{line_id}/purchase-requests/{purchase_request_id}` : `purchase_requests_changed` ; la ligne n'est pas supprimée (aucune ligne `deleted`), mais un `DELETE` exige un `reason_code` explicite.
+- `DELETE /supplier-order-lines/{line_id}` : `deleted` avec l'état avant ; `reason_code` explicite obligatoire.

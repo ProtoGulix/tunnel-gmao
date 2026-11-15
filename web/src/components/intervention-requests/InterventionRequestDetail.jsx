@@ -13,6 +13,7 @@ import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 /**
  * Transitions autorisées par statut (source : doc API /intervention-requests/{id}/transition).
@@ -86,7 +87,7 @@ function InterventionProgress({ iv, interventionId }) {
         </Flex>
         {interventionId && (
           <Button size="1" variant="ghost" color="blue" asChild>
-            <Link to={`/intervention/${interventionId}`} style={{ textDecoration: 'none' }}>
+            <Link to={entityCodeUrl('intervention', interventionId)} style={{ textDecoration: 'none' }}>
               Ouvrir <ArrowUpRight size={12} />
             </Link>
           </Button>
@@ -350,8 +351,8 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
   };
 
   const handleDelete = async () => {
-    await doDelete();
-    onDeleted?.();
+    const done = await doDelete();
+    if (done) onDeleted?.();
   };
 
   if (loading) return <LoadingState message="Chargement de la demande..." />;

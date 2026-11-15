@@ -1,8 +1,8 @@
 export const TASK_STATUS_LABEL = {
-  todo: 'En attente',
+  todo: 'À faire',
   in_progress: 'En cours',
-  done: 'Validée',
-  skipped: 'Ignorée',
+  done: 'Terminé',
+  skipped: 'Ignoré',
 };
 
 export const TASK_STATUS_COLOR = {
@@ -22,4 +22,12 @@ export const TASK_ORIGIN_COLOR = {
   plan: 'green',
   resp: 'blue',
   tech: 'orange',
+};
+
+// Barre de couleur à gauche d'une ligne de tâche, selon le statut
+export const TASK_ACCENT = {
+  todo: 'var(--gray-6)',
+  in_progress: 'var(--blue-9)',
+  done: 'var(--green-8)',
+  skipped: 'var(--orange-8)',
 };

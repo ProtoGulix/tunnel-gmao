@@ -5,11 +5,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertDialog, Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
+import { Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
+import PlanInactiveBadge from '@/components/preventive/PlanInactiveBadge';
 import { ClipboardCheck, Plus } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import ErrorState from '@/components/ui/ErrorState';
+import PlanDeactivateDialog from '@/components/preventive/PlanDeactivateDialog';
+import StatusCallout from '@/components/ui/StatusCallout';
+import { usePlanActionError } from '@/hooks/preventive/usePlanActionError';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
 import { usePreventivePlans } from '@/hooks/preventive/usePreventivePlans';
@@ -34,6 +38,7 @@ function PlanItem({ plan, isSelected, onClick }) {
           <Flex align="center" gap="2">
             <Badge variant="soft" color="blue" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{plan.code}</Badge>
             <Text size="2" weight="medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{plan.label}</Text>
+            <PlanInactiveBadge plan={plan} />
           </Flex>
           <Text size="1" color="gray">{triggerLabel(plan)}</Text>
         </Flex>
@@ -52,8 +57,9 @@ export default function PreventivePage() {
   const [mode, setMode] = useState(null); // null | 'create' | 'edit'
   const [saving, setSaving] = useState(false);
   const [toDeactivate, setToDeactivate] = useState(null);
+  const { actionError, setActionError, reportFailure } = usePlanActionError();
 
-  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
+  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, reactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
 
   // Sélectionner le plan depuis l'URL une fois les données chargées
@@ -91,18 +97,38 @@ export default function PreventivePage() {
 
   const handleDeactivate = useCallback(async () => {
     if (!toDeactivate) return;
-    await deactivatePlan(toDeactivate.id);
-    if (selectedPlan?.id === toDeactivate.id) selectPlan(null);
-    setToDeactivate(null);
-  }, [toDeactivate, deactivatePlan, selectedPlan, selectPlan]);
+    const plan = toDeactivate;
+    setToDeactivate(null); // la confirmation se ferme avant que la fenêtre de motif s'ouvre
+    setActionError(null);
+    try {
+      await deactivatePlan(plan.id);
+    } catch (err) {
+      reportFailure(err, 'Impossible de désactiver le plan');
+      return;
+    }
+    if (selectedPlan?.id === plan.id) selectPlan(null);
+  }, [toDeactivate, deactivatePlan, selectedPlan, selectPlan, reportFailure]);
+
+  const handleReactivate = useCallback(async (plan) => {
+    setActionError(null);
+    try {
+      const updated = await reactivatePlan(plan.id);
+      if (selectedPlan?.id === plan.id) setSelectedPlan(updated ?? { ...plan, active: true });
+    } catch (err) {
+      reportFailure(err, 'Impossible de réactiver le plan');
+    }
+  }, [reactivatePlan, selectedPlan, reportFailure]);
 
   const handleSaveSteps = useCallback(async (id, steps) => {
     try {
       setSaving(true);
+      setActionError(null);
       const updated = await saveSteps(id, steps);
       setSelectedPlan((prev) => (prev?.id === id ? { ...prev, steps: updated } : prev));
+    } catch (err) {
+      reportFailure(err, "Impossible d'enregistrer les étapes");
     } finally { setSaving(false); }
-  }, [saveSteps]);
+  }, [saveSteps, reportFailure]);
 
   const filtered = plans.filter((p) =>
     !search ||
@@ -138,6 +164,7 @@ export default function PreventivePage() {
         plan={selectedPlan}
         onEdit={(p) => { setSelectedPlan(p); setMode('edit'); setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('plan', p.id); return n; }, { replace: true }); }}
         onDeactivate={setToDeactivate}
+        onReactivate={handleReactivate}
         onSaveSteps={handleSaveSteps}
         saving={saving}
       />
@@ -152,6 +179,7 @@ export default function PreventivePage() {
         title="Préventif"
         subtitle="Plans de maintenance préventive et suivi des occurrences"
       />
+      {actionError && <Box px="4"><StatusCallout type="error">{actionError}</StatusCallout></Box>}
       <Box px="4" style={{ flex: 1, minHeight: 500, overflow: 'hidden' }}>
         <MasterDetailLayout
           freeDetail
@@ -187,22 +215,7 @@ export default function PreventivePage() {
         />
       </Box>
 
-      <AlertDialog.Root open={!!toDeactivate} onOpenChange={(open) => !open && setToDeactivate(null)}>
-        <AlertDialog.Content maxWidth="420px">
-          <AlertDialog.Title>Désactiver le plan</AlertDialog.Title>
-          <AlertDialog.Description>
-            Désactiver <strong>{toDeactivate?.label}</strong> ? Les occurrences futures ne seront plus générées.
-          </AlertDialog.Description>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="soft" color="gray">Annuler</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="red" onClick={handleDeactivate}>Désactiver</Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+      <PlanDeactivateDialog plan={toDeactivate} onConfirm={handleDeactivate} onClose={() => setToDeactivate(null)} />
     </Flex>
   );
 }

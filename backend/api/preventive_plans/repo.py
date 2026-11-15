@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, List
 from uuid import uuid4
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
 from api.preventive_plans.schemas import GammeStepIn, PreventivePlanIn, PreventivePlanUpdate
@@ -43,6 +44,13 @@ class PreventivePlanRepository:
                 (str(uuid4()), plan_id, step.label, step.sort_order, step.optional),
             )
 
+    def _steps_snapshot(self, cur, plan_id: str) -> List[Dict[str, Any]]:
+        """Étapes du plan sous forme comparable (sans identifiant), pour l'audit."""
+        return [
+            {"sort_order": s["sort_order"], "label": s["label"], "optional": s["optional"]}
+            for s in self._fetch_steps(cur, plan_id)
+        ]
+
     def _replace_steps_in_tx(self, cur, plan_id: str, steps: List[GammeStepIn]) -> None:
         """Remplace les steps dans une transaction existante (sans commit).
 
@@ -53,6 +61,7 @@ class PreventivePlanRepository:
         - INSERT les nouveaux sort_order
         - DELETE les sort_order supprimés, seulement s'ils n'ont pas de tâches liées
         """
+        before = self._steps_snapshot(cur, plan_id)
         # Récupérer les steps existants indexés par sort_order
         cur.execute(
             "SELECT id, sort_order FROM preventive_plan_gamme_step WHERE plan_id = %s",
@@ -101,6 +110,18 @@ class PreventivePlanRepository:
                         "DELETE FROM preventive_plan_gamme_step WHERE id = %s",
                         (step_id,),
                     )
+
+        # Les étapes ne sont pas une entité du journal : leur changement est une décision sur
+        # le plan, que le diff de sa ligne ne voit pas (PATCH /steps ne touche pas le plan).
+        after = self._steps_snapshot(cur, plan_id)
+        if after != before:
+            record_audit_event(
+                "preventive_plan",
+                plan_id,
+                "steps_changed",
+                old_value={"steps": before},
+                new_value={"steps": after},
+            )
 
     # ── Lecture ──────────────────────────────────────────────────
 
@@ -262,6 +283,31 @@ class PreventivePlanRepository:
         finally:
             release_connection(conn)
 
+        return self.get_by_id(plan_id)
+
+    # ── Réactivation ──────────────────────────────────────────────
+
+    def reactivate(self, plan_id: str) -> Dict[str, Any]:
+        """Réactive un plan désactivé ; sans effet sur un plan déjà actif."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE preventive_plan SET active = true WHERE id = %s AND active = false",
+                (plan_id,),
+            )
+            cur.execute("SELECT 1 FROM preventive_plan WHERE id = %s", (plan_id,))
+            if cur.fetchone() is None:
+                raise NotFoundError(f"Plan préventif {plan_id} non trouvé")
+            conn.commit()
+        except NotFoundError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "réactivation du plan préventif")
+        finally:
+            release_connection(conn)
         return self.get_by_id(plan_id)
 
     # ── Suppression ───────────────────────────────────────────────

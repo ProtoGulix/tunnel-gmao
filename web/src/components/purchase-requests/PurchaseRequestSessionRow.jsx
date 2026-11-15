@@ -24,8 +24,9 @@ export default function PurchaseRequestSessionRow({ item, onDeleted }) {
       await deletePurchaseRequest(item.id);
       onDeleted(item.id);
     } catch (err) {
-      setError(extractApiErrorMessage(err, 'Suppression impossible'));
       setDeleting(false);
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
+      setError(extractApiErrorMessage(err, 'Suppression impossible'));
     }
   };
 

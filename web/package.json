@@ -1,6 +1,6 @@
 {
   "name": "tunnel-gmao",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
   "author": "ProtoGulix",
   "license": "AGPL-3.0-or-later",
@@ -34,7 +34,8 @@
     "lint:api": "node scripts/lint-api.js",
     "arch:check": "powershell -ExecutionPolicy Bypass -File ./scripts/arch-check.ps1",
     "arch:check:bash": "bash ./scripts/arch-check.sh",
-    "changelog:check": "node scripts/validate-changelog.cjs"
+    "changelog:check": "node scripts/validate-changelog.cjs",
+    "test": "node --test \"src/**/*.test.js\""
   },
   "dependencies": {
     "@radix-ui/themes": "^3.2.1",

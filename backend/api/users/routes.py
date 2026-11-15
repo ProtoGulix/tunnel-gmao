@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.users.repo import UserRepository
 from api.users.schemas import PasswordChange, ProfileUpdate, UserListItem, UserOut
@@ -44,7 +45,8 @@ def get_user(user_id: str):
     return single(repo.get_by_id(user_id))
 
 
-@router.patch("/me/profile", response_model=UserOut)
+# L'identifiant vient du jeton, pas du chemin : le repo dépose la trace (events_only).
+@router.patch("/me/profile", response_model=UserOut, dependencies=[audit("user", events_only=True)])
 def update_my_profile(body: ProfileUpdate, request: Request):
     """Met à jour le prénom, nom et/ou initiales de l'utilisateur connecté."""
     user_id = getattr(request.state, "user_id", None)
@@ -55,7 +57,7 @@ def update_my_profile(body: ProfileUpdate, request: Request):
     return repo.update_profile(str(user_id), body.model_dump(exclude_none=True))
 
 
-@router.post("/me/password", status_code=200)
+@router.post("/me/password", status_code=200, dependencies=[audit("user", events_only=True)])
 def change_my_password(body: PasswordChange, request: Request):
     """Change le mot de passe de l'utilisateur connecté (vérifie l'ancien avant)."""
     user_id = getattr(request.state, "user_id", None)

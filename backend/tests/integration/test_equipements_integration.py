@@ -85,6 +85,14 @@ def test_arbre_children_ids_memes_controles(client, admin):
 
 def test_arbre_suppression_refusee_avec_des_filles(client, admin):
     parent, fille, _ = _chaine(client, admin, 3)
-    assert client.delete(f"/equipements/{parent}", headers=admin.headers).status_code == 400
+    # Motif explicite exigé pour toute suppression (ADR 0018 point 5) : avec lui, le 400 du
+    # parent vient bien de ses filles. Motif de suppression de la migration 0009.
+    motif = {"reason_code": "DELETE_CREATED_BY_MISTAKE"}
+    refus = client.request("DELETE", f"/equipements/{parent}", headers=admin.headers, json=motif)
+    assert refus.status_code == 400
+    assert "sous-équipement" in refus.text, refus.text
     feuille = _creer(client, admin, "feuille", fille)
-    assert client.delete(f"/equipements/{feuille}", headers=admin.headers).status_code == 204
+    suppression = client.request(
+        "DELETE", f"/equipements/{feuille}", headers=admin.headers, json=motif
+    )
+    assert suppression.status_code == 204

@@ -25,10 +25,6 @@ export async function updateSupplier(id, updates) {
   return response.data || null;
 }
 
-export async function deleteSupplier(id) {
-  await api.delete(`/suppliers/${id}`);
-}
-
 // --- Liaisons fournisseur-pièce ---
 
 export async function fetchSupplierItemLinks(supplierId) {

@@ -5,7 +5,9 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Flex, Separator, Tabs, Text } from '@radix-ui/themes';
-import { CalendarClock, CheckCircle2, ExternalLink, Pause, Pencil } from 'lucide-react';
+import PlanInactiveBadge from '@/components/preventive/PlanInactiveBadge';
+import PlanActivationButton from '@/components/preventive/PlanActivationButton';
+import { CalendarClock, CheckCircle2, ExternalLink, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
 import { usePermissions } from '@/auth/usePermissions';
@@ -15,10 +17,11 @@ import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurr
 import { triggerLabel, OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS } from '@/config/preventiveConfig';
 import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
 
-export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSaveSteps, saving }) {
+export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onReactivate, onSaveSteps, saving }) {
   const { can } = usePermissions();
   const { items, loading } = usePreventiveOccurrences({ plan_id: plan.id });
   const { labelMap: diLabelMap, colorMap: diColorMap } = useInterventionRequestStatuses();
@@ -67,7 +70,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
           )}
           {r.intervention_id && (
             <Button size="1" variant="soft" color="gray" asChild>
-              <Link to={`/intervention/${r.intervention_id}`}><ExternalLink size={11} />Intervention</Link>
+              <Link to={entityCodeUrl('intervention', r.intervention_id)}><ExternalLink size={11} />Intervention</Link>
             </Button>
           )}
           {!r.di_id && !r.intervention_id && (
@@ -96,6 +99,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
             <Badge color={plan.auto_accept ? 'green' : 'gray'} variant="soft" size="1">
               {plan.auto_accept ? 'Auto' : 'Manuel'}
             </Badge>
+            <PlanInactiveBadge plan={plan} />
           </Flex>
         </Flex>
         <Flex gap="2" shrink="0" align="center">
@@ -104,11 +108,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onSav
               <Pencil size={13} />Modifier
             </Button>
           )}
-          {can(PERM.preventive.removePlan) && (
-            <Button size="2" variant="soft" color="orange" onClick={() => onDeactivate(plan)}>
-              <Pause size={13} />Désactiver
-            </Button>
-          )}
+          <PlanActivationButton plan={plan} onDeactivate={onDeactivate} onReactivate={onReactivate} />
         </Flex>
       </Flex>
 
@@ -169,6 +169,7 @@ PreventivePlanDetail.propTypes = {
   }).isRequired,
   onEdit: PropTypes.func.isRequired,
   onDeactivate: PropTypes.func.isRequired,
+  onReactivate: PropTypes.func.isRequired,
   onSaveSteps: PropTypes.func.isRequired,
   saving: PropTypes.bool,
 };

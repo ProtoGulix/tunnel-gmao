@@ -29,6 +29,11 @@ export async function deletePreventivePlan(id) {
   await api.delete(`/preventive-plans/${id}`);
 }
 
+export async function reactivatePreventivePlan(id) {
+  const res = await api.post(`/preventive-plans/${id}/reactivate`);
+  return res.data;
+}
+
 export async function patchPreventivePlanSteps(id, steps) {
   const res = await api.patch(`/preventive-plans/${id}/steps`, steps);
   return res.data;

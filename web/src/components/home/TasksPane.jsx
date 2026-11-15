@@ -126,6 +126,8 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
             <GroupCard
               key={group.id}
               code={interventionCode}
+              codeType="intervention"
+              codeId={group.id}
               title={interventionTitle}
               priority={group.priority ?? 'normal'}
               count={sortedTasks.length}
@@ -173,7 +175,6 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                       {/* ── Échéance éditable ── */}
                       {editingDue ? (
                         <input
-                          // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
                           type="date"
                           defaultValue={task.due_date?.slice(0, 10) ?? ''}
@@ -234,7 +235,6 @@ export function TasksPane({ taskGroups, pagination, skip, onPageChange, onAddAct
                       {/* ── Affectation éditable ── */}
                       {editingAssignee ? (
                         <select
-                          // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
                           defaultValue={currentAssigneeId}
                           onBlur={(e) => {

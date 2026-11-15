@@ -404,3 +404,11 @@ Mise à jour rapide de la quantité uniquement. Fonctionne pour les items legacy
 ## `DELETE /stock-items/{id}`
 
 Supprime un article. Réponse `204`.
+
+## Audit (ADR 0018, étape 3)
+
+`entity_type = stock_item`, motif routinier injecté si absent, auteur pris du jeton.
+
+- `POST /stock-items` : `created`.
+- `PUT /stock-items/{item_id}` et `PATCH /stock-items/{item_id}/quantity` : une ligne `{champ}_changed` par champ modifié.
+- `DELETE /stock-items/{item_id}` : `deleted` avec l'état avant ; `reason_code` explicite obligatoire (400 sinon).

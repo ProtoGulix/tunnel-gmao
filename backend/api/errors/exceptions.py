@@ -90,3 +90,14 @@ def raise_db_error(e: Exception, context: str = "opération") -> None:
         raise ValidationError(msg)
 
     raise DatabaseError(str(e))
+
+
+class AuditReasonRequiredError(ValidationError):
+    """Motif d'audit explicite exigé (400) : même contrat que le middleware d'audit.
+
+    Le front (auditGuard.js) reconnaît le détail et le champ `audit`, ouvre la fenêtre
+    de choix du motif puis rejoue la requête."""
+
+    def __init__(self, audit: dict):
+        super().__init__("reason_code obligatoire pour cette mutation")
+        self.audit = audit

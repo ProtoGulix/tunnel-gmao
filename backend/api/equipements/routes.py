@@ -3,8 +3,9 @@
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.equipements.repo import EquipementRepository
 from api.equipements.schemas import (
@@ -113,28 +114,44 @@ def get_equipement(
     )
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_equipement(data: EquipementCreate):
-    """Crée un nouvel équipement"""
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[audit("equipement", id_from_created=True, table="machine")],
+)
+def create_equipement(data: EquipementCreate, request: Request):
+    """Crée un nouvel équipement (table machine)"""
     repo = EquipementRepository()
-    return single(repo.add(data.model_dump(exclude_unset=True)))
+    created = repo.add(data.model_dump(exclude_unset=True))
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put("/{equipement_id}")
+@router.put(
+    "/{equipement_id}",
+    dependencies=[audit("equipement", id_from_path="equipement_id", table="machine")],
+)
 def update_equipement(equipement_id: str, data: EquipementUpdate):
     """Remplace complètement un équipement (tous les champs non envoyés passent à null)"""
     repo = EquipementRepository()
     return single(repo.update(equipement_id, data.model_dump()))
 
 
-@router.patch("/{equipement_id}")
+@router.patch(
+    "/{equipement_id}",
+    dependencies=[audit("equipement", id_from_path="equipement_id", table="machine")],
+)
 def patch_equipement(equipement_id: str, data: EquipementPatch):
     """Met à jour partiellement un équipement (seuls les champs envoyés sont modifiés)"""
     repo = EquipementRepository()
     return single(repo.update(equipement_id, data.model_dump(exclude_unset=True)))
 
 
-@router.delete("/{equipement_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{equipement_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[audit("equipement", id_from_path="equipement_id", table="machine")],
+)
 def delete_equipement(equipement_id: str):
     """Supprime un équipement"""
     repo = EquipementRepository()

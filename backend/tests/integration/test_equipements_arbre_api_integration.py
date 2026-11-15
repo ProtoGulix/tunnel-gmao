@@ -5,6 +5,9 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
+# Motif explicite, valable pour demande, intervention, tâche et action (audit_rule seed).
+RAISON = "ROUTINE"
+
 
 def _data(r):
     assert r.status_code in (200, 201), r.text
@@ -20,7 +23,7 @@ def _creer(client, admin, name, parent_id=None):
 
 
 def _raison(instance):
-    return instance.sql("SELECT code FROM audit_reason_code WHERE is_active LIMIT 1")[0][0]
+    return RAISON
 
 
 def _demande(client, admin, instance, machine_id):

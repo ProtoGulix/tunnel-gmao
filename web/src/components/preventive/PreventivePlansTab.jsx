@@ -4,12 +4,17 @@
  */
 
 import { useCallback, useState } from 'react';
-import { AlertDialog, Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
-import { CheckCircle2, ClipboardCheck, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Badge, Box, Button, Flex, Switch, Text } from '@radix-ui/themes';
+import PlanInactiveBadge from '@/components/preventive/PlanInactiveBadge';
+import PlanActivationButton from '@/components/preventive/PlanActivationButton';
+import { CheckCircle2, ClipboardCheck, Pencil, Plus } from 'lucide-react';
 import { usePreventivePlans } from '@/hooks/preventive/usePreventivePlans';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
+import PlanDeactivateDialog from '@/components/preventive/PlanDeactivateDialog';
+import StatusCallout from '@/components/ui/StatusCallout';
+import { usePlanActionError } from '@/hooks/preventive/usePlanActionError';
 import PreventivePlanForm from '@/components/preventive/PreventivePlanForm';
 import GammeStepsPanel from '@/components/preventive/GammeStepsPanel';
 import { triggerLabel } from '@/config/preventiveConfig';
@@ -19,13 +24,14 @@ import { PERM } from '@/auth/permissionCodes';
 export default function PreventivePlansTab() {
   const { can } = usePermissions();
   const [activeOnly, setActiveOnly] = useState(true);
-  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, saveSteps } =
+  const { plans, loading, error, refresh, createPlan, updatePlan, deactivatePlan, reactivatePlan, saveSteps } =
     usePreventivePlans({ active_only: activeOnly });
   const [mode, setMode] = useState(null);
   const [editing, setEditing] = useState(null);
   const [stepsFor, setStepsFor] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toDeactivate, setToDeactivate] = useState(null);
+  const { actionError, setActionError, reportFailure } = usePlanActionError();
 
   const reset = () => { setMode(null); setEditing(null); setStepsFor(null); };
 
@@ -39,15 +45,33 @@ export default function PreventivePlansTab() {
 
   const handleDeactivate = useCallback(async () => {
     if (!toDeactivate) return;
-    await deactivatePlan(toDeactivate.id);
-    setToDeactivate(null);
-  }, [toDeactivate, deactivatePlan]);
+    const plan = toDeactivate;
+    setToDeactivate(null); // la confirmation se ferme avant que la fenêtre de motif s'ouvre
+    setActionError(null);
+    try {
+      await deactivatePlan(plan.id);
+    } catch (err) {
+      reportFailure(err, 'Impossible de désactiver le plan');
+    }
+  }, [toDeactivate, deactivatePlan, reportFailure]);
+
+  const handleReactivate = useCallback(async (plan) => {
+    setActionError(null);
+    try {
+      await reactivatePlan(plan.id);
+    } catch (err) {
+      reportFailure(err, 'Impossible de réactiver le plan');
+    }
+  }, [reactivatePlan, reportFailure]);
 
   const handleSaveSteps = async (id, steps) => {
     try {
       setSaving(true);
+      setActionError(null);
       const updated = await saveSteps(id, steps);
       setStepsFor((prev) => ({ ...prev, steps: updated }));
+    } catch (err) {
+      reportFailure(err, "Impossible d'enregistrer les étapes");
     } finally {
       setSaving(false);
     }
@@ -58,7 +82,15 @@ export default function PreventivePlansTab() {
       key: 'code', header: 'Code', width: 100,
       render: (r) => <Badge variant="soft" color="blue" style={{ fontFamily: 'monospace' }}>{r.code}</Badge>,
     },
-    { key: 'label', header: 'Libellé', render: (r) => <Text size="2" weight="medium">{r.label}</Text> },
+    {
+      key: 'label', header: 'Libellé',
+      render: (r) => (
+        <Flex align="center" gap="2">
+          <Text size="2" weight="medium">{r.label}</Text>
+          <PlanInactiveBadge plan={r} />
+        </Flex>
+      ),
+    },
     {
       key: 'class', header: 'Classe', width: 130,
       render: (r) => <Text size="1" color="gray">{r.equipement_class_label || '—'}</Text>,
@@ -85,12 +117,12 @@ export default function PreventivePlansTab() {
               <CheckCircle2 size={12} />Étapes
             </Button>
           )}
-          {can(PERM.preventive.removePlan) && (
-            <Button size="1" variant="ghost" color="red" title="Désactiver"
-              onClick={() => setToDeactivate(r)}>
-              <Trash2 size={12} />
-            </Button>
-          )}
+          <PlanActivationButton
+            plan={r}
+            compact
+            onDeactivate={setToDeactivate}
+            onReactivate={handleReactivate}
+          />
         </Flex>
       ),
     },
@@ -121,6 +153,7 @@ export default function PreventivePlansTab() {
           </Flex>
         }
       />
+      {actionError && <StatusCallout type="error">{actionError}</StatusCallout>}
       {mode === 'create' && (
         <Box mb="3">
           <PreventivePlanForm plan={null} onSubmit={handleCreate} onCancel={() => setMode(null)} saving={saving} />
@@ -143,22 +176,7 @@ export default function PreventivePlansTab() {
         getRowKey={(r) => r.id}
         emptyState={{ icon: ClipboardCheck, title: 'Aucun plan préventif', description: 'Créez un premier plan préventif.' }}
       />
-      <AlertDialog.Root open={!!toDeactivate} onOpenChange={(open) => !open && setToDeactivate(null)}>
-        <AlertDialog.Content maxWidth="420px">
-          <AlertDialog.Title>Désactiver le plan</AlertDialog.Title>
-          <AlertDialog.Description>
-            Désactiver <strong>{toDeactivate?.label}</strong> ? Les occurrences futures ne seront plus générées.
-          </AlertDialog.Description>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="soft" color="gray">Annuler</Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button color="red" onClick={handleDeactivate}>Désactiver</Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+      <PlanDeactivateDialog plan={toDeactivate} onConfirm={handleDeactivate} onClose={() => setToDeactivate(null)} />
     </Box>
   );
 }

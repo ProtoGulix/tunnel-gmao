@@ -12,6 +12,7 @@ Usage dans les repos :
         release_connection(conn)
 """
 
+import contextvars
 import logging
 import time
 from contextlib import contextmanager
@@ -78,8 +79,87 @@ def init_pool(
     raise DatabaseError(f"Connexion PostgreSQL impossible : {last_error}") from last_error
 
 
-def get_connection() -> psycopg2.extensions.connection:
-    """Emprunte une connexion du pool."""
+class RequestConnection:
+    """Connexion de l'unité de travail d'une requête qui modifie (ADR 0018, point 1).
+
+    Enveloppe la vraie connexion empruntée par le middleware de transaction : les repos
+    la reçoivent de get_connection() sans le savoir. commit() ne valide rien et
+    release_connection() ne rend rien : seul le middleware valide ou annule, à la fin de
+    la requête. rollback() annule réellement (la suite de la requête repart d'une
+    transaction saine) mais marque la requête en échec : le middleware annulera alors
+    tout, même si la route a avalé l'exception et répond 2xx (ADR 0018, point 1 bis).
+    """
+
+    def __init__(self, real: psycopg2.extensions.connection):
+        self._real = real
+        self.failed = False
+        self.closed = False
+
+    def __getattr__(self, name):
+        # Délègue cursor(), info, status... à la vraie connexion.
+        return getattr(self._real, name)
+
+    def commit(self) -> None:
+        """Sans effet : la validation appartient au middleware de transaction."""
+
+    def rollback(self) -> None:
+        self.failed = True
+        self._real.rollback()
+
+    @property
+    def real(self) -> psycopg2.extensions.connection:
+        return self._real
+
+    def is_healthy(self) -> bool:
+        """Vrai si la requête peut être validée : aucun rollback() et transaction saine."""
+        if self.failed:
+            return False
+        # psycopg2 ne lève rien sur un COMMIT d'une transaction en erreur : il annule en
+        # silence. On refuse donc de valider une transaction en erreur ou une connexion cassée.
+        return self._real.info.transaction_status in (
+            psycopg2.extensions.TRANSACTION_STATUS_IDLE,
+            psycopg2.extensions.TRANSACTION_STATUS_INTRANS,
+        )
+
+
+# Connexion de la requête en cours, posée par le middleware de transaction. Hors requête
+# qui modifie (GET, scripts, démarrage, tests de repo), elle reste vide : comportement inchangé.
+_request_connection: contextvars.ContextVar[RequestConnection | None] = contextvars.ContextVar(
+    "request_connection", default=None
+)
+
+
+def open_request_connection() -> RequestConnection:
+    """Emprunte une vraie connexion du pool pour une requête qui modifie (bloquant)."""
+    return RequestConnection(_borrow())
+
+
+def bind_request_connection(conn: RequestConnection) -> contextvars.Token:
+    """Rend la connexion visible de get_connection() dans le contexte courant."""
+    return _request_connection.set(conn)
+
+
+def unbind_request_connection(token: contextvars.Token) -> None:
+    _request_connection.reset(token)
+
+
+def close_request_connection(conn: RequestConnection, commit: bool) -> None:
+    """Valide ou annule, puis rend la vraie connexion au pool (bloquant).
+
+    Marque la connexion fermée : une tâche de fond démarrée après la validation hérite du
+    ContextVar mais ne reçoit plus cette connexion, elle emprunte la sienne.
+    """
+    conn.closed = True
+    try:
+        if commit:
+            conn.real.commit()
+        else:
+            conn.real.rollback()
+    finally:
+        release_connection(conn.real)
+
+
+def _borrow() -> psycopg2.extensions.connection:
     if _pool is None:
         raise DatabaseError("Pool DB non initialisé")
     try:
@@ -90,8 +170,18 @@ def get_connection() -> psycopg2.extensions.connection:
         raise DatabaseError(f"Pool saturé ou indisponible : {e}") from e
 
 
-def release_connection(conn: psycopg2.extensions.connection) -> None:
-    """Restitue la connexion au pool (même en cas d'erreur)."""
+def get_connection():
+    """Connexion de la requête en cours si elle existe, sinon emprunte une connexion du pool."""
+    current = _request_connection.get()
+    if current is not None and not current.closed:
+        return current
+    return _borrow()
+
+
+def release_connection(conn) -> None:
+    """Restitue la connexion au pool (même en cas d'erreur). Sans effet sur celle d'une requête."""
+    if isinstance(conn, RequestConnection):
+        return
     if _pool is None or conn is None:
         return
     try:

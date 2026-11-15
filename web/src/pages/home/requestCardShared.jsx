@@ -6,6 +6,7 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text } from '@radix-ui/themes';
+import { EntityCodeLink } from '@/components/shared/EntityCodeLink';
 
 export function formatDay(iso) {
   if (!iso) return '—';
@@ -18,14 +19,12 @@ export function InterventionLinkCell({ request }) {
     return <Text size="1" color="gray">—</Text>;
   }
   return (
-    <a href={`/intervention/${iv.id}`} style={{ textDecoration: 'none' }}>
-      <Flex align="center" gap="1">
-        <Text size="1" style={{ fontFamily: 'monospace' }}>{iv.code}</Text>
-        <Badge size="1" variant="soft" style={{ backgroundColor: (iv.status_color || '#888') + '22', color: iv.status_color || '#888' }}>
-          {iv.status_label}
-        </Badge>
-      </Flex>
-    </a>
+    <Flex align="center" gap="1">
+      <EntityCodeLink type="intervention" id={iv.id} code={iv.code} size={1} />
+      <Badge size="1" variant="soft" style={{ backgroundColor: (iv.status_color || '#888') + '22', color: iv.status_color || '#888' }}>
+        {iv.status_label}
+      </Badge>
+    </Flex>
   );
 }
 

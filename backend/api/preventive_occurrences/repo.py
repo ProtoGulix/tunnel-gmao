@@ -3,10 +3,14 @@ from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
+from api.utils.status_log import skip_request_status_log
 
 logger = logging.getLogger(__name__)
+
+SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
 
 
 class PreventiveOccurrenceRepository:
@@ -162,7 +166,11 @@ class PreventiveOccurrenceRepository:
     # ── Skip ─────────────────────────────────────────────────────
 
     def skip_occurrence(self, occurrence_id: str, skip_reason: str) -> Dict[str, Any]:
-        """Ignore une occurrence en statut 'pending'"""
+        """Ignore une occurrence en statut 'pending'.
+
+        Le texte `skip_reason` reste libre (le passage à un motif d'audit est un autre chantier) ;
+        l'audit de la requête (motif, avant, après) est écrit par le middleware.
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -186,10 +194,8 @@ class PreventiveOccurrenceRepository:
             )
             conn.commit()
         except (NotFoundError, ValidationError, ConflictError):
-            conn.rollback()
             raise
         except Exception as e:
-            conn.rollback()
             raise_db_error(e, "mise à jour du statut de l'occurrence")
         finally:
             release_connection(conn)
@@ -200,8 +206,10 @@ class PreventiveOccurrenceRepository:
 
     def generate_occurrences(self) -> Dict[str, Any]:
         """
-        Génère les occurrences en attente pour tous les plans actifs.
-        Chaque machine est traitée dans sa propre transaction.
+        Génère les occurrences en attente pour tous les plans actifs, tout ou rien.
+
+        Tout se passe dans la transaction de la requête : les cas prévisibles sont vérifiés
+        avant d'écrire et comptés dans le rapport ; une erreur SQL remonte et annule tout.
         """
         today = date.today()
         plans = self._load_active_plans()
@@ -209,31 +217,28 @@ class PreventiveOccurrenceRepository:
         generated = 0
         skipped_conflicts = 0
         skipped_active = 0
+        # Conservé dans la réponse pour les clients existants ; toujours vide depuis AUDC-24
+        # (une erreur annule la génération au lieu d'être listée).
         errors: List[str] = []
         created_di_ids: List[str] = []
 
         for plan in plans:
-            machines = self._load_machines_for_class(str(plan["equipement_class_id"]))
-            if machines is None:
-                errors.append(f"Plan {plan['label']}: erreur chargement machines")
+            if plan["equipement_class_id"] is None:
+                # Plan sans classe d'équipement : aucune machine à traiter, rien à écrire.
+                logger.info("Plan %s sans classe d'équipement : ignoré", plan["label"])
                 continue
 
-            for machine in machines:
-                machine_id = str(machine["id"])
-                machine_label = machine.get("code") or machine_id
-                try:
-                    result, di_id = self._generate_for_machine(plan, machine_id, today)
-                    if result == "generated":
-                        generated += 1
-                        if di_id:
-                            created_di_ids.append(di_id)
-                    elif result == "conflict":
-                        skipped_conflicts += 1
-                    elif result == "skipped_active_exists":
-                        skipped_active += 1
-                    # "skipped_not_due" et "skipped_no_hours" : pas comptés
-                except Exception as e:
-                    errors.append(f"Plan {plan['label']} / Machine {machine_label}: {e}")
+            for machine in self._load_machines_for_class(str(plan["equipement_class_id"])):
+                result, di_id = self._generate_for_machine(plan, str(machine["id"]), today)
+                if result == "generated":
+                    generated += 1
+                    if di_id:
+                        created_di_ids.append(di_id)
+                elif result == "conflict":
+                    skipped_conflicts += 1
+                elif result == "skipped_active_exists":
+                    skipped_active += 1
+                # "skipped_not_due" et "skipped_no_hours" : pas comptés
 
         return {
             "generated": generated,
@@ -267,8 +272,8 @@ class PreventiveOccurrenceRepository:
         finally:
             release_connection(conn)
 
-    def _load_machines_for_class(self, class_id: str) -> Optional[List[Dict[str, Any]]]:
-        """Charge les machines d'une classe d'équipement"""
+    def _load_machines_for_class(self, class_id: str) -> List[Dict[str, Any]]:
+        """Charge les machines d'une classe d'équipement (une erreur SQL remonte)."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -279,8 +284,8 @@ class PreventiveOccurrenceRepository:
             rows = cur.fetchall()
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, row)) for row in rows]
-        except Exception:
-            return None
+        except Exception as e:
+            raise_db_error(e, "chargement des machines d'une classe")
         finally:
             release_connection(conn)
 
@@ -369,6 +374,19 @@ class PreventiveOccurrenceRepository:
 
                 scheduled_date = today
 
+            # Conflit prévisible : une occurrence existe déjà à cette date (même annulée), la
+            # contrainte d'unicité (plan, machine, date) refuserait l'insertion. Vérifié avant
+            # d'écrire, sans rollback : le cas est rapporté, pas traité comme une erreur.
+            cur.execute(
+                """
+                SELECT 1 FROM preventive_occurrence
+                WHERE plan_id = %s AND machine_id = %s AND scheduled_date = %s
+                """,
+                (plan_id, machine_id, scheduled_date),
+            )
+            if cur.fetchone():
+                return "conflict", None
+
             occurrence_id = str(uuid4())
             cur.execute(
                 """
@@ -376,7 +394,6 @@ class PreventiveOccurrenceRepository:
                     (id, plan_id, machine_id, scheduled_date, triggered_at,
                      hours_at_trigger, status)
                 VALUES (%s, %s, %s, %s, NOW(), %s, 'pending')
-                ON CONFLICT (plan_id, machine_id, scheduled_date) DO NOTHING
                 """,
                 (
                     occurrence_id,
@@ -386,10 +403,6 @@ class PreventiveOccurrenceRepository:
                     current_hours if plan["trigger_type"] == "hours" else None,
                 ),
             )
-            if cur.rowcount == 0:
-                conn.rollback()
-                return "conflict", None
-
             cur.execute(
                 """
                 INSERT INTO intervention_request
@@ -437,14 +450,9 @@ class PreventiveOccurrenceRepository:
                 occurrence_id,
             )
 
+            self._record_system_created(cur, "preventive_occurrence", occurrence_id)
+            self._record_system_created(cur, "request", di_id)
             conn.commit()
-
-        except (NotFoundError, ValidationError, ConflictError):
-            conn.rollback()
-            raise
-        except Exception:
-            conn.rollback()
-            raise
         finally:
             release_connection(conn)
 
@@ -453,65 +461,102 @@ class PreventiveOccurrenceRepository:
 
         return "generated", di_id
 
+    # Tables des entités dont la génération dépose l'événement `created` (liste blanche).
+    _CREATED_TABLES = {
+        "preventive_occurrence": "preventive_occurrence",
+        "request": "intervention_request",
+        "intervention": "intervention",
+    }
+
+    def _record_system_created(self, cur: Any, entity_type: str, entity_id: str) -> None:
+        """Dépose la ligne `created` d'une entité créée par la génération (événement du système).
+
+        L'auteur est l'utilisateur du jeton, le motif SYSTEM_CASCADE ; la valeur est la ligne
+        créée, sans identifiant ni horodatages techniques.
+        """
+        table = self._CREATED_TABLES[entity_type]
+        cur.execute(f"SELECT row_to_json(t) FROM {table} t WHERE id = %s", (entity_id,))
+        created = cur.fetchone()[0]
+        for technical in ("id", "created_at", "updated_at"):
+            created.pop(technical, None)
+        record_audit_event(
+            entity_type,
+            entity_id,
+            "created",
+            new_value=created,
+            is_system=True,
+            reason_code=SYSTEM_CASCADE_REASON,
+        )
+
+    def _plan_label(self, plan_id: str) -> str:
+        """Libellé du plan, repris comme titre de l'intervention (colonne obligatoire)."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT label FROM preventive_plan WHERE id = %s", (str(plan_id),))
+            return cur.fetchone()[0]
+        except Exception as e:
+            raise_db_error(e, "lecture du libellé du plan")
+        finally:
+            release_connection(conn)
+
     def _auto_accept_occurrence(
         self, occurrence_id: str, di_id: str, machine_id: str, plan_id: str
     ) -> None:
         """
         Crée une intervention en acceptant la DI liée à l'occurrence.
-        Import lazy pour éviter la circularité avec interventions.repo
+        Import lazy pour éviter la circularité avec interventions.repo.
+        Tout ou rien : une erreur remonte et annule la génération entière.
         """
+        from api.interventions.repo import InterventionRepository
+
+        label = self._plan_label(plan_id)
+        intervention = InterventionRepository().add(
+            {
+                "title": label,
+                "machine_id": machine_id,
+                "type_inter": "PRE",
+                "tech_initials": "SYS",
+                "priority": "normale",
+                "request_id": di_id,
+                "plan_id": plan_id,
+            },
+            system_acceptance=True,
+        )
+        intervention_id = str(intervention["id"])
+
+        conn = self._get_connection()
         try:
-            from api.interventions.repo import InterventionRepository
-
-            intervention = InterventionRepository().add(
-                {
-                    "machine_id": machine_id,
-                    "type_inter": "PREV",
-                    "tech_initials": "SYS",
-                    "priority": "normale",
-                    "request_id": di_id,
-                    "plan_id": plan_id,
-                }
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE preventive_occurrence
+                SET intervention_id = %s, status = 'in_progress'
+                WHERE id = %s
+                """,
+                (intervention_id, occurrence_id),
             )
-            intervention_id = str(intervention["id"])
-
-            conn = self._get_connection()
-            try:
-                cur = conn.cursor()
-                cur.execute(
-                    """
-                    UPDATE preventive_occurrence
-                    SET intervention_id = %s, status = 'in_progress'
-                    WHERE id = %s
-                    """,
-                    (intervention_id, occurrence_id),
-                )
-                cur.execute(
-                    """
-                    UPDATE intervention_task
-                    SET intervention_id = %s,
-                        assigned_to = COALESCE(assigned_to,
-                            (SELECT tech_id FROM intervention WHERE id = %s)),
-                        due_date = COALESCE(due_date,
-                            (SELECT reported_date FROM intervention WHERE id = %s))
-                    WHERE occurrence_id = %s AND intervention_id IS NULL
-                    """,
-                    (intervention_id, intervention_id, intervention_id, occurrence_id),
-                )
-                conn.commit()
-                logger.info(
-                    "Rattachement tâches auto-accept : intervention %s liée à l'occurrence %s",
-                    intervention_id,
-                    occurrence_id,
-                )
-            except Exception:
-                conn.rollback()
-                raise
-            finally:
-                release_connection(conn)
-
-        except Exception as e:
-            logger.warning("Auto-accept échoué pour l'occurrence %s: %s", occurrence_id, e)
+            cur.execute(
+                """
+                UPDATE intervention_task
+                SET intervention_id = %s,
+                    assigned_to = COALESCE(assigned_to,
+                        (SELECT tech_id FROM intervention WHERE id = %s)),
+                    due_date = COALESCE(due_date,
+                        (SELECT reported_date FROM intervention WHERE id = %s))
+                WHERE occurrence_id = %s AND intervention_id IS NULL
+                """,
+                (intervention_id, intervention_id, intervention_id, occurrence_id),
+            )
+            self._record_system_created(cur, "intervention", intervention_id)
+            conn.commit()
+        finally:
+            release_connection(conn)
+        logger.info(
+            "Rattachement tâches auto-accept : intervention %s liée à l'occurrence %s",
+            intervention_id,
+            occurrence_id,
+        )
 
     # ── Repair ───────────────────────────────────────────────────
 
@@ -761,23 +806,23 @@ class PreventiveOccurrenceRepository:
                     req_row = cur.fetchone()
                     if req_row:
                         req_id, req_statut = str(req_row[0]), req_row[1]
-                        cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-                        cur.execute(
-                            "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
-                            (req_id,),
-                        )
-                        cur.execute(
-                            """
-                            INSERT INTO request_status_log
-                                (request_id, status_from, status_to, changed_by, notes)
-                            VALUES (%s, %s, 'cloturee', NULL, %s)
-                            """,
-                            (
-                                req_id,
-                                req_statut,
-                                "Clôture automatique — procédure de réparation (bug cascade fermeture)",
-                            ),
-                        )
+                        with skip_request_status_log(cur):
+                            cur.execute(
+                                "UPDATE intervention_request SET statut = 'cloturee' WHERE id = %s",
+                                (req_id,),
+                            )
+                            cur.execute(
+                                """
+                                INSERT INTO request_status_log
+                                    (request_id, status_from, status_to, changed_by, notes)
+                                VALUES (%s, %s, 'cloturee', NULL, %s)
+                                """,
+                                (
+                                    req_id,
+                                    req_statut,
+                                    "Clôture automatique — procédure de réparation (bug cascade fermeture)",
+                                ),
+                            )
                         requests_closed += 1
                         details.append(
                             f"Bug 2 : demande {req_id} → 'cloturee' (liée à l'occurrence {occ_id})"
@@ -869,7 +914,6 @@ class PreventiveOccurrenceRepository:
             )
 
         except Exception as e:
-            conn.rollback()
             raise_db_error(e, "procédure de réparation des occurrences")
         finally:
             release_connection(conn)

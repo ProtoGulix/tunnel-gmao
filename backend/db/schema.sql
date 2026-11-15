@@ -589,10 +589,6 @@ BEGIN
     ) RETURNING id INTO v_log_id;
 
     RETURN v_log_id;
-
-EXCEPTION WHEN OTHERS THEN
-    RAISE WARNING 'fn_audit_log_decision: %', SQLERRM;
-    RETURN NULL;
 END;
 $$;
 

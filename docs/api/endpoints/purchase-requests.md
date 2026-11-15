@@ -6,7 +6,7 @@ Deux modes de création :
 - **Liée à une action** (`intervention_action_id`) — l'intervention est déduite via la table de jonction `intervention_action_purchase_request`
 - **Autonome** — DA spontanée sans aucune relation (réappro consommable atelier, etc.)
 
-> **Audit log** : tout `POST`, `PATCH` et `DELETE` sur cette ressource exige un champ `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--reason_code-obligatoire).
+> **Audit log** : `POST` et `PUT` sont routiniers (règle d'audit `purchase_request`) : aucun motif demandé, `ROUTINE` est injecté. Seul `DELETE` exige un `reason_code` dans le body. Voir [Audit Log — règle commune](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 > Voir aussi : [Interventions](interventions.md) | [Stock Items](stock-items.md) | [Supplier Orders](supplier-orders.md) | [Supplier Order Lines](supplier-order-lines.md)
 
@@ -407,7 +407,7 @@ Crée une demande d’achat. Deux modes selon le contexte :
 | `reason`                 | string | non          | null     | Raison de la demande                                                                 |
 | `notes`                  | string | non          | null     | Notes complémentaires                                                                |
 | `workshop`               | string | non          | null     | Atelier concerné                                                                     |
-| `reason_code`            | string | **oui**      | —        | Code raison obligatoire pour l’audit. Voir `GET /audit/reasons`                      |
+| `reason_code`            | string | non          | —        | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons`      |
 | `reason_text`            | string | conditionnel | null     | Texte libre obligatoire si `reason_code = "OTHER"`                                   |
 
 ### Règles métier
@@ -456,7 +456,30 @@ Retourne le détail complet de la demande mise à jour.
 
 ## `DELETE /purchase-requests/{id}`
 
-Supprime une demande. Réponse `204`.
+Supprime une demande. Réponse `200`.
+
+**Audit** : un motif explicite est exigé dans le corps (`reason_code`, voir `GET /audit/reasons`), sans motif routinier injecté. Le middleware écrit la ligne `deleted`.
+
+---
+
+**Audit (création, modification)** : une ligne `created` (identifiant créé) ou une ligne `*_changed` par champ modifié, auteur = jeton, écrites par le middleware ; motif routinier appliqué sans saisie.
+
+---
+
+## `POST /purchase-requests/import/headers`
+
+Retourne les colonnes d'un CSV envoyé (`multipart`). N'écrit rien en base (exclue de l'audit, raison « sans écriture » dans `api/audits/exclusions.py`).
+
+---
+
+## `POST /purchase-requests/import`
+
+Importe des demandes d'achat depuis un CSV (`multipart` : `file`, `intervention_id`, `col_ref`, `col_qty`, `urgency`, `dry_run`, `excluded_rows`).
+
+**Tout ou rien** (ADR 0018, 1 quinquies) : toutes les lignes sont validées avant d'écrire (référence non vide, quantité entière entre 1 et 2 147 483 647). Si une ligne est invalide (hors `dry_run`) : aucune demande créée, réponse `422` portant le rapport complet (`total`, `created: 0`, `errors`, `lines`, plus `detail` et `error_type: "ImportRejected"`) ; les lignes valides y restent en `status: "preview"`. Une erreur SQL répond `500` et n'écrit rien.
+
+- `201` : rapport `ImportResult`, une ligne `created` d'audit par demande créée (auteur = jeton).
+- `dry_run=true` : analyse sans écriture, `201` même avec des lignes en erreur.
 
 ---
 
@@ -487,6 +510,8 @@ Pour chaque demande `PENDING_DISPATCH` avec un `stock_item_id` :
 - La demande est ignorée et remontée dans `errors[]`
 
 > **Invariant** : une même `purchase_request` n'est jamais dispatchée deux fois. Si elle est déjà liée à une `supplier_order_line`, elle est ignorée.
+
+> **Valider puis écrire** (ADR 0018, 1 quinquies) : toutes les demandes sont d'abord examinées en lecture seule ; seules les répartissables sont écrites, les autres sont dans `errors[]`. Une erreur SQL annule toute la répartition (`500`, rien réparti). Audit : ligne `created` (système, motif `SYSTEM_CASCADE`) pour chaque commande créée, ligne `dispatched` pour chaque demande répartie.
 
 ### Réponse `200`
 
@@ -520,5 +545,5 @@ Pour chaque demande `PENDING_DISPATCH` avec un `stock_item_id` :
 | ------------------ | ------------------------------------------------------------------------ |
 | `dispatched_count` | Nombre de demandes dispatchées avec succès                               |
 | `created_orders`   | Nombre de nouvelles `supplier_order` créées                              |
-| `errors`           | Demandes non dispatchées avec raison                                     |
+| `errors`           | Demandes non répartissables (pièce non liée, aucun fournisseur), signalées sans écriture |
 | `details[].mode`   | `direct` (fournisseur préféré) ou `consultation` (tous les fournisseurs) |

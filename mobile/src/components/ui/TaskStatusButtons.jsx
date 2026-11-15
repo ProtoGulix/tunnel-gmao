@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Check, Ban, RotateCcw, Loader2 } from 'lucide-react'
+import { Ban, RotateCcw, Loader2 } from 'lucide-react'
+import { AuditReasonSheet } from './AuditReasonSheet'
 import { updateTask } from '../../api/tasks'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
@@ -7,46 +8,40 @@ import { PERM } from '../../auth/permissionCodes'
 /**
  * TaskStatusButtons — boutons de transition de statut d'une tâche.
  *
- * PATCH /intervention-tasks/{id} n'accepte que status ∈ {todo, skipped} —
- * `done` est volontairement exclu côté backend (InterventionTaskPatch) :
- * une tâche ne peut être clôturée qu'en la liant à une action avec
- * close_task=true (POST /intervention-actions, voir TaskSection dans
- * ActionForm.jsx). Ce composant ne propose donc PAS de bouton "Marquer
- * terminée" — seulement "Ignorer" (avec motif obligatoire, voir
- * InterventionTaskPatch.validate_status_rules) et "Remettre à faire" pour
- * annuler une exclusion.
+ * "Ignorer" envoie status=skipped sans motif : le backend répond 400 avec les
+ * motifs d'audit autorisés, on les propose dans AuditReasonSheet puis on
+ * renvoie avec le motif choisi (ADR 0016). Aucun motif ni saisie maison.
+ * "Remettre à faire" reste une modification routinière.
+ * `done` passe par une action avec close_task=true (voir ActionForm.jsx).
  *
  * @param {{ task: Object, onChanged: (updatedTask: Object) => void }} props
  */
 export function TaskStatusButtons({ task, onChanged }) {
   const { can } = usePermissions()
   const [saving, setSaving] = useState(false)
-  const [showSkipForm, setShowSkipForm] = useState(false)
-  const [skipReason, setSkipReason] = useState('')
+  const [reasons, setReasons] = useState(null)
   const [error, setError] = useState(null)
 
-  const isDone = task.status === 'done'
-  const isSkipped = task.status === 'skipped'
-  const isTerminal = isDone || isSkipped
+  const isTerminal = task.status === 'done' || task.status === 'skipped'
 
-  async function applyStatus(status, extra = {}) {
+  async function applyStatus(status, extra = {}, audit) {
     setSaving(true)
     setError(null)
     try {
-      const updated = await updateTask(task.id, { status, ...extra })
+      const updated = await updateTask(task.id, { status, ...extra }, audit)
+      setReasons(null)
       onChanged(updated)
-      setShowSkipForm(false)
-      setSkipReason('')
     } catch (err) {
-      setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la mise à jour')
+      const asked = err?.data?.audit?.reasons
+      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+        setReasons(asked)
+      } else {
+        setReasons(null)
+        setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la mise à jour')
+      }
     } finally {
       setSaving(false)
     }
-  }
-
-  function handleSkipConfirm() {
-    if (!skipReason.trim()) return
-    applyStatus('skipped', { skip_reason: skipReason.trim() })
   }
 
   if (!can(PERM.intervention.updateTask)) return null
@@ -55,26 +50,14 @@ export function TaskStatusButtons({ task, onChanged }) {
     return <Loader2 size={16} className="animate-spin text-tunnel-muted shrink-0" />
   }
 
-  if (showSkipForm) {
+  if (reasons) {
     return (
-      <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-        <input
-          className="text-xs border border-tunnel-border rounded px-2 py-1 w-32 focus:outline-none focus:ring-1 focus:ring-tunnel-accent/30"
-          value={skipReason}
-          onChange={e => setSkipReason(e.target.value)}
-          placeholder="Motif requis…"
-          autoFocus
-          onKeyDown={e => { if (e.key === 'Enter' && skipReason.trim()) { e.preventDefault(); handleSkipConfirm() } }}
-        />
-        <button type="button" disabled={!skipReason.trim()} onClick={handleSkipConfirm}
-          className="shrink-0 p-1.5 rounded bg-amber-100 text-amber-700 disabled:opacity-40">
-          <Check size={13} />
-        </button>
-        <button type="button" onClick={() => { setShowSkipForm(false); setSkipReason('') }}
-          className="shrink-0 p-1.5 rounded text-tunnel-muted">
-          <Ban size={13} />
-        </button>
-      </div>
+      <AuditReasonSheet
+        title="Pourquoi ignorer cette tâche ?"
+        reasons={reasons}
+        onConfirm={audit => applyStatus('skipped', {}, audit)}
+        onCancel={() => setReasons(null)}
+      />
     )
   }
 
@@ -87,7 +70,7 @@ export function TaskStatusButtons({ task, onChanged }) {
           <RotateCcw size={13} />
         </button>
       ) : (
-        <button type="button" title="Ignorer" onClick={() => setShowSkipForm(true)}
+        <button type="button" title="Ignorer" onClick={() => applyStatus('skipped')}
           className="p-1.5 rounded bg-amber-100 text-amber-700 active:bg-amber-200">
           <Ban size={13} />
         </button>

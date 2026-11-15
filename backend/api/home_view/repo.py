@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, List, Optional
 
+from api.audits.events import record_audit_event, record_column_changes
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 
@@ -99,19 +100,37 @@ class HomeViewRepository:
                 raise ValidationError(f"Vue d'accueil inconnue : '{home_view}'")
 
             cur.execute(
+                "SELECT home_view FROM role_home_view WHERE role_id = %s FOR UPDATE", (role_id,)
+            )
+            previous = cur.fetchone()
+
+            cur.execute(
                 """
                 INSERT INTO role_home_view (role_id, home_view, updated_by)
                 VALUES (%s, %s, %s)
                 ON CONFLICT (role_id) DO UPDATE
                     SET home_view = EXCLUDED.home_view, updated_at = now(), updated_by = EXCLUDED.updated_by
-                RETURNING role_id, home_view
+                RETURNING id, role_id, home_view
                 """,
                 (role_id, home_view, updated_by),
             )
             row = cur.fetchone()
-            cols = [desc[0] for desc in cur.description]
+            line_id, saved_role_id, saved_view = row
+            # Le chemin porte role_id : la trace est déposée sous l'id de la ligne, et dit ce
+            # qui s'est réellement passé (création, ou changement de vue).
+            if previous is None:
+                record_audit_event(
+                    "role_home_view",
+                    line_id,
+                    "created",
+                    new_value={"role_id": saved_role_id, "home_view": saved_view},
+                )
+            else:
+                record_column_changes(
+                    "role_home_view", line_id, {"home_view": previous[0]}, {"home_view": saved_view}
+                )
             conn.commit()
-            return dict(zip(cols, row))
+            return {"role_id": saved_role_id, "home_view": saved_view}
         except (NotFoundError, ValidationError):
             conn.rollback()
             raise
@@ -126,7 +145,19 @@ class HomeViewRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            cur.execute("DELETE FROM role_home_view WHERE role_id = %s", (role_id,))
+            cur.execute(
+                "DELETE FROM role_home_view WHERE role_id = %s RETURNING id, role_id, home_view",
+                (role_id,),
+            )
+            row = cur.fetchone()
+            # Aucune ligne : rien n'a été supprimé, rien à tracer.
+            if row:
+                record_audit_event(
+                    "role_home_view",
+                    row[0],
+                    "deleted",
+                    old_value={"role_id": row[1], "home_view": row[2]},
+                )
             conn.commit()
         except Exception as e:
             conn.rollback()

@@ -117,11 +117,12 @@ Déclenche la génération des occurrences pour tous les plans préventifs actif
 - Pour chaque plan actif, pour chaque machine de la classe d'équipement du plan :
   - **trigger_type = `periodicity`** : génère si `last_scheduled_date + periodicity_days ≤ today` (ou si aucune occurrence précédente)
   - **trigger_type = `hours`** : génère si `current_hours - last_trigger_hours ≥ hours_threshold`
-  - Insère avec `ON CONFLICT (plan_id, machine_id, scheduled_date) DO NOTHING` — pas de doublon
+  - Une occurrence déjà existante à cette date (même annulée) est vérifiée avant d'écrire et comptée dans `skipped_conflicts` — pas de doublon, pas d'erreur
   - Crée automatiquement une DI (`demandeur_nom = "Système préventif"`, `statut = "nouvelle"`, `is_system = true`, `suggested_type_inter = "PRE"`)
   - Si `plan.auto_accept = true` : crée aussi l'intervention (`type_inter = "PRE"`, `tech_initials = "SYS"`)
 
-- Chaque machine est traitée dans sa **propre transaction** — l'échec sur une machine n'annule pas les autres.
+- **Tout ou rien** : toute la génération est une seule transaction. Une erreur SQL annule tout (réponse `500`, aucune occurrence, demande ni intervention créée).
+- Audit : chaque occurrence, demande et intervention créée écrit un événement `created` au nom du système (motif `SYSTEM_CASCADE`), l'auteur étant l'utilisateur du jeton.
 
 ### Réponse `200`
 
@@ -129,23 +130,23 @@ Déclenche la génération des occurrences pour tous les plans préventifs actif
 {
   "generated": 5,
   "skipped_conflicts": 2,
-  "errors": [
-    "Plan Maintenance moteurs / Machine CONV-003: machine_hours introuvable"
-  ]
+  "skipped_active": 1,
+  "errors": []
 }
 ```
 
 | Champ               | Description                                              |
 | ------------------- | -------------------------------------------------------- |
 | `generated`         | Nombre d'occurrences créées avec succès                  |
-| `skipped_conflicts` | Occurrences ignorées car déjà existantes (ON CONFLICT)   |
-| `errors`            | Liste des erreurs par machine (n'empêchent pas les autres) |
+| `skipped_conflicts` | Occurrences ignorées car déjà existantes à cette date    |
+| `skipped_active`    | Machines ignorées car une occurrence non terminée existe |
+| `errors`            | Toujours vide (conservé pour compatibilité) : une erreur annule la génération |
 
 ---
 
 ## `PATCH /preventive-occurrences/{id}/skip`
 
-Ignore une occurrence en statut `pending`.
+Ignore une occurrence en statut `pending`. Audité : le `reason_code` de la requête est validé par le middleware (règle routinière de `preventive_occurrence` si absent) ; `skip_reason` reste un texte libre.
 
 ### Entrée
 

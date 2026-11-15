@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 import bcrypt
 
+from api.audits.events import record_audit_event, record_column_changes
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
 from api.utils.sanitizer import strip_html
@@ -107,12 +108,19 @@ class UserRepository:
         try:
             conn = get_connection()
             with conn.cursor() as cur:
+                # Colonnes issues de la liste blanche `allowed` ci-dessus.
+                cur.execute(
+                    f"SELECT {', '.join(updates)} FROM tunnel_user WHERE id = %s::uuid FOR UPDATE",
+                    (user_id,),
+                )
+                before_row = cur.fetchone()
+                if before_row is None:
+                    raise NotFoundError(f"Utilisateur {user_id} non trouvé")
                 cur.execute(
                     f"UPDATE tunnel_user SET {set_clause}, updated_at = now() WHERE id = %s::uuid",
                     params,
                 )
-                if cur.rowcount == 0:
-                    raise NotFoundError(f"Utilisateur {user_id} non trouvé")
+            record_column_changes("user", user_id, dict(zip(updates, before_row)), updates)
             conn.commit()
             return self.get_by_id(user_id)
         except (NotFoundError, ValidationError):
@@ -173,6 +181,14 @@ class UserRepository:
                     "UPDATE tunnel_user SET password_hash = %s, updated_at = now() WHERE id = %s::uuid",
                     (new_hash, user_id),
                 )
+            # Les empreintes sont masquées par le middleware avant l'écriture d'audit.
+            record_audit_event(
+                "user",
+                user_id,
+                "password_hash_changed",
+                old_value={"password_hash": raw_hash},
+                new_value={"password_hash": new_hash},
+            )
             conn.commit()
         except (NotFoundError, ValidationError):
             raise

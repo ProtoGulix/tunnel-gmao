@@ -28,14 +28,8 @@ class InterventionCreate(BaseModel):
     status_actual: Optional[str] = None
     printed_fiche: Optional[bool] = None
     reported_date: Optional[date] = None
-    request_id: Optional[UUID] = None
-    reason_code: str = Field(
-        ...,
-        description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
-    )
-    reason_text: Optional[str] = Field(
-        default=None,
-        description="Texte libre obligatoire si reason_code=OTHER.",
+    request_id: UUID = Field(
+        description="Demande d'intervention dont l'intervention est issue (obligatoire, ADR 0019)."
     )
 
     class Config:
@@ -55,14 +49,6 @@ class InterventionIn(BaseModel):
     status_actual: Optional[str] = None
     printed_fiche: Optional[bool] = None
     reported_date: Optional[date] = None
-    reason_code: str = Field(
-        ...,
-        description="Code raison obligatoire pour l'audit (ex: CLIENT_REQUEST, OTHER). Voir GET /audit/reasons.",
-    )
-    reason_text: Optional[str] = Field(
-        default=None,
-        description="Texte libre obligatoire si reason_code=OTHER.",
-    )
 
     class Config:
         from_attributes = True

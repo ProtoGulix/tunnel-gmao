@@ -49,9 +49,9 @@ src/
 │   ├── machines/
 │   │   └── useMachineData.js
 │   ├── equipements/
-│   │   ├── useEquipements.js
+│   │   ├── useEquipementsBrowser.js   # liste plate + arbre mère/fille
 │   │   ├── useEquipementDetail.js
-│   │   └── useEquipementHealth.js
+│   │   └── useEquipementActivity.js
 │   ├── stock/
 │   │   ├── useStockItems.js
 │   │   ├── useStockItem.js
@@ -177,8 +177,7 @@ src/
 │   │       ├── SupplierOrdersTable.jsx
 │   │       └── OrderLineTable/
 │   │
-│   ├── machines/
-│   ├── equipements/
+│   ├── equipements/                # EquipementList, EquipementDetailPanel, tabs/EquipementPreventifTab...
 │   ├── preventive/
 │   ├── technicien/
 │   ├── anomalies/
@@ -192,12 +191,8 @@ src/
 │   │   ├── InterventionsList.jsx
 │   │   ├── InterventionDetail.jsx
 │   │   └── InterventionCreate.jsx
-│   ├── machines/
-│   │   ├── MachineList.jsx
-│   │   └── MachineDetail.jsx
 │   ├── equipements/
-│   │   ├── EquipementsList.jsx
-│   │   └── EquipementDetail.jsx
+│   │   └── EquipementsPage.jsx   # master-detail (?id=), liste plate ou arbre
 │   ├── achats/
 │   │   └── ProcurementPage.jsx
 │   ├── technicien/

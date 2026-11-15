@@ -48,19 +48,16 @@ export default function AdminSecurityTab() {
       await blocklistHook.unblockIp(id);
       notify('IP débloquée');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors du déblocage'), 'error');
       throw err;
     }
   }, [blocklistHook, notify]);
 
   const handleAddDomain = useCallback(async (payload) => {
-    try {
-      await domainsHook.addDomain(payload);
-      notify('Domaine ajouté');
-    } catch (err) {
-      notify(extractApiErrorMessage(err, 'Erreur lors de l\'ajout'), 'error');
-      throw err;
-    }
+    // Une erreur (refus 409 compris) remonte à la fenêtre d'ajout, qui l'affiche.
+    await domainsHook.addDomain(payload);
+    notify('Domaine ajouté');
   }, [domainsHook, notify]);
 
   const handleRemoveDomain = useCallback(async (id) => {
@@ -68,6 +65,7 @@ export default function AdminSecurityTab() {
       await domainsHook.removeDomain(id);
       notify('Domaine supprimé');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors de la suppression'), 'error');
       throw err;
     }
@@ -99,6 +97,7 @@ export default function AdminSecurityTab() {
       await apiKeysHook.revokeKey(id);
       notify('Cle API revoquee');
     } catch (err) {
+      if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors de la revocation'), 'error');
       throw err;
     }

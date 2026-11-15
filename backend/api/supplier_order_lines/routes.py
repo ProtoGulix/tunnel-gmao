@@ -1,8 +1,9 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.supplier_order_lines.repo import SupplierOrderLineRepository
 from api.supplier_order_lines.schemas import (
@@ -91,10 +92,8 @@ def get_supplier_order_line(line_id: str):
     return single(repo.get_by_id(line_id))
 
 
-@router.post(
-    "",
-)
-def create_supplier_order_line(line: SupplierOrderLineIn):
+@router.post("", dependencies=[audit("supplier_order_line", id_from_created=True)])
+def create_supplier_order_line(line: SupplierOrderLineIn, request: Request):
     """Crée une nouvelle ligne de commande fournisseur"""
     repo = SupplierOrderLineRepository()
     data = line.model_dump()
@@ -104,12 +103,12 @@ def create_supplier_order_line(line: SupplierOrderLineIn):
             {'purchase_request_id': str(pr['purchase_request_id']), 'quantity': pr['quantity']}
             for pr in data['purchase_requests']
         ]
-    return single(repo.add(data))
+    created = repo.add(data)
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.put(
-    "/{line_id}",
-)
+@router.put("/{line_id}", dependencies=[audit("supplier_order_line", id_from_path="line_id")])
 def update_supplier_order_line(line_id: str, line: SupplierOrderLineIn):
     """Met à jour une ligne de commande existante"""
     repo = SupplierOrderLineRepository()
@@ -123,9 +122,7 @@ def update_supplier_order_line(line_id: str, line: SupplierOrderLineIn):
     return single(repo.update(line_id, data))
 
 
-@router.patch(
-    "/{line_id}",
-)
+@router.patch("/{line_id}", dependencies=[audit("supplier_order_line", id_from_path="line_id")])
 def patch_supplier_order_line(line_id: str, line: SupplierOrderLinePatch):
     """Met à jour partiellement une ligne (seuls les champs fournis sont modifiés)"""
     repo = SupplierOrderLineRepository()
@@ -138,7 +135,7 @@ def patch_supplier_order_line(line_id: str, line: SupplierOrderLinePatch):
     return single(repo.update(line_id, data))
 
 
-@router.delete("/{line_id}")
+@router.delete("/{line_id}", dependencies=[audit("supplier_order_line", id_from_path="line_id")])
 def delete_supplier_order_line(line_id: str):
     """Supprime une ligne de commande"""
     repo = SupplierOrderLineRepository()
@@ -148,6 +145,7 @@ def delete_supplier_order_line(line_id: str):
 
 @router.post(
     "/{line_id}/purchase-requests",
+    dependencies=[audit("supplier_order_line", id_from_path="line_id")],
 )
 def link_purchase_request(line_id: str, body: LinkPurchaseRequestBody):
     """Lie une demande d'achat à une ligne de commande"""
@@ -155,8 +153,11 @@ def link_purchase_request(line_id: str, body: LinkPurchaseRequestBody):
     return single(repo.link_purchase_request(line_id, body.purchase_request_id, body.quantity))
 
 
+# events_only : la ligne n'est pas supprimée, seul le lien l'est. Un DELETE exige quand même un
+# motif explicite ; l'événement `purchase_requests_changed` vient du repo.
 @router.delete(
     "/{line_id}/purchase-requests/{purchase_request_id}",
+    dependencies=[audit("supplier_order_line", events_only=True)],
 )
 def unlink_purchase_request(line_id: str, purchase_request_id: str):
     """Retire le lien avec une demande d'achat"""

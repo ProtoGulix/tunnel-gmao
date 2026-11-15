@@ -145,7 +145,7 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
     familyCode, setFamilyCode,
     subFamilyCode, setSubFamilyCode,
     facets, pagination, goToPage,
-    refresh, createItem, editItem, removeItem,
+    refresh, createItem, editItem,
   } = useParts({ initialSearch: urlSearch });
 
   const [selected, setSelected] = useState(null);
@@ -186,12 +186,6 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
     } finally { setSaving(false); }
   };
 
-  const handleDelete = async () => {
-    await removeItem(selected.id);
-    setSelected(null);
-    setMode(null);
-  };
-
   const handleRefreshDetail = useCallback(async () => {
     if (!selected) return;
     const detail = await fetchPartDetail(selected.id);
@@ -221,7 +215,6 @@ const PartsTab = forwardRef(function PartsTab(props, ref) {
       <PartDetailPanel
         part={selected}
         onEdit={() => setMode('edit')}
-        onDelete={handleDelete}
         onRefresh={handleRefreshDetail}
         onClose={() => { setSelected(null); setMode(null); }}
       />

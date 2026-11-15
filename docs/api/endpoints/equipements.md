@@ -276,7 +276,7 @@ Retourne `null` si aucune demande ouverte. Triées par `created_at DESC`.
 
 ## `POST /equipements`
 
-Crée un équipement.
+Crée un équipement. Audit : une ligne `created` (identifiant créé, auteur = jeton), sans doublon.
 
 ### Entrée
 
@@ -322,7 +322,7 @@ Crée un équipement.
 
 ## `PUT /equipements/{id}`
 
-Remplace complètement un équipement. `name` est obligatoire. Tous les champs non envoyés passent à `null`.
+Remplace complètement un équipement. `name` est obligatoire. Tous les champs non envoyés passent à `null`. Audit : une ligne `*_changed` par champ réellement modifié.
 
 ### Entrée
 
@@ -364,6 +364,8 @@ Même body que `POST`, tous les champs optionnels (dont `name`).
 ## `DELETE /equipements/{id}`
 
 Supprime un équipement. Réponse `204`.
+
+**Audit** : un motif explicite est exigé dans le corps (`reason_code`) ; la ligne `deleted` est écrite par le middleware. Seul `EQUIPMENT_UPDATE` s'applique aujourd'hui à un équipement (aucun motif proposable à l'utilisateur : à ajouter aux données de référence).
 
 ---
 

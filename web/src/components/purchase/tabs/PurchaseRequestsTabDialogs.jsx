@@ -3,8 +3,9 @@
  * (abandon d'édition non enregistrée, suppression par lot).
  * @module components/purchase/tabs/PurchaseRequestsTabDialogs
  */
-import { AlertDialog, Button, Flex, Text } from '@radix-ui/themes';
-import { Trash2 } from 'lucide-react';
+import { AlertDialog, Button, Flex } from '@radix-ui/themes';
+import AuditReasonDialog from '@/components/ui/AuditReasonDialog';
+import { DECISION_DELETED } from '@/lib/api/auditReasonFilter';
 import PropTypes from 'prop-types';
 
 export function UnsavedChangesDialog({ open, onCancel, onConfirm }) {
@@ -33,32 +34,26 @@ UnsavedChangesDialog.propTypes = {
   onConfirm: PropTypes.func.isRequired,
 };
 
-export function BulkDeleteDialog({ open, onOpenChange, labels, onConfirm, deleting }) {
+/** Suppression par lot : un seul motif « deleted » (fenêtre commune), appliqué à chaque demande. */
+export function BulkDeleteDialog({ open, labels, onConfirm, onCancel, deleting }) {
   const count = labels.length;
   return (
-    <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
-      <AlertDialog.Content maxWidth="480px">
-        <AlertDialog.Title>Supprimer {count} demande{count > 1 ? 's' : ''} d&apos;achat</AlertDialog.Title>
-        <AlertDialog.Description size="2">
-          <Text weight="bold">{labels.join(', ')}</Text>
-          {' '}seront supprimées définitivement. Cette action est irréversible.
-        </AlertDialog.Description>
-        <Flex gap="3" mt="4" justify="end">
-          <AlertDialog.Cancel>
-            <Button variant="soft" color="gray">Annuler</Button>
-          </AlertDialog.Cancel>
-          <Button variant="solid" color="red" onClick={onConfirm} loading={deleting}>
-            <Trash2 size={14} /> Supprimer définitivement
-          </Button>
-        </Flex>
-      </AlertDialog.Content>
-    </AlertDialog.Root>
+    <AuditReasonDialog
+      open={open}
+      entityType="purchase_request"
+      decisionType={DECISION_DELETED}
+      title={`Supprimer ${count} demande${count > 1 ? 's' : ''} d'achat`}
+      description={`${labels.join(', ')} : suppression définitive, irréversible.`}
+      saving={deleting}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }
 BulkDeleteDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  onOpenChange: PropTypes.func.isRequired,
   labels: PropTypes.arrayOf(PropTypes.string).isRequired,
   onConfirm: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
   deleting: PropTypes.bool,
 };

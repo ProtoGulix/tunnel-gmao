@@ -84,9 +84,9 @@ function UnblockConfirmModal({ open, onOpenChange, item, onConfirm, submitting }
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 380 }}>
-        <Dialog.Title>Débloquer l'IP</Dialog.Title>
+        <Dialog.Title>Débloquer l&apos;IP</Dialog.Title>
         <Text size="2" mt="3" as="p">
-          Débloquer l'adresse IP <Text weight="bold">{item.ip}</Text> ?
+          Débloquer l&apos;adresse IP <Text weight="bold">{item.ip_address}</Text> ?
         </Text>
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close><Button variant="soft" color="gray">Annuler</Button></Dialog.Close>
@@ -126,7 +126,7 @@ export default function AdminSecurityBlocklist({ items, loading, onBlock, onUnbl
   };
 
   const columns = useMemo(() => [
-    { key: 'ip', header: 'IP', width: 140, render: (i) => <Text size="2" style={{ fontFamily: 'monospace' }}>{i.ip}</Text> },
+    { key: 'ip', header: 'IP', width: 140, render: (i) => <Text size="2" style={{ fontFamily: 'monospace' }}>{i.ip_address}</Text> },
     { key: 'reason', header: 'Raison', render: (i) => <Text size="2" color="gray">{i.reason || '—'}</Text> },
     {
       key: 'expires_at', header: 'Bloqué jusqu\'au', width: 160,
@@ -136,7 +136,7 @@ export default function AdminSecurityBlocklist({ items, loading, onBlock, onUnbl
         </Badge>
       ),
     },
-    { key: 'created_by', header: 'Créé par', width: 130, render: (i) => <Text size="2">{(typeof i.created_by === 'string' ? i.created_by : i.created_by?.email) || '—'}</Text> },
+    { key: 'created_by', header: 'Créé par', width: 130, render: (i) => <Text size="2">{i.created_by_name || '—'}</Text> },
     {
       key: 'actions', header: '', align: 'end', width: 100,
       render: (i) => (

@@ -155,9 +155,9 @@ export function useInterventionDetail(id) {
     [id, fetchData]
   );
 
-  const deleteIntervention = useCallback(async () => {
+  const deleteIntervention = useCallback(async (reason, outcome) => {
     try {
-      await apiDeleteIntervention(id);
+      await apiDeleteIntervention(id, reason, outcome);
     } catch (err) {
       throw new Error(
         extractApiErrorMessage(err, "Erreur lors de la suppression de l'intervention")

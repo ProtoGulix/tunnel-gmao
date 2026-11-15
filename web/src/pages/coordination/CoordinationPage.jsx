@@ -4,14 +4,18 @@ import { Badge, Button, Flex, Select, Spinner, Tabs, Text } from '@radix-ui/them
 import { ChevronLeft, ChevronRight, MousePointerClick, CalendarDays, CalendarX2, Plus } from 'lucide-react';
 import InterventionCreateModal from '@/components/interventions/InterventionCreateModal';
 import PageHeader from '@/components/layout/PageHeader';
-import { fetchInterventionTasksList, patchInterventionTask } from '@/api/interventionTasks';
+import { fetchInterventionTasksList } from '@/api/interventionTasks';
 import { fetchInterventions, updateIntervention } from '@/api/interventions';
 import { fetchEquipements } from '@/api/equipements';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
 import { INTERVENTION_TYPES, STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { GroupCard } from '@/components/shared/GroupCard';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
-import TaskActionButtons from '@/components/tasks/TaskActionButtons';
+import TaskLine from '@/components/tasks/TaskLine';
+import TaskErrorNotice from '@/components/tasks/TaskErrorNotice';
+import { deriveInitials } from '@/components/tasks/taskUtils';
+import { usePermissions } from '@/auth/usePermissions';
+import { PERM } from '@/auth/permissionCodes';
 import {
   getMondayOf,
   addDays,
@@ -262,161 +266,9 @@ function EquipementLine({ eq, isSelected, onSelect, isLast }) {
 
 // ── Tasks/interventions panel ─────────────────────────────────────────────────
 
-const TASK_ACCENT = {
-  in_progress: 'var(--blue-9)',
-  todo:        'var(--gray-6)',
-  done:        'var(--green-8)',
-};
-
 const IV_STATUS_ORDER = ['ouvert', 'attente_pieces', 'attente_prod', 'ferme'];
 const PRIORITY_ORDER  = ['urgent', 'important', 'normal', 'faible'];
 const PRIORITY_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
-
-// ── Helpers partagés avec TasksPane ──────────────────────────────────────────
-
-function deriveInitials(assignedTo) {
-  if (!assignedTo) return null;
-  if (assignedTo.initial)   return String(assignedTo.initial).toUpperCase();
-  if (assignedTo.initials)  return String(assignedTo.initials).toUpperCase();
-  const f = String(assignedTo.first_name || '').trim();
-  const l = String(assignedTo.last_name  || '').trim();
-  return `${f[0] || ''}${l[0] || ''}`.toUpperCase() || null;
-}
-
-function userFullName(u) {
-  const f = u.first_name || u.firstName || '';
-  const l = u.last_name  || u.lastName  || '';
-  return `${f} ${l}`.trim() || u.email || u.initials || String(u.id);
-}
-
-const formatDue = (iso) => {
-  if (!iso) return null;
-  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-};
-
-// ── Cellule date éditable (même pattern que TasksPane) ───────────────────────
-
-function InlineDateCell({ taskId, value, onSaved }) {
-  const [editing, setEditing] = useState(false);
-  const [saving,  setSaving]  = useState(false);
-  const today = new Date(); today.setHours(0,0,0,0);
-  const overdue = value && new Date(value) < today;
-
-  async function commit(v) {
-    if (v === (value ?? '')) { setEditing(false); return; }
-    setSaving(true);
-    try { await patchInterventionTask(taskId, { due_date: v || null }); onSaved(); }
-    catch { /* silencieux */ }
-    finally { setSaving(false); setEditing(false); }
-  }
-
-  if (editing) {
-    return (
-      <input
-        autoFocus type="date"
-        defaultValue={value?.slice(0, 10) ?? ''}
-        onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') setEditing(false); }}
-        style={{ flexShrink: 0, fontSize: 11, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--accent-8)', background: 'var(--color-background)', color: 'var(--gray-12)', outline: 'none' }}
-      />
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      disabled={saving}
-      onClick={() => setEditing(true)}
-      style={{ flexShrink: 0, background: 'none', border: 'none', padding: '1px 3px', borderRadius: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: saving ? 0.5 : 1 }}
-    >
-      {overdue && value ? (
-        <Badge color="red" variant="solid" size="1">{formatDue(value)}</Badge>
-      ) : value ? (
-        <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{formatDue(value)}</Text>
-      ) : (
-        <Text size="1" style={{ color: 'var(--gray-6)', whiteSpace: 'nowrap' }}>+date</Text>
-      )}
-    </button>
-  );
-}
-
-// ── Cellule affectation éditable (même pattern que TasksPane) ────────────────
-
-function InlineAssignCell({ taskId, assignedTo, users, onSaved }) {
-  const [editing, setSaving_] = useState(false);
-  const [saving,  setSaving]  = useState(false);
-  const initials = deriveInitials(assignedTo);
-  const currentId = String(assignedTo?.id ?? '');
-
-  async function commit(v) {
-    if (v === currentId) { setSaving_(false); return; }
-    setSaving(true);
-    try { await patchInterventionTask(taskId, { assigned_to: v || null }); onSaved(); }
-    catch { /* silencieux */ }
-    finally { setSaving(false); setSaving_(false); }
-  }
-
-  if (editing) {
-    return (
-      <select
-        autoFocus defaultValue={currentId}
-        onBlur={(e) => commit(e.target.value)}
-        onChange={(e) => commit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Escape') setSaving_(false); }}
-        style={{ flexShrink: 0, fontSize: 11, padding: '1px 4px', borderRadius: 4, border: '1px solid var(--accent-8)', background: 'var(--color-background)', color: 'var(--gray-12)', outline: 'none', maxWidth: 140 }}
-      >
-        <option value="">— Non assigné</option>
-        {users.map((u) => <option key={u.id} value={String(u.id)}>{userFullName(u)}</option>)}
-      </select>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      disabled={saving}
-      title={initials ? `${userFullName(assignedTo)} — modifier` : 'Assigner'}
-      onClick={() => setSaving_(true)}
-      style={{ flexShrink: 0, background: initials ? 'var(--accent-4)' : 'var(--gray-3)', border: '1px solid', borderColor: initials ? 'var(--accent-6)' : 'var(--gray-5)', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, opacity: saving ? 0.5 : 1 }}
-    >
-      {initials
-        ? <Text size="1" weight="bold" style={{ color: 'var(--accent-11)', fontSize: 9, lineHeight: 1 }}>{initials}</Text>
-        : <Text size="1" style={{ color: 'var(--gray-9)', fontSize: 9 }}>+</Text>
-      }
-    </button>
-  );
-}
-
-// ── Badge statut tâche — clic toggle todo ↔ in_progress ─────────────────────
-
-const TASK_STATUS_CFG = {
-  todo:        { color: 'gray',  label: 'À faire'  },
-  in_progress: { color: 'blue',  label: 'En cours' },
-  done:        { color: 'green', label: 'Terminé'  },
-};
-
-function InlineTaskStatus({ taskId, status, onSaved }) {
-  const [saving, setSaving] = useState(false);
-  const cfg = TASK_STATUS_CFG[status] ?? TASK_STATUS_CFG.todo;
-  const next = status === 'in_progress' ? 'todo' : 'in_progress';
-
-  async function handleClick() {
-    if (saving) return;
-    setSaving(true);
-    try { await patchInterventionTask(taskId, { status: next }); onSaved(next); }
-    catch { /* silencieux */ }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <Badge size="1" color={cfg.color} variant="soft"
-      style={{ flexShrink: 0, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}
-      onClick={handleClick}
-    >
-      {saving ? '…' : cfg.label}
-    </Badge>
-  );
-}
 
 // ── Header intervention : statut + priorité inline ───────────────────────────
 
@@ -495,43 +347,21 @@ function InlineIvPriority({ ivId, priority, onSaved }) {
 // ── InterventionTasksBlock ────────────────────────────────────────────────────
 
 function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStatusChanged, onTaskDeleted, onIvChanged }) {
+  const { can } = usePermissions();
   const typeColor = INTERVENTION_TYPES.find((t) => t.id === intervention.type)?.color ?? 'gray';
   const tasks     = intervention.tasks ?? null;
   const planned   = tasks ? tasks.filter((t) => t.due_date)  : null;
   const unplanned = tasks ? tasks.filter((t) => !t.due_date) : null;
   const totalCount = tasks?.length ?? null;
 
-  function TaskLine({ task, isLast = false }) {
-    const [hovered, setHovered] = useState(false);
-    const isDone    = task.status === 'done';
-    const isSkipped = task.status === 'skipped';
-    const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
-
-    return (
-      <GroupCard.Row
-        accentColor={TASK_ACCENT[task.status] ?? 'var(--gray-6)'}
-        isLast={isLast}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <InlineTaskStatus taskId={task.id} status={task.status} onSaved={(newStatus) => onTaskStatusChanged(intervention.id, task.id, newStatus)} />
-        <Text size="1" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: (isDone || isSkipped) ? 'line-through' : 'none', color: (isDone || isSkipped) ? 'var(--gray-9)' : undefined }}>
-          {task.label}
-        </Text>
-        <TaskActionButtons
-          taskId={task.id}
-          status={task.status}
-          visible={hovered}
-          mode="live"
-          canDelete={canDelete}
-          onStatusChange={(taskId, newStatus) => onTaskStatusChanged(intervention.id, taskId, newStatus)}
-          onDeleted={(taskId) => onTaskDeleted(intervention.id, taskId)}
-        />
-        <InlineAssignCell taskId={task.id} assignedTo={task.assigned_to ?? null} users={users} onSaved={onTaskCreated} />
-        <InlineDateCell   taskId={task.id} value={task.due_date} onSaved={onTaskCreated} />
-      </GroupCard.Row>
-    );
-  }
+  const [taskError, setTaskError] = useState(null);
+  const lineProps = (task, isLast) => ({
+    task, users, isLast, readOnly: false,
+    onSaved: onTaskCreated,
+    onStatusChange: (taskId, newStatus) => onTaskStatusChanged(intervention.id, taskId, newStatus),
+    onDeleted: (taskId) => onTaskDeleted(intervention.id, taskId),
+    onError: setTaskError,
+  });
 
   return (
     <GroupCard
@@ -554,7 +384,7 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
         <Text size="1" color="gray" style={{ display: 'block', padding: '8px 10px' }}>Aucune tâche ouverte</Text>
       )}
       {planned && planned.map((task, i) => (
-        <TaskLine key={task.id} task={task} isLast={i === planned.length - 1 && !unplanned?.length} />
+        <TaskLine key={task.id} {...lineProps(task, i === planned.length - 1 && !unplanned?.length)} />
       ))}
       {unplanned && unplanned.length > 0 && (
         <>
@@ -564,11 +394,14 @@ function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStat
             <div style={{ flex: 1, height: 1, background: 'var(--gray-4)' }} />
           </Flex>
           {unplanned.map((task, i) => (
-            <TaskLine key={task.id} task={task} isLast={i === unplanned.length - 1} />
+            <TaskLine key={task.id} {...lineProps(task, i === unplanned.length - 1)} />
           ))}
         </>
       )}
-      <GhostCreateRow interventionId={intervention.id} users={users} onCreated={(created) => onTaskCreated(created, intervention.id)} />
+      <TaskErrorNotice message={taskError} onClose={() => setTaskError(null)} />
+      {can(PERM.interventions.createTask) && (
+        <GhostCreateRow interventionId={intervention.id} users={users} onCreated={(created) => onTaskCreated(created, intervention.id)} />
+      )}
     </GroupCard>
   );
 }

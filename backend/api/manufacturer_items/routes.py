@@ -1,7 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
+from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import require_authenticated
 from api.manufacturer_items.repo import ManufacturerItemRepository
 from api.manufacturer_items.schemas import ManufacturerItemIn
@@ -34,21 +35,27 @@ def get_manufacturer_item(item_id: str):
     return single(repo.get_by_id_with_suppliers(item_id))
 
 
-@router.post("", status_code=201)
-def create_manufacturer_item(data: ManufacturerItemIn):
+@router.post("", status_code=201, dependencies=[audit("manufacturer_item", id_from_created=True)])
+def create_manufacturer_item(data: ManufacturerItemIn, request: Request):
     """Crée une nouvelle référence fabricant"""
     repo = ManufacturerItemRepository()
-    return single(repo.add(data.model_dump()))
+    created = repo.add(data.model_dump())
+    declare_created_id(request, created["id"])
+    return single(created)
 
 
-@router.patch("/{item_id}")
+@router.patch("/{item_id}", dependencies=[audit("manufacturer_item", id_from_path="item_id")])
 def patch_manufacturer_item(item_id: str, data: ManufacturerItemIn):
     """Met à jour une référence fabricant"""
     repo = ManufacturerItemRepository()
     return single(repo.update(item_id, data.model_dump(exclude_none=True)))
 
 
-@router.delete("/{item_id}", status_code=204)
+@router.delete(
+    "/{item_id}",
+    status_code=204,
+    dependencies=[audit("manufacturer_item", id_from_path="item_id")],
+)
 def delete_manufacturer_item(item_id: str):
     """Supprime une référence fabricant"""
     repo = ManufacturerItemRepository()

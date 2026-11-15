@@ -38,12 +38,6 @@ class InterventionTaskIn(BaseModel):
     assigned_to: Optional[UUID] = None
     due_date: Optional[date] = None
     sort_order: int = 0
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
-    )
-    reason_text: Optional[str] = Field(
-        default=None, description="Texte libre obligatoire si reason_code=OTHER."
-    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -52,38 +46,26 @@ class InterventionTaskPatch(BaseModel):
     label: Optional[str] = None
     status: Optional[str] = Field(
         default=None,
-        pattern="^(todo|skipped)$",
+        pattern="^(todo|skipped|done)$",
         description=(
             "Transitions autorisées via PATCH direct : todo (réouverture), "
-            "skipped (exclusion). `done` est volontairement exclu — une tâche "
-            "ne peut être clôturée qu'en la liant à une action "
-            "(POST /intervention-actions avec tasks=[{task_id, close_task: true}]), "
-            "jamais par un PATCH isolé sans travail associé."
+            "skipped (exclusion), done (clôture sans action, ADR 0016). "
+            "`done` est réservé à RESP et ADMIN. `done` et `skipped` exigent un motif "
+            "explicite (`reason_code` manual ou user de l'entité task). Une tâche liée à du travail reste "
+            "clôturée par POST /intervention-actions (close_task: true)."
         ),
     )
-    skip_reason: Optional[str] = None
+    skip_reason: Optional[str] = Field(
+        default=None,
+        description="Facultatif si un motif explicite est fourni : prend alors son libellé.",
+    )
     assigned_to: Optional[UUID] = None
     due_date: Optional[date] = None
     sort_order: Optional[int] = None
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
-    )
-    reason_text: Optional[str] = Field(
-        default=None, description="Texte libre obligatoire si reason_code=OTHER."
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-    @model_validator(mode="after")
-    def validate_status_rules(self) -> "InterventionTaskPatch":
-        if self.status == "skipped" and not (self.skip_reason or "").strip():
-            raise ValueError("skip_reason obligatoire si status=skipped")
-        return self
-
-
-class InterventionTaskDelete(BaseModel):
-    reason_code: str = Field(
-        ..., description="Code raison obligatoire pour l'audit. Voir GET /audit/reasons."
+    # Facultatifs : le middleware valide le motif ; la route les relit seulement pour la
+    # clôture directe (ADR 0016), où le motif doit être choisi par l'utilisateur.
+    reason_code: Optional[str] = Field(
+        default=None, description="Motif d'audit (obligatoire pour done et skipped)."
     )
     reason_text: Optional[str] = Field(
         default=None, description="Texte libre obligatoire si reason_code=OTHER."

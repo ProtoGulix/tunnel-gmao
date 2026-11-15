@@ -8,10 +8,8 @@ import {
   fetchSupplierDetail,
   fetchSupplierItemLinks,
   updateSupplier,
-  deleteSupplier,
   createSupplierItemLink,
   updateSupplierItemLink,
-  deleteSupplierItemLink,
   setPreferredSupplierItemLink,
 } from '@/api/suppliers';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
@@ -53,10 +51,6 @@ export function useSupplierDetail(supplierId) {
     [supplierId]
   );
 
-  const removeSupplier = useCallback(async () => {
-    await deleteSupplier(supplierId);
-  }, [supplierId]);
-
   const addLink = useCallback(
     async (payload) => {
       const created = await createSupplierItemLink({ ...payload, supplier_id: supplierId });
@@ -70,11 +64,6 @@ export function useSupplierDetail(supplierId) {
     const updated = await updateSupplierItemLink(linkId, updates);
     setLinks((prev) => prev.map((l) => (l.id === linkId ? updated : l)));
     return updated;
-  }, []);
-
-  const removeLink = useCallback(async (linkId) => {
-    await deleteSupplierItemLink(linkId);
-    setLinks((prev) => prev.filter((l) => l.id !== linkId));
   }, []);
 
   const setPreferred = useCallback(async (linkId) => {
@@ -92,10 +81,8 @@ export function useSupplierDetail(supplierId) {
     error,
     refresh: load,
     editSupplier,
-    removeSupplier,
     addLink,
     editLink,
-    removeLink,
     setPreferred,
   };
 }

@@ -2,8 +2,44 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+
+
+def _links_snapshot(cur, line_id: str) -> List[Dict[str, Any]]:
+    """Liens d'une ligne avec ses demandes d'achat, sous forme comparable (pour l'audit)."""
+    cur.execute(
+        "SELECT purchase_request_id::text, quantity FROM supplier_order_line_purchase_request "
+        "WHERE supplier_order_line_id = %s ORDER BY purchase_request_id",
+        (line_id,),
+    )
+    return [{"purchase_request_id": pr, "quantity": qty} for pr, qty in cur.fetchall()]
+
+
+def _record_links_change(line_id: str, before: List[Dict[str, Any]], after: List[Dict[str, Any]]):
+    """Les liens aux demandes d'achat ne sont pas une entité du journal : leur changement est
+    une décision sur la ligne, que le diff de sa ligne ne voit pas."""
+    if before != after:
+        record_audit_event(
+            "supplier_order_line",
+            line_id,
+            "purchase_requests_changed",
+            old_value={"purchase_requests": before},
+            new_value={"purchase_requests": after},
+        )
+
+
+def _record_deselected(cur) -> None:
+    """Trace les lignes que la règle « une seule ligne sélectionnée » vient de désélectionner."""
+    for (other_id,) in cur.fetchall():
+        record_audit_event(
+            "supplier_order_line",
+            other_id,
+            "is_selected_changed",
+            old_value={"is_selected": True},
+            new_value={"is_selected": False},
+        )
 
 
 class SupplierOrderLineRepository:
@@ -423,6 +459,7 @@ class SupplierOrderLineRepository:
                         """,
                         (str(uuid4()), line_id, str(pr_link['purchase_request_id']), qty),
                     )
+                _record_links_change(line_id, [], _links_snapshot(cur, line_id))
 
                 # Règle métier: une seule ligne sélectionnée par purchase_request
                 # Si is_selected = true, désélectionne les autres lignes liées aux mêmes PR
@@ -432,15 +469,17 @@ class SupplierOrderLineRepository:
                         """
                         UPDATE supplier_order_line
                         SET is_selected = false
-                        WHERE id != %s
+                        WHERE id != %s AND is_selected
                         AND id IN (
                             SELECT DISTINCT supplier_order_line_id
                             FROM supplier_order_line_purchase_request
                             WHERE purchase_request_id = ANY(%s)
                         )
+                        RETURNING id
                         """,
                         (line_id, pr_ids),
                     )
+                    _record_deselected(cur)
 
             conn.commit()
         except Exception as e:
@@ -501,7 +540,7 @@ class SupplierOrderLineRepository:
                     """
                     UPDATE supplier_order_line
                     SET is_selected = false
-                    WHERE id != %s
+                    WHERE id != %s AND is_selected
                     AND id IN (
                         SELECT DISTINCT sol2.id
                         FROM supplier_order_line sol2
@@ -512,12 +551,15 @@ class SupplierOrderLineRepository:
                             WHERE supplier_order_line_id = %s
                         )
                     )
+                    RETURNING id
                     """,
                     (line_id, line_id),
                 )
+                _record_deselected(cur)
 
             # Met à jour les liens purchase_requests si fournis
             if 'purchase_requests' in data:
+                links_before = _links_snapshot(cur, line_id)
                 # Supprime les liens existants
                 cur.execute(
                     "DELETE FROM supplier_order_line_purchase_request WHERE supplier_order_line_id = %s",
@@ -536,6 +578,7 @@ class SupplierOrderLineRepository:
                         """,
                         (str(uuid4()), line_id, str(pr_link['purchase_request_id']), qty),
                     )
+                _record_links_change(line_id, links_before, _links_snapshot(cur, line_id))
 
             conn.commit()
         except Exception as e:
@@ -573,6 +616,7 @@ class SupplierOrderLineRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+            links_before = _links_snapshot(cur, line_id)
             cur.execute(
                 """
                 INSERT INTO supplier_order_line_purchase_request
@@ -583,6 +627,7 @@ class SupplierOrderLineRepository:
                 """,
                 (str(uuid4()), line_id, purchase_request_id, quantity),
             )
+            _record_links_change(line_id, links_before, _links_snapshot(cur, line_id))
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -600,6 +645,7 @@ class SupplierOrderLineRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+            links_before = _links_snapshot(cur, line_id)
             cur.execute(
                 """
                 DELETE FROM supplier_order_line_purchase_request
@@ -607,6 +653,7 @@ class SupplierOrderLineRepository:
                 """,
                 (line_id, purchase_request_id),
             )
+            _record_links_change(line_id, links_before, _links_snapshot(cur, line_id))
             conn.commit()
         except Exception as e:
             conn.rollback()

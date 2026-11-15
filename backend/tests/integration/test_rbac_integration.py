@@ -1,7 +1,6 @@
 """Autorisation par rôle avec le vrai JWTMiddleware (ADR 0005) et clé d'API MCP."""
 
 import secrets
-from uuid import uuid4
 
 import pytest
 
@@ -27,7 +26,8 @@ def _ecritures(cible_id):
         ("PATCH", f"/admin/users/{cible_id}/role", {"role_code": "ACHETEUR"}),
         ("PATCH", f"/admin/users/{cible_id}/active", {"is_active": True}),
         ("POST", f"/admin/users/{cible_id}/reset-password", None),
-        ("DELETE", f"/admin/users/{cible_id}", None),
+        # Une suppression exige un motif explicite (étape 4 de l'audit centralisé).
+        ("DELETE", f"/admin/users/{cible_id}", {"reason_code": "DELETE_CREATED_BY_MISTAKE"}),
     ]
 
 
@@ -72,30 +72,6 @@ def test_resp_lit_la_liste_des_utilisateurs(client, make_user, grant):
 def test_tech_ne_lit_pas_la_liste_des_utilisateurs(client, make_user):
     tech = make_user("TECH")
     assert client.get("/admin/users", headers=tech.headers).status_code == 403
-
-
-def _log_body():
-    return {
-        "entity_type": "intervention",
-        "entity_id": str(uuid4()),
-        "decision_type": "manual_note",
-        "new_value": {"note": "test"},
-        "reason_code": "OTHER",
-        "reason_text": "test d'intégration",
-    }
-
-
-def test_audit_log_manuel_refuse_au_tech(client, make_user):
-    tech = make_user("TECH")
-    r = client.post("/audit/log", headers=tech.headers, json=_log_body())
-    assert r.status_code == 403
-
-
-def test_audit_log_manuel_accepte_pour_resp(client, make_user, grant):
-    grant("RESP", "POST", "/audit/log")
-    resp_user = make_user("RESP")
-    r = client.post("/audit/log", headers=resp_user.headers, json=_log_body())
-    assert r.status_code == 201, r.text
 
 
 @pytest.fixture

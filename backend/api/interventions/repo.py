@@ -1,10 +1,11 @@
 import logging
 from datetime import date
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from fastapi import HTTPException
 
+from api.audits.events import record_audit_event
 from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
@@ -12,6 +13,24 @@ from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError,
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.utils.search import build_search_clause
+from api.utils.status_log import skip_request_status_log
+
+# Motif des événements du système (migration 0007, catégorie system).
+SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
+
+
+def _request_routine_reason() -> str:
+    """Motif de la règle d'audit routinière des demandes (table audit_rule)."""
+    from api.utils.audit import resolve_reason_code
+
+    rule = resolve_reason_code("request", [])
+    if rule is None or not rule.get("default_reason_code"):
+        raise DatabaseError("Aucune règle d'audit routinière pour les demandes")
+    return rule["default_reason_code"]
+
+
+# Issues de la demande liée à la suppression d'une intervention (ADR 0019).
+REQUEST_OUTCOMES = ("reopen", "delete")
 
 logger = logging.getLogger(__name__)
 
@@ -738,8 +757,18 @@ class InterventionRepository:
             raise ValidationError(f"Utilisateur {tech_id} introuvable")
         data['tech_initials'] = row[0]
 
-    def add(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Crée une nouvelle intervention"""
+    def add(
+        self,
+        data: Dict[str, Any],
+        user_id: Optional[str] = None,
+        system_acceptance: bool = False,
+    ) -> Dict[str, Any]:
+        """Crée une nouvelle intervention.
+
+        `user_id` : auteur (jeton) de l'acceptation de la demande liée, dans son historique.
+        `system_acceptance` : acceptation faite par le système (génération préventive en
+        acceptation automatique) ; son événement d'audit porte alors le motif system.
+        """
         request_id = str(data['request_id']) if data.get('request_id') else None
 
         conn = self._get_connection()
@@ -790,7 +819,7 @@ class InterventionRepository:
             )
 
             if request_id:
-                self._link_request(cur, intervention_id, request_id)
+                self._link_request(cur, intervention_id, request_id, user_id, system_acceptance)
 
             conn.commit()
         except HTTPException:
@@ -806,7 +835,14 @@ class InterventionRepository:
 
         return self.get_by_id(intervention_id)
 
-    def _link_request(self, cur: Any, intervention_id: str, request_id: str) -> None:
+    def _link_request(
+        self,
+        cur: Any,
+        intervention_id: str,
+        request_id: str,
+        user_id: Optional[str] = None,
+        system_acceptance: bool = False,
+    ) -> None:
         """
         Lie une demande d'intervention à l'intervention créée :
         - Vérifie que la demande existe et est dans un état linkable
@@ -872,14 +908,39 @@ class InterventionRepository:
             (request_id,),
         )
 
-        cur.execute("SET LOCAL app.skip_request_status_log = 'true'")
-        cur.execute(
-            """
-            INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-            VALUES (%s, %s, 'acceptee', NULL, %s)
-            """,
-            (request_id, current_statut, "Intervention créée manuellement"),
-        )
+        with skip_request_status_log(cur):
+            cur.execute(
+                """
+                INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
+                VALUES (%s, %s, 'acceptee', %s, %s)
+                """,
+                (request_id, current_statut, user_id, "Intervention créée manuellement"),
+            )
+
+        # Acceptation de la demande par la création de l'intervention (chemin normal) :
+        # événement d'audit sur la demande, écrit par le middleware (ADR 0018 point 4). Le
+        # motif de la requête vaut pour l'intervention et peut ne pas s'appliquer à la
+        # demande : on prend celui de la règle d'audit des demandes, jamais une valeur en dur.
+        # Mêmes types de décision que l'acceptation par transition (le middleware y écrit
+        # statut_changed et intervention_id_changed).
+        reason_code = SYSTEM_CASCADE_REASON if system_acceptance else _request_routine_reason()
+        for decision_type, old_value, new_value in (
+            ("statut_changed", {"statut": current_statut}, {"statut": "acceptee"}),
+            (
+                "intervention_id_changed",
+                {"intervention_id": None},
+                {"intervention_id": intervention_id},
+            ),
+        ):
+            record_audit_event(
+                "request",
+                request_id,
+                decision_type,
+                old_value=old_value,
+                new_value=new_value,
+                is_system=system_acceptance,
+                reason_code=reason_code,
+            )
 
         # Vérifier si la DI appartient à une occurrence préventive non encore liée
         cur.execute(
@@ -1014,20 +1075,12 @@ class InterventionRepository:
 
         intervention.status_actual stocke directement le code texte (ex: 'ferme'),
         identique à intervention_status_ref.id — pas besoin de résolution via DB.
+        Une erreur de la cascade n'est pas avalée : elle annule toute la requête (ADR 0018).
         """
-        if not status_actual:
-            return
-        try:
-            if str(status_actual) == CLOSED_STATUS_CODE:
-                from api.intervention_requests.repo import InterventionRequestRepository
+        if status_actual and str(status_actual) == CLOSED_STATUS_CODE:
+            from api.intervention_requests.repo import InterventionRequestRepository
 
-                InterventionRequestRepository().on_intervention_closed(intervention_id)
-        except Exception:
-            logger.error(
-                "Erreur cascade fermeture pour intervention %s",
-                intervention_id,
-                exc_info=True,
-            )
+            InterventionRequestRepository().on_intervention_closed(intervention_id)
 
     def force_close_request(self, intervention_id: str) -> Dict[str, Any]:
         """Force la clôture de la demande liée à une intervention fermée.
@@ -1135,8 +1188,20 @@ class InterventionRepository:
         finally:
             release_connection(conn)
 
-    def delete(self, intervention_id: str) -> bool:
-        """Supprime une intervention (interdit si actions ou demandes d'achat liées)"""
+    def delete(
+        self,
+        intervention_id: str,
+        request_outcome: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> bool:
+        """Supprime une intervention (interdit si actions ou demandes d'achat liées).
+
+        Si une demande est liée, `request_outcome` est obligatoire (ADR 0019) :
+        `reopen` remet la demande à « nouvelle », `delete` la supprime avec l'intervention.
+        Une intervention ancienne, sans demande, se supprime sans issue. Tout est fait dans la
+        transaction de la requête : si l'issue échoue, l'intervention reste en place.
+        """
+        from api.intervention_requests.repo import InterventionRequestRepository
         from api.interventions.validators import InterventionValidator
 
         self.get_by_id(intervention_id, include_actions=False)
@@ -1145,9 +1210,33 @@ class InterventionRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+            request_repo = InterventionRequestRepository()
+            linked = request_repo.get_linked_to_intervention(cur, intervention_id)
+            if linked and request_outcome not in REQUEST_OUTCOMES:
+                raise ValidationError(
+                    "Cette intervention est liée à une demande : précisez son issue avec "
+                    "request_outcome=reopen (rouvrir la demande) ou request_outcome=delete "
+                    "(supprimer aussi la demande)."
+                )
+            if (
+                linked
+                and request_outcome == "delete"
+                and request_repo.has_preventive_occurrence(cur, linked["id"])
+            ):
+                raise ValidationError(
+                    "Cette demande est liée à une occurrence préventive : elle ne peut pas "
+                    "être supprimée avec l'intervention. Utilisez request_outcome=reopen."
+                )
             cur.execute("DELETE FROM intervention WHERE id = %s", (intervention_id,))
+            if linked and request_outcome == "reopen":
+                request_repo.reopen_after_intervention_deleted(cur, linked, user_id)
+            elif linked:
+                request_repo.delete_after_intervention_deleted(cur, linked)
             conn.commit()
             return True
+        except ValidationError:
+            conn.rollback()
+            raise
         except Exception as e:
             conn.rollback()
             raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
