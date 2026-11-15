@@ -56,6 +56,10 @@ def _w(module: str, *methods: str, path: Optional[str] = None) -> WriteRule:
 AUDIT_HISTORY_PATHS = ("/audit/logs", "/audit/briefing")
 AUDIT_HISTORY_READERS = ("RESP", "MCP")
 
+# --- Export de masse des fiches : pilotage seulement (ADMIN et RESP) ------------------
+# Lecture seule mais coûteuse (jusqu'à 200 PDF) : fermée à TECH, ACHETEUR et MCP.
+BULK_EXPORT_PATHS = ("/exports/interventions/closed",)
+
 # --- Zones fermées en lecture aux rôles non-ADMIN ------------------------------------
 # /admin/* et /api-keys sont réservés à ADMIN, sauf les exceptions de RESP ci-dessous.
 CLOSED_PREFIXES = ("/admin", "/api-keys", "/home-view/admin")
@@ -134,6 +138,8 @@ def default_allowed(role: str, endpoint: Endpoint) -> bool:
         prefixes = RESP_ADMIN_READ_PREFIXES if is_read else RESP_ADMIN_WRITE_PREFIXES
         return _under(path, prefixes)
 
+    if path in BULK_EXPORT_PATHS:
+        return role == "RESP"
     if is_read:
         if path in AUDIT_HISTORY_PATHS:
             return role in AUDIT_HISTORY_READERS

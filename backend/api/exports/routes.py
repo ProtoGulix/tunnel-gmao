@@ -1,24 +1,128 @@
 import hashlib
+import logging
 import re
+import zipfile
 from datetime import date, datetime, timedelta
 from io import BytesIO
-from typing import Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import StreamingResponse
+from weasyprint import HTML
 
 from api.auth.permissions import require_authenticated
-from api.errors.exceptions import ValidationError
+from api.errors.exceptions import NotFoundError, RenderError, ValidationError
 from api.exports.pdf_generator import PDFGenerator
 from api.exports.planning_repo import PlanningRepository
 from api.exports.qr_generator import QRGenerator
 from api.exports.repo import ExportRepository
 from api.limiter import limiter
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(
     prefix="/exports", tags=["exports"], dependencies=[Depends(require_authenticated)]
 )
+
+# Plafond de fiches par export de masse : au-delà, on refuse plutôt que de tronquer.
+MAX_BULK_SHEETS = 100
+
+
+def _parse_period(date_from: str, date_to: str):
+    """Valide la période AAAA-MM-JJ (bornes incluses, date_from <= date_to)."""
+    try:
+        start = date.fromisoformat(date_from)
+        end = date.fromisoformat(date_to)
+    except ValueError:
+        raise ValidationError("Format de date invalide. Attendu AAAA-MM-JJ")
+    if start > end:
+        raise ValidationError("date_from doit être antérieure ou égale à date_to")
+    return start, end
+
+
+def _unique_pdf_names(codes: List[str]) -> List[str]:
+    """Noms de fichiers PDF assainis (même règle que l'export unitaire), uniques."""
+    used: dict = {}
+    names = []
+    for code in codes:
+        base = re.sub(r'[^\w\-]', '_', str(code))
+        used[base] = used.get(base, 0) + 1
+        suffix = "" if used[base] == 1 else f"_{used[base]}"
+        names.append(f"{base}{suffix}.pdf")
+    return names
+
+
+def _merge_pdf(htmls: List[str]) -> bytes:
+    """Un seul PDF : rendu de chaque fiche puis concaténation des pages (WeasyPrint)."""
+    try:
+        docs = [HTML(string=h).render() for h in htmls]
+        pages = [p for d in docs for p in d.pages]
+        return docs[0].copy(pages).write_pdf()
+    except Exception as e:
+        logger.error("Erreur assemblage PDF : %s", e, exc_info=e)
+        raise RenderError("Erreur génération PDF")
+
+
+# Déclarée avant /interventions/{intervention_id}/pdf : aucun conflit de chemin.
+@router.get("/interventions/closed")
+@limiter.limit("2/minute")
+def export_closed_interventions(
+    request: Request,
+    date_from: str = Query(..., description="Début de période AAAA-MM-JJ (inclus)"),
+    date_to: str = Query(..., description="Fin de période AAAA-MM-JJ (incluse)"),
+    equipement_id: Optional[str] = Query(None, description="UUID de l'équipement (optionnel)"),
+    format: Literal["zip", "pdf"] = Query(..., description="zip (un PDF par fiche) ou pdf"),
+):
+    """
+    Export de masse des fiches des interventions fermées sur une période.
+
+    La date retenue est celle du dernier passage à 'ferme'. Plafond de MAX_BULK_SHEETS fiches.
+    Réservé à ADMIN et RESP (matrice des droits, db/default_permissions.py).
+    """
+    start, end = _parse_period(date_from, date_to)
+    if equipement_id:
+        try:
+            UUID(equipement_id)
+        except ValueError:
+            raise ValidationError("Format UUID invalide pour equipement_id")
+
+    repo = ExportRepository()
+    rows = repo.list_closed_interventions(start, end, equipement_id, MAX_BULK_SHEETS + 1)
+    if len(rows) > MAX_BULK_SHEETS:
+        raise ValidationError(
+            f"Plus de {MAX_BULK_SHEETS} fiches sur cette période : réduisez la période "
+            "ou filtrez par équipement"
+        )
+    if not rows:
+        raise NotFoundError("Aucune intervention fermée sur cette période")
+
+    # Même chemin que l'export unitaire : mêmes données, même gabarit
+    generator = PDFGenerator()
+    datas = [repo.get_intervention_export_data(r["id"]) for r in rows]
+    htmls = [generator.render_html(d) for d in datas]
+    base_name = f"fiches-fermees_{start.isoformat()}_{end.isoformat()}"
+
+    if format == "zip":
+        names = _unique_pdf_names([d.get("code") or r["id"] for d, r in zip(datas, rows)])
+        buffer = BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            for name, html in zip(names, htmls):
+                archive.writestr(name, generator.generate_pdf(html))
+        content, media_type, disposition = buffer.getvalue(), "application/zip", "attachment"
+        filename = f"{base_name}.zip"
+    else:
+        content = _merge_pdf(htmls)
+        media_type, disposition, filename = "application/pdf", "inline", f"{base_name}.pdf"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'{disposition}; filename="{filename}"',
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+    )
 
 
 @router.get("/interventions/{intervention_id}/pdf")

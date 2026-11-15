@@ -1,16 +1,19 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-15
+Dernière mise à jour : 2026-11-16
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.3.1** (tag du 2026-11-15) : test de santé du front web
-  derrière Cloudflare Access, bascule depuis la 3.57.0 (migration 0013,
-  deploy/basculer-production.sh). Production : bascule depuis la 3.57.0 à faire à
-  partir de ce tag (deploy/MIGRATION-v4.md, section « Bascule automatique »).
+- Dernière version publiée : **v5.4.0** (tag du 2026-11-16) : export de masse des fiches
+  des interventions fermées (ZIP ou PDF unique, plafond 100, ADMIN et RESP).
+  Production en 5.3.1 (basculée le 2026-11-15, révision 0013) ; clone dans
+  ~/DEV/tunnel-gmao sur main, mises à jour par git pull et docker compose up -d --build
+  (le redémarrage de l'API rejoue le bootstrap et crée le droit d'export). Restent à la
+  main : domaine mobile vers /m, Grafana, clients MCP, cache des postes, puis suppression
+  des anciens conteneurs et de l'archive après validation.
 - develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
@@ -24,6 +27,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
+| fait | Export de masse des fiches fermées (EXPM-01, EXPM-02), fusionné le 2026-11-16 après essai à l'écran ; plafond 100 ; bootstrap rejoué sur la base de dev, à rejouer en production à sa mise à jour | — | [EXPM-01](taches/EXPM-01-backend-export-masse-fiches.md), [EXPM-02](taches/EXPM-02-web-bouton-export-masse.md) |
 | à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
 | fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
@@ -49,9 +53,11 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-16 : export de masse des fiches fermées en ZIP et en PDF unique, sur une période de fermeture (date du dernier passage à `ferme`), réservé à ADMIN et RESP, plafond 100 fiches (mesure : 0,31 s par fiche).
 
 2026-11-15 : avant la version 5.3.0, retirer les quatre routes de référentiel cassées et leurs boutons, retirer le bouton Supprimer de l'onglet Pièces, refuser une règle de domaine de courriel qui exclurait l'admin qui la pose, retirer du catalogue des droits au démarrage les endpoints disparus du code. Types et statuts en base hors de cette version.
 Avant : 2026-11-14 : étape 2 de l'audit centralisé fusionnée. Avant : une intervention vient toujours d'une demande ; la supprimer fait choisir
