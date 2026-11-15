@@ -7,11 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.2.0** (tag du 2026-10-10).
-- develop contient depuis : fin de l'ADR 0011 (équipements), codes internes cliquables
-  (ADR 0009 et sa révision), en-tête compact du panneau d'intervention (ADR 0013),
-  suppression de la page complète d'intervention (ADR 0014), correctifs divers.
-  Détail dans CHANGELOG.md, section « Non publié ».
+- Dernière version publiée : **v5.3.0** (tag du 2026-11-15) : audit centralisé, onglet
+  Tâches, clôture en coordination, suites avant version. Production : migrations 0006 à
+  0012 à jouer à sa prochaine mise à jour (bootstrap).
+- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
 

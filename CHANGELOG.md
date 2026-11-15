@@ -6,7 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.3.0] — 2026-11-15
+
+### [interne] Mise à jour d'une base existante
+- Le bootstrap joue les migrations 0006 à 0012 (audit centralisé, motifs, règles d'audit)
+  et ouvre les droits par défaut des nouvelles routes ; au démarrage, l'API retire du
+  catalogue des droits les endpoints disparus (POST /audit/log et quatre routes de
+  référentiel). Motifs de clôture : docs/backlog/motifs-cloture-bases-existantes.md.
 
 ### Administration (suites avant version)
 - Une règle de domaine de courriel est refusée (message clair, rien n'est enregistré) si,
