@@ -10,7 +10,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Dernière version publiée : **v5.3.0** (tag du 2026-11-15) : audit centralisé, onglet
   Tâches, clôture en coordination, suites avant version. Production : migrations 0006 à
   0012 à jouer à sa prochaine mise à jour (bootstrap).
-- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
+- develop contient depuis : correctif du test de santé du front web derrière Cloudflare
+  Access (SANTE-01).
 
 ## Feuille de route fondatrice
 
@@ -22,6 +23,9 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| en cours | Bascule de la production 3.57.0 vers la 5.x, répétée sur une copie (fiches BASC-01 à BASC-03, spike 0003) | fix/bascule-depuis-3.57 | décisions de l'utilisateur du 2026-11-15 |
+| à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
+| fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
@@ -45,7 +49,7 @@ et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : BASC-02 (répétition complète à rejouer), BASC-03 (en cours). Closes aussi : BASC-01, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 

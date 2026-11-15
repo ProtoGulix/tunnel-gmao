@@ -1,4 +1,5 @@
 import { BASE_URL } from '@/lib/api/client';
+import { healthFetchOptions } from '@/lib/healthRequest';
 
 const HEALTH_PATH = '/health';
 const HEALTH_TIMEOUT_MS = 5000;
@@ -18,15 +19,7 @@ export async function checkServerStatus() {
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
     const startedAt = performance.now();
 
-    // no-cors permet un test de joignabilite sans exiger les en-tetes CORS.
-    // Le resultat est opaque: on valide la connectivite reseau, pas le code HTTP.
-    await fetch(getHealthUrl(), {
-      method: 'GET',
-      mode: 'no-cors',
-      cache: 'no-store',
-      credentials: 'omit',
-      signal: controller.signal,
-    });
+    await fetch(getHealthUrl(), healthFetchOptions(controller.signal));
 
     clearTimeout(timeoutId);
 

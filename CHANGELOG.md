@@ -6,6 +6,12 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Corrigé
+- Derrière un proxy d'authentification (Cloudflare Access), le bandeau « serveur
+  injoignable » du front web ne reste plus affiché alors que le serveur répond.
+
 ## [5.3.0] — 2026-11-15
 
 ### [interne] Mise à jour d'une base existante
