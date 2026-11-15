@@ -1,0 +1,32 @@
+# Paramètres de basculer-production.sh (fiche BASC-04). Copier en bascule.conf, adapter.
+# bascule.conf n'est jamais versionné. Format KEY=VALEUR, listes séparées par des espaces.
+# Tous les paramètres sont obligatoires : un manque arrête le script avant toute action.
+# Les noms ci-dessous sont des exemples génériques : relever les vrais avec « docker ps ».
+
+# Conteneur PostgreSQL de l'ancienne instance (il reste démarré : c'est la source).
+#ANCIENNE_DB_CONTENEUR=ancienne-db
+# Rôle et base de l'ancienne instance (le mot de passe est lu dans POSTGRES_PASSWORD
+# du conteneur, jamais ici).
+#ANCIENNE_DB_UTILISATEUR=directus
+#ANCIENNE_DB_NOM=directus
+
+# Conteneur de l'ancienne API : ses variables fournissent les clés reprises (JWT_SECRET_KEY, SMTP_*...).
+#ANCIENNE_API_CONTENEUR=ancienne-api
+
+# Conteneur dont la publication (adresse et port) est reprise par la nouvelle stack :
+# l'ancien front web, celui que le proxy ou le domaine public atteint.
+#CONTENEUR_EXPOSE=ancien-front
+
+# Conteneurs à arrêter à la coupure (API, fronts, Directus...). Y mettre l'API et le
+# conteneur exposé, jamais l'ancienne base.
+#CONTENEURS_A_ARRETER=ancienne-api ancien-front ancien-mobile
+
+# Conteneurs dont la configuration est archivée avant la coupure (inspect, variables,
+# .env et docker-compose du dossier du projet, montages de moins de 50 Mo).
+#CONTENEURS_A_ARCHIVER=ancienne-api ancien-front ancien-mobile ancienne-db
+
+# Adresse du premier administrateur (variable obligatoire de la nouvelle stack ; aucun
+# compte n'est créé, les comptes existants sont conservés) et adresse publique telle
+# que tapée dans le navigateur (QR codes imprimés).
+#ADMIN_EMAIL=admin@exemple.fr
+#PUBLIC_URL=https://gmao.exemple.fr

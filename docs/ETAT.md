@@ -7,9 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.3.0** (tag du 2026-11-15) : audit centralisé, onglet
-  Tâches, clôture en coordination, suites avant version. Production : migrations 0006 à
-  0012 à jouer à sa prochaine mise à jour (bootstrap).
+- Dernière version publiée : **v5.3.1** (tag du 2026-11-15) : test de santé du front web
+  derrière Cloudflare Access, bascule depuis la 3.57.0 (migration 0013,
+  deploy/basculer-production.sh). Production : bascule depuis la 3.57.0 à faire à
+  partir de ce tag (deploy/MIGRATION-v4.md, section « Bascule automatique »).
 - develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
@@ -22,6 +23,9 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
+| à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
+| fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
@@ -36,16 +40,16 @@ Intégrité de l'audit (ADR 0017, fiches AUD-01 à AUD-05) : fusionnée dans dev
 2026-11-13, check.sh et test-integration.sh (107) verts, reviewer APPROUVÉ. Migration
 0006 jouée sur la base de dev le 2026-11-13 avec l'accord de l'utilisateur (bootstrap,
 révision 0006_audit_erreurs_visibles vérifiée). Production : à jouer à sa prochaine
-mise à jour, avec les motifs de clôture (backlog motifs-cloture-bases-existantes.md).
+mise à jour, avec les motifs de clôture (migration 0013, BASC-03).
 
 Clôture en coordination (ADR 0016, fiches CLO-01 à CLO-06) : fusionnée dans develop le
 2026-11-13, après validation à l'écran par l'utilisateur, check.sh et
 test-integration.sh (97) verts, reviewer APPROUVÉ. Motifs de clôture posés dans la seed
-et la base de dev ; autres bases : docs/backlog/motifs-cloture-bases-existantes.md.
+et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 

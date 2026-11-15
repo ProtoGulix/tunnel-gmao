@@ -27,5 +27,9 @@ backup_*.sql
 # Dumps de migration v4 : données réelles, jamais versionnées
 deploy/backups-v4/
 
+# Bascule automatique : paramètres du serveur et archives (dumps, secrets), jamais versionnés
+deploy/bascule.conf
+deploy/archives-bascule/
+
 # Archives et données locales, jamais versionnées
 private/

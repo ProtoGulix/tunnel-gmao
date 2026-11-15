@@ -6,6 +6,34 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.3.1] — 2026-11-15
+
+### Corrigé
+- Derrière un proxy d'authentification (Cloudflare Access), le bandeau « serveur
+  injoignable » du front web ne reste plus affiché alors que le serveur répond.
+
+### [interne] Bascule depuis la production 3.57.0
+- deploy/basculer-production.sh : bascule automatique de la production (paramètres dans
+  deploy/bascule.conf, modèle bascule.conf.example). Sauvegarde, archive des
+  configurations des anciens conteneurs, reprise des clés (JWT, SMTP), coupure par arrêt,
+  migration, démarrage, contrôles, rapport ; retour arrière automatique après la coupure
+  et option `--retour-arriere`. Refus avant la coupure d'une clé JWT de moins de 32
+  caractères (l'API v5 ne démarrerait pas). Essayé sur une fausse production, réussite
+  et échec provoqué.
+- migrate-from-v4.sh accepte une source à la révision 029 (`002_create_missing_tables` et
+  `029_home_view`) en plus de la 030 : deploy/rattrapage-029.sql est appliqué à la base
+  cible (jamais à la source) après la restauration. Il ne supprime ni index ni donnée,
+  et aucune contrainte hormis les 3 clés de `machine` (point suivant).
+- Le contrôle de schéma avant le stamp devient « la cible contient au moins le schéma de
+  référence », par le catalogue PostgreSQL ; les contraintes et index en plus de
+  l'ancienne base sont comptés sans bloquer. deploy/MIGRATION-v4.md à jour.
+- Le rattrapage retire les 3 clés étrangères de `machine` déjà présentes dans la
+  3.57.0 : la migration 0003 les recrée en ON DELETE RESTRICT (elle échouait sur deux
+  noms identiques).
+- Migration 0013 : les quatre motifs de clôture de tâche (TASK_*, ADR 0016) et la
+  désactivation de LEGACY_STATUS_CHANGE, jusque-là posés par la seule seed, sont rattrapés
+  sur les bases déjà installées. Idempotente, sans écraser un motif existant.
+
 ## [5.3.0] — 2026-11-15
 
 ### [interne] Mise à jour d'une base existante
