@@ -9,8 +9,11 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 - Dernière version publiée : **v5.3.1** (tag du 2026-11-15) : test de santé du front web
   derrière Cloudflare Access, bascule depuis la 3.57.0 (migration 0013,
-  deploy/basculer-production.sh). Production : bascule depuis la 3.57.0 à faire à
-  partir de ce tag (deploy/MIGRATION-v4.md, section « Bascule automatique »).
+  deploy/basculer-production.sh). Production basculée en 5.3.1 le 2026-11-15 (révision
+  0013, 411 interventions retrouvées) ; clone dans ~/DEV/tunnel-gmao sur main, mises à
+  jour par git pull et docker compose up -d --build. Restent à la main : domaine mobile
+  vers /m, Grafana, clients MCP, cache des postes, puis suppression des anciens
+  conteneurs et de l'archive après validation.
 - develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
