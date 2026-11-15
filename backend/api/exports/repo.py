@@ -1,8 +1,9 @@
-from typing import Any, Dict
+from datetime import date, timedelta
+from typing import Any, Dict, List, Optional
 
 from api.constants import INTERVENTION_TYPES_MAP
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError
+from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
 
 
 class ExportRepository:
@@ -25,6 +26,59 @@ class ExportRepository:
             raise
         except Exception as e:
             raise DatabaseError(f"Erreur DB: {str(e)}")
+        finally:
+            release_connection(conn)
+
+    def list_closed_interventions(
+        self,
+        date_from: date,
+        date_to: date,
+        equipement_id: Optional[str],
+        limit: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Interventions fermées dont le dernier passage à 'ferme' tombe dans la période.
+
+        Il n'existe pas de colonne de date de fermeture : on retient la date du dernier
+        passage à 'ferme' dans intervention_status_log. Bornes incluses (date_to + 1 jour
+        exclu). Renvoie au plus `limit` lignes triées par date puis code ; l'appelant
+        demande limit + 1 pour détecter un dépassement.
+        """
+        # equipement_id : filtre sur machine (la table s'appelle machine, l'API equipement)
+        params: list = [date_from, date_to + timedelta(days=1)]
+        machine_filter = ""
+        if equipement_id:
+            machine_filter = "AND i.machine_id = %s"
+            params.append(equipement_id)
+        params.append(limit)
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f"""
+                SELECT i.id, i.code, c.closed_at
+                FROM intervention i
+                JOIN LATERAL (
+                    SELECT MAX(sl.date) AS closed_at
+                    FROM intervention_status_log sl
+                    WHERE sl.intervention_id = i.id
+                      AND sl.status_to = (
+                          SELECT id FROM intervention_status_ref WHERE code = 'ferme' LIMIT 1
+                      )
+                ) c ON TRUE
+                WHERE i.status_actual = (
+                          SELECT id FROM intervention_status_ref WHERE code = 'ferme' LIMIT 1
+                      )
+                  AND c.closed_at >= %s AND c.closed_at < %s
+                  {machine_filter}
+                ORDER BY c.closed_at ASC, i.code ASC
+                LIMIT %s
+                """,
+                params,
+            )
+            return [{"id": str(r[0]), "code": r[1], "closed_at": r[2]} for r in cur.fetchall()]
+        except Exception as e:
+            raise_db_error(e, "liste des interventions fermées")
         finally:
             release_connection(conn)
 

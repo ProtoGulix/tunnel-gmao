@@ -6,6 +6,47 @@ Génération de documents PDF et QR codes pour les interventions.
 
 ---
 
+## `GET /exports/interventions/closed`
+
+Export de masse des fiches des interventions fermées sur une période. Chaque fiche est
+produite comme l'export unitaire (même données, même gabarit).
+
+**Auth** : JWT Bearer. Droit réservé à ADMIN et RESP (TECH, ACHETEUR et clé MCP : 403).
+**Limite de débit** : 2 requêtes par minute.
+
+### Paramètres
+
+| Nom | Obligatoire | Description |
+|---|---|---|
+| `date_from` | oui | Début de période `AAAA-MM-JJ`, inclus |
+| `date_to` | oui | Fin de période `AAAA-MM-JJ`, incluse (`date_from` <= `date_to`) |
+| `equipement_id` | non | UUID de l'équipement |
+| `format` | oui | `zip` (un PDF par fiche) ou `pdf` (un seul PDF) |
+
+La date retenue est celle du dernier passage à `ferme` dans le journal des statuts.
+Tri par cette date puis par code. Plafond de 100 fiches : au-delà, refus (jamais de
+troncature).
+
+### Réponse `200`
+
+- `zip` : `application/zip`, `Content-Disposition: attachment`, fichier
+  `fiches-fermees_<from>_<to>.zip`, un PDF par fiche nommé par son code assaini.
+- `pdf` : `application/pdf`, `Content-Disposition: inline`, fichier
+  `fiches-fermees_<from>_<to>.pdf`.
+
+### Erreurs
+
+| Code | Description |
+|---|---|
+| 400 | Date ou UUID invalide, période inversée, plus de 100 fiches |
+| 422 | Paramètre obligatoire absent ou format inconnu |
+| 401 | JWT manquant ou invalide |
+| 403 | Rôle sans le droit |
+| 404 | Aucune intervention fermée sur la période |
+| 429 | Limite de débit dépassée |
+
+---
+
 ## `GET /exports/interventions/{id}/pdf`
 
 Génère un rapport PDF complet pour une intervention.

@@ -85,6 +85,7 @@ export const PERM = {
     dispatch: 'purchase-requests:dispatch_pending_requests',
   },
   interventions: {
+    exportClosed: 'exports:export_closed_interventions',
     create: 'interventions:create_intervention',
     update: 'interventions:update_intervention',
     remove: 'interventions:delete_intervention',

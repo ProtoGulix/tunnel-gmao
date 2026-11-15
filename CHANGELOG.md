@@ -6,6 +6,15 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Ajouté
+- Export de masse des fiches des interventions fermées sur une période, en archive ZIP
+  (un PDF par fiche) ou en un seul PDF à imprimer, avec filtre par équipement. Limité à
+  100 fiches par export, réservé aux administrateurs et responsables.
+  Mise à jour : le nouveau droit est créé par le bootstrap, rejoué au démarrage du
+  conteneur API (docker compose up -d --build).
+
 ## [5.3.1] — 2026-11-15
 
 ### Corrigé

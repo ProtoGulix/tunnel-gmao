@@ -6,7 +6,8 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
-import { ClipboardList, Wrench } from 'lucide-react';
+import { ClipboardList, FileDown, Wrench } from 'lucide-react';
+import ExportClosedInterventionsDialog from '@/components/interventions/ExportClosedInterventionsDialog';
 import PageHeader from '@/components/layout/PageHeader';
 import InterventionsTabContent from '@/components/interventions/InterventionsTabContent';
 import RequestsTabContent from '@/components/intervention-requests/RequestsTabContent';
@@ -17,6 +18,7 @@ import { PERM } from '@/auth/permissionCodes';
 export default function InterventionsListPage() {
   const navigate = useNavigate();
   const { can } = usePermissions();
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'interventions';
   // Un seul param `id` dans l'URL : sa signification dépend de l'onglet actif (`tab`).
@@ -76,7 +78,13 @@ export default function InterventionsListPage() {
         icon={Wrench}
         onAdd={can(PERM.interventions.create) ? () => navigate('/intervention/new') : undefined}
         addLabel="Nouvelle intervention"
+        actions={can(PERM.interventions.exportClosed) ? [{
+          label: 'Exporter les fiches fermées',
+          icon: FileDown,
+          onClick: () => setIsExportOpen(true),
+        }] : undefined}
       />
+      <ExportClosedInterventionsDialog open={isExportOpen} onClose={() => setIsExportOpen(false)} />
 
       <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <Box px="4">

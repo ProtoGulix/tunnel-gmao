@@ -126,3 +126,36 @@ export async function fetchInterventionPdf(id) {
   const blob = new Blob([response.data], { type: 'application/pdf' });
   return window.URL.createObjectURL(blob);
 }
+
+async function readBlobErrorMessage(error) {
+  const data = error?.response?.data;
+  if (data instanceof Blob) {
+    try {
+      const body = JSON.parse(await data.text());
+      if (typeof body.detail === 'string') return body.detail;
+    } catch {
+      // corps non JSON : message générique ci-dessous
+    }
+  }
+  return error?.response?.status === 429
+    ? 'Trop de demandes : réessayez dans une minute'
+    : "L'export a échoué";
+}
+
+/**
+ * Export de masse des fiches fermées sur une période (ADMIN et RESP, plafond côté backend).
+ * Retourne le Blob (zip ou pdf) ; en cas d'erreur, lève une Error portant le message du backend.
+ */
+export async function fetchClosedInterventionsExport({ dateFrom, dateTo, equipementId, format }) {
+  const params = { date_from: dateFrom, date_to: dateTo, format };
+  if (equipementId) params.equipement_id = equipementId;
+  try {
+    const response = await api.get('/exports/interventions/closed', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(await readBlobErrorMessage(error));
+  }
+}
