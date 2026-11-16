@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Badge, Box, Button, Checkbox, Dialog, Flex, Text } from '@radix-ui/themes';
+import { Badge, Box, Button, Dialog, Flex, Text } from '@radix-ui/themes';
 import { CalendarClock } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
@@ -99,7 +99,7 @@ function OpenRequests({ list }) {
 }
 OpenRequests.propTypes = { list: PropTypes.object.isRequired };
 
-function InterventionsBlock({ list }) {
+export function InterventionsBlock({ list }) {
   return (
     <ListBlock title="Interventions" list={list} emptyLabel="Aucune intervention.">
       {(inter) => {
@@ -151,21 +151,10 @@ function PreventifBlock({ eq }) {
 }
 PreventifBlock.propTypes = { eq: PropTypes.object.isRequired };
 
-export default function ActivitySection({ eq, includeDescendants, onIncludeChange }) {
+export default function ActivitySection({ eq, includeDescendants }) {
   const { requests, interventions } = useEquipementActivity(String(eq.id), includeDescendants);
-  const hasChildren = (eq.children_count ?? 0) > 0;
   return (
     <Section title="Activité">
-      {hasChildren && (
-        <Text as="label" size="2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-3)' }}>
-          <Checkbox
-            checked={includeDescendants}
-            onCheckedChange={(v) => onIncludeChange(v === true)}
-          />
-          Inclure les sous-équipements
-          {eq.descendants_count > 0 && <Text size="1" color="gray">({eq.descendants_count})</Text>}
-        </Text>
-      )}
       <OpenRequests list={requests} />
       <InterventionsBlock list={interventions} />
       <PreventifBlock eq={eq} />
@@ -175,5 +164,4 @@ export default function ActivitySection({ eq, includeDescendants, onIncludeChang
 ActivitySection.propTypes = {
   eq: PropTypes.object.isRequired,
   includeDescendants: PropTypes.bool.isRequired,
-  onIncludeChange: PropTypes.func.isRequired,
 };

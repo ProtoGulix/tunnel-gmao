@@ -55,6 +55,24 @@ export async function fetchEquipementById(id, params = {}) {
 }
 
 /**
+ * Tableau de bord d'un équipement : indicateurs, évolution mensuelle, répartitions
+ * @param {string} id - ID de l'équipement
+ * @param {Object} [params]
+ * @param {string} [params.startDate] - AAAA-MM-JJ (défaut serveur : 12 mois calendaires)
+ * @param {string} [params.endDate] - AAAA-MM-JJ (défaut serveur : aujourd'hui)
+ * @param {boolean} [params.includeDescendants] - Inclure les sous-équipements
+ * @returns {Promise<Object>} Contenu de `data` (period, scope, kpis, monthly, by_type, ...)
+ */
+export async function fetchEquipementDashboard(id, params = {}) {
+  const query = {};
+  if (params.startDate) query.start_date = params.startDate;
+  if (params.endDate) query.end_date = params.endDate;
+  if (params.includeDescendants !== undefined) query.include_descendants = params.includeDescendants;
+  const response = await api.get(`/equipements/${id}/dashboard`, { params: query });
+  return response.data;
+}
+
+/**
  * Crée un équipement
  * @param {Object} data - Données de l'équipement
  * @param {string} data.name - Nom de l'équipement

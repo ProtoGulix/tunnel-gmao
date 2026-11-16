@@ -1,6 +1,7 @@
 """Règles métier des équipements."""
 
 import re
+from datetime import date
 
 from api.errors.exceptions import ValidationError
 
@@ -77,3 +78,40 @@ def validate_children_exist(missing_ids: list[str]) -> None:
         raise ValidationError(
             f"Sous-équipement(s) inexistant(s) : {', '.join(str(i) for i in missing_ids)}."
         )
+
+
+# Durée maximale d'une période de tableau de bord : 10 ans (3660 jours).
+DASHBOARD_MAX_DAYS = 3660
+# Nombre de mois calendaires de la période par défaut, mois courant inclus.
+DASHBOARD_DEFAULT_MONTHS = 12
+
+
+def resolve_dashboard_period(
+    start: date | None, end: date | None, today: date | None = None
+) -> tuple[date, date]:
+    """Période du tableau de bord d'un équipement.
+
+    Défaut : du 1er jour du mois d'il y a 11 mois jusqu'à aujourd'hui (12 mois calendaires,
+    mois courant inclus). Refuse une période inversée ou de plus de 10 ans (400).
+    """
+    today = today or date.today()
+    if end is None:
+        end = today
+    if start is None:
+        index = end.year * 12 + (end.month - 1) - (DASHBOARD_DEFAULT_MONTHS - 1)
+        start = date(index // 12, index % 12 + 1, 1)
+    if start > end:
+        raise ValidationError("La date de début doit précéder la date de fin")
+    if (end - start).days > DASHBOARD_MAX_DAYS:
+        raise ValidationError("La période ne peut pas dépasser 10 ans")
+    return start, end
+
+
+def month_keys(start: date, end: date) -> list[str]:
+    """Tous les mois « AAAA-MM » de start à end, bornes comprises, même sans donnée."""
+    keys = []
+    year, month = start.year, start.month
+    while (year, month) <= (end.year, end.month):
+        keys.append(f"{year:04d}-{month:02d}")
+        year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+    return keys

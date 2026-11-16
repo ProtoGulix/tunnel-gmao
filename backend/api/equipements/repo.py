@@ -1,16 +1,23 @@
 """Requêtes pour le domaine équipements"""
 
 import logging
+from datetime import date
 from typing import Any, Dict, List
 from uuid import UUID, uuid4
 
 import psycopg2
 from fastapi import HTTPException
 
-from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPES_MAP, PRIORITY_TYPES
+from api.constants import (
+    CLOSED_STATUS_CODE,
+    INTERVENTION_TYPES,
+    INTERVENTION_TYPES_MAP,
+    PRIORITY_TYPES,
+)
 from api.db import get_connection, release_connection
 from api.equipements.validators import (
     build_equipement_code,
+    month_keys,
     validate_attachment,
     validate_children_exist,
     validate_deletable,
@@ -1119,6 +1126,227 @@ class EquipementRepository:
             raise_db_error(e, "opération")
         finally:
             release_connection(conn)
+
+    # --- Tableau de bord (TDB-01) -------------------------------------------------------
+
+    _NOT_SET_LABEL = "Non renseigné"
+
+    @staticmethod
+    def _hours(value) -> float:
+        """Heures arrondies à 2 décimales (SUM numeric nul ou absent : 0)."""
+        return round(float(value or 0), 2)
+
+    @staticmethod
+    def _avg(value) -> float | None:
+        """Moyenne arrondie à 2 décimales ; sans donnée, None (jamais 0)."""
+        return None if value is None else round(float(value), 2)
+
+    def _dashboard_interventions(self, cur, ids, start, end) -> Dict[str, Any]:
+        """Agrégats SQL côté interventions : déclarées, fermées dans la période, ouvertes."""
+        closed_ref = "(SELECT id FROM intervention_status_ref WHERE code = %s LIMIT 1)"
+        cur.execute(
+            """
+            SELECT to_char(i.reported_date, 'YYYY-MM'), i.type_inter, COUNT(*)
+            FROM intervention i
+            WHERE i.machine_id = ANY(%s::uuid[]) AND i.reported_date BETWEEN %s AND %s
+            GROUP BY 1, 2
+            """,
+            (ids, start, end),
+        )
+        reported = cur.fetchall()
+        # Fermeture = date du dernier passage à 'ferme' du journal, comme l'export de masse.
+        cur.execute(
+            f"""
+            SELECT to_char(c.closed_at, 'YYYY-MM'), COUNT(*),
+                   SUM(c.closed_at - i.reported_date), COUNT(c.closed_at - i.reported_date)
+            FROM intervention i
+            JOIN LATERAL (
+                SELECT MAX(sl.date)::date AS closed_at
+                FROM intervention_status_log sl
+                WHERE sl.intervention_id = i.id AND sl.status_to = {closed_ref}
+            ) c ON TRUE
+            WHERE i.machine_id = ANY(%s::uuid[]) AND i.status_actual = {closed_ref}
+              AND c.closed_at BETWEEN %s AND %s
+            GROUP BY 1
+            """,
+            (CLOSED_STATUS_CODE, ids, CLOSED_STATUS_CODE, start, end),
+        )
+        closed = cur.fetchall()
+        # État actuel : ignore la période, archivées comprises.
+        cur.execute(
+            f"""
+            SELECT COUNT(*) FROM intervention i
+            WHERE i.machine_id = ANY(%s::uuid[]) AND i.status_actual IS DISTINCT FROM {closed_ref}
+            """,
+            (ids, CLOSED_STATUS_CODE),
+        )
+        return {"reported": reported, "closed": closed, "open_now": cur.fetchone()[0]}
+
+    # Date d'une action : sa création, à défaut le jour déclaré de son intervention
+    # (created_at est nullable sur les données importées).
+    _ACTION_FROM = """
+        FROM intervention_action a
+        JOIN intervention i ON i.id = a.intervention_id
+        LEFT JOIN action_subcategory sc ON sc.id = a.action_subcategory
+        LEFT JOIN action_category ac ON ac.id = sc.category_id
+        LEFT JOIN complexity_factor cf ON cf.code = a.complexity_factor
+        WHERE i.machine_id = ANY(%s::uuid[])
+          AND COALESCE(a.created_at::date, i.reported_date) BETWEEN %s AND %s
+    """
+
+    def _dashboard_actions(self, cur, ids, start, end) -> Dict[str, Any]:
+        """Agrégats SQL côté actions : total, par mois, par type, par catégorie, par facteur."""
+        params = (ids, start, end)
+        queries = {
+            "total": "SELECT COUNT(*), SUM(a.time_spent), AVG(NULLIF(a.complexity_score, 0))",
+            "month": """SELECT to_char(COALESCE(a.created_at::date, i.reported_date), 'YYYY-MM'),
+                               COUNT(*), SUM(a.time_spent), AVG(NULLIF(a.complexity_score, 0))""",
+            "type": "SELECT i.type_inter, SUM(a.time_spent)",
+            "category": "SELECT ac.code, ac.name, ac.color, COUNT(*), SUM(a.time_spent)",
+            "factor": "SELECT a.complexity_factor, cf.label, COUNT(*)",
+        }
+        groups = {
+            "total": "",
+            "month": "GROUP BY 1",
+            "type": "GROUP BY 1",
+            "category": "GROUP BY ac.code, ac.name, ac.color ORDER BY 5 DESC, 1",
+            "factor": "GROUP BY a.complexity_factor, cf.label ORDER BY 3 DESC, 1",
+        }
+        out: Dict[str, Any] = {}
+        for key, select in queries.items():
+            # Sans facteur de complexité renseigné, une action n'entre pas dans cette répartition.
+            only_factor = " AND COALESCE(a.complexity_factor, '') <> ''" if key == "factor" else ""
+            cur.execute(f"{select} {self._ACTION_FROM}{only_factor} {groups[key]}", params)
+            out[key] = cur.fetchone() if key == "total" else cur.fetchall()
+        return out
+
+    def _dashboard_by_type(self, reported, actions_by_type) -> List[Dict[str, Any]]:
+        """Types connus (même à zéro), puis un code null « Non renseigné » si besoin."""
+        count: Dict[Any, int] = {}
+        for _month, type_code, n in reported:
+            count[type_code] = count.get(type_code, 0) + n
+        hours = {type_code: hrs for type_code, hrs in actions_by_type}
+        known = {t["id"] for t in INTERVENTION_TYPES}
+        rows = [
+            {
+                "code": t["id"],
+                "label": t["title"],
+                "color": t["color"],
+                "count": count.get(t["id"], 0),
+                "time_spent_hours": self._hours(hours.get(t["id"])),
+            }
+            for t in INTERVENTION_TYPES
+        ]
+        unknown = [c for c in {*count, *hours} if c not in known]
+        if unknown:
+            rows.append(
+                {
+                    "code": None,
+                    "label": self._NOT_SET_LABEL,
+                    "color": None,
+                    "count": sum(count.get(c, 0) for c in unknown),
+                    "time_spent_hours": self._hours(sum(hours.get(c) or 0 for c in unknown)),
+                }
+            )
+        return rows
+
+    def _dashboard_monthly(self, start, end, inter, acts) -> List[Dict[str, Any]]:
+        """Une ligne par mois de la période, vide comprise."""
+        known = [t["id"] for t in INTERVENTION_TYPES]
+        by_month = {
+            key: {
+                "month": key,
+                "reported": 0,
+                "closed": 0,
+                "reported_by_type": {code: 0 for code in known},
+                "time_spent_hours": 0.0,
+                "avg_complexity": None,
+            }
+            for key in month_keys(start, end)
+        }
+        for month, type_code, n in inter["reported"]:
+            row = by_month[month]
+            row["reported"] += n
+            # Un type inconnu du référentiel est regroupé sous la clé "null".
+            key = type_code if type_code in known else "null"
+            row["reported_by_type"][key] = row["reported_by_type"].get(key, 0) + n
+        for month, n, _sum_delay, _n_delay in inter["closed"]:
+            by_month[month]["closed"] = n
+        for month, _n, hours, avg_complexity in acts["month"]:
+            by_month[month]["time_spent_hours"] = self._hours(hours)
+            by_month[month]["avg_complexity"] = self._avg(avg_complexity)
+        return list(by_month.values())
+
+    def get_dashboard(
+        self,
+        equipement_id: str,
+        start: date,
+        end: date,
+        include_descendants: bool = False,
+    ) -> Dict[str, Any]:
+        """Tableau de bord d'un équipement (lecture seule) sur la période [start, end].
+
+        Périmètre : l'équipement, et ses descendants si include_descendants. Les agrégats
+        sont calculés en SQL (GROUP BY) ; la réponse complète les mois et types vides.
+        """
+        equipement_id = self._uuid_or_400(equipement_id)
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM machine WHERE id = %s", (equipement_id,))
+                if cur.fetchone() is None:
+                    raise NotFoundError(f"Équipement {equipement_id} non trouvé")
+                ids = [equipement_id]
+                if include_descendants:
+                    ids += self._descendant_ids(cur, equipement_id)
+                inter = self._dashboard_interventions(cur, ids, start, end)
+                acts = self._dashboard_actions(cur, ids, start, end)
+            conn.commit()
+        except NotFoundError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "tableau de bord équipement")
+        finally:
+            release_connection(conn)
+
+        total_actions, total_hours, avg_complexity = acts["total"]
+        delay_sum = sum(float(r[2] or 0) for r in inter["closed"])
+        delay_n = sum(r[3] for r in inter["closed"])
+        return {
+            "period": {"start": start, "end": end},
+            "scope": {
+                "equipement_id": equipement_id,
+                "include_descendants": include_descendants,
+                "equipement_count": len(ids),
+            },
+            "kpis": {
+                "interventions_reported": sum(r[2] for r in inter["reported"]),
+                "interventions_closed": sum(r[1] for r in inter["closed"]),
+                "interventions_open_now": inter["open_now"],
+                "time_spent_hours": self._hours(total_hours),
+                "actions_count": total_actions,
+                "avg_complexity": self._avg(avg_complexity),
+                "avg_close_delay_days": self._avg(delay_sum / delay_n) if delay_n else None,
+            },
+            "monthly": self._dashboard_monthly(start, end, inter, acts),
+            "by_type": self._dashboard_by_type(inter["reported"], acts["type"]),
+            "by_action_category": [
+                {
+                    "code": code,
+                    "name": name or self._NOT_SET_LABEL,
+                    "color": color,
+                    "actions_count": n,
+                    "time_spent_hours": self._hours(hrs),
+                }
+                for code, name, color, n, hrs in acts["category"]
+            ],
+            "by_complexity_factor": [
+                {"code": code, "label": label or code, "count": n}
+                for code, label, n in acts["factor"]
+            ],
+        }
 
     def get_health_by_id(
         self, equipement_id: str, include_descendants: bool | None = None

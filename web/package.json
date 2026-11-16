@@ -1,6 +1,6 @@
 {
   "name": "tunnel-gmao",
-  "version": "5.4.0",
+  "version": "5.5.0",
   "description": "GMAO terrain-first : enregistre la réalité sans imposer de méthode. Vos données, votre serveur, votre contrôle.",
   "author": "ProtoGulix",
   "license": "AGPL-3.0-or-later",
@@ -45,7 +45,8 @@
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.11.0",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

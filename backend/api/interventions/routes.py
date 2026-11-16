@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -90,12 +91,22 @@ def list_interventions(
         False,
         description="Avec equipement_id : inclut les interventions des équipements descendants. Ignoré sans equipement_id",
     ),
+    type_inter: str | None = Query(
+        None, description="CSV de types d'intervention (ex: CUR,PRE), voir GET /interventions/types"
+    ),
+    reported_from: date | None = Query(
+        None, description="Déclarées à partir de cette date (AAAA-MM-JJ, incluse)"
+    ),
+    reported_to: date | None = Query(
+        None, description="Déclarées jusqu'à cette date (AAAA-MM-JJ, incluse)"
+    ),
 ) -> Dict[str, Any]:
     """Liste interventions avec filtres/sort et stats optionnelles (sans actions)"""
     intervention_repo = InterventionRepository()
 
     statuses = [s.strip() for s in status.split(',')] if status else None
     priorities = [p.strip() for p in priority.split(',')] if priority else None
+    types = [t.strip() for t in type_inter.split(',') if t.strip()] if type_inter else None
     include_list = [i.strip() for i in include.split(',')] if include else []
     include_stats = (include is None) or ("stats" in include_list)
     include_tasks = "tasks" in include_list
@@ -113,6 +124,9 @@ def list_interventions(
         printed=printed,
         tech_id=tech_id,
         include_descendants=include_descendants,
+        types=types,
+        reported_from=reported_from,
+        reported_to=reported_to,
     )
     total = intervention_repo.count_all(
         search=search,
@@ -122,6 +136,9 @@ def list_interventions(
         printed=printed,
         tech_id=tech_id,
         include_descendants=include_descendants,
+        types=types,
+        reported_from=reported_from,
+        reported_to=reported_to,
     )
     return paginated(items, total=total, offset=skip, limit=limit, audit_entity="intervention")
 

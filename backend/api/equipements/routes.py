@@ -1,5 +1,6 @@
 """Routes pour les équipements"""
 
+from datetime import date
 from typing import Literal
 from uuid import UUID
 
@@ -10,10 +11,13 @@ from api.auth.permissions import require_authenticated
 from api.equipements.repo import EquipementRepository
 from api.equipements.schemas import (
     EquipementCreate,
+    EquipementDashboardResponse,
     EquipementListPaginated,
     EquipementPatch,
     EquipementUpdate,
 )
+from api.equipements.validators import resolve_dashboard_period
+from api.limiter import limiter
 from api.utils.response import paginated, single
 
 router = APIRouter(
@@ -168,6 +172,29 @@ def get_equipement_stats(
     """Récupère les statistiques détaillées d'un équipement"""
     repo = EquipementRepository()
     return single(repo.get_stats_by_id(equipement_id, start_date=start_date, end_date=end_date))
+
+
+@router.get("/{equipement_id}/dashboard", response_model=EquipementDashboardResponse)
+@limiter.limit("60/minute")
+def get_equipement_dashboard(
+    request: Request,
+    equipement_id: str,
+    start_date: date | None = Query(
+        None, description="Début de période (AAAA-MM-JJ). Défaut : 12 mois calendaires"
+    ),
+    end_date: date | None = Query(
+        None, description="Fin de période (AAAA-MM-JJ). Défaut : aujourd'hui"
+    ),
+    include_descendants: bool = Query(
+        False, description="Inclut les équipements descendants (tout niveau) dans les agrégats"
+    ),
+):
+    """Tableau de bord d'un équipement : indicateurs, évolution mensuelle et répartitions"""
+    start, end = resolve_dashboard_period(start_date, end_date)
+    repo = EquipementRepository()
+    return single(
+        repo.get_dashboard(equipement_id, start, end, include_descendants=include_descendants)
+    )
 
 
 @router.get("/{equipement_id}/health")

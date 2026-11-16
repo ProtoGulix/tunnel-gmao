@@ -94,6 +94,9 @@ export function Header({ eq, editable = false, onSave }) {
 }
 Header.propTypes = { eq: PropTypes.object.isRequired, editable: PropTypes.bool, onSave: PropTypes.func };
 
+// Plusieurs colonnes selon la largeur du panneau, pour garder la liste courte.
+const CHILDREN_GRID = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', columnGap: 24 };
+
 export function ChildrenSection({ list }) {
   const { items, total, loading, error, page, pageSize, setPage, setPageSize } = list;
   if (error) {
@@ -106,12 +109,12 @@ export function ChildrenSection({ list }) {
   if (total === 0) return null;
   return (
     <Section title="Sous-équipements" count={total}>
-      <Flex direction="column" style={{ opacity: loading ? 0.6 : 1 }}>
+      <Box style={{ ...CHILDREN_GRID, opacity: loading ? 0.6 : 1 }}>
         {items.map((c) => (
           <Link key={c.id} to={equipementUrl(c.id)} replace style={linkStyle}>
-            <Flex align="center" gap="2" style={{ padding: '5px 0', borderBottom: '1px solid var(--gray-4)' }} title={c.health?.reason || undefined}>
+            <Flex align="center" gap="2" style={{ padding: '3px 0', borderBottom: '1px solid var(--gray-4)' }} title={c.health?.reason || undefined}>
               <EquipementHealthDot level={c.health?.level} />
-              <Text size="2" weight="medium" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Text size="1" weight="medium" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {c.code || '—'} – {c.name}
               </Text>
               {c.children_count > 0 && <Badge color="gray" variant="soft" size="1">{c.children_count}</Badge>}
@@ -119,7 +122,7 @@ export function ChildrenSection({ list }) {
             </Flex>
           </Link>
         ))}
-      </Flex>
+      </Box>
       {total > PAGE_SIZE_OPTIONS[0] && (
         <Box mt="2">
           <Pagination

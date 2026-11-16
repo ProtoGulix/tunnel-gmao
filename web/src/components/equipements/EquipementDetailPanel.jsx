@@ -5,11 +5,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Callout } from '@radix-ui/themes';
+import { Box, Callout, Checkbox, Text } from '@radix-ui/themes';
 import { AlertCircle } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
 import ActivitySection from '@/components/equipements/EquipementActivity';
+import DashboardSection from '@/components/equipements/EquipementDashboardSection';
 import { usePagedList } from '@/hooks/shared/usePagedList';
 import { fetchEquipements, fetchEquipementStatuts, patchEquipement } from '@/api/equipements';
 import { fetchEquipementClasses } from '@/api/equipementClasses';
@@ -26,6 +27,23 @@ import { useEquipementDetail } from '@/hooks/equipements/useEquipementDetail';
  */
 // Champs dont le changement se voit dans la liste de gauche (arbre, chemin, santé)
 const LIST_FIELDS = new Set(['name', 'statut_id', 'equipement_class_id', 'parent_id']);
+
+// Une seule case pour le tableau de bord et l'activité
+function IncludeDescendantsToggle({ eq, checked, onChange }) {
+  if ((eq.children_count ?? 0) === 0) return null;
+  return (
+    <Text as="label" size="2" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 'var(--space-3)' }}>
+      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      Inclure les sous-équipements
+      {eq.descendants_count > 0 && <Text size="1" color="gray">({eq.descendants_count})</Text>}
+    </Text>
+  );
+}
+IncludeDescendantsToggle.propTypes = {
+  eq: PropTypes.object.isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
 
 export default function EquipementDetailPanel({ id, onLoaded, onChanged }) {
   const { can } = usePermissions();
@@ -69,6 +87,8 @@ export default function EquipementDetailPanel({ id, onLoaded, onChanged }) {
     return run;
   }, [id, applyDetail, onChanged, onLoaded]);
 
+  const withDescendants = includeDescendants ?? equipement?.include_descendants === true;
+
   if (error && !equipement) return <Box p="4"><ErrorState error={error} /></Box>;
   if (!equipement) return <LoadingState fullscreen={false} message="Chargement…" />;
 
@@ -83,11 +103,11 @@ export default function EquipementDetailPanel({ id, onLoaded, onChanged }) {
       <Header eq={equipement} editable={editable} onSave={saveField} />
       <FicheSection eq={equipement} editable={editable} onSave={saveField} classes={classes} statuts={statuts} />
       <ChildrenSection list={children} />
-      <ActivitySection
-        eq={equipement}
-        includeDescendants={includeDescendants ?? equipement.include_descendants === true}
-        onIncludeChange={setIncludeDescendants}
-      />
+      <IncludeDescendantsToggle eq={equipement} checked={withDescendants} onChange={setIncludeDescendants} />
+      {can(PERM.equipements.dashboard) && (
+        <DashboardSection eq={equipement} includeDescendants={withDescendants} />
+      )}
+      <ActivitySection eq={equipement} includeDescendants={withDescendants} />
     </Box>
   );
 }

@@ -213,11 +213,11 @@ export default function EditableProperty({
   }
   return (
     <Box py="1" style={{ borderBottom: '1px solid var(--gray-4)' }}>
-      <Flex align={type === 'textarea' ? 'start' : 'center'} gap="3" style={{ minHeight: 28 }}>
-        <Text size="1" color="gray" style={{ width: 130, flexShrink: 0 }}>{label}</Text>
+      <Flex align={type === 'textarea' ? 'start' : 'center'} gap="3" style={{ minHeight: 24 }}>
+        <Text size="1" color="gray" style={{ width: 110, flexShrink: 0 }}>{label}</Text>
         <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>{content}{indicator}</Flex>
       </Flex>
-      {errorLine && <Box style={{ paddingLeft: 142 }}>{errorLine}</Box>}
+      {errorLine && <Box style={{ paddingLeft: 122 }}>{errorLine}</Box>}
     </Box>
   );
 }

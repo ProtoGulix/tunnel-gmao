@@ -101,6 +101,9 @@ SelectProperty.propTypes = {
  * @param {Array} [classes] - classes d'équipement (liste du select)
  * @param {Array} [statuts] - statuts du cycle de vie (liste du select)
  */
+// Deux colonnes dès que le panneau est assez large ; les notes gardent toute la largeur.
+const FICHE_GRID = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', columnGap: 24 };
+
 export default function FicheSection({ eq, editable = false, onSave, classes = [], statuts = [] }) {
   const prop = (label, field, extra) => (
     <EditableProperty key={field} label={label} value={eq[field]} editable={editable} onSave={(v) => onSave(field, v)} {...extra} />
@@ -108,7 +111,7 @@ export default function FicheSection({ eq, editable = false, onSave, classes = [
   const cls = eq.equipement_class;
   return (
     <Section title="Fiche">
-      <Box>
+      <Box style={FICHE_GRID}>
         <SelectProperty
           label="Classe" field="equipement_class_id" current={cls?.id} display={cls ? (cls.label ?? cls.code) : undefined}
           options={optionList(classes, (c) => `${c.code} — ${c.label}`)} editable={editable} onSave={onSave} convert={String}
@@ -121,7 +124,7 @@ export default function FicheSection({ eq, editable = false, onSave, classes = [
         {TEXT_FIELDS.map(([label, field]) => prop(label, field))}
         {prop('Mise en service', 'date_mise_service', { type: 'date', display: formatDate(eq.date_mise_service) ?? undefined })}
         {prop('Nœud de regroupement', 'is_mere', { type: 'checkbox', value: eq.is_mere === true })}
-        {prop('Notes', 'notes', { type: 'textarea' })}
+        <Box style={{ gridColumn: '1 / -1' }}>{prop('Notes', 'notes', { type: 'textarea' })}</Box>
       </Box>
     </Section>
   );
