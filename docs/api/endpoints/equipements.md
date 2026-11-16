@@ -395,6 +395,69 @@ Statistiques détaillées pour un équipement.
 
 ---
 
+## `GET /equipements/{id}/dashboard`
+
+Tableau de bord d'un équipement : indicateurs, évolution mensuelle et répartitions. Lecture seule, droit `equipements:get_equipement_dashboard` (ouvert par défaut à RESP, TECH, ACHETEUR et MCP). Limité à 60 requêtes par minute.
+
+### Query params
+
+| Param                 | Type | Défaut                                         | Description                                                    |
+| --------------------- | ---- | ---------------------------------------------- | -------------------------------------------------------------- |
+| `start_date`          | date | 1er jour du mois d'il y a 11 mois              | Début de période (12 mois calendaires, mois courant inclus)    |
+| `end_date`            | date | aujourd'hui                                    | Fin de période (incluse)                                       |
+| `include_descendants` | bool | false                                          | Inclut les descendants (tout niveau), comme `GET /equipements/{id}` |
+
+Erreurs : `400` si `start_date` > `end_date`, si la période dépasse 10 ans (3660 jours) ou si l'identifiant n'est pas un UUID ; `404` si l'équipement n'existe pas.
+
+### Règles de calcul
+
+- Une intervention compte dans la période selon son `reported_date` (archivées comprises).
+- Sa fermeture est la date du dernier passage à `ferme` dans le journal de statuts, comme l'export de masse. Seules les interventions actuellement fermées sont comptées ; `avg_close_delay_days` est la moyenne de (fermeture − `reported_date`).
+- Une action compte selon `created_at` (date), à défaut le `reported_date` de son intervention.
+- `interventions_open_now` ignore la période (état actuel, hors statut `ferme`).
+- Durées en heures, arrondies à 2 décimales. Une moyenne sans donnée vaut `null`, jamais `0` ; `avg_complexity` ignore les scores absents ou nuls.
+- `monthly` contient tous les mois de la période, même vides. `reported_by_type` porte tous les types connus ; un type inconnu est compté sous la clé `"null"`.
+- `by_type` liste tous les types connus (même à `0`) ; un type inconnu apparaît sous `code: null`, libellé « Non renseigné ». `count` = interventions déclarées, `time_spent_hours` = temps des actions.
+- `by_action_category` : catégories ayant des actions ; une action sans sous-catégorie apparaît sous `code: null`, nom « Non renseigné ».
+- `by_complexity_factor` : actions ayant un facteur de complexité renseigné (les autres n'y figurent pas).
+
+### Réponse `200`
+
+```json
+{
+  "data": {
+    "period": { "start": "2026-01-01", "end": "2026-03-31" },
+    "scope": { "equipement_id": "uuid", "include_descendants": false, "equipement_count": 1 },
+    "kpis": {
+      "interventions_reported": 2,
+      "interventions_closed": 1,
+      "interventions_open_now": 1,
+      "time_spent_hours": 4.0,
+      "actions_count": 3,
+      "avg_complexity": 4.0,
+      "avg_close_delay_days": 5.0
+    },
+    "monthly": [
+      {
+        "month": "2026-01",
+        "reported": 1,
+        "closed": 1,
+        "reported_by_type": { "CUR": 1, "PRE": 0 },
+        "time_spent_hours": 2.0,
+        "avg_complexity": 4.0
+      }
+    ],
+    "by_type": [{ "code": "CUR", "label": "Curatif", "color": "red", "count": 1, "time_spent_hours": 2.0 }],
+    "by_action_category": [
+      { "code": "MEC", "name": "Mécanique", "color": "blue", "actions_count": 2, "time_spent_hours": 2.0 }
+    ],
+    "by_complexity_factor": [{ "code": "DIAG", "label": "Diagnostic difficile ou panne intermittente", "count": 2 }]
+  }
+}
+```
+
+---
+
 ## `GET /equipements/{id}/health`
 
 État de santé uniquement (ultra-léger, polling-friendly).

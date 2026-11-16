@@ -1,6 +1,15 @@
 import { api } from '@/lib/api/client';
 import { mapInterventionResponse, mapInterventionDetailResponse } from './interventionMappers';
 
+// Type (csv) et bornes de date de déclaration (AAAA-MM-JJ, incluses)
+function buildTypeAndDateParams(filters) {
+  const params = {};
+  if (filters.typeInter) params.type_inter = filters.typeInter;
+  if (filters.reportedFrom) params.reported_from = filters.reportedFrom;
+  if (filters.reportedTo) params.reported_to = filters.reportedTo;
+  return params;
+}
+
 function buildListParams(filters) {
   const params = {
     skip: filters.skip ?? 0,
@@ -13,7 +22,7 @@ function buildListParams(filters) {
   if (filters.sort) params.sort = filters.sort;
   if (filters.include) params.include = filters.include;
   if (filters.search) params.search = filters.search;
-  return params;
+  return { ...params, ...buildTypeAndDateParams(filters) };
 }
 
 export async function fetchInterventions(filters = {}) {

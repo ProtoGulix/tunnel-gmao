@@ -33,6 +33,7 @@ export const PERM = {
     update: 'equipements:update_equipement',
     patch: 'equipements:patch_equipement',
     remove: 'equipements:delete_equipement',
+    dashboard: 'equipements:get_equipement_dashboard',
   },
   stock: {
     createItem: 'stock-items:create_stock_item',

@@ -6,7 +6,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.audits.events import record_audit_event
-from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
+from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
@@ -90,6 +90,34 @@ class InterventionRepository:
     def _get_connection(self):
         return get_connection()
 
+    @staticmethod
+    def _type_and_date_filters(
+        types: List[str] | None, reported_from: date | None, reported_to: date | None
+    ) -> tuple[List[str], List[Any]]:
+        """Filtres type_inter (liste blanche INTERVENTION_TYPE_IDS) et reported_date (bornes incluses).
+
+        Lève ValidationError (400) pour un type inconnu ou une période inversée."""
+        clauses: List[str] = []
+        params: List[Any] = []
+        if types:
+            unknown = [t for t in types if t not in INTERVENTION_TYPE_IDS]
+            if unknown:
+                raise ValidationError(
+                    f"Type d'intervention inconnu : {', '.join(unknown)}. "
+                    f"Valeurs : {', '.join(INTERVENTION_TYPE_IDS)}"
+                )
+            clauses.append(f"i.type_inter IN ({','.join(['%s'] * len(types))})")
+            params.extend(types)
+        if reported_from and reported_to and reported_from > reported_to:
+            raise ValidationError("reported_from doit précéder reported_to")
+        if reported_from:
+            clauses.append("i.reported_date >= %s")
+            params.append(reported_from)
+        if reported_to:
+            clauses.append("i.reported_date <= %s")
+            params.append(reported_to)
+        return clauses, params
+
     def get_all(
         self,
         limit: int = 100,
@@ -104,6 +132,9 @@ class InterventionRepository:
         printed: bool | None = None,
         tech_id: str | None = None,
         include_descendants: bool = False,
+        types: List[str] | None = None,
+        reported_from: date | None = None,
+        reported_to: date | None = None,
     ) -> List[Dict[str, Any]]:
         """Récupère interventions avec filtres/sort et stats calculées en SQL (sans actions)"""
         # Garde-fou: limit max 1000
@@ -153,6 +184,10 @@ class InterventionRepository:
         if tech_id:
             where_clauses.append("i.tech_id = %s")
             params.append(tech_id)
+
+        extra_clauses, extra_params = self._type_and_date_filters(types, reported_from, reported_to)
+        where_clauses.extend(extra_clauses)
+        params.extend(extra_params)
 
         where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
@@ -465,6 +500,9 @@ class InterventionRepository:
         printed: bool | None = None,
         tech_id: str | None = None,
         include_descendants: bool = False,
+        types: List[str] | None = None,
+        reported_from: date | None = None,
+        reported_to: date | None = None,
     ) -> int:
         """Compte le nombre total d'interventions correspondant aux filtres de get_all()"""
         priorities_norm = None
@@ -508,6 +546,10 @@ class InterventionRepository:
         if tech_id:
             where_clauses.append("i.tech_id = %s")
             params.append(tech_id)
+
+        extra_clauses, extra_params = self._type_and_date_filters(types, reported_from, reported_to)
+        where_clauses.extend(extra_clauses)
+        params.extend(extra_params)
 
         where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 

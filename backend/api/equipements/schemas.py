@@ -308,3 +308,71 @@ class EquipementListPaginated(BaseModel):
     items: list[EquipementListItem]
     pagination: PaginationMeta
     facets: dict[str, list[EquipementClassFacetItem]]
+
+
+class DashboardPeriod(BaseModel):
+    start: date
+    end: date
+
+
+class DashboardScope(BaseModel):
+    equipement_id: UUID
+    include_descendants: bool
+    equipement_count: int
+
+
+class DashboardKpis(BaseModel):
+    interventions_reported: int
+    interventions_closed: int
+    interventions_open_now: int
+    time_spent_hours: float
+    actions_count: int
+    avg_complexity: float | None
+    avg_close_delay_days: float | None
+
+
+class DashboardMonth(BaseModel):
+    month: str
+    reported: int
+    closed: int
+    reported_by_type: dict[str, int]
+    time_spent_hours: float
+    avg_complexity: float | None
+
+
+class DashboardByType(BaseModel):
+    code: str | None
+    label: str
+    color: str | None
+    count: int
+    time_spent_hours: float
+
+
+class DashboardByActionCategory(BaseModel):
+    code: str | None
+    name: str
+    color: str | None
+    actions_count: int
+    time_spent_hours: float
+
+
+class DashboardByComplexityFactor(BaseModel):
+    code: str
+    label: str
+    count: int
+
+
+class EquipementDashboard(BaseModel):
+    """Tableau de bord d'un équipement : indicateurs, évolution mensuelle et répartitions"""
+
+    period: DashboardPeriod
+    scope: DashboardScope
+    kpis: DashboardKpis
+    monthly: list[DashboardMonth]
+    by_type: list[DashboardByType]
+    by_action_category: list[DashboardByActionCategory]
+    by_complexity_factor: list[DashboardByComplexityFactor]
+
+
+class EquipementDashboardResponse(BaseModel):
+    data: EquipementDashboard

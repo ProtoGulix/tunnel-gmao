@@ -6,6 +6,25 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Ajouté
+- Tableau de bord d'un équipement côté serveur : indicateurs (interventions, temps
+  passé, complexité, délai de fermeture), évolution mensuelle, répartition par type,
+  catégorie d'action et facteur de complexité, avec ou sans les équipements
+  descendants. Le droit de lecture est créé au démarrage du conteneur API.
+- Liste des interventions : nouveaux filtres par type d'intervention et par période de
+  déclaration (`type_inter`, `reported_from`, `reported_to`).
+- Fiche équipement : nouvelle section « État et évolution » (chiffres clés, histogramme
+  mensuel par type, heures passées par mois, répartition par type, catégorie d'action et
+  facteur de complexité). Un clic sur un mois ou un type ouvre la liste des
+  interventions concernées. La case « Inclure les sous-équipements » commande
+  désormais cette section et l'activité.
+
+### Modifié
+- Fiche équipement plus compacte : propriétés sur deux colonnes et liste des
+  sous-équipements en grille.
+
 ## [5.4.0] — 2026-11-16
 
 ### Ajouté

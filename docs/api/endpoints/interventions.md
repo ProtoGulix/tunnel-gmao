@@ -51,6 +51,9 @@ Liste les interventions avec filtres, tri et pagination.
 | `priority`      | csv    | —      | Filtrer par priorité (`faible,normale,important,urgent`)                |
 | `printed`       | bool   | —      | `true` : imprimées, `false` : non imprimées, omis : toutes              |
 | `tech_id`       | uuid   | —      | Filtrer par UUID du technicien pilote (`intervention.tech_id`)          |
+| `type_inter`    | csv    | —      | Filtrer par type (`CUR,PRE`…, codes de `GET /interventions/types`). Code inconnu : `400` |
+| `reported_from` | date   | —      | Déclarées à partir de cette date (`AAAA-MM-JJ`, incluse, sur `reported_date`) |
+| `reported_to`   | date   | —      | Déclarées jusqu'à cette date (incluse). `reported_from` > `reported_to` : `400` |
 | `sort`          | csv    | —      | Tri avec `-` pour DESC (ex: `-priority,-reported_date,-next_due_date`)  |
 | `include`       | csv    | —      | Données optionnelles (`stats`). Stats incluses par défaut               |
 
