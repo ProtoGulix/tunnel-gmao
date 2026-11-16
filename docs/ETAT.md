@@ -8,13 +8,17 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 ## Versions
 
 - Dernière version publiée : **v5.4.0** (2026-11-16, tag sur main) : export de masse des fiches
-  des interventions fermées (ZIP ou PDF unique, plafond 100, ADMIN et RESP).
-  Production en 5.3.1, à mettre à jour en 5.4.0 (basculée le 2026-11-15, révision 0013) ; clone dans
-  ~/DEV/tunnel-gmao sur main, mises à jour par git pull et docker compose up -d --build
-  (le redémarrage de l'API rejoue le bootstrap et crée le droit d'export). Restent à la
-  main : domaine mobile vers /m, Grafana, clients MCP, cache des postes, puis suppression
-  des anciens conteneurs et de l'archive après validation.
-- develop contient depuis : le tableau de bord d'un équipement (section « Non publié » du CHANGELOG). Mise à jour de la production : rejouer le bootstrap (redémarrage de l'API) pour ouvrir le droit `equipements:get_equipement_dashboard` aux rôles par défaut.
+  des interventions fermées. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
+  2026-11-16 (NON VÉRIFIÉ : résultat non rapporté). Production basculée le 2026-11-15
+  (révision 0013) ; clone dans ~/DEV/tunnel-gmao sur main, mises à jour par git pull puis
+  `cd deploy && docker compose up -d --build` (le fichier Compose est dans deploy/).
+  Restent à la main : domaine mobile vers /m, Grafana, clients MCP, cache des postes,
+  puis suppression des anciens conteneurs et de l'archive après validation.
+- Version en cours de publication : **v5.5.0** (préparée dans develop le 2026-11-16) : tableau de
+  bord d'un équipement (section « État et évolution », Recharts, ADR 0020). À sa mise en
+  production, le redémarrage de l'API rejoue le bootstrap et ouvre le droit
+  `equipements:get_equipement_dashboard` aux rôles par défaut.
+- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
 
@@ -76,8 +80,10 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mettre la production à jour en 5.4.0 (action de l'utilisateur : git pull sur main
-   puis docker compose up -d --build ; le bootstrap crée le droit d'export).
+0. Publication de la 5.5.0 : l'utilisateur ouvre et fusionne la PR develop → main
+   (« Create a merge commit ») ; ensuite l'agent principal pose le tag annoté v5.5.0 sur
+   main, le pousse (TUNNEL_RELEASE=1), refusionne main dans develop et met à jour
+   « Dernière version publiée » ci-dessus.
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
