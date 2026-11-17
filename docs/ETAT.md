@@ -7,13 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Version en cours de publication : **v5.6.0** (2026-11-17) : page « Organisation » (ADR
-  0021). La fonctionnalité est déjà sur main (PR #7, fusionnée sans commit de version) ;
-  la PR suivante develop → main apporte le commit de version. À sa mise en production,
-  redémarrer l'API pour rejouer le bootstrap et ouvrir le droit `stats:get_organisation`.
-- Dernière version publiée : **v5.5.0** (2026-11-16, tag sur main) : tableau de bord d'un
-  équipement (section « État et évolution », Recharts, ADR 0020). Avant : v5.4.0, export de
-  masse des fiches fermées. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
+- Dernière version publiée : **v5.6.0** (2026-11-17, tag sur main, PR #7 et #8) : page
+  « Organisation » (ADR 0021). Production encore en 5.5.0 : à sa mise à jour, redémarrer
+  l'API pour rejouer le bootstrap et ouvrir le droit `stats:get_organisation`. Avant :
+  v5.5.0, tableau de bord d'un équipement (ADR 0020) ; v5.4.0, export de masse des fiches. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
   2026-11-16 (NON VÉRIFIÉ : résultat non rapporté). Production basculée le 2026-11-15
   (révision 0013) ; clone dans ~/DEV/tunnel-gmao sur main, mises à jour par git pull puis
   `cd deploy && docker compose up -d --build` (le fichier Compose est dans deploy/).
@@ -91,11 +88,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Publication de la 5.6.0 : l'utilisateur ouvre et fusionne la PR develop → main
-   (« Create a merge commit ») ; ensuite l'agent principal pose le tag annoté v5.6.0 sur
-   main, le pousse (TUNNEL_RELEASE=1), refusionne main dans develop et met à jour
-   « Dernière version publiée » ci-dessus. Puis mise à jour de la production
-   (git pull, `sudo docker compose up -d --build` dans deploy/, droit stats:get_organisation).
+0. Mettre la production à jour en 5.6.0 (action de l'utilisateur sur le serveur :
+   git pull sur main, puis `cd deploy && sudo docker compose up -d --build` ; le
+   redémarrage de l'API crée le droit stats:get_organisation).
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
