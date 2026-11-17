@@ -7,6 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
+- Version en cours de publication : **v5.6.0** (2026-11-17) : page « Organisation » (ADR
+  0021). La fonctionnalité est déjà sur main (PR #7, fusionnée sans commit de version) ;
+  la PR suivante develop → main apporte le commit de version. À sa mise en production,
+  redémarrer l'API pour rejouer le bootstrap et ouvrir le droit `stats:get_organisation`.
 - Dernière version publiée : **v5.5.0** (2026-11-16, tag sur main) : tableau de bord d'un
   équipement (section « État et évolution », Recharts, ADR 0020). Avant : v5.4.0, export de
   masse des fiches fermées. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
@@ -21,7 +25,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
   est Docker Desktop, vide).
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
-  dans private/ (hors git).
+  supprimée ensuite à sa demande.
 - develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
@@ -87,8 +91,11 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Version 5.6.0 (page « Organisation ») à décider par l'utilisateur avant son départ,
-   puis mise à jour de la production (bootstrap rejoué pour le droit stats:get_organisation).
+0. Publication de la 5.6.0 : l'utilisateur ouvre et fusionne la PR develop → main
+   (« Create a merge commit ») ; ensuite l'agent principal pose le tag annoté v5.6.0 sur
+   main, le pousse (TUNNEL_RELEASE=1), refusionne main dans develop et met à jour
+   « Dernière version publiée » ci-dessus. Puis mise à jour de la production
+   (git pull, `sudo docker compose up -d --build` dans deploy/, droit stats:get_organisation).
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
