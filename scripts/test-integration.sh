@@ -10,7 +10,8 @@ PORT=55435
 PASSWORD="$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 
 cleanup() {
-  docker rm -f "$NAME" >/dev/null 2>&1 || true
+  # -v : supprime aussi le volume anonyme de l'image postgres, sinon il reste à chaque lancement.
+  docker rm -fv "$NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT INT TERM
 cleanup

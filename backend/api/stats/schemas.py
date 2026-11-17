@@ -1,4 +1,5 @@
-from typing import List
+from datetime import date, datetime
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -384,3 +385,67 @@ class QualiteDonneesResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# --- Indicateurs d'organisation (ADR 0021) : chiffres d'équipe, jamais par technicien ---
+
+
+class OrganisationPeriod(BaseModel):
+    start: date
+    end: date
+
+
+class OrganisationHours(BaseModel):
+    CUR: float
+    PRE: float
+    PRO: float
+    other: float
+    total: float
+
+
+class OrganisationMonth(BaseModel):
+    interventions_reported: int
+    urgent_count: int
+    urgent_share: Optional[float] = None
+    hours: OrganisationHours
+    chantiers_started: int
+    chantiers_interrupted: int
+    interrupted_share: Optional[float] = None
+    tech_days: int
+    avg_interventions_per_tech_day: Optional[float] = None
+    scattered_days_share: Optional[float] = None
+
+
+class OrganisationMonthly(OrganisationMonth):
+    month: str
+
+
+class OrganisationProjects(BaseModel):
+    count: int
+    avg_active_days: Optional[float] = None
+    avg_span_days: Optional[float] = None
+    active_ratio: Optional[float] = None
+
+
+class OrganisationPreventive(BaseModel):
+    active_plans: int
+    occurrences_not_started: int
+    oldest_not_started_days: Optional[int] = None
+    pending_requests: int
+    oldest_pending_request_days: Optional[int] = None
+    last_generated_at: Optional[datetime] = None
+
+
+class OrganisationWaitingParts(BaseModel):
+    count: int
+    median_age_days: Optional[float] = None
+    max_age_days: Optional[int] = None
+
+
+class OrganisationResponse(BaseModel):
+    period: OrganisationPeriod
+    monthly: List[OrganisationMonthly]
+    totals: OrganisationMonth
+    projects: OrganisationProjects
+    preventive: OrganisationPreventive
+    waiting_parts: OrganisationWaitingParts

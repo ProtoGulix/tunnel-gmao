@@ -27,21 +27,24 @@ export const MENU_CONFIG = {
   private: PAGES_CONFIG.filter((p) => p.requiresAuth && !p.publicOnly),
 };
 
-export function getMenuItems(isAuthenticated, userRole = null) {
+// Un lien d'authentifié est masqué sans le rôle (requiredRoles) ou sans le droit (requiredPermission)
+function isAllowed(item, normalizedRole, can) {
+  if (item.publicOnly) return false;
+  if (item.requiredRoles && !item.requiredRoles.map((r) => r.toUpperCase()).includes(normalizedRole)) return false;
+  return !item.requiredPermission || Boolean(can && can(item.requiredPermission));
+}
+
+export function getMenuItems(isAuthenticated, userRole = null, can = null) {
   const normalizedRole = userRole?.toUpperCase() ?? null;
   return PAGES_CONFIG.filter((item) => {
     if (item.showInMenu === false || item.disabled === true) return false;
-    if (isAuthenticated) {
-      if (item.publicOnly) return false;
-      if (item.requiredRoles && !item.requiredRoles.map((r) => r.toUpperCase()).includes(normalizedRole)) return false;
-      return true;
-    }
+    if (isAuthenticated) return isAllowed(item, normalizedRole, can);
     return item.public || item.publicOnly;
   });
 }
 
-export function getMenuSections(isAuthenticated, userRole = null) {
-  const menuItems = getMenuItems(isAuthenticated, userRole);
+export function getMenuSections(isAuthenticated, userRole = null, can = null) {
+  const menuItems = getMenuItems(isAuthenticated, userRole, can);
 
   if (isAuthenticated) {
     const sections = {};

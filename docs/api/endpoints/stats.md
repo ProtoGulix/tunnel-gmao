@@ -269,3 +269,62 @@ Détection des problèmes de complétude et cohérence des données. 13 règles 
 ```
 
 > Tri : high d'abord, puis medium, puis par entité, puis `created_at` DESC.
+
+---
+
+## `GET /stats/organisation`
+
+Indicateurs d'organisation de l'équipe (ADR 0021). Lecture seule, 10 requêtes par minute. Droit : `stats:get_organisation`. Chiffres d'équipe uniquement : la réponse ne contient aucun identifiant, nom ni initiale de technicien.
+
+### Query params
+
+| Param | Type | Défaut |
+|---|---|---|
+| `start_date` | date | 1er jour du mois d'il y a 11 mois |
+| `end_date` | date | aujourd'hui |
+
+`400` si `start_date > end_date` ou si la période dépasse 3660 jours.
+
+### Règles métier
+
+- Date d'une action : `created_at::date`, à défaut le `reported_date` de l'intervention. Les actions sans technicien ne forment ni chantier ni journée-technicien.
+- Chantier : couple (technicien, intervention PRO ou PRE) avec des actions sur au moins 2 jours distincts, rattaché au mois de son premier jour (le premier jour doit être dans la période, les jours suivants peuvent la dépasser). Coupé si le même technicien agit, un jour strictement entre le premier et le dernier, sur une intervention CUR de priorité `urgent`.
+- Seule la priorité `urgent` compte comme urgence.
+- Dispersion : interventions distinctes par journée-technicien ; `scattered_days_share` = part des journées à 3 interventions ou plus.
+- `projects` : interventions PRO (tous techniciens) actives sur 2 jours ou plus, dont le premier jour est dans la période ; durée = dernier jour - premier jour + 1 ; `active_ratio` = somme des jours actifs / somme des durées, en %.
+- `preventive` et `waiting_parts` : état actuel, hors période. Âges en jours depuis la génération de l'occurrence (`triggered_at`), la création de la demande ou le `reported_date`. `last_generated_at` : dernier `triggered_at` d'une occurrence liée à une demande.
+- Parts en % à 1 décimale, `null` si le dénominateur vaut 0 ; heures à 2 décimales ; tous les mois de la période sont présents.
+
+### Réponse `200`
+
+```json
+{
+  "period": { "start": "2026-01-01", "end": "2026-03-31" },
+  "monthly": [
+    {
+      "month": "2026-01",
+      "interventions_reported": 40,
+      "urgent_count": 12,
+      "urgent_share": 30.0,
+      "hours": { "CUR": 60.5, "PRE": 10.0, "PRO": 25.25, "other": 4.0, "total": 99.75 },
+      "chantiers_started": 5,
+      "chantiers_interrupted": 2,
+      "interrupted_share": 40.0,
+      "tech_days": 60,
+      "avg_interventions_per_tech_day": 1.4,
+      "scattered_days_share": 8.3
+    }
+  ],
+  "totals": { "...": "mêmes champs que monthly, sans month" },
+  "projects": { "count": 3, "avg_active_days": 2.0, "avg_span_days": 9.33, "active_ratio": 21.4 },
+  "preventive": {
+    "active_plans": 12,
+    "occurrences_not_started": 30,
+    "oldest_not_started_days": 190,
+    "pending_requests": 30,
+    "oldest_pending_request_days": 190,
+    "last_generated_at": "2026-05-04T08:00:00Z"
+  },
+  "waiting_parts": { "count": 4, "median_age_days": 9.5, "max_age_days": 40 }
+}
+```

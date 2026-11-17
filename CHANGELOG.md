@@ -6,6 +6,23 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Ajouté
+- Indicateurs d'organisation de l'équipe côté serveur (`GET /stats/organisation`, ADR
+  0021) : interruptions des chantiers par les urgences, part d'urgences, répartition des
+  heures, dispersion des journées, préventif en attente et pièces en attente. Chiffres
+  d'équipe uniquement, aucun détail par technicien. Le droit de lecture est créé au
+  démarrage du conteneur API.
+- Page « Organisation » du front web (menu Production, droit `stats:get_organisation`) :
+  tuiles d'état du préventif et des pièces, graphiques mensuels des interruptions, des
+  urgences, des heures par type et de la dispersion, avec la définition de chaque
+  indicateur. Période de 6, 12 ou 24 mois.
+
+### [interne]
+- scripts/test-integration.sh supprime le volume de sa base jetable à la fin : chaque
+  lancement laissait un volume Docker orphelin (289 accumulés, 15 Go, disque plein).
+
 ## [5.5.0] — 2026-11-16
 
 ### Ajouté
