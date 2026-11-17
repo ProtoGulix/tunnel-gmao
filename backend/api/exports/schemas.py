@@ -25,3 +25,11 @@ class QRExportInfo(BaseModel):
 
     content_type: str = "image/png"
     requires_auth: bool = False
+
+
+class MarkPrintedRequest(BaseModel):
+    """Sélection des fiches à marquer imprimées (mêmes champs que l'export de masse)"""
+
+    date_from: str
+    date_to: str
+    equipement_id: Optional[str] = None

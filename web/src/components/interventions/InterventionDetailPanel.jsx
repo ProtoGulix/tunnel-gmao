@@ -137,10 +137,11 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
     try {
       setMutationError('');
       await updateIntervention({ printedFiche: true });
+      onRefreshList?.();
     } catch (err) {
       setMutationError(extractApiErrorMessage(err, 'Erreur marquage imprimé'));
     }
-  }, [updateIntervention]);
+  }, [updateIntervention, onRefreshList]);
 
   const handlePointageRequested = useCallback(() => {
     notify('Demande de pointage envoyée');

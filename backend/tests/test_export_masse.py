@@ -189,3 +189,129 @@ def test_pdf_unique_avec_au_moins_une_page_par_fiche(client, depot, monkeypatch)
     )
     assert r.content.startswith(b"%PDF")
     assert assemblees and assemblees[0] >= 3
+
+
+# --- Marquage imprimées (IMPR-01) ---
+
+MARK_URL = "/exports/interventions/closed/mark-printed"
+MARK_BODY = {"date_from": "2026-01-01", "date_to": "2026-01-31"}
+MARK = Endpoint("exports:mark_closed_interventions_printed", "POST", MARK_URL, "exports")
+
+
+def test_marquage_ouvert_a_admin_et_resp_seulement():
+    assert default_allowed("ADMIN", MARK)
+    assert default_allowed("RESP", MARK)
+    for role in ("TECH", "ACHETEUR", "MCP"):
+        assert not default_allowed(role, MARK), role
+
+
+@pytest.fixture
+def marquage(monkeypatch, depot):
+    """Enregistre les identifiants transmis au marquage ; 1 fiche déjà imprimée sur 2."""
+    recu = []
+
+    def marque(self, ids):
+        recu.append(list(ids))
+        return len(ids) - 1
+
+    monkeypatch.setattr(ExportRepository, "mark_interventions_printed", marque)
+    return recu
+
+
+def test_marquage_utilise_la_selection_de_l_export(client, depot, marquage):
+    r = client.post(
+        MARK_URL, json={**MARK_BODY, "equipement_id": "9b2f1c64-7c1a-4e1d-8f3a-1a2b3c4d5e6f"}
+    )
+    assert r.status_code == 200, r.text
+    assert r.json() == {"data": {"marked": 1, "total": 2}}
+    assert marquage == [["id-0", "id-1"]]
+    assert depot["appels"][0][2] == "9b2f1c64-7c1a-4e1d-8f3a-1a2b3c4d5e6f"
+    assert depot["appels"][0][3] == export_routes.MAX_BULK_SHEETS + 1
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"date_from": "2026-02-01", "date_to": "2026-01-01"},
+        {"date_from": "pas-une-date", "date_to": "2026-01-01"},
+        {**MARK_BODY, "equipement_id": "pas-un-uuid"},
+    ],
+)
+def test_marquage_valide_comme_l_export(client, depot, marquage, body):
+    assert client.post(MARK_URL, json=body).status_code == 400
+    assert marquage == []
+
+
+def test_marquage_plafond_et_aucune_fiche(client, depot, marquage):
+    depot["codes"] = [f"INT-{i}" for i in range(export_routes.MAX_BULK_SHEETS + 1)]
+    assert client.post(MARK_URL, json=MARK_BODY).status_code == 400
+    depot["codes"] = []
+    assert client.post(MARK_URL, json=MARK_BODY).status_code == 404
+    assert marquage == []
+
+
+# --- Audit du marquage (IMPR-01) ---
+
+
+class _FakeCursor:
+    """Curseur qui renvoie seulement les fiches « pas encore imprimées » (ici : 2 sur 3)."""
+
+    def __init__(self, rows):
+        self._rows = rows
+
+    def execute(self, sql, params):
+        self.sql = sql
+
+    def fetchall(self):
+        return self._rows
+
+
+class _FakeConn:
+    def __init__(self, rows):
+        self._cur = _FakeCursor(rows)
+        self.commits = 0
+
+    def cursor(self):
+        return self._cur
+
+    def commit(self):
+        self.commits += 1
+
+
+def test_marquage_depose_un_evenement_par_fiche_reellement_marquee(monkeypatch):
+    from uuid import uuid4
+
+    from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
+
+    marquees = [(uuid4(), False), (uuid4(), None)]
+    conn = _FakeConn(marquees)
+    monkeypatch.setattr(ExportRepository, "_get_connection", lambda self: conn)
+    monkeypatch.setattr("api.exports.repo.release_connection", lambda c: None)
+
+    unit = AuditUnit()
+    token = bind_audit_unit(unit)
+    try:
+        n = ExportRepository().mark_interventions_printed([str(uuid4()) for _ in range(3)])
+    finally:
+        unbind_audit_unit(token)
+
+    assert n == 2
+    # Un événement par fiche marquée, rien pour celle déjà imprimée (absente du RETURNING)
+    assert [(e.entity_type, e.entity_id, e.decision_type) for e in unit.events] == [
+        ("intervention", marquees[0][0], "printed_fiche_changed"),
+        ("intervention", marquees[1][0], "printed_fiche_changed"),
+    ]
+    assert unit.events[0].old_value == {"printed_fiche": False}
+    assert unit.events[0].new_value == {"printed_fiche": True}
+
+
+def test_marquage_sans_fiche_ne_depose_rien(monkeypatch):
+    from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
+
+    unit = AuditUnit()
+    token = bind_audit_unit(unit)
+    try:
+        assert ExportRepository().mark_interventions_printed([]) == 0
+    finally:
+        unbind_audit_unit(token)
+    assert unit.events == []

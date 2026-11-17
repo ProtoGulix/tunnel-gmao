@@ -57,8 +57,12 @@ AUDIT_HISTORY_PATHS = ("/audit/logs", "/audit/briefing")
 AUDIT_HISTORY_READERS = ("RESP", "MCP")
 
 # --- Export de masse des fiches : pilotage seulement (ADMIN et RESP) ------------------
-# Lecture seule mais coûteuse (jusqu'à 200 PDF) : fermée à TECH, ACHETEUR et MCP.
-BULK_EXPORT_PATHS = ("/exports/interventions/closed",)
+# Lecture seule mais coûteuse (jusqu'à 100 PDF) : fermée à TECH, ACHETEUR et MCP.
+# Le marquage « imprimées » (POST) est une écriture : même réserve, quel que soit le rôle.
+BULK_EXPORT_PATHS = (
+    "/exports/interventions/closed",
+    "/exports/interventions/closed/mark-printed",
+)
 
 # --- Zones fermées en lecture aux rôles non-ADMIN ------------------------------------
 # /admin/* et /api-keys sont réservés à ADMIN, sauf les exceptions de RESP ci-dessous.

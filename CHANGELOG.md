@@ -6,6 +6,20 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Modifié
+- Export de masse des fiches fermées : après un export réussi, un bouton « Marquer ces
+  fiches comme imprimées » apparaît dans la fenêtre ; chaque fiche marquée est tracée
+  dans le journal d'audit.
+- Liste des interventions : « À archiver » ne contient plus que les interventions fermées
+  ou annulées dont la fiche n'est pas imprimée ; les fiches imprimées passent dans un
+  bloc « Archivées », visible dans « Tout » et par la recherche.
+
+### [interne]
+- API : `POST /exports/interventions/closed/mark-printed` marque comme imprimées les
+  fiches d'un export de masse (ADMIN et RESP), sans toucher au statut des interventions.
+
 ## [5.7.0] — 2026-11-17
 
 ### Modifié

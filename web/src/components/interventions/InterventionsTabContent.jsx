@@ -3,7 +3,7 @@
  * @module components/interventions/InterventionsTabContent
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Flex, SegmentedControl, Text } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
@@ -31,6 +31,8 @@ const GROUPS = [
   { key: 'bloque', short: 'Bloqué', label: 'Bloqué', color: 'var(--amber-9)' },
   { key: 'projet', short: 'Projets', label: 'Projets / Support', color: 'var(--blue-9)' },
   { key: 'archive', short: 'À archiver', label: 'À archiver', color: 'var(--gray-6)' },
+  // Hors sélecteur : visible seulement dans « Tout »
+  { key: 'imprimees', short: 'Archivées', label: 'Archivées', color: 'var(--gray-4)', tabless: true },
 ];
 const ALL = 'tout';
 
@@ -38,7 +40,7 @@ const ALL = 'tout';
 function GroupSelector({ value, onChange, blocks }) {
   return (
     <SegmentedControl.Root size="1" value={value} onValueChange={onChange} style={{ width: '100%' }}>
-      {GROUPS.map((g) => (
+      {GROUPS.filter((g) => !g.tabless).map((g) => (
         <SegmentedControl.Item key={g.key} value={g.key}>
           {g.short} ({blocks[g.key].length})
         </SegmentedControl.Item>
@@ -50,10 +52,18 @@ function GroupSelector({ value, onChange, blocks }) {
 GroupSelector.propTypes = { value: PropTypes.string.isRequired, onChange: PropTypes.func.isRequired, blocks: PropTypes.object.isRequired };
 
 /* ── Contenu de l'onglet Interventions ──────────────────────────────────── */
-export default function InterventionsTabContent({ selectedId, onSelect, onCreate }) {
+export default function InterventionsTabContent({ selectedId, onSelect, onCreate, refreshToken }) {
   const [search, setSearch] = useState('');
   const [group, setGroup] = useState('actionnable');
   const { blocks, loading, error, refetch } = useInterventionsList(search);
+
+  // Relance la liste quand la page change refreshToken (marquage de masse), sauf au montage
+  const lastToken = useRef(refreshToken);
+  useEffect(() => {
+    if (lastToken.current === refreshToken) return;
+    lastToken.current = refreshToken;
+    refetch();
+  }, [refreshToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Liste maître : le groupe choisi seul, ou tous les groupes avec leurs séparateurs */
   const masterList = useMemo(() => {
@@ -112,4 +122,5 @@ InterventionsTabContent.propTypes = {
   selectedId: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
   onCreate: PropTypes.func.isRequired,
+  refreshToken: PropTypes.number,
 };

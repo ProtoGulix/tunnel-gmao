@@ -19,6 +19,8 @@ export default function InterventionsListPage() {
   const navigate = useNavigate();
   const { can } = usePermissions();
   const [isExportOpen, setIsExportOpen] = useState(false);
+  // Incrémenté après un marquage de masse : l'onglet relance sa liste
+  const [listVersion, setListVersion] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'interventions';
   // Un seul param `id` dans l'URL : sa signification dépend de l'onglet actif (`tab`).
@@ -84,7 +86,10 @@ export default function InterventionsListPage() {
           onClick: () => setIsExportOpen(true),
         }] : undefined}
       />
-      <ExportClosedInterventionsDialog open={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      <ExportClosedInterventionsDialog
+        open={isExportOpen} onClose={() => setIsExportOpen(false)}
+        onMarked={() => setListVersion((v) => v + 1)}
+      />
 
       <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <Box px="4">
@@ -101,6 +106,7 @@ export default function InterventionsListPage() {
         {activeTab === 'interventions' && (
           <InterventionsTabContent
             selectedId={selectedInterventionId}
+            refreshToken={listVersion}
             onSelect={handleSelectIntervention}
             onCreate={() => setSelectedInterventionId(null)}
           />

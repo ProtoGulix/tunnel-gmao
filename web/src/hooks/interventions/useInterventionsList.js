@@ -1,7 +1,7 @@
 /**
  * Hook pour la liste des interventions
  *
- * Gère le fetch, le filtrage par recherche, la segmentation en 4 blocs,
+ * Gère le fetch, le filtrage par recherche, la segmentation en 5 blocs,
  * le tri et l'auto-refresh.
  */
 
@@ -114,12 +114,13 @@ export function useInterventionsList(searchTerm = '') {
     [calculateAge]
   );
 
-  // Segmentation en 4 blocs
+  // Segmentation en 5 blocs
   const blocks = useMemo(() => {
     const actionnable = [];
     const bloque = [];
     const projet = [];
     const archive = [];
+    const imprimees = [];
 
     // eslint-disable-next-line complexity
     filteredData.forEach((i) => {
@@ -127,9 +128,9 @@ export function useInterventionsList(searchTerm = '') {
       const type = i.type?.toUpperCase();
       const priority = i.priority?.toLowerCase();
 
-      // Bloc 4: Archivé (fermé ou annulé)
+      // Bloc 4: À archiver (fermé ou annulé, fiche non imprimée) ; imprimées : bloc 5 à part
       if (status === 'ferme' || status === 'cancelled') {
-        archive.push(i);
+        (i.printedFiche ? imprimees : archive).push(i);
         return;
       }
 
@@ -154,6 +155,7 @@ export function useInterventionsList(searchTerm = '') {
       bloque: sortInterventions(bloque),
       projet: sortInterventions(projet),
       archive: sortInterventions(archive),
+      imprimees: sortInterventions(imprimees),
     };
   }, [filteredData, sortInterventions]);
 
