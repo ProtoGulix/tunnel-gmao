@@ -12,7 +12,7 @@ import { api } from '@/lib/api/client';
  */
 export async function getMyChangelog() {
   const response = await api.get('/users/me/changelog');
-  return response.data?.data || response.data;
+  return response.data;
 }
 
 /**
@@ -20,5 +20,5 @@ export async function getMyChangelog() {
  */
 export async function markMyChangelogSeen() {
   const response = await api.patch('/users/me/changelog-seen');
-  return response.data?.data || response.data;
+  return response.data;
 }

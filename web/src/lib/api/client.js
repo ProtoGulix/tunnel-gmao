@@ -12,6 +12,7 @@
 import axios from 'axios';
 import { emitSystemError } from '@/lib/api/systemErrors';
 import { isAuditRequiredError, handleAuditError } from '@/lib/api/auditGuard';
+import { unwrapEnvelope } from '@/lib/api/unwrapEnvelope';
 
 // ==============================
 // CONFIGURATION
@@ -109,15 +110,9 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    if (
-      response.data !== null &&
-      typeof response.data === 'object' &&
-      !Array.isArray(response.data) &&
-      Object.keys(response.data).length === 1 &&
-      'data' in response.data
-    ) {
-      response.data = response.data.data;
-    }
+    const { data, audit } = unwrapEnvelope(response.data);
+    response.data = data;
+    if (audit !== undefined) response.audit = audit;
     return response;
   },
   async (error) => {
@@ -157,7 +152,7 @@ api.interceptors.response.use(
           { refresh_token: storedRefreshToken },
           { withCredentials: true }
         );
-        const data = response.data?.data || response.data;
+        const data = unwrapEnvelope(response.data).data;
         const newAccessToken = data.access_token;
         const newRefreshToken = data.refresh_token;
 

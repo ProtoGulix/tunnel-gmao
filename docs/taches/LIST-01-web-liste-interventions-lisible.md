@@ -49,7 +49,7 @@ sélecteur de groupe sous la recherche (« À faire » par défaut), lignes plus
 (réglage local), en-tête du panneau retravaillé (équipement, code lisible, titre plus
 grand, type en clair). Bug signalé en cours de route et corrigé à part (commit fix) :
 en-tête vidé après un changement de statut ou de priorité, cause dans l'intercepteur
-du client (backlog intercepteur-enveloppe-data.md, inventaire et ADR lancés ensuite).
+du client (réglée par l'ADR 0022, ENV-01 et ENV-02).
 
 Fichiers : InterventionsTabContent.jsx, InterventionListItem.jsx (nouveau),
 InterventionPanelHeader.jsx, InterventionPanelHeaderParts.jsx, api/interventions.js,

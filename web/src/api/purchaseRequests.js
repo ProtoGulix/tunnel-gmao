@@ -17,7 +17,7 @@ import { api } from '@/lib/api/client';
  */
 export async function fetchPurchaseRequests(params = {}) {
   const response = await api.get('/purchase-requests/list', { params });
-  return response.data.data ?? [];
+  return response.data ?? [];
 }
 
 /**
@@ -27,7 +27,7 @@ export async function fetchPurchaseRequests(params = {}) {
  */
 export async function fetchPurchaseRequestDetail(id) {
   const response = await api.get(`/purchase-requests/detail/${id}`);
-  return response.data.data;
+  return response.data;
 }
 
 /**

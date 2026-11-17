@@ -31,7 +31,7 @@ export async function fetchMyHomeView() {
  */
 export async function fetchHomeViewAssignments() {
   const res = await api.get('/home-view/admin/assignments');
-  return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+  return res.data ?? [];
 }
 
 /**

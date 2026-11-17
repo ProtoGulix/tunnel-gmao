@@ -18,6 +18,11 @@ mobile/CHANGELOG.md.
 - En-tête d'une intervention plus lisible : l'équipement est mis en valeur, le code
   est plus lisible, le titre est plus grand et le type est écrit en clair.
 
+### [interne]
+- Client web : une seule règle de déballage des réponses du backend (ADR 0022), dans
+  l'intercepteur ; les appels lisent directement `response.data`. Suppression de
+  `singleBody` et des lectures tolérantes `data?.data || data`.
+
 ## [5.6.1] — 2026-11-17
 
 ### Corrigé
