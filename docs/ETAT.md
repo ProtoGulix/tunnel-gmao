@@ -7,7 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.6.1** (2026-11-17, correctif, PR #9, tag sur main) :
+- Version en cours de publication : **v5.7.0** (2026-11-17, PR develop → main) :
+  liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
+  réponses dans le client web (ENV-02, interne).
+- v5.6.1 (2026-11-17, correctif, PR #9, tag sur main) :
   formulaire « Éditer » d'une action ouvert vide (risque d'écrasement) et en-tête
   d'intervention vidé après un changement de statut (ADR 0022, ENV-01). Production
   mise à jour en 5.6.1 le 2026-11-17 (confirmé par l'utilisateur).
@@ -26,9 +29,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : liste des interventions plus lisible et en-tête du panneau
-  (LIST-01), déballage unique de l'enveloppe des réponses dans le client web (ENV-02,
-  interne).
+- develop contient depuis : rien de plus que la 5.7.0.
 
 ## Feuille de route fondatrice
 

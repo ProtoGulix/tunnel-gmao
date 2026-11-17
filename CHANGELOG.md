@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.7.0] — 2026-11-17
 
 ### Modifié
 - Liste des interventions : un sélecteur sous la recherche affiche un seul groupe à la
