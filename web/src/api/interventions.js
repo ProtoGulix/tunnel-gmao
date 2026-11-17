@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { singleBody } from '@/lib/api/singleBody';
 import { mapInterventionResponse, mapInterventionDetailResponse } from './interventionMappers';
 
 // Type (csv) et bornes de date de déclaration (AAAA-MM-JJ, incluses)
@@ -95,7 +96,7 @@ export async function createIntervention(data) {
   if (data.reportedBy) payload.reported_by = data.reportedBy;
   if (data.requestId) payload.request_id = data.requestId;
   const response = await api.post('/interventions', payload);
-  return mapInterventionResponse(response.data?.data ?? response.data);
+  return mapInterventionResponse(singleBody(response.data));
 }
 
 export async function updateIntervention(id, updates) {
@@ -108,7 +109,7 @@ export async function updateIntervention(id, updates) {
   if (updates.reason_text !== undefined) payload.reason_text = updates.reason_text;
 
   const response = await api.put(`/interventions/${id}`, payload);
-  return mapInterventionDetailResponse(response.data.data);
+  return mapInterventionDetailResponse(singleBody(response.data));
 }
 
 export async function updateInterventionStatus(id, newStatus, reasonCode, reasonText) {
