@@ -7,7 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Version en cours de publication : **v5.7.0** (2026-11-17, PR develop → main) :
+- Dernière version publiée : **v5.7.0** (2026-11-17, PR #10, tag sur main ; production
+  à mettre à jour par l'utilisateur) :
   liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
   réponses dans le client web (ENV-02, interne).
 - v5.6.1 (2026-11-17, correctif, PR #9, tag sur main) :
