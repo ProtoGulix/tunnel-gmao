@@ -4,12 +4,15 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 
 from api.auth.permissions import require_authenticated
+from api.equipements.validators import resolve_dashboard_period
 from api.errors.exceptions import ValidationError
 from api.limiter import limiter
+from api.stats.organisation_repo import OrganisationRepository
 from api.stats.repo import StatsRepository
 from api.stats.schemas import (
     AnomaliesSaisieResponse,
     ChargeTechniqueResponse,
+    OrganisationResponse,
     QualiteDonneesResponse,
     ServiceStatusResponse,
 )
@@ -93,3 +96,19 @@ def get_qualite_donnees(
 
     repo = StatsRepository()
     return repo.get_qualite_donnees(severite=severite, entite=entite, code=code)
+
+
+@router.get("/organisation", response_model=OrganisationResponse)
+@limiter.limit("10/minute")
+def get_organisation(
+    request: Request,
+    start_date: Optional[date] = Query(
+        None, description="Début de période (AAAA-MM-JJ). Défaut : 12 mois calendaires"
+    ),
+    end_date: Optional[date] = Query(
+        None, description="Fin de période (AAAA-MM-JJ). Défaut : aujourd'hui"
+    ),
+):
+    """Indicateurs d'organisation de l'équipe (ADR 0021) : chiffres d'équipe, jamais par technicien."""
+    start, end = resolve_dashboard_period(start_date, end_date)
+    return OrganisationRepository().get_organisation(start, end)

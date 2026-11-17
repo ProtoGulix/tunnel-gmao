@@ -16,6 +16,7 @@ const Login = lazy(() => import('@/pages/auth/Login'));
 const HomeRouter = lazy(() => import('@/pages/HomeRouter'));
 const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
 const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
+const OrganisationPage = lazy(() => import('@/pages/organisation/OrganisationPage'));
 const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
 const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
 const InterventionCreatePage = lazy(() => import('@/pages/interventions/InterventionCreatePage'));
@@ -123,6 +124,17 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <ServiceStatusPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/organisation"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <OrganisationPage />
             </Layout>
           </ProtectedRoute>
         }

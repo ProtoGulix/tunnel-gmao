@@ -12,9 +12,9 @@ from tests.integration.conftest import BACKEND
 
 pytestmark = pytest.mark.integration
 
-# Comptes attendus sur 254 endpoints : à mettre à jour avec les règles de
+# Comptes attendus sur 255 endpoints : à mettre à jour avec les règles de
 # db/default_permissions.py quand une route est ajoutée.
-EXPECTED_ALLOWED = {"ADMIN": 254, "RESP": 218, "TECH": 121, "ACHETEUR": 157, "MCP": 110}
+EXPECTED_ALLOWED = {"ADMIN": 255, "RESP": 219, "TECH": 122, "ACHETEUR": 158, "MCP": 111}
 
 
 def _allowed_by_role(instance):

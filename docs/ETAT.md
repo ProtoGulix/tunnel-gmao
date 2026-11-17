@@ -15,9 +15,13 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
   `cd deploy && docker compose up -d --build` (le fichier Compose est dans deploy/).
   Restent à la main : domaine mobile vers /m, Grafana, clients MCP, cache des postes,
   puis suppression des anciens conteneurs et de l'archive après validation.
-- Mise en production de la 5.5.0 à faire par l'utilisateur : à sa mise en
-  production, le redémarrage de l'API rejoue le bootstrap et ouvre le droit
-  `equipements:get_equipement_dashboard` aux rôles par défaut.
+- Production en 5.5.0 constatée le 2026-11-16 (dépôt du serveur sur 0bef3b9, droit du
+  tableau de bord présent en base). Sur le serveur, le Docker de production est celui
+  du système : `sudo docker ...` (le contexte par défaut de l'utilisateur maintenance
+  est Docker Desktop, vide).
+- Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
+  de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
+  dans private/ (hors git).
 - develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
 
 ## Feuille de route fondatrice
@@ -30,6 +34,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Page « Organisation » : indicateurs d'équipe (chantiers coupés par une urgence, part d'urgences, préventif en attente, dispersion), vue par tous, aucun chiffre individuel ; fusionnée le 2026-11-17 après essai à l'écran, reviewer APPROUVÉ ; droit créé par le bootstrap, à rejouer en production à la mise à jour | — | ADR 0021, [ORG-01](taches/ORG-01-backend-indicateurs-organisation.md), [ORG-02](taches/ORG-02-web-page-organisation.md) |
 | fait | Tableau de bord d'un équipement : section « État et évolution » du panneau web (Recharts, ADR 0020), modale des interventions, fiche et sous-équipements compactés ; fusionné le 2026-11-16 après essai à l'écran, reviewer APPROUVÉ | — | ADR 0020, spike 0004, [TDB-01](taches/TDB-01-backend-tableau-de-bord-equipement.md), [TDB-02](taches/TDB-02-web-section-etat-evolution.md), [TDB-03](taches/TDB-03-web-finition-visuelle.md) |
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Export de masse des fiches fermées (EXPM-01, EXPM-02), fusionné le 2026-11-16 après essai à l'écran ; plafond 100 ; bootstrap rejoué sur la base de dev, à rejouer en production à sa mise à jour | — | [EXPM-01](taches/EXPM-01-backend-export-masse-fiches.md), [EXPM-02](taches/EXPM-02-web-bouton-export-masse.md) |
@@ -58,9 +63,11 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-16 : page « Organisation » ouverte à tous les rôles, chiffres d'équipe seulement, définitions figées par l'ADR 0021.
 
 2026-11-16 : tableau de bord d'un équipement avec Recharts (ADR 0020), 12 derniers mois par défaut, sous-équipements selon la case existante du panneau.
 
@@ -80,8 +87,8 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mettre la production à jour en 5.5.0 (action de l'utilisateur : sauvegarde, git pull
-   sur main, puis cd deploy && docker compose up -d --build).
+0. Version 5.6.0 (page « Organisation ») à décider par l'utilisateur avant son départ,
+   puis mise à jour de la production (bootstrap rejoué pour le droit stats:get_organisation).
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,

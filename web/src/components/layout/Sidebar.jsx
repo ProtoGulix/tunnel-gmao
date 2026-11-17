@@ -27,6 +27,7 @@ import BrandLogo from '@/components/layout/BrandLogo';
 import NotificationBellContainer from '@/components/layout/NotificationBellContainer';
 
 // 4. Config
+import { usePermissions } from '@/auth/usePermissions';
 import { getMenuSections, SECTION_LABELS } from '@/config/menuConfig';
 import { MOBILE_BREAKPOINT, SIDEBAR_WIDTH, MOBILE_HEADER_HEIGHT } from '@/config/layoutConfig';
 import COLOR_PALETTE from '@/config/colorPalette';
@@ -170,6 +171,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   const { updateUser } = useAuth();
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { can } = usePermissions();
 
   // Hook personnalisé pour gérer les effets et l'état
   const { serverStatus, isMobile, menuBadges } = useSidebarState(
@@ -179,8 +181,7 @@ export default function Sidebar({ isAuthenticated, user, onLogout, isMobile: isM
   );
 
   // Récupérer les sections du menu selon l'état d'authentification et le rôle
-  const menuSections = getMenuSections(isAuthenticated, user?.role ?? null);
-
+  const menuSections = getMenuSections(isAuthenticated, user?.role ?? null, can);
   const handleLogoutClick = () => {
     if (logoutConfirm) {
       onLogout();

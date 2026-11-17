@@ -12,7 +12,9 @@ import {
   Truck,
   Settings,
   CalendarClock,
+  Users,
 } from 'lucide-react';
+import { PERM } from '@/auth/permissionCodes';
 
 export const PAGES_CONFIG = [
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -146,6 +148,17 @@ export const PAGES_CONFIG = [
     pageSubtitle: 'Charge, fragmentation, capacité réelle',
     section: 'production',
     requiresAuth: true,
+  },
+  {
+    id: 'organisation',
+    path: '/organisation',
+    label: 'Organisation',
+    icon: Users,
+    pageTitle: 'Organisation',
+    pageSubtitle: "Interruptions, urgences, préventif",
+    section: 'production',
+    requiresAuth: true,
+    requiredPermission: PERM.stats.organisation,
   },
   {
     id: 'quality-data',

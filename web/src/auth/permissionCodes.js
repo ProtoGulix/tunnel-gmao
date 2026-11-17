@@ -35,6 +35,12 @@ export const PERM = {
     remove: 'equipements:delete_equipement',
     dashboard: 'equipements:get_equipement_dashboard',
   },
+  stats: {
+    // Page Organisation (ADR 0021)
+    // Le code du catalogue contient « _or » : faux positif de la règle sur les filtres Directus
+    // eslint-disable-next-line no-restricted-syntax
+    organisation: 'stats:get_organisation',
+  },
   stock: {
     createItem: 'stock-items:create_stock_item',
     updateItem: 'stock-items:update_stock_item',
