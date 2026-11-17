@@ -4,7 +4,6 @@
  */
 
 import { api } from '@/lib/api/client';
-import { singleBody } from '@/lib/api/singleBody';
 
 /**
  * Actions sur une plage de dates, tous les techniciens ou un seul.
@@ -18,7 +17,7 @@ export async function fetchWeekActions(startDate, endDate, techId = null) {
   const params = { start_date: startDate, end_date: endDate };
   if (techId) params.tech_id = techId;
   const res = await api.get('/intervention-actions', { params });
-  const list = res.data.data ?? [];
+  const list = res.data ?? [];
   const grouped = {};
   for (const entry of list) {
     grouped[entry.date] = entry.actions ?? [];
@@ -86,7 +85,7 @@ export async function fetchActiveUsers() {
  */
 export async function createActionDirect(payload) {
   const res = await api.post('/intervention-actions', payload);
-  return singleBody(res.data);
+  return res.data;
 }
 
 /**

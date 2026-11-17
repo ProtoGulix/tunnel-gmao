@@ -6,6 +6,23 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.7.0] — 2026-11-17
+
+### Modifié
+- Liste des interventions : un sélecteur sous la recherche affiche un seul groupe à la
+  fois (À faire, Bloqué, Projets, À archiver) ou tous, avec leur nombre.
+- Liste des interventions plus lisible : le titre passe en premier, l'équipement est
+  mis en valeur juste dessous avec la date de signalement à droite, comme dans la
+  liste des demandes d'intervention, le statut n'est plus répété quand le groupe le
+  dit déjà, et le retard n'est plus affiché sur les interventions fermées ou annulées.
+- En-tête d'une intervention plus lisible : l'équipement est mis en valeur, le code
+  est plus lisible, le titre est plus grand et le type est écrit en clair.
+
+### [interne]
+- Client web : une seule règle de déballage des réponses du backend (ADR 0022), dans
+  l'intercepteur ; les appels lisent directement `response.data`. Suppression de
+  `singleBody` et des lectures tolérantes `data?.data || data`.
+
 ## [5.6.1] — 2026-11-17
 
 ### Corrigé

@@ -1,23 +1,22 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-16
+Dernière mise à jour : 2026-11-17
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Correctif en cours de publication : **v5.6.1** (2026-11-17, hotfix/5.6.1 depuis main) :
+- Version en cours de publication : **v5.7.0** (2026-11-17, PR develop → main) :
+  liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
+  réponses dans le client web (ENV-02, interne).
+- v5.6.1 (2026-11-17, correctif, PR #9, tag sur main) :
   formulaire « Éditer » d'une action ouvert vide (risque d'écrasement) et en-tête
-  d'intervention vidé après un changement de statut (ADR 0022, ENV-01). À mettre en
-  production dès sa publication ; d'ici là, ne pas utiliser « Éditer » sur une action.
-- Version en cours de publication : **v5.6.0** (2026-11-17) : page « Organisation » (ADR
-  0021). La fonctionnalité est déjà sur main (PR #7, fusionnée sans commit de version) ;
-  la PR suivante develop → main apporte le commit de version. À sa mise en production,
-  redémarrer l'API pour rejouer le bootstrap et ouvrir le droit `stats:get_organisation`.
-- Dernière version publiée : **v5.5.0** (2026-11-16, tag sur main) : tableau de bord d'un
-  équipement (section « État et évolution », Recharts, ADR 0020). Avant : v5.4.0, export de
-  masse des fiches fermées. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
+  d'intervention vidé après un changement de statut (ADR 0022, ENV-01). Production
+  mise à jour en 5.6.1 le 2026-11-17 (confirmé par l'utilisateur).
+- v5.6.0 (2026-11-17, tag sur main, PR #7 et #8) : page
+  « Organisation » (ADR 0021), en production avec la 5.6.1. Avant :
+  v5.5.0, tableau de bord d'un équipement (ADR 0020) ; v5.4.0, export de masse des fiches. Production : mise à jour en 5.4.0 lancée par l'utilisateur le
   2026-11-16 (NON VÉRIFIÉ : résultat non rapporté). Production basculée le 2026-11-15
   (révision 0013) ; clone dans ~/DEV/tunnel-gmao sur main, mises à jour par git pull puis
   `cd deploy && docker compose up -d --build` (le fichier Compose est dans deploy/).
@@ -30,7 +29,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : rien de plus (section « Non publié » du CHANGELOG absente).
+- develop contient depuis : rien de plus que la 5.7.0.
 
 ## Feuille de route fondatrice
 
@@ -42,6 +41,8 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Liste des interventions plus lisible (sélecteur de groupe, équipement en valeur), en-tête du panneau, correctif de l'en-tête vidé après un changement de statut ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [LIST-01](taches/LIST-01-web-liste-interventions-lisible.md) |
+| fait | Forme unique des réponses côté client web (intercepteur `{ data }`, même règle que le mobile) : ENV-01 (4 lectures cassées, publiée en 5.6.1) puis ENV-02 (intercepteur unique, lectures directes) ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | ADR 0022, [ENV-01](taches/ENV-01-web-lectures-cassees.md), [ENV-02](taches/ENV-02-web-intercepteur-unique.md) |
 | fait | Page « Organisation » : indicateurs d'équipe (chantiers coupés par une urgence, part d'urgences, préventif en attente, dispersion), vue par tous, aucun chiffre individuel ; fusionnée le 2026-11-17 après essai à l'écran, reviewer APPROUVÉ ; droit créé par le bootstrap, à rejouer en production à la mise à jour | — | ADR 0021, [ORG-01](taches/ORG-01-backend-indicateurs-organisation.md), [ORG-02](taches/ORG-02-web-page-organisation.md) |
 | fait | Tableau de bord d'un équipement : section « État et évolution » du panneau web (Recharts, ADR 0020), modale des interventions, fiche et sous-équipements compactés ; fusionné le 2026-11-16 après essai à l'écran, reviewer APPROUVÉ | — | ADR 0020, spike 0004, [TDB-01](taches/TDB-01-backend-tableau-de-bord-equipement.md), [TDB-02](taches/TDB-02-web-section-etat-evolution.md), [TDB-03](taches/TDB-03-web-finition-visuelle.md) |
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
@@ -94,12 +95,6 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
-
-0. Publication de la 5.6.0 : l'utilisateur ouvre et fusionne la PR develop → main
-   (« Create a merge commit ») ; ensuite l'agent principal pose le tag annoté v5.6.0 sur
-   main, le pousse (TUNNEL_RELEASE=1), refusionne main dans develop et met à jour
-   « Dernière version publiée » ci-dessus. Puis mise à jour de la production
-   (git pull, `sudo docker compose up -d --build` dans deploy/, droit stats:get_organisation).
 
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,

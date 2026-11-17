@@ -7,7 +7,7 @@
 import { api } from '@/lib/api/client';
 
 function extractAuthData(response) {
-  return response?.data?.data || response?.data;
+  return response?.data;
 }
 
 /**
@@ -56,7 +56,7 @@ export function isAuthenticated() {
  */
 export async function getMe() {
   const response = await api.get('/auth/me');
-  return response.data?.data || response.data;
+  return response.data;
 }
 
 /**
@@ -64,7 +64,7 @@ export async function getMe() {
  */
 export async function updateMyProfile(data) {
   const response = await api.patch('/users/me/profile', data);
-  return response.data?.data || response.data;
+  return response.data;
 }
 
 /**
@@ -75,5 +75,5 @@ export async function changeMyPassword(currentPassword, newPassword) {
     current_password: currentPassword,
     new_password: newPassword,
   });
-  return response.data?.data || response.data;
+  return response.data;
 }

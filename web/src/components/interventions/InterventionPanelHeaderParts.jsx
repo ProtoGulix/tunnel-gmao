@@ -3,7 +3,8 @@
  */
 
 import PropTypes from 'prop-types';
-import { Button, DropdownMenu, IconButton, Text } from '@radix-ui/themes';
+import { Badge, Button, DropdownMenu, IconButton, Text } from '@radix-ui/themes';
+import { INTERVENTION_TYPES } from '@/config/interventionTypes';
 import { CalendarCheck, ChevronDown, ClipboardList, Copy, MoreHorizontal, Trash2 } from 'lucide-react';
 
 function formatShortDate(iso) {
@@ -133,3 +134,28 @@ export function WorkSummary({ stats }) {
 }
 
 WorkSummary.propTypes = { stats: PropTypes.object };
+
+/** Équipement mis en valeur, comme dans la liste : code en badge contrasté, nom lisible. */
+export function MachineHeading({ machine }) {
+  return (
+    <>
+      {machine?.code && (
+        <Badge variant="surface" color="gray" highContrast size="2" style={{ fontFamily: 'monospace', fontWeight: 700, flexShrink: 0 }}>
+          {machine.code}
+        </Badge>
+      )}
+      <Text size="3" weight="medium" truncate style={{ minWidth: 0, color: 'var(--gray-12)' }}>{machine?.name ?? ''}</Text>
+    </>
+  );
+}
+
+MachineHeading.propTypes = { machine: PropTypes.object };
+
+/** Type d'intervention en clair (Projet, Curatif...), absent si le code est inconnu. */
+export function TypeBadge({ typeCode }) {
+  const type = INTERVENTION_TYPES.find((t) => t.id === typeCode?.toUpperCase());
+  if (!type) return null;
+  return <Badge color={type.color} variant="soft" size="2">{type.title}</Badge>;
+}
+
+TypeBadge.propTypes = { typeCode: PropTypes.string };

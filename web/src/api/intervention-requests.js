@@ -116,7 +116,7 @@ export async function patchAmelioration(id, data) {
   if ('deadline' in data) payload.deadline = data.deadline;
 
   const response = await api.patch(`/intervention-requests/${id}/amelioration`, payload);
-  return response.data?.data ?? response.data;
+  return response.data;
 }
 
 /**
@@ -127,7 +127,7 @@ export async function patchAmelioration(id, data) {
  */
 export async function fetchInterventionRequest(id) {
   const response = await api.get(`/intervention-requests/${id}`);
-  return response.data.data;
+  return response.data;
 }
 
 /**
@@ -162,7 +162,7 @@ export async function createInterventionRequest(data) {
   }
 
   const response = await api.post('/intervention-requests', payload);
-  return response.data?.data ?? response.data;
+  return response.data;
 }
 
 /**
@@ -202,7 +202,7 @@ export async function transitionInterventionRequest(id, data) {
   }
 
   const response = await api.post(`/intervention-requests/${id}/transition`, payload);
-  return response.data?.data ?? response.data;
+  return response.data;
 }
 
 /**
