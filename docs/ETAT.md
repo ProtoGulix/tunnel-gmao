@@ -7,6 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
+- Correctif en cours de publication : **v5.6.1** (2026-11-17, hotfix/5.6.1 depuis main) :
+  formulaire « Éditer » d'une action ouvert vide (risque d'écrasement) et en-tête
+  d'intervention vidé après un changement de statut (ADR 0022, ENV-01). À mettre en
+  production dès sa publication ; d'ici là, ne pas utiliser « Éditer » sur une action.
 - Version en cours de publication : **v5.6.0** (2026-11-17) : page « Organisation » (ADR
   0021). La fonctionnalité est déjà sur main (PR #7, fusionnée sans commit de version) ;
   la PR suivante develop → main apporte le commit de version. À sa mise en production,
