@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/lib/api/client';
+import { singleBody } from '@/lib/api/singleBody';
 
 /**
  * Actions sur une plage de dates, tous les techniciens ou un seul.
@@ -85,7 +86,7 @@ export async function fetchActiveUsers() {
  */
 export async function createActionDirect(payload) {
   const res = await api.post('/intervention-actions', payload);
-  return res.data.data;
+  return singleBody(res.data);
 }
 
 /**

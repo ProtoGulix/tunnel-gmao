@@ -6,6 +6,16 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.6.1] — 2026-11-17
+
+### Corrigé
+- Action : le formulaire « Éditer » s'ouvre de nouveau avec les valeurs de l'action (il
+  s'ouvrait vide, et l'enregistrer pouvait écraser la description, la date ou le type) ;
+  la carte d'une action ne se vide plus après son enregistrement.
+- Intervention : l'en-tête du panneau ne se vide plus après un changement de statut ou
+  de priorité (le titre, l'équipement et la demande liée disparaissaient, et le type
+  s'affichait à tort en « Curatif » jusqu'au rechargement).
+
 ## [5.6.0] — 2026-11-17
 
 ### Ajouté

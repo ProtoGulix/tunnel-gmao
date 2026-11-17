@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { singleBody } from '@/lib/api/singleBody';
 
 export async function fetchInterventionTasksList(params = {}) {
   const res = await api.get('/intervention-tasks', { params });
@@ -81,5 +82,5 @@ export async function fetchInterventionTaskActions(task_id) {
 
 export async function createInterventionActionForTask(data) {
   const res = await api.post('/intervention-actions', data);
-  return res.data.data ?? {};
+  return singleBody(res.data);
 }
