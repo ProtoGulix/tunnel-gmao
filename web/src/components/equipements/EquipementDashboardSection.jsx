@@ -89,7 +89,9 @@ export default function DashboardSection({ eq, includeDescendants }) {
             ))}
           </Select.Content>
         </Select.Root>
-        {data && <AllInterventionsButton onClick={() => open(periodFilters(data.period), 'Toute la période')} />}
+        {/* Toutes les interventions de l'équipement, sans période (choix de l'utilisateur du
+            2026-11-17) : un projet signalé avant la période y a encore des actions */}
+        <AllInterventionsButton onClick={() => open({}, 'Toutes les interventions')} />
       </Flex>
       <DashboardState data={data} loading={loading} error={error} onRetry={reload} onOpen={open} />
       <EquipementInterventionsDialog

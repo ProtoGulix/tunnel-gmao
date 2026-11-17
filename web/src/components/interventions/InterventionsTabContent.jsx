@@ -31,8 +31,6 @@ const GROUPS = [
   { key: 'bloque', short: 'Bloqué', label: 'Bloqué', color: 'var(--amber-9)' },
   { key: 'projet', short: 'Projets', label: 'Projets / Support', color: 'var(--blue-9)' },
   { key: 'archive', short: 'À archiver', label: 'À archiver', color: 'var(--gray-6)' },
-  // Hors sélecteur : visible seulement dans « Tout »
-  { key: 'imprimees', short: 'Archivées', label: 'Archivées', color: 'var(--gray-4)', tabless: true },
 ];
 const ALL = 'tout';
 
@@ -40,7 +38,7 @@ const ALL = 'tout';
 function GroupSelector({ value, onChange, blocks }) {
   return (
     <SegmentedControl.Root size="1" value={value} onValueChange={onChange} style={{ width: '100%' }}>
-      {GROUPS.filter((g) => !g.tabless).map((g) => (
+      {GROUPS.map((g) => (
         <SegmentedControl.Item key={g.key} value={g.key}>
           {g.short} ({blocks[g.key].length})
         </SegmentedControl.Item>

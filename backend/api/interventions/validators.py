@@ -67,6 +67,14 @@ class InterventionValidator:
             )
 
     @staticmethod
+    def validate_reported_date_not_null(fields_set: set, data: Dict[str, Any]) -> None:
+        """Refuse reported_date explicitement null en mise à jour (champ absent = inchangé).
+
+        fields_set vient de model_fields_set : exclude_none ne distingue pas absent et null."""
+        if "reported_date" in fields_set and data.get("reported_date") is None:
+            raise ValidationError("La date de signalement ne peut pas être vide")
+
+    @staticmethod
     def validate_deletable(intervention_id: str) -> None:
         """
         RÈGLE MÉTIER : Une intervention ne peut être supprimée que si elle

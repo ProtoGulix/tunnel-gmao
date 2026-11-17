@@ -22,6 +22,8 @@ function buildListParams(filters) {
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;
   if (filters.include) params.include = filters.include;
+  // Historique : l'API cache par défaut les interventions archivées (fiche imprimée)
+  if (filters.includePrinted) params.include_printed = true;
   if (filters.search) params.search = filters.search;
   return { ...params, ...buildTypeAndDateParams(filters) };
 }

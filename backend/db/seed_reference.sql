@@ -338,6 +338,14 @@ INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, d
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
 
 --
+-- Motif de complétion de données par une migration (IMPR-04), cohérent avec la migration
+-- 0014 : catégorie system, intervention, reported_date_changed. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'DATA_BACKFILL', 'Complétion de données historiques', 'system', '{intervention}', '{reported_date_changed}', '#64748b', 'Donnée manquante complétée par une migration, à partir d''une source déjà présente en base (code, journal des statuts).', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
 -- Règle d'audit de l'occurrence préventive (AUDC-29), cohérente avec la migration 0008 :
 -- règle routinière et entité ajoutée aux entity_types de ROUTINE. Idempotent.
 --

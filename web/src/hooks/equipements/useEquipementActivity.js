@@ -38,6 +38,7 @@ export function useEquipementActivity(equipementId, includeDescendants) {
     (skip, limit) => fetchInterventionsPage({
       equipementId,
       includeDescendants,
+      includePrinted: true, // historique complet, archivées comprises
       sort: '-reported_date',
       skip,
       limit,

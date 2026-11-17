@@ -49,7 +49,8 @@ Liste les interventions avec filtres, tri et pagination.
 | `include_descendants` | bool | false | Avec `equipement_id` : inclut les interventions des équipements descendants (tout niveau). Ignoré sans `equipement_id` |
 | `status`        | csv    | —      | Filtrer par codes statut (ex: `ouvert,ferme,en_cours`)                  |
 | `priority`      | csv    | —      | Filtrer par priorité (`faible,normale,important,urgent`)                |
-| `printed`       | bool   | —      | `true` : imprimées, `false` : non imprimées, omis : toutes              |
+| `printed`       | bool   | false  | `false` : non imprimées (actives), `true` : imprimées (archivées). Ignoré si `include_printed=true` |
+| `include_printed` | bool | false  | `true` : toutes les interventions, archivées comprises (historique d'un équipement) |
 | `tech_id`       | uuid   | —      | Filtrer par UUID du technicien pilote (`intervention.tech_id`)          |
 | `type_inter`    | csv    | —      | Filtrer par type (`CUR,PRE`…, codes de `GET /interventions/types`). Code inconnu : `400` |
 | `reported_from` | date   | —      | Déclarées à partir de cette date (`AAAA-MM-JJ`, incluse, sur `reported_date`) |
@@ -501,7 +502,7 @@ Crée une nouvelle intervention.
 | `reported_by`   | string | non     | null     | Nom du signaleur                                                                                                                                                                                                                                            |
 | `status_actual` | string | non     | `ouvert` | Code statut initial (géré par trigger)                                                                                                                                                                                                                      |
 | `printed_fiche` | bool   | non     | `false`  | Fiche imprimée ?                                                                                                                                                                                                                                            |
-| `reported_date` | date   | non     | null     | Date de signalement                                                                                                                                                                                                                                         |
+| `reported_date` | date   | non     | date du jour | Date de signalement ; absente ou null, le serveur pose la date du jour (idem à la création depuis une demande) |
 | `request_id`    | uuid   | **oui** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
 
 ### Réponse `201`
@@ -513,6 +514,8 @@ Intervention complète avec equipement, `request` (objet demande si liée), stat
 ## `PUT /interventions/{id}`
 
 Met à jour une intervention. Même body que POST, tous les champs sont optionnels.
+
+> **Date de signalement** : `reported_date` absente du corps = inchangée ; explicitement `null` = `400` ("La date de signalement ne peut pas être vide").
 
 > **Motif** : routinier, aucun `reason_code` requis (`ROUTINE` injecté) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 

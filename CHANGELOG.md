@@ -12,13 +12,33 @@ mobile/CHANGELOG.md.
 - Export de masse des fiches fermées : après un export réussi, un bouton « Marquer ces
   fiches comme imprimées » apparaît dans la fenêtre ; chaque fiche marquée est tracée
   dans le journal d'audit.
-- Liste des interventions : « À archiver » ne contient plus que les interventions fermées
-  ou annulées dont la fiche n'est pas imprimée ; les fiches imprimées passent dans un
-  bloc « Archivées », visible dans « Tout » et par la recherche.
+- Une fiche marquée imprimée vaut archivée : elle quitte la liste des interventions
+  (« À archiver ») dès le marquage, sans attendre le rafraîchissement automatique.
+
+### Corrigé
+- Une intervention créée sans date de signalement prend désormais la date du jour (création
+  directe et acceptation d'une demande) ; effacer la date d'une intervention est refusé.
+- Historique d'un équipement (section « Activité » et liste « Voir les interventions » du
+  tableau de bord) : les interventions archivées (fiche imprimée) n'y apparaissaient pas,
+  alors que les graphiques les comptent. Elles sont affichées, avec un badge « Archivée ».
+- Historique d'un équipement : le statut de chaque intervention s'affichait « — » et la
+  date de signalement manquait.
+- Tableau de bord d'un équipement : « Voir les interventions » liste toutes les
+  interventions de l'équipement, quelle que soit la période choisie (un projet signalé
+  avant la période, mais dont les actions y sont comptées, n'y apparaissait pas).
+- Interventions de la reprise d'historique sans date de signalement : elles sont
+  complétées (date lue dans le code de l'intervention, sinon premier passage du journal des
+  statuts) et apparaissent désormais dans les périodes du tableau de bord d'un équipement.
+  Chaque correction est tracée dans le journal d'audit (motif « Complétion de données
+  historiques »).
 
 ### [interne]
 - API : `POST /exports/interventions/closed/mark-printed` marque comme imprimées les
   fiches d'un export de masse (ADMIN et RESP), sans toucher au statut des interventions.
+- API : `GET /interventions` accepte `include_printed=true` pour renvoyer aussi les
+  interventions archivées (le défaut ne change pas : actives seulement).
+- Migration 0014 : motif système DATA_BACKFILL et complétion de reported_date (une ligne
+  d'audit par intervention, idempotente). Le downgrade ne remet pas les dates à NULL.
 
 ## [5.7.0] — 2026-11-17
 

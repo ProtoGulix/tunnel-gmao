@@ -855,7 +855,7 @@ class InterventionRepository:
                     str(data['tech_id']) if data.get('tech_id') else None,
                     data.get('status_actual', 'ouvert'),
                     data.get('printed_fiche', False),
-                    data.get('reported_date'),
+                    data.get('reported_date') or date.today(),
                     plan_id,
                 ),
             )

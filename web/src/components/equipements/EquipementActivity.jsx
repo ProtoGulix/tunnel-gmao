@@ -99,11 +99,19 @@ function OpenRequests({ list }) {
 }
 OpenRequests.propTypes = { list: PropTypes.object.isRequired };
 
+// Fiche imprimée : l'intervention est archivée (cachée des listes de travail)
+function ArchivedBadge({ archived }) {
+  if (!archived) return null;
+  return <Badge variant="outline" size="1" color="gray" style={{ flexShrink: 0 }}>Archivée</Badge>;
+}
+ArchivedBadge.propTypes = { archived: PropTypes.bool };
+
+// Reçoit des interventions converties par mapInterventionResponse (status, reportedDate)
 export function InterventionsBlock({ list }) {
   return (
     <ListBlock title="Interventions" list={list} emptyLabel="Aucune intervention.">
       {(inter) => {
-        const status = STATUS_CONFIG[inter.status_actual?.toLowerCase()];
+        const status = STATUS_CONFIG[inter.status?.toLowerCase()];
         return (
           <RowLink key={inter.id} to={entityCodeUrl('intervention', inter.id)}>
             <Badge variant="solid" color="blue" size="1" style={{ fontFamily: 'monospace', flexShrink: 0 }}>{inter.code}</Badge>
@@ -114,9 +122,10 @@ export function InterventionsBlock({ list }) {
               </Badge>
             )}
             <Badge variant="soft" size="1" color={status?.color ?? 'gray'} style={{ flexShrink: 0 }}>
-              {status?.label ?? inter.status_actual ?? '—'}
+              {status?.label ?? inter.status ?? '—'}
             </Badge>
-            <Text size="1" color="gray" style={{ flexShrink: 0 }}>{formatDate(inter.reported_date)}</Text>
+            <ArchivedBadge archived={inter.printedFiche} />
+            <Text size="1" color="gray" style={{ flexShrink: 0 }}>{formatDate(inter.reportedDate)}</Text>
           </RowLink>
         );
       }}

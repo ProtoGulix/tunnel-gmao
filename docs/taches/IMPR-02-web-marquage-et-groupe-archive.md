@@ -59,5 +59,7 @@ de la fenêtre (EquipementSearch partagé, passage à la ligne), résultat qui p
 fiches déjà imprimées, « Fermer » en action principale après marquage.
 Essai à l'écran le 2026-11-17 avec l'accord de l'utilisateur (API de dev redémarrée,
 256 endpoints synchronisés ; une fiche marquée dans la base de dev) : validé.
+Corrigé ensuite par IMPR-03 : le bloc « Archivées » restait toujours vide (l'API ne renvoie
+pas les archivées par défaut), il est retiré.
 NON VÉRIFIÉ : sur la capture de l'essai, les dates de la fenêtre apparaissaient vides
 après le marquage ; aucune remise à zéro dans le code, cause non établie.
