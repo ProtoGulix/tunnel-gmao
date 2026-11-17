@@ -6,6 +6,7 @@
 
 /* eslint-disable complexity */
 import { api } from '@/lib/api/client';
+import { singleBody } from '@/lib/api/singleBody';
 
 /**
  * Crée une nouvelle action d'intervention
@@ -57,7 +58,7 @@ export async function createAction(actionData) {
  */
 export async function fetchAction(id) {
   const response = await api.get(`/intervention-actions/${id}`);
-  return mapActionResponse(response.data);
+  return mapActionResponse(singleBody(response.data));
 }
 
 /**
@@ -125,7 +126,7 @@ export async function updateAction(id, updates) {
   }
 
   const response = await api.patch(`/intervention-actions/${id}`, payload);
-  return mapActionResponse(response.data.data);
+  return mapActionResponse(singleBody(response.data));
 }
 
 /**

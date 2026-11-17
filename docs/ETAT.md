@@ -7,7 +7,11 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.6.0** (2026-11-17, tag sur main, PR #7 et #8) : page
+- Dernière version publiée : **v5.6.1** (2026-11-17, correctif, PR #9, tag sur main) :
+  formulaire « Éditer » d'une action ouvert vide (risque d'écrasement) et en-tête
+  d'intervention vidé après un changement de statut (ADR 0022, ENV-01). À mettre en
+  production au plus tôt ; d'ici là, ne pas utiliser « Éditer » sur une action.
+- v5.6.0 (2026-11-17, tag sur main, PR #7 et #8) : page
   « Organisation » (ADR 0021). Production encore en 5.5.0 : à sa mise à jour, redémarrer
   l'API pour rejouer le bootstrap et ouvrir le droit `stats:get_organisation`. Avant :
   v5.5.0, tableau de bord d'un équipement (ADR 0020) ; v5.4.0, export de masse des fiches. Production : mise à jour en 5.4.0 lancée par l'utilisateur le

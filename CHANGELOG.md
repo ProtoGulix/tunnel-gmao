@@ -8,21 +8,25 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
-### Corrigé
-- Intervention : l'en-tête du panneau ne se vide plus après un changement de statut ou
-  de priorité (le titre, l'équipement et la demande liée disparaissaient, et le type
-  s'affichait à tort en « Curatif » jusqu'au rechargement).
-
 ### Modifié
 - Liste des interventions : un sélecteur sous la recherche affiche un seul groupe à la
   fois (À faire, Bloqué, Projets, À archiver) ou tous, avec leur nombre.
 - Liste des interventions plus lisible : le titre passe en premier, l'équipement est
   mis en valeur juste dessous avec la date de signalement à droite, comme dans la
-  liste des demandes d'intervention, le statut n'est
-  plus répété quand le groupe le dit déjà, et le retard n'est plus affiché sur les
-  interventions fermées ou annulées.
+  liste des demandes d'intervention, le statut n'est plus répété quand le groupe le
+  dit déjà, et le retard n'est plus affiché sur les interventions fermées ou annulées.
 - En-tête d'une intervention plus lisible : l'équipement est mis en valeur, le code
   est plus lisible, le titre est plus grand et le type est écrit en clair.
+
+## [5.6.1] — 2026-11-17
+
+### Corrigé
+- Action : le formulaire « Éditer » s'ouvre de nouveau avec les valeurs de l'action (il
+  s'ouvrait vide, et l'enregistrer pouvait écraser la description, la date ou le type) ;
+  la carte d'une action ne se vide plus après son enregistrement.
+- Intervention : l'en-tête du panneau ne se vide plus après un changement de statut ou
+  de priorité (le titre, l'équipement et la demande liée disparaissaient, et le type
+  s'affichait à tort en « Curatif » jusqu'au rechargement).
 
 ## [5.6.0] — 2026-11-17
 
