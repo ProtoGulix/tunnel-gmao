@@ -7,7 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Version en cours de publication : **v5.7.0** (2026-11-17, PR develop → main) :
+- Dernière version publiée : **v5.7.0** (2026-11-17, PR #10, tag sur main ; production
+  à mettre à jour par l'utilisateur) :
   liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
   réponses dans le client web (ENV-02, interne).
 - v5.6.1 (2026-11-17, correctif, PR #9, tag sur main) :
@@ -29,7 +30,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : rien de plus que la 5.7.0.
+- develop contient depuis : marquage des fiches imprimées après l'export de masse
+  (IMPR-01, IMPR-02), historique d'un équipement avec les archivées et dates de
+  signalement complétées (IMPR-03 à 05). Migration 0014 à jouer en production (au
+  démarrage de l'API, à la mise à jour) ; base de dev déjà en 0014.
 
 ## Feuille de route fondatrice
 
@@ -42,6 +46,9 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
 | fait | Liste des interventions plus lisible (sélecteur de groupe, équipement en valeur), en-tête du panneau, correctif de l'en-tête vidé après un changement de statut ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [LIST-01](taches/LIST-01-web-liste-interventions-lisible.md) |
+| fait | Lien de la fiche d'intervention vers la fiche équipement (code et nom de l'en-tête cliquables) | feat/lien-fiche-equipement | [LIEN-01](taches/LIEN-01-web-lien-fiche-equipement.md) |
+| fait | Historique d'un équipement : archivées affichées (`include_printed`), statut et date corrigés, « Voir les interventions » sans période ; 56 dates de signalement vides complétées (migration 0014, audit DATA_BACKFILL, jouée en dev), date du jour par défaut à la création ; bloc « Archivées » d'IMPR-02 retiré ; fusionné le 2026-11-17, reviewer APPROUVÉ | — | [IMPR-03](taches/IMPR-03-historique-equipement-archivees.md), [IMPR-04](taches/IMPR-04-migration-dates-signalement.md), [IMPR-05](taches/IMPR-05-date-signalement-par-defaut.md) |
+| fait | Fiches imprimées après l'export de masse : marquage proposé après l'export (nouvelle route POST, accord du 2026-11-17, une ligne d'audit par fiche), « À archiver » sans les fiches imprimées ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [IMPR-01](taches/IMPR-01-backend-marquer-fiches-imprimees.md), [IMPR-02](taches/IMPR-02-web-marquage-et-groupe-archive.md) |
 | fait | Forme unique des réponses côté client web (intercepteur `{ data }`, même règle que le mobile) : ENV-01 (4 lectures cassées, publiée en 5.6.1) puis ENV-02 (intercepteur unique, lectures directes) ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | ADR 0022, [ENV-01](taches/ENV-01-web-lectures-cassees.md), [ENV-02](taches/ENV-02-web-intercepteur-unique.md) |
 | fait | Page « Organisation » : indicateurs d'équipe (chantiers coupés par une urgence, part d'urgences, préventif en attente, dispersion), vue par tous, aucun chiffre individuel ; fusionnée le 2026-11-17 après essai à l'écran, reviewer APPROUVÉ ; droit créé par le bootstrap, à rejouer en production à la mise à jour | — | ADR 0021, [ORG-01](taches/ORG-01-backend-indicateurs-organisation.md), [ORG-02](taches/ORG-02-web-page-organisation.md) |
 | fait | Tableau de bord d'un équipement : section « État et évolution » du panneau web (Recharts, ADR 0020), modale des interventions, fiche et sous-équipements compactés ; fusionné le 2026-11-16 après essai à l'écran, reviewer APPROUVÉ | — | ADR 0020, spike 0004, [TDB-01](taches/TDB-01-backend-tableau-de-bord-equipement.md), [TDB-02](taches/TDB-02-web-section-etat-evolution.md), [TDB-03](taches/TDB-03-web-finition-visuelle.md) |

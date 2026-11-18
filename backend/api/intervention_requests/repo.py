@@ -1,6 +1,7 @@
 import json
 import logging
 from contextlib import contextmanager
+from datetime import date
 from typing import Any, Dict, List, Optional
 
 from api.audits.events import record_audit_event
@@ -917,7 +918,7 @@ class InterventionRequestRepository:
             )
         status_pris_en_charge_id = row[0]
 
-        reported_date = intervention_data.get("reported_date") or None
+        reported_date = intervention_data.get("reported_date") or date.today()
 
         # Récupérer plan_id depuis l'occurrence liée (DI système préventive)
         cur.execute(

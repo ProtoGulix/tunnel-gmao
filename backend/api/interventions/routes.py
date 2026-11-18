@@ -84,7 +84,13 @@ def list_interventions(
     include: str | None = Query(None, description="Ex: stats"),
     printed: bool | None = Query(
         False,
-        description="Filtre par statut d'impression/archivage. false=actives (défaut), true=archivées, null=toutes",
+        description="Filtre d'archivage (fiche imprimée). false=actives (défaut), true=archivées. "
+        "Ignoré si include_printed=true",
+    ),
+    include_printed: bool = Query(
+        False,
+        description="true : toutes les interventions, archivées (fiche imprimée) comprises, "
+        "pour un historique",
     ),
     tech_id: str | None = Query(None, description="Filtrer par UUID technicien pilote"),
     include_descendants: bool = Query(
@@ -104,6 +110,8 @@ def list_interventions(
     """Liste interventions avec filtres/sort et stats optionnelles (sans actions)"""
     intervention_repo = InterventionRepository()
 
+    # printed ne peut pas valoir « null » dans une query string : include_printed lève le filtre
+    printed_filter = None if include_printed else printed
     statuses = [s.strip() for s in status.split(',')] if status else None
     priorities = [p.strip() for p in priority.split(',')] if priority else None
     types = [t.strip() for t in type_inter.split(',') if t.strip()] if type_inter else None
@@ -121,7 +129,7 @@ def list_interventions(
         sort=sort,
         include_stats=include_stats,
         include_tasks=include_tasks,
-        printed=printed,
+        printed=printed_filter,
         tech_id=tech_id,
         include_descendants=include_descendants,
         types=types,
@@ -133,7 +141,7 @@ def list_interventions(
         equipement_id=equipement_id,
         statuses=statuses,
         priorities=priorities,
-        printed=printed,
+        printed=printed_filter,
         tech_id=tech_id,
         include_descendants=include_descendants,
         types=types,
@@ -190,6 +198,7 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
+    InterventionValidator.validate_reported_date_not_null(data.model_fields_set, data.model_dump())
     repo = InterventionRepository()
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))
 

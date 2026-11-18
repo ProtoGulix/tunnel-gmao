@@ -47,6 +47,48 @@ troncature).
 
 ---
 
+## `POST /exports/interventions/closed/mark-printed`
+
+Marque comme imprimées (`printed_fiche` à vrai) les fiches d'un export de masse. L'export
+reste sans effet de bord : ce marquage est un acte distinct, sur la même sélection
+(même requête, mêmes validations, même plafond de 100 fiches).
+
+**Auth** : JWT Bearer. Droit réservé à ADMIN et RESP (TECH, ACHETEUR et clé MCP : 403).
+**Limite de débit** : 10 requêtes par minute.
+
+### Corps JSON
+
+| Champ | Obligatoire | Description |
+|---|---|---|
+| `date_from` | oui | Début de période `AAAA-MM-JJ`, inclus |
+| `date_to` | oui | Fin de période `AAAA-MM-JJ`, incluse |
+| `equipement_id` | non | UUID de l'équipement |
+
+### Réponse `200`
+
+```json
+{ "data": { "marked": 3, "total": 5 } }
+```
+
+`total` : fiches sélectionnées ; `marked` : celles qui n'étaient pas encore imprimées.
+Idempotent (un second appel renvoie `marked: 0`). Ne modifie ni le statut ni le journal
+des statuts.
+
+### Audit
+
+Chaque fiche réellement marquée (passée de faux à vrai) écrit une ligne `audit_log`
+`printed_fiche_changed` sur l'entité `intervention`, comme le `PUT /interventions/{id}`
+unitaire : motif routinier de l'entité, sans saisie de motif par l'utilisateur, auteur pris
+du jeton (`changed_by`). L'écriture se fait dans la même transaction : si elle échoue,
+aucune fiche n'est marquée. Rien n'est tracé pour une fiche déjà imprimée.
+
+### Erreurs
+
+Mêmes codes que l'export : 400 (date ou UUID invalide, période inversée, plus de 100
+fiches), 401, 403, 404 (aucune intervention fermée sur la période), 429.
+
+---
+
 ## `GET /exports/interventions/{id}/pdf`
 
 Génère un rapport PDF complet pour une intervention.

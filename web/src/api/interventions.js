@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { mapInterventionResponse, mapInterventionDetailResponse } from './interventionMappers';
 
 // Type (csv) et bornes de date de déclaration (AAAA-MM-JJ, incluses)
@@ -21,6 +22,8 @@ function buildListParams(filters) {
   if (filters.priority) params.priority = filters.priority;
   if (filters.sort) params.sort = filters.sort;
   if (filters.include) params.include = filters.include;
+  // Historique : l'API cache par défaut les interventions archivées (fiche imprimée)
+  if (filters.includePrinted) params.include_printed = true;
   if (filters.search) params.search = filters.search;
   return { ...params, ...buildTypeAndDateParams(filters) };
 }
@@ -149,6 +152,21 @@ async function readBlobErrorMessage(error) {
   return error?.response?.status === 429
     ? 'Trop de demandes : réessayez dans une minute'
     : "L'export a échoué";
+}
+
+/**
+ * Marque comme imprimées les fiches fermées de la période (mêmes valeurs que l'export).
+ * Retourne { marked, total } ; en cas d'erreur, lève une Error portant le message du backend.
+ */
+export async function markClosedInterventionsPrinted({ dateFrom, dateTo, equipementId }) {
+  const body = { date_from: dateFrom, date_to: dateTo };
+  if (equipementId) body.equipement_id = equipementId;
+  try {
+    const response = await api.post('/exports/interventions/closed/mark-printed', body);
+    return response.data;
+  } catch (error) {
+    throw new Error(extractApiErrorMessage(error, 'Le marquage a échoué'));
+  }
 }
 
 /**

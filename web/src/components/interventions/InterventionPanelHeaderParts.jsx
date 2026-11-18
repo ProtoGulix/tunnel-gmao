@@ -3,9 +3,10 @@
  */
 
 import PropTypes from 'prop-types';
-import { Badge, Button, DropdownMenu, IconButton, Text } from '@radix-ui/themes';
+import { Link as RouterLink } from 'react-router-dom';
+import { Badge, Button, DropdownMenu, Flex, IconButton, Link, Text } from '@radix-ui/themes';
 import { INTERVENTION_TYPES } from '@/config/interventionTypes';
-import { CalendarCheck, ChevronDown, ClipboardList, Copy, MoreHorizontal, Trash2 } from 'lucide-react';
+import { CalendarCheck, ChevronDown, ClipboardList, Copy, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
 
 function formatShortDate(iso) {
   if (!iso) return '';
@@ -136,7 +137,7 @@ export function WorkSummary({ stats }) {
 WorkSummary.propTypes = { stats: PropTypes.object };
 
 /** Équipement mis en valeur, comme dans la liste : code en badge contrasté, nom lisible. */
-export function MachineHeading({ machine }) {
+function MachineLabel({ machine }) {
   return (
     <>
       {machine?.code && (
@@ -146,6 +147,23 @@ export function MachineHeading({ machine }) {
       )}
       <Text size="3" weight="medium" truncate style={{ minWidth: 0, color: 'var(--gray-12)' }}>{machine?.name ?? ''}</Text>
     </>
+  );
+}
+
+MachineLabel.propTypes = { machine: PropTypes.object };
+
+/** Équipement de l'intervention ; avec un id, lien vers sa fiche (même adresse que depuis une DI). */
+export function MachineHeading({ machine }) {
+  if (!machine?.id) return <MachineLabel machine={machine} />;
+  return (
+    <Link asChild underline="hover" color="gray" highContrast style={{ minWidth: 0 }}>
+      <RouterLink to={`/equipements?id=${encodeURIComponent(machine.id)}`} title="Ouvrir la fiche équipement" aria-label={`Ouvrir la fiche équipement ${machine.code ?? ''} ${machine.name ?? ''}`.trim()}>
+        <Flex align="center" gap="2" style={{ minWidth: 0 }}>
+          <MachineLabel machine={machine} />
+          <ExternalLink size={13} style={{ flexShrink: 0, color: 'var(--gray-10)' }} aria-hidden="true" />
+        </Flex>
+      </RouterLink>
+    </Link>
   );
 }
 

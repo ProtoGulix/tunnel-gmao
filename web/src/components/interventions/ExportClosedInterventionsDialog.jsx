@@ -7,10 +7,12 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Callout, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
-import { AlertTriangle, Download, Printer } from 'lucide-react';
+import { Button, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
+import { CheckCheck, Download, Printer } from 'lucide-react';
 import EquipementSearch from '@/components/planning/EquipementSearch';
+import ExportFeedback from '@/components/interventions/ExportFeedback';
 import { fetchClosedInterventionsExport } from '@/api/interventions';
+import { useMarkExportedPrinted } from '@/hooks/interventions/useMarkExportedPrinted';
 
 function triggerDownload(blob, filename) {
   const url = window.URL.createObjectURL(blob);
@@ -23,17 +25,59 @@ function triggerDownload(blob, filename) {
   window.setTimeout(() => window.URL.revokeObjectURL(url), 10000);
 }
 
-export default function ExportClosedInterventionsDialog({ open, onClose }) {
+// Boutons du pied de fenêtre ; une fois les fiches marquées, fermer devient l'action principale
+function ExportDialogActions({ onClose, onExport, onMark, isBusy, canSubmit, busyFormat, canMark, marking, marked }) {
+  return (
+    <Flex justify="end" gap="2" mt="4" wrap="wrap">
+      <Button variant={marked ? 'solid' : 'soft'} color="gray" onClick={onClose} disabled={isBusy}>
+        Fermer
+      </Button>
+      {canMark && (
+        <Button variant="soft" color="green" loading={marking} onClick={onMark}>
+          <CheckCheck size={16} />
+          Marquer ces fiches comme imprimées
+        </Button>
+      )}
+      <Button variant="soft" disabled={!canSubmit} loading={busyFormat === 'pdf'} onClick={() => onExport('pdf')}>
+        <Printer size={16} />
+        Imprimer (PDF)
+      </Button>
+      <Button variant={marked ? 'soft' : 'solid'} disabled={!canSubmit} loading={busyFormat === 'zip'} onClick={() => onExport('zip')}>
+        <Download size={16} />
+        Télécharger (ZIP)
+      </Button>
+    </Flex>
+  );
+}
+
+ExportDialogActions.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onExport: PropTypes.func.isRequired,
+  onMark: PropTypes.func.isRequired,
+  isBusy: PropTypes.bool,
+  canSubmit: PropTypes.bool,
+  busyFormat: PropTypes.string,
+  canMark: PropTypes.bool,
+  marking: PropTypes.bool,
+  marked: PropTypes.bool,
+};
+
+export default function ExportClosedInterventionsDialog({ open, onClose, onMarked }) {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [equipement, setEquipement] = useState(null);
   const [busyFormat, setBusyFormat] = useState(null);
   const [error, setError] = useState(null);
+  const currentKey = `${dateFrom}|${dateTo}|${equipement?.id ?? ''}`;
+  const { canMark, marking, markResult, markError, markPrinted, resetMark, setExportedKey } =
+    useMarkExportedPrinted({ currentKey, dateFrom, dateTo, equipementId: equipement?.id, onMarked });
 
-  const canSubmit = dateFrom && dateTo && !busyFormat;
+  const isBusy = !!busyFormat || marking;
+  const canSubmit = dateFrom && dateTo && !isBusy;
 
   const handleExport = async (format) => {
     setError(null);
+    resetMark();
     // L'onglet est ouvert dans le geste de clic : après un await, le bloqueur de fenêtres le refuserait
     const tab = format === 'pdf' ? window.open('', '_blank') : null;
     setBusyFormat(format);
@@ -51,6 +95,7 @@ export default function ExportClosedInterventionsDialog({ open, onClose }) {
       } else {
         triggerDownload(blob, `fiches-fermees_${dateFrom}_${dateTo}.zip`);
       }
+      setExportedKey(currentKey);
     } catch (err) {
       tab?.close();
       setError(err.message);
@@ -84,12 +129,7 @@ export default function ExportClosedInterventionsDialog({ open, onClose }) {
             <EquipementSearch value={equipement} onChange={setEquipement} />
           </div>
 
-          {error && (
-            <Callout.Root color="red" size="1" role="alert">
-              <Callout.Icon><AlertTriangle size={16} /></Callout.Icon>
-              <Callout.Text>{error}</Callout.Text>
-            </Callout.Root>
-          )}
+          <ExportFeedback error={error || markError} markResult={markResult} canMark={canMark} />
           {busyFormat && (
             <Text size="2" color="gray" aria-live="polite">
               Génération en cours, cela peut prendre un moment…
@@ -97,19 +137,11 @@ export default function ExportClosedInterventionsDialog({ open, onClose }) {
           )}
         </Flex>
 
-        <Flex justify="end" gap="2" mt="4" wrap="wrap">
-          <Button variant="soft" color="gray" onClick={onClose} disabled={!!busyFormat}>
-            Fermer
-          </Button>
-          <Button variant="soft" disabled={!canSubmit} loading={busyFormat === 'pdf'} onClick={() => handleExport('pdf')}>
-            <Printer size={16} />
-            Imprimer (PDF)
-          </Button>
-          <Button disabled={!canSubmit} loading={busyFormat === 'zip'} onClick={() => handleExport('zip')}>
-            <Download size={16} />
-            Télécharger (ZIP)
-          </Button>
-        </Flex>
+        <ExportDialogActions
+          onClose={onClose} onExport={handleExport} onMark={markPrinted}
+          isBusy={isBusy} canSubmit={!!canSubmit} busyFormat={busyFormat}
+          canMark={canMark} marking={marking} marked={!!markResult}
+        />
       </Dialog.Content>
     </Dialog.Root>
   );
@@ -118,4 +150,5 @@ export default function ExportClosedInterventionsDialog({ open, onClose }) {
 ExportClosedInterventionsDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  onMarked: PropTypes.func,
 };

@@ -78,9 +78,10 @@ export default function EquipementSearch({ value, onChange, disabled, placeholde
 
   if (selected) {
     return (
-      <Flex align="center" gap="2" style={{ padding: '6px 10px', background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}>
+      // wrap : dans une fenêtre étroite, les badges passent à la ligne au lieu de déborder
+      <Flex align="center" gap="2" wrap="wrap" style={{ padding: '6px 10px', background: 'var(--blue-3)', borderRadius: 'var(--radius-2)', border: '1px solid var(--blue-6)' }}>
         <Badge color="blue" variant="soft" size="1">{selected.code}</Badge>
-        <Text size="2" weight="medium" style={{ flex: 1 }}>{selected.name}</Text>
+        <Text size="2" weight="medium" style={{ flex: 1, minWidth: 120 }}>{selected.name}</Text>
         <NewRequestsCount health={selected.health} />
         <InterventionCount health={selected.health} />
         <HealthBadge level={selected.health?.level} />

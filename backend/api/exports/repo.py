@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
+from api.audits.events import record_column_changes
 from api.constants import INTERVENTION_TYPES_MAP
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
@@ -79,6 +80,51 @@ class ExportRepository:
             return [{"id": str(r[0]), "code": r[1], "closed_at": r[2]} for r in cur.fetchall()]
         except Exception as e:
             raise_db_error(e, "liste des interventions fermées")
+        finally:
+            release_connection(conn)
+
+    def mark_interventions_printed(self, intervention_ids: List[str]) -> int:
+        """
+        Passe printed_fiche à vrai pour les interventions données, en une requête.
+
+        Ne touche qu'aux fiches pas encore imprimées (idempotent) et renvoie leur nombre.
+        Aucune colonne de statut modifiée : ni trigger de clôture ni journal des statuts.
+        Chaque fiche réellement marquée dépose un événement d'audit `printed_fiche_changed`
+        (entité intervention, comme le PUT unitaire) : le middleware l'écrit dans la même
+        transaction que la requête, donc sans trace rien n'est marqué.
+        """
+        if not intervention_ids:
+            return 0
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            # Verrou sur les lignes à marquer : l'ancienne valeur lue est celle qu'on remplace.
+            cur.execute(
+                """
+                UPDATE intervention i SET printed_fiche = TRUE
+                FROM (
+                    SELECT id, printed_fiche FROM intervention
+                    WHERE id = ANY(%s::uuid[]) AND printed_fiche IS NOT TRUE
+                    FOR UPDATE
+                ) old
+                WHERE i.id = old.id
+                RETURNING i.id, old.printed_fiche
+                """,
+                (intervention_ids,),
+            )
+            marked_rows = cur.fetchall()
+            for intervention_id, old_value in marked_rows:
+                record_column_changes(
+                    "intervention",
+                    intervention_id,
+                    {"printed_fiche": old_value},
+                    {"printed_fiche": True},
+                )
+            conn.commit()
+            return len(marked_rows)
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "marquage des fiches imprimées")
         finally:
             release_connection(conn)
 

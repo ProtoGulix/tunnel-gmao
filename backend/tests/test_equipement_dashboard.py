@@ -226,3 +226,6 @@ def test_route_interventions_sans_nouveaux_parametres_inchangee(monkeypatch):
     assert (vus["types"], vus["reported_from"], vus["reported_to"]) == (None, None, None)
     c.get("/interventions", params={"type_inter": "CUR, PRE", "reported_from": "2026-01-01"})
     assert vus["types"] == ["CUR", "PRE"] and vus["reported_from"] == date(2026, 1, 1)
+    # Historique d'un équipement : archivées comprises, prioritaire sur printed
+    c.get("/interventions", params={"include_printed": "true", "printed": "false"})
+    assert vus["printed"] is None

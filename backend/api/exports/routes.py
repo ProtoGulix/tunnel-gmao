@@ -11,13 +11,16 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from weasyprint import HTML
 
+from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
 from api.errors.exceptions import NotFoundError, RenderError, ValidationError
 from api.exports.pdf_generator import PDFGenerator
 from api.exports.planning_repo import PlanningRepository
 from api.exports.qr_generator import QRGenerator
 from api.exports.repo import ExportRepository
+from api.exports.schemas import MarkPrintedRequest
 from api.limiter import limiter
+from api.utils.response import single
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,33 @@ def _merge_pdf(htmls: List[str]) -> bytes:
         raise RenderError("Erreur génération PDF")
 
 
+def _select_closed(date_from: str, date_to: str, equipement_id: Optional[str]):
+    """
+    Valide la demande et renvoie (début, fin, interventions fermées sélectionnées).
+
+    Sélection commune à l'export et au marquage : une seule requête (list_closed_interventions),
+    donc jamais deux sélections divergentes.
+    """
+    start, end = _parse_period(date_from, date_to)
+    if equipement_id:
+        try:
+            UUID(equipement_id)
+        except ValueError:
+            raise ValidationError("Format UUID invalide pour equipement_id")
+
+    rows = ExportRepository().list_closed_interventions(
+        start, end, equipement_id, MAX_BULK_SHEETS + 1
+    )
+    if len(rows) > MAX_BULK_SHEETS:
+        raise ValidationError(
+            f"Plus de {MAX_BULK_SHEETS} fiches sur cette période : réduisez la période "
+            "ou filtrez par équipement"
+        )
+    if not rows:
+        raise NotFoundError("Aucune intervention fermée sur cette période")
+    return start, end, rows
+
+
 # Déclarée avant /interventions/{intervention_id}/pdf : aucun conflit de chemin.
 @router.get("/interventions/closed")
 @limiter.limit("2/minute")
@@ -80,22 +110,8 @@ def export_closed_interventions(
     La date retenue est celle du dernier passage à 'ferme'. Plafond de MAX_BULK_SHEETS fiches.
     Réservé à ADMIN et RESP (matrice des droits, db/default_permissions.py).
     """
-    start, end = _parse_period(date_from, date_to)
-    if equipement_id:
-        try:
-            UUID(equipement_id)
-        except ValueError:
-            raise ValidationError("Format UUID invalide pour equipement_id")
-
+    start, end, rows = _select_closed(date_from, date_to, equipement_id)
     repo = ExportRepository()
-    rows = repo.list_closed_interventions(start, end, equipement_id, MAX_BULK_SHEETS + 1)
-    if len(rows) > MAX_BULK_SHEETS:
-        raise ValidationError(
-            f"Plus de {MAX_BULK_SHEETS} fiches sur cette période : réduisez la période "
-            "ou filtrez par équipement"
-        )
-    if not rows:
-        raise NotFoundError("Aucune intervention fermée sur cette période")
 
     # Même chemin que l'export unitaire : mêmes données, même gabarit
     generator = PDFGenerator()
@@ -123,6 +139,27 @@ def export_closed_interventions(
             "Cache-Control": "no-cache, no-store, must-revalidate",
         },
     )
+
+
+# events_only : la route touche plusieurs interventions ; le repo dépose un événement par fiche
+# réellement marquée, avec le motif routinier de l'entité intervention (comme le PUT unitaire).
+@router.post(
+    "/interventions/closed/mark-printed",
+    dependencies=[audit("intervention", events_only=True)],
+)
+@limiter.limit("10/minute")
+def mark_closed_interventions_printed(request: Request, body: MarkPrintedRequest):
+    """
+    Marque comme imprimées les fiches d'un export de masse (même sélection que l'export).
+
+    L'export lui-même reste sans effet de bord ; ce marquage est un acte distinct.
+    Idempotent. Ne touche ni au statut ni au journal des statuts.
+    Trace une ligne d'audit par fiche réellement marquée (auteur : jeton).
+    Réservé à ADMIN et RESP (matrice des droits, db/default_permissions.py).
+    """
+    _, _, rows = _select_closed(body.date_from, body.date_to, body.equipement_id)
+    marked = ExportRepository().mark_interventions_printed([r["id"] for r in rows])
+    return single({"marked": marked, "total": len(rows)})
 
 
 @router.get("/interventions/{intervention_id}/pdf")
