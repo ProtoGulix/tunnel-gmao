@@ -76,14 +76,15 @@ class NotificationRepository:
     def mark_read(self, notification_id: str, user_id: str) -> Dict[str, Any]:
         """Marque une notification comme lue.
 
-        Lève NotFoundError si la notification n'existe pas, ForbiddenError si
-        elle n'appartient pas à l'utilisateur courant.
+        Lève NotFoundError si la notification n'existe pas ou est masquée (elle n'est plus
+        visible de son destinataire), ForbiddenError si elle n'appartient pas à l'utilisateur
+        courant.
         """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT user_id FROM notification WHERE id = %s",
+                "SELECT user_id FROM notification WHERE id = %s AND dismissed_at IS NULL",
                 (notification_id,),
             )
             row = cur.fetchone()

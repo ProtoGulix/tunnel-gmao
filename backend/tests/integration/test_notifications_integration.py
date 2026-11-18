@@ -115,3 +115,11 @@ def test_palier_masque_par_tous_n_est_pas_reemis(instance, client, make_user):
     assert crees >= 1
     instance.sql("UPDATE notification SET dismissed_at = now() WHERE entity_id = %s", (entite,))
     assert repo.notify_active_users_once(*args) == 0
+
+
+def test_marquer_lue_une_notification_masquee_donne_404(instance, client, make_user):
+    user = make_user("TECH")
+    n = _notif(instance, user.id)
+    assert client.delete(f"/notifications/{n}", headers=user.headers).status_code == 200
+    assert client.patch(f"/notifications/{n}/read", headers=user.headers).status_code == 404
+    assert instance.sql("SELECT read_at FROM notification WHERE id = %s", (n,))[0][0] is None

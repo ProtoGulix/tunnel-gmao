@@ -9,6 +9,8 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Mobile : cloche des notifications dans l'en-tête de chaque écran, à droite de la loupe
+  (compteur relevé une seule fois pour l'application) et bouton « Charger plus » au-delà de 50 notifications.
 - Notifications : suppression par masquage (une, les lues, toutes) côté API, sans que la
   relance masquée revienne au passage suivant de la tâche quotidienne (migration 0016).
 - Mobile : bouton « Préventif » dans la barre du bas, à la place du QR Code (toujours sur
@@ -39,6 +41,7 @@ mobile/CHANGELOG.md.
   la couper, ajouter `SCHEDULED_JOBS_ENABLED=false` dans deploy/.env avant la mise à jour.
 
 ### Corrigé
+- Notifications : marquer comme lue une notification supprimée est refusé (introuvable).
 - Notifications : la liste pouvait afficher une notification en double et en omettre une
   autre quand plusieurs avaient été créées au même instant (passage de la tâche
   quotidienne) ; le tri est désormais stable d'une page à l'autre.

@@ -1,4 +1,5 @@
 import { ChevronLeft, Search } from 'lucide-react'
+import { NotificationBell } from '../notifications/NotificationBell'
 
 /**
  * PageHeader — en-tête de page standardisé
@@ -9,8 +10,9 @@ import { ChevronLeft, Search } from 'lucide-react'
  * searchActive : état actif du bouton loupe (fond coloré)
  * action       : slot libre à droite (bouton, badge…)
  * tabs         : slot sous le titre (rangée d'onglets)
+ * showBell     : cloche des notifications à droite (false sur l'écran Notifications)
  */
-export function PageHeader({ title, onBack, onSearch, searchActive = false, action, tabs }) {
+export function PageHeader({ title, onBack, onSearch, searchActive = false, action, tabs, showBell = true }) {
   return (
     <header className={`bg-white border-b border-[#E0E0E0] px-4 shrink-0 ${tabs ? 'pt-4 pb-0' : 'pt-4 pb-3'}`}>
       <div className="flex items-center gap-2 mb-3">
@@ -31,6 +33,7 @@ export function PageHeader({ title, onBack, onSearch, searchActive = false, acti
             <Search size={18} />
           </button>
         )}
+        {showBell && <NotificationBell size={20} className="!w-11 !h-11 -my-2 -mr-2 text-[#616161]" />}
       </div>
       {tabs && <div className="flex">{tabs}</div>}
     </header>

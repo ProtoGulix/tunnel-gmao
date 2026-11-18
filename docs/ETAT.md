@@ -58,6 +58,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Export de masse des fiches fermées (EXPM-01, EXPM-02), fusionné le 2026-11-16 après essai à l'écran ; plafond 100 ; bootstrap rejoué sur la base de dev, à rejouer en production à sa mise à jour | — | [EXPM-01](taches/EXPM-01-backend-export-masse-fiches.md), [EXPM-02](taches/EXPM-02-web-bouton-export-masse.md) |
 | fait | Notifications et retards : clic d'une notification qui ouvre l'élément (web), pastille « +N j » des retards (web et mobile), tout le stock en retard notifié au premier passage (amendement de l'ADR 0023), tri stable de la liste, suppression des notifications par masquage (migration 0016, jouée en dev) ; essai à l'écran validé le 2026-11-18 | fix/notifications-et-retards | [PREV-10](taches/PREV-10-clic-notification-et-retards-visibles.md), [PREV-11](taches/PREV-11-suppression-des-notifications.md) |
+| fait | Finitions des notifications avant la version : marquer lue une notification masquée refusé (404) ; mobile : cloche dans l'en-tête de chaque écran (relevé unique du compteur), « Charger plus », boutons de l'écran Notifications ; essai à l'écran validé le 2026-11-18 | fix/notifications-finitions | [PREV-12](taches/PREV-12-finitions-notifications.md) |
 | à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
 | fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
@@ -83,7 +84,7 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : PREV-10, PREV-11. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
