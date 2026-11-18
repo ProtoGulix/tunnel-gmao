@@ -24,12 +24,11 @@ export default function InterventionsListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'interventions';
   // Un seul param `id` dans l'URL : sa signification dépend de l'onglet actif (`tab`).
-  const [selectedInterventionId, setSelectedInterventionId] = useState(
-    () => (activeTab === 'interventions' ? searchParams.get('id') : null)
-  );
-  const [selectedRequestId, setSelectedRequestId] = useState(
-    () => (activeTab === 'demandes' ? searchParams.get('id') : null)
-  );
+  // La sélection est dérivée de l'URL (pas d'état local) : un lien ou une notification
+  // vers une autre `id` ouvre l'élément même quand la page est déjà affichée.
+  const urlId = searchParams.get('id');
+  const selectedInterventionId = activeTab === 'interventions' ? urlId : null;
+  const selectedRequestId = activeTab === 'demandes' ? urlId : null;
 
   const setIdParam = (id) => {
     setSearchParams((prev) => {
@@ -41,10 +40,6 @@ export default function InterventionsListPage() {
   };
 
   const handleTabChange = (tab) => {
-    // Réinitialise la sélection de l'onglet quitté pour ne pas empiler des ids obsolètes
-    if (tab === 'demandes') setSelectedInterventionId(null);
-    else if (tab === 'interventions') setSelectedRequestId(null);
-
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set('tab', tab);
@@ -54,23 +49,13 @@ export default function InterventionsListPage() {
     }, { replace: true });
   };
 
-  const handleSelectIntervention = (interv) => {
-    setSelectedInterventionId(String(interv.id));
-    setIdParam(interv.id);
-  };
+  const handleSelectIntervention = (interv) => setIdParam(interv.id);
 
   const handleSelectRequest = (req) => {
-    setSelectedRequestId((prev) => {
-      const next = prev === req.id ? null : req.id;
-      setIdParam(next);
-      return next;
-    });
+    setIdParam(String(selectedRequestId) === String(req.id) ? null : req.id);
   };
 
-  const handleDeselectRequest = () => {
-    setSelectedRequestId(null);
-    setIdParam(null);
-  };
+  const handleDeselectRequest = () => setIdParam(null);
 
   return (
     <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
@@ -108,7 +93,7 @@ export default function InterventionsListPage() {
             selectedId={selectedInterventionId}
             refreshToken={listVersion}
             onSelect={handleSelectIntervention}
-            onCreate={() => setSelectedInterventionId(null)}
+            onCreate={() => setIdParam(null)}
           />
         )}
         {activeTab === 'demandes' && (

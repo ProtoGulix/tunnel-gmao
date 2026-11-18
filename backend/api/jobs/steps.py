@@ -7,7 +7,7 @@ import logging
 from datetime import date, timedelta
 from typing import Any, Dict, Optional
 
-from api.jobs.milestones import milestone_to_notify
+from api.jobs.milestones import latest_milestone
 from api.jobs.repo import JobsRepository
 from api.notifications.repo import NotificationRepository
 from api.preventive_occurrences.repo import PreventiveOccurrenceRepository
@@ -31,8 +31,8 @@ def generate_preventive() -> Dict[str, Any]:
 def notify_preventive_overdue(today: Optional[date] = None) -> Dict[str, int]:
     """Étape 2 : notifie les occurrences actives en retard, à chaque palier hebdomadaire.
 
-    Paliers : échéance + 1, + 8, + 15 jours... Un palier est émis s'il tombe dans les
-    REMINDER_CATCHUP_DAYS derniers jours et n'a pas déjà été émis. Une occurrence close
+    Paliers : échéance + 1, + 8, + 15 jours... Le dernier palier atteint est émis s'il ne
+    l'a pas déjà été (tout le stock sort au premier passage). Une occurrence close
     (terminée, ignorée, annulée) n'est plus lue : plus rien n'est émis.
     """
     today = today or date.today()
@@ -40,11 +40,8 @@ def notify_preventive_overdue(today: Optional[date] = None) -> Dict[str, int]:
     notified = 0
     for occ in JobsRepository().list_overdue_occurrences(today):
         due = occ["scheduled_date"]
-        milestone = milestone_to_notify(
-            due + timedelta(days=1),
-            settings.REMINDER_INTERVAL_DAYS,
-            today,
-            settings.REMINDER_CATCHUP_DAYS,
+        milestone = latest_milestone(
+            due + timedelta(days=1), settings.REMINDER_INTERVAL_DAYS, today
         )
         if milestone is None:
             continue
@@ -77,7 +74,7 @@ def notify_idle_interventions(today: Optional[date] = None) -> Dict[str, int]:
     """Étape 3 : alarme « sans action » sur les interventions non fermées (PREV-05).
 
     Paliers : dernière activité + 7, + 14, + 21 jours... (REMINDER_INTERVAL_DAYS, même pas que
-    les retards du préventif), émis s'ils tombent dans les REMINDER_CATCHUP_DAYS derniers jours.
+    les retards du préventif) ; le dernier palier atteint est émis s'il ne l'a pas déjà été.
     Une nouvelle action déplace la dernière activité donc remet le compte à zéro ; une
     intervention fermée n'est plus lue.
     """
@@ -87,9 +84,7 @@ def notify_idle_interventions(today: Optional[date] = None) -> Dict[str, int]:
     for inter in JobsRepository().list_open_interventions_activity():
         last = inter["last_activity"]
         step = settings.REMINDER_INTERVAL_DAYS
-        milestone = milestone_to_notify(
-            last + timedelta(days=step), step, today, settings.REMINDER_CATCHUP_DAYS
-        )
+        milestone = latest_milestone(last + timedelta(days=step), step, today)
         if milestone is None:
             continue
         days_idle = (today - last).days

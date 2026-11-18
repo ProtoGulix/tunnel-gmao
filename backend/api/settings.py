@@ -47,10 +47,8 @@ class Settings(BaseSettings):
     SCHEDULED_JOBS_ENABLED: bool = os.getenv("SCHEDULED_JOBS_ENABLED", "false").lower() == "true"
     # Heure (0 à 23, heure du serveur) du passage quotidien, en plus du passage au démarrage.
     SCHEDULED_JOBS_HOUR: int = int(os.getenv("SCHEDULED_JOBS_HOUR", "5"))
-    # Relance des retards : un palier toutes les N semaines de jours (échéance + 1, + 8, + 15...)
-    # et rattrapage des paliers des N derniers jours manqués (ADR 0023).
+    # Relance des retards : un palier tous les N jours (échéance + 1, + 8, + 15...) (ADR 0023).
     REMINDER_INTERVAL_DAYS: int = int(os.getenv("REMINDER_INTERVAL_DAYS", "7"))
-    REMINDER_CATCHUP_DAYS: int = int(os.getenv("REMINDER_CATCHUP_DAYS", "1"))
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
 
@@ -122,10 +120,10 @@ if not 0 <= settings.SCHEDULED_JOBS_HOUR <= 23:
     )
     sys.exit(1)
 
-if settings.REMINDER_INTERVAL_DAYS < 1 or settings.REMINDER_CATCHUP_DAYS < 1:
+if settings.REMINDER_INTERVAL_DAYS < 1:
     logger.critical(
-        "ERREUR DE CONFIGURATION CRITIQUE : REMINDER_INTERVAL_DAYS et REMINDER_CATCHUP_DAYS "
-        "doivent valoir au moins 1. L'API refuse de démarrer."
+        "ERREUR DE CONFIGURATION CRITIQUE : REMINDER_INTERVAL_DAYS doit valoir au moins 1. "
+        "L'API refuse de démarrer."
     )
     sys.exit(1)
 

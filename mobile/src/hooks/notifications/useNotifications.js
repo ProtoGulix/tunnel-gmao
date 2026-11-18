@@ -3,6 +3,8 @@ import {
   fetchNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  dismissNotification,
+  dismissNotifications,
 } from '../../api/notifications'
 
 /** Liste des notifications de l'utilisateur, marquage lu avec mise à jour optimiste. */
@@ -34,7 +36,18 @@ export function useNotifications() {
     return markAllNotificationsRead().catch(() => load())
   }, [load])
 
+  // Retrait local puis rechargement de la liste : l'état réel du serveur fait foi.
+  const dismiss = useCallback((id) => {
+    setItems((prev) => prev.filter((n) => n.id !== id))
+    return dismissNotification(id).catch(() => {}).finally(load)
+  }, [load])
+
+  const dismissAll = useCallback((onlyRead) => {
+    setItems((prev) => (onlyRead ? prev.filter((n) => !n.read_at) : []))
+    return dismissNotifications(onlyRead).catch(() => {}).finally(load)
+  }, [load])
+
   const unread = items.filter((n) => !n.read_at).length
 
-  return { items, unread, loading, error, reload: load, markRead, markAllRead }
+  return { items, unread, loading, error, reload: load, markRead, markAllRead, dismiss, dismissAll }
 }

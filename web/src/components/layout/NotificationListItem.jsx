@@ -6,7 +6,7 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text, Box } from '@radix-ui/themes';
-import { CalendarClock, ClipboardList, Wrench, Info } from 'lucide-react';
+import { CalendarClock, ClipboardList, Wrench, Info, X } from 'lucide-react';
 import { getTimeAgo } from '@/lib/utils/actionUtils';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
@@ -82,7 +82,7 @@ export function resolveEntityPath(notification) {
   return null;
 }
 
-export default function NotificationListItem({ notification, onOpen }) {
+export default function NotificationListItem({ notification, onOpen, onDismiss }) {
   const Icon = TYPE_ICONS[notification.type] ?? Info;
   const Content = TYPE_CONTENT[notification.type];
   const isUnread = !notification.read_at;
@@ -125,6 +125,26 @@ export default function NotificationListItem({ notification, onOpen }) {
           )}
         <Text size="1" color="gray">{getTimeAgo(notification.created_at)}</Text>
       </Flex>
+      <button
+        type="button"
+        aria-label="Supprimer la notification"
+        title="Supprimer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss(notification.id);
+        }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--gray-10)',
+          padding: 4,
+          display: 'flex',
+          flexShrink: 0,
+        }}
+      >
+        <X size={14} />
+      </button>
     </Flex>
   );
 }
@@ -141,4 +161,5 @@ NotificationListItem.propTypes = {
     created_at: PropTypes.string,
   }).isRequired,
   onOpen: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired,
 };

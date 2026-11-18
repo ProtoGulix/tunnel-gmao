@@ -9,6 +9,8 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Notifications : suppression par masquage (une, les lues, toutes) côté API, sans que la
+  relance masquée revienne au passage suivant de la tâche quotidienne (migration 0016).
 - Mobile : bouton « Préventif » dans la barre du bas, à la place du QR Code (toujours sur
   l'accueil). Écran « Préventif à faire » (plans en retard puis de la semaine, avec lien vers
   l'intervention ou la demande) et cloche de notifications sur l'accueil (compteur des non
@@ -25,6 +27,11 @@ mobile/CHANGELOG.md.
   avec leur icône et ouvrent la demande, l'intervention ou l'échéancier.
 
 ### Modifié
+- Notifications : au premier passage de la tâche quotidienne, tous les préventifs en
+  retard et toutes les interventions sans action depuis 7 jours sont notifiés d'un coup,
+  puis chacun revient une fois par semaine tant qu'il n'est pas traité.
+- Préventif : les jours de retard sont affichés en pastille rouge « +N j » dans l'échéancier,
+  l'onglet Préventif d'un équipement et la liste mobile « Préventif à faire ».
 - Installation : la tâche quotidienne (génération du préventif, retards et interventions
   sans action notifiés) est activée par défaut, à 5 h (heure du conteneur, UTC) ; réglages
   `SCHEDULED_JOBS_ENABLED` et `SCHEDULED_JOBS_HOUR` dans deploy/.env. Une installation
@@ -32,6 +39,11 @@ mobile/CHANGELOG.md.
   la couper, ajouter `SCHEDULED_JOBS_ENABLED=false` dans deploy/.env avant la mise à jour.
 
 ### Corrigé
+- Notifications : la liste pouvait afficher une notification en double et en omettre une
+  autre quand plusieurs avaient été créées au même instant (passage de la tâche
+  quotidienne) ; le tri est désormais stable d'une page à l'autre.
+- Web : cliquer une notification (ou un lien) vers une intervention ou une demande alors
+  que la page Interventions est déjà ouverte n'ouvrait rien ; la sélection suit désormais l'URL.
 - Préventif : quand la demande d'un préventif est rejetée, il ne reste plus en retard pour
   toujours : l'occurrence est ignorée, le préventif reste dû à son échéance et une nouvelle
   demande est générée au passage suivant.
@@ -62,14 +74,14 @@ mobile/CHANGELOG.md.
   (`is_system`, auteur vide, motif SYSTEM_SCHEDULE) ; une étape en échec est journalisée sans
   arrêter les autres.
 - Retards du préventif notifiés à tous les utilisateurs actifs (`preventif_echeance`) à
-  échéance + 1, + 8, + 15 jours... tant que l'occurrence n'est pas close ; un palier tombé
-  dans les 7 derniers jours et non encore émis l'est au passage suivant. Réglages
-  `REMINDER_INTERVAL_DAYS` et `REMINDER_CATCHUP_DAYS` (7 et 1). La fonction de paliers est
+  échéance + 1, + 8, + 15 jours... tant que l'occurrence n'est pas close ; le dernier palier
+  atteint et non encore émis l'est au passage suivant, si bien que tout le stock en retard
+  sort au premier passage. Réglage `REMINDER_INTERVAL_DAYS` (7). La fonction de paliers est
   partagée avec l'alarme « sans action ».
 - Alarme « sans action » (`intervention_a_cloturer`) : toute intervention non fermée (attentes
   comprises) sans action depuis 7 jours notifie les utilisateurs actifs, puis chaque semaine
-  (dernière action + 7, + 14...). Même réglage et même rattrapage que les retards du
-  préventif : le stock existant ressort à son prochain palier, pas d'un coup. Une nouvelle
+  (dernière action + 7, + 14...). Même règle que les retards du préventif : le stock
+  existant sort au premier passage, puis chaque semaine. Une nouvelle
   action remet le compte à zéro.
 - Audit : chaque tâche de gamme créée par la génération (bouton, tâche planifiée, acceptation
   automatique) écrit sa ligne `created`. L'écriture d'une ligne d'audit est extraite du

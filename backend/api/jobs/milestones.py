@@ -4,6 +4,11 @@ Un élément en retard est notifié à des paliers réguliers : premier palier, 
 `step_days` jours. Retard du préventif : échéance + 1, + 8, + 15... Alarme « sans action »
 (PREV-05) : dernière activité + 7, + 14, + 21... Seul le premier palier change, la règle
 est la même ; c'est pourquoi elle vit ici et nulle part ailleurs.
+
+Le dernier palier atteint est toujours notifié s'il ne l'a pas déjà été (clé : type,
+entité, palier, vérifiée par l'appelant) : à l'activation, tout le stock en retard sort une
+fois, puis chaque élément revient à son palier suivant. Un passage manqué est rattrapé au
+suivant. Décision de l'utilisateur du 2026-11-18, amendement de l'ADR 0023.
 """
 
 from __future__ import annotations
@@ -20,19 +25,3 @@ def latest_milestone(first: date, step_days: int, today: date) -> Optional[date]
         return None
     elapsed = (today - first).days
     return first + timedelta(days=elapsed - elapsed % step_days)
-
-
-def milestone_to_notify(
-    first: date, step_days: int, today: date, catchup_days: int
-) -> Optional[date]:
-    """Palier à notifier aujourd'hui : le dernier palier atteint s'il tombe dans les
-    `catchup_days` derniers jours (aujourd'hui compris), sinon None.
-
-    La fenêtre rattrape un passage manqué (serveur arrêté) sans jamais notifier un palier
-    ancien. Que ce palier ait déjà été émis est vérifié par l'appelant (clé : type, entité,
-    palier), pas ici.
-    """
-    milestone = latest_milestone(first, step_days, today)
-    if milestone is None or (today - milestone).days >= catchup_days:
-        return None
-    return milestone

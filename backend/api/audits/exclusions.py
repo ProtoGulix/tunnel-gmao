@@ -106,6 +106,14 @@ EXCLUSIONS: Dict[Tuple[str, str], Exclusion] = {
         EXCLUDED,
         reason="Marque lue une notification personnelle : état d'usage de l'utilisateur, pas une décision",
     ),
+    ("DELETE", "/notifications"): Exclusion(
+        EXCLUDED,
+        reason="Masque des notifications personnelles : état d'usage de l'utilisateur, pas une décision",
+    ),
+    ("DELETE", "/notifications/{notification_id}"): Exclusion(
+        EXCLUDED,
+        reason="Masque une notification personnelle : état d'usage de l'utilisateur, pas une décision",
+    ),
     ("PATCH", "/users/me/changelog-seen"): Exclusion(
         EXCLUDED,
         reason="Mémorise la dernière version des nouveautés vue par l'utilisateur : préférence d'affichage",

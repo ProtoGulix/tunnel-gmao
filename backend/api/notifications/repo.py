@@ -26,8 +26,10 @@ class NotificationRepository:
                 f"""
                 SELECT {_COLUMNS}
                 FROM notification
-                WHERE user_id = %s
-                ORDER BY created_at DESC
+                WHERE user_id = %s AND dismissed_at IS NULL
+                -- id départage les notifications d'une même transaction (même created_at) :
+                -- sans lui, l'ordre change d'une page à l'autre (doublons et manques).
+                ORDER BY created_at DESC, id DESC
                 LIMIT %s OFFSET %s
                 """,
                 (user_id, limit, offset),
@@ -41,12 +43,12 @@ class NotificationRepository:
             release_connection(conn)
 
     def count_for_user(self, user_id: str) -> int:
-        """Compte le nombre total de notifications d'un utilisateur (toutes confondues)"""
+        """Compte les notifications visibles d'un utilisateur (les masquées sont ignorées)"""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT COUNT(*) FROM notification WHERE user_id = %s",
+                "SELECT COUNT(*) FROM notification WHERE user_id = %s AND dismissed_at IS NULL",
                 (user_id,),
             )
             return int(cur.fetchone()[0])
@@ -61,7 +63,8 @@ class NotificationRepository:
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT COUNT(*) FROM notification WHERE user_id = %s AND read_at IS NULL",
+                "SELECT COUNT(*) FROM notification "
+                "WHERE user_id = %s AND read_at IS NULL AND dismissed_at IS NULL",
                 (user_id,),
             )
             return int(cur.fetchone()[0])
@@ -133,6 +136,58 @@ class NotificationRepository:
         except Exception as e:
             conn.rollback()
             raise_db_error(e, "marquage global des notifications comme lues")
+        finally:
+            release_connection(conn)
+
+    def dismiss(self, notification_id: str, user_id: str) -> int:
+        """Masque une notification de l'utilisateur (la ligne reste en base).
+
+        Lève NotFoundError si elle n'existe pas, n'est pas la sienne ou est déjà masquée :
+        le même 404 dans les trois cas, pour ne rien révéler sur les notifications d'autrui.
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE notification SET dismissed_at = now()
+                WHERE id = %s AND user_id = %s AND dismissed_at IS NULL
+                """,
+                (notification_id, user_id),
+            )
+            if cur.rowcount == 0:
+                raise NotFoundError(f"Notification {notification_id} non trouvée")
+            conn.commit()
+            return cur.rowcount
+        except NotFoundError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "masquage de la notification")
+        finally:
+            release_connection(conn)
+
+    def dismiss_all(self, user_id: str, only_read: bool = False) -> int:
+        """Masque les notifications de l'utilisateur (seulement les lues si only_read)."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            # Fragment fixe choisi par un booléen : aucune valeur client dans le SQL.
+            read_filter = "AND read_at IS NOT NULL" if only_read else ""
+            cur.execute(
+                f"""
+                UPDATE notification SET dismissed_at = now()
+                WHERE user_id = %s AND dismissed_at IS NULL {read_filter}
+                """,
+                (user_id,),
+            )
+            dismissed = cur.rowcount
+            conn.commit()
+            return dismissed
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "masquage des notifications")
         finally:
             release_connection(conn)
 

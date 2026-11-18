@@ -14,9 +14,10 @@ function planRoute(row) {
   return null
 }
 
+// Valeur de l'API (days_overdue), aucun calcul côté client
 function overdueText(days) {
-  if (!days) return null
-  return days === 1 ? '1 jour de retard' : `${days} jours de retard`
+  if (!days || days <= 0) return null
+  return `+${days} j`
 }
 
 function PlanRow({ row, accentColor, onOpen }) {
@@ -24,13 +25,19 @@ function PlanRow({ row, accentColor, onOpen }) {
   const late = overdueText(row.days_overdue)
   return (
     <ListRow accentColor={accentColor} chevron={!!route} onClick={() => route && onOpen(route)}>
-      <p className="text-sm font-semibold text-tunnel-text">{row.plan_label}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold text-tunnel-text">{row.plan_label}</p>
+        {late && (
+          <span className="shrink-0 rounded-full bg-tunnel-danger px-3 py-1 text-base font-bold text-white">
+            {late}
+          </span>
+        )}
+      </div>
       <p className="text-xs text-tunnel-secondary">
         <span className="font-mono">{row.machine_code}</span> {row.machine_name}
       </p>
       <p className="text-xs text-tunnel-secondary">
         Échéance {formatDayFr(row.due_date)}
-        {late && <span className="font-semibold text-tunnel-danger"> · {late}</span>}
         {!route && ' · pas encore générée'}
       </p>
     </ListRow>

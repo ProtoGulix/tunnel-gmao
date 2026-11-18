@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { ListRow } from '../ui/ListRow'
 import { formatDateFr } from '../../utils/dateUtils'
 import { colors } from '../../config/colors'
@@ -10,11 +11,13 @@ const TYPE_LABELS = {
 }
 
 /** Une notification : le texte vient de l'API (message), non lues en gras avec liseré. */
-export function NotificationRow({ notification, onOpen }) {
+export function NotificationRow({ notification, onOpen, onDismiss }) {
   const unread = !notification.read_at
   return (
-    <ListRow
+    <div className="flex items-stretch bg-white">
+    <ListRow className="flex-1"
       onClick={() => onOpen(notification)}
+      chevron={false}
       accentColor={unread ? colors.primary : undefined}
       faded={!unread}
     >
@@ -26,5 +29,14 @@ export function NotificationRow({ notification, onOpen }) {
       </p>
       <p className="text-xs text-tunnel-secondary">{formatDateFr(notification.created_at)}</p>
     </ListRow>
+    <button
+      type="button"
+      aria-label="Supprimer la notification"
+      onClick={() => onDismiss(notification.id)}
+      className="shrink-0 w-11 min-h-[44px] flex items-center justify-center text-tunnel-secondary active:bg-tunnel-bg"
+    >
+      <X size={18} />
+    </button>
+    </div>
   )
 }

@@ -23,4 +23,7 @@ test('échéancier : un libellé et une couleur par état de la route, regroupem
   assert.equal(c.overdueLabel(3), '3 jours de retard');
   assert.equal(c.overdueLabel(0), null);
   assert.equal(c.overdueLabel(null), null);
+  assert.equal(c.overdueBadgeLabel(12), '+12 j');
+  assert.equal(c.overdueBadgeLabel(0), null);
+  assert.equal(c.overdueBadgeLabel(null), null);
 });

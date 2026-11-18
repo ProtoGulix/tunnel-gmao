@@ -11,10 +11,11 @@ import { CalendarClock, ExternalLink } from 'lucide-react';
 import { usePreventiveSchedule } from '@/hooks/preventive/usePreventiveSchedule';
 import { PERM } from '@/auth/permissionCodes';
 import { usePermissions } from '@/auth/usePermissions';
-import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS, groupSchedule, overdueLabel } from '@/config/preventiveConfig';
+import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS, groupSchedule } from '@/config/preventiveConfig';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 import MachineCodeLink from '@/components/preventive/MachineCodeLink';
 import DataTable from '@/components/ui/DataTable';
+import OverdueBadge from '@/components/preventive/OverdueBadge';
 import ErrorState from '@/components/ui/ErrorState';
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
@@ -23,11 +24,10 @@ function DueCell({ row }) {
   if (row.state === 'not_computed') {
     return <Text size="1" color="gray" title="Le compteur d'heures n'est pas fiable : pas d'échéance calculée">non calculé</Text>;
   }
-  const late = overdueLabel(row.days_overdue);
   return (
     <Flex direction="column" gap="0">
       <Text size="2" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtDate(row.due_date)}</Text>
-      {row.state === 'overdue' && late && <Text size="1" color="red">{late}</Text>}
+      {row.state === 'overdue' && <OverdueBadge days={row.days_overdue} />}
     </Flex>
   );
 }

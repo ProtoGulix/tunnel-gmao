@@ -16,7 +16,7 @@ from api.audits.events import (
     unbind_audit_unit,
 )
 from api.jobs import executor
-from api.jobs.milestones import latest_milestone, milestone_to_notify
+from api.jobs.milestones import latest_milestone
 from api.jobs.scheduler import seconds_until_next_run
 
 ECHEANCE = date(2026, 11, 1)
@@ -28,7 +28,6 @@ PREMIER_PALIER = date(2026, 11, 2)  # échéance + 1
 
 def test_pas_de_palier_avant_le_premier():
     assert latest_milestone(PREMIER_PALIER, 7, ECHEANCE) is None
-    assert milestone_to_notify(PREMIER_PALIER, 7, ECHEANCE, 7) is None
 
 
 @pytest.mark.parametrize(
@@ -43,17 +42,6 @@ def test_pas_de_palier_avant_le_premier():
 )
 def test_dernier_palier_atteint(today, attendu):
     assert latest_milestone(PREMIER_PALIER, 7, today) == attendu
-
-
-def test_palier_a_notifier_dans_la_fenetre():
-    # J+30, palier J+29 : tombé hier, donc dans les 7 derniers jours.
-    assert milestone_to_notify(PREMIER_PALIER, 7, date(2026, 12, 1), 7) == date(2026, 11, 30)
-
-
-def test_palier_trop_ancien_n_est_pas_notifie():
-    # Fenêtre d'un jour : seul un palier d'aujourd'hui est émis (pas de rattrapage).
-    assert milestone_to_notify(PREMIER_PALIER, 7, date(2026, 12, 1), 1) is None
-    assert milestone_to_notify(PREMIER_PALIER, 7, date(2026, 11, 30), 1) == date(2026, 11, 30)
 
 
 def test_pas_de_pas_nul():
@@ -110,10 +98,9 @@ def test_heure_hors_plage_refuse_de_demarrer(heure):
 
 def test_relance_reglable_et_valeurs_par_defaut():
     done = _lire_reglages(
-        code="print(s.REMINDER_INTERVAL_DAYS, s.REMINDER_CATCHUP_DAYS)",
+        code="print(s.REMINDER_INTERVAL_DAYS)",
     )
-    # Rattrapage d'un jour par défaut : le stock ressort à son prochain palier, étalé.
-    assert done.stdout.split() == ["7", "1"]
+    assert done.stdout.split() == ["7"]
     assert _lire_reglages({"REMINDER_INTERVAL_DAYS": "0"}).returncode == 1
 
 

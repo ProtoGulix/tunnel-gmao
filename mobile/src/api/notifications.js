@@ -20,3 +20,12 @@ export function markNotificationRead(id) {
 export function markAllNotificationsRead() {
   return client.patch("/notifications/read-all");
 }
+
+export function dismissNotification(id) {
+  return client.delete(`/notifications/${id}`);
+}
+
+// onlyRead : true masque les lues, false masque toutes les notifications.
+export function dismissNotifications(onlyRead) {
+  return client.delete(`/notifications?only_read=${onlyRead}`);
+}

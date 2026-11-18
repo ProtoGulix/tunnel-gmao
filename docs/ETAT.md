@@ -57,6 +57,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | fait | Tableau de bord d'un équipement : section « État et évolution » du panneau web (Recharts, ADR 0020), modale des interventions, fiche et sous-équipements compactés ; fusionné le 2026-11-16 après essai à l'écran, reviewer APPROUVÉ | — | ADR 0020, spike 0004, [TDB-01](taches/TDB-01-backend-tableau-de-bord-equipement.md), [TDB-02](taches/TDB-02-web-section-etat-evolution.md), [TDB-03](taches/TDB-03-web-finition-visuelle.md) |
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Export de masse des fiches fermées (EXPM-01, EXPM-02), fusionné le 2026-11-16 après essai à l'écran ; plafond 100 ; bootstrap rejoué sur la base de dev, à rejouer en production à sa mise à jour | — | [EXPM-01](taches/EXPM-01-backend-export-masse-fiches.md), [EXPM-02](taches/EXPM-02-web-bouton-export-masse.md) |
+| fait | Notifications et retards : clic d'une notification qui ouvre l'élément (web), pastille « +N j » des retards (web et mobile), tout le stock en retard notifié au premier passage (amendement de l'ADR 0023), tri stable de la liste, suppression des notifications par masquage (migration 0016, jouée en dev) ; essai à l'écran validé le 2026-11-18 | fix/notifications-et-retards | [PREV-10](taches/PREV-10-clic-notification-et-retards-visibles.md), [PREV-11](taches/PREV-11-suppression-des-notifications.md) |
 | à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
 | fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
@@ -82,11 +83,13 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : PREV-10, PREV-11. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
-2026-11-18 : préventif automatisé. Périodicité glissante, référence = date de clôture de la demande liée à l'occurrence ; prévenance globale de 7 jours ; tâche quotidienne dans l'API (ADR 0023) avec motif SYSTEM_SCHEDULE ; préventifs en retard et interventions sans action depuis 7 jours (attentes comprises) notifiés à tous les utilisateurs actifs, une notification par élément puis une relance hebdomadaire, le stock ressortant à son prochain palier ; cloche sur le mobile ; mail hebdo et relevé des heures au backlog.
+2026-11-18 : tout le stock en retard (préventifs, interventions sans action) est notifié au premier passage, puis chaque semaine (amendement de l'ADR 0023, l'utilisateur revient sur « le stock ressort à son prochain palier ») ; une notification se supprime par masquage (la ligne reste en base pour la déduplication), une par une, les lues ou toutes.
+
+2026-11-18 : préventif automatisé. Périodicité glissante, référence = date de clôture de la demande liée à l'occurrence ; prévenance globale de 7 jours ; tâche quotidienne dans l'API (ADR 0023) avec motif SYSTEM_SCHEDULE ; préventifs en retard et interventions sans action depuis 7 jours (attentes comprises) notifiés à tous les utilisateurs actifs, une notification par élément puis une relance hebdomadaire, le stock ressortant à son prochain palier (amendé le même jour : tout le stock sort au premier passage, voir ci-dessus) ; cloche sur le mobile ; mail hebdo et relevé des heures au backlog.
 
 2026-11-16 : page « Organisation » ouverte à tous les rôles, chiffres d'équipe seulement, définitions figées par l'ADR 0021.
 
@@ -108,7 +111,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule) et constater le verrou (deux processus) ; migration 0015 jouée en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
+0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
    routinière, ADMIN et RESP), validée à l'écran ; bootstrap rejoué sur la base de dev

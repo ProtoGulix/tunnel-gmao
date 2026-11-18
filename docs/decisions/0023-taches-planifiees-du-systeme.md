@@ -15,8 +15,11 @@ générées et non traitées dont l'échéance est passée. Décisions de l'util
 demande), prévenance globale d'une semaine, notification à tous des préventifs qui
 passent en retard, alarme « sans action depuis 7 jours » sur les interventions ouvertes
 avec relance hebdomadaire, retards du préventif relancés de la même façon,
-notification par élément à chaque palier hebdomadaire (pas d'envoi massif du stock au
-démarrage : chaque élément ressort à son prochain palier).
+notification par élément à chaque palier hebdomadaire. Amendement du 2026-11-18
+(décision de l'utilisateur, qui revient sur « pas d'envoi massif du stock ») : le dernier
+palier atteint est notifié s'il ne l'a pas déjà été, donc tout le stock en retard sort au
+premier passage, puis chaque élément revient à son palier suivant. Le réglage de fenêtre de
+rattrapage (`REMINDER_CATCHUP_DAYS`) est supprimé.
 
 Il faut donc un traitement qui tourne chaque jour sans requête ni utilisateur. Deux
 contraintes du code actuel :

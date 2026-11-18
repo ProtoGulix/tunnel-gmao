@@ -277,25 +277,30 @@ def test_pas_de_doublon_relance_a_j_plus_8_puis_rien_apres_cloture(instance, pla
     assert len(_notifs(instance, occ)) == 2 * actifs
 
 
-def test_occurrence_en_retard_de_30_jours_ressort_a_son_prochain_palier(instance, plan_factory):
+def test_occurrence_en_retard_de_30_jours_sort_au_premier_passage(instance, plan_factory):
     (machine,), plan = plan_factory()
     echeance = date.today() - timedelta(days=30)
     occ = _occurrence_en_retard(instance, plan, machine, echeance, status="pending")
     actifs = _actifs(instance)
 
-    # Premier passage à J+30 : le dernier palier (J+29) est d'hier, il n'est pas rattrapé
-    # (rattrapage d'un jour par défaut) : pas d'envoi massif du stock à l'activation.
+    # Premier passage à J+30 : le dernier palier atteint (J+29) est émis, même tombé hier :
+    # tout le stock en retard sort à l'activation (amendement de l'ADR 0023).
     run_system_step(lambda: steps.notify_preventive_overdue())
-    assert _notifs(instance, occ) == []
+    lignes = _notifs(instance, occ)
+    assert {x[1] for x in lignes} == {(echeance + timedelta(days=29)).isoformat()}
+    assert len(lignes) == actifs
 
-    # Jours suivants jusqu'au prochain palier J+36 : rien ; à J+36, la notification.
+    # Jours suivants jusqu'au prochain palier J+36 : rien de plus ; à J+36, la relance.
     for jour in (31, 35):
         run_system_step(lambda j=jour: steps.notify_preventive_overdue(echeance + timedelta(j)))
-    assert _notifs(instance, occ) == []
+    assert len(_notifs(instance, occ)) == actifs
     run_system_step(lambda: steps.notify_preventive_overdue(echeance + timedelta(36)))
     lignes = _notifs(instance, occ)
-    assert {x[1] for x in lignes} == {(echeance + timedelta(days=36)).isoformat()}
-    assert len(lignes) == actifs
+    assert {x[1] for x in lignes} == {
+        (echeance + timedelta(days=29)).isoformat(),
+        (echeance + timedelta(days=36)).isoformat(),
+    }
+    assert len(lignes) == 2 * actifs
 
 
 def test_notification_porte_intervention_et_demande(instance, plan_factory):
@@ -409,7 +414,7 @@ def test_sans_action_attente_comprise_fermeture_exclue(instance, intervention_ou
     assert len(_notifs_sans_action(instance, inter)) == _actifs(instance)
 
 
-def test_sans_action_stock_etale_au_prochain_palier(instance):
+def test_sans_action_stock_sort_au_premier_passage(instance):
     machine = instance.sql(
         "INSERT INTO machine (code, name) VALUES (%s, 'Presse stock') RETURNING id",
         (f"ST-{time.time_ns() % 10**8}",),
@@ -422,15 +427,20 @@ def test_sans_action_stock_etale_au_prochain_palier(instance):
             (machine, debut),
         )[0][0]
     )
-    # Premier passage à J+30 : le dernier palier (J+28) est tombé il y a 2 jours, pas rattrapé.
+    # Premier passage à J+30 : le dernier palier (J+28), tombé il y a 2 jours, est émis.
     _passage_sans_action(debut + timedelta(30))
-    assert _notifs_sans_action(instance, inter) == []
+    lignes = _notifs_sans_action(instance, inter)
+    assert {x[0] for x in lignes} == {(debut + timedelta(28)).isoformat()}
+    assert len(lignes) == _actifs(instance)
     _passage_sans_action(debut + timedelta(34))
-    assert _notifs_sans_action(instance, inter) == []
+    assert len(_notifs_sans_action(instance, inter)) == _actifs(instance)
     _passage_sans_action(debut + timedelta(35))
     lignes = _notifs_sans_action(instance, inter)
-    assert {x[0] for x in lignes} == {(debut + timedelta(35)).isoformat()}
-    assert len(lignes) == _actifs(instance)
+    assert {x[0] for x in lignes} == {
+        (debut + timedelta(28)).isoformat(),
+        (debut + timedelta(35)).isoformat(),
+    }
+    assert len(lignes) == 2 * _actifs(instance)
 
 
 def test_boucle_quotidienne_contient_l_etape_sans_action_apres_les_retards():

@@ -5,11 +5,11 @@ import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { NotificationRow } from '../../components/notifications/NotificationRow'
 import { useNotifications } from '../../hooks/notifications/useNotifications'
 import { notificationRoute } from '../../utils/notificationLink'
-import { CheckCheck } from 'lucide-react'
+import { CheckCheck, Trash2 } from 'lucide-react'
 
 export default function NotificationsPage() {
   const navigate = useNavigate()
-  const { items, unread, loading, error, markRead, markAllRead } = useNotifications()
+  const { items, unread, loading, error, markRead, markAllRead, dismiss, dismissAll } = useNotifications()
 
   const open = (n) => {
     markRead(n.id)
@@ -27,13 +27,31 @@ export default function NotificationsPage() {
           emptyMessage="Aucune notification"
         />
         <div className="flex flex-col gap-3 p-4">
-          {items.map((n) => <NotificationRow key={n.id} notification={n} onOpen={open} />)}
+          {items.map((n) => <NotificationRow key={n.id} notification={n} onOpen={open} onDismiss={dismiss} />)}
         </div>
       </div>
-      {unread > 0 && (
+      {items.length > 0 && (
         <BottomBar>
-          <BottomBtn variant="primary" onClick={markAllRead} icon={<CheckCheck size={14} />}>
-            Tout marquer lu
+          {unread > 0 && (
+            <BottomBtn variant="primary" onClick={markAllRead} icon={<CheckCheck size={14} />}>
+              Tout marquer lu
+            </BottomBtn>
+          )}
+          <BottomBtn
+            variant="secondary"
+            className="min-h-[44px]"
+            disabled={!items.some((n) => n.read_at)}
+            onClick={() => dismissAll(true)}
+            icon={<Trash2 size={14} />}
+          >
+            Supprimer les lues
+          </BottomBtn>
+          <BottomBtn
+            variant="danger"
+            className="min-h-[44px]"
+            onClick={() => { if (window.confirm('Supprimer toutes les notifications ?')) dismissAll(false) }}
+          >
+            Tout supprimer
           </BottomBtn>
         </BottomBar>
       )}

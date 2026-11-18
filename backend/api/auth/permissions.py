@@ -199,6 +199,8 @@ PERSONAL_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("GET", "/notifications/unread-count"),
         ("PATCH", "/notifications/read-all"),
         ("PATCH", "/notifications/{notification_id}/read"),
+        ("DELETE", "/notifications/{notification_id}"),
+        ("DELETE", "/notifications"),
         # Page d'accueil de l'utilisateur courant.
         ("GET", "/home-view/me"),
     }

@@ -26,3 +26,9 @@ export function overdueLabel(days) {
   if (!days || days <= 0) return null;
   return `${days} jour${days > 1 ? 's' : ''} de retard`;
 }
+
+/** Pastille « +3 j » ; null si la route ne signale pas de retard. */
+export function overdueBadgeLabel(days) {
+  if (!days || days <= 0) return null;
+  return `+${days} j`;
+}

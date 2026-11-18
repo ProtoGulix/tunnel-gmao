@@ -1,6 +1,7 @@
 # PREV-05. Backend : alarme « sans action depuis 7 jours, on en est où ? »
 
-- Statut : faite (2026-11-18)
+- Statut : faite (2026-11-18). Rattrapage remplacé par l'amendement de l'ADR 0023 du
+  2026-11-18 : tout le stock sort au premier passage, `REMINDER_CATCHUP_DAYS` supprimé
 - Agent : backend-dev (sonnet)
 - Branche : feat/preventif-automatise, worktree d'une sous-branche
   feat/preventif-automatise-prev05

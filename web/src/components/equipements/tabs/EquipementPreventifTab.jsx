@@ -12,7 +12,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import { usePreventiveSchedule } from '@/hooks/preventive/usePreventiveSchedule';
 import { PERM } from '@/auth/permissionCodes';
 import { usePermissions } from '@/auth/usePermissions';
-import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS, overdueLabel } from '@/config/preventiveConfig';
+import OverdueBadge from '@/components/preventive/OverdueBadge';
+import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS } from '@/config/preventiveConfig';
 
 function formatDate(iso) {
   if (!iso) return null;
@@ -68,16 +69,16 @@ function OccurrencesSummary({ summary }) {
 // État et échéance viennent de la route d'échéancier (aucun calcul ici)
 function ScheduleInfo({ entry }) {
   if (!entry) return null;
-  const late = entry.state === 'overdue' ? overdueLabel(entry.days_overdue) : null;
   return (
     <Flex direction="column" align="end" gap="1">
+      {entry.state === 'overdue' && <OverdueBadge days={entry.days_overdue} />}
       <Badge color={SCHEDULE_STATE_COLORS[entry.state] ?? 'gray'} variant="soft" size="1">
         {SCHEDULE_STATE_LABELS[entry.state] ?? entry.state}
       </Badge>
       {entry.state === 'not_computed' ? (
         <Text size="1" color="gray">Échéance non calculée</Text>
       ) : (
-        <Text size="1" color="gray">Échéance {formatDate(entry.due_date)}{late ? ` · ${late}` : ''}</Text>
+        <Text size="1" color="gray">Échéance {formatDate(entry.due_date)}</Text>
       )}
     </Flex>
   );
