@@ -7,8 +7,16 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.8.0** (2026-11-18, PR #11 pour le code et #12 pour la
-  préparation de version, tag sur main ; production à mettre à jour par l'utilisateur) :
+- Dernière version publiée : **v5.9.0** (2026-11-18, tag sur main ; production à mettre à
+  jour par l'utilisateur) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
+  PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
+  notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des
+  notifications, pastille des retards, suppression des notifications par masquage, cloche
+  mobile sur chaque écran (PREV-10 à PREV-12). Migrations 0015 et 0016 à jouer en
+  production (au démarrage de l'API) ; tâche quotidienne active par défaut
+  (`SCHEDULED_JOBS_ENABLED=false` pour la couper). Avant la mise à jour : compter le volume
+  du premier passage (lecture seule) ; après : constater le verrou (un seul passage).
+- v5.8.0 (2026-11-18, PR #11 pour le code et #12 pour la préparation de version, tag sur main) :
   marquage des fiches imprimées après l'export de masse (IMPR-01, IMPR-02), historique
   d'un équipement avec les archivées et dates de signalement complétées (IMPR-03 à 05),
   lien de la fiche d'intervention vers la fiche équipement (LIEN-01). Migration 0014 à
@@ -35,7 +43,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : le préventif automatisé (échéancier glissant, génération quotidienne désactivée par défaut, notifications de retard et « sans action », cloche mobile ; migration 0015), non publié.
+- develop contient depuis la 5.9.0 : rien.
 
 ## Feuille de route fondatrice
 

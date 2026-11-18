@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.9.0] — 2026-11-18
 
 ### Ajouté
 - Mobile : cloche des notifications dans l'en-tête de chaque écran, à droite de la loupe
