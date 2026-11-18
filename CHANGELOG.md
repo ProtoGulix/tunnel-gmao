@@ -24,6 +24,13 @@ mobile/CHANGELOG.md.
 - Cloche : les notifications d'échéance préventive et d'intervention à clôturer s'affichent
   avec leur icône et ouvrent la demande, l'intervention ou l'échéancier.
 
+### Modifié
+- Installation : la tâche quotidienne (génération du préventif, retards et interventions
+  sans action notifiés) est activée par défaut, à 5 h (heure du conteneur, UTC) ; réglages
+  `SCHEDULED_JOBS_ENABLED` et `SCHEDULED_JOBS_HOUR` dans deploy/.env. Une installation
+  existante la reçoit active à sa mise à jour (premier passage au démarrage de l'API) ; pour
+  la couper, ajouter `SCHEDULED_JOBS_ENABLED=false` dans deploy/.env avant la mise à jour.
+
 ### Corrigé
 - Préventif : quand la demande d'un préventif est rejetée, il ne reste plus en retard pour
   toujours : l'occurrence est ignorée, le préventif reste dû à son échéance et une nouvelle

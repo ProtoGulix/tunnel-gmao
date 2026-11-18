@@ -53,6 +53,10 @@ services:
       SMTP_FROM: ${SMTP_FROM:-tunnel@example.com}
       SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Tunnel GMAO}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      # Tâche quotidienne du système (ADR 0023) : génération du préventif, retards et
+      # interventions sans action notifiés. Activée par défaut à l'installation.
+      SCHEDULED_JOBS_ENABLED: ${SCHEDULED_JOBS_ENABLED:-true}
+      SCHEDULED_JOBS_HOUR: ${SCHEDULED_JOBS_HOUR:-5}
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
