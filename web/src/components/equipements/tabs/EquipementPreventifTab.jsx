@@ -9,6 +9,10 @@ import { Box, Badge, Card, Flex, Grid, Text } from '@radix-ui/themes';
 import { CalendarClock, CheckCircle2, Clock, SkipForward } from 'lucide-react';
 import PropTypes from 'prop-types';
 import EmptyState from '@/components/ui/EmptyState';
+import { usePreventiveSchedule } from '@/hooks/preventive/usePreventiveSchedule';
+import { PERM } from '@/auth/permissionCodes';
+import { usePermissions } from '@/auth/usePermissions';
+import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS, overdueLabel } from '@/config/preventiveConfig';
 
 function formatDate(iso) {
   if (!iso) return null;
@@ -61,7 +65,25 @@ function OccurrencesSummary({ summary }) {
   );
 }
 
-function PlanItem({ plan }) {
+// État et échéance viennent de la route d'échéancier (aucun calcul ici)
+function ScheduleInfo({ entry }) {
+  if (!entry) return null;
+  const late = entry.state === 'overdue' ? overdueLabel(entry.days_overdue) : null;
+  return (
+    <Flex direction="column" align="end" gap="1">
+      <Badge color={SCHEDULE_STATE_COLORS[entry.state] ?? 'gray'} variant="soft" size="1">
+        {SCHEDULE_STATE_LABELS[entry.state] ?? entry.state}
+      </Badge>
+      {entry.state === 'not_computed' ? (
+        <Text size="1" color="gray">Échéance non calculée</Text>
+      ) : (
+        <Text size="1" color="gray">Échéance {formatDate(entry.due_date)}{late ? ` · ${late}` : ''}</Text>
+      )}
+    </Flex>
+  );
+}
+
+function PlanItem({ plan, entry }) {
   const triggerText =
     plan.trigger_type === 'periodicity'
       ? `Périodicité : toutes les ${plan.periodicity_days} jours`
@@ -87,6 +109,7 @@ function PlanItem({ plan }) {
           <Text size="2">{plan.label}</Text>
           <Text size="1" color="gray">{triggerText}</Text>
         </Flex>
+        <ScheduleInfo entry={entry} />
         {plan.next_occurrence && (
           <Flex direction="column" align="end" gap="1">
             <Text size="1" color="gray">Prochaine occurrence</Text>
@@ -99,7 +122,17 @@ function PlanItem({ plan }) {
 }
 
 export default function EquipementPreventifTab({ equipement }) {
+  const { can } = usePermissions();
+  // Sans le droit de lire l'échéancier, aucun appel : les plans s'affichent sans échéance.
+  const { items: schedule } = usePreventiveSchedule(
+    { machine_id: equipement?.id },
+    Boolean(equipement?.id) && can(PERM.preventive.schedule)
+  );
   if (!equipement) return <Text color="gray">Aucune donnée</Text>;
+  const entryByPlan = Object.fromEntries(schedule.map((e) => [e.plan_id, e]));
+  // La route trie par échéance : la première ligne datée est la prochaine
+  const next = schedule.find((e) => e.due_date);
+  const overdueCount = schedule.filter((e) => e.state === 'overdue').length;
 
   const plans = equipement.preventive_plans ?? null;
   const summary = equipement.preventive_occurrences_summary;
@@ -107,6 +140,16 @@ export default function EquipementPreventifTab({ equipement }) {
   return (
     <Box py="4">
       <Flex direction="column" gap="5">
+        {overdueCount > 0 && (
+          <Badge color="red" variant="soft" size="2" style={{ alignSelf: 'flex-start' }}>
+            {overdueCount} préventif{overdueCount > 1 ? 's' : ''} en retard
+          </Badge>
+        )}
+        {next && (
+          <Text size="2" color="gray">
+            Prochaine échéance : <Text weight="medium">{formatDate(next.due_date)}</Text> ({next.plan_label})
+          </Text>
+        )}
         <OccurrencesSummary summary={summary} />
 
         <Box>
@@ -125,7 +168,7 @@ export default function EquipementPreventifTab({ equipement }) {
             />
           ) : (
             <Flex direction="column" gap="2">
-              {plans.map((plan) => <PlanItem key={plan.id} plan={plan} />)}
+              {plans.map((plan) => <PlanItem key={plan.id} plan={plan} entry={entryByPlan[plan.id]} />)}
             </Flex>
           )}
         </Box>
@@ -148,7 +191,10 @@ OccurrencesSummary.propTypes = {
   }),
 };
 
+ScheduleInfo.propTypes = { entry: PropTypes.object };
+
 PlanItem.propTypes = {
+  entry: PropTypes.object,
   plan: PropTypes.shape({
     id: PropTypes.string.isRequired,
     code: PropTypes.string,

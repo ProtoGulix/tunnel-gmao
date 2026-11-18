@@ -36,6 +36,12 @@ from starlette.routing import Match
 from api.audits.declaration import CREATED_ID_ATTR, find_declaration
 from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
 from api.audits.repo import AuditRepository
+from api.audits.writer import (  # noqa: F401  (ré-exports : importés par les tests)
+    MASKED_VALUE,
+    SENSITIVE_COLUMNS,
+    mask_sensitive,
+    write_audit_entry,
+)
 
 # Entités tracées : préfixe URL → entity_type
 _ENTITY_MAP: Dict[str, str] = {
@@ -79,19 +85,6 @@ _TABLE_MAP: Dict[str, str] = {
     "service": "service",
     "role_home_view": "role_home_view",
 }
-
-# Colonnes dont la valeur ne doit jamais être écrite dans audit_log (lisible par RESP et MCP).
-SENSITIVE_COLUMNS = frozenset({"password_hash", "key_hash"})
-MASKED_VALUE = "***"
-
-
-def mask_sensitive(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Copie de l'état où la valeur de chaque colonne sensible est remplacée.
-
-    La clé reste présente : le diff `password_hash_changed` reste visible sans l'empreinte.
-    """
-    return {k: (MASKED_VALUE if k in SENSITIVE_COLUMNS else v) for k, v in state.items()}
-
 
 # Pattern : /interventions ou /interventions/{uuid} ou /interventions/{uuid}/sous-ressource
 _PATH_RE = re.compile(
@@ -500,8 +493,8 @@ def _write_audit_log(
 
     Une erreur n'est jamais avalée : elle remonte, la transaction est annulée avec la
     mutation (ADR 0018). Auteur : request.state.user_id (jeton), jamais le corps.
-    Point unique d'écriture : c'est ici que les colonnes sensibles sont masquées (created,
-    deleted, diffs, événements des repos), les diffs ayant été calculés sur les vraies valeurs.
+    L'écriture elle-même (masquage des colonnes sensibles comprise) est api.audits.writer,
+    partagée avec l'exécuteur des tâches planifiées.
     """
     if not reason_code or not entity_id_str:
         return
@@ -510,16 +503,17 @@ def _write_audit_log(
     if raw_user_id:
         changed_by = UUID(str(raw_user_id))
 
-    AuditRepository().call_fn_audit_log_decision(
+    write_audit_entry(
         entity_type=entity_type,
         entity_id=UUID(entity_id_str),
         decision_type=decision_type,
-        old_value=mask_sensitive(old_value) if old_value else old_value,
-        new_value=mask_sensitive(new_value) if new_value else new_value,
+        old_value=old_value,
+        new_value=new_value,
         reason_code=reason_code,
         reason_text=reason_text,
         changed_by=changed_by,
         is_system=is_system,
+        repository=AuditRepository(),
     )
 
 

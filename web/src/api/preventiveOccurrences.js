@@ -30,3 +30,13 @@ export async function repairPreventiveOccurrences() {
   const res = await api.post('/preventive-occurrences/repair');
   return res.data;
 }
+
+/** Échéancier : une ligne par plan actif et machine ; l'état (retard, à venir) est calculé par la route. */
+export async function fetchPreventiveSchedule({ machine_id, include_descendants, state } = {}) {
+  const params = {};
+  if (machine_id) params.machine_id = machine_id;
+  if (include_descendants) params.include_descendants = true;
+  if (state) params.state = state;
+  const res = await api.get('/preventive-occurrences/schedule', { params });
+  return Array.isArray(res.data) ? res.data : [];
+}

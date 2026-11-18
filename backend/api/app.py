@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import sys
 from contextlib import asynccontextmanager
@@ -103,7 +104,18 @@ async def lifespan(app: FastAPI):
 
     permission_cache.load()
     await sync_endpoints_catalog()
+    jobs_task = None
+    if settings.SCHEDULED_JOBS_ENABLED:
+        # Tâche quotidienne du système (ADR 0023) : désactivée tant que le réglage ne la demande pas.
+        from api.jobs.scheduler import daily_loop
+
+        jobs_task = asyncio.create_task(daily_loop())
     yield
+    if jobs_task is not None:
+        # Arrêt propre : annule la boucle et attend qu'elle ait rendu verrou et connexions.
+        jobs_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await jobs_task
     close_pool()
 
 

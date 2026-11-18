@@ -24,7 +24,9 @@ pending → generated → in_progress → completed
 | `completed`   | DI clôturée ou intervention fermée — passage automatique en cascade               |
 | `skipped`     | Ignorée manuellement (raison obligatoire)                                         |
 
-> **Rejet de la DI** : si la DI liée passe en `rejetee`, l'occurrence revient automatiquement à `pending` et `di_id` est vidé.
+> **Rejet de la DI** : si la DI liée passe en `rejetee`, l'occurrence passe à `skipped` (`skip_reason` « Demande rejetée », `di_id` conservé, audit système). Elle ne sert pas de référence à l'échéance : le préventif reste dû et la génération suivante en crée une nouvelle (à l'échéance, ou aujourd'hui si cette date est déjà prise).
+>
+> **Machines hors service** : seules les machines au statut `EN_SERVICE` sont concernées par la génération, l'échéancier et les notifications de retard.
 
 > **Acceptation en cascade** : DI `nouvelle` → `acceptee` passe l'occurrence à `in_progress` et renseigne `intervention_id`.
 
@@ -92,6 +94,36 @@ Liste les occurrences de maintenance préventive avec filtres optionnels.
 
 ---
 
+## `GET /preventive-occurrences/schedule`
+
+Échéancier du préventif : une ligne par plan actif et par machine de la classe du plan, triée
+par échéance (les plans aux heures, sans échéance, en fin de liste). Lecture seule, ouverte
+aux rôles qui lisent la matrice (ADMIN, RESP, TECH, ACHETEUR, MCP). Déclarée avant `/{id}`.
+
+Périodicité **glissante** : échéance = date de référence + `periodicity_days`. La référence
+est la date du passage à `cloturee` de la demande de la dernière occurrence `completed`
+(`request_status_log`) ; à défaut (occurrence `skipped`, demande sans ligne de clôture), sa
+`scheduled_date`. Sans historique, l'échéance est aujourd'hui. Une occurrence active
+(`pending`, `generated`, `in_progress`) l'emporte : l'échéance est sa `scheduled_date`.
+
+### Query params
+
+| Param | Description |
+|---|---|
+| `machine_id` | Limite à une machine ; avec `include_descendants=true`, à ses descendants |
+| `state` | `overdue`, `due_soon`, `ok` ou `not_computed` (autre valeur : 400) |
+
+### Réponse `200`
+
+Liste de `{ plan_id, plan_code, plan_label, machine_id, machine_code, machine_name,
+reference_date, due_date, state, days_overdue, occurrence_id, di_id, intervention_id }`.
+`state` : `overdue` (échéance passée), `due_soon` (échéance dans les `PREVENTIVE_LEAD_DAYS`
+jours, 7 par défaut, aujourd'hui inclus), `ok`, `not_computed` (plan `hours` : le compteur
+mesure le temps passé, pas le fonctionnement). `reference_date` est nul si une occurrence
+active existe ou sans historique.
+
+---
+
 ## `GET /preventive-occurrences/{id}`
 
 Détail d'une occurrence.
@@ -115,7 +147,7 @@ Déclenche la génération des occurrences pour tous les plans préventifs actif
 **Logique de génération :**
 
 - Pour chaque plan actif, pour chaque machine de la classe d'équipement du plan :
-  - **trigger_type = `periodicity`** : génère si `last_scheduled_date + periodicity_days ≤ today` (ou si aucune occurrence précédente)
+  - **trigger_type = `periodicity`** : périodicité glissante, même calcul que l'échéancier (`GET /schedule`). Génère dès que `référence + periodicity_days ≤ today + PREVENTIVE_LEAD_DAYS` (7 jours) ou si aucune occurrence précédente. `scheduled_date` = l'échéance (date future possible) et la DI système reçoit cette date dans `deadline`
   - **trigger_type = `hours`** : génère si `current_hours - last_trigger_hours ≥ hours_threshold`
   - Une occurrence déjà existante à cette date (même annulée) est vérifiée avant d'écrire et comptée dans `skipped_conflicts` — pas de doublon, pas d'erreur
   - Crée automatiquement une DI (`demandeur_nom = "Système préventif"`, `statut = "nouvelle"`, `is_system = true`, `suggested_type_inter = "PRE"`)

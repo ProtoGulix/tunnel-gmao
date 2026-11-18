@@ -59,3 +59,21 @@ class RepairOccurrencesResult(BaseModel):
     tasks_optional_resynced: int = 0
     tasks_generated_missing: int = 0
     details: list[str] = []
+
+
+class ScheduleEntryOut(BaseModel):
+    """Une ligne de l'échéancier : un plan actif sur une machine de sa classe."""
+
+    plan_id: UUID
+    plan_code: str
+    plan_label: str
+    machine_id: UUID
+    machine_code: str
+    machine_name: str
+    reference_date: Optional[date] = None
+    due_date: Optional[date] = None
+    state: str
+    days_overdue: int
+    occurrence_id: Optional[UUID] = None
+    di_id: Optional[UUID] = None
+    intervention_id: Optional[UUID] = None

@@ -18,7 +18,9 @@ export const DEFINITIONS = {
   preventive:
     "État actuel : occurrences générées dont la demande liée est encore « nouvelle », avec l'âge de la plus ancienne.",
   generation:
-    "Date de la dernière occurrence générée. La génération du préventif est manuelle : au-delà de 35 jours, un oubli est probable.",
+    "Date de la dernière occurrence générée. La génération du préventif est automatique quand la tâche quotidienne est activée (le bouton « Générer » reste disponible) : au-delà de 35 jours, un oubli ou une tâche quotidienne désactivée est probable.",
+  overdue:
+    "État actuel : plans préventifs actifs, par équipement, dont l'échéance est dépassée (périodicité glissante, calculée par l'échéancier). Les plans par heures ne sont pas comptés.",
   waitingParts:
     "État actuel : interventions au statut « attente de pièces », âge médian depuis leur signalement.",
   date:

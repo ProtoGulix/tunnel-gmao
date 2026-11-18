@@ -1,16 +1,39 @@
 import logging
-from datetime import date, timedelta
+from datetime import date
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from api.audits.events import record_audit_event
+from api.audits.events import record_audit_event, system_reason_code
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
+from api.preventive_occurrences import schedule
+from api.settings import settings
 from api.utils.status_log import skip_request_status_log
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
+
+# Dernière occurrence terminée d'un couple plan (pp) x machine (m) : sa scheduled_date et,
+# si elle est completed, la date de clôture de sa demande. Source unique de la référence
+# de l'échéance glissante, partagée par l'échéancier et la génération (ADR 0023). Une
+# occurrence ignorée parce que sa demande a été rejetée (PREV-08) n'est pas une référence :
+# le préventif n'a pas été fait, l'échéance reste celle d'avant.
+_LAST_TERMINATED_LATERAL = """LEFT JOIN LATERAL (
+                    SELECT po.scheduled_date,
+                           CASE WHEN po.status = 'completed' THEN (
+                               SELECT MAX(rsl.date)::date FROM request_status_log rsl
+                               WHERE rsl.request_id = po.di_id AND rsl.status_to = 'cloturee'
+                           ) END AS closed_on
+                    FROM preventive_occurrence po
+                    WHERE po.plan_id = pp.id AND po.machine_id = m.id
+                      AND po.status IN ('completed', 'skipped')
+                      AND NOT (po.status = 'skipped' AND EXISTS (
+                          SELECT 1 FROM intervention_request ir
+                          WHERE ir.id = po.di_id AND ir.statut = 'rejetee'
+                      ))
+                    ORDER BY po.scheduled_date DESC
+                    LIMIT 1
+                ) last ON true"""
 
 
 class PreventiveOccurrenceRepository:
@@ -163,6 +186,112 @@ class PreventiveOccurrenceRepository:
             result.setdefault(occ_key, []).append(task)
         return result
 
+    # ── Échéancier ───────────────────────────────────────────────
+
+    def get_schedule(
+        self,
+        today: date,
+        lead_days: int,
+        machine_id: Optional[str] = None,
+        include_descendants: bool = False,
+        state: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Échéancier : une ligne par plan actif x machine de la classe du plan.
+
+        Lecture seule. Le calcul de l'échéance est délégué à schedule.py (fonction pure).
+        Référence d'un couple : date de clôture de la demande de la dernière occurrence
+        completed (request_status_log), à défaut sa scheduled_date. Une occurrence active
+        l'emporte : l'échéance est sa scheduled_date.
+        """
+        machine_sql, machine_params = "", []
+        if machine_id:
+            from api.equipements.repo import EquipementRepository
+
+            machine_sql, machine_params = EquipementRepository().machine_scope(
+                "m.id", machine_id, include_descendants
+            )
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            where_machine = f"AND {machine_sql}" if machine_id else ""
+            cur.execute(
+                f"""
+                SELECT pp.id AS plan_id, pp.code AS plan_code, pp.label AS plan_label,
+                       pp.trigger_type, pp.periodicity_days,
+                       m.id AS machine_id, m.code AS machine_code, m.name AS machine_name,
+                       act.id AS occurrence_id, act.di_id, act.intervention_id,
+                       act.scheduled_date AS active_date,
+                       last.scheduled_date AS last_scheduled_date,
+                       last.closed_on
+                FROM preventive_plan pp
+                JOIN machine m ON m.equipement_class_id = pp.equipement_class_id
+                JOIN equipement_statuts es ON es.id = m.statut_id AND es.code = 'EN_SERVICE'
+                LEFT JOIN LATERAL (
+                    SELECT po.id, po.di_id, po.intervention_id, po.scheduled_date
+                    FROM preventive_occurrence po
+                    WHERE po.plan_id = pp.id AND po.machine_id = m.id
+                      AND po.status IN ('pending', 'generated', 'in_progress')
+                    ORDER BY po.scheduled_date ASC
+                    LIMIT 1
+                ) act ON true
+                {_LAST_TERMINATED_LATERAL}
+                WHERE pp.active = true {where_machine}
+                """,
+                machine_params,
+            )
+            cols = [d[0] for d in cur.description]
+            rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        except Exception as e:
+            raise_db_error(e, "chargement de l'échéancier du préventif")
+        finally:
+            release_connection(conn)
+        return self._build_schedule(rows, today, lead_days, state)
+
+    @staticmethod
+    def _build_schedule(
+        rows: List[Dict[str, Any]], today: date, lead_days: int, state: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Applique le calcul pur à chaque ligne, filtre par état et trie par échéance."""
+        out = []
+        for r in rows:
+            reference = None
+            if r["trigger_type"] != "periodicity":
+                due = schedule.not_computed()
+            elif r["active_date"] is not None:
+                due = schedule.classify_due(r["active_date"], today, lead_days)
+            else:
+                reference = r["closed_on"] or r["last_scheduled_date"]
+                due = schedule.compute_due(reference, r["periodicity_days"], today, lead_days)
+            if state and due.state != state:
+                continue
+            out.append(
+                {
+                    "plan_id": r["plan_id"],
+                    "plan_code": r["plan_code"],
+                    "plan_label": r["plan_label"],
+                    "machine_id": r["machine_id"],
+                    "machine_code": r["machine_code"],
+                    "machine_name": r["machine_name"],
+                    "reference_date": reference,
+                    "due_date": due.due_date,
+                    "state": due.state,
+                    "days_overdue": due.days_overdue,
+                    "occurrence_id": r["occurrence_id"],
+                    "di_id": r["di_id"],
+                    "intervention_id": r["intervention_id"],
+                }
+            )
+        # Échéances vides (heures) en fin de liste ; à égalité, ordre stable par plan puis machine.
+        out.sort(
+            key=lambda x: (
+                x["due_date"] is None,
+                x["due_date"] or date.max,
+                x["plan_code"],
+                x["machine_code"],
+            )
+        )
+        return out
+
     # ── Skip ─────────────────────────────────────────────────────
 
     def skip_occurrence(self, occurrence_id: str, skip_reason: str) -> Dict[str, Any]:
@@ -273,12 +402,14 @@ class PreventiveOccurrenceRepository:
             release_connection(conn)
 
     def _load_machines_for_class(self, class_id: str) -> List[Dict[str, Any]]:
-        """Charge les machines d'une classe d'équipement (une erreur SQL remonte)."""
+        """Charge les machines EN_SERVICE d'une classe d'équipement (une erreur SQL remonte)."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT id, code, name FROM machine WHERE equipement_class_id = %s",
+                "SELECT m.id, m.code, m.name FROM machine m "
+                "JOIN equipement_statuts es ON es.id = m.statut_id AND es.code = 'EN_SERVICE' "
+                "WHERE m.equipement_class_id = %s",
                 (class_id,),
             )
             rows = cur.fetchall()
@@ -301,6 +432,7 @@ class PreventiveOccurrenceRepository:
         """
         plan_id = str(plan["id"])
         current_hours = None
+        due_from_period = False
 
         conn = self._get_connection()
         try:
@@ -323,24 +455,28 @@ class PreventiveOccurrenceRepository:
                 return "skipped_active_exists", None
 
             if plan["trigger_type"] == "periodicity":
-                # Référence : dernière occurrence terminée (completed ou skipped)
+                # Échéance glissante : le calcul vient de schedule.py, comme l'échéancier.
+                # Une occurrence est créée dès que l'échéance entre dans la prévenance ;
+                # scheduled_date = échéance (date future possible).
                 cur.execute(
-                    """
-                    SELECT MAX(scheduled_date)
-                    FROM preventive_occurrence
-                    WHERE plan_id = %s AND machine_id = %s
-                      AND status IN ('completed', 'skipped')
+                    f"""
+                    SELECT last.scheduled_date, last.closed_on
+                    FROM preventive_plan pp
+                    JOIN machine m ON m.id = %s
+                    {_LAST_TERMINATED_LATERAL}
+                    WHERE pp.id = %s
                     """,
-                    (plan_id, machine_id),
+                    (machine_id, plan_id),
                 )
-                last_date = cur.fetchone()[0]
-                if last_date is not None:
-                    next_date = last_date + timedelta(days=plan["periodicity_days"])
-                    if next_date > today:
-                        return "skipped_not_due", None
-                    scheduled_date = next_date
-                else:
-                    scheduled_date = today
+                row = cur.fetchone()
+                reference = (row[1] or row[0]) if row else None
+                due = schedule.compute_due(
+                    reference, plan["periodicity_days"], today, settings.PREVENTIVE_LEAD_DAYS
+                )
+                if due.state == schedule.STATE_OK:
+                    return "skipped_not_due", None
+                scheduled_date = due.due_date
+                due_from_period = True
 
             else:  # hours
                 # Référence : dernière occurrence terminée (completed ou skipped)
@@ -350,6 +486,10 @@ class PreventiveOccurrenceRepository:
                     FROM preventive_occurrence
                     WHERE plan_id = %s AND machine_id = %s
                       AND status IN ('completed', 'skipped')
+                      AND NOT (status = 'skipped' AND EXISTS (
+                          SELECT 1 FROM intervention_request ir
+                          WHERE ir.id = di_id AND ir.statut = 'rejetee'
+                      ))
                     ORDER BY created_at DESC
                     LIMIT 1
                     """,
@@ -385,7 +525,21 @@ class PreventiveOccurrenceRepository:
                 (plan_id, machine_id, scheduled_date),
             )
             if cur.fetchone():
-                return "conflict", None
+                if due_from_period:
+                    # Échéance déjà prise par une occurrence du couple (ex. celle d'une demande
+                    # rejetée, ignorée) : la nouvelle est créée aujourd'hui, sans conflit.
+                    scheduled_date = today
+                    cur.execute(
+                        """
+                        SELECT 1 FROM preventive_occurrence
+                        WHERE plan_id = %s AND machine_id = %s AND scheduled_date = %s
+                        """,
+                        (plan_id, machine_id, scheduled_date),
+                    )
+                    if cur.fetchone():
+                        return "conflict", None
+                else:
+                    return "conflict", None
 
             occurrence_id = str(uuid4())
             cur.execute(
@@ -406,11 +560,12 @@ class PreventiveOccurrenceRepository:
             cur.execute(
                 """
                 INSERT INTO intervention_request
-                    (machine_id, demandeur_nom, description, is_system, suggested_type_inter, code, statut)
-                VALUES (%s, 'Système préventif', %s, true, 'PRE', 'PLACEHOLDER', 'nouvelle')
+                    (machine_id, demandeur_nom, description, is_system, suggested_type_inter,
+                     code, statut, deadline)
+                VALUES (%s, 'Système préventif', %s, true, 'PRE', 'PLACEHOLDER', 'nouvelle', %s)
                 RETURNING id
                 """,
-                (machine_id, plan["label"]),
+                (machine_id, plan["label"], scheduled_date),
             )
             di_id = str(cur.fetchone()[0])
 
@@ -441,9 +596,15 @@ class PreventiveOccurrenceRepository:
                     FROM preventive_plan_gamme_step pgs
                     WHERE pgs.id = %s
                     ON CONFLICT (gamme_step_id, occurrence_id) DO NOTHING
+                    RETURNING id
                     """,
                     (step_id, occurrence_id, step_id),
                 )
+                task_row = cur.fetchone()
+                if task_row:
+                    # Une ligne `created` par tâche de gamme réellement créée (décision du
+                    # 2026-11-18), y compris celles que l'acceptation automatique rattache.
+                    self._record_system_created(cur, "task", str(task_row[0]))
             logger.info(
                 "Tâches préventives : %s tâche(s) générée(s) pour l'occurrence %s",
                 len(steps),
@@ -466,13 +627,16 @@ class PreventiveOccurrenceRepository:
         "preventive_occurrence": "preventive_occurrence",
         "request": "intervention_request",
         "intervention": "intervention",
+        "task": "intervention_task",
     }
 
     def _record_system_created(self, cur: Any, entity_type: str, entity_id: str) -> None:
         """Dépose la ligne `created` d'une entité créée par la génération (événement du système).
 
-        L'auteur est l'utilisateur du jeton, le motif SYSTEM_CASCADE ; la valeur est la ligne
-        créée, sans identifiant ni horodatages techniques.
+        Le motif vient du contexte (system_reason_code) : SYSTEM_CASCADE dans la requête du
+        bouton « Générer », où l'auteur est l'utilisateur du jeton ; SYSTEM_SCHEDULE dans la
+        tâche planifiée, sans auteur. La valeur est la ligne créée, sans identifiant ni
+        horodatages techniques.
         """
         table = self._CREATED_TABLES[entity_type]
         cur.execute(f"SELECT row_to_json(t) FROM {table} t WHERE id = %s", (entity_id,))
@@ -485,7 +649,7 @@ class PreventiveOccurrenceRepository:
             "created",
             new_value=created,
             is_system=True,
-            reason_code=SYSTEM_CASCADE_REASON,
+            reason_code=system_reason_code(),
         )
 
     def _plan_label(self, plan_id: str) -> str:

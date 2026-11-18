@@ -5,12 +5,16 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from api.audits.declaration import audit
 from api.auth.permissions import require_authenticated
+from api.errors.exceptions import ValidationError
 from api.notifications.mailer import send_di_a_traiter_mails
 from api.preventive_occurrences.repo import PreventiveOccurrenceRepository
+from api.preventive_occurrences.schedule import SCHEDULE_STATES
 from api.preventive_occurrences.schemas import (
     OccurrenceSkipIn,
     PreventiveOccurrenceOut,
+    ScheduleEntryOut,
 )
+from api.settings import settings
 from api.utils.response import single
 
 router = APIRouter(
@@ -41,6 +45,28 @@ def list_occurrences(
         scheduled_date_from=scheduled_date_from,
         scheduled_date_to=scheduled_date_to,
         include_descendants=include_descendants,
+    )
+
+
+@router.get("/schedule", response_model=list[ScheduleEntryOut])
+def get_schedule(
+    machine_id: Optional[str] = Query(None),
+    include_descendants: bool = Query(
+        False,
+        description="Avec machine_id : inclut les équipements descendants. Ignoré sans machine_id",
+    ),
+    state: Optional[str] = Query(None, description="Filtre : " + ", ".join(SCHEDULE_STATES)),
+):
+    """Échéancier du préventif (périodicité glissante) : une ligne par plan actif et machine,
+    triée par échéance. Lecture seule. Déclarée avant /{occurrence_id}."""
+    if state is not None and state not in SCHEDULE_STATES:
+        raise ValidationError(f"state invalide : {', '.join(SCHEDULE_STATES)}")
+    return PreventiveOccurrenceRepository().get_schedule(
+        today=date.today(),
+        lead_days=settings.PREVENTIVE_LEAD_DAYS,
+        machine_id=machine_id,
+        include_descendants=include_descendants,
+        state=state,
     )
 
 

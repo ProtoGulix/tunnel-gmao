@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Wrench, Package, Cpu, QrCode } from 'lucide-react'
+import { Home, Wrench, Package, Cpu, CalendarClock } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: '/',             icon: Home,    label: 'Accueil' },
   { to: '/interventions', icon: Wrench,  label: 'Intervention' },
   { to: '/stock',        icon: Package, label: 'Stock' },
   { to: '/equipements',  icon: Cpu,     label: 'Équipements' },
-  { to: '/qrcode',       icon: QrCode,  label: 'QR Code' },
+  // Préventif à la place du QR Code (décision du 2026-11-18) : le QR Code reste sur l'accueil.
+  { to: '/preventif',    icon: CalendarClock, label: 'Préventif' },
 ]
 
 export function BottomNav() {

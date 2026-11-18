@@ -36,12 +36,22 @@ class AuditEvent:
     reason_code: Optional[str] = None
 
 
+# Motif des mutations du système qui suivent une décision d'utilisateur (ADR 0018).
+DEFAULT_SYSTEM_REASON = "SYSTEM_CASCADE"
+
+
 @dataclass
 class AuditUnit:
-    """Événements d'une requête. `closed` passe à vrai quand le middleware a fini de les écrire."""
+    """Événements d'une requête. `closed` passe à vrai quand le middleware a fini de les écrire.
+
+    `system_reason` : motif des mutations du système de cette unité. Vide dans une requête
+    (valeur par défaut : SYSTEM_CASCADE) ; l'exécuteur des tâches planifiées y pose
+    SYSTEM_SCHEDULE (ADR 0023).
+    """
 
     events: List[AuditEvent] = field(default_factory=list)
     closed: bool = False
+    system_reason: Optional[str] = None
 
 
 _current_unit: contextvars.ContextVar[Optional[AuditUnit]] = contextvars.ContextVar(
@@ -56,6 +66,17 @@ def bind_audit_unit(unit: AuditUnit) -> contextvars.Token:
 
 def unbind_audit_unit(token: contextvars.Token) -> None:
     _current_unit.reset(token)
+
+
+def system_reason_code() -> str:
+    """Motif des événements du système de l'unité en cours.
+
+    Les repos partagés entre une requête et une tâche planifiée (génération du préventif)
+    l'appellent au lieu de coder un motif : le contexte, posé par le middleware ou par
+    l'exécuteur, décide (SYSTEM_CASCADE dans une requête, SYSTEM_SCHEDULE dans une tâche).
+    """
+    unit = _current_unit.get()
+    return (unit.system_reason if unit else None) or DEFAULT_SYSTEM_REASON
 
 
 def record_audit_event(

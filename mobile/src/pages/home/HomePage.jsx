@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom'
-import { Wrench, Package, Cpu, QrCode } from 'lucide-react'
+import { Wrench, Package, Cpu, QrCode, CalendarClock } from 'lucide-react'
+import { NotificationBell } from '../../components/notifications/NotificationBell'
 import { MyTasksSection } from '../../components/home/MyTasksSection'
 
 const SHORTCUTS = [
+  { label: 'Préventif à faire', route: '/preventif', icon: CalendarClock, color: '#1F3A5F' },
   { label: 'Interventions', route: '/interventions', icon: Wrench,   color: '#1F3A5F' },
   { label: 'Stock',         route: '/stock',         icon: Package,  color: '#1F3A5F' },
   { label: 'Équipements',   route: '/equipements',   icon: Cpu,      color: '#1F3A5F' },
@@ -14,7 +16,11 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
-      <header className="flex flex-col items-center py-6 gap-3" style={{ backgroundColor: '#2E2E2E' }}>
+      <header className="relative flex flex-col items-center py-6 gap-3" style={{ backgroundColor: '#2E2E2E' }}>
+        {/* Le bouton porte `relative` (pastille) : il est placé par un conteneur absolu. */}
+        <div className="absolute top-2 right-2">
+          <NotificationBell className="text-white" />
+        </div>
         <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-md">
           <img src="/Tunnel_Logo.png" alt="Tunnel" className="w-12 h-12 object-contain" />
         </div>

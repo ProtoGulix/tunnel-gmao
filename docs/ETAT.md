@@ -35,7 +35,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : rien de plus que la 5.8.0.
+- develop contient depuis : le préventif automatisé (échéancier glissant, génération quotidienne désactivée par défaut, notifications de retard et « sans action », cloche mobile ; migration 0015), non publié.
 
 ## Feuille de route fondatrice
 
@@ -47,6 +47,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Préventif automatisé : échéancier glissant (référence = clôture de la demande), génération automatique quotidienne une semaine avant l'échéance, retards notifiés à tous, alarme « sans action depuis 7 jours » avec relance hebdo, cloche mobile ; décisions de l'utilisateur du 2026-11-18 ; ADR et fiches validés le 2026-11-18 ; PREV-01 à PREV-08 faites et intégrées dans la branche (401 tests d'intégration verts ; PREV-08 : demande rejetée = occurrence ignorée et régénérée, machines hors service exclues), essai à l'écran web et mobile validé par l'utilisateur, reviewer APPROUVÉ, fusionné dans develop le 2026-11-18 ; tâche quotidienne désactivée par défaut | — | ADR 0023, [PREV-01](taches/PREV-01-backend-echeancier.md) à [PREV-07](taches/PREV-07-mobile-preventif-et-cloche.md) |
 | fait | Liste des interventions plus lisible (sélecteur de groupe, équipement en valeur), en-tête du panneau, correctif de l'en-tête vidé après un changement de statut ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [LIST-01](taches/LIST-01-web-liste-interventions-lisible.md) |
 | fait | Lien de la fiche d'intervention vers la fiche équipement (code et nom de l'en-tête cliquables) | feat/lien-fiche-equipement | [LIEN-01](taches/LIEN-01-web-lien-fiche-equipement.md) |
 | fait | Historique d'un équipement : archivées affichées (`include_printed`), statut et date corrigés, « Voir les interventions » sans période ; 56 dates de signalement vides complétées (migration 0014, audit DATA_BACKFILL, jouée en dev), date du jour par défaut à la création ; bloc « Archivées » d'IMPR-02 retiré ; fusionné le 2026-11-17, reviewer APPROUVÉ | — | [IMPR-03](taches/IMPR-03-historique-equipement-archivees.md), [IMPR-04](taches/IMPR-04-migration-dates-signalement.md), [IMPR-05](taches/IMPR-05-date-signalement-par-defaut.md) |
@@ -85,6 +86,8 @@ Fiches ouvertes : aucune. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 �
 
 ## Dernière décision
 
+2026-11-18 : préventif automatisé. Périodicité glissante, référence = date de clôture de la demande liée à l'occurrence ; prévenance globale de 7 jours ; tâche quotidienne dans l'API (ADR 0023) avec motif SYSTEM_SCHEDULE ; préventifs en retard et interventions sans action depuis 7 jours (attentes comprises) notifiés à tous les utilisateurs actifs, une notification par élément puis une relance hebdomadaire, le stock ressortant à son prochain palier ; cloche sur le mobile ; mail hebdo et relevé des heures au backlog.
+
 2026-11-16 : page « Organisation » ouverte à tous les rôles, chiffres d'équipe seulement, définitions figées par l'ADR 0021.
 
 2026-11-16 : tableau de bord d'un équipement avec Recharts (ADR 0020), 12 derniers mois par défaut, sous-équipements selon la case existante du panneau.
@@ -105,6 +108,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). À faire : décider l'activation de la tâche quotidienne (SCHEDULED_JOBS_ENABLED à ajouter à deploy/docker-compose.yml, accord requis), d'abord en dev ; migration 0015 jouée en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
    routinière, ADMIN et RESP), validée à l'écran ; bootstrap rejoué sur la base de dev

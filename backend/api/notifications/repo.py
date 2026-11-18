@@ -1,5 +1,6 @@
 """Requêtes pour le domaine notifications"""
 
+from datetime import date
 from typing import Any, Dict, List, Optional
 
 from psycopg2.extras import Json
@@ -170,6 +171,58 @@ class NotificationRepository:
         except Exception as e:
             conn.rollback()
             raise_db_error(e, "création de la notification")
+        finally:
+            release_connection(conn)
+
+    def notify_active_users_once(
+        self,
+        type_: str,
+        entity_type: str,
+        entity_id: str,
+        message: str,
+        milestone: date,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Notifie chaque utilisateur actif d'un palier de relance, une seule fois.
+
+        Le palier est rangé dans `data` (clé `milestone`, date ISO) : rien n'est émis si une
+        notification de même (type, entité, palier) existe déjà, ce qui rend la tâche
+        quotidienne idempotente (ADR 0023, point 5). Retourne le nombre de notifications créées.
+        """
+        milestone_key = milestone.isoformat()
+        payload = {**(data or {}), "milestone": milestone_key}
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO notification (user_id, type, entity_type, entity_id, message, data)
+                SELECT u.id, %s, %s, %s::uuid, %s, %s::jsonb
+                FROM tunnel_user u
+                WHERE u.is_active
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notification n
+                      WHERE n.type = %s AND n.entity_id = %s::uuid
+                        AND n.data->>'milestone' = %s
+                  )
+                """,
+                (
+                    type_,
+                    entity_type,
+                    entity_id,
+                    message,
+                    Json(payload),
+                    type_,
+                    entity_id,
+                    milestone_key,
+                ),
+            )
+            created = cur.rowcount
+            conn.commit()
+            return created
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "création des notifications de relance")
         finally:
             release_connection(conn)
 
