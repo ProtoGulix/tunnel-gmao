@@ -9,6 +9,8 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Modifié
+- Fiche d'intervention : le code et le nom de l'équipement, en tête du panneau, ouvrent
+  la fiche de l'équipement.
 - Export de masse des fiches fermées : après un export réussi, un bouton « Marquer ces
   fiches comme imprimées » apparaît dans la fenêtre ; chaque fiche marquée est tracée
   dans le journal d'audit.
