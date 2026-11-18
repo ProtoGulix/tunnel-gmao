@@ -1,14 +1,20 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-17
+Dernière mise à jour : 2026-11-18
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.7.0** (2026-11-17, PR #10, tag sur main ; production
-  à mettre à jour par l'utilisateur) :
+- Version en cours de publication : **v5.8.0** (2026-11-18) : marquage des fiches
+  imprimées après l'export de masse (IMPR-01, IMPR-02), historique d'un équipement avec
+  les archivées et dates de signalement complétées (IMPR-03 à 05), lien de la fiche
+  d'intervention vers la fiche équipement (LIEN-01). Le code est arrivé sur main par la
+  PR #11, fusionnée avant la préparation de version : numéros et CHANGELOG suivent par une
+  seconde PR, le tag v5.8.0 se pose sur sa fusion. Migration 0014 à jouer en production
+  (au démarrage de l'API, à la mise à jour) ; base de dev déjà en 0014.
+- v5.7.0 (2026-11-17, PR #10, tag sur main) :
   liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
   réponses dans le client web (ENV-02, interne).
 - v5.6.1 (2026-11-17, correctif, PR #9, tag sur main) :
@@ -30,10 +36,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : marquage des fiches imprimées après l'export de masse
-  (IMPR-01, IMPR-02), historique d'un équipement avec les archivées et dates de
-  signalement complétées (IMPR-03 à 05). Migration 0014 à jouer en production (au
-  démarrage de l'API, à la mise à jour) ; base de dev déjà en 0014.
+- develop contient depuis : rien de plus que la 5.8.0.
 
 ## Feuille de route fondatrice
 
