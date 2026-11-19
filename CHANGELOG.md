@@ -21,6 +21,12 @@ mobile/CHANGELOG.md.
   (« N préventif(s) en retard »), sur le web comme sur le mobile, sauf si un problème plus
   grave est déjà signalé. Le statut de marche (En service…) ne change pas.
 
+### Corrigé
+- Export de masse des fiches : les fiches déjà imprimées (archivées) ne sortent plus ; une
+  case « Inclure les fiches déjà imprimées » permet de les réimprimer. Les fiches sortent
+  rangées par équipement, puis par date de fermeture ; dans le ZIP, les fichiers sont
+  numérotés (001_, 002_…) pour garder cet ordre.
+
 ### [interne] Suivi du préventif
 - API : `GET /preventive-occurrences/history?machine_id=` (historique avec écart en jours,
   négatif en avance) et `POST /preventive-occurrences/anticipate` (création immédiate de

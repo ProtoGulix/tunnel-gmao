@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
+import { Button, Checkbox, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
 import { CheckCheck, Download, Printer } from 'lucide-react';
 import EquipementSearch from '@/components/planning/EquipementSearch';
 import ExportFeedback from '@/components/interventions/ExportFeedback';
@@ -66,11 +66,14 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [equipement, setEquipement] = useState(null);
+  const [includePrinted, setIncludePrinted] = useState(false);
   const [busyFormat, setBusyFormat] = useState(null);
   const [error, setError] = useState(null);
-  const currentKey = `${dateFrom}|${dateTo}|${equipement?.id ?? ''}`;
+  const currentKey = `${dateFrom}|${dateTo}|${equipement?.id ?? ''}|${includePrinted}`;
   const { canMark, marking, markResult, markError, markPrinted, resetMark, setExportedKey } =
-    useMarkExportedPrinted({ currentKey, dateFrom, dateTo, equipementId: equipement?.id, onMarked });
+    useMarkExportedPrinted({
+      currentKey, dateFrom, dateTo, equipementId: equipement?.id, includePrinted, onMarked,
+    });
 
   const isBusy = !!busyFormat || marking;
   const canSubmit = dateFrom && dateTo && !isBusy;
@@ -86,6 +89,7 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
         dateFrom,
         dateTo,
         equipementId: equipement?.id,
+        includePrinted,
         format,
       });
       if (format === 'pdf') {
@@ -109,7 +113,8 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
       <Dialog.Content maxWidth="480px">
         <Dialog.Title>Exporter les fiches fermées</Dialog.Title>
         <Dialog.Description size="2" mb="3">
-          Fiches des interventions fermées sur la période (date de fermeture), 100 au maximum.
+          Fiches des interventions fermées sur la période (date de fermeture), 100 au maximum,
+          rangées par équipement puis par date de fermeture.
         </Dialog.Description>
 
         <Flex direction="column" gap="3">
@@ -128,6 +133,13 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
             <Text as="div" size="2" weight="bold" mb="1">Équipement (optionnel)</Text>
             <EquipementSearch value={equipement} onChange={setEquipement} />
           </div>
+
+          <Text as="label" size="2">
+            <Flex gap="2" align="center">
+              <Checkbox checked={includePrinted} onCheckedChange={(v) => setIncludePrinted(v === true)} />
+              Inclure les fiches déjà imprimées
+            </Flex>
+          </Text>
 
           <ExportFeedback error={error || markError} markResult={markResult} canMark={canMark} />
           {busyFormat && (

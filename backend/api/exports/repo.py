@@ -36,14 +36,21 @@ class ExportRepository:
         date_to: date,
         equipement_id: Optional[str],
         limit: int,
+        include_printed: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Interventions fermées dont le dernier passage à 'ferme' tombe dans la période.
 
+        Sans `include_printed`, les fiches déjà imprimées (archivées, `printed_fiche`) sont
+        écartées. Ordre de sortie : code de l'équipement (sans équipement en dernier), puis
+        date de fermeture, puis code de l'intervention ; deux équipements de même code ne se
+        mélangent pas (décision de l'utilisateur du
+        2026-11-19 : classement par machine).
+
         Il n'existe pas de colonne de date de fermeture : on retient la date du dernier
         passage à 'ferme' dans intervention_status_log. Bornes incluses (date_to + 1 jour
-        exclu). Renvoie au plus `limit` lignes triées par date puis code ; l'appelant
-        demande limit + 1 pour détecter un dépassement.
+        exclu). Renvoie au plus `limit` lignes ; l'appelant demande limit + 1 pour détecter
+        un dépassement.
         """
         # equipement_id : filtre sur machine (la table s'appelle machine, l'API equipement)
         params: list = [date_from, date_to + timedelta(days=1)]
@@ -51,6 +58,7 @@ class ExportRepository:
         if equipement_id:
             machine_filter = "AND i.machine_id = %s"
             params.append(equipement_id)
+        printed_filter = "" if include_printed else "AND i.printed_fiche IS NOT TRUE"
         params.append(limit)
         conn = self._get_connection()
         try:
@@ -59,6 +67,7 @@ class ExportRepository:
                 f"""
                 SELECT i.id, i.code, c.closed_at
                 FROM intervention i
+                LEFT JOIN machine m ON m.id = i.machine_id
                 JOIN LATERAL (
                     SELECT MAX(sl.date) AS closed_at
                     FROM intervention_status_log sl
@@ -72,7 +81,8 @@ class ExportRepository:
                       )
                   AND c.closed_at >= %s AND c.closed_at < %s
                   {machine_filter}
-                ORDER BY c.closed_at ASC, i.code ASC
+                  {printed_filter}
+                ORDER BY m.code ASC NULLS LAST, m.id, c.closed_at ASC, i.code ASC
                 LIMIT %s
                 """,
                 params,

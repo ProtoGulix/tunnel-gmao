@@ -67,7 +67,9 @@ def _merge_pdf(htmls: List[str]) -> bytes:
         raise RenderError("Erreur génération PDF")
 
 
-def _select_closed(date_from: str, date_to: str, equipement_id: Optional[str]):
+def _select_closed(
+    date_from: str, date_to: str, equipement_id: Optional[str], include_printed: bool
+):
     """
     Valide la demande et renvoie (début, fin, interventions fermées sélectionnées).
 
@@ -82,7 +84,7 @@ def _select_closed(date_from: str, date_to: str, equipement_id: Optional[str]):
             raise ValidationError("Format UUID invalide pour equipement_id")
 
     rows = ExportRepository().list_closed_interventions(
-        start, end, equipement_id, MAX_BULK_SHEETS + 1
+        start, end, equipement_id, MAX_BULK_SHEETS + 1, include_printed
     )
     if len(rows) > MAX_BULK_SHEETS:
         raise ValidationError(
@@ -90,7 +92,8 @@ def _select_closed(date_from: str, date_to: str, equipement_id: Optional[str]):
             "ou filtrez par équipement"
         )
     if not rows:
-        raise NotFoundError("Aucune intervention fermée sur cette période")
+        detail = "" if include_printed else " non imprimée"
+        raise NotFoundError(f"Aucune intervention fermée{detail} sur cette période")
     return start, end, rows
 
 
@@ -103,14 +106,19 @@ def export_closed_interventions(
     date_to: str = Query(..., description="Fin de période AAAA-MM-JJ (incluse)"),
     equipement_id: Optional[str] = Query(None, description="UUID de l'équipement (optionnel)"),
     format: Literal["zip", "pdf"] = Query(..., description="zip (un PDF par fiche) ou pdf"),
+    include_printed: bool = Query(
+        False, description="Inclure les fiches déjà imprimées (archivées) ; exclues par défaut"
+    ),
 ):
     """
     Export de masse des fiches des interventions fermées sur une période.
 
     La date retenue est celle du dernier passage à 'ferme'. Plafond de MAX_BULK_SHEETS fiches.
+    Fiches déjà imprimées exclues sauf `include_printed`. Ordre : équipement, puis date de
+    fermeture ; dans le zip, les noms sont numérotés (001_, 002_...) pour garder cet ordre.
     Réservé à ADMIN et RESP (matrice des droits, db/default_permissions.py).
     """
-    start, end, rows = _select_closed(date_from, date_to, equipement_id)
+    start, end, rows = _select_closed(date_from, date_to, equipement_id, include_printed)
     repo = ExportRepository()
 
     # Même chemin que l'export unitaire : mêmes données, même gabarit
@@ -121,6 +129,8 @@ def export_closed_interventions(
 
     if format == "zip":
         names = _unique_pdf_names([d.get("code") or r["id"] for d, r in zip(datas, rows)])
+        # Numérotés : l'explorateur de fichiers range par nom, l'ordre de sortie reste visible.
+        names = [f"{rank:03d}_{name}" for rank, name in enumerate(names, start=1)]
         buffer = BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
             for name, html in zip(names, htmls):
@@ -157,7 +167,9 @@ def mark_closed_interventions_printed(request: Request, body: MarkPrintedRequest
     Trace une ligne d'audit par fiche réellement marquée (auteur : jeton).
     Réservé à ADMIN et RESP (matrice des droits, db/default_permissions.py).
     """
-    _, _, rows = _select_closed(body.date_from, body.date_to, body.equipement_id)
+    _, _, rows = _select_closed(
+        body.date_from, body.date_to, body.equipement_id, body.include_printed
+    )
     marked = ExportRepository().mark_interventions_printed([r["id"] for r in rows])
     return single({"marked": marked, "total": len(rows)})
 

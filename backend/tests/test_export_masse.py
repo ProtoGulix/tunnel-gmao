@@ -52,10 +52,11 @@ def _fiche(code):
 @pytest.fixture
 def depot(monkeypatch):
     """Faux dépôt : liste de codes configurable, enregistre les paramètres reçus."""
-    etat = {"codes": ["INT-1", "INT-2"], "appels": []}
+    etat = {"codes": ["INT-1", "INT-2"], "appels": [], "include_printed": []}
 
-    def liste(self, date_from, date_to, equipement_id, limit):
+    def liste(self, date_from, date_to, equipement_id, limit, include_printed=False):
         etat["appels"].append((date_from, date_to, equipement_id, limit))
+        etat["include_printed"].append(include_printed)
         return [
             {"id": f"id-{i}", "code": c, "closed_at": None}
             for i, c in enumerate(etat["codes"][:limit])
@@ -166,8 +167,15 @@ def test_zip_un_pdf_par_fiche_noms_assainis_et_uniques(client, depot):
         'attachment; filename="fiches-fermees_2026-01-01_2026-01-31.zip"'
     )
     with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-        assert z.namelist() == ["INT_1.pdf", "INT_1_2.pdf", "INT-3.pdf"]
+        # Numérotés dans l'ordre de sortie, assainis et uniques.
+        assert z.namelist() == ["001_INT_1.pdf", "002_INT_1_2.pdf", "003_INT-3.pdf"]
         assert all(z.read(n).startswith(b"%PDF") for n in z.namelist())
+
+
+def test_imprimees_exclues_par_defaut_incluses_sur_demande(client, depot):
+    assert client.get(URL, params=PERIODE).status_code == 200
+    assert client.get(URL, params={**PERIODE, "include_printed": "true"}).status_code == 200
+    assert depot["include_printed"] == [False, True]
 
 
 def test_pdf_unique_avec_au_moins_une_page_par_fiche(client, depot, monkeypatch):

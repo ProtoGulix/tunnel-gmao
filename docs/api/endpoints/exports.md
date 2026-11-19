@@ -22,15 +22,18 @@ produite comme l'export unitaire (même données, même gabarit).
 | `date_to` | oui | Fin de période `AAAA-MM-JJ`, incluse (`date_from` <= `date_to`) |
 | `equipement_id` | non | UUID de l'équipement |
 | `format` | oui | `zip` (un PDF par fiche) ou `pdf` (un seul PDF) |
+| `include_printed` | non | `true` pour inclure les fiches déjà imprimées (`printed_fiche`, archivées) ; défaut `false` : exclues |
 
 La date retenue est celle du dernier passage à `ferme` dans le journal des statuts.
-Tri par cette date puis par code. Plafond de 100 fiches : au-delà, refus (jamais de
+Ordre de sortie : code de l'équipement (interventions sans équipement en dernier), puis
+cette date, puis code de l'intervention. Plafond de 100 fiches : au-delà, refus (jamais de
 troncature).
 
 ### Réponse `200`
 
 - `zip` : `application/zip`, `Content-Disposition: attachment`, fichier
-  `fiches-fermees_<from>_<to>.zip`, un PDF par fiche nommé par son code assaini.
+  `fiches-fermees_<from>_<to>.zip`, un PDF par fiche nommé `<rang>_<code assaini>.pdf` (`001_`, `002_`…, dans l'ordre de
+  sortie).
 - `pdf` : `application/pdf`, `Content-Disposition: inline`, fichier
   `fiches-fermees_<from>_<to>.pdf`.
 
@@ -42,7 +45,7 @@ troncature).
 | 422 | Paramètre obligatoire absent ou format inconnu |
 | 401 | JWT manquant ou invalide |
 | 403 | Rôle sans le droit |
-| 404 | Aucune intervention fermée sur la période |
+| 404 | Aucune intervention fermée (non imprimée, par défaut) sur la période |
 | 429 | Limite de débit dépassée |
 
 ---
@@ -63,6 +66,7 @@ reste sans effet de bord : ce marquage est un acte distinct, sur la même sélec
 | `date_from` | oui | Début de période `AAAA-MM-JJ`, inclus |
 | `date_to` | oui | Fin de période `AAAA-MM-JJ`, incluse |
 | `equipement_id` | non | UUID de l'équipement |
+| `include_printed` | non | Même valeur que l'export (défaut `false`) |
 
 ### Réponse `200`
 

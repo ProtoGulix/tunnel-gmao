@@ -57,6 +57,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Export de masse : fiches déjà imprimées exclues par défaut (case pour les inclure), ordre par équipement puis fermeture, ZIP numéroté (constat en production du 2026-11-19, choix de l'utilisateur) ; reviewer APPROUVÉ, essai à l'écran validé, fusionné dans develop le 2026-11-19 | — | [EXPM-03](taches/EXPM-03-export-masse-sans-imprimees-et-ordre.md) |
 | fait | Suivi du préventif sur la fiche équipement (web) : pastille à jour ou en retard, liste des interventions préventives, courbe d'avance ou de retard, lancement en avance d'un plan (décisions de l'utilisateur du 2026-11-19 : lancer en avance plutôt que déclarer antidaté, web seulement) ; PREV-14 et PREV-15 faites et intégrées dans la branche, reviewer APPROUVÉ ; à l'essai : section Préventif avant « État et évolution », santé en « Attention » si un préventif est en retard (PREV-16) ; 425 tests d'intégration verts ; essai à l'écran validé par l'utilisateur, reviewer APPROUVÉ (deux passes), fusionné dans develop le 2026-11-19 | — | [PREV-14](taches/PREV-14-backend-historique-et-lancement-en-avance.md), [PREV-15](taches/PREV-15-web-suivi-preventif-fiche-equipement.md) |
 | fait | Préventif automatisé : échéancier glissant (référence = clôture de la demande), génération automatique quotidienne une semaine avant l'échéance, retards notifiés à tous, alarme « sans action depuis 7 jours » avec relance hebdo, cloche mobile ; décisions de l'utilisateur du 2026-11-18 ; ADR et fiches validés le 2026-11-18 ; PREV-01 à PREV-08 faites et intégrées dans la branche (401 tests d'intégration verts ; PREV-08 : demande rejetée = occurrence ignorée et régénérée, machines hors service exclues), essai à l'écran web et mobile validé par l'utilisateur, reviewer APPROUVÉ, fusionné dans develop le 2026-11-18 ; tâche quotidienne désactivée par défaut | — | ADR 0023, [PREV-01](taches/PREV-01-backend-echeancier.md) à [PREV-07](taches/PREV-07-mobile-preventif-et-cloche.md) |
 | fait | Liste des interventions plus lisible (sélecteur de groupe, équipement en valeur), en-tête du panneau, correctif de l'en-tête vidé après un changement de statut ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [LIST-01](taches/LIST-01-web-liste-interventions-lisible.md) |
@@ -95,7 +96,7 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 

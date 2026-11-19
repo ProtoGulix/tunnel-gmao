@@ -15,7 +15,9 @@ function formatMarkResult(marked, total) {
   return `${main} ; ${already} ${already > 1 ? "l'étaient déjà" : "l'était déjà"}`;
 }
 
-export function useMarkExportedPrinted({ currentKey, dateFrom, dateTo, equipementId, onMarked }) {
+export function useMarkExportedPrinted({
+  currentKey, dateFrom, dateTo, equipementId, includePrinted, onMarked,
+}) {
   const [exportedKey, setExportedKey] = useState(null);
   const [marking, setMarking] = useState(false);
   const [markResult, setMarkResult] = useState(null);
@@ -25,7 +27,9 @@ export function useMarkExportedPrinted({ currentKey, dateFrom, dateTo, equipemen
     setMarkError(null);
     setMarking(true);
     try {
-      const { marked, total } = await markClosedInterventionsPrinted({ dateFrom, dateTo, equipementId });
+      const { marked, total } = await markClosedInterventionsPrinted({
+        dateFrom, dateTo, equipementId, includePrinted,
+      });
       setMarkResult(formatMarkResult(marked, total));
       onMarked?.();
     } catch (err) {
