@@ -33,3 +33,4 @@ class MarkPrintedRequest(BaseModel):
     date_from: str
     date_to: str
     equipement_id: Optional[str] = None
+    include_printed: bool = False

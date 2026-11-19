@@ -5,66 +5,17 @@
  * Affiche les plans de maintenance préventive (preventive_plans) et le résumé
  * des occurrences (preventive_occurrences_summary) retournés par GET /equipements/{id}.
  */
-import { Box, Badge, Card, Flex, Grid, Text } from '@radix-ui/themes';
-import { CalendarClock, CheckCircle2, Clock, SkipForward } from 'lucide-react';
+import { Box, Badge, Flex, Text } from '@radix-ui/themes';
 import PropTypes from 'prop-types';
 import EmptyState from '@/components/ui/EmptyState';
-import { usePreventiveSchedule } from '@/hooks/preventive/usePreventiveSchedule';
 import { PERM } from '@/auth/permissionCodes';
 import { usePermissions } from '@/auth/usePermissions';
 import OverdueBadge from '@/components/preventive/OverdueBadge';
+import { formatDate } from '@/components/equipements/EquipementDetailSections';
+import OccurrencesSummary from '@/components/equipements/OccurrencesSummary';
+import AnticipatePlanButton, { AnticipateError } from '@/components/equipements/AnticipatePlanButton';
+import EquipementPreventifHistory from '@/components/equipements/EquipementPreventifHistory';
 import { SCHEDULE_STATE_COLORS, SCHEDULE_STATE_LABELS } from '@/config/preventiveConfig';
-
-function formatDate(iso) {
-  if (!iso) return null;
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function OccurrencesSummary({ summary }) {
-  if (!summary) return null;
-  return (
-    <Box>
-      <Text weight="medium" size="2" mb="3">Résumé des occurrences</Text>
-      <Grid columns={{ initial: '2', xs: '4' }} gap="3">
-        <Card style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-          <Flex direction="column" align="center" gap="1">
-            <Clock size={16} color="var(--orange-9)" />
-            <Text size="4" weight="bold" color="orange">{summary.pending_count}</Text>
-            <Text size="1" color="gray">En attente</Text>
-          </Flex>
-        </Card>
-        <Card style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-          <Flex direction="column" align="center" gap="1">
-            <CheckCircle2 size={16} color="var(--green-9)" />
-            <Text size="4" weight="bold" color="green">{summary.generated_count}</Text>
-            <Text size="1" color="gray">Générées</Text>
-          </Flex>
-        </Card>
-        <Card style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-          <Flex direction="column" align="center" gap="1">
-            <SkipForward size={16} color="var(--gray-9)" />
-            <Text size="4" weight="bold" color="gray">{summary.skipped_count}</Text>
-            <Text size="1" color="gray">Passées</Text>
-          </Flex>
-        </Card>
-        {summary.next_scheduled && (
-          <Card style={{ padding: 'var(--space-3)', textAlign: 'center' }}>
-            <Flex direction="column" align="center" gap="1">
-              <CalendarClock size={16} color="var(--blue-9)" />
-              <Text size="2" weight="bold" color="blue">{formatDate(summary.next_scheduled)}</Text>
-              <Text size="1" color="gray">Prochaine</Text>
-            </Flex>
-          </Card>
-        )}
-      </Grid>
-      {summary.last_skipped_reason && (
-        <Text size="1" color="gray" mt="2">
-          Dernier skip : {summary.last_skipped_reason}
-        </Text>
-      )}
-    </Box>
-  );
-}
 
 // État et échéance viennent de la route d'échéancier (aucun calcul ici)
 function ScheduleInfo({ entry }) {
@@ -84,7 +35,7 @@ function ScheduleInfo({ entry }) {
   );
 }
 
-function PlanItem({ plan, entry }) {
+function PlanItem({ plan, entry, anticipate }) {
   const triggerText =
     plan.trigger_type === 'periodicity'
       ? `Périodicité : toutes les ${plan.periodicity_days} jours`
@@ -111,6 +62,9 @@ function PlanItem({ plan, entry }) {
           <Text size="1" color="gray">{triggerText}</Text>
         </Flex>
         <ScheduleInfo entry={entry} />
+        {anticipate && (
+          <AnticipatePlanButton plan={plan} isPending={anticipate.isPending} onConfirm={anticipate.onConfirm} />
+        )}
         {plan.next_occurrence && (
           <Flex direction="column" align="end" gap="1">
             <Text size="1" color="gray">Prochaine occurrence</Text>
@@ -122,13 +76,13 @@ function PlanItem({ plan, entry }) {
   );
 }
 
-export default function EquipementPreventifTab({ equipement }) {
+// Lancer en avance : plans à périodicité sans occurrence en cours (occurrence_id vide dans l'échéancier)
+const canAnticipatePlan = (plan, entry) =>
+  plan.active !== false && plan.trigger_type === 'periodicity' && Boolean(entry) && !entry.occurrence_id;
+
+export default function EquipementPreventifTab({ equipement, schedule = [], history, anticipate }) {
   const { can } = usePermissions();
-  // Sans le droit de lire l'échéancier, aucun appel : les plans s'affichent sans échéance.
-  const { items: schedule } = usePreventiveSchedule(
-    { machine_id: equipement?.id },
-    Boolean(equipement?.id) && can(PERM.preventive.schedule)
-  );
+  const canAnticipate = can(PERM.preventive.anticipate);
   if (!equipement) return <Text color="gray">Aucune donnée</Text>;
   const entryByPlan = Object.fromEntries(schedule.map((e) => [e.plan_id, e]));
   // La route trie par échéance : la première ligne datée est la prochaine
@@ -151,6 +105,7 @@ export default function EquipementPreventifTab({ equipement }) {
             Prochaine échéance : <Text weight="medium">{formatDate(next.due_date)}</Text> ({next.plan_label})
           </Text>
         )}
+        <AnticipateError message={anticipate?.error} />
         <OccurrencesSummary summary={summary} />
 
         <Box>
@@ -169,10 +124,22 @@ export default function EquipementPreventifTab({ equipement }) {
             />
           ) : (
             <Flex direction="column" gap="2">
-              {plans.map((plan) => <PlanItem key={plan.id} plan={plan} entry={entryByPlan[plan.id]} />)}
+              {plans.map((plan) => (
+                <PlanItem
+                  key={plan.id}
+                  plan={plan}
+                  entry={entryByPlan[plan.id]}
+                  anticipate={
+                    canAnticipate && anticipate && canAnticipatePlan(plan, entryByPlan[plan.id])
+                      ? { isPending: anticipate.pendingPlanId === plan.id, onConfirm: anticipate.anticipate }
+                      : null
+                  }
+                />
+              ))}
             </Flex>
           )}
         </Box>
+        {history && <EquipementPreventifHistory history={history} />}
       </Flex>
     </Box>
   );
@@ -180,22 +147,16 @@ export default function EquipementPreventifTab({ equipement }) {
 
 EquipementPreventifTab.propTypes = {
   equipement: PropTypes.object,
-};
-
-OccurrencesSummary.propTypes = {
-  summary: PropTypes.shape({
-    pending_count: PropTypes.number,
-    generated_count: PropTypes.number,
-    skipped_count: PropTypes.number,
-    next_scheduled: PropTypes.string,
-    last_skipped_reason: PropTypes.string,
-  }),
+  schedule: PropTypes.array,
+  history: PropTypes.object,
+  anticipate: PropTypes.object,
 };
 
 ScheduleInfo.propTypes = { entry: PropTypes.object };
 
 PlanItem.propTypes = {
   entry: PropTypes.object,
+  anticipate: PropTypes.shape({ isPending: PropTypes.bool, onConfirm: PropTypes.func }),
   plan: PropTypes.shape({
     id: PropTypes.string.isRequired,
     code: PropTypes.string,

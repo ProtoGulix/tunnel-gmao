@@ -53,6 +53,7 @@ Tri par défaut (`sort=health`) : santé décroissante `critical` > `warning` > 
         "open_purchase_requests_count": 0,
         "purchase_request_status_counts": {},
         "has_affectation": true,
+        "overdue_preventive_count": 0,
         "rules_triggered": []
       },
       "parent": null,
@@ -106,6 +107,8 @@ Détail complet d'un équipement avec tous les champs de la base, `children_coun
 | `include_descendants` | bool | auto   | Inclut les équipements descendants dans `interventions`, `open_requests`, `preventive_occurrences_summary` et `health`. Omis : vrai si l'équipement a des filles, faux sinon. `preventive_plans` reste celui de la classe de l'équipement lui-même |
 
 Champs ajoutés : `ancestors` (`[{id, code, name}]`, de la racine jusqu'au parent, sans l'équipement), `descendants_count` (descendants de tout niveau) et `include_descendants` (valeur effective appliquée). `health.source` vaut `null` si la santé est celle de l'équipement, sinon `{id, code, name}` du descendant le plus dégradé (niveaux `ok` < `maintenance` < `warning` < `critical` ; à égalité, l'équipement lui-même) et `health.reason` est alors préfixée `"<code> : "` (`"<name> : "` si le descendant n'a pas de code). Les compteurs de `health` sont ceux de ce descendant. Le calcul est borné à 20 niveaux de récursion.
+
+`health.overdue_preventive_count` : nombre de préventifs en retard de l'équipement, même règle que `GET /preventive-occurrences/schedule` (état `overdue`). S'il est positif, la règle `OVERDUE_PREVENTIVE > 0` passe la santé en `warning` (« N préventif(s) en retard ») quand elle était `ok` ou `maintenance` ; un niveau plus grave garde sa raison. Présent partout où `health` est renvoyé (liste, détail, `/health`, interventions).
 
 ### Réponse `200`
 

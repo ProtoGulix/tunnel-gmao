@@ -158,8 +158,8 @@ async function readBlobErrorMessage(error) {
  * Marque comme imprimées les fiches fermées de la période (mêmes valeurs que l'export).
  * Retourne { marked, total } ; en cas d'erreur, lève une Error portant le message du backend.
  */
-export async function markClosedInterventionsPrinted({ dateFrom, dateTo, equipementId }) {
-  const body = { date_from: dateFrom, date_to: dateTo };
+export async function markClosedInterventionsPrinted({ dateFrom, dateTo, equipementId, includePrinted }) {
+  const body = { date_from: dateFrom, date_to: dateTo, include_printed: !!includePrinted };
   if (equipementId) body.equipement_id = equipementId;
   try {
     const response = await api.post('/exports/interventions/closed/mark-printed', body);
@@ -173,8 +173,11 @@ export async function markClosedInterventionsPrinted({ dateFrom, dateTo, equipem
  * Export de masse des fiches fermées sur une période (ADMIN et RESP, plafond côté backend).
  * Retourne le Blob (zip ou pdf) ; en cas d'erreur, lève une Error portant le message du backend.
  */
-export async function fetchClosedInterventionsExport({ dateFrom, dateTo, equipementId, format }) {
-  const params = { date_from: dateFrom, date_to: dateTo, format };
+export async function fetchClosedInterventionsExport({
+  dateFrom, dateTo, equipementId, includePrinted, format,
+}) {
+  // Fiches déjà imprimées exclues par défaut (backend) ; ordre : équipement puis fermeture
+  const params = { date_from: dateFrom, date_to: dateTo, format, include_printed: !!includePrinted };
   if (equipementId) params.equipement_id = equipementId;
   try {
     const response = await api.get('/exports/interventions/closed', {

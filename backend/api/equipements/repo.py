@@ -1641,6 +1641,16 @@ class EquipementRepository:
                 'has_affectation': bool(row[11]),
             }
 
+        # Préventifs en retard : même règle que l'échéancier (import local : le repo du
+        # préventif importe déjà celui des équipements).
+        from api.preventive_occurrences.repo import PreventiveOccurrenceRepository
+
+        overdue = PreventiveOccurrenceRepository().overdue_counts(
+            cur, list(health_inputs), date.today()
+        )
+        for machine_id, metrics in health_inputs.items():
+            metrics['overdue_preventive_count'] = overdue.get(machine_id, 0)
+
         return health_inputs
 
     def get_health_map(self, cur, equipement_ids: List[str]) -> Dict[str, Dict[str, Any]]:
@@ -1652,7 +1662,8 @@ class EquipementRepository:
         }
 
     def _calculate_health(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Calcule le health d'un équipement selon interventions, demandes, DA et tâches."""
+        """Calcule le health d'un équipement selon interventions, demandes, DA, tâches et
+        préventifs en retard (« Attention », sauf niveau déjà plus grave)."""
         open_count = int(metrics.get('open_interventions_count', 0) or 0)
         urgent_count = int(metrics.get('urgent_count', 0) or 0)
         open_requests_count = int(metrics.get('open_requests_count', 0) or 0)
@@ -1662,6 +1673,7 @@ class EquipementRepository:
         unassigned_tasks_count = int(metrics.get('unassigned_tasks_count', 0) or 0)
         open_purchase_requests_count = int(metrics.get('open_purchase_requests_count', 0) or 0)
         has_affectation = bool(metrics.get('has_affectation', False))
+        overdue_preventive_count = int(metrics.get('overdue_preventive_count', 0) or 0)
         request_status_counts = self._normalize_status_counts(metrics.get('request_status_counts'))
         purchase_request_status_counts = self._normalize_status_counts(
             metrics.get('purchase_request_status_counts')
@@ -1724,6 +1736,13 @@ class EquipementRepository:
                 level = 'maintenance'
                 reason = f"{open_purchase_requests_count} demande{'s' if open_purchase_requests_count > 1 else ''} d'achat ouverte{'s' if open_purchase_requests_count > 1 else ''}"
 
+        if overdue_preventive_count > 0:
+            rules_triggered.append('OVERDUE_PREVENTIVE > 0')
+            if level in ('ok', 'maintenance'):
+                level = 'warning'
+                plural = 's' if overdue_preventive_count > 1 else ''
+                reason = f"{overdue_preventive_count} préventif{plural} en retard"
+
         has_open_work = (
             open_count > 0
             or open_requests_count > 0
@@ -1750,5 +1769,6 @@ class EquipementRepository:
             'open_purchase_requests_count': open_purchase_requests_count,
             'purchase_request_status_counts': purchase_request_status_counts,
             'has_affectation': has_affectation,
+            'overdue_preventive_count': overdue_preventive_count,
             'rules_triggered': rules_triggered,
         }

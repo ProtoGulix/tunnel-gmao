@@ -40,3 +40,15 @@ export async function fetchPreventiveSchedule({ machine_id, include_descendants,
   const res = await api.get('/preventive-occurrences/schedule', { params });
   return Array.isArray(res.data) ? res.data : [];
 }
+
+/** Historique d'une machine : une ligne par occurrence, avec l'écart d'échéance (delta_days). */
+export async function fetchPreventiveHistory(machine_id) {
+  const res = await api.get('/preventive-occurrences/history', { params: { machine_id } });
+  return Array.isArray(res.data?.items) ? res.data.items : [];
+}
+
+/** Lance tout de suite l'occurrence d'un plan à périodicité, sans attendre la prévenance. */
+export async function anticipatePreventiveOccurrence(plan_id, machine_id) {
+  const res = await api.post('/preventive-occurrences/anticipate', { plan_id, machine_id });
+  return res.data;
+}

@@ -6,7 +6,7 @@ from uuid import uuid4
 from api.audits.events import record_audit_event, system_reason_code
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
-from api.preventive_occurrences import schedule
+from api.preventive_occurrences import schedule, validators
 from api.settings import settings
 from api.utils.status_log import skip_request_status_log
 
@@ -214,38 +214,61 @@ class PreventiveOccurrenceRepository:
         try:
             cur = conn.cursor()
             where_machine = f"AND {machine_sql}" if machine_id else ""
-            cur.execute(
-                f"""
-                SELECT pp.id AS plan_id, pp.code AS plan_code, pp.label AS plan_label,
-                       pp.trigger_type, pp.periodicity_days,
-                       m.id AS machine_id, m.code AS machine_code, m.name AS machine_name,
-                       act.id AS occurrence_id, act.di_id, act.intervention_id,
-                       act.scheduled_date AS active_date,
-                       last.scheduled_date AS last_scheduled_date,
-                       last.closed_on
-                FROM preventive_plan pp
-                JOIN machine m ON m.equipement_class_id = pp.equipement_class_id
-                JOIN equipement_statuts es ON es.id = m.statut_id AND es.code = 'EN_SERVICE'
-                LEFT JOIN LATERAL (
-                    SELECT po.id, po.di_id, po.intervention_id, po.scheduled_date
-                    FROM preventive_occurrence po
-                    WHERE po.plan_id = pp.id AND po.machine_id = m.id
-                      AND po.status IN ('pending', 'generated', 'in_progress')
-                    ORDER BY po.scheduled_date ASC
-                    LIMIT 1
-                ) act ON true
-                {_LAST_TERMINATED_LATERAL}
-                WHERE pp.active = true {where_machine}
-                """,
-                machine_params,
-            )
-            cols = [d[0] for d in cur.description]
-            rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+            rows = self._fetch_schedule_rows(cur, where_machine, machine_params)
         except Exception as e:
             raise_db_error(e, "chargement de l'échéancier du préventif")
         finally:
             release_connection(conn)
         return self._build_schedule(rows, today, lead_days, state)
+
+    @staticmethod
+    def _fetch_schedule_rows(cur, where_machine: str, params: List[Any]) -> List[Dict[str, Any]]:
+        """Lignes brutes de l'échéancier (plan actif x machine en service de la classe).
+
+        `where_machine` est un fragment SQL construit par le code (jamais une saisie), ses
+        valeurs passent par `params`. Partagé par l'échéancier et la santé des équipements.
+        """
+        cur.execute(
+            f"""
+            SELECT pp.id AS plan_id, pp.code AS plan_code, pp.label AS plan_label,
+                   pp.trigger_type, pp.periodicity_days,
+                   m.id AS machine_id, m.code AS machine_code, m.name AS machine_name,
+                   act.id AS occurrence_id, act.di_id, act.intervention_id,
+                   act.scheduled_date AS active_date,
+                   last.scheduled_date AS last_scheduled_date,
+                   last.closed_on
+            FROM preventive_plan pp
+            JOIN machine m ON m.equipement_class_id = pp.equipement_class_id
+            JOIN equipement_statuts es ON es.id = m.statut_id AND es.code = 'EN_SERVICE'
+            LEFT JOIN LATERAL (
+                SELECT po.id, po.di_id, po.intervention_id, po.scheduled_date
+                FROM preventive_occurrence po
+                WHERE po.plan_id = pp.id AND po.machine_id = m.id
+                  AND po.status IN ('pending', 'generated', 'in_progress')
+                ORDER BY po.scheduled_date ASC
+                LIMIT 1
+            ) act ON true
+            {_LAST_TERMINATED_LATERAL}
+            WHERE pp.active = true {where_machine}
+            """,
+            params,
+        )
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    def overdue_counts(self, cur, machine_ids: List[str], today: date) -> Dict[str, int]:
+        """Nombre de préventifs en retard par machine (clé : id texte), même règle que
+        l'échéancier. Utilise le curseur de l'appelant (calcul de santé en lot)."""
+        if not machine_ids:
+            return {}
+        rows = self._fetch_schedule_rows(cur, "AND m.id = ANY(%s::uuid[])", [list(machine_ids)])
+        counts: Dict[str, int] = {}
+        for line in self._build_schedule(
+            rows, today, settings.PREVENTIVE_LEAD_DAYS, schedule.STATE_OVERDUE
+        ):
+            key = str(line["machine_id"])
+            counts[key] = counts.get(key, 0) + 1
+        return counts
 
     @staticmethod
     def _build_schedule(
@@ -291,6 +314,158 @@ class PreventiveOccurrenceRepository:
             )
         )
         return out
+
+    # ── Historique d'une machine ─────────────────────────────────
+
+    def get_history(self, machine_id: str) -> List[Dict[str, Any]]:
+        """Historique préventif d'une machine : une ligne par occurrence, échéance récente d'abord.
+
+        done_on = date de clôture de la demande (même référence que la génération, seulement
+        pour une occurrence completed) ; delta_days = done_on - scheduled_date (négatif : en avance).
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM machine WHERE id = %s", (machine_id,))
+            if not cur.fetchone():
+                raise NotFoundError(f"Équipement {machine_id} non trouvé")
+            cur.execute(
+                """
+                SELECT po.id AS occurrence_id, po.plan_id, pp.code AS plan_code,
+                       pp.label AS plan_label, po.status, po.scheduled_date, c.done_on,
+                       (c.done_on - po.scheduled_date) AS delta_days,
+                       po.skip_reason, po.di_id, po.intervention_id,
+                       i.code AS intervention_code
+                FROM preventive_occurrence po
+                JOIN preventive_plan pp ON pp.id = po.plan_id
+                LEFT JOIN intervention i ON i.id = po.intervention_id
+                LEFT JOIN LATERAL (
+                    SELECT CASE WHEN po.status = 'completed' THEN (
+                        SELECT MAX(rsl.date)::date FROM request_status_log rsl
+                        WHERE rsl.request_id = po.di_id AND rsl.status_to = 'cloturee'
+                    ) END AS done_on
+                ) c ON true
+                WHERE po.machine_id = %s
+                ORDER BY po.scheduled_date DESC, po.created_at DESC
+                """,
+                (machine_id,),
+            )
+            cols = [d[0] for d in cur.description]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise_db_error(e, "historique préventif d'une machine")
+        finally:
+            release_connection(conn)
+
+    # ── Lancement en avance ──────────────────────────────────────
+
+    def anticipate(self, plan_id: str, machine_id: str) -> tuple[Dict[str, Any], str]:
+        """Crée tout de suite l'occurrence d'un plan à périodicité sur une machine.
+
+        Même création que la génération (_create_occurrence), sans attendre la prévenance.
+        scheduled_date = échéance glissante théorique, ou aujourd'hui si elle est passée ou sans
+        historique. Retourne (occurrence créée, id de la demande système).
+        """
+        today = date.today()
+        plan = self._load_plan(plan_id)
+        machine = self._load_machine(machine_id)
+        validators.validate_anticipation(plan, machine)
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id FROM preventive_occurrence
+                WHERE plan_id = %s AND machine_id = %s
+                  AND status IN ('pending', 'generated', 'in_progress')
+                LIMIT 1
+                """,
+                (plan_id, machine_id),
+            )
+            active = cur.fetchone()
+            if active:
+                raise ConflictError(f"Une occurrence active existe déjà : {active[0]}")
+            reference = self._reference_date(cur, plan_id, machine_id)
+        except ConflictError:
+            raise
+        except Exception as e:
+            raise_db_error(e, "contrôle du lancement en avance")
+        finally:
+            release_connection(conn)
+
+        due = schedule.compute_due(
+            reference, plan["periodicity_days"], today, settings.PREVENTIVE_LEAD_DAYS
+        )
+        scheduled_date = max(due.due_date, today)
+        status, di_id = self._create_occurrence(plan, machine_id, scheduled_date, None, True, today)
+        if status == "conflict":
+            raise ConflictError(
+                "Une occurrence existe déjà à cette date pour ce plan et cette machine"
+            )
+        return self._occurrence_of_request(di_id), di_id
+
+    def _occurrence_of_request(self, di_id: str) -> Dict[str, Any]:
+        """Occurrence liée à une demande (relue après création et acceptation automatique)."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM preventive_occurrence WHERE di_id = %s", (di_id,))
+            occurrence_id = str(cur.fetchone()[0])
+        except Exception as e:
+            raise_db_error(e, "lecture de l'occurrence créée")
+        finally:
+            release_connection(conn)
+        return self.get_by_id(occurrence_id)
+
+    def _load_plan(self, plan_id: str) -> Dict[str, Any]:
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, label, trigger_type, periodicity_days, hours_threshold,
+                       auto_accept, equipement_class_id, active
+                FROM preventive_plan WHERE id = %s
+                """,
+                (plan_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Plan {plan_id} non trouvé")
+            return dict(zip([d[0] for d in cur.description], row))
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise_db_error(e, "chargement du plan préventif")
+        finally:
+            release_connection(conn)
+
+    def _load_machine(self, machine_id: str) -> Dict[str, Any]:
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT m.id, m.equipement_class_id, (es.code = 'EN_SERVICE') AS in_service
+                FROM machine m
+                LEFT JOIN equipement_statuts es ON es.id = m.statut_id
+                WHERE m.id = %s
+                """,
+                (machine_id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Équipement {machine_id} non trouvé")
+            return dict(zip([d[0] for d in cur.description], row))
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise_db_error(e, "chargement de l'équipement")
+        finally:
+            release_connection(conn)
 
     # ── Skip ─────────────────────────────────────────────────────
 
@@ -458,18 +633,7 @@ class PreventiveOccurrenceRepository:
                 # Échéance glissante : le calcul vient de schedule.py, comme l'échéancier.
                 # Une occurrence est créée dès que l'échéance entre dans la prévenance ;
                 # scheduled_date = échéance (date future possible).
-                cur.execute(
-                    f"""
-                    SELECT last.scheduled_date, last.closed_on
-                    FROM preventive_plan pp
-                    JOIN machine m ON m.id = %s
-                    {_LAST_TERMINATED_LATERAL}
-                    WHERE pp.id = %s
-                    """,
-                    (machine_id, plan_id),
-                )
-                row = cur.fetchone()
-                reference = (row[1] or row[0]) if row else None
+                reference = self._reference_date(cur, plan_id, machine_id)
                 due = schedule.compute_due(
                     reference, plan["periodicity_days"], today, settings.PREVENTIVE_LEAD_DAYS
                 )
@@ -513,7 +677,53 @@ class PreventiveOccurrenceRepository:
                     return "skipped_not_due", None
 
                 scheduled_date = today
+        finally:
+            release_connection(conn)
 
+        return self._create_occurrence(
+            plan,
+            machine_id,
+            scheduled_date,
+            current_hours if plan["trigger_type"] == "hours" else None,
+            due_from_period,
+            today,
+        )
+
+    @staticmethod
+    def _reference_date(cur: Any, plan_id: str, machine_id: str) -> Optional[date]:
+        """Référence de l'échéance glissante d'un couple plan x machine : clôture de la demande
+        de la dernière occurrence terminée, à défaut sa scheduled_date, None sans historique."""
+        cur.execute(
+            f"""
+            SELECT last.scheduled_date, last.closed_on
+            FROM preventive_plan pp
+            JOIN machine m ON m.id = %s
+            {_LAST_TERMINATED_LATERAL}
+            WHERE pp.id = %s
+            """,
+            (machine_id, plan_id),
+        )
+        row = cur.fetchone()
+        return (row[1] or row[0]) if row else None
+
+    def _create_occurrence(
+        self,
+        plan: Dict[str, Any],
+        machine_id: str,
+        scheduled_date: date,
+        hours_at_trigger: Optional[float],
+        due_from_period: bool,
+        today: date,
+    ) -> tuple[str, Optional[str]]:
+        """Crée l'occurrence, sa demande système et ses tâches (génération et lancement en avance).
+
+        Retourne ('generated', di_id) ou ('conflict', None). Les règles d'audit et l'acceptation
+        automatique du plan sont celles de la génération : un seul code de création.
+        """
+        plan_id = str(plan["id"])
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
             # Conflit prévisible : une occurrence existe déjà à cette date (même annulée), la
             # contrainte d'unicité (plan, machine, date) refuserait l'insertion. Vérifié avant
             # d'écrire, sans rollback : le cas est rapporté, pas traité comme une erreur.
@@ -554,7 +764,7 @@ class PreventiveOccurrenceRepository:
                     plan_id,
                     machine_id,
                     scheduled_date,
-                    current_hours if plan["trigger_type"] == "hours" else None,
+                    hours_at_trigger,
                 ),
             )
             cur.execute(

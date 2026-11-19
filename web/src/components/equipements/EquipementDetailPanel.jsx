@@ -11,6 +11,7 @@ import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
 import ActivitySection from '@/components/equipements/EquipementActivity';
 import DashboardSection from '@/components/equipements/EquipementDashboardSection';
+import PreventifSection from '@/components/equipements/EquipementPreventifSection';
 import { usePagedList } from '@/hooks/shared/usePagedList';
 import { fetchEquipements, fetchEquipementStatuts, patchEquipement } from '@/api/equipements';
 import { fetchEquipementClasses } from '@/api/equipementClasses';
@@ -103,6 +104,7 @@ export default function EquipementDetailPanel({ id, onLoaded, onChanged }) {
       <Header eq={equipement} editable={editable} onSave={saveField} />
       <FicheSection eq={equipement} editable={editable} onSave={saveField} classes={classes} statuts={statuts} />
       <ChildrenSection list={children} />
+      <PreventifSection eq={equipement} />
       <IncludeDescendantsToggle eq={equipement} checked={withDescendants} onChange={setIncludeDescendants} />
       {can(PERM.equipements.dashboard) && (
         <DashboardSection eq={equipement} includeDescendants={withDescendants} />

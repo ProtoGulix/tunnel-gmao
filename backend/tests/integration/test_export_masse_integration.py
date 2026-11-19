@@ -1,6 +1,7 @@
 """Export de masse des fiches fermées avec vrais middlewares et vraie base (EXPM-01)."""
 
 import io
+import secrets
 import zipfile
 
 import pytest
@@ -47,7 +48,7 @@ def test_seules_les_fermees_de_la_periode_sont_exportees_et_les_droits_s_appliqu
     assert r.status_code == 200, r.text
     with zipfile.ZipFile(io.BytesIO(r.content)) as z:
         # Borne de fin incluse : la fermeture du 15 à 10 h est retenue
-        assert z.namelist() == [f"{_code(instance, dans_periode)}.pdf"]
+        assert z.namelist() == [f"001_{_code(instance, dans_periode)}.pdf"]
     assert _code(instance, ouverte) and _code(instance, hors_periode)
 
     pdf = client.get(URL, params={**params, "format": "pdf"}, headers=admin.headers)
@@ -84,7 +85,8 @@ def test_marquage_imprimees_idempotent_sans_toucher_au_statut(
         ([a, b, hors],),
     )[0][0]
 
-    body = {"date_from": "2032-03-01", "date_to": "2032-03-31"}
+    # Avec les déjà imprimées : la sélection reste celle de l'export qui les inclut.
+    body = {"date_from": "2032-03-01", "date_to": "2032-03-31", "include_printed": True}
     for role in ("TECH", "ACHETEUR"):
         assert client.post(url, json=body, headers=make_user(role).headers).status_code == 403
     r = client.post(url, json=body, headers=admin.headers)
@@ -126,3 +128,55 @@ def test_marquage_imprimees_idempotent_sans_toucher_au_statut(
     entity_id, _, changed_by, old_value, new_value = lignes[0]
     assert entity_id == a and changed_by == admin.id
     assert old_value == {"printed_fiche": False} and new_value == {"printed_fiche": True}
+
+
+def _zip_codes(client, admin, params):
+    r = client.get(URL, params={**params, "format": "zip"}, headers=admin.headers)
+    assert r.status_code == 200, r.text
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        return z.namelist()
+
+
+def test_imprimees_exclues_par_defaut_et_ordre_par_equipement_puis_fermeture(
+    client, admin, instance, monkeypatch
+):
+    monkeypatch.setattr(limiter, "enabled", False)
+    a_tard, _ = intervention_liee(client, admin, instance)
+    a_tot, _ = intervention_liee(client, admin, instance)
+    b, _ = intervention_liee(client, admin, instance)
+    imprimee, _ = intervention_liee(client, admin, instance)
+    suffixe = secrets.token_hex(3)
+    machine_a = instance.sql("SELECT machine_id FROM intervention WHERE id = %s", (a_tard,))[0][0]
+    instance.sql("UPDATE machine SET code = %s WHERE id = %s", (f"EXA-{suffixe}", machine_a))
+    instance.sql(
+        "UPDATE intervention SET machine_id = %s WHERE id = ANY(%s::uuid[])",
+        (machine_a, [a_tot, imprimee]),
+    )
+    instance.sql(
+        "UPDATE machine SET code = %s FROM intervention i "
+        "WHERE i.id = %s AND machine.id = i.machine_id",
+        (f"EXB-{suffixe}", b),
+    )
+    # B fermée la première : l'équipement passe avant la date.
+    _fermer(client, admin, b, "2033-02-01T10:00:00")
+    _fermer(client, admin, a_tot, "2033-02-05T10:00:00")
+    _fermer(client, admin, a_tard, "2033-02-20T10:00:00")
+    _fermer(client, admin, imprimee, "2033-02-10T10:00:00")
+    instance.sql("UPDATE intervention SET printed_fiche = TRUE WHERE id = %s", (imprimee,))
+    periode = {"date_from": "2033-02-01", "date_to": "2033-02-28"}
+
+    attendu = [_code(instance, i) for i in (a_tot, a_tard, b)]
+    assert _zip_codes(client, admin, periode) == [
+        f"{n:03d}_{c}.pdf" for n, c in enumerate(attendu, start=1)
+    ]
+
+    avec = _zip_codes(client, admin, {**periode, "include_printed": "true"})
+    assert [n.split("_", 1)[1] for n in avec] == [
+        f"{_code(instance, i)}.pdf" for i in (a_tot, imprimee, a_tard, b)
+    ]
+
+    # Seule une imprimée sur la période : rien à exporter par défaut.
+    seule = {"date_from": "2033-02-10", "date_to": "2033-02-10", "format": "zip"}
+    r = client.get(URL, params=seule, headers=admin.headers)
+    assert r.status_code == 404
+    assert "non imprimée" in r.text

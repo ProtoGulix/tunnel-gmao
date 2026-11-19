@@ -124,6 +124,59 @@ active existe ou sans historique.
 
 ---
 
+## `GET /preventive-occurrences/history`
+
+Historique préventif d'une machine : une ligne par occurrence, échéance la plus récente
+d'abord, sans pagination. Lecture seule (mêmes droits que `/schedule`, clé MCP incluse).
+
+### Query params
+
+| Param        | Type | Description                  |
+| ------------ | ---- | ---------------------------- |
+| `machine_id` | uuid | Équipement (obligatoire)     |
+
+### Réponse `200`
+
+`{"items": [...]}`, chaque élément : `occurrence_id`, `plan_id`, `plan_code`, `plan_label`,
+`status`, `scheduled_date` (échéance), `done_on` (date de clôture de la demande, `null` si
+l'occurrence n'est pas `completed`), `delta_days` (`done_on - scheduled_date` en jours :
+négatif = en avance, positif = en retard ; `null` si non terminée), `skip_reason`, `di_id`,
+`intervention_id`, `intervention_code`.
+
+### Erreurs
+
+`404` si la machine n'existe pas.
+
+---
+
+## `POST /preventive-occurrences/anticipate`
+
+Lance un préventif en avance : crée tout de suite l'occurrence et sa demande système, par le
+même code que la génération (mêmes événements d'audit `created`, même acceptation automatique
+du plan), sans attendre la prévenance. Droits de `/generate` : ADMIN et RESP, clé MCP refusée.
+
+### Entrée
+
+```json
+{ "plan_id": "<uuid>", "machine_id": "<uuid>" }
+```
+
+`scheduled_date` = échéance glissante théorique ; si elle est déjà passée ou sans historique,
+aujourd'hui. Après clôture, la prochaine échéance part de la date de clôture.
+
+### Réponse `201`
+
+`{"data": <occurrence>}` (champs de `GET /preventive-occurrences/{id}`).
+
+### Erreurs
+
+- `409` : une occurrence active (`pending`, `generated`, `in_progress`) existe déjà pour ce
+  plan et cette machine (son id est dans le détail), ou une occurrence existe déjà à la date du jour ;
+- `422` : plan inactif, plan non à périodicité, machine hors service ou d'une autre classe que le plan ;
+- `404` : plan ou machine inconnu.
+
+---
+
 ## `GET /preventive-occurrences/{id}`
 
 Détail d'une occurrence.

@@ -77,3 +77,29 @@ class ScheduleEntryOut(BaseModel):
     occurrence_id: Optional[UUID] = None
     di_id: Optional[UUID] = None
     intervention_id: Optional[UUID] = None
+
+
+class AnticipateIn(BaseModel):
+    plan_id: UUID
+    machine_id: UUID
+
+
+class HistoryItemOut(BaseModel):
+    """Une occurrence de l'historique d'une machine (delta_days négatif : en avance)."""
+
+    occurrence_id: UUID
+    plan_id: UUID
+    plan_code: str
+    plan_label: str
+    status: str
+    scheduled_date: date
+    done_on: Optional[date] = None
+    delta_days: Optional[int] = None
+    skip_reason: Optional[str] = None
+    di_id: Optional[UUID] = None
+    intervention_id: Optional[UUID] = None
+    intervention_code: Optional[str] = None
+
+
+class HistoryOut(BaseModel):
+    items: list[HistoryItemOut]
