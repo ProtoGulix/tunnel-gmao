@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.10.0** (2026-11-19, tag sur main) : suivi du préventif sur la
+- Dernière version publiée : **v5.10.0** (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
   fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
   de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
   PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
