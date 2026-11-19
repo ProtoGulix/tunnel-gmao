@@ -56,7 +56,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 ## Feuille de route fondatrice
 
 Étapes 1 à 5 de CLAUDE.md section 10 closes. L'étape 5 (RBAC, ADR 0007) est livrée en
-v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de sortie
+v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son critère de sortie
 « tests rôle par endpoint verts » n'a pas été recontrôlé (NON VÉRIFIÉ).
 
 ## Chantiers
@@ -106,6 +106,8 @@ Fiches ouvertes : aucune. Closes aussi : SEC-01, EXPM-03. Closes aussi : PREV-15
 
 ## Dernière décision
 
+2026-11-19 : backlog trié point par point contre le code (anciens backlogs v1 à v4, suites des étapes 2 à 5, AUDC, bascule) ; points faits ou périmés retirés, points ouverts rangés par thème (docs/backlog/README.md). Prochaines corrections proposées : liens action-tâche orphelins, tables d'audit modifiables, jeton mobile jamais rafraîchi (déconnexions fréquentes confirmées par l'utilisateur), routes « amelioration » absentes.
+
 2026-11-19 : backlog, lot sécurité et erreurs d'abord (choix de l'utilisateur) ; messages P0001 renvoyés au client seulement s'ils figurent dans une liste blanche (alternative écartée : code SQLSTATE dédié, qui demandait une migration des fonctions).
 
 2026-11-19 : un préventif fait en avance s'enregistre en lançant l'occurrence tout de suite (demande créée, circuit normal, échéance théorique conservée pour mesurer l'avance), pas par une déclaration antidatée ; suivi du préventif sur la fiche équipement côté web seulement.
@@ -146,7 +148,7 @@ subagents, format de compte rendu imposé aux agents).
    exigé puis accepté ; suppressions d'articles, liens fournisseur et fabricants couvertes
    par les tests d'intégration seulement). Base de dev : migrations 0007 à 0011 jouées ;
    Suites :
-   docs/backlog/suites-audc-etape-2.md. Étape 4 fusionnée le 2026-11-14 (essai à l'écran
+   docs/backlog (tri du 2026-11-19). Étape 4 fusionnée le 2026-11-14 (essai à l'écran
    validé ; correctifs au passage : adresse IP des IP bloquées, saisie du formulaire de
    classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les

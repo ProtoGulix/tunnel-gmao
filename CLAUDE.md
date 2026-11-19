@@ -134,9 +134,9 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 
 1. ✅ (2026-10-06, ADR 0004) Configuration (hors code, sur confirmation de l'utilisateur) : corriger API_ENV, changer le mot de passe de la base, limiter les ports Docker à 127.0.0.1, expirer la clé d'API Claude. Sortie : /api/docs répond 401 ou 404 depuis Internet, la base n'est plus joignable depuis le réseau local.
 2. ✅ (2026-10-06, ADR 0005) Failles bloquantes du code : escalade RESP vers ADMIN, identité prise du jeton, erreurs SQL masquées, IP client fiable, export CSV neutralisé. Sortie : un test par faille, qui échoue avant le correctif et passe après.
-3. ✅ (2026-10-06, réserves dans docs/backlog/suites-etape-3c.md et 3d.md) Monorepo : nouveau dépôt, Compose à trois services, installation automatique de la base (ADR 0002). Sortie : docker compose up sur une machine vierge donne une instance fonctionnelle avec un premier admin.
+3. ✅ (2026-10-06, réserves triées le 2026-11-19, voir docs/backlog/README.md) Monorepo : nouveau dépôt, Compose à trois services, installation automatique de la base (ADR 0002). Sortie : docker compose up sur une machine vierge donne une instance fonctionnelle avec un premier admin.
 4. ✅ (2026-10-07, v5.0.0 publiée) Publication : gitleaks propre, anciens dépôts passés en privé et archivés (archivage : action de l'utilisateur sur GitHub).
-5. ✅ (2026-10-07, ADR 0007, v5.1.0 publiée, réserves dans docs/backlog/suites-etape-5.md) Chantier RBAC : matrice de permissions remplie, contrôle appliqué globalement, MCP en lecture seule. Sortie : tests rôle par endpoint verts (critère NON VÉRIFIÉ lors de la mise à jour du 2026-11-13 : livré, mais la couverture rôle par endpoint n'a pas été recontrôlée).
+5. ✅ (2026-10-07, ADR 0007, v5.1.0 publiée, réserves triées le 2026-11-19, voir docs/backlog/README.md) Chantier RBAC : matrice de permissions remplie, contrôle appliqué globalement, MCP en lecture seule. Sortie : tests rôle par endpoint verts (critère NON VÉRIFIÉ lors de la mise à jour du 2026-11-13 : livré, mais la couverture rôle par endpoint n'a pas été recontrôlée).
 
 ## 11. Règles de travail
 
