@@ -8,6 +8,19 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Corrigé
+- Mobile : la session ne coupe plus toutes les 15 minutes. Le mobile renouvelle seul son
+  jeton de connexion, comme le web, pendant toute la journée de poste (8 heures par
+  défaut). Les durées de session réglées dans `deploy/.env` (`ACCESS_TOKEN_EXPIRE_MINUTES`,
+  `REFRESH_TOKEN_EXPIRE_HOURS`) sont désormais prises en compte.
+- Accueil « Direction technique » : la partie « Idées d'amélioration », qui affichait
+  « Erreur » faute de fonctionnement côté serveur, est retirée ; la vue garde les demandes
+  d'intervention.
+- Suppression d'une action : une tâche « en cours » qui n'a plus aucune action revient à
+  « à faire » (événement d'audit système), et le lien action-tâche ne reste plus orphelin ni
+  ne bloque la suppression de la tâche. Migration 0017 : clés étrangères en cascade sur
+  `intervention_action_task`, après suppression des éventuels liens orphelins.
+
 ### [interne] Sécurité
 - Messages d'erreur de la base : seuls les refus métier connus (durée d'une action, bornes
   horaires, motif d'audit…) sont renvoyés tels quels ; tout autre message devient
@@ -16,6 +29,10 @@ mobile/CHANGELOG.md.
   « route publique » du middleware d'authentification est retirée. La route, déjà fermée
   sans jeton par le routeur des exports, refusait aussi les utilisateurs connectés ; elle
   est désormais servie à tout utilisateur connecté.
+- Journaux en ajout seul : la table de version d'alembic (`alembic_version_backend`) rejoint
+  `audit_log`, `permission_audit_log` et `security_log` parmi les tables que le rôle de
+  l'application ne peut ni modifier, ni supprimer, ni vider (REVOKE rejoué à chaque
+  démarrage). Test d'intégration ajouté.
 
 ## [5.10.0] — 2026-11-19
 

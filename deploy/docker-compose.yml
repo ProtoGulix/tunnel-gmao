@@ -57,6 +57,10 @@ services:
       # interventions sans action notifiés. Activée par défaut à l'installation.
       SCHEDULED_JOBS_ENABLED: ${SCHEDULED_JOBS_ENABLED:-true}
       SCHEDULED_JOBS_HOUR: ${SCHEDULED_JOBS_HOUR:-5}
+      # Durée de session : jeton d'accès (minutes), renouvelé seul par le web et le mobile
+      # tant que le jeton de rafraîchissement (heures, une journée de poste) est valide.
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      REFRESH_TOKEN_EXPIRE_HOURS: ${REFRESH_TOKEN_EXPIRE_HOURS:-8}
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]

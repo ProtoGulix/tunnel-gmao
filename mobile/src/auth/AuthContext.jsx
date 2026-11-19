@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { login as apiLogin, logout as apiLogout, getMe } from '../api/auth'
+import { SESSION_EXPIRED_EVENT } from '../lib/api/client'
 
 const AuthContext = createContext(null)
 
@@ -12,6 +13,13 @@ export function AuthProvider({ children }) {
       .then(setUser)
       .catch(() => setUser(null))
       .finally(() => setLoading(false))
+  }, [])
+
+  // Rafraîchissement du jeton impossible (refresh expiré ou révoqué) : retour à la connexion.
+  useEffect(() => {
+    const onExpired = () => setUser(null)
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
   }, [])
 
   const login = useCallback(async (email, password) => {

@@ -1,3 +1,5 @@
+**TRAITÉ (TRI-01, 2026-11-19) : rafraîchissement du jeton côté mobile, durées transmises par Compose.**
+
 # Mobile : jeton jamais rafraîchi, durées de jeton ignorées par Compose
 
 Tri du 2026-11-19, vérifié par l'agent principal ; l'utilisateur confirme des déconnexions

@@ -1001,7 +1001,37 @@ class InterventionActionRepository:
                     "Suppression impossible : une demande d'achat liée a déjà été dispatchée"
                 )
 
+            # Tâches « en cours » portées par cette action, relevées avant la suppression :
+            # le lien disparaît en cascade avec l'action.
+            cur.execute(
+                """
+                SELECT it.id::text
+                FROM intervention_action_task iat
+                JOIN intervention_task it ON it.id = iat.task_id
+                WHERE iat.action_id = %s AND it.status = 'in_progress'
+                FOR UPDATE OF it
+                """,
+                (action_id,),
+            )
+            in_progress_ids = [r[0] for r in cur.fetchall()]
+
             cur.execute("DELETE FROM intervention_action WHERE id = %s", (action_id,))
+
+            # Une tâche qui n'a plus aucune action revient à « à faire » (même transaction).
+            for task_id in in_progress_ids:
+                cur.execute(
+                    """
+                    UPDATE intervention_task
+                    SET status = 'todo', updated_at = NOW()
+                    WHERE id = %s AND status = 'in_progress'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM intervention_action_task WHERE task_id = %s
+                      )
+                    """,
+                    (task_id, task_id),
+                )
+                if cur.rowcount:
+                    _audit_task_from_action(task_id, 'in_progress', 'todo', action_id)
             conn.commit()
             return True
         except (ValidationError, NotFoundError):

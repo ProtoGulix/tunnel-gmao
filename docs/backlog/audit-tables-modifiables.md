@@ -1,3 +1,5 @@
+**TRAITÉ (TRI-03, 2026-11-19) : constat erroné du tri. Le REVOKE UPDATE, DELETE, TRUNCATE existait déjà pour audit_log, permission_audit_log et security_log (APPEND_ONLY_TABLES de bootstrap.py, ADR 0007 point 6) ; la table de version d'alembic y a été ajoutée, avec un test.**
+
 # Tables d'audit modifiables par le rôle de l'application
 
 Réserve de l'étape 3c, toujours vraie au tri du 2026-11-19 (vérifiée par l'agent principal).

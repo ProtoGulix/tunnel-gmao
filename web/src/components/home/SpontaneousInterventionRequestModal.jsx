@@ -6,7 +6,7 @@ import StatusCallout from '@/components/ui/StatusCallout';
 import { createInterventionRequest } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
-export default function SpontaneousInterventionRequestModal({ open, onOpenChange, onSuccess, initialType = 'standard' }) {
+export default function SpontaneousInterventionRequestModal({ open, onOpenChange, onSuccess }) {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -36,12 +36,12 @@ export default function SpontaneousInterventionRequestModal({ open, onOpenChange
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Content style={{ maxWidth: 560 }}>
         <Dialog.Title>
-          {initialType === 'amelioration' ? 'Nouvelle idée d\'amélioration' : 'Nouvelle demande d\'intervention'}
+          Nouvelle demande d&apos;intervention
         </Dialog.Title>
 
         {success && (
           <StatusCallout type="success">
-            {initialType === 'amelioration' ? 'Idée proposée avec succès' : 'Demande créée avec succès'}
+            Demande créée avec succès
           </StatusCallout>
         )}
         {error && <StatusCallout type="error">{error}</StatusCallout>}
@@ -52,7 +52,6 @@ export default function SpontaneousInterventionRequestModal({ open, onOpenChange
             onSubmit={handleSubmit}
             onCancel={() => onOpenChange(false)}
             saving={saving}
-            initialType={initialType}
           />
         )}
       </Dialog.Content>
@@ -64,5 +63,4 @@ SpontaneousInterventionRequestModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onOpenChange: PropTypes.func.isRequired,
   onSuccess: PropTypes.func,
-  initialType: PropTypes.oneOf(['standard', 'amelioration']),
 };

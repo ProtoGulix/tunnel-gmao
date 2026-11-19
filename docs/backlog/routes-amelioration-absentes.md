@@ -1,3 +1,5 @@
+**TRAITÉ (TRI-04, 2026-11-19) : partie « Idées d'amélioration » retirée du web (décision de l'utilisateur) ; idée au backlog : idees-amelioration.md.**
+
 # Tableau de bord web : routes « amelioration » inexistantes
 
 Réserve de l'étape 3d, toujours vraie au tri du 2026-11-19 (vérifiée par l'agent principal).

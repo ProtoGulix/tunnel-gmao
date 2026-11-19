@@ -1,3 +1,5 @@
+**TRAITÉ (TRI-02, 2026-11-19) : migration 0017 (clés étrangères en cascade, orphelins purgés) ; une tâche en cours sans action revient à « à faire ».**
+
 # Suppression d'une action : tâches « en cours » et liens orphelins
 
 Relevé au tri du 2026-11-19 (ancien backlog backend, point 14), vérifié par l'agent principal.
