@@ -6,6 +6,27 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Ajouté
+- Fiche équipement : le bloc Préventif indique d'un coup d'œil « Préventif à jour » ou
+  « N en retard ». La fenêtre Détail liste les interventions préventives (échéance, date de
+  réalisation, écart en pastille) et montre une courbe de l'avance ou du retard de chaque
+  plan, réalisation après réalisation.
+- Préventif : bouton « Lancer en avance » sur chaque plan de la fiche équipement, pour un
+  contrôle fait plus tôt que prévu (par exemple un contrôleur venu en avance). La demande est
+  créée tout de suite et suit le circuit habituel ; la prochaine échéance part de sa
+  clôture. Réservé aux responsables et administrateurs.
+- Santé des équipements : un préventif en retard passe l'équipement en « Attention »
+  (« N préventif(s) en retard »), sur le web comme sur le mobile, sauf si un problème plus
+  grave est déjà signalé. Le statut de marche (En service…) ne change pas.
+
+### [interne] Suivi du préventif
+- API : `GET /preventive-occurrences/history?machine_id=` (historique avec écart en jours,
+  négatif en avance) et `POST /preventive-occurrences/anticipate` (création immédiate de
+  l'occurrence et de sa demande, même code que la génération ; 409 si une occurrence est
+  déjà en cours, 422 si plan ou machine non éligibles).
+
 ## [5.9.1] — 2026-11-19
 
 ### Corrigé

@@ -50,6 +50,7 @@ class EquipementHealth(BaseModel):
     open_purchase_requests_count: int = 0
     purchase_request_status_counts: dict[str, int] | None = None
     has_affectation: bool = False
+    overdue_preventive_count: int = 0
     rules_triggered: list[str] | None = None
     source: EquipementHealthSource | None = None
 
@@ -290,6 +291,7 @@ class EquipementHealthOnly(BaseModel):
     open_purchase_requests_count: int = 0
     purchase_request_status_counts: dict[str, int] | None = None
     has_affectation: bool = False
+    overdue_preventive_count: int = 0
     rules_triggered: list[str] | None = None
     source: EquipementHealthSource | None = None
 

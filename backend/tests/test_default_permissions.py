@@ -170,9 +170,21 @@ def test_acheteur_n_ecrit_rien_sur_interventions_actions_taches_preventif():
         ("POST", "/intervention-tasks", "Intervention Tasks"),
         ("POST", "/preventive-plans", "Preventive Plans"),
         ("POST", "/preventive-occurrences/generate", "Preventive Occurrences"),
+        ("POST", "/preventive-occurrences/anticipate", "Preventive Occurrences"),
         ("POST", "/intervention-requests", "intervention-requests"),
     ):
         assert not default_allowed("ACHETEUR", ep(method, path, module)), path
+
+
+def test_lancement_en_avance_et_historique_par_role():
+    """PREV-14 : anticipate écrit comme generate (ADMIN, RESP) ; history se lit comme l'échéancier."""
+    anticipate = ep("POST", "/preventive-occurrences/anticipate", "Preventive Occurrences")
+    history = ep("GET", "/preventive-occurrences/history", "Preventive Occurrences")
+    assert default_allowed("ADMIN", anticipate) and default_allowed("RESP", anticipate)
+    for role in ("TECH", "ACHETEUR", "MCP"):
+        assert not default_allowed(role, anticipate), role
+    for role in ("ADMIN", "RESP", "TECH", "ACHETEUR", "MCP"):
+        assert default_allowed(role, history), role
 
 
 # --- MCP -----------------------------------------------------------------------------

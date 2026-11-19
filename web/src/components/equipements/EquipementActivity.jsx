@@ -1,18 +1,15 @@
 /**
- * @fileoverview Section Activité d'un équipement : demandes ouvertes, interventions, préventif
+ * @fileoverview Section Activité d'un équipement : demandes ouvertes, interventions
  * @module components/equipements/EquipementActivity
  */
 
-import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { Badge, Box, Button, Dialog, Flex, Text } from '@radix-ui/themes';
-import { CalendarClock } from 'lucide-react';
+import { Badge, Box, Flex, Text } from '@radix-ui/themes';
 import ErrorState from '@/components/ui/ErrorState';
 import LoadingState from '@/components/ui/LoadingState';
 import Pagination from '@/components/ui/Pagination';
 import { useEquipementActivity, ACTIVITY_PAGE_SIZE_OPTIONS } from '@/hooks/equipements/useEquipementActivity';
-import EquipementPreventifTab from '@/components/equipements/tabs/EquipementPreventifTab';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 import { Section, formatDate, linkStyle } from '@/components/equipements/EquipementDetailSections';
 import { STATUS_CONFIG, PRIORITY_BADGE_COLORS } from '@/config/interventionTypes';
@@ -134,39 +131,12 @@ export function InterventionsBlock({ list }) {
 }
 InterventionsBlock.propTypes = { list: PropTypes.object.isRequired };
 
-function PreventifBlock({ eq }) {
-  const [open, setOpen] = useState(false);
-  const summary = eq.preventive_occurrences_summary;
-  if (!summary && eq.preventive_plans == null) return null;
-  const pending = summary?.pending_count ?? 0;
-  return (
-    <Box>
-      <Text size="1" weight="bold" color="gray" style={{ display: 'block', marginBottom: 4 }}>Préventif</Text>
-      <Flex align="center" gap="3" wrap="wrap">
-        <Badge color={pending > 0 ? 'orange' : 'gray'} variant="soft">{pending} en attente</Badge>
-        {summary?.next_scheduled && <Text size="2" color="gray">Prochaine : {formatDate(summary.next_scheduled)}</Text>}
-        <Button size="1" variant="soft" color="gray" onClick={() => setOpen(true)}>
-          <CalendarClock size={13} /> Détail
-        </Button>
-      </Flex>
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Content maxWidth="600px">
-          <Dialog.Title>Maintenance préventive — {eq.code}</Dialog.Title>
-          <EquipementPreventifTab equipement={eq} />
-        </Dialog.Content>
-      </Dialog.Root>
-    </Box>
-  );
-}
-PreventifBlock.propTypes = { eq: PropTypes.object.isRequired };
-
 export default function ActivitySection({ eq, includeDescendants }) {
   const { requests, interventions } = useEquipementActivity(String(eq.id), includeDescendants);
   return (
     <Section title="Activité">
       <OpenRequests list={requests} />
       <InterventionsBlock list={interventions} />
-      <PreventifBlock eq={eq} />
     </Section>
   );
 }

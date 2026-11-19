@@ -32,3 +32,31 @@ export function overdueBadgeLabel(days) {
   if (!days || days <= 0) return null;
   return `+${days} j`;
 }
+
+/** Écart réalisation / échéance : « −5 j » en avance, « +12 j » en retard, « à l'heure » à 0 ; null si non terminée. */
+export function deltaBadgeLabel(delta) {
+  if (delta === null || delta === undefined) return null;
+  if (delta === 0) return "à l'heure";
+  return delta < 0 ? `\u2212${-delta} j` : `+${delta} j`;
+}
+
+export const deltaBadgeColor = (delta) => (delta > 0 ? 'red' : delta < 0 ? 'green' : 'gray');
+
+/**
+ * Points de la courbe d'écart : une ligne par date de réalisation, une colonne par plan
+ * (clé = plan_code). Seules les occurrences terminées (delta_days connu) comptent.
+ * @returns {{ rows: Array<Object>, plans: Array<{ code: string, label: string }> }}
+ */
+export function historyChartData(items) {
+  const done = items.filter((r) => r.done_on && r.delta_days !== null && r.delta_days !== undefined);
+  const byDate = new Map();
+  const plans = new Map();
+  for (const r of done) {
+    plans.set(r.plan_code, r.plan_label);
+    const row = byDate.get(r.done_on) ?? { date: r.done_on };
+    row[r.plan_code] = r.delta_days;
+    byDate.set(r.done_on, row);
+  }
+  const rows = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return { rows, plans: [...plans].map(([code, label]) => ({ code, label })) };
+}

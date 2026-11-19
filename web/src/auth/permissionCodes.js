@@ -120,6 +120,8 @@ export const PERM = {
     replaceSteps: 'preventive_plans:replace_plan_steps',
     skipOccurrence: 'preventive_occurrences:skip_occurrence',
     schedule: 'preventive_occurrences:get_schedule',
+    history: 'preventive_occurrences:get_history',
+    anticipate: 'preventive_occurrences:anticipate_occurrence',
   },
   adminRef: {
     createSubcategory: 'admin:create_action_subcategory',
