@@ -12,6 +12,8 @@ import StockPage from '../pages/stock/StockPage'
 import InterventionRequestsPage from '../pages/intervention-requests/InterventionRequestsPage'
 import EquipementsPage from '../pages/equipements/EquipementsPage'
 import QrCodePage from '../pages/qrcode/QrCodePage'
+import PreventivePage from '../pages/preventive/PreventivePage'
+import NotificationsPage from '../pages/notifications/NotificationsPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -51,6 +53,10 @@ export default function AppRoutes() {
         {/* Équipements — UUID dans l'URL pour QR code */}
         <Route path="equipements" element={<ErrorBoundary><EquipementsPage /></ErrorBoundary>} />
         <Route path="equipements/:uuid" element={<ErrorBoundary><EquipementsPage /></ErrorBoundary>} />
+
+        {/* Préventif à faire et notifications */}
+        <Route path="preventif" element={<ErrorBoundary><PreventivePage /></ErrorBoundary>} />
+        <Route path="notifications" element={<ErrorBoundary><NotificationsPage /></ErrorBoundary>} />
 
         {/* QR Code */}
         <Route path="qrcode" element={<ErrorBoundary><QrCodePage /></ErrorBoundary>} />

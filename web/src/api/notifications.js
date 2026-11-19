@@ -69,3 +69,22 @@ export async function markAllNotificationsRead() {
 export async function requestPointage(interventionId, techIds) {
   await api.post(`/interventions/${interventionId}/request-pointage`, { tech_ids: techIds });
 }
+
+/**
+ * Masque une notification de l'utilisateur courant (suppression côté interface, la ligne reste en base).
+ * @param {string} id - UUID de la notification
+ * @returns {Promise<void>}
+ */
+export async function dismissNotification(id) {
+  await api.delete(`/notifications/${id}`);
+}
+
+/**
+ * Masque les notifications de l'utilisateur courant.
+ * @param {boolean} onlyRead - true : seulement les lues ; false : toutes
+ * @returns {Promise<number>} nombre de notifications masquées
+ */
+export async function dismissNotifications(onlyRead) {
+  const response = await api.delete('/notifications', { params: { only_read: onlyRead } });
+  return Number(response.data?.dismissed ?? 0);
+}

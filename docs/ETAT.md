@@ -7,13 +7,20 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Version en cours de publication : **v5.8.0** (2026-11-18) : marquage des fiches
-  imprimées après l'export de masse (IMPR-01, IMPR-02), historique d'un équipement avec
-  les archivées et dates de signalement complétées (IMPR-03 à 05), lien de la fiche
-  d'intervention vers la fiche équipement (LIEN-01). Le code est arrivé sur main par la
-  PR #11, fusionnée avant la préparation de version : numéros et CHANGELOG suivent par une
-  seconde PR, le tag v5.8.0 se pose sur sa fusion. Migration 0014 à jouer en production
-  (au démarrage de l'API, à la mise à jour) ; base de dev déjà en 0014.
+- Dernière version publiée : **v5.9.0** (2026-11-18, tag sur main ; production à mettre à
+  jour par l'utilisateur) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
+  PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
+  notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des
+  notifications, pastille des retards, suppression des notifications par masquage, cloche
+  mobile sur chaque écran (PREV-10 à PREV-12). Migrations 0015 et 0016 à jouer en
+  production (au démarrage de l'API) ; tâche quotidienne active par défaut
+  (`SCHEDULED_JOBS_ENABLED=false` pour la couper). Avant la mise à jour : compter le volume
+  du premier passage (lecture seule) ; après : constater le verrou (un seul passage).
+- v5.8.0 (2026-11-18, PR #11 pour le code et #12 pour la préparation de version, tag sur main) :
+  marquage des fiches imprimées après l'export de masse (IMPR-01, IMPR-02), historique
+  d'un équipement avec les archivées et dates de signalement complétées (IMPR-03 à 05),
+  lien de la fiche d'intervention vers la fiche équipement (LIEN-01). Migration 0014 à
+  jouer en production (au démarrage de l'API, à la mise à jour) ; base de dev déjà en 0014.
 - v5.7.0 (2026-11-17, PR #10, tag sur main) :
   liste des interventions plus lisible et en-tête du panneau (LIST-01), forme unique des
   réponses dans le client web (ENV-02, interne).
@@ -36,7 +43,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis : rien de plus que la 5.8.0.
+- develop contient depuis la 5.9.0 : rien.
 
 ## Feuille de route fondatrice
 
@@ -48,6 +55,7 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Préventif automatisé : échéancier glissant (référence = clôture de la demande), génération automatique quotidienne une semaine avant l'échéance, retards notifiés à tous, alarme « sans action depuis 7 jours » avec relance hebdo, cloche mobile ; décisions de l'utilisateur du 2026-11-18 ; ADR et fiches validés le 2026-11-18 ; PREV-01 à PREV-08 faites et intégrées dans la branche (401 tests d'intégration verts ; PREV-08 : demande rejetée = occurrence ignorée et régénérée, machines hors service exclues), essai à l'écran web et mobile validé par l'utilisateur, reviewer APPROUVÉ, fusionné dans develop le 2026-11-18 ; tâche quotidienne désactivée par défaut | — | ADR 0023, [PREV-01](taches/PREV-01-backend-echeancier.md) à [PREV-07](taches/PREV-07-mobile-preventif-et-cloche.md) |
 | fait | Liste des interventions plus lisible (sélecteur de groupe, équipement en valeur), en-tête du panneau, correctif de l'en-tête vidé après un changement de statut ; essayée à l'écran, fusionnée le 2026-11-17, reviewer APPROUVÉ | — | [LIST-01](taches/LIST-01-web-liste-interventions-lisible.md) |
 | fait | Lien de la fiche d'intervention vers la fiche équipement (code et nom de l'en-tête cliquables) | feat/lien-fiche-equipement | [LIEN-01](taches/LIEN-01-web-lien-fiche-equipement.md) |
 | fait | Historique d'un équipement : archivées affichées (`include_printed`), statut et date corrigés, « Voir les interventions » sans période ; 56 dates de signalement vides complétées (migration 0014, audit DATA_BACKFILL, jouée en dev), date du jour par défaut à la création ; bloc « Archivées » d'IMPR-02 retiré ; fusionné le 2026-11-17, reviewer APPROUVÉ | — | [IMPR-03](taches/IMPR-03-historique-equipement-archivees.md), [IMPR-04](taches/IMPR-04-migration-dates-signalement.md), [IMPR-05](taches/IMPR-05-date-signalement-par-defaut.md) |
@@ -57,6 +65,8 @@ v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de 
 | fait | Tableau de bord d'un équipement : section « État et évolution » du panneau web (Recharts, ADR 0020), modale des interventions, fiche et sous-équipements compactés ; fusionné le 2026-11-16 après essai à l'écran, reviewer APPROUVÉ | — | ADR 0020, spike 0004, [TDB-01](taches/TDB-01-backend-tableau-de-bord-equipement.md), [TDB-02](taches/TDB-02-web-section-etat-evolution.md), [TDB-03](taches/TDB-03-web-finition-visuelle.md) |
 | fait | Bascule de la production 3.57.0 vers la 5.x (fiches BASC-01 à BASC-04, spike 0003) : répétée sur une copie, script automatique essayé, fusionnée le 2026-11-15 ; bascule réelle à faire depuis une version publiée | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Export de masse des fiches fermées (EXPM-01, EXPM-02), fusionné le 2026-11-16 après essai à l'écran ; plafond 100 ; bootstrap rejoué sur la base de dev, à rejouer en production à sa mise à jour | — | [EXPM-01](taches/EXPM-01-backend-export-masse-fiches.md), [EXPM-02](taches/EXPM-02-web-bouton-export-masse.md) |
+| fait | Notifications et retards : clic d'une notification qui ouvre l'élément (web), pastille « +N j » des retards (web et mobile), tout le stock en retard notifié au premier passage (amendement de l'ADR 0023), tri stable de la liste, suppression des notifications par masquage (migration 0016, jouée en dev) ; essai à l'écran validé le 2026-11-18 | fix/notifications-et-retards | [PREV-10](taches/PREV-10-clic-notification-et-retards-visibles.md), [PREV-11](taches/PREV-11-suppression-des-notifications.md) |
+| fait | Finitions des notifications avant la version : marquer lue une notification masquée refusé (404) ; mobile : cloche dans l'en-tête de chaque écran (relevé unique du compteur), « Charger plus », boutons de l'écran Notifications ; essai à l'écran validé le 2026-11-18 | fix/notifications-finitions | [PREV-12](taches/PREV-12-finitions-notifications.md) |
 | à cadrer | Contraintes d'intégrité perdues par le schéma de référence, [backlog](backlog/contraintes-perdues-reference.md) | à créer | spike 0003 |
 | fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
@@ -82,9 +92,13 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-18 : tout le stock en retard (préventifs, interventions sans action) est notifié au premier passage, puis chaque semaine (amendement de l'ADR 0023, l'utilisateur revient sur « le stock ressort à son prochain palier ») ; une notification se supprime par masquage (la ligne reste en base pour la déduplication), une par une, les lues ou toutes.
+
+2026-11-18 : préventif automatisé. Périodicité glissante, référence = date de clôture de la demande liée à l'occurrence ; prévenance globale de 7 jours ; tâche quotidienne dans l'API (ADR 0023) avec motif SYSTEM_SCHEDULE ; préventifs en retard et interventions sans action depuis 7 jours (attentes comprises) notifiés à tous les utilisateurs actifs, une notification par élément puis une relance hebdomadaire, le stock ressortant à son prochain palier (amendé le même jour : tout le stock sort au premier passage, voir ci-dessus) ; cloche sur le mobile ; mail hebdo et relevé des heures au backlog.
 
 2026-11-16 : page « Organisation » ouverte à tous les rôles, chiffres d'équipe seulement, définitions figées par l'ADR 0021.
 
@@ -106,6 +120,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
    routinière, ADMIN et RESP), validée à l'écran ; bootstrap rejoué sur la base de dev

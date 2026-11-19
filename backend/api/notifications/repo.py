@@ -1,5 +1,6 @@
 """Requêtes pour le domaine notifications"""
 
+from datetime import date
 from typing import Any, Dict, List, Optional
 
 from psycopg2.extras import Json
@@ -25,8 +26,10 @@ class NotificationRepository:
                 f"""
                 SELECT {_COLUMNS}
                 FROM notification
-                WHERE user_id = %s
-                ORDER BY created_at DESC
+                WHERE user_id = %s AND dismissed_at IS NULL
+                -- id départage les notifications d'une même transaction (même created_at) :
+                -- sans lui, l'ordre change d'une page à l'autre (doublons et manques).
+                ORDER BY created_at DESC, id DESC
                 LIMIT %s OFFSET %s
                 """,
                 (user_id, limit, offset),
@@ -40,12 +43,12 @@ class NotificationRepository:
             release_connection(conn)
 
     def count_for_user(self, user_id: str) -> int:
-        """Compte le nombre total de notifications d'un utilisateur (toutes confondues)"""
+        """Compte les notifications visibles d'un utilisateur (les masquées sont ignorées)"""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT COUNT(*) FROM notification WHERE user_id = %s",
+                "SELECT COUNT(*) FROM notification WHERE user_id = %s AND dismissed_at IS NULL",
                 (user_id,),
             )
             return int(cur.fetchone()[0])
@@ -60,7 +63,8 @@ class NotificationRepository:
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT COUNT(*) FROM notification WHERE user_id = %s AND read_at IS NULL",
+                "SELECT COUNT(*) FROM notification "
+                "WHERE user_id = %s AND read_at IS NULL AND dismissed_at IS NULL",
                 (user_id,),
             )
             return int(cur.fetchone()[0])
@@ -72,14 +76,15 @@ class NotificationRepository:
     def mark_read(self, notification_id: str, user_id: str) -> Dict[str, Any]:
         """Marque une notification comme lue.
 
-        Lève NotFoundError si la notification n'existe pas, ForbiddenError si
-        elle n'appartient pas à l'utilisateur courant.
+        Lève NotFoundError si la notification n'existe pas ou est masquée (elle n'est plus
+        visible de son destinataire), ForbiddenError si elle n'appartient pas à l'utilisateur
+        courant.
         """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute(
-                "SELECT user_id FROM notification WHERE id = %s",
+                "SELECT user_id FROM notification WHERE id = %s AND dismissed_at IS NULL",
                 (notification_id,),
             )
             row = cur.fetchone()
@@ -135,6 +140,58 @@ class NotificationRepository:
         finally:
             release_connection(conn)
 
+    def dismiss(self, notification_id: str, user_id: str) -> int:
+        """Masque une notification de l'utilisateur (la ligne reste en base).
+
+        Lève NotFoundError si elle n'existe pas, n'est pas la sienne ou est déjà masquée :
+        le même 404 dans les trois cas, pour ne rien révéler sur les notifications d'autrui.
+        """
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                UPDATE notification SET dismissed_at = now()
+                WHERE id = %s AND user_id = %s AND dismissed_at IS NULL
+                """,
+                (notification_id, user_id),
+            )
+            if cur.rowcount == 0:
+                raise NotFoundError(f"Notification {notification_id} non trouvée")
+            conn.commit()
+            return cur.rowcount
+        except NotFoundError:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "masquage de la notification")
+        finally:
+            release_connection(conn)
+
+    def dismiss_all(self, user_id: str, only_read: bool = False) -> int:
+        """Masque les notifications de l'utilisateur (seulement les lues si only_read)."""
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            # Fragment fixe choisi par un booléen : aucune valeur client dans le SQL.
+            read_filter = "AND read_at IS NOT NULL" if only_read else ""
+            cur.execute(
+                f"""
+                UPDATE notification SET dismissed_at = now()
+                WHERE user_id = %s AND dismissed_at IS NULL {read_filter}
+                """,
+                (user_id,),
+            )
+            dismissed = cur.rowcount
+            conn.commit()
+            return dismissed
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "masquage des notifications")
+        finally:
+            release_connection(conn)
+
     def create(
         self,
         user_id: str,
@@ -170,6 +227,58 @@ class NotificationRepository:
         except Exception as e:
             conn.rollback()
             raise_db_error(e, "création de la notification")
+        finally:
+            release_connection(conn)
+
+    def notify_active_users_once(
+        self,
+        type_: str,
+        entity_type: str,
+        entity_id: str,
+        message: str,
+        milestone: date,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> int:
+        """Notifie chaque utilisateur actif d'un palier de relance, une seule fois.
+
+        Le palier est rangé dans `data` (clé `milestone`, date ISO) : rien n'est émis si une
+        notification de même (type, entité, palier) existe déjà, ce qui rend la tâche
+        quotidienne idempotente (ADR 0023, point 5). Retourne le nombre de notifications créées.
+        """
+        milestone_key = milestone.isoformat()
+        payload = {**(data or {}), "milestone": milestone_key}
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO notification (user_id, type, entity_type, entity_id, message, data)
+                SELECT u.id, %s, %s, %s::uuid, %s, %s::jsonb
+                FROM tunnel_user u
+                WHERE u.is_active
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notification n
+                      WHERE n.type = %s AND n.entity_id = %s::uuid
+                        AND n.data->>'milestone' = %s
+                  )
+                """,
+                (
+                    type_,
+                    entity_type,
+                    entity_id,
+                    message,
+                    Json(payload),
+                    type_,
+                    entity_id,
+                    milestone_key,
+                ),
+            )
+            created = cur.rowcount
+            conn.commit()
+            return created
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "création des notifications de relance")
         finally:
             release_connection(conn)
 

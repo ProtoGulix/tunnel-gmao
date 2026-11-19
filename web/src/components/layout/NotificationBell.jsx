@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { Popover, Flex, Text, Button, Separator } from '@radix-ui/themes';
+import { Popover, Flex, Text, Button, Separator, AlertDialog } from '@radix-ui/themes';
 import { Bell } from 'lucide-react';
 import NotificationListItem, { resolveEntityPath } from '@/components/layout/NotificationListItem';
 
@@ -33,6 +33,8 @@ const FLASH_DURATION_MS = 2400;
  * @param {Function} props.onLoadMore
  * @param {Function} props.onMarkRead
  * @param {Function} props.onMarkAllRead
+ * @param {Function} props.onDismiss - Supprime une notification (id)
+ * @param {Function} props.onDismissAll - Supprime les lues (true) ou toutes (false)
  * @param {Object} props.colors
  * @param {boolean} [props.compact=false] - Icône seule sans libellé (header mobile contraint)
  */
@@ -45,6 +47,8 @@ export default function NotificationBell({
   onLoadMore,
   onMarkRead,
   onMarkAllRead,
+  onDismiss,
+  onDismissAll,
   colors,
   compact = false,
 }) {
@@ -141,6 +145,39 @@ export default function NotificationBell({
           </Button>
         </Flex>
         <Separator size="4" />
+        <Flex align="center" justify="between" px="3" py="1">
+          <Button
+            size="1"
+            variant="ghost"
+            color="gray"
+            disabled={!items.some((n) => n.read_at)}
+            onClick={() => onDismissAll(true)}
+          >
+            Supprimer les lues
+          </Button>
+          <AlertDialog.Root>
+            <AlertDialog.Trigger>
+              <Button size="1" variant="ghost" color="red" disabled={items.length === 0}>
+                Tout supprimer
+              </Button>
+            </AlertDialog.Trigger>
+            <AlertDialog.Content maxWidth="400px">
+              <AlertDialog.Title>Tout supprimer ?</AlertDialog.Title>
+              <AlertDialog.Description size="2">
+                Toutes vos notifications seront supprimées de la liste.
+              </AlertDialog.Description>
+              <Flex gap="3" mt="4" justify="end">
+                <AlertDialog.Cancel>
+                  <Button variant="soft" color="gray">Annuler</Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action>
+                  <Button color="red" onClick={() => onDismissAll(false)}>Tout supprimer</Button>
+                </AlertDialog.Action>
+              </Flex>
+            </AlertDialog.Content>
+          </AlertDialog.Root>
+        </Flex>
+        <Separator size="4" />
         <Flex direction="column" gap="1" p="2" style={{ maxHeight: 420, overflowY: 'auto' }}>
           {items.length === 0 && !loading && (
             <Text size="2" color="gray" style={{ padding: '1rem', textAlign: 'center' }}>
@@ -148,7 +185,7 @@ export default function NotificationBell({
             </Text>
           )}
           {items.map((notification) => (
-            <NotificationListItem key={notification.id} notification={notification} onOpen={handleItemOpen} />
+            <NotificationListItem key={notification.id} notification={notification} onOpen={handleItemOpen} onDismiss={onDismiss} />
           ))}
           {hasMore && (
             <Button variant="soft" size="1" mt="1" loading={loading} onClick={onLoadMore}>
@@ -170,6 +207,8 @@ NotificationBell.propTypes = {
   onLoadMore: PropTypes.func.isRequired,
   onMarkRead: PropTypes.func.isRequired,
   onMarkAllRead: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+  onDismissAll: PropTypes.func.isRequired,
   colors: PropTypes.shape({
     text: PropTypes.string.isRequired,
   }).isRequired,

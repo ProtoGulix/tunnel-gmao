@@ -19,6 +19,8 @@ export default function NotificationBellContainer({ colors, compact = false }) {
     loadMore,
     markRead,
     markAllRead,
+    dismiss,
+    dismissAll,
   } = useNotificationCenter();
 
   return (
@@ -31,6 +33,8 @@ export default function NotificationBellContainer({ colors, compact = false }) {
       onLoadMore={loadMore}
       onMarkRead={markRead}
       onMarkAllRead={markAllRead}
+      onDismiss={dismiss}
+      onDismissAll={dismissAll}
       colors={colors}
       compact={compact}
     />

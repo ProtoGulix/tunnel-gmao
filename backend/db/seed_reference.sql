@@ -335,6 +335,7 @@ SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(
 --
 
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'SYSTEM_CASCADE', 'Mutation automatique du système', 'system', NULL, NULL, '#64748b', 'Mutation produite par le système lui-même (cascade, génération, acceptation automatique), sans décision d''un utilisateur.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'SYSTEM_SCHEDULE', 'Génération planifiée du système', 'system', NULL, NULL, '#64748b', 'Création produite par une tâche planifiée du système (génération des occurrences préventives), sans décision d''un utilisateur.', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
 
 --

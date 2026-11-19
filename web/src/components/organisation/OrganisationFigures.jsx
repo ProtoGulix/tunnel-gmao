@@ -78,6 +78,19 @@ function generationTile(p, now) {
   };
 }
 
+// Compte des lignes « en retard » de la route d'échéancier ; null tant que la route n'a pas répondu
+function overdueTile(count) {
+  return {
+    title: 'Préventifs en retard',
+    sentence: count === 0
+      ? 'Préventifs en retard : aucun.'
+      : `Préventifs en retard : ${count} plan${count > 1 ? 's' : ''} sur équipement${count > 1 ? 's' : ''}.`,
+    level: count === 0 ? 'ok' : 'alert',
+    statusLabel: count === 0 ? 'À jour' : 'En retard',
+    definition: DEFINITIONS.overdue,
+  };
+}
+
 function partsTile(w) {
   return {
     title: 'Attente de pièces',
@@ -90,11 +103,12 @@ function partsTile(w) {
   };
 }
 
-/** Trois tuiles d'état actuel (hors période) */
-export function StateTiles({ preventive, waitingParts, now }) {
+/** Tuiles d'état actuel (hors période) */
+export function StateTiles({ preventive, waitingParts, overdueCount, now }) {
   const tiles = [preventiveTile(preventive), generationTile(preventive, now), partsTile(waitingParts)];
+  if (overdueCount != null) tiles.splice(2, 0, overdueTile(overdueCount));
   return (
-    <Grid columns={{ initial: '1', md: '3' }} gap="3" mb="4">
+    <Grid columns={{ initial: '1', md: '2', lg: tiles.length > 3 ? '4' : '3' }} gap="3" mb="4">
       {tiles.map((t) => <StateTile key={t.title} {...t} />)}
     </Grid>
   );
@@ -102,6 +116,7 @@ export function StateTiles({ preventive, waitingParts, now }) {
 StateTiles.propTypes = {
   preventive: PropTypes.object.isRequired,
   waitingParts: PropTypes.object.isRequired,
+  overdueCount: PropTypes.number,
   now: PropTypes.instanceOf(Date),
 };
 

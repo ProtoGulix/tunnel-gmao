@@ -6,18 +6,17 @@
 
 import PropTypes from 'prop-types';
 import { Badge, Flex, Text, Box } from '@radix-ui/themes';
-import { ClipboardList, Wrench, Info } from 'lucide-react';
+import { CalendarClock, ClipboardList, Wrench, Info, X } from 'lucide-react';
 import { getTimeAgo } from '@/lib/utils/actionUtils';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
-// Icône par type de notification. `di_a_traiter`/`intervention_a_cloturer`/
-// `preventif_echeance` sont accueillis par le backend mais pas encore tous émis —
-// tout type inconnu retombe sur l'icône générique plutôt que de casser le rendu.
+// Icône par type de notification. Tout type inconnu retombe sur l'icône
+// générique plutôt que de casser le rendu.
 const TYPE_ICONS = {
   di_a_traiter: ClipboardList,
   pointage_demande: Wrench,
   intervention_a_cloturer: Wrench,
-  preventif_echeance: ClipboardList,
+  preventif_echeance: CalendarClock,
 };
 
 // Rendu structuré par type — met en valeur demandeur/machine plutôt que
@@ -47,6 +46,13 @@ function DiATraiterContent({ notification, isUnread }) {
 }
 DiATraiterContent.propTypes = { notification: PropTypes.object.isRequired, isUnread: PropTypes.bool };
 
+// Libellé court du type, en tête de ligne ; le texte détaillé reste `message`
+// (aucune clé de `data` n'est exigée pour les types préventif).
+const TYPE_LABELS = {
+  preventif_echeance: 'Préventif',
+  intervention_a_cloturer: 'À clôturer',
+};
+
 const TYPE_CONTENT = {
   di_a_traiter: DiATraiterContent,
 };
@@ -65,10 +71,18 @@ export function resolveEntityPath(notification) {
   if (entityType === 'intervention') {
     return entityCodeUrl('intervention', entityId);
   }
+  if (entityType === 'preventive_occurrence') {
+    // L'occurrence n'a pas de page propre : on suit la demande ou l'intervention liée si
+    // la notification les porte, sinon on ouvre l'échéancier.
+    const d = notification.data ?? {};
+    if (d.intervention_id) return entityCodeUrl('intervention', d.intervention_id);
+    if (d.di_id) return `/interventions?tab=demandes&id=${d.di_id}`;
+    return '/preventive?view=echeancier';
+  }
   return null;
 }
 
-export default function NotificationListItem({ notification, onOpen }) {
+export default function NotificationListItem({ notification, onOpen, onDismiss }) {
   const Icon = TYPE_ICONS[notification.type] ?? Info;
   const Content = TYPE_CONTENT[notification.type];
   const isUnread = !notification.read_at;
@@ -97,6 +111,11 @@ export default function NotificationListItem({ notification, onOpen }) {
       />
       <Icon size={16} style={{ marginTop: 2, flexShrink: 0, color: 'var(--gray-10)' }} />
       <Flex direction="column" gap="1" style={{ minWidth: 0, flex: 1 }}>
+        {TYPE_LABELS[notification.type] && (
+          <Badge size="1" variant="soft" color={notification.type === 'preventif_echeance' ? 'orange' : 'gray'} style={{ alignSelf: 'flex-start' }}>
+            {TYPE_LABELS[notification.type]}
+          </Badge>
+        )}
         {Content
           ? <Content notification={notification} isUnread={isUnread} />
           : (
@@ -106,6 +125,26 @@ export default function NotificationListItem({ notification, onOpen }) {
           )}
         <Text size="1" color="gray">{getTimeAgo(notification.created_at)}</Text>
       </Flex>
+      <button
+        type="button"
+        aria-label="Supprimer la notification"
+        title="Supprimer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss(notification.id);
+        }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--gray-10)',
+          padding: 4,
+          display: 'flex',
+          flexShrink: 0,
+        }}
+      >
+        <X size={14} />
+      </button>
     </Flex>
   );
 }
@@ -122,4 +161,5 @@ NotificationListItem.propTypes = {
     created_at: PropTypes.string,
   }).isRequired,
   onOpen: PropTypes.func.isRequired,
+  onDismiss: PropTypes.func.isRequired,
 };

@@ -60,3 +60,22 @@ def mark_read(
     """Marque une notification comme lue. 404 si absente, 403 si elle n'appartient pas à l'utilisateur."""
     uid = _require_user_id(user_id)
     return single(repo.mark_read(notification_id, uid))
+
+
+@router.delete("/{notification_id}")
+def dismiss_notification(
+    notification_id: str, user_id: str | None = Depends(require_authenticated)
+) -> Dict[str, Any]:
+    """Masque une notification de l'utilisateur courant. 404 si absente, d'un autre ou déjà masquée."""
+    uid = _require_user_id(user_id)
+    return {"dismissed": repo.dismiss(notification_id, uid)}
+
+
+@router.delete("")
+def dismiss_notifications(
+    only_read: bool = Query(False),
+    user_id: str | None = Depends(require_authenticated),
+) -> Dict[str, Any]:
+    """Masque les notifications de l'utilisateur courant (seulement les lues si only_read)."""
+    uid = _require_user_id(user_id)
+    return {"dismissed": repo.dismiss_all(uid, only_read=only_read)}

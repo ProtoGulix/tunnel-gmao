@@ -33,12 +33,22 @@ class Settings(BaseSettings):
 
     # API
     API_TITLE: str = "GMAO API"
-    API_VERSION: str = "5.8.0"
+    API_VERSION: str = "5.9.0"
     API_ENV: str = os.getenv("API_ENV", "development")
     AUTH_DISABLED: bool = os.getenv("AUTH_DISABLED", "false").lower() == "true"
     # Durée de vie du cache des permissions (secondes) : délai maximal avant qu'un
     # worker voie une modification de la matrice faite par l'admin (ADR 0007).
     PERMISSION_CACHE_TTL_SECONDS: float = float(os.getenv("PERMISSION_CACHE_TTL_SECONDS", "30"))
+    # Prévenance de l'échéancier du préventif (jours) : une échéance dans ce délai est « due_soon »
+    # (ADR 0023).
+    PREVENTIVE_LEAD_DAYS: int = int(os.getenv("PREVENTIVE_LEAD_DAYS", "7"))
+    # Tâche quotidienne du système (ADR 0023). DÉSACTIVÉE par défaut : une installation
+    # (ou une base qui n'est pas la sienne) ne génère ni ne notifie rien sans l'avoir demandé.
+    SCHEDULED_JOBS_ENABLED: bool = os.getenv("SCHEDULED_JOBS_ENABLED", "false").lower() == "true"
+    # Heure (0 à 23, heure du serveur) du passage quotidien, en plus du passage au démarrage.
+    SCHEDULED_JOBS_HOUR: int = int(os.getenv("SCHEDULED_JOBS_HOUR", "5"))
+    # Relance des retards : un palier tous les N jours (échéance + 1, + 8, + 15...) (ADR 0023).
+    REMINDER_INTERVAL_DAYS: int = int(os.getenv("REMINDER_INTERVAL_DAYS", "7"))
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
 
@@ -99,6 +109,21 @@ if settings.API_ENV not in _VALID_API_ENVS:
         "L'API refuse de démarrer.",
         settings.API_ENV,
         ", ".join(_VALID_API_ENVS),
+    )
+    sys.exit(1)
+
+if not 0 <= settings.SCHEDULED_JOBS_HOUR <= 23:
+    logger.critical(
+        "ERREUR DE CONFIGURATION CRITIQUE : SCHEDULED_JOBS_HOUR=%r hors de 0 à 23. "
+        "L'API refuse de démarrer.",
+        settings.SCHEDULED_JOBS_HOUR,
+    )
+    sys.exit(1)
+
+if settings.REMINDER_INTERVAL_DAYS < 1:
+    logger.critical(
+        "ERREUR DE CONFIGURATION CRITIQUE : REMINDER_INTERVAL_DAYS doit valoir au moins 1. "
+        "L'API refuse de démarrer."
     )
     sys.exit(1)
 

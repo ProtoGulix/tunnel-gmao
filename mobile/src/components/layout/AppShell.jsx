@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { BottomNav } from '../ui/BottomNav'
+import { NotificationCountProvider } from '../../hooks/notifications/useNotificationCount'
 import { useServerHealth } from '../../hooks/shared/useServerHealth'
 
 const STATUS_CONFIG = {
@@ -23,12 +24,14 @@ function ServerStatusBar() {
 
 export default function AppShell() {
   return (
-    <div className="flex flex-col h-full bg-tunnel-bg safe-top">
-      <ServerStatusBar />
-      <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'var(--bottom-nav-height)' }}>
-        <Outlet />
-      </main>
-      <BottomNav />
-    </div>
+    <NotificationCountProvider>
+      <div className="flex flex-col h-full bg-tunnel-bg safe-top">
+        <ServerStatusBar />
+        <main className="flex-1 overflow-y-auto" style={{ paddingBottom: 'var(--bottom-nav-height)' }}>
+          <Outlet />
+        </main>
+        <BottomNav />
+      </div>
+    </NotificationCountProvider>
   )
 }

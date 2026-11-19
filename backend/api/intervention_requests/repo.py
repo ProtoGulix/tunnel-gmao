@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from api.audits.events import record_audit_event
+from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, IN_PROGRESS_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import (
@@ -147,6 +147,7 @@ logger = logging.getLogger(__name__)
 
 # Motif des événements d'audit déposés par le système (migration 0007, catégorie system).
 SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
+REJECTED_SKIP_REASON = "Demande rejetée"
 
 
 class InterventionRequestRepository:
@@ -781,21 +782,12 @@ class InterventionRequestRepository:
                         request_id,
                     )
 
-            # ── Rejet : remettre l'occurrence préventive liée en pending ──
+            # ── Rejet : l'occurrence préventive liée est ignorée (PREV-08) ──
+            # di_id est conservé : il identifie une occurrence ignorée parce que sa demande a
+            # été rejetée, que l'échéance glissante ne prend pas pour référence (le préventif
+            # reste dû et sera régénéré). Même transaction que le rejet (ADR 0018).
             elif status_to == "rejetee":
-                cur.execute(
-                    """
-                    UPDATE preventive_occurrence
-                    SET status = 'pending', di_id = NULL
-                    WHERE di_id = %s
-                    """,
-                    (request_id,),
-                )
-                if cur.rowcount:
-                    logger.info(
-                        "Demande %s rejetée : occurrence préventive remise en pending",
-                        request_id,
-                    )
+                self._skip_occurrences_of_rejected_request(cur, request_id)
 
             # Appliquer la transition (flag pour éviter double-trigger)
             with skip_request_status_log(cur):
@@ -1078,6 +1070,39 @@ class InterventionRequestRepository:
                 is_system=True,
                 reason_code=SYSTEM_CASCADE_REASON,
             )
+
+    def _skip_occurrences_of_rejected_request(self, cur: Any, request_id: str) -> None:
+        """Passe à `skipped` l'occurrence active d'une demande rejetée, avec son audit système.
+
+        Deux événements `status_changed` et `skip_reason_changed`, comme le skip manuel : le
+        rejet garde son propre motif, l'occurrence porte celui du système.
+        """
+        cur.execute(
+            """
+            UPDATE preventive_occurrence o
+            SET status = 'skipped', skip_reason = %s
+            FROM (SELECT id, status FROM preventive_occurrence
+                  WHERE di_id = %s AND status IN ('pending', 'generated')) old
+            WHERE o.id = old.id
+            RETURNING o.id, old.status
+            """,
+            (REJECTED_SKIP_REASON, request_id),
+        )
+        for occurrence_id, old_status in cur.fetchall():
+            for field, old, new in (
+                ("status", old_status, "skipped"),
+                ("skip_reason", None, REJECTED_SKIP_REASON),
+            ):
+                record_audit_event(
+                    "preventive_occurrence",
+                    occurrence_id,
+                    f"{field}_changed",
+                    old_value={field: old},
+                    new_value={field: new},
+                    is_system=True,
+                    reason_code=system_reason_code(),
+                )
+            logger.info("Demande %s rejetée : occurrence préventive ignorée", request_id)
 
     def reopen_after_intervention_deleted(
         self, cur: Any, linked: Dict[str, Any], changed_by: Optional[str]

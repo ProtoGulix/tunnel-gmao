@@ -9,6 +9,8 @@ import {
   fetchUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
+  dismissNotification,
+  dismissNotifications,
 } from '@/api/notifications';
 
 const UNREAD_COUNT_POLL_MS = 30000;
@@ -28,6 +30,8 @@ const PAGE_SIZE = 20;
  * @returns {Function} returns.loadMore - Charge la page suivante
  * @returns {Function} returns.markRead - Marque une notification lue (maj optimiste)
  * @returns {Function} returns.markAllRead - Marque tout lu (maj optimiste)
+ * @returns {Function} returns.dismiss - Supprime (masque) une notification
+ * @returns {Function} returns.dismissAll - Supprime les lues (onlyRead=true) ou toutes
  */
 export function useNotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -116,6 +120,42 @@ export function useNotificationCenter() {
     }
   }, []);
 
+  // Après un masquage, le décalage des pages (skip) rend « charger plus » faux :
+  // on retire localement puis on recharge proprement la première page et le compteur.
+  const resync = useCallback(async () => {
+    await loadFirstPage();
+    try {
+      setUnreadCount(await fetchUnreadCount());
+    } catch {
+      // Le prochain poll resynchronisera le compteur.
+    }
+  }, [loadFirstPage]);
+
+  const dismiss = useCallback(async (id) => {
+    const target = items.find((n) => n.id === id);
+    setItems((prev) => prev.filter((n) => n.id !== id));
+    if (target && !target.read_at) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+    try {
+      await dismissNotification(id);
+    } catch {
+      // Échec : la resynchronisation ci-dessous restaure l'état réel.
+    }
+    await resync();
+  }, [items, resync]);
+
+  const dismissAll = useCallback(async (onlyRead) => {
+    setItems((prev) => (onlyRead ? prev.filter((n) => !n.read_at) : []));
+    if (!onlyRead) setUnreadCount(0);
+    try {
+      await dismissNotifications(onlyRead);
+    } catch {
+      // Échec : la resynchronisation ci-dessous restaure l'état réel.
+    }
+    await resync();
+  }, [resync]);
+
   return {
     items,
     unreadCount,
@@ -125,5 +165,7 @@ export function useNotificationCenter() {
     loadMore,
     markRead,
     markAllRead,
+    dismiss,
+    dismissAll,
   };
 }

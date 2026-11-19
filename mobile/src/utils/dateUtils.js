@@ -69,3 +69,15 @@ export function formatDateFr(dateStr) {
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(dateStr))
 }
+
+/**
+ * Formate une date calendaire YYYY-MM-DD : "14 avr. 2026".
+ * Retourne null si dateStr est falsy.
+ * @param {string|null} dateStr
+ */
+export function formatDayFr(dateStr) {
+  if (!dateStr) return null
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  }).format(new Date(`${dateStr.slice(0, 10)}T00:00:00`))
+}

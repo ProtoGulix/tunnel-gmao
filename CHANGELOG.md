@@ -6,6 +6,91 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.9.0] — 2026-11-18
+
+### Ajouté
+- Mobile : cloche des notifications dans l'en-tête de chaque écran, à droite de la loupe
+  (compteur relevé une seule fois pour l'application) et bouton « Charger plus » au-delà de 50 notifications.
+- Notifications : suppression par masquage (une, les lues, toutes) côté API, sans que la
+  relance masquée revienne au passage suivant de la tâche quotidienne (migration 0016).
+- Mobile : bouton « Préventif » dans la barre du bas, à la place du QR Code (toujours sur
+  l'accueil). Écran « Préventif à faire » (plans en retard puis de la semaine, avec lien vers
+  l'intervention ou la demande) et cloche de notifications sur l'accueil (compteur des non
+  lues, liste, tout marquer lu, ouverture de l'élément visé).
+- Préventif : nouvel onglet « Échéancier » (page Préventif) qui range les plans en retard,
+  de la semaine et à venir, avec l'équipement, l'échéance, les jours de retard et le lien
+  vers la demande ou l'intervention. Les plans par heures sont signalés « non calculé ».
+- Fiche d'un équipement, onglet Préventif : badge « en retard », état et prochaine échéance
+  de chaque plan.
+- Page Organisation : tuile « Préventifs en retard ». Le texte de la tuile de génération
+  précise que la génération devient automatique quand la tâche quotidienne est activée (le
+  bouton « Générer » reste disponible).
+- Cloche : les notifications d'échéance préventive et d'intervention à clôturer s'affichent
+  avec leur icône et ouvrent la demande, l'intervention ou l'échéancier.
+
+### Modifié
+- Notifications : au premier passage de la tâche quotidienne, tous les préventifs en
+  retard et toutes les interventions sans action depuis 7 jours sont notifiés d'un coup,
+  puis chacun revient une fois par semaine tant qu'il n'est pas traité.
+- Préventif : les jours de retard sont affichés en pastille rouge « +N j » dans l'échéancier,
+  l'onglet Préventif d'un équipement et la liste mobile « Préventif à faire ».
+- Installation : la tâche quotidienne (génération du préventif, retards et interventions
+  sans action notifiés) est activée par défaut, à 5 h (heure du conteneur, UTC) ; réglages
+  `SCHEDULED_JOBS_ENABLED` et `SCHEDULED_JOBS_HOUR` dans deploy/.env. Une installation
+  existante la reçoit active à sa mise à jour (premier passage au démarrage de l'API) ; pour
+  la couper, ajouter `SCHEDULED_JOBS_ENABLED=false` dans deploy/.env avant la mise à jour.
+
+### Corrigé
+- Notifications : marquer comme lue une notification supprimée est refusé (introuvable).
+- Notifications : la liste pouvait afficher une notification en double et en omettre une
+  autre quand plusieurs avaient été créées au même instant (passage de la tâche
+  quotidienne) ; le tri est désormais stable d'une page à l'autre.
+- Web : cliquer une notification (ou un lien) vers une intervention ou une demande alors
+  que la page Interventions est déjà ouverte n'ouvrait rien ; la sélection suit désormais l'URL.
+- Préventif : quand la demande d'un préventif est rejetée, il ne reste plus en retard pour
+  toujours : l'occurrence est ignorée, le préventif reste dû à son échéance et une nouvelle
+  demande est générée au passage suivant.
+- Préventif : les machines qui ne sont pas en service (arrêt, rebut, projet, construction)
+  ne génèrent plus de préventif, n'apparaissent plus dans l'échéancier et ne donnent plus
+  de notification de retard.
+
+### [interne] Préventif automatisé
+- Web : l'échéancier n'est appelé que si le rôle a le droit `preventive_occurrences:get_schedule`
+  (sans lui, la tuile Organisation est omise et l'onglet l'indique, sans erreur affichée).
+- Échéancier du préventif en lecture : `GET /preventive-occurrences/schedule` calcule
+  l'échéance de chaque plan actif et machine (périodicité glissante, référence : date de
+  clôture de la demande de la dernière occurrence terminée) et son état (en retard, bientôt
+  due, ok, non calculé pour les plans aux heures). Prévenance : réglage `PREVENTIVE_LEAD_DAYS`
+  (7 jours par défaut).
+- Génération du préventif : la règle passe de périodicité fixe à glissante. La référence est la
+  date de clôture de la demande de la dernière occurrence terminée (à défaut sa date
+  planifiée) et l'occurrence est créée une semaine avant l'échéance, avec `scheduled_date` =
+  échéance. Les échéances des plans existants se déplacent donc : une clôture tardive décale
+  la suivante. La demande système reçoit l'échéance dans sa date limite (`deadline`). Plans
+  aux heures inchangés.
+- Motif d'audit SYSTEM_SCHEDULE (migration 0015) pour tracer les générations planifiées
+  du système, sans utilisateur.
+- Tâche quotidienne du système (ADR 0023), **désactivée par défaut** (`SCHEDULED_JOBS_ENABLED`) :
+  une boucle de l'API génère le préventif au démarrage puis chaque jour à `SCHEDULED_JOBS_HOUR`
+  (5 h), sous verrou PostgreSQL (un seul passage malgré plusieurs processus), avec les mails
+  « DI à traiter » du bouton « Générer ». Chaque étape a sa transaction et son audit
+  (`is_system`, auteur vide, motif SYSTEM_SCHEDULE) ; une étape en échec est journalisée sans
+  arrêter les autres.
+- Retards du préventif notifiés à tous les utilisateurs actifs (`preventif_echeance`) à
+  échéance + 1, + 8, + 15 jours... tant que l'occurrence n'est pas close ; le dernier palier
+  atteint et non encore émis l'est au passage suivant, si bien que tout le stock en retard
+  sort au premier passage. Réglage `REMINDER_INTERVAL_DAYS` (7). La fonction de paliers est
+  partagée avec l'alarme « sans action ».
+- Alarme « sans action » (`intervention_a_cloturer`) : toute intervention non fermée (attentes
+  comprises) sans action depuis 7 jours notifie les utilisateurs actifs, puis chaque semaine
+  (dernière action + 7, + 14...). Même règle que les retards du préventif : le stock
+  existant sort au premier passage, puis chaque semaine. Une nouvelle
+  action remet le compte à zéro.
+- Audit : chaque tâche de gamme créée par la génération (bouton, tâche planifiée, acceptation
+  automatique) écrit sa ligne `created`. L'écriture d'une ligne d'audit est extraite du
+  middleware (`api/audits/writer.py`) sans changement de comportement ; le motif des
+  événements du système est choisi par le contexte (`system_reason_code`).
+
 ## [5.8.0] — 2026-11-18
 
 ### Modifié

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
-from api.audits.events import record_audit_event
+from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
@@ -14,9 +14,6 @@ from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
-
-# Motif des événements du système (migration 0007, catégorie system).
-SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
 
 
 def _request_routine_reason() -> str:
@@ -965,7 +962,7 @@ class InterventionRepository:
         # demande : on prend celui de la règle d'audit des demandes, jamais une valeur en dur.
         # Mêmes types de décision que l'acceptation par transition (le middleware y écrit
         # statut_changed et intervention_id_changed).
-        reason_code = SYSTEM_CASCADE_REASON if system_acceptance else _request_routine_reason()
+        reason_code = system_reason_code() if system_acceptance else _request_routine_reason()
         for decision_type, old_value, new_value in (
             ("statut_changed", {"statut": current_statut}, {"statut": "acceptee"}),
             (
