@@ -7,8 +7,10 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.9.0** (2026-11-18, PR #13, tag sur main ; production à mettre à
-  jour par l'utilisateur) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
+- Dernière version publiée : **v5.9.1** (2026-11-19, correctif : une relance part un
+  intervalle après le dernier envoi, PREV-13 ; production à mettre à jour par l'utilisateur,
+  directement de la 5.8.0 à la 5.9.1).
+- v5.9.0 (2026-11-18, PR #13, tag sur main) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
   PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
   notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des
   notifications, pastille des retards, suppression des notifications par masquage, cloche
@@ -43,7 +45,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.9.0 : PREV-13 (relance un intervalle après le dernier envoi), à publier en 5.9.1 avant la mise à jour de la production.
+- develop contient depuis la 5.9.1 : rien.
 
 ## Feuille de route fondatrice
 
