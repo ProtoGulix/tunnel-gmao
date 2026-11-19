@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import HTTPException, status
 
@@ -68,11 +69,44 @@ class RenderError(HTTPException):
         )
 
 
+# Messages des RAISE EXCEPTION de la base (code P0001) faits pour l'utilisateur : refus
+# métier lisibles, renvoyés tels quels. Tout autre message (erreur interne, futur RAISE non
+# relu) est remplacé par un texte générique ; le détail reste dans les logs (CLAUDE.md 6.4).
+# Les messages internes de fn_audit_log_decision (changed_by absent, motif non système) n'y
+# figurent pas : ils signalent un défaut du serveur, pas une saisie à corriger.
+_USER_FACING_DB_MESSAGES = tuple(
+    re.compile(p)
+    for p in (
+        r"type_inter est requis pour générer le code intervention",
+        r"tech_initials est requis pour générer le code intervention",
+        r"time_spent ou les bornes action_start/action_end sont requis",
+        r"time_spent minimum est 0\.25h",
+        r"time_spent doit être un multiple de 0\.25",
+        r"Ambiguïté : fournir soit les bornes horaires soit time_spent, pas les deux",
+        r"action_start doit être un multiple de 15 minutes",
+        r"action_end doit être un multiple de 15 minutes",
+        r"action_end doit être postérieur à action_start",
+        r"reason_text obligatoire quand reason_code = OTHER",
+        r"Raison \S+ inconnue ou inactive",
+        r"Machine \S+ inconnue",
+    )
+)
+GENERIC_DB_REFUSAL = "Opération refusée par la base de données"
+
+
+def user_facing_db_message(message: str) -> str:
+    """Message P0001 renvoyable au client : lui-même s'il est connu, sinon un texte générique."""
+    if any(p.fullmatch(message.strip()) for p in _USER_FACING_DB_MESSAGES):
+        return message.strip()
+    return GENERIC_DB_REFUSAL
+
+
 def raise_db_error(e: Exception, context: str = "opération") -> None:
     """
     Convertit une exception psycopg2 en exception HTTP appropriée.
     - Violation de contrainte unique (23505) → ConflictError 409
     - Violation de clé étrangère (23503) → ValidationError 400
+    - RAISE EXCEPTION de la base (P0001) → ValidationError 400, message connu ou générique
     - Tout le reste → DatabaseError 500 (message générique)
     Le détail brut de l'erreur est toujours journalisé côté serveur, jamais renvoyé.
     """
@@ -87,7 +121,7 @@ def raise_db_error(e: Exception, context: str = "opération") -> None:
         )
     if pgcode == "P0001":
         msg = getattr(getattr(e, "diag", None), "message_primary", None) or str(e)
-        raise ValidationError(msg)
+        raise ValidationError(user_facing_db_message(msg))
 
     raise DatabaseError(str(e))
 

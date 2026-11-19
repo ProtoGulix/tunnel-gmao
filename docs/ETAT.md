@@ -51,7 +51,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.10.0 : rien.
+- develop contient depuis la 5.10.0 : SEC-01 (messages bruts de la base masqués, QR code réservé aux utilisateurs connectés).
 
 ## Feuille de route fondatrice
 
@@ -102,9 +102,11 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : aucune. Closes aussi : SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-19 : backlog, lot sécurité et erreurs d'abord (choix de l'utilisateur) ; messages P0001 renvoyés au client seulement s'ils figurent dans une liste blanche (alternative écartée : code SQLSTATE dédié, qui demandait une migration des fonctions).
 
 2026-11-19 : un préventif fait en avance s'enregistre en lançant l'occurrence tout de suite (demande créée, circuit normal, échéance théorique conservée pour mesurer l'avance), pas par une déclaration antidatée ; suivi du préventif sur la fiche équipement côté web seulement.
 

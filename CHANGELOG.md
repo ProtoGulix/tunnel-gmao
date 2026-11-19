@@ -6,6 +6,17 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne] Sécurité
+- Messages d'erreur de la base : seuls les refus métier connus (durée d'une action, bornes
+  horaires, motif d'audit…) sont renvoyés tels quels ; tout autre message devient
+  « Opération refusée par la base de données », le détail restant dans les logs.
+- QR code d'une intervention (`GET /exports/interventions/{id}/qrcode`) : l'exception
+  « route publique » du middleware d'authentification est retirée. La route, déjà fermée
+  sans jeton par le routeur des exports, refusait aussi les utilisateurs connectés ; elle
+  est désormais servie à tout utilisateur connecté.
+
 ## [5.10.0] — 2026-11-19
 
 ### Ajouté

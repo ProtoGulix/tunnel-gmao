@@ -220,7 +220,7 @@ def export_intervention_pdf(intervention_id: str, request: Request):
 @router.get("/interventions/{intervention_id}/qrcode")
 def export_intervention_qrcode(intervention_id: str):
     """
-    Génère QR code pour intervention (public, pas d'authentification)
+    Génère QR code pour intervention (utilisateur connecté, comme tous les exports)
 
     Le QR code pointe vers la page de détail de l'intervention dans le frontend.
     Conçu pour être imprimé sur les rapports physiques.
