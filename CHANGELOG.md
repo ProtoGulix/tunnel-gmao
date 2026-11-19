@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.9.1] — 2026-11-19
+
+### Corrigé
+- Notifications : après le premier envoi de tout le stock en retard, une partie des
+  préventifs et des interventions revenait dès le lendemain. Une relance part désormais
+  une semaine après le précédent envoi pour le même élément.
+
 ## [5.9.0] — 2026-11-18
 
 ### Ajouté
@@ -70,7 +77,7 @@ mobile/CHANGELOG.md.
   aux heures inchangés.
 - Motif d'audit SYSTEM_SCHEDULE (migration 0015) pour tracer les générations planifiées
   du système, sans utilisateur.
-- Tâche quotidienne du système (ADR 0023), **désactivée par défaut** (`SCHEDULED_JOBS_ENABLED`) :
+- Tâche quotidienne du système (ADR 0023), activée par défaut (`SCHEDULED_JOBS_ENABLED`, voir « Modifié ») :
   une boucle de l'API génère le préventif au démarrage puis chaque jour à `SCHEDULED_JOBS_HOUR`
   (5 h), sous verrou PostgreSQL (un seul passage malgré plusieurs processus), avec les mails
   « DI à traiter » du bouton « Générer ». Chaque étape a sa transaction et son audit

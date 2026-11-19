@@ -1,14 +1,16 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-18
+Dernière mise à jour : 2026-11-19
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.9.0** (2026-11-18, tag sur main ; production à mettre à
-  jour par l'utilisateur) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
+- Dernière version publiée : **v5.9.1** (2026-11-19, correctif : une relance part un
+  intervalle après le dernier envoi, PREV-13 ; production à mettre à jour par l'utilisateur,
+  directement de la 5.8.0 à la 5.9.1).
+- v5.9.0 (2026-11-18, PR #13, tag sur main) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
   PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
   notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des
   notifications, pastille des retards, suppression des notifications par masquage, cloche
@@ -43,7 +45,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.9.0 : rien.
+- develop contient depuis la 5.9.1 : rien.
 
 ## Feuille de route fondatrice
 
@@ -95,6 +97,8 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 Fiches ouvertes : aucune. Closes aussi : PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-19 : une relance (préventif en retard, intervention sans action) part un intervalle après le dernier envoi pour le même élément, pas au palier suivant (le stock rattrapé revenait dès le lendemain, constaté en dev). Précision de l'ADR 0023.
 
 2026-11-18 : tout le stock en retard (préventifs, interventions sans action) est notifié au premier passage, puis chaque semaine (amendement de l'ADR 0023, l'utilisateur revient sur « le stock ressort à son prochain palier ») ; une notification se supprime par masquage (la ligne reste en base pour la déduplication), une par une, les lues ou toutes.
 

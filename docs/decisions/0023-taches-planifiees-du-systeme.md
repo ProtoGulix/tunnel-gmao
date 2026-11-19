@@ -20,6 +20,11 @@ notification par élément à chaque palier hebdomadaire. Amendement du 2026-11-
 palier atteint est notifié s'il ne l'a pas déjà été, donc tout le stock en retard sort au
 premier passage, puis chaque élément revient à son palier suivant. Le réglage de fenêtre de
 rattrapage (`REMINDER_CATCHUP_DAYS`) est supprimé.
+Précision du 2026-11-19 (constat en dev, accord de l'utilisateur) : une relance ne part
+que si aucune notification du même élément n'a été envoyée depuis un intervalle
+(`REMINDER_INTERVAL_DAYS`) ; sans cela, un élément rattrapé à un palier ancien revenait au
+palier suivant, parfois dès le lendemain. Le rythme devient « un intervalle après le dernier
+envoi ».
 
 Il faut donc un traitement qui tourne chaque jour sans requête ni utilisateur. Deux
 contraintes du code actuel :

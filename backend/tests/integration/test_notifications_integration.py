@@ -2,7 +2,7 @@
 même date de création (passage de la tâche quotidienne, une seule transaction)."""
 
 import secrets
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -123,3 +123,20 @@ def test_marquer_lue_une_notification_masquee_donne_404(instance, client, make_u
     assert client.delete(f"/notifications/{n}", headers=user.headers).status_code == 200
     assert client.patch(f"/notifications/{n}/read", headers=user.headers).status_code == 404
     assert instance.sql("SELECT read_at FROM notification WHERE id = %s", (n,))[0][0] is None
+
+
+def test_ancienne_notification_sans_jour_d_envoi_datee_par_sa_creation(instance, make_user):
+    # Ligne d'avant la 5.9.1 : pas de `sent_on`, la période sans relance lit created_at.
+    make_user("TECH")
+    repo = NotificationRepository()
+    entite = str(instance.sql("SELECT gen_random_uuid()")[0][0])
+    instance.sql(
+        "INSERT INTO notification (user_id, type, entity_type, entity_id, message, data) "
+        "SELECT id, 'preventif_echeance', 'preventive_occurrence', %s, 'ancienne', "
+        "'{\"milestone\": \"2026-11-12\"}'::jsonb FROM tunnel_user WHERE is_active LIMIT 1",
+        (entite,),
+    )
+    today = instance.sql("SELECT current_date")[0][0]
+    args = ("preventif_echeance", "preventive_occurrence", entite, "relance", today)
+    assert repo.notify_active_users_once(*args, quiet_since=today - timedelta(6)) == 0
+    assert repo.notify_active_users_once(*args, quiet_since=today + timedelta(1)) >= 1

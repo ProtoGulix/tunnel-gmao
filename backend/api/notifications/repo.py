@@ -238,15 +238,26 @@ class NotificationRepository:
         message: str,
         milestone: date,
         data: Optional[Dict[str, Any]] = None,
+        quiet_since: Optional[date] = None,
+        sent_on: Optional[date] = None,
     ) -> int:
         """Notifie chaque utilisateur actif d'un palier de relance, une seule fois.
 
         Le palier est rangé dans `data` (clé `milestone`, date ISO) : rien n'est émis si une
         notification de même (type, entité, palier) existe déjà, ce qui rend la tâche
-        quotidienne idempotente (ADR 0023, point 5). Retourne le nombre de notifications créées.
+        quotidienne idempotente (ADR 0023, point 5). Avec `quiet_since`, rien n'est émis non
+        plus si une notification de même (type, entité) a été envoyée depuis cette date : après
+        le rattrapage du stock, la relance suivante attend un intervalle entier au lieu de
+        tomber au palier suivant, parfois dès le lendemain. Masquées comprises. Le jour
+        d'envoi (`sent_on`, aujourd'hui par défaut) est rangé dans `data` ; les lignes plus
+        anciennes, sans lui, sont datées par leur création. Retourne le
+        nombre de notifications créées.
         """
         milestone_key = milestone.isoformat()
         payload = {**(data or {}), "milestone": milestone_key}
+        if quiet_since is not None:
+            # Jour d'envoi selon la tâche (son `today`), relu par la période sans relance.
+            payload["sent_on"] = (sent_on or date.today()).isoformat()
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -259,7 +270,10 @@ class NotificationRepository:
                   AND NOT EXISTS (
                       SELECT 1 FROM notification n
                       WHERE n.type = %s AND n.entity_id = %s::uuid
-                        AND n.data->>'milestone' = %s
+                        AND (n.data->>'milestone' = %s
+                             OR (%s::date IS NOT NULL
+                                 AND COALESCE((n.data->>'sent_on')::date, n.created_at::date)
+                                     >= %s::date))
                   )
                 """,
                 (
@@ -271,6 +285,8 @@ class NotificationRepository:
                     type_,
                     entity_id,
                     milestone_key,
+                    quiet_since,
+                    quiet_since,
                 ),
             )
             created = cur.rowcount
