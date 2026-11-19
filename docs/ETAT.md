@@ -7,9 +7,15 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.9.1** (2026-11-19, PR #14, tag sur main, correctif : une relance part un
-  intervalle après le dernier envoi, PREV-13 ; production à mettre à jour par l'utilisateur,
-  directement de la 5.8.0 à la 5.9.1).
+- Dernière version publiée : **v5.10.0** (2026-11-19, tag sur main) : suivi du préventif sur la
+  fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
+  de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
+  PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
+  (EXPM-03). Pas de migration nouvelle. Production (5.6.1) à mettre à jour par l'utilisateur
+  directement en 5.10.0 : consignes de la 5.9.0 (migrations 0014 à 0016 au démarrage, tâche
+  quotidienne active par défaut, premier passage au démarrage).
+- v5.9.1 (2026-11-19, PR #14, tag sur main) : correctif, une relance part un intervalle après
+  le dernier envoi (PREV-13).
 - v5.9.0 (2026-11-18, PR #13, tag sur main) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
   PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
   notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des
@@ -45,7 +51,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.9.1 : rien.
+- develop contient depuis la 5.10.0 : rien.
 
 ## Feuille de route fondatrice
 
