@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.9.1** (2026-11-19, correctif : une relance part un
+- Dernière version publiée : **v5.9.1** (2026-11-19, PR #14, tag sur main, correctif : une relance part un
   intervalle après le dernier envoi, PREV-13 ; production à mettre à jour par l'utilisateur,
   directement de la 5.8.0 à la 5.9.1).
 - v5.9.0 (2026-11-18, PR #13, tag sur main) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
