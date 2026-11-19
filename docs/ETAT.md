@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.9.0** (2026-11-18, tag sur main ; production à mettre à
+- Dernière version publiée : **v5.9.0** (2026-11-18, PR #13, tag sur main ; production à mettre à
   jour par l'utilisateur) : préventif automatisé (ADR 0023 et son amendement, PREV-01 à
   PREV-09 : échéancier glissant, génération quotidienne, retards et interventions sans action
   notifiés à tous, tout le stock au premier passage puis chaque semaine), clic des

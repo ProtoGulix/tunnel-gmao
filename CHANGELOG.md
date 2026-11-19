@@ -70,7 +70,7 @@ mobile/CHANGELOG.md.
   aux heures inchangés.
 - Motif d'audit SYSTEM_SCHEDULE (migration 0015) pour tracer les générations planifiées
   du système, sans utilisateur.
-- Tâche quotidienne du système (ADR 0023), **désactivée par défaut** (`SCHEDULED_JOBS_ENABLED`) :
+- Tâche quotidienne du système (ADR 0023), activée par défaut (`SCHEDULED_JOBS_ENABLED`, voir « Modifié ») :
   une boucle de l'API génère le préventif au démarrage puis chaque jour à `SCHEDULED_JOBS_HOUR`
   (5 h), sous verrou PostgreSQL (un seul passage malgré plusieurs processus), avec les mails
   « DI à traiter » du bouton « Générer ». Chaque étape a sa transaction et son audit
