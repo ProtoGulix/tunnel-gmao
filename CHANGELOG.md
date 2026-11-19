@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Corrigé
+- Notifications : après le premier envoi de tout le stock en retard, une partie des
+  préventifs et des interventions revenait dès le lendemain. Une relance part désormais
+  une semaine après le précédent envoi pour le même élément.
+
 ## [5.9.0] — 2026-11-18
 
 ### Ajouté

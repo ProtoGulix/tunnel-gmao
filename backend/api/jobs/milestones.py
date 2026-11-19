@@ -8,7 +8,8 @@ est la même ; c'est pourquoi elle vit ici et nulle part ailleurs.
 Le dernier palier atteint est toujours notifié s'il ne l'a pas déjà été (clé : type,
 entité, palier, vérifiée par l'appelant) : à l'activation, tout le stock en retard sort une
 fois, puis chaque élément revient à son palier suivant. Un passage manqué est rattrapé au
-suivant. Décision de l'utilisateur du 2026-11-18, amendement de l'ADR 0023.
+suivant. Décision de l'utilisateur du 2026-11-18, amendement de l'ADR 0023. L'appelant
+impose en plus un intervalle entier depuis le dernier envoi (précision du 2026-11-19).
 """
 
 from __future__ import annotations

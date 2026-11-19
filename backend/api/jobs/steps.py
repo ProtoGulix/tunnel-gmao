@@ -23,6 +23,11 @@ def _text(value: Any) -> Optional[str]:
     return str(value) if value is not None else None
 
 
+def _quiet_since(today: date) -> date:
+    """Début de la période sans relance : un intervalle entier après le dernier envoi."""
+    return today - timedelta(days=settings.REMINDER_INTERVAL_DAYS - 1)
+
+
 def generate_preventive() -> Dict[str, Any]:
     """Étape 1 : génération des occurrences, même code que le bouton « Générer »."""
     return PreventiveOccurrenceRepository().generate_occurrences()
@@ -32,8 +37,9 @@ def notify_preventive_overdue(today: Optional[date] = None) -> Dict[str, int]:
     """Étape 2 : notifie les occurrences actives en retard, à chaque palier hebdomadaire.
 
     Paliers : échéance + 1, + 8, + 15 jours... Le dernier palier atteint est émis s'il ne
-    l'a pas déjà été (tout le stock sort au premier passage). Une occurrence close
-    (terminée, ignorée, annulée) n'est plus lue : plus rien n'est émis.
+    l'a pas déjà été (tout le stock sort au premier passage), au plus une fois par intervalle
+    pour une même occurrence. Une occurrence close (terminée, ignorée, annulée) n'est plus
+    lue : plus rien n'est émis.
     """
     today = today or date.today()
     notifications = NotificationRepository()
@@ -66,6 +72,8 @@ def notify_preventive_overdue(today: Optional[date] = None) -> Dict[str, int]:
                 "due_date": due.isoformat(),
                 "days_overdue": days_late,
             },
+            quiet_since=_quiet_since(today),
+            sent_on=today,
         )
     return {"notified": notified}
 
@@ -74,7 +82,8 @@ def notify_idle_interventions(today: Optional[date] = None) -> Dict[str, int]:
     """Étape 3 : alarme « sans action » sur les interventions non fermées (PREV-05).
 
     Paliers : dernière activité + 7, + 14, + 21 jours... (REMINDER_INTERVAL_DAYS, même pas que
-    les retards du préventif) ; le dernier palier atteint est émis s'il ne l'a pas déjà été.
+    les retards du préventif) ; le dernier palier atteint est émis s'il ne l'a pas déjà été,
+    au plus une fois par intervalle pour une même intervention.
     Une nouvelle action déplace la dernière activité donc remet le compte à zéro ; une
     intervention fermée n'est plus lue.
     """
@@ -102,5 +111,7 @@ def notify_idle_interventions(today: Optional[date] = None) -> Dict[str, int]:
                 "days_without_action": days_idle,
                 "last_activity_date": last.isoformat(),
             },
+            quiet_since=_quiet_since(today),
+            sent_on=today,
         )
     return {"notified": notified}

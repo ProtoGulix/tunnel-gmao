@@ -290,11 +290,13 @@ def test_occurrence_en_retard_de_30_jours_sort_au_premier_passage(instance, plan
     assert {x[1] for x in lignes} == {(echeance + timedelta(days=29)).isoformat()}
     assert len(lignes) == actifs
 
-    # Jours suivants jusqu'au prochain palier J+36 : rien de plus ; à J+36, la relance.
-    for jour in (31, 35):
+    # Le palier J+36 tombe 6 jours après l'envoi : la relance attend un intervalle entier
+    # depuis l'envoi (J+30), donc J+37, et porte le palier J+36. Cas vu en dev le
+    # 2026-11-19 : le stock rattrapé revenait dès le lendemain.
+    for jour in (31, 35, 36):
         run_system_step(lambda j=jour: steps.notify_preventive_overdue(echeance + timedelta(j)))
     assert len(_notifs(instance, occ)) == actifs
-    run_system_step(lambda: steps.notify_preventive_overdue(echeance + timedelta(36)))
+    run_system_step(lambda: steps.notify_preventive_overdue(echeance + timedelta(37)))
     lignes = _notifs(instance, occ)
     assert {x[1] for x in lignes} == {
         (echeance + timedelta(days=29)).isoformat(),
@@ -432,9 +434,12 @@ def test_sans_action_stock_sort_au_premier_passage(instance):
     lignes = _notifs_sans_action(instance, inter)
     assert {x[0] for x in lignes} == {(debut + timedelta(28)).isoformat()}
     assert len(lignes) == _actifs(instance)
-    _passage_sans_action(debut + timedelta(34))
+    # Le palier J+35 tombe 5 jours après l'envoi : la relance attend un intervalle entier
+    # depuis l'envoi (J+30), donc J+37, et porte le palier J+35.
+    for jour in (34, 35, 36):
+        _passage_sans_action(debut + timedelta(jour))
     assert len(_notifs_sans_action(instance, inter)) == _actifs(instance)
-    _passage_sans_action(debut + timedelta(35))
+    _passage_sans_action(debut + timedelta(37))
     lignes = _notifs_sans_action(instance, inter)
     assert {x[0] for x in lignes} == {
         (debut + timedelta(28)).isoformat(),
