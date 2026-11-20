@@ -15,6 +15,8 @@ pytestmark = pytest.mark.integration
 
 _MIGRATION = Path(__file__).resolve().parents[2] / "alembic/versions/0018_contraintes_production.py"
 _ZERO = "00000000-0000-0000-0000-000000000000"
+# Posée par 0018 puis retirée par 0020 (la clé étrangère vers intervention_type la remplace).
+_RETIREES_PAR_0020 = {"chk_suggested_type_inter"}
 
 
 def _migration():
@@ -30,7 +32,7 @@ def _objets(instance):
         "AND contype IN ('f', 'c')"
     )
     index = instance.sql("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")
-    return {r[0] for r in contraintes}, {r[0] for r in index}
+    return {r[0] for r in contraintes} - _RETIREES_PAR_0020, {r[0] for r in index}
 
 
 def test_inventaire_complet_present_par_nom(instance):
@@ -42,6 +44,7 @@ def test_inventaire_complet_present_par_nom(instance):
     )
     contraintes, index = _objets(instance)
     attendues = {n for _t, n, _d in migration._FOREIGN_KEYS + migration._CHECKS}
+    attendues -= _RETIREES_PAR_0020
     assert attendues <= contraintes
     assert {n for _t, n, _c in migration._INDEXES} <= index
 
@@ -55,6 +58,12 @@ def test_migration_rejouee_sans_effet(instance):
                 _migration().upgrade()
     finally:
         engine.dispose()
+        # Rejouer 0018 repose le CHECK que 0020 a retiré : on rétablit l'état de la session,
+        # sinon les tests suivants (types ajoutés en administration) seraient refusés.
+        instance.sql(
+            "ALTER TABLE public.intervention_request DROP CONSTRAINT IF EXISTS "
+            "chk_suggested_type_inter"
+        )
     assert _objets(instance) == avant
 
 

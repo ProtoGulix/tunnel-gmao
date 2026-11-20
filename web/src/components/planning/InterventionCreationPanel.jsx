@@ -12,6 +12,7 @@ import { ClipboardList, X } from 'lucide-react';
 import { fetchServices } from '@/api/services';
 import { fetchActiveUsers } from '@/api/planning';
 import { createIntervention } from '@/api/interventions';
+import { TYPE_REQUIRED_MESSAGE } from '@/lib/interventionTypesStore';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
 import { TimelineIcon } from '@/components/interventions/InterventionFormFields';
 import { DiSummaryBlock } from '@/components/interventions/DiSummaryBlock';
@@ -90,7 +91,7 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
 
   const [formData, setFormData] = useState(() => ({
     // Champs intervention
-    type: selectedRequest?.suggested_type_inter ?? 'CUR',
+    type: selectedRequest?.suggested_type_inter ?? '',
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
@@ -131,6 +132,7 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError(null);
+    if (!formData.type) { setError(TYPE_REQUIRED_MESSAGE); return; }
     if (!formData.techId) { setError('Veuillez sélectionner un technicien'); return; }
     setSaving(true);
     try {

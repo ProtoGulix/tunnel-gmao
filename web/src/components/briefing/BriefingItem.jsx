@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge } from '@radix-ui/themes';
-import { TYPE_INTER_LABELS, INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { ProgressBar } from './components/ProgressBar';
 
 const AVATAR_COLORS = {
@@ -9,8 +9,6 @@ const AVATAR_COLORS = {
   CC: 'var(--amber-9)',
   QC: 'var(--pink-9)',
 };
-
-const TYPE_COLOR = Object.fromEntries(INTERVENTION_TYPES.map((t) => [t.id, t.color]));
 
 function Avatar({ initials }) {
   const bg = AVATAR_COLORS[(initials || '').toUpperCase()] || 'var(--gray-8)';
@@ -60,8 +58,9 @@ UrgencyBadge.propTypes = {
 
 function SituationBadges({ situation }) {
   const { situationType, type, tasksLinked, stats } = situation;
-  const typeLabel = TYPE_INTER_LABELS[type] || type;
-  const typeColor = TYPE_COLOR[type] || 'gray';
+  const { labelOf, colorOf } = useInterventionTypeRefs();
+  const typeLabel = labelOf(type) || type;
+  const typeColor = colorOf(type);
   const totalTasks = stats?.tasks?.total ?? stats?.taskProgress?.total ?? 0;
   const isNoTask = totalTasks === 0 && (tasksLinked?.length ?? 0) === 0;
 

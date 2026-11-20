@@ -20,3 +20,7 @@ Anciens points H-7, M-1 à M-8, P-1 à P-5, toujours ouverts.
   96 tailles `text-[Npx]`.
 - Droits relus seulement au chargement (auth/AuthContext.jsx:11,30) ; droit
   `createIntervention` déclaré mais jamais vérifié à l'écran (le backend reste le garde).
+- Acceptation d'une demande (InterventionRequestsPage, AcceptDISheet + InterventionForm) :
+  pas alignée sur le formulaire de l'accueil (champ titre, initiales en lecture seule, pas de
+  choix du technicien, passe par la transition `acceptee`). Relevé le 2026-11-20 (TYP-04) ;
+  le type y est déjà vide et obligatoire.

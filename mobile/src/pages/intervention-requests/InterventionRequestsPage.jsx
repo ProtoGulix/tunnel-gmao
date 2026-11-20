@@ -118,7 +118,7 @@ const AcceptDISheet = ({ item, onClose, onDone }) => {
 
   return (
     <InterventionForm
-      di={{ id: item.id, code: item.code, description: item.description }}
+      di={{ id: item.id, code: item.code, description: item.description, suggested_type_inter: item.suggested_type_inter, is_system: item.is_system }}
       onSubmit={handleSubmit}
       onCancel={onClose}
       loading={loading}

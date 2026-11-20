@@ -199,3 +199,9 @@ export async function fetchClosedInterventionsExport({
     throw new Error(await readBlobErrorMessage(error));
   }
 }
+
+/** Types d'intervention (référentiel en base, ADR 0026), inactifs inclus pour l'affichage de l'historique */
+export async function fetchInterventionTypeRefs() {
+  const r = await api.get('/interventions/types', { params: { include_inactive: true } });
+  return Array.isArray(r.data) ? r.data : [];
+}

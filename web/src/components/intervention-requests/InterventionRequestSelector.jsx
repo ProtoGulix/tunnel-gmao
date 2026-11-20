@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Flex, Text, Tooltip } from '@radix-ui/themes';
 import { Bot, ClipboardList } from 'lucide-react';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
-import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
 
 function RequestRow({ req, isSelected, onToggle }) {
@@ -55,7 +55,7 @@ function RequestRow({ req, isSelected, onToggle }) {
           <Flex align="center" gap="1">
             <Text size="1" color="gray">Type suggéré :</Text>
             <Badge color="blue" variant="soft" size="1">
-              {TYPE_INTER_LABELS[req.suggested_type_inter] ?? req.suggested_type_inter}
+              <InterventionTypeLabel code={req.suggested_type_inter} />
             </Badge>
           </Flex>
         )}

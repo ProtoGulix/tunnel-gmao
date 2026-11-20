@@ -41,8 +41,11 @@ export function searchDI(params = {}) {
     .then((res) => res.items ?? res);
 }
 
-export function getInterventionTypes() {
-  return client.get("/interventions/types").then(res => Array.isArray(res) ? res : (res.items ?? res))
+// includeInactive : pour l'affichage des interventions existantes (types retirés inclus) ;
+// sans, seuls les types actifs sont renvoyés (création).
+export function getInterventionTypes({ includeInactive = false } = {}) {
+  const query = includeInactive ? "?include_inactive=true" : ""
+  return client.get(`/interventions/types${query}`).then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 
 // Techniciens actifs, pour choisir le pilote d'une intervention à la création.

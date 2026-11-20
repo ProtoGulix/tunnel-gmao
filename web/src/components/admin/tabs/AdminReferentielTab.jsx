@@ -6,6 +6,7 @@
 import { useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
 import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench, Cpu } from 'lucide-react';
+import { reloadInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import {
   ActionCategoriesSection,
   ComplexityFactorsSection,
@@ -61,17 +62,20 @@ export default function AdminReferentielTab() {
     wrap(async () => {
       await refApi.createInterventionType(payload);
       intTypes.refresh();
+      reloadInterventionTypeRefs();
     }, 'Type créé'), [intTypes, wrap]);
 
   const handleUpdateIntType = useCallback((id, payload) =>
     wrap(async () => {
       const updated = await refApi.updateInterventionType(id, payload);
+      reloadInterventionTypeRefs();
       intTypes.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Type modifié'), [intTypes, wrap]);
 
   const handleToggleIntTypeActive = useCallback((id, is_active) =>
     wrap(async () => {
       const updated = await refApi.toggleInterventionTypeActive(id, is_active);
+      reloadInterventionTypeRefs();
       intTypes.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, is_active ? 'Activé' : 'Désactivé'), [intTypes, wrap]);
 

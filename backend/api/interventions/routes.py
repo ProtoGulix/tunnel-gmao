@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from api.audits.declaration import audit, declare_created_id
 from api.auth.permissions import check_matrix, require_authenticated
-from api.constants import INTERVENTION_TYPES
 from api.equipements.schemas import EquipementDetail
 from api.errors.exceptions import ForbiddenError, UnauthorizedError
 from api.intervention_actions.repo import InterventionActionRepository
@@ -25,6 +24,7 @@ from api.interventions.schemas import (
     RequestPointageIn,
     RequestPointageOut,
 )
+from api.interventions.types import list_types
 from api.interventions.validators import InterventionValidator
 from api.utils.response import paginated, referentiel, single
 
@@ -59,9 +59,14 @@ def add_stats_to_intervention(intervention: Dict[str, Any], actions: List[Dict[s
 
 
 @router.get("/types")
-def list_intervention_types():
-    """Liste tous les types d'intervention disponibles (id, title, color)"""
-    return referentiel(INTERVENTION_TYPES)
+def list_intervention_types(
+    include_inactive: bool = Query(
+        False, description="Inclut les types désactivés (affichage de l'historique)"
+    ),
+):
+    """Types d'intervention lus en base, triés par libellé (id = code, title, color,
+    description, is_active). Actifs seulement par défaut."""
+    return referentiel(list_types(include_inactive))
 
 
 @router.get("")

@@ -1,5 +1,5 @@
+import { getTypeLabel, getTypeColor } from "@/hooks/shared/useInterventionTypeRefs";
 import {
-  INTERVENTION_TYPES,
   STATUS_CONFIG,
   PRIORITY_CONFIG,
 } from "@/config/interventionTypes";
@@ -58,14 +58,7 @@ export function getTypeBadge(type) {
     return { label: "N/A", color: "gray" };
   }
 
-  const typeConfig = INTERVENTION_TYPES.find(
-    (t) => t.id === type.toUpperCase()
-  );
-  if (typeConfig) {
-    return { label: typeConfig.label, color: typeConfig.color };
-  }
-
-  return { label: type, color: "gray" };
+  return { label: getTypeLabel(type.toUpperCase()), color: getTypeColor(type.toUpperCase()) };
 }
 
 /**
@@ -93,12 +86,12 @@ export function isInterventionOpen(intervention) {
 /**
  * Calcule les statistiques des interventions
  */
-export function calculateInterventionStats(interventions) {
+export function calculateInterventionStats(interventions, types = []) {
   const active = interventions.filter(isInterventionOpen);
   const closed = interventions.filter((i) => !isInterventionOpen(i));
 
   // Par type
-  const byType = INTERVENTION_TYPES.map((type) => {
+  const byType = types.map((type) => {
     const count = active.filter((i) => {
       // Gérer à la fois les anciennes strings et les nouveaux objets
       const typeCode = typeof i.type_inter === 'string'
@@ -109,7 +102,7 @@ export function calculateInterventionStats(interventions) {
     return count > 0
       ? {
           id: type.id,
-          label: type.label,
+          label: type.title,
           count,
           color: type.color,
         }

@@ -15,7 +15,7 @@ from api.errors.exceptions import ValidationError, raise_db_error
 # Colonnes tracées par entité (états avant/après de l'audit, sérialisables en JSON).
 _CATEGORY_COLS = "id, name, code, color"
 _SUBCATEGORY_COLS = "id, name, code, category_id"
-_TYPE_COLS = "id, code, label, is_active"
+_TYPE_COLS = "id, code, label, color, description, is_active"
 _STATUS_COLS = "code, label, color"
 
 
@@ -154,20 +154,56 @@ class ReferentielRepository:
             _SUBCATEGORY_COLS,
         )
 
-    def create_intervention_type(self, code: str, label: str) -> int:
+    def create_intervention_type(
+        self,
+        code: str,
+        label: str,
+        description: Optional[str] = None,
+        color: Optional[str] = None,
+    ) -> int:
+        code, label = code.strip(), label.strip()
+        if not code or not label:
+            raise ValidationError("Le code et le libellé du type sont obligatoires")
+        # La couleur absente laisse la valeur par défaut de la table.
+        cols, values = (
+            ["code", "label", "description"],
+            [code, label, (description or "").strip() or None],
+        )
+        if color is not None:
+            cols.append("color")
+            values.append(color.strip())
         return self._create(
             "intervention_type",
-            "INSERT INTO intervention_type (code, label) VALUES (%s, %s)",
-            (code, label),
+            f"INSERT INTO intervention_type ({', '.join(cols)}) "
+            f"VALUES ({', '.join(['%s'] * len(cols))})",
+            tuple(values),
             _TYPE_COLS,
         )
 
-    def patch_intervention_type(self, type_id: int, label: Optional[str]) -> None:
-        if label is None:
+    def patch_intervention_type(
+        self,
+        type_id: int,
+        label: Optional[str],
+        description: Optional[str] = None,
+        color: Optional[str] = None,
+    ) -> None:
+        """Libellé, description et couleur ; le code n'est jamais modifiable (ADR 0026).
+
+        Une description vide efface la description."""
+        sets = []
+        if label is not None:
+            if not label.strip():
+                raise ValidationError("Le libellé du type ne peut pas être vide")
+            sets.append(("label", label.strip()))
+        if description is not None:
+            sets.append(("description", description.strip() or None))
+        if color is not None:
+            if not color.strip():
+                raise ValidationError("La couleur du type ne peut pas être vide")
+            sets.append(("color", color.strip()))
+        if not sets:
             raise ValidationError("Rien à mettre à jour")
-        self._update(
-            "intervention_type", "intervention_type", "id", type_id, [("label", label)], _TYPE_COLS
-        )
+        self._update("intervention_type", "intervention_type", "id", type_id, sets, _TYPE_COLS)
 
     def set_intervention_type_active(self, type_id: int, is_active: bool) -> None:
         self._update(

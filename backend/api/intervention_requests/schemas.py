@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from api.constants import INTERVENTION_TYPE_IDS
 from api.equipements.schemas import EquipementListItem
 from api.intervention_tasks.schemas import InterventionTaskOut
 from api.services.schemas import ServiceOut
@@ -33,13 +32,6 @@ class InterventionRequestIn(BaseModel):
     suggested_type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention suggéré (pré-remplit l'acceptation)"
     )
-
-    @field_validator("suggested_type_inter")
-    @classmethod
-    def validate_suggested_type_inter(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in INTERVENTION_TYPE_IDS:
-            raise ValueError(f"Type d'intervention suggéré invalide : {v}")
-        return v
 
     class Config:
         from_attributes = True

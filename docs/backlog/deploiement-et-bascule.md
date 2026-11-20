@@ -12,3 +12,7 @@ Réserves de BASC-04 et de l'étape 3c, toujours vraies ; la bascule réelle est
 - deploy/MIGRATION-v4.md sans la procédure de clonage dans le dossier définitif.
 - Action de l'utilisateur sur le serveur de production : vérifier que les anciens
   conteneurs coupés ne redémarrent pas avec Docker (`restart: always`).
+- Bascule depuis la v4 (`deploy/migrate-from-v4.sh`) : depuis la migration 0020 (ADR 0026),
+  les données de départ remplissent `intervention_type` (8 lignes) alors qu'une source v4
+  l'a vide ; la comparaison des nombres de lignes (étape 5) pourrait refuser le stamp.
+  Relevé le 2026-11-20 pendant TYP-01, NON VÉRIFIÉ (script ni lu en entier ni exécuté).

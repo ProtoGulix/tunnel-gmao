@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { Inbox, Wrench, Clock, Zap, ShoppingCart } from 'lucide-react';
-import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -38,7 +38,6 @@ const PRIORITY_LABEL = {
 function InterventionRef({ iv }) {
   if (!iv) return null;
 
-  const typeLabel = TYPE_INTER_LABELS[iv.type_inter] ?? iv.type_inter ?? '?';
   const priorityColor = PRIORITY_COLOR[iv.priority] ?? 'var(--gray-11)';
   const priorityLabel = PRIORITY_LABEL[iv.priority] ?? iv.priority;
 
@@ -56,7 +55,7 @@ function InterventionRef({ iv }) {
         <Text size="1" weight="bold" style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--blue-11)' }}>
           {iv.code}
         </Text>
-        <Badge size="1" variant="soft" color="blue">{typeLabel}</Badge>
+        <Badge size="1" variant="soft" color="blue">{iv.type_inter ? <InterventionTypeLabel code={iv.type_inter} /> : '?'}</Badge>
         {iv.status_label && (
           <Badge size="1" variant="soft"
             style={{ backgroundColor: (iv.status_color || '#888') + '22', color: iv.status_color || '#888' }}>

@@ -17,7 +17,7 @@ def intervention(instance, make_user):
     )[0][0]
     inter_id = instance.sql(
         "INSERT INTO intervention (title, machine_id, type_inter, tech_id, tech_initials) "
-        "VALUES ('Fuite huile', %s, 'COR', %s, 'IT') RETURNING id",
+        "VALUES ('Fuite huile', %s, 'CUR', %s, 'IT') RETURNING id",
         (machine_id, pilote.id),
     )[0][0]
     return str(inter_id)

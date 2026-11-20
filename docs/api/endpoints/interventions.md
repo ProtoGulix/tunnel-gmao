@@ -190,24 +190,27 @@ Liste les interventions avec filtres, tri et pagination.
 
 ## `GET /interventions/types`
 
-Retourne la liste des types d'intervention disponibles.
+Types d'intervention lus en base (table `intervention_type`, ADR 0026), triés par libellé.
+Seuls les types actifs sont renvoyés ; `?include_inactive=true` ajoute les types désactivés
+(affichage de l'historique).
 
 ### Réponse `200`
 
 ```json
 [
-  { "id": "CUR", "title": "Curatif", "color": "red" },
-  { "id": "PRE", "title": "Préventif", "color": "green" },
-  { "id": "REA", "title": "Réapprovisionnement", "color": "blue" },
-  { "id": "BAT", "title": "Batiment", "color": "gray" },
-  { "id": "PRO", "title": "Projet", "color": "blue" },
-  { "id": "COF", "title": "Remise en conformité", "color": "amber" },
-  { "id": "PIL", "title": "Pilotage", "color": "blue" },
-  { "id": "MES", "title": "Mise en service", "color": "amber" }
+  {
+    "id": "CUR",
+    "title": "Curatif",
+    "color": "red",
+    "description": "Réparer une panne ou un défaut constaté.",
+    "is_active": true
+  }
 ]
 ```
 
-> Utiliser `id` comme valeur du champ `type_inter` lors de la création d'une intervention.
+> `id` est le code du type, valeur du champ `type_inter`. Un type inconnu, ou désactivé
+> pour une nouvelle valeur (création, changement de type, `suggested_type_inter` d'une
+> demande), est refusé en `400` ; un type désactivé reste accepté sur ce qui le porte déjà.
 
 ---
 
@@ -495,7 +498,7 @@ Crée une nouvelle intervention, avec au besoin sa demande et ses tâches, **en 
 | Champ           | Type   | Requis  | Défaut   | Description                                                                                                                                                                                                                                                 |
 | --------------- | ------ | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `machine_id`    | uuid   | **oui** | —        | Équipement concerné (trigger exige une machine existante)                                                                                                                                                                                                   |
-| `type_inter`    | string | **oui** | —        | Type d'intervention (`CUR`, `PRE`, `REA`, `BAT`, `PRO`, `COF`, `PIL`, `MES`) — voir `GET /interventions/types`                                                                                                                                              |
+| `type_inter`    | string | **oui** | —        | Code d'un type actif — voir `GET /interventions/types`                                                                                                                                              |
 | `tech_id`       | uuid   | **oui** | —        | UUID du technicien pilote (`directus_users.id`). L'API résout les initiales en interne pour le trigger de génération de code                                                                                                                                |
 | `title`         | string | non     | null     | Titre de l'intervention                                                                                                                                                                                                                                     |
 | `priority`      | string | non     | null     | `faible`, `normale`, `important`, `urgent`                                                                                                                                                                                                                  |

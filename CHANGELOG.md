@@ -9,6 +9,24 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Types d'intervention en base : les 8 types (et ceux que l'administration ajoute) vivent
+  dans la table `intervention_type`, avec une description courte affichée sous chaque type
+  dans le sélecteur. À la création d'une intervention, sur le web comme sur le mobile, le
+  type est vide et obligatoire (plus de « Curatif » prérempli) ; le type suggéré par une
+  demande le préremplit toujours. L'API (`GET /interventions/types`, `?include_inactive=true`
+  pour l'historique), les validations, les filtres, les exports et la santé des équipements
+  lisent la base. Un type inconnu ou désactivé est refusé pour une nouvelle valeur. Le
+  libellé, la couleur, la description et l'état actif se modifient en Administration, le
+  code non ; un type utilisé ne se supprime pas, il se désactive. Migration 0020 : colonne
+  `description` et clés étrangères sur `intervention.type_inter` et
+  `intervention_request.suggested_type_inter`. ADR 0026.
+  Changement d'API : un type inconnu à la création d'une intervention répond désormais
+  400 (au lieu de 409). Le type suggéré par une demande reste accepté pour son
+  intervention même s'il a été désactivé depuis.
+- Création d'une intervention : le type et la priorité se choisissent dans des listes
+  qui montrent, pour chaque choix, une pastille de couleur, le libellé et une description
+  courte ; la description du choix fait s'affiche sous le champ. Un type imposé par une
+  demande système s'affiche dans le même sélecteur, grisé et cadenassé (web et mobile).
 - Interventions : `POST /interventions` peut créer, dans une seule transaction, la demande
   d'origine (`request`, à la place de `request_id`) et les tâches (`tasks`). Un échec
   n'écrit plus rien, donc plus de demande orpheline ni de doublon. La demande créée ainsi

@@ -52,7 +52,9 @@ def _creer_direct(monkeypatch, data):
     monkeypatch.setattr(interventions_repo, "release_connection", lambda c: None)
     monkeypatch.setattr(repo, "_resolve_tech_initials", lambda c, d: None)
     monkeypatch.setattr(repo, "get_by_id", lambda *a, **k: {"id": INTERVENTION_ID})
-    monkeypatch.setattr(InterventionValidator, "validate_create", staticmethod(lambda d: None))
+    monkeypatch.setattr(
+        InterventionValidator, "validate_create", staticmethod(lambda d, **kwargs: None)
+    )
     repo.add({"title": "t", "machine_id": MACHINE_ID, "type_inter": "CUR", **data})
     return cur.inserts[0]
 
@@ -60,7 +62,9 @@ def _creer_direct(monkeypatch, data):
 def _creer_depuis_demande(monkeypatch, intervention_data):
     """Appelle _create_intervention_for_request avec un curseur factice."""
     cur = _FauxCurseur()
-    monkeypatch.setattr(InterventionValidator, "validate_create", staticmethod(lambda d: None))
+    monkeypatch.setattr(
+        InterventionValidator, "validate_create", staticmethod(lambda d, **kwargs: None)
+    )
     InterventionRequestRepository()._create_intervention_for_request(
         cur,
         {"id": "r1", "equipement": {"id": MACHINE_ID}, "description": "d", "demandeur_nom": "n"},

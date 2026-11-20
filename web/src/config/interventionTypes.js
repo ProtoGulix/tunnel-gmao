@@ -1,18 +1,4 @@
-export const INTERVENTION_TYPES = [
-  { id: 'CUR', title: 'Curatif', color: 'red' }, // Rouge bloqué
-  { id: 'PRE', title: 'Préventif', color: 'green' }, // Vert OK
-  { id: 'REA', title: 'Réapprovisionnement', color: 'blue' }, // Bleu primaire
-  { id: 'BAT', title: 'Batiment', color: 'gray' },
-  { id: 'PRO', title: 'Projet', color: 'blue' }, // Bleu primaire
-  { id: 'COF', title: 'Remise en conformité', color: 'amber' }, // Orange attente
-  { id: 'PIL', title: 'Pilotage', color: 'blue' }, // Bleu primaire
-  { id: 'MES', title: 'Mise en service', color: 'amber' }, // Orange attente
-];
-
-/** Map centralisée code → libellé français — dérivée de INTERVENTION_TYPES, jamais dupliquée */
-export const TYPE_INTER_LABELS = Object.fromEntries(
-  INTERVENTION_TYPES.map((t) => [t.id, t.title])
-);
+// Les types d'intervention viennent de la base (ADR 0026) : voir hooks/shared/useInterventionTypeRefs.js
 
 export const STATUS_CONFIG = {
   ouvert: { color: 'blue', label: 'Ouvert', bg: 'var(--blue-3)' }, // Bleu = en cours

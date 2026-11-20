@@ -335,7 +335,7 @@ def intervention_ouverte(instance):
     inter = str(
         instance.sql(
             "INSERT INTO intervention (title, machine_id, type_inter, tech_initials, "
-            "reported_date) VALUES ('Sans action', %s, 'COR', 'IT', %s) RETURNING id",
+            "reported_date) VALUES ('Sans action', %s, 'CUR', 'IT', %s) RETURNING id",
             (machine, date.today() - timedelta(days=60)),
         )[0][0]
     )
@@ -425,7 +425,7 @@ def test_sans_action_stock_sort_au_premier_passage(instance):
     inter = str(
         instance.sql(
             "INSERT INTO intervention (title, machine_id, type_inter, tech_initials, "
-            "reported_date) VALUES ('Stock', %s, 'COR', 'IT', %s) RETURNING id",
+            "reported_date) VALUES ('Stock', %s, 'CUR', 'IT', %s) RETURNING id",
             (machine, debut),
         )[0][0]
     )

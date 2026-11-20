@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { AlertTriangle, Wrench, Clock, Bot, User } from 'lucide-react';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { normalizeTileData, SECTION_BAR_COLOR } from './briefingTileNormalize';
 import { BriefingTileHeader } from './BriefingTileHeader';
 
@@ -107,6 +108,7 @@ function TaskSummary({ tasks }) {
 TaskSummary.propTypes = { tasks: PropTypes.array };
 
 export function BriefingTile({ item, sectionId }) {
+  useInterventionTypeRefs(); // abonne la tuile au chargement des types (libellés lus hors composant)
   const barColor = SECTION_BAR_COLOR[sectionId] ?? 'var(--gray-9)';
   const d = normalizeTileData(item, sectionId);
   const isDiSection = sectionId.startsWith('di_');

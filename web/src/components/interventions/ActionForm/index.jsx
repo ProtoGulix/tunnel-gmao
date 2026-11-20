@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Badge, Box, Flex, Text, Card, Button } from '@radix-ui/themes';
 import { Plus, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
-import { INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { useActionForm } from './useActionForm';
 import { useActionSubmit } from './useActionSubmit';
 import ActionFormFields from './ActionFormFields';
@@ -56,7 +56,8 @@ function ActionForm({
 
   const typeInterCode = interventionMeta?.type_inter ?? pickedIntervention?.type_inter ?? null;
   const isPreventif = typeInterCode === 'PRE';
-  const typeConfig = typeInterCode ? INTERVENTION_TYPES.find((t) => t.id === typeInterCode) : null;
+  const { types: interventionTypes } = useInterventionTypeRefs();
+  const typeConfig = typeInterCode ? interventionTypes.find((t) => t.id === typeInterCode) : null;
 
   const resolvedInterventionId = interventionId ?? pickedIntervention?.id;
   const resolvedTechId = techId ?? user?.id ?? null;

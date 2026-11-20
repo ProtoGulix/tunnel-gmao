@@ -2,9 +2,9 @@ from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
 from api.audits.events import record_column_changes
-from api.constants import INTERVENTION_TYPES_MAP
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.interventions.types import get_type_labels
 
 
 class ExportRepository:
@@ -437,9 +437,7 @@ class ExportRepository:
                 "reported_date": inter.get("reported_date"),
                 "reported_by": inter.get("reported_by"),
                 "type_inter": inter.get("type_inter"),
-                "type_inter_label": INTERVENTION_TYPES_MAP.get(inter.get("type_inter", ""), {}).get(
-                    "title"
-                ),
+                "type_inter_label": get_type_labels().get(inter.get("type_inter") or ""),
                 "tech_initials": tech_ini,
                 "tech_full_name": tech_full,
                 "equipements": {

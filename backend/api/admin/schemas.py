@@ -145,10 +145,16 @@ class ActionSubcategoryPatch(BaseModel):
 class InterventionTypeCreate(BaseModel):
     code: str
     label: str
+    description: Optional[str] = None
+    color: Optional[str] = None
 
 
 class InterventionTypePatch(BaseModel):
+    """Le code n'est pas modifiable (ADR 0026) : un champ `code` envoyé est ignoré."""
+
     label: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
 
 
 class InterventionTypeActivePatch(BaseModel):

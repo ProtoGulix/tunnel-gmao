@@ -11,7 +11,8 @@ import { DIList } from '../../components/interventions/DIList'
 import { DIForm } from '../../components/interventions/DIForm'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
-import { INTERVENTION_STATUSES, PRIORITIES, INTERVENTION_TYPES } from '../../config/badges'
+import { INTERVENTION_STATUSES, PRIORITIES } from '../../config/badges'
+import { useInterventionTypes } from '../../hooks/interventions/useInterventionTypes'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
 import { DAY_LABELS, formatWeekLabel, formatTime, isToday } from '../../utils/dateUtils'
@@ -21,7 +22,6 @@ const statusColor   = (s) => INTERVENTION_STATUSES[s]?.color ?? '#616161'
 const statusLabel   = (s) => INTERVENTION_STATUSES[s]?.label ?? s
 const priorityColor = (p) => PRIORITIES[p]?.color ?? '#616161'
 const priorityLabel = (p) => PRIORITIES[p]?.label ?? p
-const typeColor     = (t) => INTERVENTION_TYPES[t]?.color  ?? '#616161'
 
 // ── Badge âge conditionnel ────────────────────────────────────────────────────
 function AgeBadge({ reported_date, priority }) {
@@ -36,6 +36,7 @@ function AgeBadge({ reported_date, priority }) {
 // ── Carte intervention ────────────────────────────────────────────────────────
 function InterventionCard({ item }) {
   const navigate = useNavigate()
+  const { typeColor, typeLabel } = useInterventionTypes()
   const borderColor = item.printed_fiche ? '#BDBDBD' : (priorityColor(item.priority) ?? '#BDBDBD')
   const tc          = typeColor(item.type_inter)
   const sc          = statusColor(item.status_actual)
@@ -82,7 +83,7 @@ function InterventionCard({ item }) {
             {item.type_inter && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
                 style={{ backgroundColor: tc + '22', color: tc }}>
-                {item.type_inter}
+                {typeLabel(item.type_inter)}
               </span>
             )}
           </div>

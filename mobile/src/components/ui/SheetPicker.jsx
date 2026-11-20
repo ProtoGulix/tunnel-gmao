@@ -1,18 +1,19 @@
 import { useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, Lock } from 'lucide-react'
 
 /**
  * SheetPicker — sélecteur générique via bottom-sheet.
  *
  * Props :
  *   title        — titre affiché dans le header du sheet
- *   options      — [{ value, label }]
+ *   options      — [{ value, label, description? }] ; description : ligne courte sous le libellé
  *   value        — valeur sélectionnée (comparée en String)
  *   onChange(v)  — appelé avec la nouvelle valeur (String)
  *   placeholder  — texte affiché quand rien n'est sélectionné
  *   zIndex       — z-index de l'overlay (défaut : 50)
+ *   locked       — valeur imposée : même sélecteur, grisé et cadenassé, ne s'ouvre pas
  */
-export function SheetPicker({ title, options, value, onChange, placeholder = 'Sélectionner...', zIndex = 50 }) {
+export function SheetPicker({ title, options, value, onChange, placeholder = 'Sélectionner...', zIndex = 50, locked = false }) {
   const [open, setOpen] = useState(false)
   const selected = options.find(o => String(o.value) === String(value))
 
@@ -20,13 +21,17 @@ export function SheetPicker({ title, options, value, onChange, placeholder = 'S�
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 bg-white text-left focus:outline-none"
+        onClick={() => { if (!locked) setOpen(true) }}
+        disabled={locked}
+        aria-label={locked ? `${title} (verrouillé)` : undefined}
+        className={`w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 text-left focus:outline-none ${locked ? 'bg-tunnel-bg' : 'bg-white'}`}
       >
         <span className={`text-sm ${selected ? 'font-medium text-tunnel-text' : 'text-tunnel-muted'}`}>
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown size={14} className="text-tunnel-muted shrink-0" />
+        {locked
+          ? <Lock size={13} className="text-tunnel-muted shrink-0" />
+          : <ChevronDown size={14} className="text-tunnel-muted shrink-0" />}
       </button>
 
       {open && (
@@ -52,7 +57,10 @@ export function SheetPicker({ title, options, value, onChange, placeholder = 'S�
                     onClick={() => { onChange(String(o.value)); setOpen(false) }}
                     className={`w-full flex items-center justify-between px-4 py-3.5 border-b border-tunnel-border text-left ${active ? 'bg-blue-50' : 'bg-white active:bg-tunnel-bg'}`}
                   >
-                    <span className="text-sm text-tunnel-text">{o.label}</span>
+                    <span className="min-w-0">
+                      <span className="block text-sm text-tunnel-text">{o.label}</span>
+                      {o.description && <span className="block text-xs text-tunnel-muted mt-0.5">{o.description}</span>}
+                    </span>
                     {active && <Check size={14} className="text-tunnel-accent shrink-0" />}
                   </button>
                 )

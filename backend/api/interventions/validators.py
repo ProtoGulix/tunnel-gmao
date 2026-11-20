@@ -1,8 +1,9 @@
 from typing import Any, Dict, Optional
 
-from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS
+from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, ValidationError
+from api.interventions.types import check_assignable
 
 
 class InterventionValidator:
@@ -50,13 +51,9 @@ class InterventionValidator:
             release_connection(conn)
 
     @staticmethod
-    def validate_type_inter(type_inter: str) -> None:
-        """Valide que le type d'intervention est connu."""
-        if type_inter not in INTERVENTION_TYPE_IDS:
-            raise ConflictError(
-                f"Type d'intervention '{type_inter}' inconnu. "
-                f"Valeurs autorisées : {', '.join(INTERVENTION_TYPE_IDS)}"
-            )
+    def validate_type_inter(type_inter: str, current: str | None = None) -> None:
+        """Valide que le type est connu en base et actif (sauf s'il est inchangé : `current`)."""
+        check_assignable(type_inter, current)
 
     @staticmethod
     def validate_request_required(data: Dict[str, Any], has_new_request: bool = False) -> None:
@@ -124,10 +121,12 @@ class InterventionValidator:
             release_connection(conn)
 
     @classmethod
-    def validate_create(cls, data: Dict[str, Any]) -> None:
-        """Valide les règles métier avant création d'une intervention."""
+    def validate_create(cls, data: Dict[str, Any], suggested_type: str | None = None) -> None:
+        """Valide les règles métier avant création d'une intervention.
+
+        `suggested_type` : type suggéré par la demande liée, accepté même désactivé."""
         if data.get("type_inter"):
-            cls.validate_type_inter(data["type_inter"])
+            cls.validate_type_inter(data["type_inter"], suggested_type)
         if data.get("machine_id"):
             from api.equipement_statuts.repo import check_equipement_statut_allows_interventions
 

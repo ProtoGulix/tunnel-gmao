@@ -6,12 +6,13 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.audits.events import record_audit_event, system_reason_code
-from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS, PRIORITY_TYPES
+from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
+from api.interventions.types import check_assignable, check_known
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -91,18 +92,13 @@ class InterventionRepository:
     def _type_and_date_filters(
         types: List[str] | None, reported_from: date | None, reported_to: date | None
     ) -> tuple[List[str], List[Any]]:
-        """Filtres type_inter (liste blanche INTERVENTION_TYPE_IDS) et reported_date (bornes incluses).
+        """Filtres type_inter (codes vérifiés dans la table intervention_type) et reported_date (bornes incluses).
 
         Lève ValidationError (400) pour un type inconnu ou une période inversée."""
         clauses: List[str] = []
         params: List[Any] = []
         if types:
-            unknown = [t for t in types if t not in INTERVENTION_TYPE_IDS]
-            if unknown:
-                raise ValidationError(
-                    f"Type d'intervention inconnu : {', '.join(unknown)}. "
-                    f"Valeurs : {', '.join(INTERVENTION_TYPE_IDS)}"
-                )
+            check_known(types)
             clauses.append(f"i.type_inter IN ({','.join(['%s'] * len(types))})")
             params.extend(types)
         if reported_from and reported_to and reported_from > reported_to:
@@ -812,12 +808,23 @@ class InterventionRepository:
 
         from api.interventions.validators import InterventionValidator
 
-        InterventionValidator.validate_create(data)
+        request_id = str(data['request_id']) if data.get('request_id') else None
+        # Le type suggéré par la demande reste utilisable même désactivé depuis (ADR 0026,
+        # décision de l'utilisateur du 2026-11-20) : une demande ne devient pas inacceptable.
+        suggested_type = None
+        if request_id:
+            cur.execute(
+                "SELECT suggested_type_inter FROM intervention_request WHERE id = %s",
+                (request_id,),
+            )
+            req_row = cur.fetchone()
+            suggested_type = req_row[0] if req_row else None
+
+        InterventionValidator.validate_create(data, suggested_type=suggested_type)
 
         # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
         # (cas acceptation d'une DI système préventive)
         plan_id = data.get('plan_id')
-        request_id = str(data['request_id']) if data.get('request_id') else None
         if plan_id is None and request_id:
             cur.execute(
                 "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
@@ -1089,6 +1096,11 @@ class InterventionRepository:
         """Met à jour une intervention existante"""
         existing = self.get_by_id(intervention_id, include_actions=False)
 
+        # Un type n'est vérifié (existant, actif) que s'il change : un type désactivé depuis
+        # reste valable sur une intervention qui le porte déjà.
+        if data.get('type_inter') and data['type_inter'] != existing.get('type_inter'):
+            check_assignable(data["type_inter"], existing.get("type_inter"))
+
         # Bloquer la fermeture si des tâches non-optionnelles sont en attente
         if 'status_actual' in data:
             self._check_closable(intervention_id, data['status_actual'])
@@ -1136,7 +1148,7 @@ class InterventionRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "mise à jour intervention")
         finally:
             release_connection(conn)
 

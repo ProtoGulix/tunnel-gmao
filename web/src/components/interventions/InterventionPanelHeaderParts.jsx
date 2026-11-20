@@ -5,7 +5,7 @@
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from 'react-router-dom';
 import { Badge, Button, DropdownMenu, Flex, IconButton, Link, Text } from '@radix-ui/themes';
-import { INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { CalendarCheck, ChevronDown, ClipboardList, Copy, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
 
 function formatShortDate(iso) {
@@ -171,7 +171,8 @@ MachineHeading.propTypes = { machine: PropTypes.object };
 
 /** Type d'intervention en clair (Projet, Curatif...), absent si le code est inconnu. */
 export function TypeBadge({ typeCode }) {
-  const type = INTERVENTION_TYPES.find((t) => t.id === typeCode?.toUpperCase());
+  const { types } = useInterventionTypeRefs();
+  const type = types.find((t) => t.id === typeCode?.toUpperCase());
   if (!type) return null;
   return <Badge color={type.color} variant="soft" size="2">{type.title}</Badge>;
 }

@@ -9,7 +9,7 @@ import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Spinner, Tex
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
 import { AlertCircle, Ban, Bot, Clock, Trash2, User, Wrench, Zap, ShoppingCart, ArrowUpRight } from 'lucide-react';
-import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
@@ -103,7 +103,7 @@ function InterventionProgress({ iv, interventionId }) {
             </Text>
             {iv.type_inter && (
               <Badge size="1" variant="soft" color="blue">
-                {TYPE_INTER_LABELS[iv.type_inter] ?? iv.type_inter}
+                <InterventionTypeLabel code={iv.type_inter} />
               </Badge>
             )}
             {iv.status_label && (
@@ -322,7 +322,7 @@ function RequestWhoWhat({ detail }) {
           <Flex gap="2" align="center" mt="2">
             <Text size="1" color="gray">Type suggéré</Text>
             <Badge color="blue" variant="soft" size="1">
-              {TYPE_INTER_LABELS[detail.suggested_type_inter] ?? detail.suggested_type_inter}
+              <InterventionTypeLabel code={detail.suggested_type_inter} />
             </Badge>
           </Flex>
         )}

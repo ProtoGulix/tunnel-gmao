@@ -188,14 +188,20 @@ Tous les champs sont optionnels.
 ### POST `/admin/intervention-types` — corps
 
 ```json
-{ "code": "CODE", "label": "Libellé" }
+{ "code": "CODE", "label": "Libellé", "description": "Aide courte", "color": "blue" }
 ```
+
+`description` et `color` sont facultatifs. Le code est unique (`409` sinon) et ne change plus.
 
 ### PATCH `/admin/intervention-types/{id}` — corps
 
 ```json
-{ "label": "Nouveau libellé" }
+{ "label": "Nouveau libellé", "description": "Aide courte", "color": "red" }
 ```
+
+Champs facultatifs, un au moins. Le code n'est pas modifiable (un `code` envoyé est ignoré) ;
+une description vide l'efface. Un type ne se supprime pas (aucune route) : il se désactive
+avec `/active`. `GET` renvoie `id`, `code`, `label`, `color`, `description`, `is_active`.
 
 ### PATCH `/admin/intervention-statuses/{code}` — corps
 

@@ -4,6 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { SelectionChip } from '../ui/AsyncSearchSelect'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
+import { listedTypes } from '../../hooks/interventions/useInterventionTypes'
 import { getInterventionTypes } from '../../api/planning'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -20,7 +21,8 @@ const PRIORITY_OPTIONS = [
  * InterventionForm — formulaire fullscreen de création d'intervention.
  *
  * Props :
- *   di             — DI liée pré-fixée (optionnel) : { id, code, description }
+ *   di             — DI liée pré-fixée (optionnel) : { id, code, description,
+ *                    suggested_type_inter, is_system }
  *   onSubmit(data) — appelé avec { type_inter, tech_initials, title, priority, reported_date }
  *                    le parent est responsable de l'appel API
  *   onCancel
@@ -30,7 +32,11 @@ const PRIORITY_OPTIONS = [
 export function InterventionForm({ di = null, onSubmit, onCancel, loading = false, error = null }) {
   const { user } = useAuth()
   const [typeOptions, setTypeOptions] = useState([])
-  const [typeInter, setTypeInter] = useState('')
+  // Type vide par défaut et obligatoire (ADR 0026) ; le type suggéré par la demande le
+  // préremplit, verrouillé pour une demande système.
+  const [typeInter, setTypeInter] = useState(di?.suggested_type_inter ?? '')
+  const lockedType = !!(di?.is_system && di?.suggested_type_inter)
+  const [localError, setLocalError] = useState(null)
   const [priority, setPriority] = useState('normale')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
   const [title, setTitle] = useState(di?.description ?? '')
@@ -40,15 +46,14 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
 
   useEffect(() => {
     getInterventionTypes()
-      .then(types => {
-        setTypeOptions(types)
-        if (types.length > 0) setTypeInter(String(types[0].id))
-      })
+      .then(setTypeOptions)
       .catch(() => {})
   }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!typeInter) { setLocalError("Choisissez le type d'intervention"); return }
+    setLocalError(null)
     onSubmit({
       type_inter: typeInter,
       tech_initials: techInitials,
@@ -77,9 +82,9 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
         <div className="p-4 space-y-5">
 
           {/* Erreur */}
-          {error && (
+          {(localError || error) && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-xs text-red-700">• {error}</p>
+              <p className="text-xs text-red-700">• {localError || error}</p>
             </div>
           )}
 
@@ -119,9 +124,10 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
               </div>
               <SheetPicker
                 title="Type d'intervention"
-                options={typeOptions.map(o => ({ value: String(o.id), label: o.title ?? o.label ?? o.code }))}
+                options={listedTypes(typeOptions, typeInter).map(o => ({ value: String(o.id), label: o.title ?? o.label ?? o.code, description: o.description }))}
                 value={typeInter}
                 onChange={setTypeInter}
+                locked={lockedType}
                 placeholder="Sélectionner…"
                 zIndex={70}
               />

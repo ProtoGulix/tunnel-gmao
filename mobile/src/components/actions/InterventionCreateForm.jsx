@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Check, Loader2, FileText, Lock } from 'lucide-react'
+import { Check, Loader2, FileText } from 'lucide-react'
 import { SheetPicker } from '../ui/SheetPicker'
+import { listedTypes } from '../../hooks/interventions/useInterventionTypes'
 import { getServices } from '../../api/interventions'
 import { createIntervention, getInterventionTypes, getActiveUsers } from '../../api/planning'
 import { getErrorMessage } from '../../lib/api/errors'
@@ -36,7 +37,7 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
   const [serviceId, setServiceId] = useState('')
   const [description, setDescription] = useState('')
   const [reportedDate, setReportedDate] = useState(todayIso)
-  const [typeInter, setTypeInter] = useState('CUR')
+  const [typeInter, setTypeInter] = useState('')
   const [typeOptions, setTypeOptions] = useState([])
   const [priority, setPriority] = useState('normale')
   const [techId, setTechId] = useState(user?.id ?? '')
@@ -60,6 +61,7 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
   }
 
   async function handleSubmit() {
+    if (!typeInter) { setError("Choisissez le type d'intervention"); return }
     if (!techId) { setError('Veuillez sélectionner un technicien'); return }
     if (mode === 'existante' && !selectedDI) { setError('Sélectionner une demande ou en créer une nouvelle'); return }
     if (mode === 'nouvelle') {
@@ -167,16 +169,9 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
       <div className="flex gap-2">
         <div className="flex-1">
           <label className={labelCls}>Type *</label>
-          {lockedType ? (
-            <div className="w-full flex items-center justify-between gap-2 border border-tunnel-border rounded-lg px-3 py-2.5 bg-tunnel-bg text-sm font-medium text-tunnel-text">
-              <span>{typeOptions.find(o => o.id === typeInter)?.title ?? typeInter}</span>
-              <Lock size={13} className="text-tunnel-muted shrink-0" />
-            </div>
-          ) : (
-            <SheetPicker title="Type d'intervention"
-              options={typeOptions.map(o => ({ value: o.id, label: o.title }))}
-              value={typeInter} onChange={setTypeInter} placeholder="Sélectionner un type..." />
-          )}
+          <SheetPicker title="Type d'intervention"
+            options={listedTypes(typeOptions, typeInter).map(o => ({ value: o.id, label: o.title, description: o.description }))}
+            value={typeInter} onChange={setTypeInter} placeholder="Choisir le type…" locked={lockedType} />
         </div>
         <div className="flex-1">
           <label className={labelCls}>Priorité</label>

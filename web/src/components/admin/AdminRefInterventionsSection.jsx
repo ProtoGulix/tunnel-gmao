@@ -36,28 +36,29 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ code: '', label: '' });
+  const [form, setForm] = useState({ code: '', label: '', description: '' });
   const [isEditMode, setIsEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleCreate = useCallback(async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try { await onCreate({ code: form.code.trim().toUpperCase(), label: form.label.trim() }); setCreateOpen(false); setForm({ code: '', label: '' }); }
+    try { await onCreate({ code: form.code.trim().toUpperCase(), label: form.label.trim(), description: form.description.trim() }); setCreateOpen(false); setForm({ code: '', label: '', description: '' }); }
     finally { setSubmitting(false); }
   }, [form, onCreate]);
 
   const handleEdit = useCallback(async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try { await onUpdate(selected.id, form); setEditOpen(false); }
+    try { await onUpdate(selected.id, { label: form.label.trim(), description: form.description.trim() }); setEditOpen(false); }
     finally { setSubmitting(false); }
   }, [form, selected, onUpdate]);
 
-  const openEdit = (item) => { setSelected(item); setForm({ code: item.code || '', label: item.label || '' }); setIsEditMode(true); setEditOpen(true); };
+  const openEdit = (item) => { setSelected(item); setForm({ code: item.code || '', label: item.label || '', description: item.description || '' }); setIsEditMode(true); setEditOpen(true); };
 
   const columns = useMemo(() => [
     { key: 'label', header: 'Libellé', render: (i) => <Text size="2" weight="medium">{i.label}</Text> },
+    { key: 'description', header: 'Description', render: (i) => <Text size="2" color="gray">{i.description || '—'}</Text> },
     {
       key: 'status', header: 'Statut', width: 90,
       render: (i) => <Badge variant="soft" color={i.is_active ? 'green' : 'red'}>{i.is_active ? 'Actif' : 'Inactif'}</Badge>,
@@ -82,15 +83,17 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
   const LabelForm = ({ onSubmit, submitLabel }) => (
     <form onSubmit={onSubmit}>
       <Flex direction="column" gap="3" mt="4">
-        {!isEditMode && (
-          <label>
-            <Text size="2" weight="bold" mb="1" as="div">Code * (ex: CURATIF)</Text>
-            <TextField.Root value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="CODE" required />
-          </label>
-        )}
+        <label>
+          <Text size="2" weight="bold" mb="1" as="div">{isEditMode ? 'Code (non modifiable)' : 'Code * (ex: CURATIF)'}</Text>
+          <TextField.Root value={form.code} readOnly={isEditMode} disabled={isEditMode} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="CODE" required={!isEditMode} />
+        </label>
         <label>
           <Text size="2" weight="bold" mb="1" as="div">Libellé *</Text>
           <TextField.Root value={form.label} onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))} required />
+        </label>
+        <label>
+          <Text size="2" weight="bold" mb="1" as="div">Description (affichée sous le libellé à la création)</Text>
+          <TextField.Root value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} maxLength={200} />
         </label>
       </Flex>
       <Flex gap="3" mt="4" justify="end">
@@ -122,7 +125,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
           count: items.length,
           showSearchInput: false,
           actions: can(PERM.adminRef.createInterventionType)
-            ? <Button size="2" onClick={() => { setForm({ code: '', label: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>
+            ? <Button size="2" onClick={() => { setForm({ code: '', label: '', description: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>
             : null,
         }}
         columns={columns}

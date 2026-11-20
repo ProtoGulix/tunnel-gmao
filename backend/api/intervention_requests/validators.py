@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from api.errors.exceptions import ValidationError
+from api.interventions.types import check_assignable
 
 # Transitions autorisées : statut_from → [statuts_to possibles]
 ALLOWED_TRANSITIONS: Dict[str, List[str]] = {
@@ -80,6 +81,9 @@ class InterventionRequestValidator:
             raise ValidationError("description est obligatoire")
         if not data.get("machine_id"):
             raise ValidationError("machine_id est obligatoire")
+        if data.get("suggested_type_inter"):
+            # Nouvelle demande : le type suggéré doit exister en base et être actif.
+            check_assignable(data["suggested_type_inter"])
 
         from api.equipement_statuts.repo import check_equipement_statut_allows_interventions
 
