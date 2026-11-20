@@ -1,5 +1,7 @@
 # Types d'intervention permis selon l'équipement
 
+TRAITÉ le 2026-11-20 (ADR 0031, chantier TPE-01 à TPE-05). Reste : la création d'une demande ne vérifie pas son type suggéré contre les types permis (le type suggéré non permis est écarté à l'acceptation).
+
 Demande de l'utilisateur du 2026-11-20, pendant l'essai à l'écran de l'ADR 0026 : limiter
 les types proposés selon l'équipement choisi. Exemple : pas de BAT (bâtiment) sur un
 équipement immatériel comme SUPP.

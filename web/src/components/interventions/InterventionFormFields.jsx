@@ -88,7 +88,7 @@ export function InterventionRow({ formData, set, lockedType, TypeField, saving, 
         <Flex gap="3" align="start" wrap="wrap">
           <Box style={{ flex: '0 0 auto' }}>
             <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Type {!lockedType && <Text color="red">*</Text>}</Text>
-            <TypeField locked={lockedType} value={formData.type} onChange={(v) => set('type', v)} />
+            <TypeField locked={lockedType} value={formData.type} equipementId={formData.equipementId} onChange={(v) => set('type', v)} />
           </Box>
           <Box style={{ flex: '0 0 auto' }}>
             <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Priorité</Text>

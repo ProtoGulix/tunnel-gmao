@@ -135,6 +135,8 @@ export const PERM = {
     createEquipementClass: 'equipement-class:create_equipement_class',
     updateEquipementClass: 'equipement-class:update_equipement_class',
     removeEquipementClass: 'equipement-class:delete_equipement_class',
+    replaceClassInterventionTypes: 'equipement-class:replace_allowed_intervention_types',
+    getClassInterventionTypes: 'equipement-class:get_allowed_intervention_types',
     createAuditReason: 'admin:create_audit_reason',
     updateAuditReason: 'admin:update_audit_reason',
     setAuditReasonActive: 'admin:patch_audit_reason_active',

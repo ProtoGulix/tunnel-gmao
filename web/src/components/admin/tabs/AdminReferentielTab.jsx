@@ -99,6 +99,13 @@ export default function AdminReferentielTab() {
       equipClasses.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Classe modifiée'), [equipClasses, wrap]);
 
+  const handleSaveClassTypes = useCallback((id, codes) =>
+    wrap(async () => {
+      const saved = await refApi.replaceClassInterventionTypes(id, codes);
+      equipClasses.setItems((prev) => prev.map((i) => (i.id === id
+        ? { ...i, allowed_intervention_types: saved?.allowed_intervention_types ?? codes } : i)));
+    }, 'Types permis enregistrés'), [equipClasses, wrap]);
+
   const handleDeleteEquipClass = useCallback((id) =>
     wrap(async () => {
       await refApi.deleteEquipementClass(id);
@@ -180,6 +187,7 @@ export default function AdminReferentielTab() {
               loading={equipClasses.loading}
               onCreate={handleCreateEquipClass}
               onUpdate={handleUpdateEquipClass}
+              onSaveTypes={handleSaveClassTypes}
               onDelete={handleDeleteEquipClass}
             />
           )}

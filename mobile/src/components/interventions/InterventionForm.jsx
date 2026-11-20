@@ -4,8 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { SelectionChip } from '../ui/AsyncSearchSelect'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
-import { listedTypes } from '../../hooks/interventions/useInterventionTypes'
-import { getInterventionTypes } from '../../api/planning'
+import { listedTypes, usePermittedTypes } from '../../hooks/interventions/useInterventionTypes'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
 const labelCls = 'flex items-center gap-1.5 mb-1.5'
@@ -21,6 +20,7 @@ const PRIORITY_OPTIONS = [
  * InterventionForm — formulaire fullscreen de création d'intervention.
  *
  * Props :
+ *   machineId      — équipement : limite les types à ceux permis par sa classe (ADR 0031)
  *   di             — DI liée pré-fixée (optionnel) : { id, code, description,
  *                    suggested_type_inter, is_system }
  *   onSubmit(data) — appelé avec { type_inter, tech_initials, title, priority, reported_date }
@@ -29,13 +29,16 @@ const PRIORITY_OPTIONS = [
  *   loading        — spinner sur le bouton Créer
  *   error          — message d'erreur à afficher
  */
-export function InterventionForm({ di = null, onSubmit, onCancel, loading = false, error = null }) {
+export function InterventionForm({ di = null, machineId = null, onSubmit, onCancel, loading = false, error = null }) {
   const { user } = useAuth()
-  const [typeOptions, setTypeOptions] = useState([])
+  const { types: typeOptions, loaded: typesLoaded } = usePermittedTypes(machineId)
   // Type vide par défaut et obligatoire (ADR 0026) ; le type suggéré par la demande le
   // préremplit, verrouillé pour une demande système.
   const [typeInter, setTypeInter] = useState(di?.suggested_type_inter ?? '')
-  const lockedType = !!(di?.is_system && di?.suggested_type_inter)
+  // Pas de verrou si le type suggéré n'est pas permis pour l'équipement : le backend arbitre
+  // (exemption du préventif).
+  const suggested = di?.suggested_type_inter
+  const lockedType = !!(di?.is_system && suggested && typeOptions.some(t => t.id === suggested))
   const [localError, setLocalError] = useState(null)
   const [priority, setPriority] = useState('normale')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
@@ -45,10 +48,8 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
     ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : '')
 
   useEffect(() => {
-    getInterventionTypes()
-      .then(setTypeOptions)
-      .catch(() => {})
-  }, [])
+    if (typesLoaded && typeInter && typeInter !== suggested && !typeOptions.some(t => t.id === typeInter)) setTypeInter('')
+  }, [typesLoaded, typeOptions, typeInter, suggested])
 
   const handleSubmit = (e) => {
     e.preventDefault()

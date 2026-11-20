@@ -17,6 +17,7 @@ from api.errors.exceptions import (
     raise_db_error,
 )
 from api.intervention_requests.validators import InterventionRequestValidator
+from api.interventions.types import allowed_type_codes, is_preventive_origin
 from api.preventive_occurrences.cascade import attach_occurrence, complete_occurrences
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
@@ -720,6 +721,16 @@ class InterventionRequestRepository:
                 payload_type = (intervention_data or {}).get("type_inter")
                 di_is_system = existing.get("is_system", False)
                 di_suggested = existing.get("suggested_type_inter")
+                # Le type de la classe de l'équipement l'emporte sur le type suggéré (ADR 0031) :
+                # un type suggéré non permis n'est ni imposé ni utilisé par défaut.
+                if di_suggested:
+                    allowed = allowed_type_codes(
+                        existing["equipement"]["id"],
+                        cur,
+                        from_plan=is_preventive_origin(cur, request_id),
+                    )
+                    if allowed is not None and di_suggested not in allowed:
+                        di_suggested = None
 
                 if di_is_system and di_suggested:
                     # DI système : suggested_type_inter est autoritaire

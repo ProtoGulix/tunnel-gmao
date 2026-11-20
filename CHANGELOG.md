@@ -9,6 +9,28 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Mobile : le sélecteur de type d'intervention (création et acceptation d'une demande) ne propose
+  que les types permis pour l'équipement ; un type devenu non permis est vidé, un type suggéré non
+  permis n'est pas verrouillé (TPE-04, ADR 0031).
+- Web : le sélecteur de type d'une nouvelle intervention ne propose que les types permis pour
+  l'équipement choisi (rechargé au changement d'équipement, type devenu non permis vidé, type
+  imposé par une demande préventive conservé), et l'administration des classes d'équipement
+  permet de régler les types permis en matrice dans la liste des classes : une colonne par type
+  (pastille de couleur), une case par classe enregistrée à chaque clic ; aucune case cochée :
+  tous permis (TPE-03, TPE-05, ADR 0031).
+- Types d'intervention permis par classe d'équipement appliqués par l'API (TPE-02, ADR 0031) :
+  refus en 400 (types permis listés) à la création d'une intervention et quand son type ou son
+  équipement change ; `GET /interventions/types?machine_id=` ne renvoie que les types permis ;
+  un type suggéré non permis par une demande n'est plus imposé à l'acceptation ;
+  `GET` et `PUT /equipement-class/{id}/intervention-types` lisent et remplacent la liste (même
+  droit que la modification d'une classe, audit `intervention_types_changed`), et les classes
+  portent `allowed_intervention_types`. Sans liste, tout reste permis. Exemption : le type PRE reste toujours permis pour une
+  intervention issue d'un plan préventif (génération automatique, acceptation d'une demande
+  préventive), pour ne pas bloquer la génération quotidienne ; un PRE manuel sans plan reste soumis
+  à la règle.
+- Types d'intervention par classe d'équipement (TPE-01, ADR 0031) : migration 0023, table
+  `equipement_class_intervention_type` (vide, aucune donnée créée ni modifiée). Retour arrière :
+  suppression de la table.
 - Règles données par l'API (REG-01, ADR 0030) : `is_locked` sur chaque intervention,
   `can_delete` sur chaque action et chaque tâche, `capabilities` (`skip_obligatory_step`,
   `close_task_without_action`) sur `GET /auth/me`, calculés par les fonctions qui servent déjà

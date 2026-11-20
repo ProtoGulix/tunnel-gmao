@@ -201,6 +201,12 @@ export async function fetchClosedInterventionsExport({
   }
 }
 
+/** Types actifs permis pour un équipement (ADR 0031) ; liste plate comme la liste complète */
+export async function fetchPermittedInterventionTypes(machineId) {
+  const r = await api.get('/interventions/types', { params: { machine_id: machineId } });
+  return Array.isArray(r.data) ? r.data : [];
+}
+
 /** Types d'intervention (référentiel en base, ADR 0026), inactifs inclus pour l'affichage de l'historique */
 export async function fetchInterventionTypeRefs() {
   const r = await api.get('/interventions/types', { params: { include_inactive: true } });

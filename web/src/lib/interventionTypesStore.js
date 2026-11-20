@@ -54,3 +54,20 @@ export function createTypesStore(fetchFn) {
     },
   };
 }
+
+/**
+ * Types proposés dans un sélecteur de création (ADR 0031).
+ * `permitted` : types actifs permis pour l'équipement choisi (null tant que la liste manque ou
+ * sans équipement : tous les types actifs). Le type courant d'une valeur imposée ou désactivée
+ * reste listé (accepté par l'API) ; sinon un type devenu non permis doit être vidé.
+ */
+export function selectableTypes({ activeTypes, allTypes, permitted, value, locked = false }) {
+  const base = permitted ?? activeTypes;
+  const current = allTypes.find((t) => t.id === value);
+  const inList = base.some((t) => t.id === value);
+  const keepCurrent = !!current && !inList && (locked || current.is_active === false);
+  return {
+    options: keepCurrent ? [...base, current] : base,
+    mustClear: !!value && !!permitted && !inList && !keepCurrent,
+  };
+}

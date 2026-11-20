@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -25,7 +26,7 @@ from api.interventions.schemas import (
     RequestPointageIn,
     RequestPointageOut,
 )
-from api.interventions.types import list_types
+from api.interventions.types import list_types, list_types_for_machine
 from api.interventions.validators import (
     InterventionValidator,
     ensure_reopen_reason,
@@ -69,9 +70,16 @@ def list_intervention_types(
     include_inactive: bool = Query(
         False, description="Inclut les types désactivés (affichage de l'historique)"
     ),
+    machine_id: UUID | None = Query(
+        None,
+        description="Équipement : ne renvoie que les types permis par sa classe (ADR 0031)",
+    ),
 ):
     """Types d'intervention lus en base, triés par libellé (id = code, title, color,
-    description, is_active). Actifs seulement par défaut."""
+    description, is_active). Actifs seulement par défaut ; avec machine_id, seulement ceux
+    que la classe de l'équipement permet (tous si elle n'a pas de liste)."""
+    if machine_id is not None:
+        return referentiel(list_types_for_machine(machine_id, include_inactive))
     return referentiel(list_types(include_inactive))
 
 

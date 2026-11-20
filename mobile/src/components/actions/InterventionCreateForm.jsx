@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Check, Loader2, FileText } from 'lucide-react'
 import { SheetPicker } from '../ui/SheetPicker'
-import { listedTypes } from '../../hooks/interventions/useInterventionTypes'
+import { listedTypes, usePermittedTypes } from '../../hooks/interventions/useInterventionTypes'
 import { getServices } from '../../api/interventions'
-import { createIntervention, getInterventionTypes, getActiveUsers } from '../../api/planning'
+import { createIntervention, getActiveUsers } from '../../api/planning'
 import { getErrorMessage } from '../../lib/api/errors'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -38,7 +38,7 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
   const [description, setDescription] = useState('')
   const [reportedDate, setReportedDate] = useState(todayIso)
   const [typeInter, setTypeInter] = useState('')
-  const [typeOptions, setTypeOptions] = useState([])
+  const { types: typeOptions, loaded: typesLoaded } = usePermittedTypes(equip.id)
   const [priority, setPriority] = useState('normale')
   const [techId, setTechId] = useState(user?.id ?? '')
   const [users, setUsers] = useState([])
@@ -47,13 +47,19 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    getInterventionTypes().then(setTypeOptions).catch(() => {})
     getServices().then(setServices).catch(() => {})
     getActiveUsers().then(setUsers).catch(() => {})
   }, [])
 
-  // Type imposé par une demande système qui en suggère un (comme l'accueil).
-  const lockedType = mode === 'existante' && !!(selectedDI?.is_system && selectedDI?.suggested_type_inter)
+  // Type imposé par une demande système qui en suggère un (comme l'accueil), sauf s'il n'est
+  // pas permis pour cet équipement : pas de verrou, le backend arbitre (exemption du préventif).
+  const suggested = mode === 'existante' ? selectedDI?.suggested_type_inter : null
+  const lockedType = !!(selectedDI?.is_system && suggested && typeOptions.some(t => t.id === suggested))
+
+  // Un type choisi devenu non permis (équipement changé) est vidé ; le type suggéré reste.
+  useEffect(() => {
+    if (typesLoaded && typeInter && typeInter !== suggested && !typeOptions.some(t => t.id === typeInter)) setTypeInter('')
+  }, [typesLoaded, typeOptions, typeInter, suggested])
 
   function selectDI(di) {
     setSelectedDI(di)

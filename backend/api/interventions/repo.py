@@ -14,7 +14,7 @@ from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError,
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.intervention_tasks.validators import task_delete_blocker
-from api.interventions.types import check_assignable, check_known
+from api.interventions.types import check_allowed_for_machine, check_assignable, check_known
 from api.interventions.validators import is_intervention_locked, is_reopening
 from api.preventive_occurrences.cascade import attach_occurrence
 from api.utils.search import build_search_clause
@@ -835,7 +835,13 @@ class InterventionRepository:
             req_row = cur.fetchone()
             suggested_type = req_row[0] if req_row else None
 
-        InterventionValidator.validate_create(data, suggested_type=suggested_type)
+        from api.interventions.types import is_preventive_origin
+
+        InterventionValidator.validate_create(
+            data,
+            suggested_type=suggested_type,
+            from_plan=is_preventive_origin(cur, request_id, data.get('plan_id')),
+        )
 
         # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
         # (cas acceptation d'une DI système préventive)
@@ -1100,6 +1106,16 @@ class InterventionRepository:
         # reste valable sur une intervention qui le porte déjà.
         if data.get('type_inter') and data['type_inter'] != existing.get('type_inter'):
             check_assignable(data["type_inter"], existing.get("type_inter"))
+
+        # Types permis par la classe de l'équipement (ADR 0031) : vérifiés seulement si le type
+        # ou l'équipement change ; une intervention existante non permise reste modifiable.
+        new_type = data.get('type_inter') or existing.get('type_inter')
+        new_machine = data.get('machine_id') or existing.get('machine_id')
+        changed = (data.get('type_inter') and data['type_inter'] != existing.get('type_inter')) or (
+            data.get('machine_id') and str(data['machine_id']) != str(existing.get('machine_id'))
+        )
+        if changed and new_type and new_machine:
+            check_allowed_for_machine(new_type, new_machine)
 
         # Bloquer la fermeture si des tâches non-optionnelles sont en attente
         if 'status_actual' in data:

@@ -56,3 +56,22 @@ export function useInterventionTypes() {
 export function listedTypes(types, current) {
   return types.filter(t => t.is_active !== false || t.id === current)
 }
+
+/**
+ * Types permis pour un équipement (ADR 0031), rechargés quand l'équipement change.
+ * `loaded` reste faux tant que la liste de l'équipement courant n'est pas arrivée : ne rien
+ * vider avant. En cas d'échec la liste reste vide et le backend arbitre à l'envoi.
+ */
+export function usePermittedTypes(machineId) {
+  const [state, setState] = useState({ machineId: null, types: [] })
+
+  useEffect(() => {
+    let alive = true
+    getInterventionTypes({ machineId })
+      .then((types) => { if (alive) setState({ machineId, types }) })
+      .catch(() => { if (alive) setState({ machineId, types: [] }) })
+    return () => { alive = false }
+  }, [machineId])
+
+  return { types: state.types, loaded: state.machineId === machineId }
+}

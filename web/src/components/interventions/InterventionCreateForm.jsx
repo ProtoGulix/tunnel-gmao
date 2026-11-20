@@ -6,7 +6,10 @@ import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
 import DescribedSelect from '@/components/ui/DescribedSelect';
 import SelectionSummary from '@/components/ui/SelectionSummary';
 import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
+import { useEffect } from 'react';
 import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
+import { usePermittedInterventionTypes } from '@/hooks/shared/usePermittedInterventionTypes';
+import { selectableTypes } from '@/lib/interventionTypesStore';
 
 /* ── Sous-composants ───────────────────────────────────────────────────────── */
 
@@ -49,11 +52,14 @@ EquipementField.propTypes = {
 // Largeur fixe : la description du type passe à la ligne au lieu d'élargir le formulaire
 const TYPE_FIELD_WIDTH = 300;
 
-function TypeField({ locked: lockedType, value, onChange }) {
+function TypeField({ locked: lockedType, value, onChange, equipementId }) {
   const { types, activeTypes, colorOf } = useInterventionTypeRefs();
-  // Un type suggéré par la demande reste proposé même désactivé (accepté par l'API)
-  const current = types.find((t) => t.id === value);
-  const listed = current && !current.is_active ? [...activeTypes, current] : activeTypes;
+  const permitted = usePermittedInterventionTypes(equipementId);
+  // Un type imposé ou désactivé reste proposé (accepté par l'API) ; un type devenu non permis est vidé
+  const { options: listed, mustClear } = selectableTypes({
+    activeTypes, allTypes: types, permitted, value, locked: lockedType,
+  });
+  useEffect(() => { if (mustClear) onChange(''); }, [mustClear, onChange]);
   const options = listed.map((t) => ({
     value: t.id, label: t.title, badge: t.id, color: colorOf(t.id), description: t.description,
   }));
@@ -65,7 +71,7 @@ function TypeField({ locked: lockedType, value, onChange }) {
     />
   );
 }
-TypeField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func };
+TypeField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func, equipementId: PropTypes.string };
 
 /* ── Composant principal ───────────────────────────────────────────────────── */
 

@@ -4,7 +4,7 @@ from api.audits.schemas import AuditRules
 from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import AuditReasonRequiredError, ConflictError, ValidationError
-from api.interventions.types import check_assignable
+from api.interventions.types import check_allowed_for_machine, check_assignable
 
 # Décision d'audit (decision_types) d'une réouverture (ADR 0028)
 REOPEN_DECISION = "intervention_reopened"
@@ -175,12 +175,19 @@ class InterventionValidator:
             release_connection(conn)
 
     @classmethod
-    def validate_create(cls, data: Dict[str, Any], suggested_type: str | None = None) -> None:
+    def validate_create(
+        cls, data: Dict[str, Any], suggested_type: str | None = None, from_plan: bool = False
+    ) -> None:
         """Valide les règles métier avant création d'une intervention.
 
-        `suggested_type` : type suggéré par la demande liée, accepté même désactivé."""
+        `suggested_type` : type suggéré par la demande liée, accepté même désactivé.
+        `from_plan` : intervention issue d'un plan préventif (type PRE toujours permis)."""
         if data.get("type_inter"):
             cls.validate_type_inter(data["type_inter"], suggested_type)
+            # Le type de la classe de l'équipement l'emporte, même sur le type suggéré (ADR 0031).
+            check_allowed_for_machine(
+                data["type_inter"], data.get("machine_id"), from_plan=from_plan
+            )
         if data.get("machine_id"):
             from api.equipement_statuts.repo import check_equipement_statut_allows_interventions
 

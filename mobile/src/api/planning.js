@@ -43,8 +43,12 @@ export function searchDI(params = {}) {
 
 // includeInactive : pour l'affichage des interventions existantes (types retirés inclus) ;
 // sans, seuls les types actifs sont renvoyés (création).
-export function getInterventionTypes({ includeInactive = false } = {}) {
-  const query = includeInactive ? "?include_inactive=true" : ""
+// machineId : limite aux types permis pour l'équipement (classe, ADR 0031) ; sans, liste inchangée.
+export function getInterventionTypes({ includeInactive = false, machineId = null } = {}) {
+  const params = new URLSearchParams()
+  if (includeInactive) params.set("include_inactive", "true")
+  if (machineId) params.set("machine_id", machineId)
+  const query = params.size ? `?${params}` : ""
   return client.get(`/interventions/types${query}`).then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
 

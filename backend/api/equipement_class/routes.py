@@ -7,7 +7,12 @@ from api.auth.permissions import require_authenticated
 from api.utils.response import single
 
 from .repo import EquipementClassRepository
-from .schemas import EquipementClass, EquipementClassCreate, EquipementClassUpdate
+from .schemas import (
+    AllowedInterventionTypesUpdate,
+    EquipementClass,
+    EquipementClassCreate,
+    EquipementClassUpdate,
+)
 
 router = APIRouter(
     prefix="/equipement-class",
@@ -49,6 +54,21 @@ def update_equipement_class(class_id: str, data: EquipementClassUpdate):
             class_id=class_id, code=data.code, label=data.label, description=data.description
         )
     )
+
+
+@router.get("/{class_id}/intervention-types")
+def get_allowed_intervention_types(class_id: str):
+    """Codes des types d'intervention permis pour la classe (liste vide = tous permis)"""
+    return single({"intervention_types": repo.get_by_id(class_id)["allowed_intervention_types"]})
+
+
+@router.put(
+    "/{class_id}/intervention-types",
+    dependencies=[audit("equipement_class", id_from_path="class_id")],
+)
+def replace_allowed_intervention_types(class_id: str, data: AllowedInterventionTypesUpdate):
+    """Remplace la liste des types permis de la classe (ADR 0031) ; renvoie la classe"""
+    return single(repo.replace_allowed_types(class_id, data.intervention_types))
 
 
 @router.delete(

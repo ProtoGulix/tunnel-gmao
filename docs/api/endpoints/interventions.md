@@ -194,6 +194,10 @@ Types d'intervention lus en base (table `intervention_type`, ADR 0026), triés p
 Seuls les types actifs sont renvoyés ; `?include_inactive=true` ajoute les types désactivés
 (affichage de l'historique).
 
+`?machine_id=<uuid>` (équipement) ne renvoie que les types permis par la classe de
+l'équipement (ADR 0031) : une classe sans liste, un équipement sans classe ou inconnu donnent
+tous les types. Sans `machine_id`, la liste est inchangée. `machine_id` invalide : `422`.
+
 ### Réponse `200`
 
 ```json
@@ -211,6 +215,13 @@ Seuls les types actifs sont renvoyés ; `?include_inactive=true` ajoute les type
 > `id` est le code du type, valeur du champ `type_inter`. Un type inconnu, ou désactivé
 > pour une nouvelle valeur (création, changement de type, `suggested_type_inter` d'une
 > demande), est refusé en `400` ; un type désactivé reste accepté sur ce qui le porte déjà.
+>
+> Types permis par classe (ADR 0031) : à la création et quand `type_inter` ou `machine_id`
+> change (`PUT`), un type que la classe de l'équipement ne permet pas est refusé en `400`
+> (`Le type d'intervention 'PRO' n'est pas permis pour cet équipement. Types permis : Curatif (CUR), …`).
+> Une intervention existante non permise reste modifiable si ni le type ni l'équipement ne
+> changent. À l'acceptation d'une demande, un type suggéré non permis n'est ni imposé ni
+> utilisé par défaut : le type choisi doit être permis.
 
 ---
 
