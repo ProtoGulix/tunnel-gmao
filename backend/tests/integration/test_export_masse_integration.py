@@ -14,18 +14,20 @@ pytestmark = pytest.mark.integration
 URL = "/exports/interventions/closed"
 
 
-def _fermer(client, admin, intervention_id, date):
-    resp = client.post(
-        "/intervention-status-log",
+def _fermer(client, admin, instance, intervention_id, date):
+    """Ferme par PUT (ADR 0027), puis date la ligne de journal créée par le trigger : l'export
+    retient la date du dernier passage à 'ferme' du journal."""
+    resp = client.put(
+        f"/interventions/{intervention_id}",
         headers=admin.headers,
-        json={
-            "intervention_id": intervention_id,
-            "status_to": "ferme",
-            "technician_id": admin.id,
-            "date": date,
-        },
+        json={"status_actual": "ferme", "reason_code": "ROUTINE"},
     )
-    assert resp.status_code == 201, resp.text
+    assert resp.status_code == 200, resp.text
+    instance.sql(
+        "UPDATE intervention_status_log SET date = %s "
+        "WHERE intervention_id = %s AND status_to = 'ferme'",
+        (date, intervention_id),
+    )
 
 
 def _code(instance, intervention_id):
@@ -40,8 +42,8 @@ def test_seules_les_fermees_de_la_periode_sont_exportees_et_les_droits_s_appliqu
     dans_periode, _ = intervention_liee(client, admin, instance)
     hors_periode, _ = intervention_liee(client, admin, instance)
     ouverte, _ = intervention_liee(client, admin, instance)
-    _fermer(client, admin, dans_periode, "2031-03-15T10:00:00")
-    _fermer(client, admin, hors_periode, "2031-05-02T10:00:00")
+    _fermer(client, admin, instance, dans_periode, "2031-03-15T10:00:00")
+    _fermer(client, admin, instance, hors_periode, "2031-05-02T10:00:00")
 
     params = {"date_from": "2031-03-01", "date_to": "2031-03-15", "format": "zip"}
     r = client.get(URL, params=params, headers=admin.headers)
@@ -76,9 +78,9 @@ def test_marquage_imprimees_idempotent_sans_toucher_au_statut(
     a, _ = intervention_liee(client, admin, instance)
     b, _ = intervention_liee(client, admin, instance)
     hors, _ = intervention_liee(client, admin, instance)
-    _fermer(client, admin, a, "2032-03-10T10:00:00")
-    _fermer(client, admin, b, "2032-03-12T10:00:00")
-    _fermer(client, admin, hors, "2032-06-12T10:00:00")
+    _fermer(client, admin, instance, a, "2032-03-10T10:00:00")
+    _fermer(client, admin, instance, b, "2032-03-12T10:00:00")
+    _fermer(client, admin, instance, hors, "2032-06-12T10:00:00")
     instance.sql("UPDATE intervention SET printed_fiche = TRUE WHERE id = %s", (b,))
     logs_avant = instance.sql(
         "SELECT COUNT(*) FROM intervention_status_log WHERE intervention_id = ANY(%s::uuid[])",
@@ -158,10 +160,10 @@ def test_imprimees_exclues_par_defaut_et_ordre_par_equipement_puis_fermeture(
         (f"EXB-{suffixe}", b),
     )
     # B fermée la première : l'équipement passe avant la date.
-    _fermer(client, admin, b, "2033-02-01T10:00:00")
-    _fermer(client, admin, a_tot, "2033-02-05T10:00:00")
-    _fermer(client, admin, a_tard, "2033-02-20T10:00:00")
-    _fermer(client, admin, imprimee, "2033-02-10T10:00:00")
+    _fermer(client, admin, instance, b, "2033-02-01T10:00:00")
+    _fermer(client, admin, instance, a_tot, "2033-02-05T10:00:00")
+    _fermer(client, admin, instance, a_tard, "2033-02-20T10:00:00")
+    _fermer(client, admin, instance, imprimee, "2033-02-10T10:00:00")
     instance.sql("UPDATE intervention SET printed_fiche = TRUE WHERE id = %s", (imprimee,))
     periode = {"date_from": "2033-02-01", "date_to": "2033-02-28"}
 

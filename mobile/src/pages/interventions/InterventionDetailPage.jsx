@@ -4,6 +4,7 @@ import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
+import { CloseInterventionPrompt } from '../../components/interventions/CloseInterventionPrompt'
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
@@ -12,6 +13,8 @@ import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
 import { formatDateFr } from '../../utils/dateUtils'
+
+const CLOSED_STATUS = 'ferme'
 
 function getInitials(name) {
   if (!name) return '?'
@@ -142,6 +145,7 @@ export default function InterventionDetailPage() {
   const { intervention, loading, error, reload } = useInterventionDetail(id)
   const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
+  const [showClosePrompt, setShowClosePrompt] = useState(false)
   const [showActionForm, setShowActionForm] = useState(false)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
   // Incrémenté à chaque reload() pour forcer InterventionTasksSection à
@@ -164,6 +168,11 @@ export default function InterventionDetailPage() {
   const stats = intervention?.stats
 
   async function handleStatusChange(toCode) {
+    // Clôture : une seule porte (ADR 0027), la confirmation passe par la mise à jour
+    if (toCode === CLOSED_STATUS) {
+      setShowClosePrompt(true)
+      return
+    }
     await changeInterventionStatus({
       intervention_id: id,
       status_from: statusCode,
@@ -306,6 +315,15 @@ export default function InterventionDetailPage() {
           statuses={statuses}
           onClose={() => setShowStatusSheet(false)}
           onChange={handleStatusChange}
+        />
+      )}
+
+      {showClosePrompt && (
+        <CloseInterventionPrompt
+          intervention={intervention}
+          title="Clore l'intervention"
+          onClosed={() => { setShowClosePrompt(false); reloadAll() }}
+          onDismiss={() => setShowClosePrompt(false)}
         />
       )}
 

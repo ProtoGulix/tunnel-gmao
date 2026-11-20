@@ -30,7 +30,7 @@ pending → generated → in_progress → completed
 
 > **Acceptation en cascade** : DI `nouvelle` → `acceptee` passe l'occurrence à `in_progress` et renseigne `intervention_id`.
 
-> **Clôture en cascade** : DI → `cloturee` **ou** fermeture de l'intervention (via PATCH ou POST /intervention-status-log) passent l'occurrence à `completed`.
+> **Clôture en cascade** : DI → `cloturee` **ou** fermeture de l'intervention (via PUT /interventions/{id} ; le journal de statut refuse la clôture, ADR 0027) passent l'occurrence à `completed`.
 
 ---
 

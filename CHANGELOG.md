@@ -54,6 +54,14 @@ mobile/CHANGELOG.md.
   l'occurrence rendue non routinière.
 
 ### Corrigé
+- Clôture d'une intervention : une seule porte, la fiche de l'intervention
+  (`PUT /interventions/{id}`), avec le contrôle des tâches obligatoires et le motif d'audit
+  si la règle l'exige. Le journal de statut refuse désormais « fermé » (400) ; le bouton
+  « Statut » du mobile ouvre la confirmation de clôture. La clôture de la demande liée par
+  la mise à jour laisse maintenant sa trace du système dans l'audit (elle manquait pour les
+  clôtures faites depuis le web). ADR 0027. Changement d'API.
+- Mobile : les boutons « Oui, clore l'intervention » et « Valider » de la fenêtre de motif
+  étaient invisibles (couleur inexistante, texte blanc sur fond blanc).
 - Mobile : la session ne coupe plus toutes les 15 minutes. Le mobile renouvelle seul son
   jeton de connexion, comme le web, pendant toute la journée de poste (8 heures par
   défaut). Les durées de session réglées dans `deploy/.env` (`ACCESS_TOKEN_EXPIRE_MINUTES`,

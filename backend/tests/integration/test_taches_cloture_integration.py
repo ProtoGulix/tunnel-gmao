@@ -308,15 +308,10 @@ def test_resp_cloture_une_tache_en_cours_qui_a_une_action(client, admin, instanc
 
 
 def _fermer(client, admin, intervention_id):
-    return client.post(
-        "/intervention-status-log",
-        json={
-            "intervention_id": intervention_id,
-            "status_from": "ouvert",
-            "status_to": "ferme",
-            "technician_id": admin.id,
-            "date": "2026-11-13T10:00:00",
-        },
+    """Clôture par la seule porte, PUT /interventions/{id} (ADR 0027)."""
+    return client.put(
+        f"/interventions/{intervention_id}",
+        json={"status_actual": "ferme", "reason_code": "ROUTINE"},
         headers=admin.headers,
     )
 
@@ -331,8 +326,11 @@ def test_gamme_incomplete_bloque_la_fermeture_puis_la_cloture_la_debloque(
     )
     assert statut[0][0] == "ouvert"
 
+    # Le PUT contrôle les tâches (400) : l'ancien 409 venait du trigger de gamme, que seule la
+    # voie du journal atteignait. L'intention reste : la fermeture est refusée tant que la
+    # tâche de gamme est ouverte.
     refus = _fermer(client, admin, intervention_id)
-    assert refus.status_code == 409, refus.text
+    assert refus.status_code == 400, refus.text
     assert instance.sql(
         "SELECT status_actual FROM intervention WHERE id = %s", (intervention_id,)
     ) == [("ouvert",)]
@@ -340,7 +338,7 @@ def test_gamme_incomplete_bloque_la_fermeture_puis_la_cloture_la_debloque(
     resp = make_user("RESP")
     assert _cloturer(client, resp.headers, task_id).status_code == 200
     ok = _fermer(client, admin, intervention_id)
-    assert ok.status_code == 201, ok.text
+    assert ok.status_code == 200, ok.text
     assert instance.sql(
         "SELECT status_actual FROM intervention WHERE id = %s", (intervention_id,)
     ) == [("ferme",)]

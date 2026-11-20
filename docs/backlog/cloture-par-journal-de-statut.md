@@ -1,3 +1,5 @@
+**TRAITÉ (ADR 0027, CLO-01 et CLO-02, 2026-11-20) : le journal refuse la clôture, le mobile clôt par la mise à jour.**
+
 # Clôture d'une intervention par le journal de statut sans contrôle des tâches
 
 Relevé pendant INT-04 (2026-11-20), reproduit dans le code par l'agent principal.
@@ -13,3 +15,11 @@ dev, 2026-11-20).
 
 Piste : appliquer `_check_closable` (et la règle d'audit de la clôture) sur cette route,
 ou faire passer le mobile par `PUT /interventions/{id}` comme le web. Décision à prendre.
+
+Restes (2026-11-20) :
+
+- 3 interventions fermées en base de dev gardent des tâches obligatoires à faire ou en
+  cours ; laissées en l'état (décision de l'utilisateur), à corriger à la main si besoin.
+  Compter aussi en production (lecture seule) avant toute correction.
+- La réouverture d'une intervention fermée et l'annulation passent encore par le journal,
+  sans motif d'audit (CLAUDE.md 2.4) : à traiter comme la clôture si l'utilisateur le décide.

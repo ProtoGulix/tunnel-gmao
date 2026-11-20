@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
-from api.errors.exceptions import NotFoundError
+from api.constants import CLOSED_STATUS_CODE
+from api.errors.exceptions import NotFoundError, ValidationError
 from api.intervention_status.repo import InterventionStatusRepository
 from api.utils.sanitizer import strip_html
 from api.utils.validators import validate_date
@@ -17,6 +18,18 @@ class InterventionStatusLogValidator:
         missing = [field for field in required_fields if not log_data.get(field)]
         if missing:
             raise ValueError(f"Champs obligatoires manquants: {', '.join(missing)}")
+
+    @staticmethod
+    def validate_not_closing(status_to: str) -> None:
+        """Refuse la clôture : elle ne passe que par PUT /interventions/{id} (ADR 0027).
+
+        Le journal ne contrôle ni les tâches obligatoires ni la règle d'audit de la clôture.
+        """
+        if status_to == CLOSED_STATUS_CODE:
+            raise ValidationError(
+                "La clôture d'une intervention se fait depuis sa fiche "
+                "(mise à jour de l'intervention), pas par le journal de statut."
+            )
 
     @staticmethod
     def validate_intervention_exists(intervention_id: str) -> Dict[str, Any]:
@@ -96,6 +109,7 @@ class InterventionStatusLogValidator:
         """
         # Vérifie les champs obligatoires
         cls.validate_required_fields(log_data)
+        cls.validate_not_closing(log_data['status_to'])
 
         # Valide la date
         log_data['date'] = validate_date(log_data.get('date'), 'date')

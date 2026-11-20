@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from datetime import date
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -1105,6 +1106,35 @@ class InterventionRepository:
         if 'status_actual' in data:
             self._check_closable(intervention_id, data['status_actual'])
 
+        # La demande liée est clôturée par le trigger de la base pendant l'écriture : sa trace
+        # système (SYSTEM_CASCADE) est déposée ici, comme pour toute clôture (ADR 0027).
+        with self._watch_closure(intervention_id, data):
+            if not self._write_update(intervention_id, data):
+                return self.get_by_id(intervention_id)
+
+        result = self.get_by_id(intervention_id)
+
+        # Si le statut vient de changer vers 'ferme', clôturer la demande liée
+        if 'status_actual' in data:
+            new_status = result.get('status_actual')
+            old_status = existing.get('status_actual')
+            if new_status != old_status:
+                # Résoudre le code du nouveau statut
+                self._notify_if_closed(intervention_id, new_status)
+
+        return result
+
+    @staticmethod
+    def _watch_closure(intervention_id: str, data: Dict[str, Any]):
+        """Contexte qui trace la clôture de la demande liée quand l'écriture ferme l'intervention."""
+        if str(data.get('status_actual')) != CLOSED_STATUS_CODE:
+            return nullcontext()
+        from api.intervention_requests.repo import InterventionRequestRepository
+
+        return InterventionRequestRepository().watch_trigger_closure(intervention_id)
+
+    def _write_update(self, intervention_id: str, data: Dict[str, Any]) -> bool:
+        """Écrit les champs modifiables présents dans `data` ; faux si aucun n'est fourni."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -1131,7 +1161,7 @@ class InterventionRepository:
                     params.append(data[field])
 
             if not set_clauses:
-                return self.get_by_id(intervention_id)
+                return False
 
             params.append(intervention_id)
 
@@ -1143,6 +1173,7 @@ class InterventionRepository:
 
             cur.execute(query, params)
             conn.commit()
+            return True
         except (ValidationError, DatabaseError):
             conn.rollback()
             raise
@@ -1151,18 +1182,6 @@ class InterventionRepository:
             raise_db_error(e, "mise à jour intervention")
         finally:
             release_connection(conn)
-
-        result = self.get_by_id(intervention_id)
-
-        # Si le statut vient de changer vers 'ferme', clôturer la demande liée
-        if 'status_actual' in data:
-            new_status = result.get('status_actual')
-            old_status = existing.get('status_actual')
-            if new_status != old_status:
-                # Résoudre le code du nouveau statut
-                self._notify_if_closed(intervention_id, new_status)
-
-        return result
 
     def _check_closable(self, intervention_id: str, status_actual: Any) -> None:
         """Lève ValidationError si des tâches non-optionnelles bloquent la fermeture."""
