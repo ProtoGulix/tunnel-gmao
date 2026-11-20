@@ -89,7 +89,7 @@ Crée un changement de statut.
 ### Règles métier
 
 - `status_from` doit correspondre au `status_actual` de l'intervention (sauf si null pour le premier changement)
-- Toutes les transitions de statut sont autorisées, sauf la clôture : `status_to = 'ferme'` répond `400` (ADR 0027). Une intervention se clôt par `PUT /interventions/{id}` (`status_actual: 'ferme'`), qui contrôle les tâches obligatoires et applique la règle d'audit de la clôture
+- Toutes les transitions de statut sont autorisées, sauf la clôture (`status_to = 'ferme'`, ADR 0027) et la sortie de « ferme » (`400`, ADR 0028 : rouvrir passe par `PUT /interventions/{id}` avec un motif). Une intervention se clôt par `PUT /interventions/{id}` (`status_actual: 'ferme'`), qui contrôle les tâches obligatoires et applique la règle d'audit de la clôture
 - Un trigger base de données met automatiquement à jour `intervention.status_actual` avec `status_to`
 
 ### Réponse `201`

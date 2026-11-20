@@ -956,6 +956,32 @@ class InterventionRequestRepository:
             reason_code=SYSTEM_CASCADE_REASON,
         )
 
+    def reopen_linked_request(self, cur: Any, intervention_id: str) -> None:
+        """Repasse « acceptee » la demande clôturée liée à une intervention qu'on rouvre.
+
+        S'exécute sur le curseur de la réouverture (même transaction, ADR 0028) ; l'événement
+        du système est déposé dans la requête, au nom du jeton.
+        """
+        cur.execute(
+            "UPDATE intervention_request SET statut = 'acceptee' "
+            "WHERE intervention_id = %s AND statut = 'cloturee' RETURNING id",
+            (intervention_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            record_audit_event(
+                "request",
+                row[0],
+                "status_transitioned",
+                old_value={"statut": "cloturee"},
+                new_value={
+                    "statut": "acceptee",
+                    "notes": "Réouverture automatique (réouverture de l'intervention)",
+                },
+                is_system=True,
+                reason_code=SYSTEM_CASCADE_REASON,
+            )
+
     @contextmanager
     def watch_trigger_closure(self, intervention_id: str):
         """Trace la clôture de la demande faite par le trigger de la base (journal de statut).

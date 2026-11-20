@@ -14,6 +14,7 @@ from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError,
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.interventions.types import check_assignable, check_known
+from api.interventions.validators import is_reopening
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -1108,8 +1109,9 @@ class InterventionRepository:
 
         # La demande liée est clôturée par le trigger de la base pendant l'écriture : sa trace
         # système (SYSTEM_CASCADE) est déposée ici, comme pour toute clôture (ADR 0027).
+        reopening = is_reopening(existing.get('status_actual'), data.get('status_actual'))
         with self._watch_closure(intervention_id, data):
-            if not self._write_update(intervention_id, data):
+            if not self._write_update(intervention_id, data, reopening):
                 return self.get_by_id(intervention_id)
 
         result = self.get_by_id(intervention_id)
@@ -1133,8 +1135,14 @@ class InterventionRepository:
 
         return InterventionRequestRepository().watch_trigger_closure(intervention_id)
 
-    def _write_update(self, intervention_id: str, data: Dict[str, Any]) -> bool:
-        """Écrit les champs modifiables présents dans `data` ; faux si aucun n'est fourni."""
+    def _write_update(
+        self, intervention_id: str, data: Dict[str, Any], reopening: bool = False
+    ) -> bool:
+        """Écrit les champs modifiables présents dans `data` ; faux si aucun n'est fourni.
+
+        Une réouverture repasse la demande liée « acceptee » sur le même curseur, donc dans
+        la même transaction : si l'un des deux UPDATE échoue, rien n'est écrit (ADR 0028).
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -1172,6 +1180,10 @@ class InterventionRepository:
             """
 
             cur.execute(query, params)
+            if reopening:
+                from api.intervention_requests.repo import InterventionRequestRepository
+
+                InterventionRequestRepository().reopen_linked_request(cur, intervention_id)
             conn.commit()
             return True
         except (ValidationError, DatabaseError):

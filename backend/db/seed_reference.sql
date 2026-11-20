@@ -473,3 +473,13 @@ SELECT setval('public.intervention_type_id_seq', GREATEST((SELECT COALESCE(MAX(i
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'intervention_type_inter_fkey' AND conrelid = 'public.intervention'::regclass) THEN ALTER TABLE public.intervention ADD CONSTRAINT intervention_type_inter_fkey FOREIGN KEY (type_inter) REFERENCES public.intervention_type(code); END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'intervention_request_suggested_type_inter_fkey' AND conrelid = 'public.intervention_request'::regclass) THEN ALTER TABLE public.intervention_request ADD CONSTRAINT intervention_request_suggested_type_inter_fkey FOREIGN KEY (suggested_type_inter) REFERENCES public.intervention_type(code); END IF; END $$;
 ALTER TABLE public.intervention_request DROP CONSTRAINT IF EXISTS chk_suggested_type_inter;
+
+--
+-- Motifs de réouverture d'une intervention (REO-01, ADR 0028), cohérents avec la migration 0021 :
+-- motifs de la décision intervention_reopened. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'INTERVENTION_CLOSED_BY_MISTAKE', 'Clôturée par erreur', 'user', '{intervention}', '{intervention_reopened}', '#d97706', 'L''intervention a été fermée par erreur : elle n''était pas terminée.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'INTERVENTION_CLOSED_BY_MISTAKE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'INTERVENTION_REWORK', 'Travail à reprendre', 'user', '{intervention}', '{intervention_reopened}', '#dc2626', 'Le travail est à reprendre : le défaut est revenu ou la réparation est incomplète.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'INTERVENTION_REWORK') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'intervention_reopened') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('intervention_reopened' = ANY(decision_types));
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));

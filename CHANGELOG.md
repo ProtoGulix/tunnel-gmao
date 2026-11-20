@@ -60,6 +60,13 @@ mobile/CHANGELOG.md.
   « Statut » du mobile ouvre la confirmation de clôture. La clôture de la demande liée par
   la mise à jour laisse maintenant sa trace du système dans l'audit (elle manquait pour les
   clôtures faites depuis le web). ADR 0027. Changement d'API.
+- Réouverture d'une intervention fermée : elle exige désormais un motif (« Clôturée par
+  erreur », « Travail à reprendre » ou « Autre » avec un texte), choisi dans la fenêtre de
+  motif habituelle, sur le web comme sur le mobile. Elle passe par la fiche de
+  l'intervention (`PUT /interventions/{id}`) ; le journal de statut refuse de sortir de
+  « fermé » (400). La demande liée, clôturée, repasse « acceptée » avec une trace du
+  système ; sur le web, le statut d'une intervention fermée n'est plus grisé. Migration
+  0021 (motifs). ADR 0028. Changement d'API.
 - Mobile : les boutons « Oui, clore l'intervention » et « Valider » de la fenêtre de motif
   étaient invisibles (couleur inexistante, texte blanc sur fond blanc).
 - Mobile : la session ne coupe plus toutes les 15 minutes. Le mobile renouvelle seul son

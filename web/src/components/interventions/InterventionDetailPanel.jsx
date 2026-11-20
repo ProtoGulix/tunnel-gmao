@@ -282,6 +282,9 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
         statusKey={mapDtoStatusToConfigKey(intervention.status)}
         priorityKey={mapPriorityToConfigKey(intervention.priority)}
         canEditProperties={!isLocked && can(PERM.interventions.update)}
+        // Le statut reste modifiable une fois fermée : rouvrir exige un motif, demandé par
+        // l'API et la fenêtre de motif globale (ADR 0028)
+        canChangeStatus={can(PERM.interventions.update)}
         onStatusChange={handleStatusChange}
         onPriorityChange={handlePriorityChange}
         onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}

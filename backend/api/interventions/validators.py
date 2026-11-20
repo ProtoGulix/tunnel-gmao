@@ -1,9 +1,55 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from api.audits.schemas import AuditRules
 from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
-from api.errors.exceptions import ConflictError, ValidationError
+from api.errors.exceptions import AuditReasonRequiredError, ConflictError, ValidationError
 from api.interventions.types import check_assignable
+
+# Décision d'audit (decision_types) d'une réouverture (ADR 0028)
+REOPEN_DECISION = "intervention_reopened"
+
+
+def is_reopening(current_status: Optional[str], new_status: Optional[str]) -> bool:
+    """Vrai si la mise à jour fait sortir l'intervention de « ferme »."""
+    return (
+        new_status is not None
+        and current_status == CLOSED_STATUS_CODE
+        and str(new_status) != CLOSED_STATUS_CODE
+    )
+
+
+def ensure_reopen_reason(
+    reason_code: Optional[str],
+    reason_text: Optional[str],
+    reasons: List[Dict[str, Any]],
+) -> None:
+    """Vérifie le motif explicite d'une réouverture (ADR 0028, même mécanisme que ADR 0016).
+
+    Rouvrir n'est jamais routinier : sans motif choisi par l'utilisateur (ROUTINE injecté
+    par le middleware, motif auto ou system), on répond la demande de motif standard.
+    `reasons` = motifs actifs de l'entité intervention ; seuls ceux dont decision_types
+    contient `intervention_reopened` sont proposés et acceptés.
+    """
+    from api.utils.audit import build_picker_reasons
+
+    proposed = [r for r in reasons if REOPEN_DECISION in (r.get("decision_types") or [])]
+    reason = {r["code"]: r for r in reasons}.get(reason_code or "")
+    if reason is None:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une intervention")
+    if reason.get("category") not in ("manual", "user"):
+        raise AuditReasonRequiredError(
+            AuditRules(
+                required=True,
+                silent=False,
+                default_reason_code=None,
+                reasons=build_picker_reasons(proposed),
+            ).model_dump()
+        )
+    if reason not in proposed:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une réouverture")
+    if reason_code == "OTHER" and not (reason_text or "").strip():
+        raise ValidationError("reason_text obligatoire quand reason_code = OTHER")
 
 
 class InterventionValidator:

@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, Query, Request
 
 from api.audits.declaration import audit, declare_created_id
+from api.audits.middleware import REASON_CODE_ATTR, REASON_TEXT_ATTR
 from api.auth.permissions import check_matrix, require_authenticated
 from api.equipements.schemas import EquipementDetail
 from api.errors.exceptions import ForbiddenError, UnauthorizedError
@@ -25,7 +26,12 @@ from api.interventions.schemas import (
     RequestPointageOut,
 )
 from api.interventions.types import list_types
-from api.interventions.validators import InterventionValidator
+from api.interventions.validators import (
+    InterventionValidator,
+    ensure_reopen_reason,
+    is_reopening,
+)
+from api.utils.audit import list_entity_reasons
 from api.utils.response import paginated, referentiel, single
 
 InterventionOut.model_rebuild(
@@ -238,9 +244,22 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
 
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
+
+    **Réouverture** (ADR 0028) : un `status_actual` qui fait sortir l'intervention de `ferme`
+    exige un motif explicite (catégorie manual ou user, décision `intervention_reopened`) :
+    sinon 400 « reason_code obligatoire » avec les motifs dans `audit`. La demande liée
+    clôturée repasse `acceptee` dans la même transaction, avec un événement du système.
     """
     InterventionValidator.validate_reported_date_not_null(data.model_fields_set, data.model_dump())
     repo = InterventionRepository()
+    if data.status_actual is not None:
+        current = repo.get_by_id(intervention_id, include_actions=False).get("status_actual")
+        if is_reopening(current, data.status_actual):
+            ensure_reopen_reason(
+                getattr(request.state, REASON_CODE_ATTR, None),
+                getattr(request.state, REASON_TEXT_ATTR, None),
+                list_entity_reasons("intervention"),
+            )
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))
 
 

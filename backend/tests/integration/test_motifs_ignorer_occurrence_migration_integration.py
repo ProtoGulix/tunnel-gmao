@@ -21,6 +21,10 @@ _REGLE = (
 )
 
 
+def _trie(lignes):
+    return [(*ligne[:4], sorted(ligne[4] or []), ligne[5]) for ligne in lignes]
+
+
 def _migration():
     spec = importlib.util.spec_from_file_location("migration_0019", _MIGRATION)
     module = importlib.util.module_from_spec(spec)
@@ -68,5 +72,6 @@ def test_retour_arriere_puis_remontee(instance):
     ) == [(True,)]
     for statement in module.upgrade_statements():
         instance.sql(statement)
-    assert instance.sql(_ETAT, (list(_CODES),)) == reference
+    # L'ordre des décisions de OTHER change quand une migration plus récente a ajouté la sienne.
+    assert _trie(instance.sql(_ETAT, (list(_CODES),))) == _trie(reference)
     assert instance.sql(_REGLE) == [(False, None)]

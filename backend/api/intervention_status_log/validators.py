@@ -32,6 +32,18 @@ class InterventionStatusLogValidator:
             )
 
     @staticmethod
+    def validate_not_reopening(intervention: Dict[str, Any], status_to: str) -> None:
+        """Refuse la sortie de « ferme » : rouvrir exige un motif, donc la mise à jour (ADR 0028)."""
+        if (
+            intervention.get('status_actual') == CLOSED_STATUS_CODE
+            and status_to != CLOSED_STATUS_CODE
+        ):
+            raise ValidationError(
+                "La réouverture d'une intervention se fait depuis sa fiche "
+                "(mise à jour de l'intervention, avec un motif), pas par le journal de statut."
+            )
+
+    @staticmethod
     def validate_intervention_exists(intervention_id: str) -> Dict[str, Any]:
         """Vérifie que l'intervention existe et retourne ses données"""
         # Import lazy pour éviter la dépendance circulaire
@@ -116,6 +128,7 @@ class InterventionStatusLogValidator:
 
         # Valide que l'intervention existe et récupère ses données
         intervention = cls.validate_intervention_exists(str(log_data['intervention_id']))
+        cls.validate_not_reopening(intervention, log_data['status_to'])
 
         # Valide que les statuts existent
         cls.validate_status_exists(log_data.get('status_from'))
