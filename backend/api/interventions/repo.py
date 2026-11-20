@@ -796,69 +796,141 @@ class InterventionRepository:
             raise ValidationError(f"Utilisateur {tech_id} introuvable")
         data['tech_initials'] = row[0]
 
+    def insert_intervention(self, cur: Any, data: Dict[str, Any]) -> str:
+        """Insère une intervention avec le curseur fourni (ni commit ni rollback), renvoie son id.
+
+        Seule fonction qui écrit une intervention (ADR 0025) : la création directe, la création
+        atomique avec sa demande et l'acceptation d'une demande l'appellent toutes. `data` porte
+        machine_id, type_inter, tech_id (ou tech_initials), et facultativement title, priority,
+        reported_by, status_actual, printed_fiche, reported_date, plan_id, request_id (cherche
+        le plan de l'occurrence préventive de la demande).
+        """
+        intervention_id = str(uuid4())
+
+        # Résoudre tech_initials depuis l'UUID avant validation (le trigger en a besoin)
+        self._resolve_tech_initials(cur, data)
+
+        from api.interventions.validators import InterventionValidator
+
+        InterventionValidator.validate_create(data)
+
+        # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
+        # (cas acceptation d'une DI système préventive)
+        plan_id = data.get('plan_id')
+        request_id = str(data['request_id']) if data.get('request_id') else None
+        if plan_id is None and request_id:
+            cur.execute(
+                "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
+                (request_id,),
+            )
+            occ_row = cur.fetchone()
+            plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
+
+        cur.execute(
+            """
+            INSERT INTO intervention
+            (id, title, machine_id, type_inter, priority,
+             reported_by, tech_initials, tech_id, status_actual,
+             printed_fiche, reported_date, plan_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                intervention_id,
+                data.get('title'),
+                data.get('machine_id'),
+                data.get('type_inter'),
+                data.get('priority'),
+                data.get('reported_by'),
+                data.get('tech_initials'),
+                str(data['tech_id']) if data.get('tech_id') else None,
+                data.get('status_actual', 'ouvert'),
+                data.get('printed_fiche', False),
+                data.get('reported_date') or date.today(),
+                plan_id,
+            ),
+        )
+        return intervention_id
+
+    @staticmethod
+    def record_created_event(cur: Any, entity_type: str, entity_id: str) -> None:
+        """Dépose la ligne d'audit `created` d'une entité créée en plus de celle de la route.
+
+        La route déclare l'intervention : la demande et les tâches créées dans le même geste
+        n'auraient aucune trace de leur création sans cet événement. Le motif vient de la
+        règle d'audit routinière de l'entité, jamais d'une valeur codée en dur ; l'auteur est
+        celui du jeton, ajouté par le middleware. `entity_type` passe par une liste blanche
+        qui fixe aussi la table lue.
+        """
+        from api.utils.audit import resolve_reason_code
+
+        tables = {
+            "intervention": "intervention",
+            "request": "intervention_request",
+            "task": "intervention_task",
+        }
+        table = tables[entity_type]
+        rule = resolve_reason_code(entity_type, [])
+        if rule is None:
+            raise DatabaseError(f"Aucune règle d'audit routinière pour la création : {entity_type}")
+        cur.execute(f"SELECT row_to_json(t) FROM {table} t WHERE id = %s", (entity_id,))
+        created = cur.fetchone()[0]
+        for technical in ("id", "created_at", "updated_at"):
+            created.pop(technical, None)
+        record_audit_event(
+            entity_type,
+            entity_id,
+            "created",
+            new_value=created,
+            reason_code=rule["default_reason_code"],
+        )
+
     def add(
         self,
         data: Dict[str, Any],
         user_id: Optional[str] = None,
         system_acceptance: bool = False,
+        new_request: Optional[Dict[str, Any]] = None,
+        tasks: Optional[List[Any]] = None,
     ) -> Dict[str, Any]:
-        """Crée une nouvelle intervention.
+        """Crée une nouvelle intervention, dans une seule transaction.
 
         `user_id` : auteur (jeton) de l'acceptation de la demande liée, dans son historique.
         `system_acceptance` : acceptation faite par le système (génération préventive en
         acceptation automatique) ; son événement d'audit porte alors le motif system.
+        `new_request` : contenu d'une demande à créer dans le même geste (origine « directe »,
+        donc sans notification) ; exclusif avec `data["request_id"]`.
+        `tasks` : tâches à créer (objets portant label, origin, optional, assigned_to,
+        due_date, sort_order). Un échec, quel qu'il soit, n'écrit rien (ADR 0025).
         """
-        request_id = str(data['request_id']) if data.get('request_id') else None
+        if new_request is not None and data.get('request_id'):
+            raise ValidationError("request_id et request sont exclusifs")
 
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            intervention_id = str(uuid4())
 
-            # Résoudre tech_initials depuis l'UUID avant validation (le trigger en a besoin)
-            self._resolve_tech_initials(cur, data)
+            if new_request is not None:
+                from api.intervention_requests.repo import InterventionRequestRepository
 
-            from api.interventions.validators import InterventionValidator
-
-            InterventionValidator.validate_create(data)
-
-            # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
-            # (cas acceptation manuelle d'une DI système préventive via POST /interventions)
-            plan_id = data.get('plan_id')
-            if plan_id is None and request_id:
-                cur.execute(
-                    "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
-                    (request_id,),
+                data = {**data}
+                data['request_id'] = InterventionRequestRepository.insert_request(
+                    cur, {**new_request, 'machine_id': data.get('machine_id')}, user_id, 'directe'
                 )
-                occ_row = cur.fetchone()
-                plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
+                self.record_created_event(cur, "request", data['request_id'])
+            request_id = str(data['request_id']) if data.get('request_id') else None
 
-            cur.execute(
-                """
-                INSERT INTO intervention
-                (id, title, machine_id, type_inter, priority,
-                 reported_by, tech_initials, tech_id, status_actual,
-                 printed_fiche, reported_date, plan_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    intervention_id,
-                    data.get('title'),
-                    data.get('machine_id'),
-                    data.get('type_inter'),
-                    data.get('priority'),
-                    data.get('reported_by'),
-                    data.get('tech_initials'),
-                    str(data['tech_id']) if data.get('tech_id') else None,
-                    data.get('status_actual', 'ouvert'),
-                    data.get('printed_fiche', False),
-                    data.get('reported_date') or date.today(),
-                    plan_id,
-                ),
-            )
+            intervention_id = self.insert_intervention(cur, data)
 
             if request_id:
                 self._link_request(cur, intervention_id, request_id, user_id, system_acceptance)
+
+            if tasks:
+                from api.intervention_tasks.repo import InterventionTaskRepository
+
+                task_repo = InterventionTaskRepository()
+                for task in tasks:
+                    task_id = task_repo.insert_task(cur, intervention_id, task, user_id)
+                    self.record_created_event(cur, "task", task_id)
 
             conn.commit()
         except HTTPException:

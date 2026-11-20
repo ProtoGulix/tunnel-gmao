@@ -3,7 +3,10 @@ export function isAuthError(error) {
 }
 
 export function getErrorMessage(error) {
-  if (error?.data?.detail) return error.data.detail
+  const detail = error?.data?.detail
+  // Une erreur 422 de validation renvoie une liste d'objets { msg, loc } : on joint les messages.
+  if (Array.isArray(detail)) return detail.map(d => d?.msg ?? String(d)).join(' ; ')
+  if (detail) return detail
   if (error?.data?.message) return error.data.message
   if (error?.message) return error.message
   return 'Une erreur est survenue'

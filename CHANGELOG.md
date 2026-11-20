@@ -8,7 +8,27 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- Interventions : `POST /interventions` peut créer, dans une seule transaction, la demande
+  d'origine (`request`, à la place de `request_id`) et les tâches (`tasks`). Un échec
+  n'écrit plus rien, donc plus de demande orpheline ni de doublon. La demande créée ainsi
+  est « directe » : aucune notification, aucun mail « à traiter ». Le droit de créer une
+  demande, et celui de créer une tâche, sont exigés en plus. Accepter une demande garde
+  maintenant le titre et le technicien (`tech_id`) reçus. ADR 0025.
+- Mobile : quand une action clôt la dernière tâche ouverte, le mobile propose de clore
+  l'intervention (avec la fenêtre de motif si les règles d'audit en exigent un) ; refuser
+  ne change rien.
+
 ### Modifié
+- Création d'une intervention : un seul formulaire, celui de l'accueil, partout. Le bouton
+  « Nouvelle intervention » de la page Interventions ouvre une fenêtre au lieu d'une page
+  (l'ancienne page bloquait sur « Le titre est obligatoire » sans demande choisie) ; la
+  fenêtre de Coordination et le Briefing utilisent le même formulaire ; le mobile suit
+  les mêmes règles : demande choisie ou saisie, sa description sert de titre, date de prise
+  en charge, technicien pilote, type, priorité. Les tâches s'ajoutent après la création.
+  Tout part en un seul envoi : une erreur ne laisse plus de demande à moitié créée. Sur le
+  mobile, la création reste possible même si une intervention est déjà ouverte sur
+  l'équipement ; le champ « Initiales technicien » disparaît.
 - Préventif : ignorer une occurrence demande désormais un motif choisi dans la fenêtre de
   motif commune (machine arrêtée, fait hors de l'outil, plan obsolète, ou autre avec un
   texte), comme les autres décisions tracées, au lieu d'une raison libre. Le motif est

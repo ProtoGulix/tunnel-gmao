@@ -3,7 +3,7 @@
  * sous forme de liste carte, identique à InterventionRequestSelector.
  *
  * Le bouton "Créer" déclenche le flow via onCreationFlowChange(true).
- * Export nommé : InterventionCreatorFlow — flow inline demande → intervention.
+ * Export nommé : InterventionCreatorLeft — liste des demandes ouvertes d'un équipement.
  *
  * @module components/planning/InterventionSelector
  */
@@ -11,12 +11,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Badge, Box, Button, Card, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
 import { Plus, ShieldCheck, Wrench } from 'lucide-react';
-import { fetchOpenInterventionsByEquipement, fetchActiveUsers } from '@/api/planning';
+import { fetchOpenInterventionsByEquipement } from '@/api/planning';
 import { fetchInterventionTasks } from '@/api/interventionTasks';
-import { createIntervention } from '@/api/interventions';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
-import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
-import { fetchEquipements } from '@/api/equipements';
 import EntitySelectorCard from '@/components/ui/EntitySelectorCard';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 
@@ -110,11 +107,6 @@ GroupedInterventionList.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-const getDefaultDateTimeLocal = () => {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-};
-
 /* ── Ligne d'intervention ─────────────────────────────────────────────────── */
 
 function InterventionRow({ item, isSelected, onToggle }) {
@@ -199,160 +191,6 @@ InterventionCreatorLeft.propTypes = {
   selectedRequest: PropTypes.object,
   onRequestSelected: PropTypes.func.isRequired,
   onCancel: PropTypes.func,
-};
-
-/**
- * Colonne droite du flow création d'intervention :
- * affiche le formulaire InterventionCreateForm.
- */
-export function InterventionCreatorRight({ equipementId, selectedRequest, formData, set, saving, error, onSubmit, onCancel }) {
-  const [users, setUsers] = useState([]);
-  useEffect(() => { fetchActiveUsers().then(setUsers).catch(() => {}); }, []);
-
-  if (!selectedRequest) {
-    return (
-      <Flex align="center" justify="center" direction="column" gap="2"
-        style={{ minHeight: 160, border: '1px dashed var(--gray-5)', borderRadius: 'var(--radius-2)', background: 'var(--gray-1)', padding: '1.5rem' }}
-      >
-        <Wrench size={20} color="var(--gray-7)" />
-        <Text size="2" color="gray" align="center">
-          Sélectionnez une demande pour créer l&apos;intervention
-        </Text>
-      </Flex>
-    );
-  }
-
-  return (
-    <InterventionCreateForm
-      formData={formData}
-      set={set}
-      locked={!!selectedRequest}
-      lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
-      diDetail={selectedRequest}
-      fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
-      users={users}
-      saving={saving}
-      error={error}
-      onSubmit={onSubmit}
-      onCancel={onCancel}
-    />
-  );
-}
-
-InterventionCreatorRight.propTypes = {
-  equipementId: PropTypes.string.isRequired,
-  selectedRequest: PropTypes.object,
-  formData: PropTypes.object.isRequired,
-  set: PropTypes.func.isRequired,
-  saving: PropTypes.bool,
-  error: PropTypes.string,
-  onSubmit: PropTypes.func.isRequired,
-  onCancel: PropTypes.func,
-};
-
-export function InterventionCreatorFlow({ equipementId, equipementLabel, onCreated, onCancel, initialRequest = null }) {
-  const [selectedRequest, setSelectedRequest] = useState(initialRequest);
-  const [formData, setFormData] = useState(() => ({
-    title: initialRequest?.description ?? '',
-    type: initialRequest?.suggested_type_inter ?? 'CUR',
-    priority: 'normale',
-    equipementId,
-    equipementLabel: equipementLabel ?? '',
-    techId: '',
-    reportedBy: initialRequest?.demandeur_nom ?? '',
-    reportedDate: getDefaultDateTimeLocal(),
-    ...(initialRequest?.id && { requestId: initialRequest.id }),
-  }));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    fetchActiveUsers().then(setUsers).catch(() => {});
-  }, []);
-
-  const set = useCallback((field, value) => setFormData((prev) => ({ ...prev, [field]: value })), []);
-
-  const handleSelectRequest = useCallback((req) => {
-    if (!req) {
-      setSelectedRequest(null);
-      setFormData((prev) => ({ ...prev, title: '', reportedBy: '', requestId: null }));
-      return;
-    }
-    setSelectedRequest(req);
-    setFormData((prev) => ({
-      ...prev,
-      title: req.description ?? '',
-      reportedBy: req.demandeur_nom ?? '',
-      requestId: req.id,
-      ...(req.suggested_type_inter && { type: req.suggested_type_inter }),
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setError(null);
-    if (!formData.title.trim()) { setError('Le titre est obligatoire'); return; }
-    if (!formData.requestId) { setError("Sélectionnez la demande d'intervention à l'origine"); return; }
-    if (!formData.techId) { setError('Veuillez sélectionner un technicien'); return; }
-    setSaving(true);
-    try {
-      const created = await createIntervention({
-        ...formData,
-        reportedDate: formData.reportedDate
-          ? new Date(formData.reportedDate).toISOString()
-          : undefined,
-      });
-      onCreated(created);
-    } catch (err) {
-      setError(err?.response?.data?.detail ?? err.message ?? "Erreur lors de la création de l'intervention");
-    } finally {
-      setSaving(false);
-    }
-  }, [formData, onCreated]);
-
-  return (
-    <Flex direction="column" gap="3">
-      {onCancel && (
-        <Button size="1" variant="ghost" color="gray" type="button" onClick={onCancel}>
-          ← Retour au sélecteur d&apos;intervention
-        </Button>
-      )}
-
-      {/* Liste des demandes — masquée si une demande est pré-sélectionnée (venue de l'onglet Demandes) */}
-      {!initialRequest && (
-        <InterventionRequestSelector
-          selectedId={selectedRequest?.id}
-          onSelect={handleSelectRequest}
-          machineId={equipementId}
-        />
-      )}
-
-      {selectedRequest && (
-        <InterventionCreateForm
-          formData={formData}
-          set={set}
-          locked={!!selectedRequest}
-          lockedType={!!(selectedRequest.is_system && selectedRequest.suggested_type_inter)}
-          diDetail={selectedRequest}
-          fetchEquipementsFn={(q) => fetchEquipements({ search: q }).then((r) => r.items ?? [])}
-          users={users}
-          saving={saving}
-          error={error}
-          onSubmit={handleSubmit}
-          onCancel={initialRequest ? onCancel : () => setSelectedRequest(null)}
-        />
-      )}
-    </Flex>
-  );
-}
-
-InterventionCreatorFlow.propTypes = {
-  equipementId: PropTypes.string.isRequired,
-  equipementLabel: PropTypes.string,
-  onCreated: PropTypes.func.isRequired,
-  onCancel: PropTypes.func,
-  initialRequest: PropTypes.object,
 };
 
 /* ── Liste des tâches d'une intervention + ghost row ─────────────────────── */

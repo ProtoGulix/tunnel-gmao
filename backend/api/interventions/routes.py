@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, Query, Request
 
 from api.audits.declaration import audit, declare_created_id
-from api.auth.permissions import require_authenticated
+from api.auth.permissions import check_matrix, require_authenticated
 from api.constants import INTERVENTION_TYPES
 from api.equipements.schemas import EquipementDetail
 from api.errors.exceptions import ForbiddenError, UnauthorizedError
@@ -166,6 +166,29 @@ def get_intervention_actions(intervention_id: str, request: Request):
     return single(repo.get_by_intervention(intervention_id))
 
 
+def _require_route_permission(request: Request, path: str) -> None:
+    """Exige le droit de la route `POST {path}` (matrice, ADR 0007) pour le rôle de l'appelant.
+
+    Création d'une demande ou de tâches dans le même geste que l'intervention : le droit
+    d'écrire sur `POST /interventions` ne suffit pas, il faut aussi celui de la route
+    propre à chaque entité. Route introuvable : refus (pas de code deviné).
+    """
+    for route in request.app.routes:
+        if getattr(route, "path", None) == path and "POST" in (
+            getattr(route, "methods", None) or ()
+        ):
+            check_matrix(request, route)
+            return
+    raise ForbiddenError("Accès refusé")
+
+
+def _require_secondary_permissions(request: Request, data: InterventionCreate) -> None:
+    if data.request is not None:
+        _require_route_permission(request, "/intervention-requests")
+    if data.tasks:
+        _require_route_permission(request, "/intervention-tasks")
+
+
 @router.post(
     "",
     status_code=201,
@@ -173,16 +196,29 @@ def get_intervention_actions(intervention_id: str, request: Request):
 )
 def create_intervention(data: InterventionCreate, request: Request):
     """
-    Crée une nouvelle intervention.
+    Crée une nouvelle intervention, en une seule transaction (ADR 0025).
+
+    Corps : les champs de l'intervention, plus **exactement un** de `request_id` (demande
+    existante) ou `request` (`demandeur_nom`, `description`, `service_id` : nouvelle demande
+    d'origine « directe », sans notification ni mail), et `tasks` facultatif (champs de
+    `POST /intervention-tasks` sans `intervention_id`). Un échec n'écrit rien. `request`
+    exige aussi le droit de `POST /intervention-requests`, `tasks` celui de
+    `POST /intervention-tasks`.
 
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
-    payload = data.model_dump(exclude_none=True)
-    InterventionValidator.validate_request_required(payload)
+    _require_secondary_permissions(request, data)
+    payload = data.model_dump(exclude_none=True, exclude={"request", "tasks"})
+    InterventionValidator.validate_request_required(payload, has_new_request=bool(data.request))
     repo = InterventionRepository()
     user_id = getattr(request.state, "user_id", None)
-    created = repo.add(payload, user_id=str(user_id) if user_id else None)
+    created = repo.add(
+        payload,
+        user_id=str(user_id) if user_id else None,
+        new_request=data.request.model_dump(exclude_none=True) if data.request else None,
+        tasks=data.tasks,
+    )
     declare_created_id(request, created["id"])
     return single(created)
 

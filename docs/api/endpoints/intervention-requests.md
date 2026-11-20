@@ -400,7 +400,7 @@ Détail complet avec historique des transitions de statut.
 
 ## `POST /intervention-requests`
 
-Crée une nouvelle demande d'intervention. Le code (`DI-YYYY-NNNN`) et le statut initial (`nouvelle`) sont générés automatiquement par trigger.
+Crée une nouvelle demande d'intervention, d'origine `signalee` (elle notifie les techniciens et envoie le mail « à traiter »). Une demande « directe », sans notification, ne se crée que par `POST /interventions` avec `request` (ADR 0025). Le code (`DI-YYYY-NNNN`) et le statut initial (`nouvelle`) sont générés automatiquement par trigger.
 
 ### Entrée
 
@@ -443,7 +443,7 @@ Retourne la demande créée avec son code et son statut initial. Le champ `inter
 
 Effectue une transition de statut sur une demande. Chaque transition est tracée dans `status_log`.
 
-Pour la transition vers `acceptee`, une intervention GMAO est automatiquement créée et liée à la demande. Les champs `type_inter` et `tech_initials` sont alors obligatoires.
+Pour la transition vers `acceptee`, une intervention GMAO est automatiquement créée et liée à la demande. `type_inter` et le technicien (`tech_id` ou `tech_initials`) sont alors obligatoires ; le `title` et le `tech_id` reçus sont conservés sur l'intervention (titre par défaut : description de la demande).
 
 ### Entrée
 
@@ -453,7 +453,8 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
   "notes": "Prise en charge atelier maintenance",
   "changed_by": "uuid-user",
   "type_inter": "CUR",
-  "tech_initials": "QC",
+  "title": "Remplacement du roulement",
+  "tech_id": "uuid-technicien",
   "priority": "urgent",
   "reported_date": "2026-03-10",
   "reason_code": "CLIENT_REQUEST"
@@ -466,7 +467,9 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
 | `notes`         | string | conditionnel          | **Obligatoire** si `status_to = "rejetee"`                                                                              |
 | `changed_by`    | uuid   | non                   | UUID de l'utilisateur Directus                                                                                          |
 | `type_inter`    | string | conditionnel          | Type d'intervention. **Obligatoire** si `acceptee` et DI humaine sans `suggested_type_inter`. Ignoré pour les DI système |
-| `tech_initials` | string | **oui si** `acceptee` | Initiales du technicien. Intégrées dans le code de l'intervention                                                       |
+| `title`         | string | non (si `acceptee`)   | Titre de l'intervention créée. Défaut : description de la demande                                                       |
+| `tech_id`       | uuid   | **un des deux** si `acceptee` | Technicien pilote, prioritaire sur `tech_initials`                                                       |
+| `tech_initials` | string | **un des deux** si `acceptee` | Initiales du technicien (héritage). Intégrées dans le code de l'intervention                                      |
 | `priority`      | string | non (si `acceptee`)   | `faible`, `normale`, `important`, `urgent`. Défaut : `normale`                                                          |
 | `reported_date` | date   | non (si `acceptee`)   | Date de signalement (`YYYY-MM-DD`). Défaut : null                                                                       |
 | `reason_code`   | string | **oui**               | Code raison obligatoire pour l'audit. Voir `GET /audit/reasons`                                                         |

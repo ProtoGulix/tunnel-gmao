@@ -10,3 +10,7 @@
 - NON VÉRIFIÉ : masquage par droit des écrans restants de l'étape 5 (famille et modèle de
   pièce, planning, briefing, onglet Sécurité) ; grisé « Supprimer aussi la demande » sur
   `isSystem` ; traçage du family_code des sous-familles au renommage d'une famille.
+- Complexité et longueur signalées par eslint (relecture INT, 2026-11-20) : InterventionCreationPanel.jsx
+  (complexité 19), DayContextRightColumn.jsx (25), DIRightPanel.jsx, InterventionSelector.jsx
+  (306 lignes) ; code surtout déplacé tel quel depuis l'accueil. Prop `equipementLabel`
+  inutilisée dans InterventionSelector.

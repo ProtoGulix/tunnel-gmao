@@ -59,9 +59,10 @@ class InterventionValidator:
             )
 
     @staticmethod
-    def validate_request_required(data: Dict[str, Any]) -> None:
-        """RÈGLE MÉTIER : Toute intervention doit être liée à une demande (request_id obligatoire)."""
-        if not data.get('request_id'):
+    def validate_request_required(data: Dict[str, Any], has_new_request: bool = False) -> None:
+        """RÈGLE MÉTIER : Toute intervention est issue d'une demande : existante (request_id)
+        ou créée dans le même geste (ADR 0025, has_new_request)."""
+        if not data.get('request_id') and not has_new_request:
             raise ValidationError(
                 "Une intervention doit obligatoirement être liée à une demande d'intervention (request_id manquant)."
             )

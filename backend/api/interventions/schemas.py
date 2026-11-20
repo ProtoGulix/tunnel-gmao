@@ -4,7 +4,7 @@ from datetime import date
 from typing import TYPE_CHECKING, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from api.equipements.schemas import EquipementDetail
 from api.intervention_actions.schemas import InterventionActionOut
@@ -16,8 +16,35 @@ if TYPE_CHECKING:
     from api.intervention_requests.schemas import InterventionRequestListItem
 
 
+class NewRequestIn(BaseModel):
+    """Demande créée dans le même geste que son intervention (ADR 0025).
+
+    L'équipement est celui de l'intervention. La demande est d'origine « directe » : aucune
+    notification ni mail « à traiter ».
+    """
+
+    demandeur_nom: str = Field(description="Nom du demandeur (donnée déclarative libre).")
+    description: str = Field(description="Description de l'intervention demandée.")
+    service_id: Optional[UUID] = Field(default=None, description="Service du demandeur.")
+
+
+class NewTaskIn(BaseModel):
+    """Tâche créée avec l'intervention : champs de POST /intervention-tasks sans intervention_id."""
+
+    label: str
+    origin: str = Field(default="tech", pattern="^(plan|resp|tech)$")
+    optional: bool = False
+    assigned_to: Optional[UUID] = None
+    due_date: Optional[date] = None
+    sort_order: int = 0
+
+
 class InterventionCreate(BaseModel):
-    """Schéma d'entrée pour créer une intervention (champs requis par le trigger)"""
+    """Schéma d'entrée pour créer une intervention (champs requis par le trigger).
+
+    La demande dont elle est issue est désignée par `request_id` (demande existante) OU
+    décrite par `request` (nouvelle demande), jamais les deux (ADR 0019, 0025).
+    """
 
     machine_id: UUID
     type_inter: str
@@ -28,9 +55,23 @@ class InterventionCreate(BaseModel):
     status_actual: Optional[str] = None
     printed_fiche: Optional[bool] = None
     reported_date: Optional[date] = None
-    request_id: UUID = Field(
-        description="Demande d'intervention dont l'intervention est issue (obligatoire, ADR 0019)."
+    request_id: Optional[UUID] = Field(
+        default=None,
+        description="Demande existante dont l'intervention est issue (exclusif avec `request`).",
     )
+    request: Optional[NewRequestIn] = Field(
+        default=None,
+        description="Nouvelle demande créée dans la même transaction (exclusif avec `request_id`).",
+    )
+    tasks: List[NewTaskIn] = Field(
+        default_factory=list, description="Tâches créées dans la même transaction (facultatif)."
+    )
+
+    @model_validator(mode="after")
+    def request_xor_request_id(self):
+        if (self.request_id is None) == (self.request is None):
+            raise ValueError("Fournir exactement un des champs `request_id` ou `request`")
+        return self
 
     class Config:
         from_attributes = True

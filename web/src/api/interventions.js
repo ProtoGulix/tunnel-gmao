@@ -96,7 +96,17 @@ export async function createIntervention(data) {
       : new Date().toISOString().slice(0, 10),
   };
   if (data.reportedBy) payload.reported_by = data.reportedBy;
-  if (data.requestId) payload.request_id = data.requestId;
+  // Création atomique (ADR 0025) : une demande existante OU une nouvelle demande dans le
+  // même appel. En cas d'erreur, rien n'est créé.
+  if (data.requestId) {
+    payload.request_id = data.requestId;
+  } else if (data.request) {
+    payload.request = {
+      demandeur_nom: data.request.demandeurNom,
+      description: data.request.description,
+      ...(data.request.serviceId && { service_id: data.request.serviceId }),
+    };
+  }
   const response = await api.post('/interventions', payload);
   return mapInterventionResponse(response.data);
 }

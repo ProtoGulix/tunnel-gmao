@@ -11,6 +11,7 @@ export const PERM = {
   // Fiche intervention : statut, actions, tâches, demande d'achat
   intervention: {
     changeStatus: 'intervention-status-log:create_status_log',
+    update: 'interventions:update_intervention',
     addAction: 'intervention-actions:add_action',
     createTask: 'intervention_tasks:create_task',
     updateTask: 'intervention_tasks:patch_task',

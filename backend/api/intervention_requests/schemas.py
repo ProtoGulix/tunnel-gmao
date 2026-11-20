@@ -99,6 +99,10 @@ class StatusTransitionIn(BaseModel):
     type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention (obligatoire pour acceptee)"
     )
+    title: Optional[str] = Field(
+        default=None,
+        description="Titre de l'intervention créée (à défaut : description de la demande)",
+    )
     tech_id: Optional[UUID] = Field(
         default=None, description="UUID du technicien pilote (prioritaire sur tech_initials)"
     )

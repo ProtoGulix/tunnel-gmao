@@ -128,10 +128,9 @@ def create_request(
     **Audit** : routinier (règle d'audit `request`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
 
-    Toute DI créée par cette route est d'origine 'signalee' (valeur par défaut
-    de `intervention_request.origine` — ce schéma d'entrée n'expose pas de champ
-    `origine`, seul le flux "créer intervention directement" en produirait une
-    'directe', et il ne passe pas par cette route). Le trigger DB
+    Toute DI créée par cette route est d'origine 'signalee' (ce schéma d'entrée n'expose pas
+    de champ `origine` ; une demande 'directe', sans notification, n'est créée que par
+    `POST /interventions` avec `request`, ADR 0025). Le trigger DB
     `fn_notify_di_a_traiter` a donc déjà fan-outé les notifications en base au
     moment où `repo.create()` retourne ; on déclenche ici, en tâche de fond,
     l'envoi des mails correspondants (ne doit jamais bloquer ni faire échouer
@@ -164,8 +163,9 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
     - rejetee → (aucune)
     - cloturee → (aucune)
 
-    Pour le statut `acceptee`, les champs `type_inter` et `tech_initials` sont obligatoires :
-    ils servent à créer automatiquement l'intervention liée.
+    Pour le statut `acceptee`, `type_inter` et le technicien (`tech_id` ou `tech_initials`)
+    sont obligatoires : ils servent à créer automatiquement l'intervention liée, avec le
+    `title` reçu (à défaut, la description de la demande) et le `tech_id` reçu.
 
     **Audit** : le motif est validé par AuditMiddleware (`reason_code` du corps, voir
     `GET /audit/reasons`) ; une règle routine s'applique si le corps n'en porte pas.
@@ -180,6 +180,8 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
     if body.status_to == "acceptee":
         intervention_data = {
             "type_inter": body.type_inter,
+            "title": body.title,
+            "tech_id": str(body.tech_id) if body.tech_id else None,
             "tech_initials": body.tech_initials,
             "priority": body.priority,
             "reported_date": body.reported_date,

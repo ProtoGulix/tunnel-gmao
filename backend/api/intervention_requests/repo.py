@@ -1,8 +1,9 @@
 import json
 import logging
 from contextlib import contextmanager
-from datetime import date
 from typing import Any, Dict, List, Optional
+
+from fastapi import HTTPException
 
 from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, IN_PROGRESS_STATUS_CODE
@@ -582,46 +583,60 @@ class InterventionRequestRepository:
     # Création
     # ──────────────────────────────────────────────────────────────
 
-    def create(self, data: Dict[str, Any], created_by: Optional[str] = None) -> Dict[str, Any]:
-        InterventionRequestValidator.validate_create(data)
-        demandeur_nom = (data.get("demandeur_nom") or "").strip()
-        description = (data.get("description") or "").strip()
-        service_id = data.get("service_id")
-        is_system = bool(data.get("is_system", False))
-        suggested_type_inter = data.get("suggested_type_inter") or None
+    @staticmethod
+    def insert_request(
+        cur: Any,
+        data: Dict[str, Any],
+        created_by: Optional[str] = None,
+        origine: str = "signalee",
+    ) -> str:
+        """Insère une demande avec le curseur fourni (ni commit ni rollback) et renvoie son id.
 
+        Seule fonction qui écrit une demande : la route de création et la création atomique
+        d'une intervention (ADR 0025) la partagent. `origine` « directe » ne notifie personne
+        (trigger fn_notify_di_a_traiter) ; « signalee » notifie les techniciens.
+        """
+        InterventionRequestValidator.validate_create(data)
+        service_id = data.get("service_id")
+        cur.execute(
+            """
+            INSERT INTO intervention_request
+                (machine_id, demandeur_nom, service_id, description,
+                 is_system, suggested_type_inter, code, statut, created_by, origine)
+            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s)
+            RETURNING id
+            """,
+            (
+                str(data["machine_id"]),
+                (data.get("demandeur_nom") or "").strip(),
+                str(service_id) if service_id else None,
+                (data.get("description") or "").strip(),
+                bool(data.get("is_system", False)),
+                data.get("suggested_type_inter") or None,
+                created_by,
+                origine,
+            ),
+        )
+        return str(cur.fetchone()[0])
+
+    def create(self, data: Dict[str, Any], created_by: Optional[str] = None) -> Dict[str, Any]:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO intervention_request
-                    (machine_id, demandeur_nom, service_id, description,
-                     is_system, suggested_type_inter, code, statut, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s)
-                RETURNING id
-                """,
-                (
-                    str(data["machine_id"]),
-                    demandeur_nom,
-                    str(service_id) if service_id else None,
-                    description,
-                    is_system,
-                    suggested_type_inter,
-                    created_by,
-                ),
-            )
-            new_id = cur.fetchone()[0]
-
+            new_id = self.insert_request(cur, data, created_by)
             conn.commit()
             logger.info("Demande d'intervention créée: %s", new_id)
+        except HTTPException:
+            # Erreur métier (validation, équipement indisponible) : message destiné au client.
+            conn.rollback()
+            raise
         except Exception as e:
             conn.rollback()
             raise DatabaseError("Erreur création demande: %s" % str(e)) from e
         finally:
             release_connection(conn)
 
-        return self.get_by_id(str(new_id))
+        return self.get_by_id(new_id)
 
     # ──────────────────────────────────────────────────────────────
     # Suppression (erreur de saisie, doublon)
@@ -854,35 +869,10 @@ class InterventionRequestRepository:
         intervention_data: Dict[str, Any],
     ) -> str:
         """Crée une intervention liée à une demande et retourne son ID."""
-        from uuid import uuid4
-
-        from api.interventions.validators import InterventionValidator
-
-        # Résoudre tech_initials depuis tech_id si fourni
-        tech_id = intervention_data.get("tech_id")
-        if tech_id and not intervention_data.get("tech_initials"):
-            cur.execute(
-                "SELECT initial FROM tunnel_user WHERE id = %s",
-                (str(tech_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise ValidationError(f"Utilisateur {tech_id} introuvable")
-            intervention_data["tech_initials"] = row[0]
+        from api.interventions.repo import InterventionRepository
 
         # get_by_id n'expose pas machine_id : l'équipement de la demande porte le même id.
         machine_id = str(request["equipement"]["id"])
-
-        # Valider l'unicité du code avant l'INSERT (remonte ConflictError 409)
-        InterventionValidator.validate_create(
-            {
-                "machine_id": machine_id,
-                "type_inter": intervention_data["type_inter"],
-                "tech_initials": intervention_data["tech_initials"],
-            }
-        )
-
-        intervention_id = str(uuid4())
 
         # Résoudre l'ID du statut "pris en charge"
         cur.execute(
@@ -906,43 +896,26 @@ class InterventionRequestRepository:
             raise DatabaseError(
                 "Impossible de résoudre le statut 'pris en charge' dans intervention_status_ref"
             )
-        status_pris_en_charge_id = row[0]
 
-        reported_date = intervention_data.get("reported_date") or date.today()
-
-        # Récupérer plan_id depuis l'occurrence liée (DI système préventive)
-        cur.execute(
-            "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
-            (str(request["id"]),),
+        # Une seule fonction insère une intervention (ADR 0025). Le titre reçu l'emporte sur
+        # la description de la demande ; reported_by = demandeur ; le technicien reçu (tech_id
+        # ou tech_initials) est conservé.
+        return InterventionRepository().insert_intervention(
+            cur,
+            {
+                "request_id": str(request["id"]),
+                "title": intervention_data.get("title") or request.get("description"),
+                "machine_id": machine_id,
+                "type_inter": intervention_data["type_inter"],
+                "priority": intervention_data.get("priority") or "normale",
+                "reported_by": request.get("demandeur_nom"),
+                "tech_id": intervention_data.get("tech_id"),
+                "tech_initials": intervention_data.get("tech_initials"),
+                "status_actual": row[0],
+                "printed_fiche": False,
+                "reported_date": intervention_data.get("reported_date"),
+            },
         )
-        occ_row = cur.fetchone()
-        plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
-
-        cur.execute(
-            """
-            INSERT INTO intervention
-                (id, title, machine_id, type_inter, priority,
-                 reported_by, tech_initials, tech_id, status_actual,
-                 printed_fiche, reported_date, plan_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                intervention_id,
-                # titre = description de la demande
-                request.get("description"),
-                machine_id,
-                intervention_data["type_inter"],
-                intervention_data.get("priority", "normale"),
-                request.get("demandeur_nom"),  # reported_by = demandeur
-                intervention_data["tech_initials"],
-                str(intervention_data["tech_id"]) if intervention_data.get("tech_id") else None,
-                status_pris_en_charge_id,
-                False,
-                reported_date,
-                plan_id,
-            ),
-        )
-        return intervention_id
 
     @staticmethod
     def _record_intervention_created(cur: Any, intervention_id: str) -> None:
@@ -952,24 +925,9 @@ class InterventionRequestRepository:
         n'aurait aucune trace de sa création. Le motif vient de la règle d'audit de l'entité
         intervention (règle par défaut), jamais d'une valeur codée en dur.
         """
-        from api.utils.audit import resolve_reason_code
+        from api.interventions.repo import InterventionRepository
 
-        rule = resolve_reason_code("intervention", [])
-        if rule is None:
-            raise DatabaseError(
-                "Aucune règle d'audit routinière pour la création d'une intervention"
-            )
-        cur.execute("SELECT row_to_json(i) FROM intervention i WHERE id = %s", (intervention_id,))
-        created = cur.fetchone()[0]
-        for technical in ("id", "created_at", "updated_at"):
-            created.pop(technical, None)
-        record_audit_event(
-            "intervention",
-            intervention_id,
-            "created",
-            new_value=created,
-            reason_code=rule["default_reason_code"],
-        )
+        InterventionRepository.record_created_event(cur, "intervention", intervention_id)
 
     def _close_linked_intervention(self, cur: Any, intervention_id: str) -> None:
         """Passe une intervention au statut fermé (code = CLOSED_STATUS_CODE).

@@ -63,8 +63,10 @@ class InterventionRequestValidator:
         if status_to == "acceptee":
             if not intervention_data or not intervention_data.get("type_inter"):
                 raise ValidationError("type_inter est obligatoire pour accepter une demande")
-            if not intervention_data.get("tech_initials"):
-                raise ValidationError("tech_initials est obligatoire pour accepter une demande")
+            if not (intervention_data.get("tech_id") or intervention_data.get("tech_initials")):
+                raise ValidationError(
+                    "tech_id ou tech_initials est obligatoire pour accepter une demande"
+                )
 
     @staticmethod
     def validate_create(data: Dict[str, Any]) -> None:

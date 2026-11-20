@@ -8,6 +8,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Box, Flex, Tabs, Text } from '@radix-ui/themes';
 import { ClipboardList, FileDown, Wrench } from 'lucide-react';
 import ExportClosedInterventionsDialog from '@/components/interventions/ExportClosedInterventionsDialog';
+import InterventionCreateModal from '@/components/interventions/InterventionCreateModal';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 import PageHeader from '@/components/layout/PageHeader';
 import InterventionsTabContent from '@/components/interventions/InterventionsTabContent';
 import RequestsTabContent from '@/components/intervention-requests/RequestsTabContent';
@@ -19,6 +21,7 @@ export default function InterventionsListPage() {
   const navigate = useNavigate();
   const { can } = usePermissions();
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   // Incrémenté après un marquage de masse : l'onglet relance sa liste
   const [listVersion, setListVersion] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,13 +66,18 @@ export default function InterventionsListPage() {
         title="Interventions"
         subtitle="Gestion des interventions de maintenance"
         icon={Wrench}
-        onAdd={can(PERM.interventions.create) ? () => navigate('/intervention/new') : undefined}
+        onAdd={can(PERM.interventions.create) ? () => setIsCreateOpen(true) : undefined}
         addLabel="Nouvelle intervention"
         actions={can(PERM.interventions.exportClosed) ? [{
           label: 'Exporter les fiches fermées',
           icon: FileDown,
           onClick: () => setIsExportOpen(true),
         }] : undefined}
+      />
+      <InterventionCreateModal
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSuccess={(created) => navigate(entityCodeUrl('intervention', created.id))}
       />
       <ExportClosedInterventionsDialog
         open={isExportOpen} onClose={() => setIsExportOpen(false)}

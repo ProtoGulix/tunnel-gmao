@@ -470,7 +470,7 @@ Raccourci vers les actions d'une intervention. Voir [Intervention Actions](inter
 
 ## `POST /interventions`
 
-Crée une nouvelle intervention.
+Crée une nouvelle intervention, avec au besoin sa demande et ses tâches, **en une seule transaction** (ADR 0025) : un échec n'écrit rien (ni demande, ni intervention, ni tâche, ni notification).
 
 ### Entrée
 
@@ -503,11 +503,34 @@ Crée une nouvelle intervention.
 | `status_actual` | string | non     | `ouvert` | Code statut initial (géré par trigger)                                                                                                                                                                                                                      |
 | `printed_fiche` | bool   | non     | `false`  | Fiche imprimée ?                                                                                                                                                                                                                                            |
 | `reported_date` | date   | non     | date du jour | Date de signalement ; absente ou null, le serveur pose la date du jour (idem à la création depuis une demande) |
-| `request_id`    | uuid   | **oui** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
+| `request_id`    | uuid   | **un des deux** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
+| `request`       | objet  | **un des deux** | —        | Nouvelle demande créée dans la même transaction (voir ci-dessous). Exclusif avec `request_id` : les deux, ou aucun, donnent `422`. |
+| `tasks`         | liste  | non     | `[]`     | Tâches créées dans la même transaction (voir ci-dessous) |
+
+**`request`** : `{ "demandeur_nom": "Atelier 2", "description": "Fuite sous la presse", "service_id": "uuid ou absent" }`. L'équipement est celui de l'intervention. La demande est créée d'origine `directe` : **aucune notification `di_a_traiter`, aucun mail**. Elle passe aussitôt à `acceptee`, liée à l'intervention. `demandeur_nom` reste une donnée déclarative libre ; l'auteur réel (`created_by`, journal de statut, audit) est celui du jeton.
+
+**`tasks[]`** : champs de `POST /intervention-tasks` sans `intervention_id` : `label` (requis), `origin` (`tech` par défaut, ou `resp`, `plan`), `optional` (`false`), `assigned_to` (uuid, défaut : le pilote), `due_date`, `sort_order` (`0`).
+
+> **Autorisation** : `POST /interventions` ne suffit pas. Si `request` est envoyé, le rôle doit aussi avoir le droit de `POST /intervention-requests` ; si `tasks` est non vide, celui de `POST /intervention-tasks` (matrice de permissions, `403` sinon, rien n'est écrit). ADMIN passe toujours.
+
+> **Audit** : lignes `created` pour l'intervention, la demande et chaque tâche, plus les lignes d'acceptation de la demande, toutes avec l'auteur du jeton et le motif routinier.
+
+Exemple avec demande et tâches :
+
+```json
+{
+  "machine_id": "uuid",
+  "type_inter": "CUR",
+  "tech_id": "uuid-utilisateur",
+  "title": "Fuite hydraulique",
+  "request": { "demandeur_nom": "Atelier 2", "description": "Fuite sous la presse", "service_id": null },
+  "tasks": [{ "label": "Remplacer le flexible" }, { "label": "Contrôler le niveau", "optional": true }]
+}
+```
 
 ### Réponse `201`
 
-Intervention complète avec equipement, `request` (objet demande si liée), stats, actions, status_logs.
+Intervention complète avec equipement, `request` (objet demande, qu'elle ait été existante ou créée par l'appel), `tasks`, stats, actions, status_logs. Enveloppe `{ "data": {...} }`.
 
 ---
 

@@ -19,7 +19,6 @@ const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatu
 const OrganisationPage = lazy(() => import('@/pages/organisation/OrganisationPage'));
 const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
 const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
-const InterventionCreatePage = lazy(() => import('@/pages/interventions/InterventionCreatePage'));
 const PurchaseRequestPage = lazy(() => import('@/pages/purchase-requests/PurchaseRequestPage'));
 const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage'));
 const StockPage = lazy(() => import('@/pages/stock/StockPage'));
@@ -162,16 +161,6 @@ export default function AppRoutes() {
         }
       />
 
-      <Route
-        path="/intervention/new"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <InterventionCreatePage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
 
       <Route
         path="/intervention/:id"

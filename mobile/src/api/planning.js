@@ -44,3 +44,8 @@ export function searchDI(params = {}) {
 export function getInterventionTypes() {
   return client.get("/interventions/types").then(res => Array.isArray(res) ? res : (res.items ?? res))
 }
+
+// Techniciens actifs, pour choisir le pilote d'une intervention à la création.
+export function getActiveUsers() {
+  return client.get("/users?status=active").then(res => Array.isArray(res) ? res : (res.items ?? []))
+}

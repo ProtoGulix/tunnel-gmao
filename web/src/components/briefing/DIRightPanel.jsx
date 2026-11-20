@@ -1,14 +1,13 @@
 import PropTypes from 'prop-types';
-import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flex, Text, Badge } from '@radix-ui/themes';
 import { CalendarClock, UserCog, Wrench } from 'lucide-react';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
-import { useInterventionCreate } from '@/hooks/interventions/useInterventionCreate';
 import { InterventionCard } from './InterventionCard';
 import { MachineTitle } from './components/IvHeader';
 import { DiBlock, IvEmptyBlock, ChainIcon } from './components/IvHeaderBlocks';
-import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
+import InterventionCreationPanel from '@/components/planning/InterventionCreationPanel';
+import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 
@@ -60,30 +59,16 @@ function DiOnlyPanel({ detail, onCreated }) {
   };
   const tasks = detail.tasks ?? detail.tasksLinked ?? [];
 
-  const { formData, setFormData, users, fetchEquipementsFn, saving, error, handleSubmit: baseSubmit } =
-    useInterventionCreate({ navigate });
-
-  // Pré-remplir avec les données de la DI
-  const [initialized, setInitialized] = useState(false);
-  if (!initialized && eq) {
-    setFormData((prev) => ({
-      ...prev,
-      title:          detail.description ?? prev.title,
-      equipementId:   eq.id,
-      equipementLabel: `${eq.code ? eq.code + ' — ' : ''}${eq.name}`,
-      reportedBy:     detail.demandeur_nom ?? prev.reportedBy,
-      requestId:      detail.id,
-      ...(detail.suggested_type_inter ? { type: detail.suggested_type_inter } : {}),
-    }));
-    setInitialized(true);
-  }
-
-  const set = useCallback((field, value) => setFormData((prev) => ({ ...prev, [field]: value })), [setFormData]);
-
-  const handleSubmit = useCallback(async (e) => {
-    await baseSubmit(e);
-    onCreated?.();
-  }, [baseSubmit, onCreated]);
+  // Demande et équipement fixés par la DI ; le technicien n'est pas prérempli (comme l'accueil).
+  const ivCreationCtx = eq ? {
+    equipementId: eq.id,
+    equipementLabel: `${eq.code ? eq.code + ' — ' : ''}${eq.name}`,
+    selectedRequest: detail,
+    onCreated: (created) => {
+      navigate(entityCodeUrl('intervention', created.id));
+      onCreated?.();
+    },
+  } : null;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -127,19 +112,7 @@ function DiOnlyPanel({ detail, onCreated }) {
           <Text size="1" weight="medium" color="gray" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
             Créer une intervention
           </Text>
-          <InterventionCreateForm
-            formData={formData}
-            set={set}
-            locked={!!eq}
-            lockedType={!!(detail.is_system && detail.suggested_type_inter)}
-            diDetail={detail}
-            fetchEquipementsFn={fetchEquipementsFn}
-            users={users}
-            saving={saving}
-            error={error}
-            onSubmit={handleSubmit}
-            embedded
-          />
+          {ivCreationCtx && <InterventionCreationPanel ivCreationCtx={ivCreationCtx} />}
         </div>
       </div>
     </div>

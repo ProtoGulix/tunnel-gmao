@@ -285,44 +285,57 @@ class InterventionTaskRepository:
 
     # ── Création ─────────────────────────────────────────────────
 
+    def insert_task(
+        self,
+        cur: Any,
+        intervention_id: str,
+        data: Any,
+        created_by: Optional[str] = None,
+    ) -> str:
+        """Insère une tâche manuelle avec le curseur fourni (ni commit ni rollback), renvoie son id.
+
+        Seule fonction qui écrit une tâche manuelle : `create` et la création atomique d'une
+        intervention (ADR 0025) la partagent. `data` porte label, origin, optional,
+        assigned_to, due_date, sort_order (InterventionTaskIn ou schéma de tâche embarquée).
+        """
+        self._ensure_intervention_editable(cur, intervention_id)
+
+        # Auto-assigner au pilote de l'intervention si assigned_to absent
+        assigned_to = str(data.assigned_to) if data.assigned_to else None
+        if not assigned_to:
+            cur.execute("SELECT tech_id FROM intervention WHERE id = %s", (intervention_id,))
+            pilot = cur.fetchone()
+            if pilot and pilot[0]:
+                assigned_to = str(pilot[0])
+
+        task_id = str(uuid4())
+        cur.execute(
+            """
+            INSERT INTO intervention_task
+                (id, intervention_id, label, origin, status, optional,
+                 assigned_to, due_date, sort_order, created_by, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, 'todo', %s, %s, %s, %s, %s, NOW(), NOW())
+            """,
+            (
+                task_id,
+                intervention_id,
+                data.label,
+                data.origin,
+                data.optional,
+                assigned_to,
+                data.due_date,
+                data.sort_order,
+                created_by,
+            ),
+        )
+        return task_id
+
     def create(self, data: InterventionTaskIn, created_by: Optional[str] = None) -> Dict[str, Any]:
         """Crée une tâche manuelle (origin resp ou tech)."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            self._ensure_intervention_editable(cur, str(data.intervention_id))
-
-            # Auto-assigner au pilote de l'intervention si assigned_to absent
-            assigned_to = str(data.assigned_to) if data.assigned_to else None
-            if not assigned_to:
-                cur.execute(
-                    "SELECT tech_id FROM intervention WHERE id = %s",
-                    (str(data.intervention_id),),
-                )
-                pilot = cur.fetchone()
-                if pilot and pilot[0]:
-                    assigned_to = str(pilot[0])
-
-            task_id = str(uuid4())
-            cur.execute(
-                """
-                INSERT INTO intervention_task
-                    (id, intervention_id, label, origin, status, optional,
-                     assigned_to, due_date, sort_order, created_by, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, 'todo', %s, %s, %s, %s, %s, NOW(), NOW())
-                """,
-                (
-                    task_id,
-                    str(data.intervention_id),
-                    data.label,
-                    data.origin,
-                    data.optional,
-                    assigned_to,
-                    data.due_date,
-                    data.sort_order,
-                    created_by,
-                ),
-            )
+            task_id = self.insert_task(cur, str(data.intervention_id), data, created_by)
             conn.commit()
         except (NotFoundError, ValidationError):
             conn.rollback()

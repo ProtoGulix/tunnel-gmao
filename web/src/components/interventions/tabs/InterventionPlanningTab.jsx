@@ -31,7 +31,7 @@ export default function InterventionPlanningTab({ onActionCreated }) {
   const [weekActions, setWeekActions] = useState({});
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // Initiales du technicien sélectionné — transmises à InterventionCreatorFlow
+  // Initiales du technicien sélectionné
   const selectedUser = users.find((u) => u.id === techId) ?? null;
   const techInitials = selectedUser
     ? `${selectedUser.first_name?.[0] ?? ''}${selectedUser.last_name?.[0] ?? ''}`.toUpperCase()
