@@ -9,14 +9,14 @@ import {
 } from './deleteInterventionRules.js';
 
 test('intervention fermée : suppression bloquée avec explication', () => {
-  assert.match(getDeleteBlockReason({ stats: {} }, 'ferme'), /fermée/);
-  assert.ok(getDeleteBlockReason({ stats: {} }, 'cancelled'));
+  assert.match(getDeleteBlockReason({ isLocked: true, stats: {} }), /fermée/);
+  assert.match(getDeleteBlockReason({ stats: {} }), /fermée/);
 });
 
 test('actions ou achats liés : suppression bloquée', () => {
-  assert.ok(getDeleteBlockReason({ stats: { actionCount: 2 } }, 'ouvert'));
-  assert.ok(getDeleteBlockReason({ stats: { purchaseCount: 1 } }, 'ouvert'));
-  assert.equal(getDeleteBlockReason({ stats: { actionCount: 0 } }, 'ouvert'), null);
+  assert.ok(getDeleteBlockReason({ isLocked: false, stats: { actionCount: 2 } }));
+  assert.ok(getDeleteBlockReason({ isLocked: false, stats: { purchaseCount: 1 } }));
+  assert.equal(getDeleteBlockReason({ isLocked: false, stats: { actionCount: 0 } }), null);
 });
 
 test('sans demande : aucun choix d\'issue', () => {

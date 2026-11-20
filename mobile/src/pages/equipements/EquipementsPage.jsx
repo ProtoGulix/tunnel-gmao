@@ -20,11 +20,11 @@ const HEALTH_CONFIG = {
 
 const STATUS_COLOR = {
   ouvert: '#1F3A5F', en_cours: '#ED6C02', en_attente: '#ED6C02',
-  attente_pieces: '#C62828', attente_prod: '#ED6C02', ferme: '#2E7D32', cancelled: '#616161',
+  attente_pieces: '#C62828', attente_prod: '#ED6C02', ferme: '#2E7D32',
 }
 const STATUS_LABEL = {
   ouvert: 'Ouvert', en_cours: 'En cours', en_attente: 'En attente',
-  attente_pieces: 'Attente pièces', attente_prod: 'Attente prod', ferme: 'Fermé', cancelled: 'Annulé',
+  attente_pieces: 'Attente pièces', attente_prod: 'Attente prod', ferme: 'Fermé',
 }
 const PRIORITY_COLOR = { urgent: '#C62828', important: '#ED6C02', normale: '#1F3A5F', faible: '#616161' }
 const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normale: 'Normale', faible: 'Faible' }
@@ -83,7 +83,8 @@ function EquipementDetail({ uuid }) {
 
   const { health } = item
   const cfg = HEALTH_CONFIG[health?.level] ?? HEALTH_CONFIG.ok
-  const ARCHIVED = new Set(['ferme', 'cancelled'])
+  // Pas de is_locked dans la fiche équipement (NON couvert par REG-01) : filtre par statut
+  const ARCHIVED = new Set(['ferme'])
   const PRIORITY_ORDER = { urgent: 0, important: 1, normale: 2, faible: 3 }
 
   const activeInterventions = (item.interventions?.items ?? [])
@@ -182,7 +183,8 @@ function EquipementDetail({ uuid }) {
 }
 
 function InterventionRow({ inter, faded = false, onNavigate }) {
-  const ARCHIVED = new Set(['ferme', 'cancelled'])
+  // Pas de is_locked dans la fiche équipement (NON couvert par REG-01) : filtre par statut
+  const ARCHIVED = new Set(['ferme'])
   const sc = STATUS_COLOR[inter.status_actual] ?? '#616161'
   const pc = PRIORITY_COLOR[inter.priority] ?? '#616161'
   const isUrgent = inter.priority === 'urgent' && !ARCHIVED.has(inter.status_actual)

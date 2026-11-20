@@ -4,7 +4,13 @@ Inventaire en lecture seule du 2026-11-20 (chantier ADR 0029). Les transitions d
 demandes sont traitées par CASC-04. Aucune règle trouvée que le backend ne vérifie pas :
 les écarts ci-dessous gênent l'affichage, ils n'ouvrent pas de faille.
 
-À traiter, par ordre d'intérêt :
+Traité par REG-02 (2026-11-20, ADR 0030) : points 1, 2 et 3 sauf l'accès aux pages par rôle
+(`/admin`, hors périmètre ADR 0030) ; point 4 réglé côté API (REG-01 : le backend refuse
+désormais la suppression d'une tâche non « à faire », le web lit `can_delete`). Restent à
+traiter : l'accès aux pages par rôle, le point 5, et les écrans sans `is_locked`
+(fiche équipement du mobile, intervention imbriquée des demandes d'intervention).
+
+À traiter, par ordre d'intérêt (liste d'origine) :
 
 1. Statut « cancelled » traité comme une intervention fermée alors qu'il n'existe pas
    pour les interventions (intervention_status_ref : ouvert, attente_pieces, attente_prod,

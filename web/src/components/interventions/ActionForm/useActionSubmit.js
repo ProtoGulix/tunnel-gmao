@@ -51,7 +51,7 @@ export function useActionSubmit({ form, resolvedInterventionId, resolvedTechId, 
 
     const shouldShowOverlay =
       resolvedInterventionId &&
-      !['ferme', 'cancelled'].includes(interventionMeta?.status_actual);
+      interventionMeta?.is_locked === false;
 
     if (shouldShowOverlay) {
       setPendingPayload(buildPayload());

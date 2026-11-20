@@ -129,7 +129,7 @@ export function useInterventionsList(searchTerm = '') {
 
       // Bloc 4: À archiver (fermé ou annulé). L'API ne renvoie pas les archivées (fiche
       // imprimée) : une fiche marquée imprimée quitte ce bloc au rechargement que le marquage déclenche
-      if (status === 'ferme' || status === 'cancelled') {
+      if (i.isLocked !== false) {
         archive.push(i);
         return;
       }

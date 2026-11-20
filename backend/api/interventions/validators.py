@@ -10,6 +10,14 @@ from api.interventions.types import check_assignable
 REOPEN_DECISION = "intervention_reopened"
 
 
+def is_intervention_locked(status_actual: Optional[str]) -> bool:
+    """Vrai si l'intervention est fermée : plus aucune écriture sur elle ni ses actions/tâches.
+
+    Règle unique (ADR 0030) : sert aux refus d'écriture et à l'indicateur `is_locked`.
+    """
+    return str(status_actual or "").strip().lower() == CLOSED_STATUS_CODE
+
+
 def is_reopening(current_status: Optional[str], new_status: Optional[str]) -> bool:
     """Vrai si la mise à jour fait sortir l'intervention de « ferme »."""
     return (

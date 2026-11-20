@@ -15,7 +15,6 @@ const ROW_PADDING_Y = '10px';
 
 /* Statuts déjà portés par le titre du groupe : inutile de les répéter sur chaque ligne */
 const IMPLICIT_STATUSES = new Set(['ouvert', 'ferme']);
-const CLOSED_STATUSES = new Set(['ferme', 'cancelled']);
 
 /* Même format de date que la liste des demandes d'intervention */
 const formatReportedDate = (iso) =>
@@ -26,7 +25,7 @@ const ELLIPSIS = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'no
 /* ── Couleur et libellé du liseré gauche selon bloc ────────────────────── */
 function getBlockMarker(interv) {
   const status = interv.status?.toLowerCase();
-  if (CLOSED_STATUSES.has(status)) return { color: 'var(--gray-6)', label: STATUS_CONFIG[status]?.label };
+  if (interv.isLocked !== false) return { color: 'var(--gray-6)', label: STATUS_CONFIG[status]?.label };
   if (status === 'attente_pieces' || status === 'attente_prod') {
     return { color: 'var(--amber-9)', label: STATUS_CONFIG[status]?.label };
   }
@@ -42,7 +41,7 @@ function getTitleBadges(interv) {
     const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.ouvert;
     badges.push({ key: 'status', label: cfg.label, color: cfg.color, variant: 'soft' });
   }
-  if (interv.next_due_date && !CLOSED_STATUSES.has(status)) {
+  if (interv.next_due_date && interv.isLocked === false) {
     const { level } = getInterventionUrgency(interv.next_due_date, interv.reportedDate);
     const color = level === 'overdue' ? 'red' : level === 'urgent' ? 'orange' : 'gray';
     const variant = level === 'overdue' ? 'solid' : 'soft';

@@ -137,6 +137,7 @@ class InterventionRef(BaseModel):
     type_inter: Optional[str] = None
     priority: Optional[str] = None
     status_actual: Optional[str] = None
+    is_locked: bool = False
     status_label: Optional[str] = None
     status_color: Optional[str] = None
     tech_initials: Optional[str] = None
@@ -166,6 +167,7 @@ class InterventionOut(BaseModel):
     tech_initials: Optional[str] = None
     tech_id: Optional[UUID] = None
     status_actual: Optional[str] = None
+    is_locked: bool = False
     updated_by: Optional[UUID] = None
     printed_fiche: Optional[bool] = None
     reported_date: Optional[date] = None

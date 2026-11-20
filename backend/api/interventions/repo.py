@@ -13,8 +13,9 @@ from api.equipements.repo import EquipementRepository
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
+from api.intervention_tasks.validators import task_delete_blocker
 from api.interventions.types import check_assignable, check_known
-from api.interventions.validators import is_reopening
+from api.interventions.validators import is_intervention_locked, is_reopening
 from api.preventive_occurrences.cascade import attach_occurrence
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
@@ -463,6 +464,7 @@ class InterventionRepository:
                     ]:
                         row_dict.pop(key, None)
 
+                row_dict['is_locked'] = is_intervention_locked(row_dict.get('status_actual'))
                 row_dict['actions'] = []  # Vide pour get_all
                 row_dict['status_logs'] = []  # Vide pour get_all
 
@@ -474,6 +476,15 @@ class InterventionRepository:
 
                         raw_tasks = _json.loads(raw_tasks)
                     row_dict['tasks'] = raw_tasks or []
+                    for task in row_dict['tasks']:
+                        task['can_delete'] = (
+                            task_delete_blocker(
+                                task.get('status'),
+                                int(task.get('action_count') or 0),
+                                row_dict['is_locked'],
+                            )
+                            is None
+                        )
                 else:
                     row_dict.pop('tasks_json', None)
 
@@ -601,6 +612,7 @@ class InterventionRepository:
 
             cols = [desc[0] for desc in cur.description]
             intervention = dict(zip(cols, row))
+            intervention['is_locked'] = is_intervention_locked(intervention.get('status_actual'))
 
             # Construire l'objet request
             req_id = intervention.pop('req_id', None)

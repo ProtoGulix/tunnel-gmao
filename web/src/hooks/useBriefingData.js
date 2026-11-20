@@ -282,7 +282,7 @@ export function useBriefingData({ equipementId } = {}) {
           sort: '-priority,-reported_date',
           limit: 500,
           equipementId,
-          status: 'ouvert,en_cours,attente_pieces,attente_prod,ferme,cancelled',
+          status: 'ouvert,en_cours,attente_pieces,attente_prod,ferme',
         }),
         fetchInterventionRequests({ machineId: equipementId, excludeStatuses: 'rejetee,cloturee', limit: 200 }),
       ]);
@@ -297,11 +297,11 @@ export function useBriefingData({ equipementId } = {}) {
       const requests = requestsResult.status === 'fulfilled' ? (requestsResult.value.items ?? []) : [];
 
       const enriched = interventions.map(enrichSituation);
-      const openEnriched = enriched.filter((iv) => iv.status !== 'ferme' && iv.status !== 'cancelled');
+      const openEnriched = enriched.filter((iv) => iv.isLocked === false);
       const classifiedSections = classifySections(openEnriched, { includeAll: true })
         .map((s) => ({ type: 'situation', ...s }));
       const archived = enriched
-        .filter((iv) => iv.status === 'ferme' || iv.status === 'cancelled')
+        .filter((iv) => iv.isLocked !== false)
         .sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
 
       const diSections = buildDISections(requests);

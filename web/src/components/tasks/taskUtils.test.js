@@ -39,10 +39,10 @@ test('canCloseTask : Terminé et Annuler pour RESP et ADMIN sur tâche à faire 
   assert.equal(canCloseTask('in_progress', false), false);
 });
 
-test('canDeleteTask : seulement une tâche à faire sans action', () => {
-  assert.equal(canDeleteTask({ status: 'todo', action_count: 0 }, true), true);
-  assert.equal(canDeleteTask({ status: 'in_progress', action_count: 0 }, true), false);
-  assert.equal(canDeleteTask({ status: 'todo', action_count: 1 }, true), false);
-  assert.equal(canDeleteTask({ status: 'todo', actions: [{}] }, true), false);
-  assert.equal(canDeleteTask({ status: 'todo' }, false), false);
+test('canDeleteTask : seulement si l\'API l\'autorise (can_delete), champ absent = masqué', () => {
+  assert.equal(canDeleteTask({ status: 'todo', can_delete: true }, true), true);
+  assert.equal(canDeleteTask({ status: 'in_progress', can_delete: false }, true), false);
+  assert.equal(canDeleteTask({ status: 'todo', can_delete: false, action_count: 1 }, true), false);
+  assert.equal(canDeleteTask({ status: 'todo' }, true), false);
+  assert.equal(canDeleteTask({ status: 'todo', can_delete: true }, false), false);
 });

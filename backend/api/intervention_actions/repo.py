@@ -6,11 +6,15 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.audits.events import record_audit_event
-from api.constants import CLOSED_STATUS_CODE, NON_DISPATCHED_PR_STATUSES
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
-from api.intervention_actions.validators import InterventionActionValidator
+from api.intervention_actions.validators import (
+    InterventionActionValidator,
+    can_delete_action,
+    has_dispatched_pr,
+)
 from api.intervention_tasks.validators import ensure_can_skip
+from api.interventions.validators import is_intervention_locked
 from api.utils.sanitizer import strip_html
 
 logger = logging.getLogger(__name__)
@@ -56,11 +60,17 @@ class InterventionActionRepository:
         if not row:
             raise NotFoundError(f"Intervention {intervention_id} non trouvée")
 
-        status_actual = str(row[0] or "").strip().lower()
-        if status_actual == CLOSED_STATUS_CODE:
+        if is_intervention_locked(row[0]):
             raise ValidationError(
                 "Intervention fermée : aucune modification des actions n'est autorisée"
             )
+
+    @staticmethod
+    def _set_can_delete(action: Dict[str, Any], interv_status: Any) -> None:
+        """Pose `can_delete` sur une action (même règle que le refus de suppression)."""
+        action['can_delete'] = can_delete_action(
+            is_intervention_locked(interv_status), action.get('purchase_requests') or []
+        )
 
     def _map_action_with_subcategory(self, row_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Mappe une row avec subcategory et category imbriquées"""
@@ -234,12 +244,15 @@ class InterventionActionRepository:
             for row in rows:
                 action = self._map_action_with_subcategory(dict(zip(cols, row)))
                 action = self._map_tech_user(action)
+                interv_status = action.pop('interv_status', None)
+                action['_interv_status'] = interv_status
                 action['intervention'] = (
                     {
                         'id': action['intervention_id'],
                         'code': action.pop('interv_code', None),
                         'title': action.pop('interv_title', None),
-                        'status_actual': action.pop('interv_status', None),
+                        'status_actual': interv_status,
+                        'is_locked': is_intervention_locked(interv_status),
                         'equipement_id': action.pop('interv_equipement_id', None),
                         'equipement_code': action.pop('interv_equipement_code', None),
                         'equipement_name': action.pop('interv_equipement_name', None),
@@ -292,6 +305,7 @@ class InterventionActionRepository:
                            it.optional, it.due_date, it.sort_order, it.skip_reason,
                            it.gamme_step_id, it.occurrence_id,
                            it.closed_by, it.created_by, it.created_at, it.updated_at,
+                           i.status_actual AS intervention_status,
                            COALESCE(agg.action_count, 0) AS action_count,
                            COALESCE(agg.time_spent, 0.0) AS time_spent,
                            u.id AS assigned_id,
@@ -303,6 +317,7 @@ class InterventionActionRepository:
                            NULL::text AS assigned_role
                     FROM intervention_action_task iat
                     INNER JOIN intervention_task it ON it.id = iat.task_id
+                    LEFT JOIN intervention i ON i.id = it.intervention_id
                     LEFT JOIN tunnel_user u ON u.id = it.assigned_to
                     LEFT JOIN LATERAL (
                         SELECT COUNT(DISTINCT iat2.action_id) AS action_count,
@@ -330,6 +345,7 @@ class InterventionActionRepository:
             # Groupement par date
             groups: Dict[date, List[Dict[str, Any]]] = {}
             for action in all_actions:
+                self._set_can_delete(action, action.pop('_interv_status', None))
                 day = action['created_at'].date() if action.get('created_at') else None
                 if day is not None:
                     groups.setdefault(day, []).append(action)
@@ -416,11 +432,13 @@ class InterventionActionRepository:
                     u.id as tech_id, u.first_name as tech_first_name,
                     u.last_name as tech_last_name, u.email as tech_email,
                     u.initial as tech_initial, NULL::text as tech_status,
-                    NULL::text as tech_role
+                    NULL::text as tech_role,
+                    i.status_actual as interv_status
                 FROM intervention_action ia
                 LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
                 LEFT JOIN action_category ac ON sc.category_id = ac.id
                 LEFT JOIN tunnel_user u ON ia.tech = u.id
+                LEFT JOIN intervention i ON ia.intervention_id = i.id
                 WHERE ia.id = %s
             """,
                 (action_id,),
@@ -433,10 +451,12 @@ class InterventionActionRepository:
             cols = [desc[0] for desc in cur.description]
             action = self._map_action_with_subcategory(dict(zip(cols, row)))
             action = self._map_tech_user(action)
+            interv_status = action.pop('interv_status', None)
             action['purchase_requests'] = self._get_linked_purchase_requests(
                 str(action['id']), conn
             )
             action['tasks'] = self._get_tasks_for_action(str(action['id']), conn)
+            self._set_can_delete(action, interv_status)
 
             intervention_id_str = (
                 str(action['intervention_id']) if action.get('intervention_id') else None
@@ -474,11 +494,13 @@ class InterventionActionRepository:
                     u.id as tech_id, u.first_name as tech_first_name,
                     u.last_name as tech_last_name, u.email as tech_email,
                     u.initial as tech_initial, NULL::text as tech_status,
-                    NULL::text as tech_role
+                    NULL::text as tech_role,
+                    i.status_actual as interv_status
                 FROM intervention_action ia
                 LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
                 LEFT JOIN action_category ac ON sc.category_id = ac.id
                 LEFT JOIN tunnel_user u ON ia.tech = u.id
+                LEFT JOIN intervention i ON ia.intervention_id = i.id
                 WHERE ia.intervention_id = %s
                 ORDER BY ia.created_at ASC
                 """,
@@ -491,6 +513,7 @@ class InterventionActionRepository:
             for row in rows:
                 action = self._map_action_with_subcategory(dict(zip(cols, row)))
                 action = self._map_tech_user(action)
+                action['_interv_status'] = action.pop('interv_status', None)
                 action['purchase_requests'] = []
                 action['tasks'] = []
                 results.append(action)
@@ -541,6 +564,7 @@ class InterventionActionRepository:
                        it.optional, it.due_date, it.sort_order, it.skip_reason,
                        it.gamme_step_id, it.occurrence_id,
                        it.closed_by, it.created_by, it.created_at, it.updated_at,
+                       i.status_actual AS intervention_status,
                        COALESCE(agg.action_count, 0) AS action_count,
                        COALESCE(agg.time_spent, 0.0) AS time_spent,
                        u.id AS assigned_id,
@@ -552,6 +576,7 @@ class InterventionActionRepository:
                        NULL::text AS assigned_role
                 FROM intervention_action_task iat
                 INNER JOIN intervention_task it ON it.id = iat.task_id
+                LEFT JOIN intervention i ON i.id = it.intervention_id
                 LEFT JOIN tunnel_user u ON u.id = it.assigned_to
                 LEFT JOIN LATERAL (
                     SELECT COUNT(DISTINCT iat2.action_id) AS action_count,
@@ -576,6 +601,8 @@ class InterventionActionRepository:
                 for action in results:
                     action['tasks'] = tasks_by_action.get(str(action['id']), [])
 
+            for action in results:
+                self._set_can_delete(action, action.pop('_interv_status', None))
             return results
         except HTTPException:
             raise
@@ -600,11 +627,13 @@ class InterventionActionRepository:
                     u.id as tech_id, u.first_name as tech_first_name,
                     u.last_name as tech_last_name, u.email as tech_email,
                     u.initial as tech_initial, NULL::text as tech_status,
-                    NULL::text as tech_role
+                    NULL::text as tech_role,
+                    i.status_actual as interv_status
                 FROM intervention_action ia
                 LEFT JOIN action_subcategory sc ON ia.action_subcategory = sc.id
                 LEFT JOIN action_category ac ON sc.category_id = ac.id
                 LEFT JOIN tunnel_user u ON ia.tech = u.id
+                LEFT JOIN intervention i ON ia.intervention_id = i.id
                 WHERE ia.id = %s
                 """,
                 (action_id,),
@@ -615,7 +644,9 @@ class InterventionActionRepository:
             cols = [desc[0] for desc in cur.description]
             action = self._map_action_with_subcategory(dict(zip(cols, row)))
             action = self._map_tech_user(action)
+            interv_status = action.pop('interv_status', None)
             action['purchase_requests'] = self._get_linked_purchase_requests(action_id, conn)
+            self._set_can_delete(action, interv_status)
             return action
         except NotFoundError:
             raise
@@ -988,7 +1019,7 @@ class InterventionActionRepository:
         """Supprime une action d'intervention.
 
         Bloquée si l'intervention parente est fermée, ou si une DA liée
-        a déjà été dispatchée (statut dérivé hors NON_DISPATCHED_PR_STATUSES).
+        a déjà été répartie (voir has_dispatched_pr).
         """
         conn = self._get_connection()
         try:
@@ -1005,12 +1036,7 @@ class InterventionActionRepository:
             self._ensure_intervention_editable(cur, intervention_id)
 
             linked_prs = self._get_linked_purchase_requests(action_id, conn)
-            dispatched = [
-                pr
-                for pr in linked_prs
-                if pr.get('derived_status', {}).get('code') not in NON_DISPATCHED_PR_STATUSES
-            ]
-            if dispatched:
+            if has_dispatched_pr(linked_prs):
                 raise ValidationError(
                     "Suppression impossible : une demande d'achat liée a déjà été dispatchée"
                 )

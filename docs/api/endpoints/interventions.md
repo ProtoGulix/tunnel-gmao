@@ -433,6 +433,8 @@ Détail complet d'une intervention. **La structure est différente de la liste**
 }
 ```
 
+`is_locked` (`bool`, liste et détail) : `true` si l'intervention est fermée, donc plus modifiable (ADR 0030). Chaque action du détail porte `can_delete` (`false` si l'intervention est fermée ou si une demande d'achat liée a déjà été répartie) et chaque tâche `can_delete`. Les clients lisent ces champs sans recopier les règles ; un champ absent se lit comme « non ».
+
 ### Différences avec la liste
 
 | Champ                  | Liste                                                                          | Détail                                                                                                                                                                                                                             |

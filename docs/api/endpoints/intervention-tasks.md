@@ -134,6 +134,9 @@ todo → in_progress → done
 | `optional`         | `true` : peut être ignorée sans bloquer la clôture                             |
 | `time_spent_total` | Temps total des actions liées (agrégat calculé via `intervention_action_task`) |
 | `actions`          | Présent uniquement si `include_actions=true`                                   |
+| `can_delete`       | `bool` : la tâche est supprimable maintenant (voir `DELETE`). Présent partout où une tâche est renvoyée (liste, détail, tâches d'intervention, tâches d'action) |
+
+Chaque intervention de la liste porte aussi `is_locked` (`true` si fermée).
 
 ### Compteurs (`include_counters=true`)
 
@@ -334,8 +337,9 @@ Tâche mise à jour.
 
 ## `DELETE /intervention-tasks/{id}`
 
-Supprime une tâche. La suppression est bloquée si au moins une action est liée à la tâche
-(présence de lignes dans `intervention_action_task`).
+Supprime une tâche. Règle (ADR 0030), la même que l'indicateur `can_delete` : la tâche doit
+être « à faire » (`todo`), sans action liée (`intervention_action_task`), sur une intervention
+non fermée.
 
 ### Body
 
@@ -359,6 +363,7 @@ Pas de corps.
 
 | Code | Cas                                                         |
 | ---- | ----------------------------------------------------------- |
+| 400  | La tâche n'est pas « à faire » (en cours, faite ou ignorée) |
 | 400  | Au moins une action est liée à cette tâche                  |
 | 400  | Intervention parente fermée ou non éditable                 |
 | 404  | Tâche introuvable                                           |

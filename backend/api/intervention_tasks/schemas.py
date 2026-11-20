@@ -26,6 +26,7 @@ class InterventionTaskOut(BaseModel):
     updated_at: Optional[datetime] = None
     action_count: int = 0
     time_spent: float = 0.0
+    can_delete: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

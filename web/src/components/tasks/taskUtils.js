@@ -23,8 +23,8 @@ export function formatDue(iso) {
 }
 
 /**
- * Une étape de gamme obligatoire ne s'ignore que par RESP et ADMIN (miroir du
- * contrôle backend, qui fait foi). Toute autre tâche peut être ignorée.
+ * Une étape de gamme obligatoire ne s'ignore qu'avec la capacité `skip_obligatory_step`
+ * (GET /auth/me, le backend fait foi). Toute autre tâche peut être ignorée.
  */
 export function canSkipTask(task, canSkipObligatory) {
   if (canSkipObligatory) return true;
@@ -32,15 +32,15 @@ export function canSkipTask(task, canSkipObligatory) {
 }
 
 /**
- * « Terminé » et « Annuler » directs (ADR 0016) : RESP et ADMIN, sur une tâche à faire
- * ou en cours. Règle d'affichage seulement : le backend vérifie le rôle.
+ * « Terminé » et « Annuler » directs (ADR 0016) : capacité `close_task_without_action`
+ * (GET /auth/me), sur une tâche à faire ou en cours. Le statut ne sert qu'à choisir les
+ * tâches concernées ; le backend vérifie le droit.
  */
-export function canCloseTask(status, isElevated) {
-  return Boolean(isElevated) && (status === 'todo' || status === 'in_progress');
+export function canCloseTask(status, canCloseWithoutAction) {
+  return Boolean(canCloseWithoutAction) && (status === 'todo' || status === 'in_progress');
 }
 
-/** Supprimer n'est proposé que pour une tâche à faire sans aucune action liée. */
+/** Supprimer n'est proposé que si l'API l'autorise (`can_delete`) et que le droit est accordé. */
 export function canDeleteTask(task, hasRemoveRight) {
-  const actionCount = task?.action_count ?? task?.actions?.length ?? 0;
-  return Boolean(hasRemoveRight) && task?.status === 'todo' && actionCount === 0;
+  return Boolean(hasRemoveRight) && task?.can_delete === true;
 }

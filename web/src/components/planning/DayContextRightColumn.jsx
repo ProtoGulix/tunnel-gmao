@@ -30,6 +30,7 @@ export default function DayContextRightColumn({
         code: resolvedIv.code ?? '',
         title: resolvedIv.title ?? '',
         status_actual: resolvedIv.status_actual ?? resolvedIv.status ?? null,
+        is_locked: resolvedIv.is_locked ?? resolvedIv.isLocked ?? null,
         type_inter: resolvedIv.type_inter ?? null,
         plan_id: resolvedIv.plan_id ?? null,
       }

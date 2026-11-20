@@ -9,6 +9,16 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Règles données par l'API (REG-01, ADR 0030) : `is_locked` sur chaque intervention,
+  `can_delete` sur chaque action et chaque tâche, `capabilities` (`skip_obligatory_step`,
+  `close_task_without_action`) sur `GET /auth/me`, calculés par les fonctions qui servent déjà
+  au refus. La suppression d'une tâche est désormais refusée (400) si elle n'est pas « à
+  faire », en plus des cas existants (action liée, intervention fermée).
+- Fronts : verrouillage et droits lus dans l'API (REG-02, ADR 0030). Web et mobile utilisent
+  `is_locked` (interventions) et `can_delete` (actions et tâches), et le web lit
+  `capabilities` de `/auth/me` pour « Ignorer » une étape obligatoire et « Terminé/Annuler »
+  sans action ; plus de statut « cancelled » ni de liste de rôles ou de statuts de demande
+  d'achat recopiés. Champ absent : action masquée.
 - Transitions de demande lues dans l'API (CASC-04, ADR 0029) : le web et le mobile ne recopient
   plus le graphe des statuts ; un bouton n'apparaît que si sa cible figure dans
   `allowed_transitions` (sans ce champ, aucun bouton). « Créer l'intervention » du mobile suit la

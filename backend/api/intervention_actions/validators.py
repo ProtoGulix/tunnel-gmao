@@ -1,10 +1,27 @@
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from api.complexity_factors.repo import ComplexityFactorRepository
+from api.constants import NON_DISPATCHED_PR_STATUSES
 from api.errors.exceptions import NotFoundError, ValidationError
 from api.utils.sanitizer import strip_html
 from api.utils.validators import validate_date
+
+
+def has_dispatched_pr(purchase_requests: List[Dict[str, Any]]) -> bool:
+    """Vrai si une demande d'achat liée a déjà été répartie (statut dérivé hors NON_DISPATCHED).
+
+    Règle unique (ADR 0030) : sert au refus de suppression d'une action et à `can_delete`.
+    """
+    return any(
+        pr.get('derived_status', {}).get('code') not in NON_DISPATCHED_PR_STATUSES
+        for pr in purchase_requests
+    )
+
+
+def can_delete_action(locked: bool, purchase_requests: List[Dict[str, Any]]) -> bool:
+    """Une action est supprimable si l'intervention n'est pas fermée et aucune DA répartie."""
+    return not locked and not has_dispatched_pr(purchase_requests)
 
 
 class InterventionActionValidator:

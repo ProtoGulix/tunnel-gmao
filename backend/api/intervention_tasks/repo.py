@@ -5,10 +5,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_tasks.schemas import InterventionTaskIn, InterventionTaskPatch
+from api.intervention_tasks.validators import task_delete_blocker
+from api.interventions.validators import is_intervention_locked
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ _TASK_SELECT = """
         it.optional, it.due_date, it.sort_order, it.skip_reason,
         it.gamme_step_id, it.occurrence_id,
         it.closed_by, it.created_by, it.created_at, it.updated_at,
+        i.status_actual AS intervention_status,
         COALESCE(agg.action_count, 0)  AS action_count,
         COALESCE(agg.time_spent, 0.0)  AS time_spent,
         u.id        AS assigned_id,
@@ -47,6 +49,15 @@ def _map_task(row: Dict[str, Any]) -> Dict[str, Any]:
     """Mappe les colonnes assigned_* en objet assigned_to imbriqué.
     Convertit aussi les Decimal psycopg2 en float pour Pydantic.
     """
+    # Indicateur de suppression : même règle que le refus (task_delete_blocker)
+    row["can_delete"] = (
+        task_delete_blocker(
+            row.get("status"),
+            int(row.get("action_count") or 0),
+            is_intervention_locked(row.pop("intervention_status", None)),
+        )
+        is None
+    )
     if row.get("time_spent") is not None:
         row["time_spent"] = float(row["time_spent"])
     if row.get("assigned_id"):
@@ -90,8 +101,7 @@ class InterventionTaskRepository:
         if not row:
             raise NotFoundError(f"Intervention {intervention_id} non trouvée")
 
-        status_actual = str(row[0] or "").strip().lower()
-        if status_actual == CLOSED_STATUS_CODE:
+        if is_intervention_locked(row[0]):
             raise ValidationError(
                 "Intervention fermée : aucune modification des tâches n'est autorisée"
             )
@@ -431,7 +441,7 @@ class InterventionTaskRepository:
     # ── Suppression ───────────────────────────────────────────────
 
     def delete(self, task_id: str) -> None:
-        """Supprime une tâche si aucune action n'y est liée."""
+        """Supprime une tâche « à faire », sans action, d'une intervention non fermée."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -444,17 +454,19 @@ class InterventionTaskRepository:
                 raise NotFoundError(f"Tâche {task_id} non trouvée")
 
             status, intervention_id, label = row
-            self._ensure_intervention_editable(cur, str(intervention_id))
+            cur.execute(
+                "SELECT status_actual FROM intervention WHERE id = %s",
+                (str(intervention_id),),
+            )
+            locked = is_intervention_locked(cur.fetchone()[0])
 
             cur.execute(
                 "SELECT COUNT(*) FROM intervention_action_task WHERE task_id = %s",
                 (task_id,),
             )
-            action_count = cur.fetchone()[0]
-            if action_count > 0:
-                raise ValidationError(
-                    f"Cette tâche est liée à {action_count} action{'s' if action_count > 1 else ''} — suppression impossible"
-                )
+            blocker = task_delete_blocker(status, cur.fetchone()[0], locked)
+            if blocker:
+                raise ValidationError(blocker)
 
             cur.execute("DELETE FROM intervention_task WHERE id = %s", (task_id,))
             conn.commit()
@@ -649,6 +661,7 @@ class InterventionTaskRepository:
                             "code": r.get("interv_code"),
                             "title": r.get("interv_title"),
                             "status": r.get("interv_status"),
+                            "is_locked": is_intervention_locked(r.get("interv_status")),
                             "priority": r.get("interv_priority"),
                             "equipement": equip,
                             "tasks": tasks_by_interv.get(iid, []),

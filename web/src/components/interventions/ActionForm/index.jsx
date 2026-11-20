@@ -193,6 +193,7 @@ ActionForm.propTypes = {
     code: PropTypes.string,
     title: PropTypes.string,
     status_actual: PropTypes.string,
+    is_locked: PropTypes.bool,
   }),
   techId: PropTypes.string,
   lockedDate: PropTypes.bool,

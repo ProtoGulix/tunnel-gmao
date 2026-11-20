@@ -59,6 +59,7 @@ export async function searchOpenInterventions(search, { limit = 20 } = {}) {
     code: raw.code ?? '',
     title: raw.title ?? '',
     status_actual: raw.status_actual ?? raw.status ?? '',
+    is_locked: raw.is_locked ?? null,
     type_inter: typeof raw.type_inter === 'string' ? raw.type_inter : (raw.type_inter?.code ?? 'CUR'),
     priority: raw.priority ?? 'normale',
     plan_id: raw.plan_id ?? null,

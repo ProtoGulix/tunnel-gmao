@@ -374,7 +374,7 @@ export default function ActionTaskSection({ interventionId, machineId, value, on
       // interventionId prop a la priorité sur createIv (sélecteur interne)
       const ivSource = createIv ?? null;
       const ivForTask = ivSource
-        ? { id: ivSource.id, code: ivSource.code, title: ivSource.title ?? '', status_actual: ivSource.status_actual, type_inter: ivSource.type_inter ?? null, plan_id: ivSource.plan_id ?? null }
+        ? { id: ivSource.id, code: ivSource.code, title: ivSource.title ?? '', status_actual: ivSource.status_actual, is_locked: ivSource.is_locked ?? ivSource.isLocked ?? null, type_inter: ivSource.type_inter ?? null, plan_id: ivSource.plan_id ?? null }
         : null;
       const enriched = ivForTask ? { ...createdTask, _intervention: ivForTask } : createdTask;
       setTasks((prev) => [...prev, enriched]);

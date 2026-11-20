@@ -6,15 +6,12 @@
 export const OUTCOME_REOPEN = 'reopen';
 export const OUTCOME_DELETE = 'delete';
 
-const CLOSED_STATUS_KEYS = ['ferme', 'cancelled'];
-
 /**
  * Raison pour laquelle la suppression est impossible, ou null si elle est proposée.
- * @param {Object} intervention - détail mappé (stats, request)
- * @param {string} statusKey - clé de statut de configuration (ex : 'ferme')
+ * @param {Object} intervention - détail mappé (isLocked venu de l'API, stats, request)
  */
-export function getDeleteBlockReason(intervention, statusKey) {
-  if (CLOSED_STATUS_KEYS.includes(statusKey)) {
+export function getDeleteBlockReason(intervention) {
+  if (intervention?.isLocked !== false) {
     return "Impossible : l'intervention est fermée";
   }
   const stats = intervention?.stats ?? {};

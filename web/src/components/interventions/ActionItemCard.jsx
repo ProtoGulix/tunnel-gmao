@@ -254,7 +254,7 @@ export default function ActionItemCard({ action, interventionId, onPurchaseReque
 
   const deleteDisabledReason = isLocked || !can(PERM.interventions.removeAction)
     ? undefined
-    : canDeleteAction({ purchaseRequests }) ? null : "Suppression impossible : une demande d'achat liée a déjà été dispatchée";
+    : canDeleteAction(localAction) ? null : "Suppression impossible : une demande d'achat liée a déjà été dispatchée";
 
   // Couleur de bordure selon la complexité
   const borderColor = complexityScore > 5 ? 'var(--red-7)' : 'var(--gray-6)';
