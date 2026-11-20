@@ -17,13 +17,6 @@ import { formatDateFr } from '../../utils/dateUtils'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
 
-// Transitions autorisées par statut
-const ALLOWED_TRANSITIONS = {
-  nouvelle:   ['en_attente', 'acceptee', 'rejetee'],
-  en_attente: ['acceptee', 'rejetee'],
-  acceptee:   ['cloturee'],
-}
-
 // ── Historique des statuts ────────────────────────────────────────────────────
 const StatusLogEntry = ({ entry, isLast }) => (
   <div className="flex gap-3">
@@ -140,7 +133,7 @@ const DIDetail = ({ id, onNavigateIntervention }) => {
   )
 
   const eq = item.equipement
-  const canAccept = ALLOWED_TRANSITIONS[item.statut]?.includes('acceptee') && !item.intervention_id
+  const canAccept = item.allowed_transitions?.includes('acceptee') && !item.intervention_id
     && can(PERM.requests.accept)
   const hasIntervention = !!item.intervention_id
 

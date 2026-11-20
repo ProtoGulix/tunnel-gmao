@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 import psycopg2
 from fastapi import HTTPException
 
+from api.audits.cascade import record_cascade
 from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.validators import (
@@ -801,6 +802,15 @@ class EquipementRepository:
             self._check_attachment(cur, child_id, parent_id)
             cur.execute(
                 "UPDATE machine SET equipement_mere = %s WHERE id = %s", (parent_id, child_id)
+            )
+            # Le sous-équipement change de parent sans que la route le déclare : son
+            # rattachement est tracé sur lui (événement du système, ADR 0029).
+            record_cascade(
+                "equipement",
+                child_id,
+                "equipement_mere_changed",
+                old_value={"equipement_mere": row[0]},
+                new_value={"equipement_mere": str(parent_id)},
             )
 
     def _default_code(self, cur, data: Dict[str, Any]) -> str:

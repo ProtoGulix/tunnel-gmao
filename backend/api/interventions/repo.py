@@ -15,6 +15,7 @@ from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.interventions.types import check_assignable, check_known
 from api.interventions.validators import is_reopening
+from api.preventive_occurrences.cascade import attach_occurrence
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -1072,22 +1073,7 @@ class InterventionRepository:
             occ_id = str(occ_row[0])
             occ_plan_id = occ_row[1]
 
-            cur.execute(
-                "UPDATE preventive_occurrence SET intervention_id = %s, status = 'in_progress' WHERE id = %s",
-                (intervention_id, occ_id),
-            )
-            cur.execute(
-                """
-                UPDATE intervention_task
-                SET intervention_id = %s,
-                    assigned_to = COALESCE(assigned_to,
-                        (SELECT tech_id FROM intervention WHERE id = %s)),
-                    due_date = COALESCE(due_date,
-                        (SELECT reported_date FROM intervention WHERE id = %s))
-                WHERE occurrence_id = %s AND intervention_id IS NULL
-                """,
-                (intervention_id, intervention_id, intervention_id, occ_id),
-            )
+            attach_occurrence(cur, occ_id, intervention_id, fill_assignment=True)
             if occ_plan_id:
                 cur.execute(
                     "UPDATE intervention SET plan_id = %s WHERE id = %s",

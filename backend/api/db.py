@@ -15,6 +15,7 @@ Usage dans les repos :
 import contextvars
 import logging
 import time
+import uuid
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
@@ -132,6 +133,23 @@ _request_connection: contextvars.ContextVar[RequestConnection | None] = contextv
 def open_request_connection() -> RequestConnection:
     """Emprunte une vraie connexion du pool pour une requête qui modifie (bloquant)."""
     return RequestConnection(_borrow())
+
+
+def set_request_author(conn: RequestConnection, user_id) -> None:
+    """Pose l'auteur de la requête pour les triggers de journal (ADR 0029, point 3).
+
+    set_config(..., true) est local à la transaction : il disparaît au commit ou au rollback
+    et ne survit donc jamais sur la connexion rendue au pool. Sans utilisateur connu, ou avec
+    une valeur qui n'est pas un identifiant, rien n'est posé : l'auteur reste vide.
+    """
+    if not user_id:
+        return
+    try:
+        author = str(uuid.UUID(str(user_id)))
+    except ValueError:
+        return
+    with conn.cursor() as cur:
+        cur.execute("SELECT set_config('app.user_id', %s, true)", (author,))
 
 
 def bind_request_connection(conn: RequestConnection) -> contextvars.Token:

@@ -9,6 +9,26 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Transitions de demande lues dans l'API (CASC-04, ADR 0029) : le web et le mobile ne recopient
+  plus le graphe des statuts ; un bouton n'apparaît que si sa cible figure dans
+  `allowed_transitions` (sans ce champ, aucun bouton). « Créer l'intervention » du mobile suit la
+  même liste.
+- Auteur des journaux de statut (CASC-01, ADR 0029) : la transaction de requête transmet
+  l'utilisateur de la requête aux triggers (`app.user_id`, local à la transaction), qui le
+  consignent dans `request_status_log.changed_by` et dans la nouvelle colonne
+  `intervention_status_log.changed_by`. Migration 0022 : aucune ligne passée modifiée ; les
+  écritures hors requête (tâche planifiée) restent sans auteur.
+  CASC-05 : la ligne « ouvert » de l'intervention (trigger `trg_init_status_log`), les
+  clôtures de /repair et `POST /intervention-status-log` portent aussi l'auteur ; le
+  `technician_id` reste déclaratif.
+- Audit des cascades (CASC-03, ADR 0029) : chaque écriture en cascade dépose un événement
+  du système (`is_system`, `SYSTEM_CASCADE`, auteur = utilisateur de la requête) sur l'entité
+  modifiée : occurrence préventive passée « in_progress » ou « completed » (y compris par le
+  trigger de fermeture), tâches rattachées, affectées ou datées à l'acceptation, corrections
+  des routes `/repair` des demandes et des occurrences, lignes de commande créées ou cumulées
+  au regroupement des demandes d'achat, sous-équipements rattachés. `closed_by` est rempli
+  quand une action clôt une tâche (faite ou ignorée), et la ligne « ouvert » du journal
+  d'une intervention porte l'auteur de la création. Aucune migration.
 - Types d'intervention en base : les 8 types (et ceux que l'administration ajoute) vivent
   dans la table `intervention_type`, avec une description courte affichée sous chaque type
   dans le sélecteur. À la création d'une intervention, sur le web comme sur le mobile, le
@@ -54,6 +74,13 @@ mobile/CHANGELOG.md.
   l'occurrence rendue non routinière.
 
 ### Corrigé
+- Clôturer une demande ne ferme plus l'intervention liée : la transition vers « clôturée »
+  est refusée tant que l'intervention est ouverte (« Clore l'intervention : elle clôturera la
+  demande. »), c'est la clôture de l'intervention, avec ses contrôles, qui clôture la demande.
+  Chaque demande renvoyée par l'API porte `allowed_transitions`, la liste des transitions que
+  l'utilisateur peut déclencher (statut, intervention liée, permission).
+- Journal des demandes : la clôture d'une demande par la fermeture de son intervention
+  n'écrit plus deux lignes identiques (migration 0022, CASC-01). Les doublons passés restent.
 - Clôture d'une intervention : une seule porte, la fiche de l'intervention
   (`PUT /interventions/{id}`), avec le contrôle des tâches obligatoires et le motif d'audit
   si la règle l'exige. Le journal de statut refuse désormais « fermé » (400) ; le bouton

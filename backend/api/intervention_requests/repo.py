@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException
 
+from api.audits.cascade import record_cascade
 from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, IN_PROGRESS_STATUS_CODE
 from api.db import get_connection, release_connection
@@ -16,6 +17,7 @@ from api.errors.exceptions import (
     raise_db_error,
 )
 from api.intervention_requests.validators import InterventionRequestValidator
+from api.preventive_occurrences.cascade import attach_occurrence, complete_occurrences
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -700,6 +702,7 @@ class InterventionRequestRepository:
             intervention_data=intervention_data,
             current_intervention_id=intervention_id,
             reason_code=reason_code,
+            intervention_status=(existing.get("intervention") or {}).get("status_actual"),
         )
 
         # Valider que status_to existe dans le référentiel
@@ -765,31 +768,15 @@ class InterventionRequestRepository:
                     effective_type_inter,
                 )
 
-            # ── Clôture : fermer l'intervention liée + compléter l'occurrence ──
+            # ── Clôture : compléter l'occurrence (l'intervention est déjà fermée, ou absente) ──
             elif status_to == "cloturee":
-                if intervention_id:
-                    self._close_linked_intervention(cur=cur, intervention_id=str(intervention_id))
-                    logger.info(
-                        "Demande %s clôturée : intervention %s fermée",
-                        request_id,
-                        intervention_id,
-                    )
                 # Passer l'occurrence préventive liée à 'completed'.
                 # Double critère : di_id (cas standard) OU intervention_id (cas où
                 # l'occurrence a son di_id NULL suite à un repair ou un bug de liaison).
-                cur.execute(
-                    """
-                    UPDATE preventive_occurrence
-                    SET status = 'completed'
-                    WHERE status NOT IN ('completed', 'skipped')
-                      AND (
-                          di_id = %s
-                          OR intervention_id = %s
-                      )
-                    """,
-                    (request_id, str(intervention_id) if intervention_id else None),
+                completed = complete_occurrences(
+                    cur, request_id, str(intervention_id) if intervention_id else None
                 )
-                if cur.rowcount:
+                if completed:
                     logger.info(
                         "Occurrence préventive liée à la demande %s passée à 'completed'",
                         request_id,
@@ -822,23 +809,7 @@ class InterventionRequestRepository:
                 # preventive_occurrence_id a été résolu AVANT _create_intervention_for_request
                 # pour éviter toute pollution du curseur partagé.
                 if preventive_occurrence_id:
-                    cur.execute(
-                        """
-                        UPDATE preventive_occurrence
-                        SET intervention_id = %s, status = 'in_progress'
-                        WHERE id = %s
-                        """,
-                        (str(intervention_id), preventive_occurrence_id),
-                    )
-                    cur.execute(
-                        """
-                        UPDATE intervention_task
-                        SET intervention_id = %s
-                        WHERE occurrence_id = %s
-                        AND intervention_id IS NULL
-                        """,
-                        (str(intervention_id), preventive_occurrence_id),
-                    )
+                    attach_occurrence(cur, preventive_occurrence_id, str(intervention_id))
                     logger.info(
                         "Rattachement tâches : %s tâche(s) liées à l'intervention %s",
                         cur.rowcount,
@@ -929,16 +900,6 @@ class InterventionRequestRepository:
 
         InterventionRepository.record_created_event(cur, "intervention", intervention_id)
 
-    def _close_linked_intervention(self, cur: Any, intervention_id: str) -> None:
-        """Passe une intervention au statut fermé (code = CLOSED_STATUS_CODE).
-        Utilise le code texte directement pour que status_actual = 'ferme'
-        et que _notify_if_closed() le détecte correctement.
-        """
-        cur.execute(
-            "UPDATE intervention SET status_actual = %s WHERE id = %s",
-            (CLOSED_STATUS_CODE, intervention_id),
-        )
-
     # ──────────────────────────────────────────────────────────────
     # Événements d'audit du système et issues d'une suppression d'intervention
     # ──────────────────────────────────────────────────────────────
@@ -955,6 +916,25 @@ class InterventionRequestRepository:
             is_system=True,
             reason_code=SYSTEM_CASCADE_REASON,
         )
+
+    @staticmethod
+    def _record_relink(request_id: str, intervention_id: str) -> None:
+        """Dépose l'événement du lien d'une demande à son intervention, rétabli par le système."""
+        record_cascade(
+            "request",
+            request_id,
+            "intervention_id_changed",
+            old_value={"intervention_id": None},
+            new_value={"intervention_id": intervention_id},
+        )
+
+    def _relink_request(self, cur: Any, request_id: str, intervention_id: str) -> None:
+        """Rétablit intervention_id sur une demande qui l'avait perdu, avec son événement."""
+        cur.execute(
+            "UPDATE intervention_request SET intervention_id = %s WHERE id = %s",
+            (intervention_id, request_id),
+        )
+        self._record_relink(request_id, str(intervention_id))
 
     def reopen_linked_request(self, cur: Any, intervention_id: str) -> None:
         """Repasse « acceptee » la demande clôturée liée à une intervention qu'on rouvre.
@@ -984,23 +964,45 @@ class InterventionRequestRepository:
 
     @contextmanager
     def watch_trigger_closure(self, intervention_id: str):
-        """Trace la clôture de la demande faite par le trigger de la base (journal de statut).
+        """Trace ce que le trigger de la base ferme avec l'intervention (journal de statut).
 
         À utiliser autour de l'écriture qui ferme l'intervention : si la demande liée passe de
-        « acceptee » à « cloturee » pendant le bloc, l'événement du système est déposé.
+        « acceptee » à « cloturee », ou si l'occurrence préventive liée change de statut
+        (« completed »), pendant le bloc, l'événement du système est déposé.
         """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             before = self.get_linked_to_intervention(cur, intervention_id)
+            occurrences_before = self._occurrence_statuses(cur, intervention_id)
             yield
             after = self.get_linked_to_intervention(cur, intervention_id)
+            occurrences_after = self._occurrence_statuses(cur, intervention_id)
         finally:
             release_connection(conn)
         if before and after and before["statut"] == "acceptee" and after["statut"] == "cloturee":
             self._record_system_closure(
                 before["id"], "acceptee", "Clôture automatique (fermeture de l'intervention)"
             )
+        for occurrence_id, old_status in occurrences_before.items():
+            new_status = occurrences_after.get(occurrence_id)
+            if new_status and new_status != old_status:
+                record_cascade(
+                    "preventive_occurrence",
+                    occurrence_id,
+                    "status_changed",
+                    old_value={"status": old_status},
+                    new_value={"status": new_status},
+                )
+
+    @staticmethod
+    def _occurrence_statuses(cur: Any, intervention_id: str) -> Dict[str, str]:
+        """Statut des occurrences préventives liées à une intervention, par identifiant."""
+        cur.execute(
+            "SELECT id, status FROM preventive_occurrence WHERE intervention_id = %s",
+            (intervention_id,),
+        )
+        return {str(row[0]): row[1] for row in cur.fetchall()}
 
     def get_linked_to_intervention(
         self, cur: Any, intervention_id: str
@@ -1174,10 +1176,7 @@ class InterventionRequestRepository:
                 row = cur.fetchone()
                 if row:
                     # Corriger le lien manquant pour les prochaines fermetures
-                    cur.execute(
-                        "UPDATE intervention_request SET intervention_id = %s WHERE id = %s",
-                        (intervention_id, str(row[0])),
-                    )
+                    self._relink_request(cur, str(row[0]), intervention_id)
 
             if row:
                 request_id, current_statut = row[0], row[1]
@@ -1190,7 +1189,7 @@ class InterventionRequestRepository:
                     cur.execute(
                         """
                         INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-                        VALUES (%s, %s, %s, NULL, %s)
+                        VALUES (%s, %s, %s, NULLIF(current_setting('app.user_id', true), '')::uuid, %s)
                         """,
                         (
                             str(request_id),
@@ -1225,19 +1224,8 @@ class InterventionRequestRepository:
                 di_row = cur.fetchone()
                 closed_request_id = str(di_row[0]) if di_row else None
 
-            cur.execute(
-                """
-                UPDATE preventive_occurrence
-                SET status = 'completed'
-                WHERE status NOT IN ('completed', 'skipped')
-                  AND (
-                      intervention_id = %s
-                      OR (di_id = %s AND %s IS NOT NULL)
-                  )
-                """,
-                (intervention_id, closed_request_id, closed_request_id),
-            )
-            if cur.rowcount:
+            completed = complete_occurrences(cur, closed_request_id, intervention_id)
+            if completed:
                 logger.info(
                     "Occurrence préventive liée à l'intervention %s passée à 'completed'",
                     intervention_id,
@@ -1309,9 +1297,13 @@ class InterventionRequestRepository:
                     WHERE po.di_id = ir.id
                       AND ir.id = %s
                       AND ir.intervention_id IS NULL
+                    RETURNING po.intervention_id
                     """,
                     (str(request_id),),
                 )
+                relinked = cur.fetchone()
+                if relinked:
+                    self._record_relink(str(request_id), str(relinked[0]))
                 # Le trigger de journal se tait le temps de l'UPDATE et de l'INSERT
                 # (sinon doublon dans request_status_log), puis est rétabli.
                 with skip_request_status_log(cur):
@@ -1323,7 +1315,7 @@ class InterventionRequestRepository:
                         """
                         INSERT INTO request_status_log
                             (request_id, status_from, status_to, changed_by, notes)
-                        VALUES (%s, %s, %s, NULL, %s)
+                        VALUES (%s, %s, %s, NULLIF(current_setting('app.user_id', true), '')::uuid, %s)
                         """,
                         (
                             str(request_id),

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from api.constants import CLOSED_STATUS_CODE
 from api.errors.exceptions import ValidationError
 from api.interventions.types import check_assignable
 
@@ -11,6 +12,38 @@ ALLOWED_TRANSITIONS: Dict[str, List[str]] = {
     "rejetee": [],
     "cloturee": [],
 }
+
+CLOSE_VIA_INTERVENTION_MESSAGE = "Clore l'intervention : elle clôturera la demande."
+
+
+def _is_closable(intervention_status: Optional[str], has_intervention: bool) -> bool:
+    """Vrai si la demande peut être clôturée : sans intervention, ou intervention fermée.
+
+    La demande ne ferme jamais son intervention (ADR 0029) : c'est la clôture de
+    l'intervention, par sa porte unique, qui clôture la demande.
+    """
+    return not has_intervention or intervention_status == CLOSED_STATUS_CODE
+
+
+def compute_allowed_transitions(
+    statut: str,
+    has_intervention: bool,
+    intervention_status: Optional[str],
+    can_transition: bool,
+) -> List[str]:
+    """Transitions que l'utilisateur peut déclencher maintenant sur une demande.
+
+    Fonction unique : le tableau ALLOWED_TRANSITIONS donne le graphe, puis on retire la
+    clôture tant que l'intervention liée est ouverte, et tout si l'utilisateur n'a pas la
+    permission de transition. Les fronts n'ont plus à recopier ces règles.
+    """
+    if not can_transition:
+        return []
+    return [
+        target
+        for target in ALLOWED_TRANSITIONS.get(statut, [])
+        if target != "cloturee" or _is_closable(intervention_status, has_intervention)
+    ]
 
 
 class InterventionRequestValidator:
@@ -32,6 +65,7 @@ class InterventionRequestValidator:
         intervention_data: Optional[Dict[str, Any]],
         current_intervention_id: Optional[Any] = None,
         reason_code: Optional[str] = None,
+        intervention_status: Optional[str] = None,
     ) -> None:
         """
         Valide qu'une transition de statut est autorisée et que les données
@@ -43,6 +77,12 @@ class InterventionRequestValidator:
                 f"Transition '{current_statut}' → '{status_to}' non autorisée. "
                 f"Transitions possibles : {allowed or 'aucune'}"
             )
+
+        # La demande ne ferme pas son intervention : on clôture l'intervention d'abord.
+        if status_to == "cloturee" and not _is_closable(
+            intervention_status, current_intervention_id is not None
+        ):
+            raise ValidationError(CLOSE_VIA_INTERVENTION_MESSAGE)
 
         # Liaison verrouillée : une demande déjà liée ne peut pas être re-acceptée
         if status_to == "acceptee" and current_intervention_id is not None:

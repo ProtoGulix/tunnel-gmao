@@ -3,10 +3,16 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from api.audits.cascade import record_cascade, record_cascade_changes
 from api.audits.events import record_audit_event, system_reason_code
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
 from api.preventive_occurrences import schedule, validators
+from api.preventive_occurrences.cascade import (
+    as_text,
+    attach_occurrence,
+    attach_tasks,
+)
 from api.settings import settings
 from api.utils.status_log import skip_request_status_log
 
@@ -902,26 +908,7 @@ class PreventiveOccurrenceRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            cur.execute(
-                """
-                UPDATE preventive_occurrence
-                SET intervention_id = %s, status = 'in_progress'
-                WHERE id = %s
-                """,
-                (intervention_id, occurrence_id),
-            )
-            cur.execute(
-                """
-                UPDATE intervention_task
-                SET intervention_id = %s,
-                    assigned_to = COALESCE(assigned_to,
-                        (SELECT tech_id FROM intervention WHERE id = %s)),
-                    due_date = COALESCE(due_date,
-                        (SELECT reported_date FROM intervention WHERE id = %s))
-                WHERE occurrence_id = %s AND intervention_id IS NULL
-                """,
-                (intervention_id, intervention_id, intervention_id, occurrence_id),
-            )
+            attach_occurrence(cur, occurrence_id, intervention_id, fill_assignment=True)
             self._record_system_created(cur, "intervention", intervention_id)
             conn.commit()
         finally:
@@ -933,6 +920,29 @@ class PreventiveOccurrenceRepository:
         )
 
     # ── Repair ───────────────────────────────────────────────────
+
+    @staticmethod
+    def _record_plan_fixed(rows) -> None:
+        """Un événement par intervention dont la réparation rétablit le plan (plan_id était vide)."""
+        for intervention_id, plan_id in rows:
+            record_cascade(
+                "intervention",
+                intervention_id,
+                "plan_id_changed",
+                old_value={"plan_id": None},
+                new_value={"plan_id": as_text(plan_id)},
+            )
+
+    @staticmethod
+    def _record_tasks_relinked(rows) -> None:
+        """Un événement par tâche que la réparation rattache à son intervention."""
+        for task_id, intervention_id in rows:
+            record_cascade_changes(
+                "task",
+                task_id,
+                {"intervention_id": None},
+                {"intervention_id": as_text(intervention_id)},
+            )
 
     def repair_orphaned_data(self) -> dict:
         """
@@ -1008,6 +1018,7 @@ class PreventiveOccurrenceRepository:
                 """
             )
             plan_rows = cur.fetchall()
+            self._record_plan_fixed(plan_rows)
             interventions_plan_fixed = len(plan_rows)
             if plan_rows:
                 details.append(
@@ -1034,6 +1045,7 @@ class PreventiveOccurrenceRepository:
                 """
             )
             plan_rows2 = cur.fetchall()
+            self._record_plan_fixed(plan_rows2)
             if plan_rows2:
                 interventions_plan_fixed += len(plan_rows2)
                 details.append(
@@ -1053,6 +1065,7 @@ class PreventiveOccurrenceRepository:
                 """
             )
             rows = cur.fetchall()
+            self._record_tasks_relinked(rows)
             tasks_relinked = len(rows)
             if rows:
                 affected_interventions = list({str(r[1]) for r in rows})
@@ -1077,6 +1090,7 @@ class PreventiveOccurrenceRepository:
                 """
             )
             rows2 = cur.fetchall()
+            self._record_tasks_relinked(rows2)
             if rows2:
                 tasks_relinked += len(rows2)
                 affected_interventions2 = list({str(r[1]) for r in rows2})
@@ -1108,15 +1122,21 @@ class PreventiveOccurrenceRepository:
                     "UPDATE preventive_occurrence SET intervention_id = %s, status = %s WHERE id = %s",
                     (linked_intervention_id, new_status, occ_id),
                 )
-                cur.execute(
-                    "UPDATE intervention_task SET intervention_id = %s WHERE occurrence_id = %s AND intervention_id IS NULL",
-                    (linked_intervention_id, occ_id),
+                record_cascade(
+                    "preventive_occurrence",
+                    occ_id,
+                    "status_changed",
+                    old_value={"status": occ_status, "intervention_id": None},
+                    new_value={"status": new_status, "intervention_id": linked_intervention_id},
                 )
+                attach_tasks(cur, occ_id, linked_intervention_id)
                 if occ_plan_id:
                     cur.execute(
-                        "UPDATE intervention SET plan_id = %s WHERE id = %s AND plan_id IS NULL",
+                        "UPDATE intervention SET plan_id = %s WHERE id = %s AND plan_id IS NULL "
+                        "RETURNING id, plan_id",
                         (str(occ_plan_id), linked_intervention_id),
                     )
+                    self._record_plan_fixed(cur.fetchall())
                 occurrences_set_in_progress += 1
                 details.append(
                     f"Étape 3 : occurrence {occ_id} liée à l'intervention {linked_intervention_id} (acceptation manuelle)"
@@ -1134,7 +1154,8 @@ class PreventiveOccurrenceRepository:
                     po.id,
                     COALESCE(po.intervention_id, ir.intervention_id) AS intervention_id,
                     po.di_id,
-                    (po.intervention_id IS NULL) AS needs_relink
+                    (po.intervention_id IS NULL) AS needs_relink,
+                    po.status
                 FROM preventive_occurrence po
                 LEFT JOIN intervention_request ir
                     ON ir.id = po.di_id AND po.intervention_id IS NULL
@@ -1147,7 +1168,7 @@ class PreventiveOccurrenceRepository:
             )
             stale_occurrences = cur.fetchall()
 
-            for occ_id, intervention_id, di_id, needs_relink in stale_occurrences:
+            for occ_id, intervention_id, di_id, needs_relink, old_status in stale_occurrences:
                 occ_id = str(occ_id)
                 intervention_id = str(intervention_id)
 
@@ -1156,11 +1177,25 @@ class PreventiveOccurrenceRepository:
                         "UPDATE preventive_occurrence SET intervention_id = %s WHERE id = %s",
                         (intervention_id, occ_id),
                     )
+                    record_cascade(
+                        "preventive_occurrence",
+                        occ_id,
+                        "intervention_id_changed",
+                        old_value={"intervention_id": None},
+                        new_value={"intervention_id": intervention_id},
+                    )
                     occurrences_relinked += 1
 
                 cur.execute(
                     "UPDATE preventive_occurrence SET status = 'completed' WHERE id = %s",
                     (occ_id,),
+                )
+                record_cascade(
+                    "preventive_occurrence",
+                    occ_id,
+                    "status_changed",
+                    old_value={"status": old_status},
+                    new_value={"status": "completed"},
                 )
                 occurrences_completed += 1
                 details.append(
@@ -1189,7 +1224,8 @@ class PreventiveOccurrenceRepository:
                                 """
                                 INSERT INTO request_status_log
                                     (request_id, status_from, status_to, changed_by, notes)
-                                VALUES (%s, %s, 'cloturee', NULL, %s)
+                                VALUES (%s, %s, 'cloturee',
+                                        NULLIF(current_setting('app.user_id', true), '')::uuid, %s)
                                 """,
                                 (
                                     req_id,
@@ -1197,6 +1233,16 @@ class PreventiveOccurrenceRepository:
                                     "Clôture automatique — procédure de réparation (bug cascade fermeture)",
                                 ),
                             )
+                        record_cascade(
+                            "request",
+                            req_id,
+                            "status_transitioned",
+                            old_value={"statut": req_statut},
+                            new_value={
+                                "statut": "cloturee",
+                                "notes": "Clôture automatique (procédure de réparation)",
+                            },
+                        )
                         requests_closed += 1
                         details.append(
                             f"Bug 2 : demande {req_id} → 'cloturee' (liée à l'occurrence {occ_id})"
@@ -1230,10 +1276,14 @@ class PreventiveOccurrenceRepository:
                     FROM preventive_plan_gamme_step pgs
                     WHERE pgs.plan_id = %s
                     ON CONFLICT (gamme_step_id, occurrence_id) DO NOTHING
+                    RETURNING id
                     """,
                     (occ_id, intervention_id, str(plan_id)),
                 )
-                inserted = cur.rowcount
+                created_tasks = cur.fetchall()
+                for (task_id,) in created_tasks:
+                    self._record_system_created(cur, "task", str(task_id))
+                inserted = len(created_tasks)
                 tasks_generated_missing += inserted
                 if inserted:
                     details.append(
@@ -1262,6 +1312,14 @@ class PreventiveOccurrenceRepository:
                 """
             )
             opt_rows = cur.fetchall()
+            for task_id, new_optional in opt_rows:
+                record_cascade(
+                    "task",
+                    task_id,
+                    "optional_changed",
+                    old_value={"optional": not new_optional},
+                    new_value={"optional": new_optional},
+                )
             tasks_optional_resynced = len(opt_rows)
             if opt_rows:
                 details.append(

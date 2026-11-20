@@ -16,14 +16,10 @@ import ErrorState from '@/components/ui/ErrorState';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 /**
- * Transitions autorisées par statut (source : doc API /intervention-requests/{id}/transition).
- * Seul le rejet est piloté manuellement — l'acceptation résulte uniquement de la création
- * d'une intervention liée (voir InterventionCreateModal), jamais d'un clic direct ici.
+ * Seul le rejet est piloté manuellement : l'acceptation résulte de la création d'une
+ * intervention liée (voir InterventionCreateModal), jamais d'un clic direct ici.
+ * La règle (quelles transitions sont possibles) vient de `allowed_transitions` (API).
  */
-const TRANSITIONS = {
-  nouvelle:   [{ to: 'rejetee', label: 'Rejeter', color: 'red', requiresNotes: true }],
-  en_attente: [{ to: 'rejetee', label: 'Rejeter', color: 'red', requiresNotes: true }],
-};
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -245,8 +241,9 @@ DeleteRequestDialog.propTypes = {
 };
 
 // Zone d'actions en en-tête — Rejeter (transition) et Supprimer (doublon) côte à côte
-function RequestHeaderActions({ statut, code, transitioning, transitionError, onTransition, canTransition, canDelete, deleting, deleteError, onDelete }) {
-  const canReject = canTransition && (TRANSITIONS[statut] ?? []).length > 0;
+function RequestHeaderActions({ allowedTransitions, code, transitioning, transitionError, onTransition, canTransition, canDelete, deleting, deleteError, onDelete }) {
+  // Ancienne API sans le champ : aucun bouton plutôt que deviner
+  const canReject = canTransition && (allowedTransitions ?? []).includes('rejetee');
 
   // Pas de modal custom : le motif de rejet EST la raison d'audit (reason_text). Le backend
   // n'est plus silencieux pour cette entité (voir _SILENT_FIELDS_BY_ENTITY["request"]), donc
@@ -280,7 +277,7 @@ function RequestHeaderActions({ statut, code, transitioning, transitionError, on
   );
 }
 RequestHeaderActions.propTypes = {
-  statut: PropTypes.string.isRequired,
+  allowedTransitions: PropTypes.arrayOf(PropTypes.string),
   code: PropTypes.string,
   transitioning: PropTypes.bool,
   transitionError: PropTypes.string,
@@ -372,7 +369,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
         <Flex align="center" gap="3" wrap="wrap" justify="end">
           <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{formatDate(detail.created_at)}</Text>
           <RequestHeaderActions
-            statut={detail.statut}
+            allowedTransitions={detail.allowed_transitions}
             code={detail.code}
             transitioning={transitioning}
             transitionError={transitionError}

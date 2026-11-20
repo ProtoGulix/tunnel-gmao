@@ -69,6 +69,8 @@ class InterventionRequestListItem(BaseModel):
     tasks: List[InterventionTaskOut] = []
     is_system: bool = False
     suggested_type_inter: Optional[str] = None
+    # Transitions que l'utilisateur courant peut déclencher (calculées par le backend)
+    allowed_transitions: List[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 

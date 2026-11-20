@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 SYSTEM_CASCADE_REASON = "SYSTEM_CASCADE"
 
 
+# L'auteur d'une clôture de tâche est l'utilisateur du jeton, posé par la transaction de requête
+# (app.user_id, ADR 0029 point 3) : aucune voie ne le reçoit du corps ni ne le laisse vide.
 def _audit_task_from_action(task_id: str, old_status: str, new_status: str, action_id: str) -> None:
     """Dépose l'événement d'audit d'une tâche dont une action change le statut.
 
@@ -738,7 +740,8 @@ class InterventionActionRepository:
                     cur.execute(
                         """
                         UPDATE intervention_task
-                        SET status = 'skipped', skip_reason = %s, updated_at = NOW()
+                        SET status = 'skipped', skip_reason = %s, updated_at = NOW(),
+                            closed_by = NULLIF(current_setting('app.user_id', true), '')::uuid
                         WHERE id = %s
                         """,
                         (task_req_data.get('skip_reason'), tid),
@@ -751,7 +754,12 @@ class InterventionActionRepository:
                         )
                     if task_req_data.get('close_task', False):
                         cur.execute(
-                            "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
+                            """
+                            UPDATE intervention_task
+                            SET status = 'done', updated_at = NOW(),
+                                closed_by = NULLIF(current_setting('app.user_id', true), '')::uuid
+                            WHERE id = %s
+                            """,
                             (tid,),
                         )
                         _audit_task_from_action(tid, task_status, 'done', action_id)
@@ -924,7 +932,8 @@ class InterventionActionRepository:
                     cur.execute(
                         """
                         UPDATE intervention_task
-                        SET status = 'skipped', skip_reason = %s, updated_at = NOW()
+                        SET status = 'skipped', skip_reason = %s, updated_at = NOW(),
+                            closed_by = NULLIF(current_setting('app.user_id', true), '')::uuid
                         WHERE id = %s
                         """,
                         (task_req_data.get('skip_reason'), tid),
@@ -937,7 +946,12 @@ class InterventionActionRepository:
                         )
                     if task_req_data.get('close_task', False):
                         cur.execute(
-                            "UPDATE intervention_task SET status = 'done', updated_at = NOW() WHERE id = %s",
+                            """
+                            UPDATE intervention_task
+                            SET status = 'done', updated_at = NOW(),
+                                closed_by = NULLIF(current_setting('app.user_id', true), '')::uuid
+                            WHERE id = %s
+                            """,
                             (tid,),
                         )
                         _audit_task_from_action(tid, task_status, 'done', action_id)

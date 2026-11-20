@@ -23,7 +23,7 @@ Le middleware d'audit est le seul à écrire dans `audit_log` (ADR 0018) ; les r
 | `DELETE /{id}`                 | demande (id du chemin)    | `deleted` (motif obligatoire)   | `false` |
 | `POST /repair`                 | aucune (`events_only`) : les demandes réparées | `status_transitioned`, motif `SYSTEM_CASCADE` | `true` |
 
-La clôture automatique d'une demande (fermeture de son intervention) écrit aussi un `status_transitioned` du système (`SYSTEM_CASCADE`), au nom de l'utilisateur du jeton. La réouverture d'une demande par la suppression de son intervention écrit un `status_transitioned` de l'utilisateur (voir `DELETE /interventions/{id}`).
+La clôture automatique d'une demande (déclenchée par la fermeture de son intervention) écrit aussi un `status_transitioned` du système (`SYSTEM_CASCADE`), au nom de l'utilisateur du jeton. La réouverture d'une demande par la suppression de son intervention écrit un `status_transitioned` de l'utilisateur (voir `DELETE /interventions/{id}`).
 
 ### Validation `reason_code`
 
@@ -69,7 +69,7 @@ en_attente → rejetee
 | `en_attente` | En attente | non      | —                                                                    |
 | `acceptee`   | Acceptée   | non      | Crée une intervention GMAO (`status_actual = in_progress`) et la lie |
 | `rejetee`    | Rejetée    | **oui**  | Motif (`notes`) obligatoire                                          |
-| `cloturee`   | Clôturée   | **oui**  | Ferme l'intervention liée (`status_actual = ferme`)                  |
+| `cloturee`   | Clôturée   | **oui**  | Refusée tant que l'intervention liée est ouverte ; ne ferme jamais l'intervention |
 
 ### Verrouillage de la liaison
 
@@ -276,6 +276,7 @@ Liste paginée des demandes avec filtres.
 | `intervention.stats`        | Calculé en une seule requête (LATERAL JOIN) : `action_count`, `total_time` (heures), `avg_complexity`, `purchase_count` |
 | `is_system`                 | `true` si la DI a été générée automatiquement (ex : occurrence préventive). `false` par défaut         |
 | `suggested_type_inter`      | Type d'intervention suggéré par le système (`CUR`, `PRE`, etc.). `null` pour les DI humaines           |
+| `allowed_transitions`       | Liste des statuts cibles que l'utilisateur courant peut demander maintenant (graphe des transitions, clôture exclue tant que l'intervention liée est ouverte, vide sans la permission de transition). Présent dans la liste, le détail et la réponse de `POST /{id}/transition` ; les clients l'utilisent sans recopier les règles |
 
 > `facets.statut` : tous les statuts avec leur compteur. Les filtres `machine_id` et `search` sont appliqués, mais pas `statut` — permet d'afficher tous les onglets même quand un est sélectionné.
 
@@ -483,7 +484,7 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
 | ------------ | ----------------------------------- | ------------------------------------- |
 | `nouvelle`   | `en_attente`, `acceptee`, `rejetee` | `acceptee` : crée l'intervention GMAO |
 | `en_attente` | `acceptee`, `rejetee`               | `acceptee` : crée l'intervention GMAO |
-| `acceptee`   | `cloturee`                          | Ferme l'intervention GMAO liée        |
+| `acceptee`   | `cloturee`                          | Refusée (400, « Clore l'intervention : elle clôturera la demande. ») si l'intervention liée n'est pas fermée ; aucune écriture sur l'intervention |
 | `rejetee`    | — (état final)                      | —                                     |
 | `cloturee`   | — (état final)                      | —                                     |
 
@@ -498,6 +499,7 @@ Retourne la demande mise à jour. Si `acceptee`, les champs `intervention_id` et
 | Code | Cas                                                                                                |
 | ---- | -------------------------------------------------------------------------------------------------- |
 | 404  | Demande introuvable                                                                                |
+| 400  | `cloturee` demandée alors que l'intervention liée est ouverte (clore l'intervention)                |
 | 422  | Transition non autorisée depuis le statut actuel                                                   |
 | 422  | `notes` manquant pour le statut `rejetee`                                                          |
 | 422  | `type_inter` ou `tech_initials` manquant pour le statut `acceptee` (DI humaine sans type suggéré)  |

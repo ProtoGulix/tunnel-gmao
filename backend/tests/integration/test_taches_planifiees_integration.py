@@ -113,12 +113,19 @@ def test_acceptation_automatique_planifiee_motif_planifie(instance, plan_factory
     assert {(x[2], x[3], x[4]) for x in lignes_audit(instance, di_id)} == {
         ("SYSTEM_SCHEDULE", True, None)
     }
-    nb_taches = instance.sql(
-        "SELECT count(*) FROM audit_log WHERE entity_type = 'task' AND entity_id IN "
-        "(SELECT id FROM intervention_task WHERE occurrence_id = %s)",
+    # Une ligne `created` et, depuis CASC-03, une ligne `updated` : l'acceptation rattache la
+    # tâche, la date et l'affecte. Les deux portent le motif planifié, sans auteur.
+    taches = instance.sql(
+        "SELECT l.decision_type, r.code, l.is_system, l.changed_by FROM audit_log l "
+        "JOIN audit_reason_code r ON r.id = l.reason_code_id "
+        "WHERE l.entity_type = 'task' AND l.entity_id IN "
+        "(SELECT id FROM intervention_task WHERE occurrence_id = %s) ORDER BY l.decision_type",
         (occ_id,),
-    )[0][0]
-    assert nb_taches == 1
+    )
+    assert taches == [
+        ("created", "SYSTEM_SCHEDULE", True, None),
+        ("updated", "SYSTEM_SCHEDULE", True, None),
+    ]
 
 
 def test_bouton_generer_garde_motif_cascade_et_auteur_du_jeton(

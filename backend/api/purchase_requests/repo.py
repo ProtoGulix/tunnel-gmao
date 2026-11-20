@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from api.audits.cascade import record_cascade
 from api.audits.events import record_audit_event
 from api.constants import (
     CLOSED_STATUS_CODE,
@@ -1095,7 +1096,7 @@ class PurchaseRequestRepository:
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             {conflict_clause}
             DO UPDATE SET quantity = COALESCE(supplier_order_line.quantity, 0) + EXCLUDED.quantity
-            RETURNING id
+            RETURNING id, quantity, (xmax = 0) AS inserted
             """,
             (
                 str(uuid4()),
@@ -1107,7 +1108,11 @@ class PurchaseRequestRepository:
                 float(unit_price) if unit_price else None,
             ),
         )
-        line_id = str(cur.fetchone()[0])
+        line_id, line_quantity, inserted = cur.fetchone()
+        line_id = str(line_id)
+        self._record_line_cascade(
+            line_id, order_id, stock_item_id, part_id, req_quantity, line_quantity, inserted
+        )
 
         # Invariant anti-doublon : ON CONFLICT ignore si déjà lié
         cur.execute(
@@ -1120,6 +1125,38 @@ class PurchaseRequestRepository:
             """,
             (str(uuid4()), line_id, req_id_str, req_quantity),
         )
+
+    @staticmethod
+    def _record_line_cascade(
+        line_id: str,
+        order_id: str,
+        stock_item_id: Optional[str],
+        part_id: Optional[str],
+        req_quantity: int,
+        line_quantity: int,
+        inserted: bool,
+    ) -> None:
+        """Événement du système d'une ligne de commande créée ou cumulée par le regroupement."""
+        if inserted:
+            record_cascade(
+                'supplier_order_line',
+                line_id,
+                'created',
+                new_value={
+                    'supplier_order_id': order_id,
+                    'stock_item_id': str(stock_item_id) if stock_item_id else None,
+                    'part_id': str(part_id) if part_id else None,
+                    'quantity': line_quantity,
+                },
+            )
+        else:
+            record_cascade(
+                'supplier_order_line',
+                line_id,
+                'quantity_changed',
+                old_value={'quantity': line_quantity - req_quantity},
+                new_value={'quantity': line_quantity},
+            )
 
     def _search_part(self, cur, search_term: str) -> Optional[Dict[str, Any]]:
         """Cherche la meilleure pièce correspondant au terme de recherche."""
