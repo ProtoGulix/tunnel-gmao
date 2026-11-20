@@ -42,5 +42,17 @@ journal le refuse déjà, rien à traiter.
 ## Conséquences
 
 - Changement d'API et migration acceptés par l'utilisateur le 2026-11-20.
-- L'occurrence préventive liée (passée à « completed » à la clôture) n'est pas modifiée par
-  la réouverture : point noté au backlog.
+- ~~L'occurrence préventive liée n'est pas modifiée par la réouverture~~ : remplacé par
+  l'amendement ci-dessous.
+
+## Amendement du 2026-11-20 (décision de l'utilisateur) : l'occurrence est rouverte
+
+6. La réouverture repasse « in_progress » l'occurrence préventive « completed » de
+   l'intervention, dans la même transaction, avec un événement du système (ADR 0029). Elle
+   se termine de nouveau à la prochaine clôture ; la référence de l'échéance glissante
+   (date de clôture de la demande, ADR 0023) devient donc la nouvelle clôture. Une
+   occurrence suivante déjà générée n'est pas touchée : elle reste active à côté
+   (garde de génération inchangée).
+
+Alternative écartée : laisser l'occurrence « completed » (la reprise compterait comme
+préventif fait à la première clôture, alors que le travail n'est pas fini).

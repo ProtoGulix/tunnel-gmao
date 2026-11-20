@@ -119,3 +119,29 @@ def complete_occurrences(
             new_value={"status": "completed"},
         )
     return len(rows)
+
+
+def reopen_occurrences(cur: Any, intervention_id: str) -> int:
+    """Repasse « in_progress » les occurrences « completed » d'une intervention rouverte.
+
+    Le préventif n'est pas fini tant que l'intervention ne l'est pas (amendement de l'ADR
+    0028) : l'occurrence se termine de nouveau à la prochaine clôture, et la référence de
+    l'échéance glissante devient la date de cette nouvelle clôture de la demande. Une
+    occurrence suivante déjà générée n'est pas touchée. Retourne le nombre d'occurrences
+    rouvertes ; chacune dépose son événement.
+    """
+    cur.execute(
+        "UPDATE preventive_occurrence SET status = 'in_progress' "
+        "WHERE intervention_id = %s AND status = 'completed' RETURNING id",
+        (intervention_id,),
+    )
+    rows = cur.fetchall()
+    for (occurrence_id,) in rows:
+        record_cascade(
+            "preventive_occurrence",
+            occurrence_id,
+            "status_changed",
+            old_value={"status": "completed"},
+            new_value={"status": "in_progress"},
+        )
+    return len(rows)

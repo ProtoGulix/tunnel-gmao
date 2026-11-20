@@ -24,5 +24,5 @@ Restes (2026-11-20) :
 - Réouverture : traitée par l'ADR 0028 (motif exigé, demande liée rouverte). Annulation :
   le statut « cancelled » n'existe pas dans intervention_status_ref (base de dev,
   2026-11-20), le journal le refuse déjà.
-- La réouverture ne touche pas à l'occurrence préventive liée, restée « completed » : à
-  décider (ADR 0028, conséquences).
+- Réouverture et occurrence préventive : TRAITÉ le 2026-11-20 (REO-04, amendement de
+  l'ADR 0028 : l'occurrence repasse « in_progress »).

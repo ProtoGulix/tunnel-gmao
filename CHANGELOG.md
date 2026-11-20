@@ -74,6 +74,9 @@ mobile/CHANGELOG.md.
   l'occurrence rendue non routinière.
 
 ### Corrigé
+- Préventif : rouvrir une intervention fermée repasse son occurrence préventive « en cours » ;
+  elle se termine de nouveau à la prochaine clôture, qui devient la référence de l'échéance
+  suivante. Changement tracé dans l'audit (REO-04, amendement de l'ADR 0028).
 - Clôturer une demande ne ferme plus l'intervention liée : la transition vers « clôturée »
   est refusée tant que l'intervention est ouverte (« Clore l'intervention : elle clôturera la
   demande. »), c'est la clôture de l'intervention, avec ses contrôles, qui clôture la demande.

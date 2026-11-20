@@ -1168,8 +1168,10 @@ class InterventionRepository:
             cur.execute(query, params)
             if reopening:
                 from api.intervention_requests.repo import InterventionRequestRepository
+                from api.preventive_occurrences.cascade import reopen_occurrences
 
                 InterventionRequestRepository().reopen_linked_request(cur, intervention_id)
+                reopen_occurrences(cur, intervention_id)
             conn.commit()
             return True
         except (ValidationError, DatabaseError):
