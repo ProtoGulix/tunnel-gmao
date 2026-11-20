@@ -615,8 +615,6 @@ class InterventionRequestRepository:
 
             conn.commit()
             logger.info("Demande d'intervention créée: %s", new_id)
-        except ValidationError:
-            raise
         except Exception as e:
             conn.rollback()
             raise DatabaseError("Erreur création demande: %s" % str(e)) from e

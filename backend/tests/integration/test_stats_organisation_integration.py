@@ -199,8 +199,9 @@ def etat_actuel(instance):
             creations["plans"].append(
                 str(
                     instance.sql(
-                        "INSERT INTO preventive_plan (code, label, trigger_type, active) "
-                        "VALUES (%s, 'Plan ORG', 'periodic', %s) RETURNING id",
+                        "INSERT INTO preventive_plan "
+                        "(code, label, trigger_type, periodicity_days, active) "
+                        "VALUES (%s, 'Plan ORG', 'periodicity', 30, %s) RETURNING id",
                         (f"ORG-{suffixe}-{i}", actif),
                     )[0][0]
                 )

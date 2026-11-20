@@ -16,8 +16,12 @@ export async function fetchPreventiveOccurrences({ plan_id, machine_id, status, 
   return Array.isArray(res.data) ? res.data : [];
 }
 
-export async function skipPreventiveOccurrence(id, skip_reason) {
-  const res = await api.patch(`/preventive-occurrences/${id}/skip`, { skip_reason });
+/**
+ * Ignore une occurrence. Aucun motif dans l'appel : le backend répond 400 avec la liste des
+ * motifs, la fenêtre de motif commune (auditGuard) le demande puis relance la requête.
+ */
+export async function skipPreventiveOccurrence(id) {
+  const res = await api.patch(`/preventive-occurrences/${id}/skip`, {});
   return res.data;
 }
 

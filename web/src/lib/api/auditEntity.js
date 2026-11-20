@@ -53,7 +53,12 @@ export function getAuditEntityType(error) {
   return SUB_ENTITY_MAP[`${first}/${second}`] ?? URL_ENTITY_MAP[first] ?? null;
 }
 
-/** Décision d'audit attendue par la requête : une suppression exige un motif « deleted ». */
+/**
+ * Décision d'audit attendue par la requête : une suppression exige un motif « deleted »,
+ * ignorer une occurrence préventive un motif « occurrence_skipped ».
+ */
 export function getAuditDecisionType(error) {
+  const url = String(error?.config?.url ?? '').split('?')[0];
+  if (/^\/?preventive-occurrences\/[^/]+\/skip$/.test(url)) return 'occurrence_skipped';
   return String(error?.config?.method ?? '').toLowerCase() === 'delete' ? 'deleted' : undefined;
 }

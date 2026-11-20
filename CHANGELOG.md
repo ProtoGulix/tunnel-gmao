@@ -8,6 +8,13 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Modifié
+- Préventif : ignorer une occurrence demande désormais un motif choisi dans la fenêtre de
+  motif commune (machine arrêtée, fait hors de l'outil, plan obsolète, ou autre avec un
+  texte), comme les autres décisions tracées, au lieu d'une raison libre. Le motif est
+  inscrit au journal d'audit. Migration 0019 : trois motifs ajoutés, règle d'audit de
+  l'occurrence rendue non routinière.
+
 ### Corrigé
 - Mobile : la session ne coupe plus toutes les 15 minutes. Le mobile renouvelle seul son
   jeton de connexion, comme le web, pendant toute la journée de poste (8 heures par
@@ -20,6 +27,14 @@ mobile/CHANGELOG.md.
   « à faire » (événement d'audit système), et le lien action-tâche ne reste plus orphelin ni
   ne bloque la suppression de la tâche. Migration 0017 : clés étrangères en cascade sur
   `intervention_action_task`, après suppression des éventuels liens orphelins.
+- Export courriel d'une commande fournisseur : l'export n'écrit plus quatre lignes parasites
+  dans le journal d'audit (numéro, statut, fournisseur, montant) à chaque appel ; il ne
+  modifie rien et ne trace plus rien. Le contenu du courriel est inchangé.
+- Installation neuve : migration 0018, les 72 clés étrangères, 15 contraintes CHECK et
+  65 index de la production sont ajoutés à toute base qui ne les avait pas (une base issue de
+  la production n'est pas modifiée). Les saisies que la production refusait (lien vers un
+  élément inexistant, tâche ignorée sans motif, quantité nulle) sont désormais refusées aussi
+  sur une installation neuve.
 
 ### [interne] Sécurité
 - Messages d'erreur de la base : seuls les refus métier connus (durée d'une action, bornes

@@ -472,8 +472,8 @@ class PreventiveOccurrenceRepository:
     def skip_occurrence(self, occurrence_id: str, skip_reason: str) -> Dict[str, Any]:
         """Ignore une occurrence en statut 'pending'.
 
-        Le texte `skip_reason` reste libre (le passage à un motif d'audit est un autre chantier) ;
-        l'audit de la requête (motif, avant, après) est écrit par le middleware.
+        `skip_reason` vient du motif d'audit choisi (voir la route) ; l'audit de la requête
+        (motif, avant, après) est écrit par le middleware.
         """
         conn = self._get_connection()
         try:

@@ -37,8 +37,8 @@ export function usePreventiveOccurrences(filters = {}) {
   }, [load]);
 
   const skipOccurrence = useCallback(
-    async (id, skip_reason) => {
-      await skipPreventiveOccurrence(id, skip_reason);
+    async (id) => {
+      await skipPreventiveOccurrence(id);
       await load();
     },
     [load]

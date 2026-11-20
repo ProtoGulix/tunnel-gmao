@@ -1,0 +1,161 @@
+# Inventaire : contraintes et index de la production absents d'une installation neuve
+# Relevé le 2026-11-19 en lecture seule sur la base de dev (dump de production du 2026-11-16, révision 0017).
+# Comparaison par NOM avec backend/db/schema.sql et backend/alembic/versions : à confirmer par définition.
+# Format : type|nom|table|définition
+
+## Clés étrangères (f) et CHECK (c)
+c|check_handled_at_with_status|preventive_suggestion|CHECK ((((handled_at IS NULL) AND (status = 'NEW'::text)) OR ((handled_at IS NOT NULL) AND (status = ANY (ARRAY['REVIEWED'::text, 'ACCEPTED'::text, 'REJECTED'::text])))))
+c|chk_suggested_type_inter|intervention_request|CHECK (((suggested_type_inter IS NULL) OR ((suggested_type_inter)::text = ANY (ARRAY[('CUR'::character varying)::text, ('PRE'::character varying)::text, ('REA'::character varying)::text, ('BAT'::character varying)::text, ('PRO'::character varying)::text, ('COF'::character varying)::text, ('PIL'::character varying)::text, ('MES'::character varying)::text]))))
+c|intervention_task_origin_check|intervention_task|CHECK (((origin)::text = ANY (ARRAY[('plan'::character varying)::text, ('resp'::character varying)::text, ('tech'::character varying)::text])))
+c|intervention_task_skip_reason_check|intervention_task|CHECK ((((status)::text <> 'skipped'::text) OR (skip_reason IS NOT NULL)))
+c|intervention_task_status_check|intervention_task|CHECK (((status)::text = ANY (ARRAY[('todo'::character varying)::text, ('in_progress'::character varying)::text, ('done'::character varying)::text, ('skipped'::character varying)::text])))
+c|part_template_field_sort_order_positive|part_template_field|CHECK ((sort_order > 0))
+c|part_template_field_type_check|part_template_field|CHECK (((field_type)::text = ANY (ARRAY[('number'::character varying)::text, ('text'::character varying)::text, ('enum'::character varying)::text])))
+c|part_template_version_positive|part_template|CHECK ((version > 0))
+c|preventive_occurrence_skip_reason_check|preventive_occurrence|CHECK ((((status)::text <> 'skipped'::text) OR (skip_reason IS NOT NULL)))
+c|preventive_plan_trigger_type_check|preventive_plan|CHECK (((((trigger_type)::text = 'periodicity'::text) AND (periodicity_days IS NOT NULL)) OR (((trigger_type)::text = 'hours'::text) AND (hours_threshold IS NOT NULL))))
+c|purchase_request_quantity_check|purchase_request|CHECK ((quantity > 0))
+c|stock_item_characteristic_single_value_check|stock_item_characteristic|CHECK ((((value_text IS NOT NULL) AND (value_number IS NULL) AND (value_enum IS NULL)) OR ((value_text IS NULL) AND (value_number IS NOT NULL) AND (value_enum IS NULL)) OR ((value_text IS NULL) AND (value_number IS NULL) AND (value_enum IS NOT NULL))))
+c|stock_item_template_version_positive|stock_item|CHECK (((template_version IS NULL) OR (template_version > 0)))
+c|supplier_order_line_purchase_request_quantity_check|supplier_order_line_purchase_request|CHECK ((quantity > 0))
+c|supplier_order_line_quantity_check|supplier_order_line|CHECK ((quantity > 0))
+f|action_subcategory_category_id_fkey|action_subcategory|FOREIGN KEY (category_id) REFERENCES action_category(id) ON DELETE SET NULL
+f|api_key_created_by_fkey|api_key|FOREIGN KEY (created_by) REFERENCES tunnel_user(id)
+f|api_key_role_id_fkey|api_key|FOREIGN KEY (role_id) REFERENCES tunnel_role(id)
+f|audit_log_reason_code_id_fkey|audit_log|FOREIGN KEY (reason_code_id) REFERENCES audit_reason_code(id)
+f|fk_intervention_action_complexity_factor|intervention_action|FOREIGN KEY (complexity_factor) REFERENCES complexity_factor(code) ON DELETE SET NULL
+f|fk_item_sub_family|stock_item|FOREIGN KEY (family_code, sub_family_code) REFERENCES stock_sub_family(family_code, code)
+f|fk_preventive_suggestion_action|preventive_suggestion|FOREIGN KEY (intervention_action_id) REFERENCES intervention_action(id) ON DELETE RESTRICT
+f|fk_preventive_suggestion_machine|preventive_suggestion|FOREIGN KEY (machine_id) REFERENCES machine(id) ON DELETE RESTRICT
+f|gamme_step_validation_intervention_id_fkey|intervention_task|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE RESTRICT
+f|gamme_step_validation_occurrence_id_fkey|intervention_task|FOREIGN KEY (occurrence_id) REFERENCES preventive_occurrence(id) ON DELETE RESTRICT
+f|gamme_step_validation_step_id_fkey|intervention_task|FOREIGN KEY (gamme_step_id) REFERENCES preventive_plan_gamme_step(id) ON DELETE RESTRICT
+f|intervention_action_action_subcategory_foreign|intervention_action|FOREIGN KEY (action_subcategory) REFERENCES action_subcategory(id) ON DELETE SET NULL
+f|intervention_action_intervention_id_fkey|intervention_action|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE CASCADE
+f|intervention_action_purchase_request_inter__58223902_foreign|intervention_action_purchase_request|FOREIGN KEY (intervention_action_id) REFERENCES intervention_action(id) ON DELETE SET NULL
+f|intervention_action_purchase_request_purch__1ea27a8f_foreign|intervention_action_purchase_request|FOREIGN KEY (purchase_request_id) REFERENCES purchase_request(id) ON DELETE SET NULL
+f|intervention_action_tech_foreign|intervention_action|FOREIGN KEY (tech) REFERENCES tunnel_user(id)
+f|intervention_machine_id_fkey|intervention|FOREIGN KEY (machine_id) REFERENCES machine(id) ON DELETE SET NULL
+f|intervention_part_intervention_id_fkey|intervention_part|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE CASCADE
+f|intervention_plan_id_fkey|intervention|FOREIGN KEY (plan_id) REFERENCES preventive_plan(id) ON DELETE SET NULL
+f|intervention_request_intervention_id_fkey|intervention_request|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE SET NULL
+f|intervention_request_machine_id_fkey|intervention_request|FOREIGN KEY (machine_id) REFERENCES machine(id) ON DELETE RESTRICT
+f|intervention_request_service_id_fkey|intervention_request|FOREIGN KEY (service_id) REFERENCES service(id) ON DELETE SET NULL
+f|intervention_request_statut_fkey|intervention_request|FOREIGN KEY (statut) REFERENCES request_status_ref(code)
+f|intervention_status_actual_foreign|intervention|FOREIGN KEY (status_actual) REFERENCES intervention_status_ref(id) ON DELETE SET NULL
+f|intervention_status_log_intervention_id_foreign|intervention_status_log|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE CASCADE
+f|intervention_status_log_status_from_foreign|intervention_status_log|FOREIGN KEY (status_from) REFERENCES intervention_status_ref(id) ON DELETE SET NULL
+f|intervention_status_log_status_to_foreign|intervention_status_log|FOREIGN KEY (status_to) REFERENCES intervention_status_ref(id) ON DELETE SET NULL
+f|intervention_status_log_technician_id_foreign|intervention_status_log|FOREIGN KEY (technician_id) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|intervention_task_assigned_to_fkey|intervention_task|FOREIGN KEY (assigned_to) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|intervention_task_created_by_fkey|intervention_task|FOREIGN KEY (created_by) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|intervention_tech_id_fkey|intervention|FOREIGN KEY (tech_id) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|intervention_updated_by_foreign|intervention|FOREIGN KEY (updated_by) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|ip_blocklist_created_by_fkey|ip_blocklist|FOREIGN KEY (created_by) REFERENCES tunnel_user(id)
+f|machine_hours_machine_id_fkey|machine_hours|FOREIGN KEY (machine_id) REFERENCES machine(id) ON DELETE CASCADE
+f|part_template_field_enum_field_fk|part_template_field_enum|FOREIGN KEY (field_id) REFERENCES part_template_field(id) ON DELETE CASCADE
+f|part_template_field_template_fk|part_template_field|FOREIGN KEY (template_id) REFERENCES part_template(id) ON DELETE CASCADE
+f|permission_audit_log_changed_by_fkey|permission_audit_log|FOREIGN KEY (changed_by) REFERENCES tunnel_user(id)
+f|permission_audit_log_endpoint_id_fkey|permission_audit_log|FOREIGN KEY (endpoint_id) REFERENCES tunnel_endpoint(id)
+f|permission_audit_log_role_id_fkey|permission_audit_log|FOREIGN KEY (role_id) REFERENCES tunnel_role(id)
+f|preventive_occurrence_di_id_fkey|preventive_occurrence|FOREIGN KEY (di_id) REFERENCES intervention_request(id) ON DELETE SET NULL
+f|preventive_occurrence_intervention_id_fkey|preventive_occurrence|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE SET NULL
+f|preventive_occurrence_machine_id_fkey|preventive_occurrence|FOREIGN KEY (machine_id) REFERENCES machine(id) ON DELETE RESTRICT
+f|preventive_occurrence_plan_id_fkey|preventive_occurrence|FOREIGN KEY (plan_id) REFERENCES preventive_plan(id) ON DELETE RESTRICT
+f|preventive_plan_equipement_class_id_fkey|preventive_plan|FOREIGN KEY (equipement_class_id) REFERENCES equipement_class(id) ON DELETE RESTRICT
+f|preventive_plan_gamme_step_plan_id_fkey|preventive_plan_gamme_step|FOREIGN KEY (plan_id) REFERENCES preventive_plan(id) ON DELETE CASCADE
+f|purchase_request_stock_item_id_fkey|purchase_request|FOREIGN KEY (stock_item_id) REFERENCES stock_item(id) ON DELETE SET NULL
+f|refresh_token_user_id_fkey|refresh_token|FOREIGN KEY (user_id) REFERENCES tunnel_user(id) ON DELETE CASCADE
+f|request_status_log_request_id_fkey|request_status_log|FOREIGN KEY (request_id) REFERENCES intervention_request(id) ON DELETE CASCADE
+f|request_status_log_status_from_fkey|request_status_log|FOREIGN KEY (status_from) REFERENCES request_status_ref(code)
+f|request_status_log_status_to_fkey|request_status_log|FOREIGN KEY (status_to) REFERENCES request_status_ref(code)
+f|security_log_user_id_fkey|security_log|FOREIGN KEY (user_id) REFERENCES tunnel_user(id) ON DELETE SET NULL
+f|stock_item_characteristic_field_fk|stock_item_characteristic|FOREIGN KEY (field_id) REFERENCES part_template_field(id) ON DELETE RESTRICT
+f|stock_item_characteristic_item_fk|stock_item_characteristic|FOREIGN KEY (stock_item_id) REFERENCES stock_item(id) ON DELETE CASCADE
+f|stock_item_family_code_fkey|stock_item|FOREIGN KEY (family_code) REFERENCES stock_family(code)
+f|stock_item_manufacturer_item_id_foreign|stock_item|FOREIGN KEY (manufacturer_item_id) REFERENCES manufacturer_item(id)
+f|stock_item_standard_spec_stock_item_id_foreign|stock_item_standard_spec|FOREIGN KEY (stock_item_id) REFERENCES stock_item(id) ON DELETE SET NULL
+f|stock_item_standars_spec_foreign|stock_item|FOREIGN KEY (standars_spec) REFERENCES stock_item_standard_spec(id) ON DELETE SET NULL
+f|stock_item_supplier_manufacturer_item_id_fkey|stock_item_supplier|FOREIGN KEY (manufacturer_item_id) REFERENCES manufacturer_item(id) ON DELETE SET NULL
+f|stock_item_supplier_stock_item_id_fkey|stock_item_supplier|FOREIGN KEY (stock_item_id) REFERENCES stock_item(id) ON DELETE SET NULL
+f|stock_item_supplier_supplier_id_fkey|stock_item_supplier|FOREIGN KEY (supplier_id) REFERENCES supplier(id) ON DELETE CASCADE
+f|stock_item_template_fk|stock_item|FOREIGN KEY (template_id) REFERENCES part_template(id) ON DELETE RESTRICT
+f|stock_sub_family_family_code_fkey|stock_sub_family|FOREIGN KEY (family_code) REFERENCES stock_family(code) ON DELETE CASCADE
+f|stock_sub_family_template_fk|stock_sub_family|FOREIGN KEY (template_id) REFERENCES part_template(id) ON DELETE SET NULL
+f|subtask_intervention_id_fkey|subtask|FOREIGN KEY (intervention_id) REFERENCES intervention(id) ON DELETE CASCADE
+f|supplier_order_line_purchase_reques_supplier_order_line_id_fkey|supplier_order_line_purchase_request|FOREIGN KEY (supplier_order_line_id) REFERENCES supplier_order_line(id) ON DELETE SET NULL
+f|supplier_order_line_purchase_request_purchase_request_id_fkey|supplier_order_line_purchase_request|FOREIGN KEY (purchase_request_id) REFERENCES purchase_request(id) ON DELETE SET NULL
+f|supplier_order_line_stock_item_id_fkey|supplier_order_line|FOREIGN KEY (stock_item_id) REFERENCES stock_item(id) ON DELETE RESTRICT
+f|supplier_order_line_supplier_order_id_fkey|supplier_order_line|FOREIGN KEY (supplier_order_id) REFERENCES supplier_order(id) ON DELETE CASCADE
+f|supplier_order_supplier_id_fkey|supplier_order|FOREIGN KEY (supplier_id) REFERENCES supplier(id) ON DELETE RESTRICT
+f|tunnel_permission_endpoint_id_fkey|tunnel_permission|FOREIGN KEY (endpoint_id) REFERENCES tunnel_endpoint(id)
+f|tunnel_permission_role_id_fkey|tunnel_permission|FOREIGN KEY (role_id) REFERENCES tunnel_role(id)
+f|tunnel_user_role_id_fkey|tunnel_user|FOREIGN KEY (role_id) REFERENCES tunnel_role(id)
+
+## Index hors contraintes
+i|action_category_code_index|action_category|CREATE INDEX action_category_code_index ON public.action_category USING btree (code)
+i|action_category_meta_low_value_index|action_category_meta|CREATE INDEX action_category_meta_low_value_index ON public.action_category_meta USING btree (is_low_value)
+i|action_category_meta_simple_index|action_category_meta|CREATE INDEX action_category_meta_simple_index ON public.action_category_meta USING btree (is_simple)
+i|action_classification_probe_active_index|action_classification_probe|CREATE INDEX action_classification_probe_active_index ON public.action_classification_probe USING btree (is_active)
+i|action_classification_probe_keyword_index|action_classification_probe|CREATE INDEX action_classification_probe_keyword_index ON public.action_classification_probe USING btree (keyword)
+i|action_classification_probe_severity_index|action_classification_probe|CREATE INDEX action_classification_probe_severity_index ON public.action_classification_probe USING btree (severity)
+i|anomaly_threshold_active_index|anomaly_threshold|CREATE INDEX anomaly_threshold_active_index ON public.anomaly_threshold USING btree (is_active)
+i|anomaly_threshold_type_index|anomaly_threshold|CREATE INDEX anomaly_threshold_type_index ON public.anomaly_threshold USING btree (anomaly_type)
+i|idx_audit_log_entity|audit_log|CREATE INDEX idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id)
+i|idx_audit_log_reason|audit_log|CREATE INDEX idx_audit_log_reason ON public.audit_log USING btree (reason_code_id)
+i|idx_audit_log_time|audit_log|CREATE INDEX idx_audit_log_time ON public.audit_log USING btree (logged_at DESC)
+i|idx_audit_reason_code_active|audit_reason_code|CREATE INDEX idx_audit_reason_code_active ON public.audit_reason_code USING btree (code, is_active)
+i|equipement_class_code_index|equipement_class|CREATE INDEX equipement_class_code_index ON public.equipement_class USING btree (code)
+i|intervention_machine_id_index|intervention|CREATE INDEX intervention_machine_id_index ON public.intervention USING btree (machine_id)
+i|idx_intervention_action_complexity_factor|intervention_action|CREATE INDEX idx_intervention_action_complexity_factor ON public.intervention_action USING btree (complexity_factor)
+i|intervention_action_created_at_index|intervention_action|CREATE INDEX intervention_action_created_at_index ON public.intervention_action USING btree (created_at)
+i|idx_intervention_action_task_task_id|intervention_action_task|CREATE INDEX idx_intervention_action_task_task_id ON public.intervention_action_task USING btree (task_id)
+i|idx_intervention_request_is_system|intervention_request|CREATE INDEX idx_intervention_request_is_system ON public.intervention_request USING btree (is_system) WHERE (is_system = true)
+i|idx_gamme_step_validation_occurrence_id|intervention_task|CREATE INDEX idx_gamme_step_validation_occurrence_id ON public.intervention_task USING btree (occurrence_id)
+i|idx_intervention_task_assigned_to|intervention_task|CREATE INDEX idx_intervention_task_assigned_to ON public.intervention_task USING btree (assigned_to)
+i|idx_intervention_task_intervention_id|intervention_task|CREATE INDEX idx_intervention_task_intervention_id ON public.intervention_task USING btree (intervention_id)
+i|idx_intervention_task_occurrence_id|intervention_task|CREATE INDEX idx_intervention_task_occurrence_id ON public.intervention_task USING btree (occurrence_id)
+i|idx_intervention_task_status|intervention_task|CREATE INDEX idx_intervention_task_status ON public.intervention_task USING btree (status)
+i|machine_code_index|machine|CREATE INDEX machine_code_index ON public.machine USING btree (code)
+i|machine_equipement_class_index|machine|CREATE INDEX machine_equipement_class_index ON public.machine USING btree (equipement_class_id)
+i|machine_equipement_mere_index|machine|CREATE INDEX machine_equipement_mere_index ON public.machine USING btree (equipement_mere)
+i|idx_part_template_active_code|part_template|CREATE INDEX idx_part_template_active_code ON public.part_template USING btree (code, version) WHERE (is_active = true)
+i|idx_part_template_code|part_template|CREATE INDEX idx_part_template_code ON public.part_template USING btree (code)
+i|idx_part_template_is_active|part_template|CREATE INDEX idx_part_template_is_active ON public.part_template USING btree (is_active) WHERE (is_active = true)
+i|idx_part_template_field_sort_order|part_template_field|CREATE INDEX idx_part_template_field_sort_order ON public.part_template_field USING btree (template_id, sort_order)
+i|idx_part_template_field_template_id|part_template_field|CREATE INDEX idx_part_template_field_template_id ON public.part_template_field USING btree (template_id)
+i|idx_part_template_field_enum_field_id|part_template_field_enum|CREATE INDEX idx_part_template_field_enum_field_id ON public.part_template_field_enum USING btree (field_id)
+i|idx_prev_occurrence_machine_id|preventive_occurrence|CREATE INDEX idx_prev_occurrence_machine_id ON public.preventive_occurrence USING btree (machine_id)
+i|idx_prev_occurrence_plan_id|preventive_occurrence|CREATE INDEX idx_prev_occurrence_plan_id ON public.preventive_occurrence USING btree (plan_id)
+i|idx_prev_occurrence_status|preventive_occurrence|CREATE INDEX idx_prev_occurrence_status ON public.preventive_occurrence USING btree (status)
+i|idx_preventive_plan_active|preventive_plan|CREATE INDEX idx_preventive_plan_active ON public.preventive_plan USING btree (active) WHERE (active = true)
+i|idx_preventive_plan_equipment_class|preventive_plan|CREATE INDEX idx_preventive_plan_equipment_class ON public.preventive_plan USING btree (equipement_class_id)
+i|idx_gamme_step_plan_id|preventive_plan_gamme_step|CREATE INDEX idx_gamme_step_plan_id ON public.preventive_plan_gamme_step USING btree (plan_id)
+i|idx_preventive_rule_active|preventive_rule|CREATE INDEX idx_preventive_rule_active ON public.preventive_rule USING btree (active) WHERE (active = true)
+i|idx_preventive_rule_keyword|preventive_rule|CREATE INDEX idx_preventive_rule_keyword ON public.preventive_rule USING btree (keyword)
+i|idx_preventive_suggestion_code|preventive_suggestion|CREATE INDEX idx_preventive_suggestion_code ON public.preventive_suggestion USING btree (preventive_code)
+i|idx_preventive_suggestion_detected_at|preventive_suggestion|CREATE INDEX idx_preventive_suggestion_detected_at ON public.preventive_suggestion USING btree (detected_at)
+i|idx_preventive_suggestion_machine|preventive_suggestion|CREATE INDEX idx_preventive_suggestion_machine ON public.preventive_suggestion USING btree (machine_id)
+i|idx_preventive_suggestion_machine_status|preventive_suggestion|CREATE INDEX idx_preventive_suggestion_machine_status ON public.preventive_suggestion USING btree (machine_id, status)
+i|idx_preventive_suggestion_status|preventive_suggestion|CREATE INDEX idx_preventive_suggestion_status ON public.preventive_suggestion USING btree (status)
+i|idx_purchase_request_created|purchase_request|CREATE INDEX idx_purchase_request_created ON public.purchase_request USING btree (created_at DESC)
+i|idx_purchase_request_status|purchase_request|CREATE INDEX idx_purchase_request_status ON public.purchase_request USING btree (status)
+i|idx_purchase_request_stock_item|purchase_request|CREATE INDEX idx_purchase_request_stock_item ON public.purchase_request USING btree (stock_item_id)
+i|idx_schema_migrations_version|schema_migrations|CREATE INDEX idx_schema_migrations_version ON public.schema_migrations USING btree (version, direction, success)
+i|idx_stock_item_supplier_refs_count|stock_item|CREATE INDEX idx_stock_item_supplier_refs_count ON public.stock_item USING btree (supplier_refs_count)
+i|idx_stock_item_template_id|stock_item|CREATE INDEX idx_stock_item_template_id ON public.stock_item USING btree (template_id)
+i|idx_stock_item_template_version|stock_item|CREATE INDEX idx_stock_item_template_version ON public.stock_item USING btree (template_id, template_version)
+i|idx_stock_item_char_item_field|stock_item_characteristic|CREATE INDEX idx_stock_item_char_item_field ON public.stock_item_characteristic USING btree (stock_item_id, field_id)
+i|idx_stock_item_characteristic_field_id|stock_item_characteristic|CREATE INDEX idx_stock_item_characteristic_field_id ON public.stock_item_characteristic USING btree (field_id)
+i|idx_stock_item_characteristic_item_id|stock_item_characteristic|CREATE INDEX idx_stock_item_characteristic_item_id ON public.stock_item_characteristic USING btree (stock_item_id)
+i|idx_stock_item_characteristic_value_enum|stock_item_characteristic|CREATE INDEX idx_stock_item_characteristic_value_enum ON public.stock_item_characteristic USING btree (value_enum) WHERE (value_enum IS NOT NULL)
+i|idx_stock_item_characteristic_value_number|stock_item_characteristic|CREATE INDEX idx_stock_item_characteristic_value_number ON public.stock_item_characteristic USING btree (value_number) WHERE (value_number IS NOT NULL)
+i|idx_stock_item_supplier_preferred|stock_item_supplier|CREATE INDEX idx_stock_item_supplier_preferred ON public.stock_item_supplier USING btree (stock_item_id, is_preferred) WHERE (is_preferred = true)
+i|stock_item_supplier_manufacturer_item_id_index|stock_item_supplier|CREATE INDEX stock_item_supplier_manufacturer_item_id_index ON public.stock_item_supplier USING btree (manufacturer_item_id)
+i|idx_stock_sub_family_template_id|stock_sub_family|CREATE INDEX idx_stock_sub_family_template_id ON public.stock_sub_family USING btree (template_id)
+i|idx_supplier_order_status|supplier_order|CREATE INDEX idx_supplier_order_status ON public.supplier_order USING btree (status)
+i|idx_supplier_order_supplier|supplier_order|CREATE INDEX idx_supplier_order_supplier ON public.supplier_order USING btree (supplier_id)
+i|idx_supplier_order_line_order|supplier_order_line|CREATE INDEX idx_supplier_order_line_order ON public.supplier_order_line USING btree (supplier_order_id)
+i|idx_supplier_order_line_stock_item|supplier_order_line|CREATE INDEX idx_supplier_order_line_stock_item ON public.supplier_order_line USING btree (stock_item_id)
+i|idx_sol_pr_line|supplier_order_line_purchase_request|CREATE INDEX idx_sol_pr_line ON public.supplier_order_line_purchase_request USING btree (supplier_order_line_id)
+i|idx_sol_pr_request|supplier_order_line_purchase_request|CREATE INDEX idx_sol_pr_request ON public.supplier_order_line_purchase_request USING btree (purchase_request_id)

@@ -70,6 +70,14 @@ def test_export_csv_commande_neutralise_une_formule(instance, client, make_user,
     grant("ACHETEUR", "POST", "/supplier-orders/{order_id}/export/csv")
     acheteur = make_user("ACHETEUR")
     fournisseur = instance.sql("INSERT INTO supplier (name) VALUES ('Fourn IT') RETURNING id")[0][0]
+    # La production exige une famille et une sous-famille existantes pour l'article (CONT-01).
+    instance.sql(
+        "INSERT INTO stock_family (code, label) VALUES ('F', 'Famille IT') ON CONFLICT DO NOTHING"
+    )
+    instance.sql(
+        "INSERT INTO stock_sub_family (family_code, code, label) VALUES ('F', 'SF', 'Sous-famille IT') "
+        "ON CONFLICT DO NOTHING"
+    )
     article = instance.sql(
         "INSERT INTO stock_item (name, family_code, sub_family_code, dimension) "
         "VALUES ('=1+1', 'F', 'SF', 'd') RETURNING id"

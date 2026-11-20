@@ -51,6 +51,13 @@ def test_base_neuve_a_deja_l_etat_attendu_et_rejouer_ne_change_rien(instance):
 def test_base_ancienne_rattrapee_et_retour_arriere_respecte_audit_log(instance):
     module = _migration()
     reference = instance.sql(_ETAT, (list(_CODES),))
+    # La clé étrangère audit_log -> audit_reason_code (0018) empêche de supprimer un motif déjà
+    # cité par d'autres tests de la session : on retire d'abord leurs traces d'audit.
+    instance.sql(
+        "DELETE FROM audit_log WHERE reason_code_id IN "
+        "(SELECT id FROM audit_reason_code WHERE code = ANY(%s))",
+        (list(_CODES),),
+    )
     # État d'une base 3.57.0 : motifs absents, LEGACY_STATUS_CHANGE actif.
     instance.sql("DELETE FROM audit_reason_code WHERE code = ANY(%s)", (list(_CODES),))
     instance.sql(

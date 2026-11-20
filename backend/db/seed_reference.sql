@@ -431,3 +431,16 @@ INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reaso
 UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'audit_rule') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('audit_rule' = ANY(entity_types));
 INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'audit_rule', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'audit_rule' AND field IS NULL);
 SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
+
+--
+-- Motifs pour ignorer une occurrence préventive (CONT-03), cohérents avec la migration 0019 :
+-- motifs de la décision occurrence_skipped, règle de l'entité non routinière. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_MACHINE_DOWN', 'Machine arrêtée', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#d97706', 'L''équipement est à l''arrêt : le préventif ne peut pas être réalisé à cette échéance.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_MACHINE_DOWN') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_DONE_OFFLINE', 'Fait hors de l''outil', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#16a34a', 'Le préventif a été réalisé sans être saisi dans l''outil.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_DONE_OFFLINE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_PLAN_OBSOLETE', 'Plan obsolète', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#6b7280', 'Le plan préventif ne correspond plus à l''équipement ou à son usage.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_PLAN_OBSOLETE') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'occurrence_skipped') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('occurrence_skipped' = ANY(decision_types));
+UPDATE public.audit_reason_code SET entity_types = array_remove(entity_types, 'preventive_occurrence') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL;
+UPDATE public.audit_rule SET is_routine = false, default_reason_code = NULL WHERE entity_type = 'preventive_occurrence' AND field IS NULL AND is_routine;
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));
