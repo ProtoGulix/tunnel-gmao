@@ -65,6 +65,7 @@ export default function HomeSplit() {
             code: group.code ?? '',
             title: group.title ?? '',
             status_actual: group.status ?? null,
+            is_locked: group.is_locked ?? null,
             plan_id: group.plan_id ?? null,
             machine: group.equipement
               ? { id: group.equipement.id, code: group.equipement.code ?? '', name: group.equipement.name ?? '' }

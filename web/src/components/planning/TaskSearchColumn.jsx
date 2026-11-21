@@ -77,6 +77,7 @@ function useTaskSearch(query) {
               code: iv.code ?? '',
               title: iv.title ?? '',
               status_actual: iv.status_actual ?? iv.status ?? '',
+              is_locked: iv.is_locked ?? null,
               type_inter: iv.type_inter ?? 'CUR',
               priority: iv.priority ?? 'normale',
               plan_id: iv.plan_id ?? null,
@@ -105,7 +106,7 @@ function TaskRow({ task, isSelected, selectedTask, isDisabled, onToggle, onDelet
   const [hovered, setHovered] = useState(false);
   const { canSkipObligatory } = usePermissions();
 
-  const canDelete = (task.action_count ?? task.actions?.length ?? 0) === 0;
+  const canDelete = task.can_delete === true;
 
   const taskActionStatus = selectedTask?.taskActionStatus ?? 'in_progress';
   const isSkipped = isSelected && taskActionStatus === 'skipped';
@@ -330,6 +331,7 @@ export default function TaskSearchColumn({
         code: intervention.code,
         title: intervention.title ?? '',
         status_actual: intervention.status ?? intervention.status_actual ?? null,
+        is_locked: intervention.is_locked ?? intervention.isLocked ?? null,
         type_inter: intervention.type_inter ?? null,
         plan_id: intervention.plan_id ?? null,
         equipement: intervention.equipement ?? null,

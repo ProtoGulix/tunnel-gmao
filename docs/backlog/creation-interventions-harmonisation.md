@@ -1,6 +1,6 @@
 # Harmoniser la création des interventions
 
-Demande de l'utilisateur du 2026-11-15 (à partir du point 1 de suites-audc-etape-2.md) :
+Demande de l'utilisateur du 2026-11-15 (à partir du point 1 des suites de l'audit centralisé, fiche retirée au tri du 2026-11-19) :
 auditer les différents moyens de créer une intervention ; les formulaires diffèrent et
 celui de l'accueil est le plus utilisé. Inventaire en lecture seule du 2026-11-15
 (agent Explore, à revérifier au cadrage), résumé :

@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { SelectionChip } from '../ui/AsyncSearchSelect'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
-import { getInterventionTypes } from '../../api/planning'
+import { listedTypes, usePermittedTypes } from '../../hooks/interventions/useInterventionTypes'
 
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
 const labelCls = 'flex items-center gap-1.5 mb-1.5'
@@ -20,17 +20,26 @@ const PRIORITY_OPTIONS = [
  * InterventionForm — formulaire fullscreen de création d'intervention.
  *
  * Props :
- *   di             — DI liée pré-fixée (optionnel) : { id, code, description }
+ *   machineId      — équipement : limite les types à ceux permis par sa classe (ADR 0031)
+ *   di             — DI liée pré-fixée (optionnel) : { id, code, description,
+ *                    suggested_type_inter, is_system }
  *   onSubmit(data) — appelé avec { type_inter, tech_initials, title, priority, reported_date }
  *                    le parent est responsable de l'appel API
  *   onCancel
  *   loading        — spinner sur le bouton Créer
  *   error          — message d'erreur à afficher
  */
-export function InterventionForm({ di = null, onSubmit, onCancel, loading = false, error = null }) {
+export function InterventionForm({ di = null, machineId = null, onSubmit, onCancel, loading = false, error = null }) {
   const { user } = useAuth()
-  const [typeOptions, setTypeOptions] = useState([])
-  const [typeInter, setTypeInter] = useState('')
+  const { types: typeOptions, loaded: typesLoaded } = usePermittedTypes(machineId)
+  // Type vide par défaut et obligatoire (ADR 0026) ; le type suggéré par la demande le
+  // préremplit, verrouillé pour une demande système.
+  const [typeInter, setTypeInter] = useState(di?.suggested_type_inter ?? '')
+  // Pas de verrou si le type suggéré n'est pas permis pour l'équipement : le backend arbitre
+  // (exemption du préventif).
+  const suggested = di?.suggested_type_inter
+  const lockedType = !!(di?.is_system && suggested && typeOptions.some(t => t.id === suggested))
+  const [localError, setLocalError] = useState(null)
   const [priority, setPriority] = useState('normale')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
   const [title, setTitle] = useState(di?.description ?? '')
@@ -39,16 +48,13 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
     ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : '')
 
   useEffect(() => {
-    getInterventionTypes()
-      .then(types => {
-        setTypeOptions(types)
-        if (types.length > 0) setTypeInter(String(types[0].id))
-      })
-      .catch(() => {})
-  }, [])
+    if (typesLoaded && typeInter && typeInter !== suggested && !typeOptions.some(t => t.id === typeInter)) setTypeInter('')
+  }, [typesLoaded, typeOptions, typeInter, suggested])
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!typeInter) { setLocalError("Choisissez le type d'intervention"); return }
+    setLocalError(null)
     onSubmit({
       type_inter: typeInter,
       tech_initials: techInitials,
@@ -77,9 +83,9 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
         <div className="p-4 space-y-5">
 
           {/* Erreur */}
-          {error && (
+          {(localError || error) && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-xs text-red-700">• {error}</p>
+              <p className="text-xs text-red-700">• {localError || error}</p>
             </div>
           )}
 
@@ -119,9 +125,10 @@ export function InterventionForm({ di = null, onSubmit, onCancel, loading = fals
               </div>
               <SheetPicker
                 title="Type d'intervention"
-                options={typeOptions.map(o => ({ value: String(o.id), label: o.title ?? o.label ?? o.code }))}
+                options={listedTypes(typeOptions, typeInter).map(o => ({ value: String(o.id), label: o.title ?? o.label ?? o.code, description: o.description }))}
                 value={typeInter}
                 onChange={setTypeInter}
+                locked={lockedType}
                 placeholder="Sélectionner…"
                 zIndex={70}
               />

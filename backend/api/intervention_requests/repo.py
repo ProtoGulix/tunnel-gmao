@@ -1,9 +1,11 @@
 import json
 import logging
 from contextlib import contextmanager
-from datetime import date
 from typing import Any, Dict, List, Optional
 
+from fastapi import HTTPException
+
+from api.audits.cascade import record_cascade
 from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, IN_PROGRESS_STATUS_CODE
 from api.db import get_connection, release_connection
@@ -15,6 +17,8 @@ from api.errors.exceptions import (
     raise_db_error,
 )
 from api.intervention_requests.validators import InterventionRequestValidator
+from api.interventions.types import allowed_type_codes, is_preventive_origin
+from api.preventive_occurrences.cascade import attach_occurrence, complete_occurrences
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -582,40 +586,52 @@ class InterventionRequestRepository:
     # Création
     # ──────────────────────────────────────────────────────────────
 
-    def create(self, data: Dict[str, Any], created_by: Optional[str] = None) -> Dict[str, Any]:
-        InterventionRequestValidator.validate_create(data)
-        demandeur_nom = (data.get("demandeur_nom") or "").strip()
-        description = (data.get("description") or "").strip()
-        service_id = data.get("service_id")
-        is_system = bool(data.get("is_system", False))
-        suggested_type_inter = data.get("suggested_type_inter") or None
+    @staticmethod
+    def insert_request(
+        cur: Any,
+        data: Dict[str, Any],
+        created_by: Optional[str] = None,
+        origine: str = "signalee",
+    ) -> str:
+        """Insère une demande avec le curseur fourni (ni commit ni rollback) et renvoie son id.
 
+        Seule fonction qui écrit une demande : la route de création et la création atomique
+        d'une intervention (ADR 0025) la partagent. `origine` « directe » ne notifie personne
+        (trigger fn_notify_di_a_traiter) ; « signalee » notifie les techniciens.
+        """
+        InterventionRequestValidator.validate_create(data)
+        service_id = data.get("service_id")
+        cur.execute(
+            """
+            INSERT INTO intervention_request
+                (machine_id, demandeur_nom, service_id, description,
+                 is_system, suggested_type_inter, code, statut, created_by, origine)
+            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s)
+            RETURNING id
+            """,
+            (
+                str(data["machine_id"]),
+                (data.get("demandeur_nom") or "").strip(),
+                str(service_id) if service_id else None,
+                (data.get("description") or "").strip(),
+                bool(data.get("is_system", False)),
+                data.get("suggested_type_inter") or None,
+                created_by,
+                origine,
+            ),
+        )
+        return str(cur.fetchone()[0])
+
+    def create(self, data: Dict[str, Any], created_by: Optional[str] = None) -> Dict[str, Any]:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO intervention_request
-                    (machine_id, demandeur_nom, service_id, description,
-                     is_system, suggested_type_inter, code, statut, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s)
-                RETURNING id
-                """,
-                (
-                    str(data["machine_id"]),
-                    demandeur_nom,
-                    str(service_id) if service_id else None,
-                    description,
-                    is_system,
-                    suggested_type_inter,
-                    created_by,
-                ),
-            )
-            new_id = cur.fetchone()[0]
-
+            new_id = self.insert_request(cur, data, created_by)
             conn.commit()
             logger.info("Demande d'intervention créée: %s", new_id)
-        except ValidationError:
+        except HTTPException:
+            # Erreur métier (validation, équipement indisponible) : message destiné au client.
+            conn.rollback()
             raise
         except Exception as e:
             conn.rollback()
@@ -623,7 +639,7 @@ class InterventionRequestRepository:
         finally:
             release_connection(conn)
 
-        return self.get_by_id(str(new_id))
+        return self.get_by_id(new_id)
 
     # ──────────────────────────────────────────────────────────────
     # Suppression (erreur de saisie, doublon)
@@ -687,6 +703,7 @@ class InterventionRequestRepository:
             intervention_data=intervention_data,
             current_intervention_id=intervention_id,
             reason_code=reason_code,
+            intervention_status=(existing.get("intervention") or {}).get("status_actual"),
         )
 
         # Valider que status_to existe dans le référentiel
@@ -704,6 +721,16 @@ class InterventionRequestRepository:
                 payload_type = (intervention_data or {}).get("type_inter")
                 di_is_system = existing.get("is_system", False)
                 di_suggested = existing.get("suggested_type_inter")
+                # Le type de la classe de l'équipement l'emporte sur le type suggéré (ADR 0031) :
+                # un type suggéré non permis n'est ni imposé ni utilisé par défaut.
+                if di_suggested:
+                    allowed = allowed_type_codes(
+                        existing["equipement"]["id"],
+                        cur,
+                        from_plan=is_preventive_origin(cur, request_id),
+                    )
+                    if allowed is not None and di_suggested not in allowed:
+                        di_suggested = None
 
                 if di_is_system and di_suggested:
                     # DI système : suggested_type_inter est autoritaire
@@ -752,31 +779,15 @@ class InterventionRequestRepository:
                     effective_type_inter,
                 )
 
-            # ── Clôture : fermer l'intervention liée + compléter l'occurrence ──
+            # ── Clôture : compléter l'occurrence (l'intervention est déjà fermée, ou absente) ──
             elif status_to == "cloturee":
-                if intervention_id:
-                    self._close_linked_intervention(cur=cur, intervention_id=str(intervention_id))
-                    logger.info(
-                        "Demande %s clôturée : intervention %s fermée",
-                        request_id,
-                        intervention_id,
-                    )
                 # Passer l'occurrence préventive liée à 'completed'.
                 # Double critère : di_id (cas standard) OU intervention_id (cas où
                 # l'occurrence a son di_id NULL suite à un repair ou un bug de liaison).
-                cur.execute(
-                    """
-                    UPDATE preventive_occurrence
-                    SET status = 'completed'
-                    WHERE status NOT IN ('completed', 'skipped')
-                      AND (
-                          di_id = %s
-                          OR intervention_id = %s
-                      )
-                    """,
-                    (request_id, str(intervention_id) if intervention_id else None),
+                completed = complete_occurrences(
+                    cur, request_id, str(intervention_id) if intervention_id else None
                 )
-                if cur.rowcount:
+                if completed:
                     logger.info(
                         "Occurrence préventive liée à la demande %s passée à 'completed'",
                         request_id,
@@ -809,23 +820,7 @@ class InterventionRequestRepository:
                 # preventive_occurrence_id a été résolu AVANT _create_intervention_for_request
                 # pour éviter toute pollution du curseur partagé.
                 if preventive_occurrence_id:
-                    cur.execute(
-                        """
-                        UPDATE preventive_occurrence
-                        SET intervention_id = %s, status = 'in_progress'
-                        WHERE id = %s
-                        """,
-                        (str(intervention_id), preventive_occurrence_id),
-                    )
-                    cur.execute(
-                        """
-                        UPDATE intervention_task
-                        SET intervention_id = %s
-                        WHERE occurrence_id = %s
-                        AND intervention_id IS NULL
-                        """,
-                        (str(intervention_id), preventive_occurrence_id),
-                    )
+                    attach_occurrence(cur, preventive_occurrence_id, str(intervention_id))
                     logger.info(
                         "Rattachement tâches : %s tâche(s) liées à l'intervention %s",
                         cur.rowcount,
@@ -856,35 +851,10 @@ class InterventionRequestRepository:
         intervention_data: Dict[str, Any],
     ) -> str:
         """Crée une intervention liée à une demande et retourne son ID."""
-        from uuid import uuid4
-
-        from api.interventions.validators import InterventionValidator
-
-        # Résoudre tech_initials depuis tech_id si fourni
-        tech_id = intervention_data.get("tech_id")
-        if tech_id and not intervention_data.get("tech_initials"):
-            cur.execute(
-                "SELECT initial FROM tunnel_user WHERE id = %s",
-                (str(tech_id),),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise ValidationError(f"Utilisateur {tech_id} introuvable")
-            intervention_data["tech_initials"] = row[0]
+        from api.interventions.repo import InterventionRepository
 
         # get_by_id n'expose pas machine_id : l'équipement de la demande porte le même id.
         machine_id = str(request["equipement"]["id"])
-
-        # Valider l'unicité du code avant l'INSERT (remonte ConflictError 409)
-        InterventionValidator.validate_create(
-            {
-                "machine_id": machine_id,
-                "type_inter": intervention_data["type_inter"],
-                "tech_initials": intervention_data["tech_initials"],
-            }
-        )
-
-        intervention_id = str(uuid4())
 
         # Résoudre l'ID du statut "pris en charge"
         cur.execute(
@@ -908,43 +878,26 @@ class InterventionRequestRepository:
             raise DatabaseError(
                 "Impossible de résoudre le statut 'pris en charge' dans intervention_status_ref"
             )
-        status_pris_en_charge_id = row[0]
 
-        reported_date = intervention_data.get("reported_date") or date.today()
-
-        # Récupérer plan_id depuis l'occurrence liée (DI système préventive)
-        cur.execute(
-            "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
-            (str(request["id"]),),
+        # Une seule fonction insère une intervention (ADR 0025). Le titre reçu l'emporte sur
+        # la description de la demande ; reported_by = demandeur ; le technicien reçu (tech_id
+        # ou tech_initials) est conservé.
+        return InterventionRepository().insert_intervention(
+            cur,
+            {
+                "request_id": str(request["id"]),
+                "title": intervention_data.get("title") or request.get("description"),
+                "machine_id": machine_id,
+                "type_inter": intervention_data["type_inter"],
+                "priority": intervention_data.get("priority") or "normale",
+                "reported_by": request.get("demandeur_nom"),
+                "tech_id": intervention_data.get("tech_id"),
+                "tech_initials": intervention_data.get("tech_initials"),
+                "status_actual": row[0],
+                "printed_fiche": False,
+                "reported_date": intervention_data.get("reported_date"),
+            },
         )
-        occ_row = cur.fetchone()
-        plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
-
-        cur.execute(
-            """
-            INSERT INTO intervention
-                (id, title, machine_id, type_inter, priority,
-                 reported_by, tech_initials, tech_id, status_actual,
-                 printed_fiche, reported_date, plan_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                intervention_id,
-                # titre = description de la demande
-                request.get("description"),
-                machine_id,
-                intervention_data["type_inter"],
-                intervention_data.get("priority", "normale"),
-                request.get("demandeur_nom"),  # reported_by = demandeur
-                intervention_data["tech_initials"],
-                str(intervention_data["tech_id"]) if intervention_data.get("tech_id") else None,
-                status_pris_en_charge_id,
-                False,
-                reported_date,
-                plan_id,
-            ),
-        )
-        return intervention_id
 
     @staticmethod
     def _record_intervention_created(cur: Any, intervention_id: str) -> None:
@@ -954,34 +907,9 @@ class InterventionRequestRepository:
         n'aurait aucune trace de sa création. Le motif vient de la règle d'audit de l'entité
         intervention (règle par défaut), jamais d'une valeur codée en dur.
         """
-        from api.utils.audit import resolve_reason_code
+        from api.interventions.repo import InterventionRepository
 
-        rule = resolve_reason_code("intervention", [])
-        if rule is None:
-            raise DatabaseError(
-                "Aucune règle d'audit routinière pour la création d'une intervention"
-            )
-        cur.execute("SELECT row_to_json(i) FROM intervention i WHERE id = %s", (intervention_id,))
-        created = cur.fetchone()[0]
-        for technical in ("id", "created_at", "updated_at"):
-            created.pop(technical, None)
-        record_audit_event(
-            "intervention",
-            intervention_id,
-            "created",
-            new_value=created,
-            reason_code=rule["default_reason_code"],
-        )
-
-    def _close_linked_intervention(self, cur: Any, intervention_id: str) -> None:
-        """Passe une intervention au statut fermé (code = CLOSED_STATUS_CODE).
-        Utilise le code texte directement pour que status_actual = 'ferme'
-        et que _notify_if_closed() le détecte correctement.
-        """
-        cur.execute(
-            "UPDATE intervention SET status_actual = %s WHERE id = %s",
-            (CLOSED_STATUS_CODE, intervention_id),
-        )
+        InterventionRepository.record_created_event(cur, "intervention", intervention_id)
 
     # ──────────────────────────────────────────────────────────────
     # Événements d'audit du système et issues d'une suppression d'intervention
@@ -1000,25 +928,92 @@ class InterventionRequestRepository:
             reason_code=SYSTEM_CASCADE_REASON,
         )
 
+    @staticmethod
+    def _record_relink(request_id: str, intervention_id: str) -> None:
+        """Dépose l'événement du lien d'une demande à son intervention, rétabli par le système."""
+        record_cascade(
+            "request",
+            request_id,
+            "intervention_id_changed",
+            old_value={"intervention_id": None},
+            new_value={"intervention_id": intervention_id},
+        )
+
+    def _relink_request(self, cur: Any, request_id: str, intervention_id: str) -> None:
+        """Rétablit intervention_id sur une demande qui l'avait perdu, avec son événement."""
+        cur.execute(
+            "UPDATE intervention_request SET intervention_id = %s WHERE id = %s",
+            (intervention_id, request_id),
+        )
+        self._record_relink(request_id, str(intervention_id))
+
+    def reopen_linked_request(self, cur: Any, intervention_id: str) -> None:
+        """Repasse « acceptee » la demande clôturée liée à une intervention qu'on rouvre.
+
+        S'exécute sur le curseur de la réouverture (même transaction, ADR 0028) ; l'événement
+        du système est déposé dans la requête, au nom du jeton.
+        """
+        cur.execute(
+            "UPDATE intervention_request SET statut = 'acceptee' "
+            "WHERE intervention_id = %s AND statut = 'cloturee' RETURNING id",
+            (intervention_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            record_audit_event(
+                "request",
+                row[0],
+                "status_transitioned",
+                old_value={"statut": "cloturee"},
+                new_value={
+                    "statut": "acceptee",
+                    "notes": "Réouverture automatique (réouverture de l'intervention)",
+                },
+                is_system=True,
+                reason_code=SYSTEM_CASCADE_REASON,
+            )
+
     @contextmanager
     def watch_trigger_closure(self, intervention_id: str):
-        """Trace la clôture de la demande faite par le trigger de la base (journal de statut).
+        """Trace ce que le trigger de la base ferme avec l'intervention (journal de statut).
 
         À utiliser autour de l'écriture qui ferme l'intervention : si la demande liée passe de
-        « acceptee » à « cloturee » pendant le bloc, l'événement du système est déposé.
+        « acceptee » à « cloturee », ou si l'occurrence préventive liée change de statut
+        (« completed »), pendant le bloc, l'événement du système est déposé.
         """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             before = self.get_linked_to_intervention(cur, intervention_id)
+            occurrences_before = self._occurrence_statuses(cur, intervention_id)
             yield
             after = self.get_linked_to_intervention(cur, intervention_id)
+            occurrences_after = self._occurrence_statuses(cur, intervention_id)
         finally:
             release_connection(conn)
         if before and after and before["statut"] == "acceptee" and after["statut"] == "cloturee":
             self._record_system_closure(
                 before["id"], "acceptee", "Clôture automatique (fermeture de l'intervention)"
             )
+        for occurrence_id, old_status in occurrences_before.items():
+            new_status = occurrences_after.get(occurrence_id)
+            if new_status and new_status != old_status:
+                record_cascade(
+                    "preventive_occurrence",
+                    occurrence_id,
+                    "status_changed",
+                    old_value={"status": old_status},
+                    new_value={"status": new_status},
+                )
+
+    @staticmethod
+    def _occurrence_statuses(cur: Any, intervention_id: str) -> Dict[str, str]:
+        """Statut des occurrences préventives liées à une intervention, par identifiant."""
+        cur.execute(
+            "SELECT id, status FROM preventive_occurrence WHERE intervention_id = %s",
+            (intervention_id,),
+        )
+        return {str(row[0]): row[1] for row in cur.fetchall()}
 
     def get_linked_to_intervention(
         self, cur: Any, intervention_id: str
@@ -1192,10 +1187,7 @@ class InterventionRequestRepository:
                 row = cur.fetchone()
                 if row:
                     # Corriger le lien manquant pour les prochaines fermetures
-                    cur.execute(
-                        "UPDATE intervention_request SET intervention_id = %s WHERE id = %s",
-                        (intervention_id, str(row[0])),
-                    )
+                    self._relink_request(cur, str(row[0]), intervention_id)
 
             if row:
                 request_id, current_statut = row[0], row[1]
@@ -1208,7 +1200,7 @@ class InterventionRequestRepository:
                     cur.execute(
                         """
                         INSERT INTO request_status_log (request_id, status_from, status_to, changed_by, notes)
-                        VALUES (%s, %s, %s, NULL, %s)
+                        VALUES (%s, %s, %s, NULLIF(current_setting('app.user_id', true), '')::uuid, %s)
                         """,
                         (
                             str(request_id),
@@ -1243,19 +1235,8 @@ class InterventionRequestRepository:
                 di_row = cur.fetchone()
                 closed_request_id = str(di_row[0]) if di_row else None
 
-            cur.execute(
-                """
-                UPDATE preventive_occurrence
-                SET status = 'completed'
-                WHERE status NOT IN ('completed', 'skipped')
-                  AND (
-                      intervention_id = %s
-                      OR (di_id = %s AND %s IS NOT NULL)
-                  )
-                """,
-                (intervention_id, closed_request_id, closed_request_id),
-            )
-            if cur.rowcount:
+            completed = complete_occurrences(cur, closed_request_id, intervention_id)
+            if completed:
                 logger.info(
                     "Occurrence préventive liée à l'intervention %s passée à 'completed'",
                     intervention_id,
@@ -1327,9 +1308,13 @@ class InterventionRequestRepository:
                     WHERE po.di_id = ir.id
                       AND ir.id = %s
                       AND ir.intervention_id IS NULL
+                    RETURNING po.intervention_id
                     """,
                     (str(request_id),),
                 )
+                relinked = cur.fetchone()
+                if relinked:
+                    self._record_relink(str(request_id), str(relinked[0]))
                 # Le trigger de journal se tait le temps de l'UPDATE et de l'INSERT
                 # (sinon doublon dans request_status_log), puis est rétabli.
                 with skip_request_status_log(cur):
@@ -1341,7 +1326,7 @@ class InterventionRequestRepository:
                         """
                         INSERT INTO request_status_log
                             (request_id, status_from, status_to, changed_by, notes)
-                        VALUES (%s, %s, %s, NULL, %s)
+                        VALUES (%s, %s, %s, NULLIF(current_setting('app.user_id', true), '')::uuid, %s)
                         """,
                         (
                             str(request_id),

@@ -1,7 +1,8 @@
 import { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { updateIntervention, updateInterventionStatus } from '@/api/interventions';
 import { patchInterventionTask } from '@/api/interventionTasks';
-import { STATUS_CONFIG, TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import { STATUS_CONFIG } from '@/config/interventionTypes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
 import type { BriefingSituation, InterventionDetail, InterventionTask } from '@/types/briefing';
 
@@ -26,13 +27,14 @@ function completionFromProgress(tp: { total: number; done: number } | null | und
 }
 
 export function useCardDisplay(situation: BriefingSituation | null, detail: InterventionDetail | null) {
+  const { labelOf } = useInterventionTypeRefs();
   const status  = situation?.status ?? '';
   const current = detail?.status ?? status;
   return {
     currentStatus: current,
     statusCfg:     STATUS_CFG_MAP[current] ?? STATUS_CFG_MAP[status],
     priorityCfg:   PRIORITY_CFG[situation?.priority ?? ''] ?? PRIORITY_CFG.normale,
-    typeLabel:     TYPE_INTER_LABELS[situation?.type ?? ''] ?? situation?.type ?? '—',
+    typeLabel:     labelOf(situation?.type ?? '') || '—',
     totalTime:     detail?.stats?.totalTime ?? situation?.stats?.totalTime ?? 0,
     actionCount:   detail?.stats?.actionCount ?? detail?.action?.length ?? situation?.stats?.actionCount ?? 0,
     purchaseCount: detail?.stats?.purchasePending ?? situation?.stats?.purchasePending ?? situation?.stats?.purchaseCount ?? 0,

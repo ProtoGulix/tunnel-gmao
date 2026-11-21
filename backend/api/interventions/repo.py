@@ -1,4 +1,5 @@
 import logging
+from contextlib import nullcontext
 from datetime import date
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -6,12 +7,16 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.audits.events import record_audit_event, system_reason_code
-from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS, PRIORITY_TYPES
+from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
 from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
+from api.intervention_tasks.validators import task_delete_blocker
+from api.interventions.types import check_allowed_for_machine, check_assignable, check_known
+from api.interventions.validators import is_intervention_locked, is_reopening
+from api.preventive_occurrences.cascade import attach_occurrence
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -91,18 +96,13 @@ class InterventionRepository:
     def _type_and_date_filters(
         types: List[str] | None, reported_from: date | None, reported_to: date | None
     ) -> tuple[List[str], List[Any]]:
-        """Filtres type_inter (liste blanche INTERVENTION_TYPE_IDS) et reported_date (bornes incluses).
+        """Filtres type_inter (codes vérifiés dans la table intervention_type) et reported_date (bornes incluses).
 
         Lève ValidationError (400) pour un type inconnu ou une période inversée."""
         clauses: List[str] = []
         params: List[Any] = []
         if types:
-            unknown = [t for t in types if t not in INTERVENTION_TYPE_IDS]
-            if unknown:
-                raise ValidationError(
-                    f"Type d'intervention inconnu : {', '.join(unknown)}. "
-                    f"Valeurs : {', '.join(INTERVENTION_TYPE_IDS)}"
-                )
+            check_known(types)
             clauses.append(f"i.type_inter IN ({','.join(['%s'] * len(types))})")
             params.extend(types)
         if reported_from and reported_to and reported_from > reported_to:
@@ -464,6 +464,7 @@ class InterventionRepository:
                     ]:
                         row_dict.pop(key, None)
 
+                row_dict['is_locked'] = is_intervention_locked(row_dict.get('status_actual'))
                 row_dict['actions'] = []  # Vide pour get_all
                 row_dict['status_logs'] = []  # Vide pour get_all
 
@@ -475,6 +476,15 @@ class InterventionRepository:
 
                         raw_tasks = _json.loads(raw_tasks)
                     row_dict['tasks'] = raw_tasks or []
+                    for task in row_dict['tasks']:
+                        task['can_delete'] = (
+                            task_delete_blocker(
+                                task.get('status'),
+                                int(task.get('action_count') or 0),
+                                row_dict['is_locked'],
+                            )
+                            is None
+                        )
                 else:
                     row_dict.pop('tasks_json', None)
 
@@ -602,6 +612,7 @@ class InterventionRepository:
 
             cols = [desc[0] for desc in cur.description]
             intervention = dict(zip(cols, row))
+            intervention['is_locked'] = is_intervention_locked(intervention.get('status_actual'))
 
             # Construire l'objet request
             req_id = intervention.pop('req_id', None)
@@ -796,69 +807,158 @@ class InterventionRepository:
             raise ValidationError(f"Utilisateur {tech_id} introuvable")
         data['tech_initials'] = row[0]
 
+    def insert_intervention(self, cur: Any, data: Dict[str, Any]) -> str:
+        """Insère une intervention avec le curseur fourni (ni commit ni rollback), renvoie son id.
+
+        Seule fonction qui écrit une intervention (ADR 0025) : la création directe, la création
+        atomique avec sa demande et l'acceptation d'une demande l'appellent toutes. `data` porte
+        machine_id, type_inter, tech_id (ou tech_initials), et facultativement title, priority,
+        reported_by, status_actual, printed_fiche, reported_date, plan_id, request_id (cherche
+        le plan de l'occurrence préventive de la demande).
+        """
+        intervention_id = str(uuid4())
+
+        # Résoudre tech_initials depuis l'UUID avant validation (le trigger en a besoin)
+        self._resolve_tech_initials(cur, data)
+
+        from api.interventions.validators import InterventionValidator
+
+        request_id = str(data['request_id']) if data.get('request_id') else None
+        # Le type suggéré par la demande reste utilisable même désactivé depuis (ADR 0026,
+        # décision de l'utilisateur du 2026-11-20) : une demande ne devient pas inacceptable.
+        suggested_type = None
+        if request_id:
+            cur.execute(
+                "SELECT suggested_type_inter FROM intervention_request WHERE id = %s",
+                (request_id,),
+            )
+            req_row = cur.fetchone()
+            suggested_type = req_row[0] if req_row else None
+
+        from api.interventions.types import is_preventive_origin
+
+        InterventionValidator.validate_create(
+            data,
+            suggested_type=suggested_type,
+            from_plan=is_preventive_origin(cur, request_id, data.get('plan_id')),
+        )
+
+        # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
+        # (cas acceptation d'une DI système préventive)
+        plan_id = data.get('plan_id')
+        if plan_id is None and request_id:
+            cur.execute(
+                "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
+                (request_id,),
+            )
+            occ_row = cur.fetchone()
+            plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
+
+        cur.execute(
+            """
+            INSERT INTO intervention
+            (id, title, machine_id, type_inter, priority,
+             reported_by, tech_initials, tech_id, status_actual,
+             printed_fiche, reported_date, plan_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                intervention_id,
+                data.get('title'),
+                data.get('machine_id'),
+                data.get('type_inter'),
+                data.get('priority'),
+                data.get('reported_by'),
+                data.get('tech_initials'),
+                str(data['tech_id']) if data.get('tech_id') else None,
+                data.get('status_actual', 'ouvert'),
+                data.get('printed_fiche', False),
+                data.get('reported_date') or date.today(),
+                plan_id,
+            ),
+        )
+        return intervention_id
+
+    @staticmethod
+    def record_created_event(cur: Any, entity_type: str, entity_id: str) -> None:
+        """Dépose la ligne d'audit `created` d'une entité créée en plus de celle de la route.
+
+        La route déclare l'intervention : la demande et les tâches créées dans le même geste
+        n'auraient aucune trace de leur création sans cet événement. Le motif vient de la
+        règle d'audit routinière de l'entité, jamais d'une valeur codée en dur ; l'auteur est
+        celui du jeton, ajouté par le middleware. `entity_type` passe par une liste blanche
+        qui fixe aussi la table lue.
+        """
+        from api.utils.audit import resolve_reason_code
+
+        tables = {
+            "intervention": "intervention",
+            "request": "intervention_request",
+            "task": "intervention_task",
+        }
+        table = tables[entity_type]
+        rule = resolve_reason_code(entity_type, [])
+        if rule is None:
+            raise DatabaseError(f"Aucune règle d'audit routinière pour la création : {entity_type}")
+        cur.execute(f"SELECT row_to_json(t) FROM {table} t WHERE id = %s", (entity_id,))
+        created = cur.fetchone()[0]
+        for technical in ("id", "created_at", "updated_at"):
+            created.pop(technical, None)
+        record_audit_event(
+            entity_type,
+            entity_id,
+            "created",
+            new_value=created,
+            reason_code=rule["default_reason_code"],
+        )
+
     def add(
         self,
         data: Dict[str, Any],
         user_id: Optional[str] = None,
         system_acceptance: bool = False,
+        new_request: Optional[Dict[str, Any]] = None,
+        tasks: Optional[List[Any]] = None,
     ) -> Dict[str, Any]:
-        """Crée une nouvelle intervention.
+        """Crée une nouvelle intervention, dans une seule transaction.
 
         `user_id` : auteur (jeton) de l'acceptation de la demande liée, dans son historique.
         `system_acceptance` : acceptation faite par le système (génération préventive en
         acceptation automatique) ; son événement d'audit porte alors le motif system.
+        `new_request` : contenu d'une demande à créer dans le même geste (origine « directe »,
+        donc sans notification) ; exclusif avec `data["request_id"]`.
+        `tasks` : tâches à créer (objets portant label, origin, optional, assigned_to,
+        due_date, sort_order). Un échec, quel qu'il soit, n'écrit rien (ADR 0025).
         """
-        request_id = str(data['request_id']) if data.get('request_id') else None
+        if new_request is not None and data.get('request_id'):
+            raise ValidationError("request_id et request sont exclusifs")
 
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            intervention_id = str(uuid4())
 
-            # Résoudre tech_initials depuis l'UUID avant validation (le trigger en a besoin)
-            self._resolve_tech_initials(cur, data)
+            if new_request is not None:
+                from api.intervention_requests.repo import InterventionRequestRepository
 
-            from api.interventions.validators import InterventionValidator
-
-            InterventionValidator.validate_create(data)
-
-            # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
-            # (cas acceptation manuelle d'une DI système préventive via POST /interventions)
-            plan_id = data.get('plan_id')
-            if plan_id is None and request_id:
-                cur.execute(
-                    "SELECT plan_id FROM preventive_occurrence WHERE di_id = %s LIMIT 1",
-                    (request_id,),
+                data = {**data}
+                data['request_id'] = InterventionRequestRepository.insert_request(
+                    cur, {**new_request, 'machine_id': data.get('machine_id')}, user_id, 'directe'
                 )
-                occ_row = cur.fetchone()
-                plan_id = str(occ_row[0]) if occ_row and occ_row[0] else None
+                self.record_created_event(cur, "request", data['request_id'])
+            request_id = str(data['request_id']) if data.get('request_id') else None
 
-            cur.execute(
-                """
-                INSERT INTO intervention
-                (id, title, machine_id, type_inter, priority,
-                 reported_by, tech_initials, tech_id, status_actual,
-                 printed_fiche, reported_date, plan_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    intervention_id,
-                    data.get('title'),
-                    data.get('machine_id'),
-                    data.get('type_inter'),
-                    data.get('priority'),
-                    data.get('reported_by'),
-                    data.get('tech_initials'),
-                    str(data['tech_id']) if data.get('tech_id') else None,
-                    data.get('status_actual', 'ouvert'),
-                    data.get('printed_fiche', False),
-                    data.get('reported_date') or date.today(),
-                    plan_id,
-                ),
-            )
+            intervention_id = self.insert_intervention(cur, data)
 
             if request_id:
                 self._link_request(cur, intervention_id, request_id, user_id, system_acceptance)
+
+            if tasks:
+                from api.intervention_tasks.repo import InterventionTaskRepository
+
+                task_repo = InterventionTaskRepository()
+                for task in tasks:
+                    task_id = task_repo.insert_task(cur, intervention_id, task, user_id)
+                    self.record_created_event(cur, "task", task_id)
 
             conn.commit()
         except HTTPException:
@@ -991,22 +1091,7 @@ class InterventionRepository:
             occ_id = str(occ_row[0])
             occ_plan_id = occ_row[1]
 
-            cur.execute(
-                "UPDATE preventive_occurrence SET intervention_id = %s, status = 'in_progress' WHERE id = %s",
-                (intervention_id, occ_id),
-            )
-            cur.execute(
-                """
-                UPDATE intervention_task
-                SET intervention_id = %s,
-                    assigned_to = COALESCE(assigned_to,
-                        (SELECT tech_id FROM intervention WHERE id = %s)),
-                    due_date = COALESCE(due_date,
-                        (SELECT reported_date FROM intervention WHERE id = %s))
-                WHERE occurrence_id = %s AND intervention_id IS NULL
-                """,
-                (intervention_id, intervention_id, intervention_id, occ_id),
-            )
+            attach_occurrence(cur, occ_id, intervention_id, fill_assignment=True)
             if occ_plan_id:
                 cur.execute(
                     "UPDATE intervention SET plan_id = %s WHERE id = %s",
@@ -1017,10 +1102,61 @@ class InterventionRepository:
         """Met à jour une intervention existante"""
         existing = self.get_by_id(intervention_id, include_actions=False)
 
+        # Un type n'est vérifié (existant, actif) que s'il change : un type désactivé depuis
+        # reste valable sur une intervention qui le porte déjà.
+        if data.get('type_inter') and data['type_inter'] != existing.get('type_inter'):
+            check_assignable(data["type_inter"], existing.get("type_inter"))
+
+        # Types permis par la classe de l'équipement (ADR 0031) : vérifiés seulement si le type
+        # ou l'équipement change ; une intervention existante non permise reste modifiable.
+        new_type = data.get('type_inter') or existing.get('type_inter')
+        new_machine = data.get('machine_id') or existing.get('machine_id')
+        changed = (data.get('type_inter') and data['type_inter'] != existing.get('type_inter')) or (
+            data.get('machine_id') and str(data['machine_id']) != str(existing.get('machine_id'))
+        )
+        if changed and new_type and new_machine:
+            check_allowed_for_machine(new_type, new_machine)
+
         # Bloquer la fermeture si des tâches non-optionnelles sont en attente
         if 'status_actual' in data:
             self._check_closable(intervention_id, data['status_actual'])
 
+        # La demande liée est clôturée par le trigger de la base pendant l'écriture : sa trace
+        # système (SYSTEM_CASCADE) est déposée ici, comme pour toute clôture (ADR 0027).
+        reopening = is_reopening(existing.get('status_actual'), data.get('status_actual'))
+        with self._watch_closure(intervention_id, data):
+            if not self._write_update(intervention_id, data, reopening):
+                return self.get_by_id(intervention_id)
+
+        result = self.get_by_id(intervention_id)
+
+        # Si le statut vient de changer vers 'ferme', clôturer la demande liée
+        if 'status_actual' in data:
+            new_status = result.get('status_actual')
+            old_status = existing.get('status_actual')
+            if new_status != old_status:
+                # Résoudre le code du nouveau statut
+                self._notify_if_closed(intervention_id, new_status)
+
+        return result
+
+    @staticmethod
+    def _watch_closure(intervention_id: str, data: Dict[str, Any]):
+        """Contexte qui trace la clôture de la demande liée quand l'écriture ferme l'intervention."""
+        if str(data.get('status_actual')) != CLOSED_STATUS_CODE:
+            return nullcontext()
+        from api.intervention_requests.repo import InterventionRequestRepository
+
+        return InterventionRequestRepository().watch_trigger_closure(intervention_id)
+
+    def _write_update(
+        self, intervention_id: str, data: Dict[str, Any], reopening: bool = False
+    ) -> bool:
+        """Écrit les champs modifiables présents dans `data` ; faux si aucun n'est fourni.
+
+        Une réouverture repasse la demande liée « acceptee » sur le même curseur, donc dans
+        la même transaction : si l'un des deux UPDATE échoue, rien n'est écrit (ADR 0028).
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -1047,7 +1183,7 @@ class InterventionRepository:
                     params.append(data[field])
 
             if not set_clauses:
-                return self.get_by_id(intervention_id)
+                return False
 
             params.append(intervention_id)
 
@@ -1058,27 +1194,22 @@ class InterventionRepository:
             """
 
             cur.execute(query, params)
+            if reopening:
+                from api.intervention_requests.repo import InterventionRequestRepository
+                from api.preventive_occurrences.cascade import reopen_occurrences
+
+                InterventionRequestRepository().reopen_linked_request(cur, intervention_id)
+                reopen_occurrences(cur, intervention_id)
             conn.commit()
+            return True
         except (ValidationError, DatabaseError):
             conn.rollback()
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "mise à jour intervention")
         finally:
             release_connection(conn)
-
-        result = self.get_by_id(intervention_id)
-
-        # Si le statut vient de changer vers 'ferme', clôturer la demande liée
-        if 'status_actual' in data:
-            new_status = result.get('status_actual')
-            old_status = existing.get('status_actual')
-            if new_status != old_status:
-                # Résoudre le code du nouveau statut
-                self._notify_if_closed(intervention_id, new_status)
-
-        return result
 
     def _check_closable(self, intervention_id: str, status_actual: Any) -> None:
         """Lève ValidationError si des tâches non-optionnelles bloquent la fermeture."""

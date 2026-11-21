@@ -19,14 +19,34 @@ Indicateurs de santé du service maintenance : charge, fragmentation, capacité 
 
 ### Réponse `200`
 
+Seuils (ADR 0034) : renvoyés dans `thresholds`, définis une seule fois côté API, bornes incluses. `above` : orange dès valeur >= `orange`, rouge dès valeur >= `red`. `below` : orange dès valeur <= `orange`, rouge dès valeur <= `red`. Valeurs : charge above 75 / 100 ; fragmentation above 5 / 15 ; pilotage below 20 / 10. Textes de statut d'un mot (`status.text`) : charge Normale / Élevée / Au plafond ; fragmentation Maîtrisée / Notable / Élevée ; pilotage Présent / Limité / Absent. Période sans heure saisie : `status` vaut `null` pour les trois (pas de badge).
+
+Série mensuelle (ADR 0034 point 12) : `monthly` a un élément par mois calendaire touché par la période, classé comme les totaux (même règle SQL), donc la somme des `total_hours` mensuels égale `capacity.total_hours`. Pourcentages de 0 à 100, à 1 décimale. `capacity_hours` d'un mois est proratisée sur ses jours compris dans la période (400 h / 30 j). Un mois sans heure donne `charge_percent`, `frag_percent` et `pilot_percent` à `null`. `trends` : `"up"`, `"down"`, `"stable"` ou `null` pour `charge_percent`, `frag_percent` et `pilot_percent`, même calcul que pour `/stats/organisation` (stable sous 2 points ; mois partiels aux bornes inclus).
+
 ```json
 {
+  "monthly": [
+    {
+      "month": "2026-01",
+      "total_hours": 150.0,
+      "capacity_hours": 413.33,
+      "charge_percent": 36.3,
+      "frag_percent": 10.0,
+      "pilot_percent": 20.0
+    }
+  ],
+  "trends": { "charge_percent": "up", "frag_percent": "stable", "pilot_percent": null },
+  "thresholds": {
+    "charge": { "direction": "above", "orange": 75.0, "red": 100.0 },
+    "fragmentation": { "direction": "above", "orange": 5.0, "red": 15.0 },
+    "pilotage": { "direction": "below", "orange": 20.0, "red": 10.0 }
+  },
   "period": { "start_date": "2025-11-15", "end_date": "2026-02-15", "days": 92 },
   "capacity": {
     "total_hours": 450.5,
     "capacity_hours": 600,
     "charge_percent": 75.1,
-    "status": { "color": "orange", "text": "Charge élevée" }
+    "status": { "color": "orange", "text": "Élevée" }
   },
   "breakdown": {
     "prod_hours": 200.0,
@@ -40,7 +60,7 @@ Indicateurs de santé du service maintenance : charge, fragmentation, capacité 
     "short_action_count": 85,
     "short_action_percent": 25.0,
     "frag_percent": 11.1,
-    "status": { "color": "green", "text": "OK" },
+    "status": { "color": "orange", "text": "Notable" },
     "top_causes": [
       { "name": "Nettoyage", "total_hours": 15.0, "action_count": 60, "percent": 30.0 }
     ]
@@ -48,7 +68,7 @@ Indicateurs de santé du service maintenance : charge, fragmentation, capacité 
   "pilotage": {
     "pilot_hours": 50.0,
     "pilot_percent": 11.1,
-    "status": { "color": "green", "text": "OK" }
+    "status": { "color": "orange", "text": "Limité" }
   },
   "site_consumption": [
     {
@@ -293,6 +313,9 @@ Indicateurs d'organisation de l'équipe (ADR 0021). Lecture seule, 10 requêtes 
 - Dispersion : interventions distinctes par journée-technicien ; `scattered_days_share` = part des journées à 3 interventions ou plus.
 - `projects` : interventions PRO (tous techniciens) actives sur 2 jours ou plus, dont le premier jour est dans la période ; durée = dernier jour - premier jour + 1 ; `active_ratio` = somme des jours actifs / somme des durées, en %.
 - `preventive` et `waiting_parts` : état actuel, hors période. Âges en jours depuis la génération de l'occurrence (`triggered_at`), la création de la demande ou le `reported_date`. `last_generated_at` : dernier `triggered_at` d'une occurrence liée à une demande.
+- `preventive_hours_share` : heures PRE / heures totales du mois (`null` pour un mois sans heures), aussi dans `totals`.
+- `trends` (ADR 0034 point 10) : pour `urgent_share`, `interrupted_share`, `avg_interventions_per_tech_day`, `scattered_days_share` et `preventive_hours_share`, `"up"`, `"down"`, `"stable"` ou `null`. Pente des moindres carrés sur les valeurs mensuelles non nulles (mois courant compris), au moins 3 valeurs sinon `null` ; variation estimée = pente x (nombre de mois de la période - 1) ; `stable` si sa valeur absolue est strictement sous 2 points (parts) ou sous 0,1 (interventions par journée). La charge, la fragmentation et le pilotage ont leur tendance dans `/stats/service-status`.
+- `waiting_parts_count` (ADR 0034 point 12) : par mois, nombre d'interventions en attente de pièces au dernier jour du mois (aujourd'hui pour le mois courant), reconstitué depuis `intervention_status_log` (dernier changement de statut jusqu'à la fin de ce jour, une requête pour tous les mois) ; `null` pour un mois dont le dernier jour précède la première ligne du journal. `trends.waiting_parts_count` : même calcul, `stable` sous 1 intervention d'écart estimé.
 - Parts en % à 1 décimale, `null` si le dénominateur vaut 0 ; heures à 2 décimales ; tous les mois de la période sont présents.
 
 ### Réponse `200`
@@ -312,9 +335,19 @@ Indicateurs d'organisation de l'équipe (ADR 0021). Lecture seule, 10 requêtes 
       "interrupted_share": 40.0,
       "tech_days": 60,
       "avg_interventions_per_tech_day": 1.4,
-      "scattered_days_share": 8.3
+      "scattered_days_share": 8.3,
+      "preventive_hours_share": 10.0,
+      "waiting_parts_count": 7
     }
   ],
+  "trends": {
+    "urgent_share": "down",
+    "interrupted_share": null,
+    "avg_interventions_per_tech_day": "stable",
+    "scattered_days_share": "up",
+    "preventive_hours_share": "stable",
+    "waiting_parts_count": "up"
+  },
   "totals": { "...": "mêmes champs que monthly, sans month" },
   "projects": { "count": 3, "avg_active_days": 2.0, "avg_span_days": 9.33, "active_ratio": 21.4 },
   "preventive": {
@@ -326,5 +359,80 @@ Indicateurs d'organisation de l'équipe (ADR 0021). Lecture seule, 10 requêtes 
     "last_generated_at": "2026-05-04T08:00:00Z"
   },
   "waiting_parts": { "count": 4, "median_age_days": 9.5, "max_age_days": 40 }
+}
+```
+
+---
+
+## `GET /stats/audit-synthese`
+
+Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 requêtes par minute. Droit : `stats:get_audit_synthese`, ouvert par défaut aux rôles qui lisent comme `stats:get_organisation` (à rejouer en production par le bootstrap à la mise à jour). Chiffres d'équipe uniquement : aucun identifiant, nom ni initiale de personne.
+
+### Query params
+
+| Param | Type | Défaut |
+|---|---|---|
+| `months` | int, 1 à 120 | 3 (mois calendaires, mois courant compris, du 1er du premier mois à aujourd'hui) |
+
+`400` hors bornes.
+
+### Définitions
+
+- Garant d'une tâche : `assigned_to`. Exécutants : techniciens distincts des actions liées (`intervention_action_task`). Les indicateurs de tâches sont rattachés au mois de création de la tâche (`created_at`) et ne dépendent pas de `closed_by`.
+- `tasks_without_guarantor` : tâches créées sans `assigned_to`.
+- `done_without_guarantor_action` : tâches `done` avec garant dont le garant n'est le technicien d'aucune action liée. Part sur `tasks_done_with_guarantor`.
+- `spotted_in_field` : tâches `done` créées par leur garant, qui en est aussi l'un des exécutants. Part sur `tasks_done_with_guarantor`.
+- `shared_tasks` : tâches `done` avec au moins deux exécutants distincts. Part sur `tasks_done`.
+- `decisions` : événements d'audit non système dont le motif est de catégorie `user` ou `manual`, par mois, type de décision et motif ; `decisions_total` en est le total du mois. Les événements sans motif n'y figurent pas, ni ceux du motif `LEGACY_STATUS_CHANGE` (journaux migrés, créations et suppressions mal étiquetées par l'ancien code : pas des décisions) ; ils restent comptés dans `audit_events`.
+- `system_share` : événements `is_system` parmi tous les événements du mois (`audit_events`).
+- `incomplete_data` : vrai si le mois commence avant `cascades_traced_from` (2026-11-20, ADR 0029) : `closed_by` et cascades y sont incomplets (novembre 2026 est donc signalé). Les indicateurs de tâches n'en dépendent pas, mais les décisions et la part système oui.
+- Parts en % à 1 décimale, `null` si le dénominateur vaut 0 ; tous les mois de la période sont présents.
+- `trends` (ADR 0035 point 4) : pour `without_guarantor_share`, `done_without_guarantor_action_share`, `spotted_in_field_share`, `shared_tasks_share`, `system_share` et `decisions_total`, `"up"`, `"down"`, `"stable"` ou `null`. Même calcul que `/stats/organisation` (pente des moindres carrés sur les valeurs mensuelles non nulles, au moins 3 valeurs sinon `null`, variation estimée = pente x (nombre de mois - 1)) ; `stable` sous 2 points pour une part, sous 2 décisions pour `decisions_total`. Les mois `incomplete_data` comptent comme les autres.
+
+### Réponse `200`
+
+```json
+{
+  "period": { "start": "2026-09-01", "end": "2026-11-20" },
+  "cascades_traced_from": "2026-11-20",
+  "monthly": [
+    {
+      "month": "2026-09",
+      "incomplete_data": true,
+      "tasks_created": 66,
+      "tasks_without_guarantor": 0,
+      "without_guarantor_share": 0.0,
+      "tasks_done": 59,
+      "tasks_done_with_guarantor": 59,
+      "done_without_guarantor_action": 17,
+      "done_without_guarantor_action_share": 28.8,
+      "spotted_in_field": 35,
+      "spotted_in_field_share": 59.3,
+      "shared_tasks": 19,
+      "shared_tasks_share": 32.2,
+      "decisions_total": 20,
+      "audit_events": 307,
+      "system_events": 134,
+      "system_share": 43.6
+    }
+  ],
+  "trends": {
+    "without_guarantor_share": "stable",
+    "done_without_guarantor_action_share": "down",
+    "spotted_in_field_share": null,
+    "shared_tasks_share": "up",
+    "system_share": "stable",
+    "decisions_total": "down"
+  },
+  "totals": { "...": "mêmes compteurs et parts que monthly, sans month ni incomplete_data" },
+  "decisions": [
+    {
+      "month": "2026-09",
+      "decision_type": "assigned_to_changed",
+      "reason_code": "TECHNICIAN_UNAVAILABLE",
+      "reason_label": "Technicien indisponible",
+      "count": 9
+    }
+  ]
 }
 ```

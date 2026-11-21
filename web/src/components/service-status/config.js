@@ -18,7 +18,10 @@ export const SERVICE_TIME_TYPE_CATEGORIES = {
     label: 'Production',
     color: 'green',
     description: 'Travail de production et fabrication',
-    categories: [{ code: 'FAB', name: 'Fabrication / Modification', id: 20 }],
+    categories: [
+      { code: 'FAB', name: 'Fabrication / Modification', id: 20 },
+      { code: 'BAT', name: 'Bâtiment / Travaux / Aménagement', id: 24 },
+    ],
   },
   DEP: {
     label: 'Dépannage',
@@ -41,16 +44,18 @@ export const SERVICE_TIME_TYPE_CATEGORIES = {
     description: 'Support diffus et travaux ponctuels',
     categories: [
       { code: 'SUP', name: 'Support / Coordination', id: 23 },
-      { code: 'BAT', name: 'Bâtiment / Travaux / Aménagement', id: 24 },
     ],
   },
 };
 
 /**
- * Seuils pour colorisation automatique
+ * Définitions des trois indicateurs de service et des deux tableaux de détail, affichées derrière
+ * l'icône d'aide (ADR 0034). Les seuils n'y figurent pas : l'API les fournit (ADR 0034, point 8).
  */
-export const THRESHOLDS = {
-  CHARGE: { NORMAL: 70, HIGH: 85 },
-  FRAGMENTATION: { LOW: 15, MEDIUM: 25 },
-  PILOTAGE: { CRITICAL: 15, LOW: 25 },
+export const SERVICE_DEFINITIONS = {
+  charge: 'Temps total heures / Capacité ETP proratisée sur la période.',
+  pilot: "% temps long protégé (documentation, préventif, dépannage réel).",
+  fragmentation: '% temps fragmenté (support, actions courtes < 0,5h non-dépannage).',
+  fragmentationCauses: "Ces causes représentent les principales sources de fragmentation du temps du service. Elles correspondent à du support diffus, des interruptions ou des micro-actions répétées. Réduire la fragmentation passe par une action sur ces causes, pas par l'ajout de ressources.",
+  siteConsumption: 'Cette analyse montre quels sites consomment la capacité du service maintenance. Elle reflète des contraintes organisationnelles (distance, support, coordination), et non la performance des équipes ou des équipements.',
 };

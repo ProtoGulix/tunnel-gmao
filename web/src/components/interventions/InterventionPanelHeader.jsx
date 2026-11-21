@@ -38,6 +38,7 @@ export default function InterventionPanelHeader({
   statusKey,
   priorityKey,
   canEditProperties,
+  canChangeStatus,
   onStatusChange,
   onPriorityChange,
   onRequestPointage,
@@ -103,7 +104,7 @@ export default function InterventionPanelHeader({
           value={statusKey}
           options={STATUS_KEYS}
           colors={STATE_COLORS}
-          disabled={!canEditProperties}
+          disabled={!canChangeStatus}
           onChange={onStatusChange}
         />
         <PropertySelect
@@ -138,6 +139,7 @@ InterventionPanelHeader.propTypes = {
   statusKey: PropTypes.string.isRequired,
   priorityKey: PropTypes.string.isRequired,
   canEditProperties: PropTypes.bool,
+  canChangeStatus: PropTypes.bool,
   onStatusChange: PropTypes.func.isRequired,
   onPriorityChange: PropTypes.func.isRequired,
   onRequestPointage: PropTypes.func,

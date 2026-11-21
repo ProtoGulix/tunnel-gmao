@@ -67,7 +67,7 @@ export function AuditReasonSheet({ title, reasons, onConfirm, onCancel }) {
               type="button"
               disabled={!text.trim()}
               onClick={() => onConfirm({ reason_code: selected.code, reason_text: text.trim() })}
-              className="w-full py-3 rounded-lg bg-tunnel-blue text-white text-sm font-medium disabled:opacity-40"
+              className="w-full py-3 rounded-lg bg-tunnel-accent text-white text-sm font-medium disabled:opacity-40"
             >
               Valider
             </button>

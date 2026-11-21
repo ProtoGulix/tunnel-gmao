@@ -30,7 +30,7 @@ pending → generated → in_progress → completed
 
 > **Acceptation en cascade** : DI `nouvelle` → `acceptee` passe l'occurrence à `in_progress` et renseigne `intervention_id`.
 
-> **Clôture en cascade** : DI → `cloturee` **ou** fermeture de l'intervention (via PATCH ou POST /intervention-status-log) passent l'occurrence à `completed`.
+> **Clôture en cascade** : DI → `cloturee` **ou** fermeture de l'intervention (via PUT /interventions/{id} ; le journal de statut refuse la clôture, ADR 0027) passent l'occurrence à `completed`.
 
 ---
 
@@ -231,31 +231,33 @@ Déclenche la génération des occurrences pour tous les plans préventifs actif
 
 ## `PATCH /preventive-occurrences/{id}/skip`
 
-Ignore une occurrence en statut `pending`. Audité : le `reason_code` de la requête est validé par le middleware (règle routinière de `preventive_occurrence` si absent) ; `skip_reason` reste un texte libre.
+Ignore une occurrence en statut `pending`. Changement hors travail normal (CLAUDE.md 2.4) :
+le motif est choisi dans la fenêtre de motif commune (décision `occurrence_skipped`), sans
+motif injecté par défaut. `skip_reason` n'est plus saisi : il est déduit du motif (son
+libellé, ou le texte pour `OTHER`).
 
 ### Entrée
 
 ```json
-{
-  "skip_reason": "Machine en arrêt technique prolongé"
-}
+{ "reason_code": "OCCURRENCE_MACHINE_DOWN" }
 ```
 
-| Champ         | Type   | Requis  | Description              |
-| ------------- | ------ | ------- | ------------------------ |
-| `skip_reason` | string | **oui** | Motif de l'ignorance (non vide) |
+| Champ         | Type   | Requis           | Description |
+| ------------- | ------ | ---------------- | ----------- |
+| `reason_code` | string | **oui**          | `OCCURRENCE_MACHINE_DOWN` (« Machine arrêtée »), `OCCURRENCE_DONE_OFFLINE` (« Fait hors de l'outil »), `OCCURRENCE_PLAN_OBSOLETE` (« Plan obsolète ») ou `OTHER` |
+| `reason_text` | string | si `OTHER`       | Raison en clair |
 
 ### Réponse `200`
 
-Occurrence mise à jour avec `status = "skipped"`.
+Occurrence mise à jour avec `status = "skipped"` ; une ligne d'audit porte le motif choisi.
 
 ### Erreurs
 
-| Code | Cas                                                           |
-| ---- | ------------------------------------------------------------- |
-| 400  | L'occurrence n'est pas en statut `pending`                    |
-| 400  | `skip_reason` vide                                            |
-| 404  | Occurrence introuvable                                        |
+| Code | Cas |
+| ---- | --- |
+| 400  | Motif absent, inconnu, routinier, système ou d'une autre décision (la réponse liste les motifs proposés) ; `OTHER` sans texte |
+| 400  | L'occurrence n'est pas en statut `pending` |
+| 404  | Occurrence introuvable |
 
 ---
 

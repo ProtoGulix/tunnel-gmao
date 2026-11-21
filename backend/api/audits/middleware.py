@@ -35,6 +35,7 @@ from starlette.routing import Match
 
 from api.audits.declaration import CREATED_ID_ATTR, find_declaration
 from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
+from api.audits.exclusions import EXCLUDED, EXCLUSIONS, NO_WRITE
 from api.audits.repo import AuditRepository
 from api.audits.writer import (  # noqa: F401  (ré-exports : importés par les tests)
     MASKED_VALUE,
@@ -164,6 +165,12 @@ class _Target:
     events_only: bool = False
 
 
+def _is_unaudited(route: APIRoute, method: str) -> bool:
+    """Vrai si la route est listée NO_WRITE ou EXCLUDED dans api/audits/exclusions.py."""
+    exclusion = EXCLUSIONS.get((method, getattr(route, "path", "")))
+    return exclusion is not None and exclusion.category in (NO_WRITE, EXCLUDED)
+
+
 def _resolve_target(request: Request) -> Optional[_Target]:
     """Cible d'audit de la requête : route déclarée si elle l'est, sinon devinée depuis l'URL.
 
@@ -177,6 +184,10 @@ def _resolve_target(request: Request) -> Optional[_Target]:
             continue
         declaration = find_declaration(route) if isinstance(route, APIRoute) else None
         if declaration is None:
+            if _is_unaudited(route, request.method):
+                # Route recensée « ne modifie rien » ou exclue : ni motif demandé, ni ligne
+                # d'audit déduite de l'URL (elle ne décrirait pas une modification réelle).
+                return None
             break
         entity_id = None
         if declaration.id_from_path:

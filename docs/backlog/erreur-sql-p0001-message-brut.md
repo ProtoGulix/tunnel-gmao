@@ -1,3 +1,5 @@
+**TRAITÉ (SEC-01, 2026-11-19) : liste blanche des messages P0001 faits pour l'utilisateur (api/errors/exceptions.py) ; tout autre message est remplacé par un texte générique, détail dans les logs. Un test oblige à classer chaque nouveau RAISE EXCEPTION.**
+
 # Message brut d'un RAISE EXCEPTION SQL renvoyé au client
 
 Relevé par test-writer (AUDC-21, 2026-11-14), NON VÉRIFIÉ par l'agent principal : une

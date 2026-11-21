@@ -41,6 +41,18 @@ export function searchDI(params = {}) {
     .then((res) => res.items ?? res);
 }
 
-export function getInterventionTypes() {
-  return client.get("/interventions/types").then(res => Array.isArray(res) ? res : (res.items ?? res))
+// includeInactive : pour l'affichage des interventions existantes (types retirés inclus) ;
+// sans, seuls les types actifs sont renvoyés (création).
+// machineId : limite aux types permis pour l'équipement (classe, ADR 0031) ; sans, liste inchangée.
+export function getInterventionTypes({ includeInactive = false, machineId = null } = {}) {
+  const params = new URLSearchParams()
+  if (includeInactive) params.set("include_inactive", "true")
+  if (machineId) params.set("machine_id", machineId)
+  const query = params.size ? `?${params}` : ""
+  return client.get(`/interventions/types${query}`).then(res => Array.isArray(res) ? res : (res.items ?? res))
+}
+
+// Techniciens actifs, pour choisir le pilote d'une intervention à la création.
+export function getActiveUsers() {
+  return client.get("/users?status=active").then(res => Array.isArray(res) ? res : (res.items ?? []))
 }

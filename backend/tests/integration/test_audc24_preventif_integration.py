@@ -141,36 +141,93 @@ def test_la_generation_ecrit_un_evenement_created_par_entite_creee(
         assert lignes == [(entite, "created", "SYSTEM_CASCADE", True, admin.id)], (entite, lignes)
 
 
-# La règle d'audit de l'occurrence vient de la migration 0008 (AUDC-29).
-def test_skip_est_audite_avec_le_motif_de_la_requete(instance, client, admin, nouveau_plan):
+# Ignorer une occurrence : motif choisi obligatoire (CONT-03), règle d'audit de la migration 0019.
+def _occurrence_pending(instance, nouveau_plan):
     (machine_id,), plan = nouveau_plan(n_machines=1)
-    occ_id = instance.sql(
+    return instance.sql(
         "INSERT INTO preventive_occurrence (plan_id, machine_id, scheduled_date, status) "
         "VALUES (%s, %s, %s, 'pending') RETURNING id::text",
         (plan, machine_id, date.today()),
     )[0][0]
 
-    refus = client.patch(
-        f"/preventive-occurrences/{occ_id}/skip",
-        headers=admin.headers,
-        json={"skip_reason": "Arrêt prévu", "reason_code": "MOTIF_INCONNU"},
+
+def _etat(instance, occ_id):
+    return instance.sql(
+        "SELECT status, skip_reason FROM preventive_occurrence WHERE id = %s", (occ_id,)
     )
-    assert refus.status_code == 400, refus.text
-    assert instance.sql("SELECT status FROM preventive_occurrence WHERE id = %s", (occ_id,)) == [
-        ("pending",)
-    ]
+
+
+@pytest.mark.parametrize(
+    "corps",
+    [
+        {},
+        {"skip_reason": "Arrêt prévu"},
+        {"reason_code": "MOTIF_INCONNU"},
+        {"reason_code": "ROUTINE"},
+        {"reason_code": "SYSTEM_CASCADE"},
+        {"reason_code": "TASK_DUPLICATE"},
+        {"reason_code": "DELETE_DUPLICATE"},
+        {"reason_code": "OTHER"},
+        {"reason_code": "OTHER", "reason_text": "  "},
+    ],
+)
+def test_skip_refuse_sans_motif_valide(instance, client, admin, nouveau_plan, corps):
+    occ_id = _occurrence_pending(instance, nouveau_plan)
+
+    resp = client.patch(f"/preventive-occurrences/{occ_id}/skip", headers=admin.headers, json=corps)
+
+    assert resp.status_code == 400, resp.text
+    assert _etat(instance, occ_id) == [("pending", None)]
+    assert lignes_audit(instance, occ_id) == []
+
+
+def test_skip_sans_motif_renvoie_les_motifs_proposes(instance, client, admin, nouveau_plan):
+    occ_id = _occurrence_pending(instance, nouveau_plan)
+
+    resp = client.patch(f"/preventive-occurrences/{occ_id}/skip", headers=admin.headers, json={})
+
+    # La fenêtre commune filtre sur la décision : seuls ces motifs portent occurrence_skipped.
+    codes = {
+        r["code"]
+        for r in resp.json()["audit"]["reasons"]
+        if "occurrence_skipped" in (r["decision_types"] or [])
+    }
+    assert codes == {
+        "OCCURRENCE_MACHINE_DOWN",
+        "OCCURRENCE_DONE_OFFLINE",
+        "OCCURRENCE_PLAN_OBSOLETE",
+        "OTHER",
+    }
+    assert resp.json()["audit"]["silent"] is False
+
+
+def test_skip_est_audite_avec_le_motif_choisi(instance, client, admin, nouveau_plan):
+    occ_id = _occurrence_pending(instance, nouveau_plan)
 
     resp = client.patch(
         f"/preventive-occurrences/{occ_id}/skip",
         headers=admin.headers,
-        json={"skip_reason": "Arrêt prévu", "reason_code": "ROUTINE"},
+        json={"reason_code": "OCCURRENCE_MACHINE_DOWN"},
     )
+
     assert resp.status_code == 200, resp.text
     lignes = lignes_audit(instance, occ_id)
     assert sorted(lg[1] for lg in lignes) == ["skip_reason_changed", "status_changed"], lignes
     assert {(lg[0], lg[2], lg[3], lg[4]) for lg in lignes} == {
-        ("preventive_occurrence", "ROUTINE", False, admin.id)
+        ("preventive_occurrence", "OCCURRENCE_MACHINE_DOWN", False, admin.id)
     }
-    assert instance.sql(
-        "SELECT skip_reason FROM preventive_occurrence WHERE id = %s", (occ_id,)
-    ) == [("Arrêt prévu",)]
+    assert _etat(instance, occ_id) == [("skipped", "Machine arrêtée")]
+
+
+def test_skip_autre_exige_un_texte_qui_devient_skip_reason(instance, client, admin, nouveau_plan):
+    occ_id = _occurrence_pending(instance, nouveau_plan)
+
+    resp = client.patch(
+        f"/preventive-occurrences/{occ_id}/skip",
+        headers=admin.headers,
+        json={"reason_code": "OTHER", "reason_text": "Ligne démontée pour travaux"},
+    )
+
+    assert resp.status_code == 200, resp.text
+    assert _etat(instance, occ_id) == [("skipped", "Ligne démontée pour travaux")]
+    assert {lg[2] for lg in lignes_audit(instance, occ_id)} == {"OTHER"}

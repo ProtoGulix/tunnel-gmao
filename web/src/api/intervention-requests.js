@@ -16,33 +16,6 @@ export async function fetchInterventionRequestStatuses() {
   return response.data;
 }
 
-/**
- * Référentiel des types de DI (standard, amelioration).
- * @returns {Promise<Array<{code: string, label: string, color: string, sort_order: number}>>}
- */
-export async function fetchInterventionRequestTypes() {
-  const response = await api.get('/intervention-requests/types');
-  return response.data;
-}
-
-/**
- * Référentiel des catégories d'idées d'amélioration.
- * @returns {Promise<Array<{code: string, label: string, color: string, sort_order: number}>>}
- */
-export async function fetchAmeliorationCategories() {
-  const response = await api.get('/intervention-requests/amelioration-categories');
-  return response.data;
-}
-
-/**
- * Référentiel des sous-statuts d'idées d'amélioration.
- * @returns {Promise<Array<{code: string, label: string, color: string, sort_order: number}>>}
- */
-export async function fetchAmeliorationSousStatuts() {
-  const response = await api.get('/intervention-requests/amelioration-sous-statuts');
-  return response.data;
-}
-
 // Filtres optionnels de fetchInterventionRequests : clé JS → clé query API,
 // avec un test de présence dédié (évite une longue chaîne de if en ligne).
 const _LIST_OPTIONAL_FILTERS = [
@@ -52,8 +25,6 @@ const _LIST_OPTIONAL_FILTERS = [
   ['includeDescendants', 'include_descendants', (v) => v !== undefined && v !== null],
   ['isSystem', 'is_system', (v) => v !== undefined && v !== null],
   ['search', 'search', (v) => !!v?.trim()],
-  ['type', 'type', (v) => !!v],
-  ['sousStatut', 'sous_statut', (v) => !!v],
   ['site', 'site', (v) => !!v],
 ];
 
@@ -81,8 +52,6 @@ function buildListQueryParams(params) {
  * @param {string} [params.machineId] - Filtrer par UUID équipement
  * @param {boolean} [params.includeDescendants] - Avec machineId : inclut les équipements descendants
  * @param {string} [params.search] - Recherche libre (code, demandeur_nom, description)
- * @param {string} [params.type] - Filtrer par type(s) de DI, séparés par virgule (ex: 'amelioration')
- * @param {string} [params.sousStatut] - Filtrer par sous-statut(s), séparés par virgule
  * @param {string} [params.site] - Filtrer par code de site (machine racine), ex: 'VLT', 'SML'
  * @returns {Promise<{items: Array, pagination: Object, facets: Object}>}
  */
@@ -91,32 +60,6 @@ export async function fetchInterventionRequests(params = {}) {
   const response = await api.get('/intervention-requests', { params: queryParams });
   const { items = [], pagination, facets } = response.data;
   return { items, pagination, facets };
-}
-
-/**
- * Met à jour partiellement les champs propres à une idée d'amélioration
- * (catégorie, priorité, sous_statut, porteur, deadline). Ne touche jamais
- * au statut générique du workflow DI — voir transitionInterventionRequest.
- *
- * @param {string} id - UUID de la demande
- * @param {Object} data
- * @param {string} [data.categorie] - Code catégorie
- * @param {string} [data.priorite] - 'basse' | 'moyenne' | 'haute'
- * @param {string} [data.sousStatut] - Code sous-statut
- * @param {string|null} [data.porteurId] - UUID du porteur (null pour retirer)
- * @param {string} [data.deadline] - Date YYYY-MM-DD
- * @returns {Promise<Object>} Demande mise à jour
- */
-export async function patchAmelioration(id, data) {
-  const payload = {};
-  if ('categorie' in data) payload.categorie = data.categorie;
-  if ('priorite' in data) payload.priorite = data.priorite;
-  if ('sousStatut' in data) payload.sous_statut = data.sousStatut;
-  if ('porteurId' in data) payload.porteur_id = data.porteurId;
-  if ('deadline' in data) payload.deadline = data.deadline;
-
-  const response = await api.patch(`/intervention-requests/${id}/amelioration`, payload);
-  return response.data;
 }
 
 /**
@@ -138,7 +81,6 @@ export async function fetchInterventionRequest(id) {
  * @param {string} data.demandeurNom - Nom du demandeur (requis)
  * @param {string} data.description - Description de l'intervention souhaitée (requis)
  * @param {string} [data.serviceId] - UUID du service/département du demandeur
- * @param {string} [data.type] - 'standard' (défaut) ou 'amelioration'
  * @param {string} [data.origine] - Origine de la demande, ex: 'directe' (créée en même temps
  *   qu'une intervention, sans passer par le workflow de signalement). Omis = défaut backend
  *   ('signalee').
@@ -153,9 +95,6 @@ export async function createInterventionRequest(data) {
 
   if (data.serviceId) {
     payload.service_id = data.serviceId;
-  }
-  if (data.type) {
-    payload.type = data.type;
   }
   if (data.origine) {
     payload.origine = data.origine;

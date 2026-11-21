@@ -5,8 +5,9 @@
 # N'utilise jamais la base de dev : conteneur propre sur 127.0.0.1:55435.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-NAME="tunnel-it-db"
-PORT=55435
+# Surchargeables pour lancer deux suites en parallèle (worktrees de subagents).
+NAME="${IT_DB_NAME:-tunnel-it-db}"
+PORT="${IT_DB_PORT:-55435}"
 PASSWORD="$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 
 cleanup() {

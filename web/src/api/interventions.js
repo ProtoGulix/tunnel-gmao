@@ -59,6 +59,7 @@ export async function searchOpenInterventions(search, { limit = 20 } = {}) {
     code: raw.code ?? '',
     title: raw.title ?? '',
     status_actual: raw.status_actual ?? raw.status ?? '',
+    is_locked: raw.is_locked ?? null,
     type_inter: typeof raw.type_inter === 'string' ? raw.type_inter : (raw.type_inter?.code ?? 'CUR'),
     priority: raw.priority ?? 'normale',
     plan_id: raw.plan_id ?? null,
@@ -96,7 +97,17 @@ export async function createIntervention(data) {
       : new Date().toISOString().slice(0, 10),
   };
   if (data.reportedBy) payload.reported_by = data.reportedBy;
-  if (data.requestId) payload.request_id = data.requestId;
+  // Création atomique (ADR 0025) : une demande existante OU une nouvelle demande dans le
+  // même appel. En cas d'erreur, rien n'est créé.
+  if (data.requestId) {
+    payload.request_id = data.requestId;
+  } else if (data.request) {
+    payload.request = {
+      demandeur_nom: data.request.demandeurNom,
+      description: data.request.description,
+      ...(data.request.serviceId && { service_id: data.request.serviceId }),
+    };
+  }
   const response = await api.post('/interventions', payload);
   return mapInterventionResponse(response.data);
 }
@@ -188,4 +199,16 @@ export async function fetchClosedInterventionsExport({
   } catch (error) {
     throw new Error(await readBlobErrorMessage(error));
   }
+}
+
+/** Types actifs permis pour un équipement (ADR 0031) ; liste plate comme la liste complète */
+export async function fetchPermittedInterventionTypes(machineId) {
+  const r = await api.get('/interventions/types', { params: { machine_id: machineId } });
+  return Array.isArray(r.data) ? r.data : [];
+}
+
+/** Types d'intervention (référentiel en base, ADR 0026), inactifs inclus pour l'affichage de l'historique */
+export async function fetchInterventionTypeRefs() {
+  const r = await api.get('/interventions/types', { params: { include_inactive: true } });
+  return Array.isArray(r.data) ? r.data : [];
 }

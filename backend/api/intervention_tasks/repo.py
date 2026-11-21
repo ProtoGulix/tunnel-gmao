@@ -5,10 +5,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_tasks.schemas import InterventionTaskIn, InterventionTaskPatch
+from api.intervention_tasks.validators import task_delete_blocker
+from api.interventions.validators import is_intervention_locked
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ _TASK_SELECT = """
         it.optional, it.due_date, it.sort_order, it.skip_reason,
         it.gamme_step_id, it.occurrence_id,
         it.closed_by, it.created_by, it.created_at, it.updated_at,
+        i.status_actual AS intervention_status,
         COALESCE(agg.action_count, 0)  AS action_count,
         COALESCE(agg.time_spent, 0.0)  AS time_spent,
         u.id        AS assigned_id,
@@ -47,6 +49,15 @@ def _map_task(row: Dict[str, Any]) -> Dict[str, Any]:
     """Mappe les colonnes assigned_* en objet assigned_to imbriqué.
     Convertit aussi les Decimal psycopg2 en float pour Pydantic.
     """
+    # Indicateur de suppression : même règle que le refus (task_delete_blocker)
+    row["can_delete"] = (
+        task_delete_blocker(
+            row.get("status"),
+            int(row.get("action_count") or 0),
+            is_intervention_locked(row.pop("intervention_status", None)),
+        )
+        is None
+    )
     if row.get("time_spent") is not None:
         row["time_spent"] = float(row["time_spent"])
     if row.get("assigned_id"):
@@ -90,8 +101,7 @@ class InterventionTaskRepository:
         if not row:
             raise NotFoundError(f"Intervention {intervention_id} non trouvée")
 
-        status_actual = str(row[0] or "").strip().lower()
-        if status_actual == CLOSED_STATUS_CODE:
+        if is_intervention_locked(row[0]):
             raise ValidationError(
                 "Intervention fermée : aucune modification des tâches n'est autorisée"
             )
@@ -285,44 +295,57 @@ class InterventionTaskRepository:
 
     # ── Création ─────────────────────────────────────────────────
 
+    def insert_task(
+        self,
+        cur: Any,
+        intervention_id: str,
+        data: Any,
+        created_by: Optional[str] = None,
+    ) -> str:
+        """Insère une tâche manuelle avec le curseur fourni (ni commit ni rollback), renvoie son id.
+
+        Seule fonction qui écrit une tâche manuelle : `create` et la création atomique d'une
+        intervention (ADR 0025) la partagent. `data` porte label, origin, optional,
+        assigned_to, due_date, sort_order (InterventionTaskIn ou schéma de tâche embarquée).
+        """
+        self._ensure_intervention_editable(cur, intervention_id)
+
+        # Auto-assigner au pilote de l'intervention si assigned_to absent
+        assigned_to = str(data.assigned_to) if data.assigned_to else None
+        if not assigned_to:
+            cur.execute("SELECT tech_id FROM intervention WHERE id = %s", (intervention_id,))
+            pilot = cur.fetchone()
+            if pilot and pilot[0]:
+                assigned_to = str(pilot[0])
+
+        task_id = str(uuid4())
+        cur.execute(
+            """
+            INSERT INTO intervention_task
+                (id, intervention_id, label, origin, status, optional,
+                 assigned_to, due_date, sort_order, created_by, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, 'todo', %s, %s, %s, %s, %s, NOW(), NOW())
+            """,
+            (
+                task_id,
+                intervention_id,
+                data.label,
+                data.origin,
+                data.optional,
+                assigned_to,
+                data.due_date,
+                data.sort_order,
+                created_by,
+            ),
+        )
+        return task_id
+
     def create(self, data: InterventionTaskIn, created_by: Optional[str] = None) -> Dict[str, Any]:
         """Crée une tâche manuelle (origin resp ou tech)."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
-            self._ensure_intervention_editable(cur, str(data.intervention_id))
-
-            # Auto-assigner au pilote de l'intervention si assigned_to absent
-            assigned_to = str(data.assigned_to) if data.assigned_to else None
-            if not assigned_to:
-                cur.execute(
-                    "SELECT tech_id FROM intervention WHERE id = %s",
-                    (str(data.intervention_id),),
-                )
-                pilot = cur.fetchone()
-                if pilot and pilot[0]:
-                    assigned_to = str(pilot[0])
-
-            task_id = str(uuid4())
-            cur.execute(
-                """
-                INSERT INTO intervention_task
-                    (id, intervention_id, label, origin, status, optional,
-                     assigned_to, due_date, sort_order, created_by, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, 'todo', %s, %s, %s, %s, %s, NOW(), NOW())
-                """,
-                (
-                    task_id,
-                    str(data.intervention_id),
-                    data.label,
-                    data.origin,
-                    data.optional,
-                    assigned_to,
-                    data.due_date,
-                    data.sort_order,
-                    created_by,
-                ),
-            )
+            task_id = self.insert_task(cur, str(data.intervention_id), data, created_by)
             conn.commit()
         except (NotFoundError, ValidationError):
             conn.rollback()
@@ -418,7 +441,7 @@ class InterventionTaskRepository:
     # ── Suppression ───────────────────────────────────────────────
 
     def delete(self, task_id: str) -> None:
-        """Supprime une tâche si aucune action n'y est liée."""
+        """Supprime une tâche « à faire », sans action, d'une intervention non fermée."""
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -431,17 +454,19 @@ class InterventionTaskRepository:
                 raise NotFoundError(f"Tâche {task_id} non trouvée")
 
             status, intervention_id, label = row
-            self._ensure_intervention_editable(cur, str(intervention_id))
+            cur.execute(
+                "SELECT status_actual FROM intervention WHERE id = %s",
+                (str(intervention_id),),
+            )
+            locked = is_intervention_locked(cur.fetchone()[0])
 
             cur.execute(
                 "SELECT COUNT(*) FROM intervention_action_task WHERE task_id = %s",
                 (task_id,),
             )
-            action_count = cur.fetchone()[0]
-            if action_count > 0:
-                raise ValidationError(
-                    f"Cette tâche est liée à {action_count} action{'s' if action_count > 1 else ''} — suppression impossible"
-                )
+            blocker = task_delete_blocker(status, cur.fetchone()[0], locked)
+            if blocker:
+                raise ValidationError(blocker)
 
             cur.execute("DELETE FROM intervention_task WHERE id = %s", (task_id,))
             conn.commit()
@@ -636,6 +661,7 @@ class InterventionTaskRepository:
                             "code": r.get("interv_code"),
                             "title": r.get("interv_title"),
                             "status": r.get("interv_status"),
+                            "is_locked": is_intervention_locked(r.get("interv_status")),
                             "priority": r.get("interv_priority"),
                             "equipement": equip,
                             "tasks": tasks_by_interv.get(iid, []),

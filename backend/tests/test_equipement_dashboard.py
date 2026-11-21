@@ -175,8 +175,16 @@ def test_code_de_droit_au_catalogue_et_matrice_par_defaut():
 # --- Filtres de GET /interventions ---
 
 
-def test_filtre_type_inter_valide_et_invalide():
+def test_filtre_type_inter_valide_et_invalide(monkeypatch):
     from api.errors.exceptions import ValidationError
+    from api.interventions import types as types_module
+
+    # Les types viennent de la base : on simule le référentiel.
+    monkeypatch.setattr(
+        types_module,
+        "list_types",
+        lambda include_inactive=False: [{"id": c, "is_active": True} for c in ("CUR", "PRE")],
+    )
 
     clauses, params = InterventionRepository._type_and_date_filters(["CUR", "PRE"], None, None)
     assert params == ["CUR", "PRE"] and "i.type_inter IN (%s,%s)" in clauses

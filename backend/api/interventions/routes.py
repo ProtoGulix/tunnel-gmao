@@ -1,11 +1,12 @@
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
 from api.audits.declaration import audit, declare_created_id
-from api.auth.permissions import require_authenticated
-from api.constants import INTERVENTION_TYPES
+from api.audits.middleware import REASON_CODE_ATTR, REASON_TEXT_ATTR
+from api.auth.permissions import check_matrix, require_authenticated
 from api.equipements.schemas import EquipementDetail
 from api.errors.exceptions import ForbiddenError, UnauthorizedError
 from api.intervention_actions.repo import InterventionActionRepository
@@ -25,7 +26,13 @@ from api.interventions.schemas import (
     RequestPointageIn,
     RequestPointageOut,
 )
-from api.interventions.validators import InterventionValidator
+from api.interventions.types import list_types, list_types_for_machine
+from api.interventions.validators import (
+    InterventionValidator,
+    ensure_reopen_reason,
+    is_reopening,
+)
+from api.utils.audit import list_entity_reasons
 from api.utils.response import paginated, referentiel, single
 
 InterventionOut.model_rebuild(
@@ -59,9 +66,21 @@ def add_stats_to_intervention(intervention: Dict[str, Any], actions: List[Dict[s
 
 
 @router.get("/types")
-def list_intervention_types():
-    """Liste tous les types d'intervention disponibles (id, title, color)"""
-    return referentiel(INTERVENTION_TYPES)
+def list_intervention_types(
+    include_inactive: bool = Query(
+        False, description="Inclut les types désactivés (affichage de l'historique)"
+    ),
+    machine_id: UUID | None = Query(
+        None,
+        description="Équipement : ne renvoie que les types permis par sa classe (ADR 0031)",
+    ),
+):
+    """Types d'intervention lus en base, triés par libellé (id = code, title, color,
+    description, is_active). Actifs seulement par défaut ; avec machine_id, seulement ceux
+    que la classe de l'équipement permet (tous si elle n'a pas de liste)."""
+    if machine_id is not None:
+        return referentiel(list_types_for_machine(machine_id, include_inactive))
+    return referentiel(list_types(include_inactive))
 
 
 @router.get("")
@@ -166,6 +185,29 @@ def get_intervention_actions(intervention_id: str, request: Request):
     return single(repo.get_by_intervention(intervention_id))
 
 
+def _require_route_permission(request: Request, path: str) -> None:
+    """Exige le droit de la route `POST {path}` (matrice, ADR 0007) pour le rôle de l'appelant.
+
+    Création d'une demande ou de tâches dans le même geste que l'intervention : le droit
+    d'écrire sur `POST /interventions` ne suffit pas, il faut aussi celui de la route
+    propre à chaque entité. Route introuvable : refus (pas de code deviné).
+    """
+    for route in request.app.routes:
+        if getattr(route, "path", None) == path and "POST" in (
+            getattr(route, "methods", None) or ()
+        ):
+            check_matrix(request, route)
+            return
+    raise ForbiddenError("Accès refusé")
+
+
+def _require_secondary_permissions(request: Request, data: InterventionCreate) -> None:
+    if data.request is not None:
+        _require_route_permission(request, "/intervention-requests")
+    if data.tasks:
+        _require_route_permission(request, "/intervention-tasks")
+
+
 @router.post(
     "",
     status_code=201,
@@ -173,16 +215,29 @@ def get_intervention_actions(intervention_id: str, request: Request):
 )
 def create_intervention(data: InterventionCreate, request: Request):
     """
-    Crée une nouvelle intervention.
+    Crée une nouvelle intervention, en une seule transaction (ADR 0025).
+
+    Corps : les champs de l'intervention, plus **exactement un** de `request_id` (demande
+    existante) ou `request` (`demandeur_nom`, `description`, `service_id` : nouvelle demande
+    d'origine « directe », sans notification ni mail), et `tasks` facultatif (champs de
+    `POST /intervention-tasks` sans `intervention_id`). Un échec n'écrit rien. `request`
+    exige aussi le droit de `POST /intervention-requests`, `tasks` celui de
+    `POST /intervention-tasks`.
 
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
-    payload = data.model_dump(exclude_none=True)
-    InterventionValidator.validate_request_required(payload)
+    _require_secondary_permissions(request, data)
+    payload = data.model_dump(exclude_none=True, exclude={"request", "tasks"})
+    InterventionValidator.validate_request_required(payload, has_new_request=bool(data.request))
     repo = InterventionRepository()
     user_id = getattr(request.state, "user_id", None)
-    created = repo.add(payload, user_id=str(user_id) if user_id else None)
+    created = repo.add(
+        payload,
+        user_id=str(user_id) if user_id else None,
+        new_request=data.request.model_dump(exclude_none=True) if data.request else None,
+        tasks=data.tasks,
+    )
     declare_created_id(request, created["id"])
     return single(created)
 
@@ -197,9 +252,22 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
 
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
+
+    **Réouverture** (ADR 0028) : un `status_actual` qui fait sortir l'intervention de `ferme`
+    exige un motif explicite (catégorie manual ou user, décision `intervention_reopened`) :
+    sinon 400 « reason_code obligatoire » avec les motifs dans `audit`. La demande liée
+    clôturée repasse `acceptee` dans la même transaction, avec un événement du système.
     """
     InterventionValidator.validate_reported_date_not_null(data.model_fields_set, data.model_dump())
     repo = InterventionRepository()
+    if data.status_actual is not None:
+        current = repo.get_by_id(intervention_id, include_actions=False).get("status_actual")
+        if is_reopening(current, data.status_actual):
+            ensure_reopen_reason(
+                getattr(request.state, REASON_CODE_ATTR, None),
+                getattr(request.state, REASON_TEXT_ATTR, None),
+                list_entity_reasons("intervention"),
+            )
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))
 
 

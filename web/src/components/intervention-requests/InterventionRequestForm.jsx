@@ -12,7 +12,6 @@ const INITIAL_FORM = {
   demandeurNom: '',
   serviceId: '',
   description: '',
-  type: 'standard',
 };
 
 function validate(form) {
@@ -22,30 +21,25 @@ function validate(form) {
   return null;
 }
 
-function buildSubmitPayload(form, allowTypeSelection) {
+function buildSubmitPayload(form) {
   return {
     machineId: form.machineId,
     demandeurNom: form.demandeurNom.trim(),
     serviceId: form.serviceId || null,
     description: form.description.trim(),
-    type: allowTypeSelection ? form.type : 'standard',
   };
 }
 
-function buildInitialForm(userFullName, machineId, machineName, initialType) {
-  const base = { ...INITIAL_FORM, demandeurNom: userFullName, type: initialType };
+function buildInitialForm(userFullName, machineId, machineName) {
+  const base = { ...INITIAL_FORM, demandeurNom: userFullName };
   if (!machineId) return base;
   return { ...base, machineId, machineName: machineName ?? '' };
 }
 
-function submitLabelFor(type) {
-  return type === 'amelioration' ? 'Proposer l\'idée' : 'Créer la demande';
-}
-
-export default function InterventionRequestForm({ onSubmit, onCancel, saving = false, machineId = null, machineName = null, bare = false, allowTypeSelection = true, initialType = 'standard' }) {
+export default function InterventionRequestForm({ onSubmit, onCancel, saving = false, machineId = null, machineName = null, bare = false }) {
   const { user } = useAuth();
   const userFullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
-  const [form, setForm] = useState(() => buildInitialForm(userFullName, machineId, machineName, initialType));
+  const [form, setForm] = useState(() => buildInitialForm(userFullName, machineId, machineName));
   const [error, setError] = useState(null);
   const [services, setServices] = useState([]);
 
@@ -71,7 +65,7 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
     const validationError = validate(form);
     if (validationError) { setError(validationError); return; }
     try {
-      await onSubmit(buildSubmitPayload(form, allowTypeSelection));
+      await onSubmit(buildSubmitPayload(form));
     } catch (err) {
       setError(extractApiErrorMessage(err, 'Erreur lors de la création de la demande'));
     }
@@ -87,10 +81,9 @@ export default function InterventionRequestForm({ onSubmit, onCancel, saving = f
           machineLocked={!!machineId}
           onMachineSelect={handleMachineSelect}
           onMachineClear={handleMachineClear}
-          allowTypeSelection={allowTypeSelection}
           saving={saving}
           onCancel={onCancel}
-          submitLabel={submitLabelFor(form.type)}
+          submitLabel="Créer la demande"
         />
       </form>
     </RequestFormShell>
@@ -104,6 +97,4 @@ InterventionRequestForm.propTypes = {
   machineId: PropTypes.string,
   machineName: PropTypes.string,
   bare: PropTypes.bool,
-  allowTypeSelection: PropTypes.bool,
-  initialType: PropTypes.oneOf(['standard', 'amelioration']),
 };

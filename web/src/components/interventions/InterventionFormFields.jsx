@@ -1,13 +1,16 @@
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Select, Spinner, Text, TextField } from '@radix-ui/themes';
 import { CheckCircle2, UserCog, Wrench } from 'lucide-react';
+import DescribedSelect from '@/components/ui/DescribedSelect';
 
+// Descriptions vues et validées à l'écran par l'utilisateur le 2026-11-20
 const PRIORITY_OPTIONS = [
-  { value: 'urgent',    label: 'Urgent' },
-  { value: 'important', label: 'Important' },
-  { value: 'normale',   label: 'Normal' },
-  { value: 'faible',    label: 'Faible' },
+  { value: 'urgent',    label: 'Urgent',    color: 'red',    description: 'Arrêt de production ou risque pour la sécurité : à traiter tout de suite.' },
+  { value: 'important', label: 'Important', color: 'orange', description: 'Production gênée ou dégradée : à traiter en priorité.' },
+  { value: 'normale',   label: 'Normal',    color: 'blue',   description: "Pas d'impact immédiat sur la production : à planifier." },
+  { value: 'faible',    label: 'Faible',    color: 'gray',   description: 'Amélioration ou confort : quand le planning le permet.' },
 ];
+const PRIORITY_FIELD_WIDTH = 240;
 
 export function TimelineIcon({ icon: Icon, done = false, last = false }) {
   const color  = done ? 'var(--green-9)' : 'var(--gray-7)';
@@ -82,19 +85,17 @@ export function InterventionRow({ formData, set, lockedType, TypeField, saving, 
     <Flex align="stretch" gap="4">
       <TimelineIcon icon={Wrench} done={done} last />
       <Flex direction="column" gap="3" style={{ flex: 1, padding: '10px 0' }}>
-        <Flex gap="3" align="end" wrap="wrap">
+        <Flex gap="3" align="start" wrap="wrap">
           <Box style={{ flex: '0 0 auto' }}>
-            <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Type</Text>
-            <TypeField locked={lockedType} value={formData.type} onChange={(v) => set('type', v)} />
+            <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Type {!lockedType && <Text color="red">*</Text>}</Text>
+            <TypeField locked={lockedType} value={formData.type} equipementId={formData.equipementId} onChange={(v) => set('type', v)} />
           </Box>
           <Box style={{ flex: '0 0 auto' }}>
             <Text as="label" size="1" weight="bold" mb="1" style={{ display: 'block' }}>Priorité</Text>
-            <Select.Root value={formData.priority} onValueChange={(v) => set('priority', v)}>
-              <Select.Trigger />
-              <Select.Content>
-                {PRIORITY_OPTIONS.map((p) => <Select.Item key={p.value} value={p.value}>{p.label}</Select.Item>)}
-              </Select.Content>
-            </Select.Root>
+            <DescribedSelect
+              value={formData.priority} options={PRIORITY_OPTIONS}
+              onChange={(v) => set('priority', v)} width={PRIORITY_FIELD_WIDTH}
+            />
           </Box>
         </Flex>
         <Flex gap="3" justify="end">

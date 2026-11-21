@@ -29,17 +29,17 @@ function sortSegment(items) {
 // Bloc 1 — À faire maintenant : ouvert, hors bloqué et projet
 // Bloc 2 — Bloqué : status_actual IN (attente_pieces, attente_prod)
 // Bloc 3 — Projets/Support : type_inter IN (PRO, PIL, MES) ET priority ≠ urgent
-// Bloc 4 — À archiver : status_actual IN (ferme, cancelled) — collapsed par défaut
+// Bloc 4 — À archiver : intervention verrouillée (is_locked, décidé par l'API) — collapsed par défaut
 
 const PROJECT_TYPES  = new Set(['PRO', 'PIL', 'MES'])
 const BLOCKED_STATUS = new Set(['attente_pieces', 'attente_prod'])
-const ARCHIVE_STATUS = new Set(['ferme', 'cancelled'])
 
 function segmentItems(items) {
   const todo = [], blocked = [], projects = [], archive = []
 
   for (const item of items) {
-    if (ARCHIVE_STATUS.has(item.status_actual)) {
+    // Champ absent : rangé dans les archives (non éditable) plutôt que proposé à tort
+    if (item.is_locked !== false) {
       archive.push(item)
     } else if (BLOCKED_STATUS.has(item.status_actual)) {
       blocked.push(item)
@@ -83,7 +83,7 @@ export function useInterventionsList() {
     setError(null)
 
     searchInterventions({
-      status: 'ouvert,attente_pieces,attente_prod,ferme,cancelled',
+      status: 'ouvert,attente_pieces,attente_prod,ferme',
       sort: '-priority,-reported_date',
       limit: 500,
     }, { signal })

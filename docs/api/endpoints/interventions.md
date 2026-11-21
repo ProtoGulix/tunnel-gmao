@@ -190,24 +190,38 @@ Liste les interventions avec filtres, tri et pagination.
 
 ## `GET /interventions/types`
 
-Retourne la liste des types d'intervention disponibles.
+Types d'intervention lus en base (table `intervention_type`, ADR 0026), triés par libellé.
+Seuls les types actifs sont renvoyés ; `?include_inactive=true` ajoute les types désactivés
+(affichage de l'historique).
+
+`?machine_id=<uuid>` (équipement) ne renvoie que les types permis par la classe de
+l'équipement (ADR 0031) : une classe sans liste, un équipement sans classe ou inconnu donnent
+tous les types. Sans `machine_id`, la liste est inchangée. `machine_id` invalide : `422`.
 
 ### Réponse `200`
 
 ```json
 [
-  { "id": "CUR", "title": "Curatif", "color": "red" },
-  { "id": "PRE", "title": "Préventif", "color": "green" },
-  { "id": "REA", "title": "Réapprovisionnement", "color": "blue" },
-  { "id": "BAT", "title": "Batiment", "color": "gray" },
-  { "id": "PRO", "title": "Projet", "color": "blue" },
-  { "id": "COF", "title": "Remise en conformité", "color": "amber" },
-  { "id": "PIL", "title": "Pilotage", "color": "blue" },
-  { "id": "MES", "title": "Mise en service", "color": "amber" }
+  {
+    "id": "CUR",
+    "title": "Curatif",
+    "color": "red",
+    "description": "Réparer une panne ou un défaut constaté.",
+    "is_active": true
+  }
 ]
 ```
 
-> Utiliser `id` comme valeur du champ `type_inter` lors de la création d'une intervention.
+> `id` est le code du type, valeur du champ `type_inter`. Un type inconnu, ou désactivé
+> pour une nouvelle valeur (création, changement de type, `suggested_type_inter` d'une
+> demande), est refusé en `400` ; un type désactivé reste accepté sur ce qui le porte déjà.
+>
+> Types permis par classe (ADR 0031) : à la création et quand `type_inter` ou `machine_id`
+> change (`PUT`), un type que la classe de l'équipement ne permet pas est refusé en `400`
+> (`Le type d'intervention 'PRO' n'est pas permis pour cet équipement. Types permis : Curatif (CUR), …`).
+> Une intervention existante non permise reste modifiable si ni le type ni l'équipement ne
+> changent. À l'acceptation d'une demande, un type suggéré non permis n'est ni imposé ni
+> utilisé par défaut : le type choisi doit être permis.
 
 ---
 
@@ -430,6 +444,8 @@ Détail complet d'une intervention. **La structure est différente de la liste**
 }
 ```
 
+`is_locked` (`bool`, liste et détail) : `true` si l'intervention est fermée, donc plus modifiable (ADR 0030). Chaque action du détail porte `can_delete` (`false` si l'intervention est fermée ou si une demande d'achat liée a déjà été répartie) et chaque tâche `can_delete`. Les clients lisent ces champs sans recopier les règles ; un champ absent se lit comme « non ».
+
 ### Différences avec la liste
 
 | Champ                  | Liste                                                                          | Détail                                                                                                                                                                                                                             |
@@ -470,7 +486,7 @@ Raccourci vers les actions d'une intervention. Voir [Intervention Actions](inter
 
 ## `POST /interventions`
 
-Crée une nouvelle intervention.
+Crée une nouvelle intervention, avec au besoin sa demande et ses tâches, **en une seule transaction** (ADR 0025) : un échec n'écrit rien (ni demande, ni intervention, ni tâche, ni notification).
 
 ### Entrée
 
@@ -495,7 +511,7 @@ Crée une nouvelle intervention.
 | Champ           | Type   | Requis  | Défaut   | Description                                                                                                                                                                                                                                                 |
 | --------------- | ------ | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `machine_id`    | uuid   | **oui** | —        | Équipement concerné (trigger exige une machine existante)                                                                                                                                                                                                   |
-| `type_inter`    | string | **oui** | —        | Type d'intervention (`CUR`, `PRE`, `REA`, `BAT`, `PRO`, `COF`, `PIL`, `MES`) — voir `GET /interventions/types`                                                                                                                                              |
+| `type_inter`    | string | **oui** | —        | Code d'un type actif — voir `GET /interventions/types`                                                                                                                                              |
 | `tech_id`       | uuid   | **oui** | —        | UUID du technicien pilote (`directus_users.id`). L'API résout les initiales en interne pour le trigger de génération de code                                                                                                                                |
 | `title`         | string | non     | null     | Titre de l'intervention                                                                                                                                                                                                                                     |
 | `priority`      | string | non     | null     | `faible`, `normale`, `important`, `urgent`                                                                                                                                                                                                                  |
@@ -503,11 +519,34 @@ Crée une nouvelle intervention.
 | `status_actual` | string | non     | `ouvert` | Code statut initial (géré par trigger)                                                                                                                                                                                                                      |
 | `printed_fiche` | bool   | non     | `false`  | Fiche imprimée ?                                                                                                                                                                                                                                            |
 | `reported_date` | date   | non     | date du jour | Date de signalement ; absente ou null, le serveur pose la date du jour (idem à la création depuis une demande) |
-| `request_id`    | uuid   | **oui** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
+| `request_id`    | uuid   | **un des deux** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
+| `request`       | objet  | **un des deux** | —        | Nouvelle demande créée dans la même transaction (voir ci-dessous). Exclusif avec `request_id` : les deux, ou aucun, donnent `422`. |
+| `tasks`         | liste  | non     | `[]`     | Tâches créées dans la même transaction (voir ci-dessous) |
+
+**`request`** : `{ "demandeur_nom": "Atelier 2", "description": "Fuite sous la presse", "service_id": "uuid ou absent" }`. L'équipement est celui de l'intervention. La demande est créée d'origine `directe` : **aucune notification `di_a_traiter`, aucun mail**. Elle passe aussitôt à `acceptee`, liée à l'intervention. `demandeur_nom` reste une donnée déclarative libre ; l'auteur réel (`created_by`, journal de statut, audit) est celui du jeton.
+
+**`tasks[]`** : champs de `POST /intervention-tasks` sans `intervention_id` : `label` (requis), `origin` (`tech` par défaut, ou `resp`, `plan`), `optional` (`false`), `assigned_to` (uuid, défaut : le pilote), `due_date`, `sort_order` (`0`).
+
+> **Autorisation** : `POST /interventions` ne suffit pas. Si `request` est envoyé, le rôle doit aussi avoir le droit de `POST /intervention-requests` ; si `tasks` est non vide, celui de `POST /intervention-tasks` (matrice de permissions, `403` sinon, rien n'est écrit). ADMIN passe toujours.
+
+> **Audit** : lignes `created` pour l'intervention, la demande et chaque tâche, plus les lignes d'acceptation de la demande, toutes avec l'auteur du jeton et le motif routinier.
+
+Exemple avec demande et tâches :
+
+```json
+{
+  "machine_id": "uuid",
+  "type_inter": "CUR",
+  "tech_id": "uuid-utilisateur",
+  "title": "Fuite hydraulique",
+  "request": { "demandeur_nom": "Atelier 2", "description": "Fuite sous la presse", "service_id": null },
+  "tasks": [{ "label": "Remplacer le flexible" }, { "label": "Contrôler le niveau", "optional": true }]
+}
+```
 
 ### Réponse `201`
 
-Intervention complète avec equipement, `request` (objet demande si liée), stats, actions, status_logs.
+Intervention complète avec equipement, `request` (objet demande, qu'elle ait été existante ou créée par l'appel), `tasks`, stats, actions, status_logs. Enveloppe `{ "data": {...} }`.
 
 ---
 
@@ -520,6 +559,8 @@ Met à jour une intervention. Même body que POST, tous les champs sont optionne
 > **Motif** : routinier, aucun `reason_code` requis (`ROUTINE` injecté) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 
 > **Clôture automatique de la demande liée** : si `status_actual` est mis à jour vers le code `ferme` et qu'une demande d'intervention est liée (`request` non null), cette demande passe automatiquement à `cloturee`. En cas d'échec de la cascade (demande restée en `acceptee`), utiliser `POST /interventions/{id}/force-close-request`.
+
+> **Réouverture** (ADR 0028) : un `status_actual` qui fait sortir l'intervention de `ferme` exige un `reason_code` explicite (catégorie manual ou user, décision `intervention_reopened` : `INTERVENTION_CLOSED_BY_MISTAKE`, `INTERVENTION_REWORK`, `OTHER` avec `reason_text`). Sans lui, `400` « reason_code obligatoire » avec ces motifs dans `audit`. La demande liée `cloturee` repasse `acceptee` dans la même transaction, avec un événement du système (`SYSTEM_CASCADE`) au nom du jeton ; elle se reclôt avec l'intervention. Un changement de statut qui ne sort pas de `ferme` reste routinier.
 
 > **Tâches incomplètes** : si l'intervention a des tâches non-optionnelles en `todo` ou `in_progress`, la mise à jour vers le statut `ferme` est bloquée et retourne `400` avec `"Impossible de fermer : X tâche(s) non-optionnelle(s) en attente."`. Utiliser `PATCH /intervention-tasks/{id}` pour traiter les tâches avant de clôturer.
 

@@ -1,4 +1,4 @@
-import { TYPE_INTER_LABELS, INTERVENTION_TYPES } from '@/config/interventionTypes';
+import { getTypeLabel, getTypeColor } from '@/hooks/shared/useInterventionTypeRefs';
 import { getInterventionUrgency } from '@/hooks/useInterventionUrgency';
 
 const _today = new Date();
@@ -9,8 +9,6 @@ function daysOpen(dateStr) {
   const diff = _today - new Date(dateStr);
   return Math.max(0, Math.floor(diff / 86400000));
 }
-
-export const TYPE_COLOR = Object.fromEntries(INTERVENTION_TYPES.map((t) => [t.id, t.color]));
 
 export const SECTION_BAR_COLOR = {
   now:           'var(--red-9)',
@@ -28,8 +26,8 @@ const DI_SECTION_IDS = new Set(['di_nouvelle', 'di_en_attente', 'di_acceptee']);
 function typeFields(code) {
   return {
     typeCode:  code ?? null,
-    typeLabel: code ? (TYPE_INTER_LABELS[code] ?? code) : null,
-    typeColor: code ? (TYPE_COLOR[code] ?? 'gray') : 'gray',
+    typeLabel: code ? getTypeLabel(code) : null,
+    typeColor: code ? getTypeColor(code) : 'gray',
   };
 }
 

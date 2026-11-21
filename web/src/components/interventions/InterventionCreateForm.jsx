@@ -1,11 +1,15 @@
 import PropTypes from 'prop-types';
-import { Badge, Box, Card, Flex, Select, Text } from '@radix-ui/themes';
+import { Box, Card, Flex, Text } from '@radix-ui/themes';
 import { MapPin, Plus } from 'lucide-react';
 import { TechDateRow, InterventionRow } from './InterventionFormFields';
 import AsyncSearchSelect from '@/components/ui/AsyncSearchSelect';
+import DescribedSelect from '@/components/ui/DescribedSelect';
 import SelectionSummary from '@/components/ui/SelectionSummary';
 import { preventEnterSubmit } from '@/components/ui/SearchableSelect/preventEnterSubmit';
-import { INTERVENTION_TYPES, TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import { useEffect } from 'react';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
+import { usePermittedInterventionTypes } from '@/hooks/shared/usePermittedInterventionTypes';
+import { selectableTypes } from '@/lib/interventionTypesStore';
 
 /* ── Sous-composants ───────────────────────────────────────────────────────── */
 
@@ -45,26 +49,29 @@ EquipementField.propTypes = {
   fetchEquipementsFn: PropTypes.func, onSelect: PropTypes.func, onClear: PropTypes.func,
 };
 
-function TypeField({ locked: lockedType, value, onChange }) {
-  const typeCfg = INTERVENTION_TYPES.find((t) => t.id === value);
-  if (lockedType) {
-    return (
-      <Flex align="center" gap="2" style={{ height: 32 }}>
-        <Badge color={typeCfg?.color ?? 'blue'} variant="soft" size="2">{TYPE_INTER_LABELS[value] ?? value}</Badge>
-        <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>préconisé</Text>
-      </Flex>
-    );
-  }
+// Largeur fixe : la description du type passe à la ligne au lieu d'élargir le formulaire
+const TYPE_FIELD_WIDTH = 300;
+
+function TypeField({ locked: lockedType, value, onChange, equipementId }) {
+  const { types, activeTypes, colorOf } = useInterventionTypeRefs();
+  const permitted = usePermittedInterventionTypes(equipementId);
+  // Un type imposé ou désactivé reste proposé (accepté par l'API) ; un type devenu non permis est vidé
+  const { options: listed, mustClear } = selectableTypes({
+    activeTypes, allTypes: types, permitted, value, locked: lockedType,
+  });
+  useEffect(() => { if (mustClear) onChange(''); }, [mustClear, onChange]);
+  const options = listed.map((t) => ({
+    value: t.id, label: t.title, badge: t.id, color: colorOf(t.id), description: t.description,
+  }));
   return (
-    <Select.Root value={value} onValueChange={onChange}>
-      <Select.Trigger />
-      <Select.Content>
-        {INTERVENTION_TYPES.map((t) => <Select.Item key={t.id} value={t.id}>{t.title}</Select.Item>)}
-      </Select.Content>
-    </Select.Root>
+    <DescribedSelect
+      value={value} options={options} onChange={onChange}
+      width={TYPE_FIELD_WIDTH} placeholder="Choisir un type…"
+      locked={lockedType} lockedHint="Type imposé par la demande"
+    />
   );
 }
-TypeField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func };
+TypeField.propTypes = { locked: PropTypes.bool, value: PropTypes.string, onChange: PropTypes.func, equipementId: PropTypes.string };
 
 /* ── Composant principal ───────────────────────────────────────────────────── */
 

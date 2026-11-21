@@ -1,13 +1,22 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-19
+Dernière mise à jour : 2026-11-20
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.10.0** (2026-11-19, tag sur main) : suivi du préventif sur la
+- Dernière version publiée : **v5.11.0** (2026-11-21, tag sur main) : 20 fusions dans develop depuis la
+  5.10.0, dont SEC-01 et TRI (sécurité, ménage), audit des cascades et auteur des journaux
+  (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
+  règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
+  « Bilan du service » à trois onglets avec seuils, séries et tendances données par l'API
+  (ADR 0032 à 0035). Production (5.6.1) à mettre à jour par l'utilisateur directement en
+  5.11.0 : migrations jusqu'à 0023 jouées au démarrage de l'API (base de dev déjà en 0023),
+  le bootstrap ouvre les nouveaux droits (dont `stats:get_audit_synthese`) ; consignes de la
+  5.9.0 toujours valables (tâche quotidienne, premier passage).
+- v5.10.0 (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
   fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
   de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
   PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
@@ -51,18 +60,32 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.10.0 : rien.
+- develop contient depuis la 5.11.0 : rien.
 
 ## Feuille de route fondatrice
 
 Étapes 1 à 5 de CLAUDE.md section 10 closes. L'étape 5 (RBAC, ADR 0007) est livrée en
-v5.1.0 avec ses réserves dans docs/backlog/suites-etape-5.md ; son critère de sortie
+v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son critère de sortie
 « tests rôle par endpoint verts » n'a pas été recontrôlé (NON VÉRIFIÉ).
 
 ## Chantiers
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-21) | Onglet « Audit » du Bilan allégé (ADR 0035, accord de l'utilisateur du 2026-11-21) : tendances de la synthèse par l'API (BIL-07), onglet web (BIL-08) | fusionnée dans develop | ADR 0035, [BIL-07](taches/BIL-07-backend-tendances-audit.md), [BIL-08](taches/BIL-08-web-onglet-audit-allege.md) |
+| fait (2026-11-21) | Onglet « État » du Bilan allégé (ADR 0034, décisions de l'utilisateur du 2026-11-21 : bandeau gardé, définitions derrière ⓘ, mini-courbes ; puis seuils et badges d'un mot donnés par l'API, tendances sur la période) | fusionnée dans develop | ADR 0034, [BIL-02](taches/BIL-02-web-onglet-etat-allege.md), [BIL-03](taches/BIL-03-backend-seuils-et-tendances.md), [BIL-04](taches/BIL-04-web-badges-courbes-barres-tendances.md), [BIL-05](taches/BIL-05-backend-series-mensuelles.md), [BIL-06](taches/BIL-06-web-courbes-huit-chiffres.md) |
+| fait (2026-11-21) | Bilan du service (ADR 0033, décisions de l'utilisateur du 2026-11-21 : trois onglets « État », « Audit » et « Qualité », période commune en mois, 3 par défaut) : page web regroupée (BIL-01) | fusionnée dans develop | ADR 0033, [BIL-01](taches/BIL-01-web-page-bilan-du-service.md) |
+| fait (2026-11-21) | Synthèse de l'audit (ADR 0032, décisions de l'utilisateur du 2026-11-20 : toute l'équipe, 3 mois, chiffres d'équipe) : route de synthèse (SYN-01), page web (SYN-02) | fusionnée dans develop | ADR 0032, [SYN-01](taches/SYN-01-backend-synthese-audit.md), [SYN-02](taches/SYN-02-web-page-synthese-audit.md) |
+| fait (2026-11-20) | Types d'intervention permis par classe d'équipement (ADR 0031, décisions de l'utilisateur du 2026-11-20) : table de liaison, migration 0023 (TPE-01) ; backend qui vérifie et filtre (TPE-02) ; web : sélecteur filtré et réglage des classes (TPE-03) ; mobile (TPE-04) ; réglage en matrice dans la liste des classes, couleur des types (TPE-05, demande de l'utilisateur à l'essai) ; préventif toujours permis pour ses propres interventions (ADR 0031 point 6) ; reviewer APPROUVÉ, 566 tests d'intégration verts, migration 0023 jouée en dev le 2026-11-20 par le bootstrap au redémarrage de l'API (table vide), essai à l'écran validé ; production : 0023 à jouer à sa mise à jour | fusionnée dans develop | ADR 0031, [TPE-01](taches/TPE-01-migration-types-par-classe.md) à [TPE-05](taches/TPE-05-web-matrice-types-par-classe.md) |
+| fait (2026-11-20) | Règles lues dans l'API (ADR 0030, décisions de l'utilisateur du 2026-11-20) : indicateurs is_locked et can_delete, capacités de l'utilisateur, suppression d'une tâche seulement « à faire » (REG-01) ; fronts sans copie de règle, statut « cancelled » retiré (REG-02) ; reviewer APPROUVÉ, 539 tests d'intégration verts, essai à l'écran validé ; restent au backlog : accès aux pages par rôle, statut d'intervention imbriqué sans is_locked (fiche équipement du mobile, demandes) | fusionnée dans develop | ADR 0030, [REG-01](taches/REG-01-backend-indicateurs-et-capacites.md), [REG-02](taches/REG-02-fronts-lisent-les-indicateurs.md) |
+| fait (2026-11-20) | Occurrence préventive rouverte avec son intervention (amendement de l'ADR 0028, décision de l'utilisateur) : l'occurrence repasse « en cours », événement du système, se termine à la nouvelle clôture ; reviewer APPROUVÉ (deux passes), 530 tests d'intégration verts | fusionnée dans develop | ADR 0028, [REO-04](taches/REO-04-occurrence-rouverte.md) |
+| fait (2026-11-20) | Audit des cascades (ADR 0029) : la demande ne ferme plus son intervention et l'API donne les transitions permises (CASC-02) ; auteur des journaux de statut et fin des doublons, migration 0022 (CASC-01, complétée par CASC-05 : auteur sur toutes les lignes de journal écrites dans une requête) ; événement du système sur chaque cascade et closed_by toujours rempli (CASC-03) ; fronts sur les transitions de l'API (CASC-04) ; reviewer APPROUVÉ, 527 tests d'intégration verts, migration 0022 jouée en dev avec accord le 2026-11-20 (aucune ligne modifiée), essai à l'écran validé ; production : 0022 à jouer à sa mise à jour ; suites au backlog : règles métier recopiées dans les fronts | fusionnée dans develop | ADR 0029, [CASC-01](taches/CASC-01-migration-auteur-des-journaux.md) à [CASC-05](taches/CASC-05-auteur-partout-dans-les-journaux.md) |
+| fait (2026-11-20) | Réouverture d'une intervention avec motif (ADR 0028) : migration 0021, motifs de réouverture, jouée en dev le 2026-11-20 (REO-01) ; motif exigé par la mise à jour, journal de statut qui refuse de sortir de « fermé », demande liée rouverte avec trace système (REO-02) ; mobile avec fenêtre de motif (REO-03) ; web : statut modifiable sur une intervention fermée ; relu APPROUVÉ, essai à l'écran validé ; production : 0021 à jouer à sa mise à jour ; suite au backlog : occurrence préventive non rouverte | fusionnée dans develop | ADR 0028, [REO-01](taches/REO-01-migration-motifs-reouverture.md) à [REO-03](taches/REO-03-mobile-reouverture.md) |
+| fait (2026-11-20) | Une seule porte de clôture (ADR 0027) : le journal de statut refuse « fermé » (CLO-01) ; le bouton « Statut » du mobile clôt par la mise à jour (CLO-02) ; trace système de la clôture de la demande ajoutée à la mise à jour ; boutons de clôture et de motif du mobile rendus visibles ; relu APPROUVÉ, essai mobile validé ; suites au backlog (réouverture et annulation sans motif, 3 interventions fermées avec tâches ouvertes) | fusionnée dans develop | ADR 0027, [CLO-01](taches/CLO-01-journal-refuse-la-cloture.md), [CLO-02](taches/CLO-02-mobile-cloture-par-la-fiche.md) |
+| fait (2026-11-20) | Types d'intervention en base (ADR 0026) : migration 0020 (description, 8 types, clés étrangères), jouée en dev le 2026-11-20 (TYP-01) ; backend lit la table, constantes retirées (TYP-02) ; web et mobile lisent l'API, type vide et obligatoire à la création, type et priorité avec description (sélecteur commun, cadenassé si imposé) (TYP-03, TYP-04) ; type suggéré par une demande accepté même désactivé ; relu APPROUVÉ, essai à l'écran validé ; production : 0020 à jouer à sa mise à jour ; suite au backlog : types permis selon l'équipement | fusionnée dans develop | ADR 0026, [TYP-01](taches/TYP-01-migration-types-en-base.md) à [TYP-04](taches/TYP-04-mobile-types-et-type-vide.md) |
+| fait | Création atomique d'une intervention (ADR 0025) : demande, intervention et tâches en un seul appel, demande « directe » sans notification, une seule insertion d'intervention (INT-01) ; trois formulaires web sur la route (INT-02) ; mobile aligné sur la fenêtre de création du web (INT-03) ; mobile propose de clore après la dernière tâche (INT-04) ; décisions de l'utilisateur du 2026-11-20 ; INT-01 à INT-04 faites et intégrées dans la branche, reviewer APPROUVÉ ; essai à l'écran du 2026-11-20 : la référence est le formulaire de l'accueil, pas la fenêtre de Coordination (correction de l'utilisateur) : composant unique de l'accueil pour la page et la Coordination, sans tâches à la création (INT-05), mobile réaligné (INT-06) ; INT-05 et INT-06 faites et intégrées (Briefing aussi sur le composant, ancien hook et composants morts retirés ; « Nouvelle intervention » de la liste ouvre la fenêtre, page supprimée) ; reviewer APPROUVÉ (deux passes), 471 tests d'intégration verts, essai à l'écran validé, fusionné dans develop le 2026-11-20 | — | ADR 0025, [INT-01](taches/INT-01-backend-creation-atomique.md) à [INT-06](taches/INT-06-mobile-aligne-sur-l-accueil.md) |
+| fait | Contraintes et traçabilité (ADR 0024) : migration 0018, contraintes et index de la production pour toute installation (72 FK, 15 CHECK, 65 index ; 4 fixtures de test corrigées) ; export courriel d'une commande sans lignes d'audit parasites, test de /repair, ménage (CONT-02) ; ignorer une occurrence avec un motif choisi, migration 0019 (CONT-03) ; 461 tests d'intégration verts ; reviewer APPROUVÉ (152 objets comparés à l'inventaire), migrations 0018 et 0019 jouées en dev avec accord le 2026-11-20 (153 objets présents, révision 0019), essai à l'écran validé, fusionné dans develop le 2026-11-20 ; production : 0017 à 0019 à jouer à sa mise à jour | — | ADR 0024, [CONT-01](taches/CONT-01-migration-contraintes-production.md) à [CONT-03](taches/CONT-03-motif-pour-ignorer-une-occurrence.md) |
+| fait | Priorités du backlog trié : jeton du mobile rafraîchi et durées de session transmises par Compose (TRI-01), clés étrangères action-tâche et tâche rendue à « à faire » (TRI-02, migration 0017), table de version d'alembic en ajout seul (TRI-03), partie « Idées d'amélioration » retirée du web (TRI-04, décision de l'utilisateur) ; reviewer APPROUVÉ, migration 0017 jouée en dev avec accord (0 orphelin), essai à l'écran validé, fusionné dans develop le 2026-11-19 | — | [TRI-01](taches/TRI-01-mobile-rafraichir-le-jeton.md) à [TRI-04](taches/TRI-04-web-routes-amelioration.md) |
 | fait | Export de masse : fiches déjà imprimées exclues par défaut (case pour les inclure), ordre par équipement puis fermeture, ZIP numéroté (constat en production du 2026-11-19, choix de l'utilisateur) ; reviewer APPROUVÉ, essai à l'écran validé, fusionné dans develop le 2026-11-19 | — | [EXPM-03](taches/EXPM-03-export-masse-sans-imprimees-et-ordre.md) |
 | fait | Suivi du préventif sur la fiche équipement (web) : pastille à jour ou en retard, liste des interventions préventives, courbe d'avance ou de retard, lancement en avance d'un plan (décisions de l'utilisateur du 2026-11-19 : lancer en avance plutôt que déclarer antidaté, web seulement) ; PREV-14 et PREV-15 faites et intégrées dans la branche, reviewer APPROUVÉ ; à l'essai : section Préventif avant « État et évolution », santé en « Attention » si un préventif est en retard (PREV-16) ; 425 tests d'intégration verts ; essai à l'écran validé par l'utilisateur, reviewer APPROUVÉ (deux passes), fusionné dans develop le 2026-11-19 | — | [PREV-14](taches/PREV-14-backend-historique-et-lancement-en-avance.md), [PREV-15](taches/PREV-15-web-suivi-preventif-fiche-equipement.md) |
 | fait | Préventif automatisé : échéancier glissant (référence = clôture de la demande), génération automatique quotidienne une semaine avant l'échéance, retards notifiés à tous, alarme « sans action depuis 7 jours » avec relance hebdo, cloche mobile ; décisions de l'utilisateur du 2026-11-18 ; ADR et fiches validés le 2026-11-18 ; PREV-01 à PREV-08 faites et intégrées dans la branche (401 tests d'intégration verts ; PREV-08 : demande rejetée = occurrence ignorée et régénérée, machines hors service exclues), essai à l'écran web et mobile validé par l'utilisateur, reviewer APPROUVÉ, fusionné dans develop le 2026-11-18 ; tâche quotidienne désactivée par défaut | — | ADR 0023, [PREV-01](taches/PREV-01-backend-echeancier.md) à [PREV-07](taches/PREV-07-mobile-preventif-et-cloche.md) |
@@ -102,9 +125,19 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : aucune. Closes aussi : EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Fiches ouvertes : TYP-01 à TYP-04. Closes aussi : INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-20 : types d'intervention en base, type vide et obligatoire à la création avec une description par type, clés étrangères (ADR 0026, décisions de l'utilisateur).
+
+2026-11-20 : création d'une intervention en une seule transaction (ADR 0025) ; fenêtre de création du web comme référence, demande créée dans le même geste sans notification, création toujours permise sur le mobile, clôture proposée après la dernière tâche (décisions de l'utilisateur).
+
+2026-11-19 : toute installation reçoit les contraintes de la production par une migration conditionnelle par nom (ADR 0024) ; ignorer une occurrence préventive exige un motif choisi dans la fenêtre commune (décision de l'utilisateur) ; création des interventions en une transaction : chantier suivant, plan à présenter.
+
+2026-11-19 : backlog trié point par point contre le code (anciens backlogs v1 à v4, suites des étapes 2 à 5, AUDC, bascule) ; points faits ou périmés retirés, points ouverts rangés par thème (docs/backlog/README.md). Prochaines corrections proposées : liens action-tâche orphelins, tables d'audit modifiables, jeton mobile jamais rafraîchi (déconnexions fréquentes confirmées par l'utilisateur), routes « amelioration » absentes.
+
+2026-11-19 : backlog, lot sécurité et erreurs d'abord (choix de l'utilisateur) ; messages P0001 renvoyés au client seulement s'ils figurent dans une liste blanche (alternative écartée : code SQLSTATE dédié, qui demandait une migration des fonctions).
 
 2026-11-19 : un préventif fait en avance s'enregistre en lançant l'occurrence tout de suite (demande créée, circuit normal, échéance théorique conservée pour mesurer l'avance), pas par une déclaration antidatée ; suivi du préventif sur la fiche équipement côté web seulement.
 
@@ -134,6 +167,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
+   production par l'utilisateur (migrations jusqu'à 0023 au démarrage de l'API).
+
 0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
    badge « Inactif » et réactivation d'un plan (POST /preventive-plans/{id}/reactivate,
@@ -144,7 +180,7 @@ subagents, format de compte rendu imposé aux agents).
    exigé puis accepté ; suppressions d'articles, liens fournisseur et fabricants couvertes
    par les tests d'intégration seulement). Base de dev : migrations 0007 à 0011 jouées ;
    Suites :
-   docs/backlog/suites-audc-etape-2.md. Étape 4 fusionnée le 2026-11-14 (essai à l'écran
+   docs/backlog (tri du 2026-11-19). Étape 4 fusionnée le 2026-11-14 (essai à l'écran
    validé ; correctifs au passage : adresse IP des IP bloquées, saisie du formulaire de
    classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les

@@ -227,27 +227,15 @@ def test_intervention_ancienne_sans_demande_se_supprime_sans_issue(client, admin
 # ── Fermeture : tout ou rien avec la cascade ────────────────────────────────
 
 
-def _fermer(client, admin, intervention_id):
-    return client.post(
-        "/intervention-status-log",
-        headers=admin.headers,
-        json={
-            "intervention_id": intervention_id,
-            "status_to": "ferme",
-            "technician_id": admin.id,
-            "date": "2026-11-01T10:00:00",
-        },
-    )
-
-
 def test_fermer_une_intervention_cloture_la_demande_liee(client, admin, instance):
     intervention_id, request_id = intervention_liee(client, admin, instance)
     resp = _fermer(client, admin, intervention_id)
-    assert resp.status_code == 201, resp.text
+    assert resp.status_code == 200, resp.text
     assert _demande(instance, request_id)[0] == "cloturee"
 
 
-def _fermer_par_put(client, admin, intervention_id):
+def _fermer(client, admin, intervention_id):
+    """Fermeture par la seule porte, PUT /interventions/{id} (ADR 0027)."""
     return client.put(
         f"/interventions/{intervention_id}",
         headers=admin.headers,
@@ -255,13 +243,12 @@ def _fermer_par_put(client, admin, intervention_id):
     )
 
 
-@pytest.mark.parametrize("fermer", [_fermer, _fermer_par_put], ids=["journal_de_statut", "put"])
 def test_fermeture_dont_la_cascade_echoue_est_annulee_et_l_intervention_reste_ouverte(
-    client, admin, instance, fermer
+    client, admin, instance
 ):
     intervention_id, request_id = intervention_liee(client, admin, instance)
     with _panne(instance, "UPDATE", condition="NEW.statut = 'cloturee'"):
-        resp = fermer(client, admin, intervention_id)
+        resp = _fermer(client, admin, intervention_id)
     statut = instance.sql(
         "SELECT status_actual FROM intervention WHERE id = %s", (intervention_id,)
     )
@@ -274,7 +261,7 @@ def test_la_cascade_de_fermeture_ecrit_un_evenement_du_systeme_au_nom_du_jeton(
     client, admin, instance
 ):
     intervention_id, request_id = intervention_liee(client, admin, instance)
-    assert _fermer(client, admin, intervention_id).status_code == 201
+    assert _fermer(client, admin, intervention_id).status_code == 200
     cascade = [
         ligne for ligne in lignes_audit(instance, request_id) if ligne[1] not in _ACCEPTATION
     ]

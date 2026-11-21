@@ -16,8 +16,6 @@ def _is_public(path: str, method: str, api_env: str) -> bool:
     always_public = {"/health", "/server/ping", "/favicon.ico", "/auth/login", "/auth/refresh"}
     if path in always_public:
         return True
-    if path.endswith("/qrcode"):
-        return True
     if api_env != "production" and path in {"/docs", "/openapi.json", "/redoc"}:
         return True
     if path.startswith("/static"):

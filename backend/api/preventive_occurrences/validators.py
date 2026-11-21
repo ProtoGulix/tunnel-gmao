@@ -1,8 +1,13 @@
 """Règles métier du lancement en avance d'une occurrence préventive."""
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException
+
+from api.errors.exceptions import ValidationError
+
+# Décision d'audit portée par les motifs proposés pour ignorer une occurrence.
+DECISION_SKIPPED = "occurrence_skipped"
 
 
 class UnprocessableError(HTTPException):
@@ -22,3 +27,27 @@ def validate_anticipation(plan: Dict[str, Any], machine: Dict[str, Any]) -> None
         raise UnprocessableError("L'équipement n'est pas en service")
     if machine["equipement_class_id"] != plan["equipement_class_id"]:
         raise UnprocessableError("L'équipement n'est pas de la classe du plan")
+
+
+def skip_reason_from_choice(
+    reason_code: Optional[str], reason_text: Optional[str], reasons: List[Dict[str, Any]]
+) -> str:
+    """Texte de `skip_reason` (exigé par la contrainte CHECK) déduit du motif choisi.
+
+    `reasons` = motifs actifs applicables à l'occurrence. Seul un motif de la décision
+    occurrence_skipped et de catégorie manual ou user est accepté (jamais ROUTINE ni un motif
+    système). Retourne le libellé, ou le texte libre pour OTHER (obligatoire).
+    """
+    reason = {r["code"]: r for r in reasons}.get(reason_code or "")
+    if (
+        reason is None
+        or reason.get("category") not in ("manual", "user")
+        or DECISION_SKIPPED not in (reason.get("decision_types") or [])
+    ):
+        raise ValidationError(f"Motif '{reason_code}' non applicable à l'abandon d'une occurrence")
+    text = (reason_text or "").strip()
+    if reason_code == "OTHER":
+        if not text:
+            raise ValidationError("reason_text obligatoire quand reason_code = OTHER")
+        return text
+    return reason["label"]

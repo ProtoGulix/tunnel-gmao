@@ -18,10 +18,15 @@ Liste toutes les classes, triées par code ASC.
     "id": "b28f1f4f-...",
     "code": "SCIE",
     "label": "Scie",
-    "description": "Machines de sciage"
+    "description": "Machines de sciage",
+    "allowed_intervention_types": ["CUR", "PRE"]
   }
 ]
 ```
+
+`allowed_intervention_types` : codes des types d'intervention permis pour la classe (ADR 0031),
+triés ; liste vide = tous les types permis. Présent aussi dans le détail, la création et le
+`PATCH`.
 
 ---
 
@@ -74,6 +79,38 @@ Supprime une classe.
 ### Réponse `204`
 
 Pas de contenu.
+
+---
+
+## `GET /equipement-class/{id}/intervention-types`
+
+Types permis de la classe. Ouvert à tout utilisateur authentifié.
+
+### Réponse `200`
+
+```json
+{ "data": { "intervention_types": ["CUR", "PRE"] } }
+```
+
+---
+
+## `PUT /equipement-class/{id}/intervention-types`
+
+Remplace la liste des types permis (ADR 0031). Même droit que `PATCH /equipement-class/{id}`
+(ADMIN, ou rôle auquel la matrice accorde `equipement-class:replace_allowed_intervention_types`;
+par défaut RESP). Corps :
+
+```json
+{ "intervention_types": ["CUR", "PRE"] }
+```
+
+Liste vide = tous les types permis. Doublons ignorés. Code absent de `intervention_type` :
+`400` (`Type d'intervention inconnu : ZZZ`), rien n'est écrit. Classe inconnue : `404`.
+Réponse `200` : la classe, `{ "data": { id, code, label, description, allowed_intervention_types } }`.
+
+Aucun effet sur les interventions existantes. Audit : événement `intervention_types_changed`
+(`entity_type` `equipement_class`, anciennes et nouvelles listes), déposé seulement si la liste
+change, motif routinier.
 
 ## Audit (ADR 0018, étape 4)
 

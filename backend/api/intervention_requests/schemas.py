@@ -4,9 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from api.constants import INTERVENTION_TYPE_IDS
 from api.equipements.schemas import EquipementListItem
 from api.intervention_tasks.schemas import InterventionTaskOut
 from api.services.schemas import ServiceOut
@@ -33,13 +32,6 @@ class InterventionRequestIn(BaseModel):
     suggested_type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention suggéré (pré-remplit l'acceptation)"
     )
-
-    @field_validator("suggested_type_inter")
-    @classmethod
-    def validate_suggested_type_inter(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in INTERVENTION_TYPE_IDS:
-            raise ValueError(f"Type d'intervention suggéré invalide : {v}")
-        return v
 
     class Config:
         from_attributes = True
@@ -77,6 +69,8 @@ class InterventionRequestListItem(BaseModel):
     tasks: List[InterventionTaskOut] = []
     is_system: bool = False
     suggested_type_inter: Optional[str] = None
+    # Transitions que l'utilisateur courant peut déclencher (calculées par le backend)
+    allowed_transitions: List[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
@@ -98,6 +92,10 @@ class StatusTransitionIn(BaseModel):
     # Champs pour la création d'intervention lors de l'acceptation (status_to = acceptee)
     type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention (obligatoire pour acceptee)"
+    )
+    title: Optional[str] = Field(
+        default=None,
+        description="Titre de l'intervention créée (à défaut : description de la demande)",
     )
     tech_id: Optional[UUID] = Field(
         default=None, description="UUID du technicien pilote (prioritaire sur tech_initials)"

@@ -3,7 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
-import { changeInterventionStatus, getInterventionStatuses } from '../../api/interventions'
+import { changeInterventionStatus, getInterventionStatuses, reopenIntervention } from '../../api/interventions'
+import { CloseInterventionPrompt } from '../../components/interventions/CloseInterventionPrompt'
+import { AuditReasonSheet } from '../../components/ui/AuditReasonSheet'
+import { getErrorMessage } from '../../lib/api/errors'
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
@@ -12,6 +15,8 @@ import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
 import { formatDateFr } from '../../utils/dateUtils'
+
+const CLOSED_STATUS = 'ferme'
 
 function getInitials(name) {
   if (!name) return '?'
@@ -142,6 +147,10 @@ export default function InterventionDetailPage() {
   const { intervention, loading, error, reload } = useInterventionDetail(id)
   const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
+  const [showClosePrompt, setShowClosePrompt] = useState(false)
+  // Réouverture en attente de motif : { toCode, reasons } (ADR 0028)
+  const [reopenAsk, setReopenAsk] = useState(null)
+  const [statusError, setStatusError] = useState(null)
   const [showActionForm, setShowActionForm] = useState(false)
   const [purchaseActionId, setPurchaseActionId] = useState(null)
   // Incrémenté à chaque reload() pour forcer InterventionTasksSection à
@@ -164,6 +173,16 @@ export default function InterventionDetailPage() {
   const stats = intervention?.stats
 
   async function handleStatusChange(toCode) {
+    // Clôture : une seule porte (ADR 0027), la confirmation passe par la mise à jour
+    if (toCode === CLOSED_STATUS) {
+      setShowClosePrompt(true)
+      return
+    }
+    // Rouvrir une intervention fermée : par la mise à jour, avec motif (ADR 0028)
+    if (statusCode === CLOSED_STATUS) {
+      await submitReopen(toCode)
+      return
+    }
     await changeInterventionStatus({
       intervention_id: id,
       status_from: statusCode,
@@ -172,6 +191,24 @@ export default function InterventionDetailPage() {
       date: new Date().toISOString(),
     })
     await reload()
+  }
+
+  async function submitReopen(toCode, audit) {
+    setStatusError(null)
+    try {
+      await reopenIntervention(id, toCode, audit)
+      setReopenAsk(null)
+      reloadAll()
+    } catch (err) {
+      const asked = err?.data?.audit?.reasons
+      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+        setReopenAsk({ toCode, reasons: asked })
+        return
+      }
+      setReopenAsk(null)
+      if (!audit) throw err
+      setStatusError(getErrorMessage(err))
+    }
   }
 
   return (
@@ -232,6 +269,10 @@ export default function InterventionDetailPage() {
           </div>
         )}
       </header>
+
+      {statusError && (
+        <div className="mx-4 mt-3 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{statusError}</div>
+      )}
 
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
@@ -306,6 +347,24 @@ export default function InterventionDetailPage() {
           statuses={statuses}
           onClose={() => setShowStatusSheet(false)}
           onChange={handleStatusChange}
+        />
+      )}
+
+      {reopenAsk && (
+        <AuditReasonSheet
+          title="Pourquoi rouvrir cette intervention ?"
+          reasons={reopenAsk.reasons}
+          onConfirm={(audit) => submitReopen(reopenAsk.toCode, audit)}
+          onCancel={() => setReopenAsk(null)}
+        />
+      )}
+
+      {showClosePrompt && (
+        <CloseInterventionPrompt
+          intervention={intervention}
+          title="Clore l'intervention"
+          onClosed={() => { setShowClosePrompt(false); reloadAll() }}
+          onDismiss={() => setShowClosePrompt(false)}
         />
       )}
 

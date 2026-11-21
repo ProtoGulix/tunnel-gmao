@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 
@@ -21,9 +22,18 @@ class EquipementClassRepository:
         try:
             cur = conn.cursor()
             cur.execute("""
-                SELECT id, code, label, description
-                FROM equipement_class
-                ORDER BY code ASC
+                SELECT ec.id, ec.code, ec.label, ec.description,
+                       COALESCE(
+                           ARRAY(
+                               SELECT ect.intervention_type_code
+                               FROM equipement_class_intervention_type ect
+                               WHERE ect.equipement_class_id = ec.id
+                               ORDER BY ect.intervention_type_code
+                           ),
+                           '{}'
+                       ) AS allowed_intervention_types
+                FROM equipement_class ec
+                ORDER BY ec.code ASC
             """)
             rows = cur.fetchall()
             cols = [desc[0] for desc in cur.description]
@@ -34,6 +44,74 @@ class EquipementClassRepository:
             raise_db_error(e, "opération")
         finally:
             release_connection(conn)
+
+    @staticmethod
+    def _read_allowed_types(cur, class_id: str) -> List[str]:
+        """Codes des types permis de la classe, triés ; liste vide = tous permis (ADR 0031)."""
+        cur.execute(
+            """
+            SELECT intervention_type_code
+            FROM equipement_class_intervention_type
+            WHERE equipement_class_id = %s
+            ORDER BY intervention_type_code
+            """,
+            (class_id,),
+        )
+        return [r[0] for r in cur.fetchall()]
+
+    def replace_allowed_types(self, class_id: str, codes: List[str]) -> Dict[str, Any]:
+        """Remplace la liste des types permis d'une classe, dans une transaction.
+
+        Codes inconnus refusés (400) ; doublons ignorés ; liste vide = tous permis. Dépose
+        l'événement d'audit seulement si la liste change."""
+        wanted = sorted({c.strip() for c in codes if c and c.strip()})
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM equipement_class WHERE id = %s", (class_id,))
+            if not cur.fetchone():
+                raise NotFoundError(f"Classe d'équipement {class_id} non trouvée")
+            if wanted:
+                cur.execute("SELECT code FROM intervention_type WHERE code = ANY(%s)", (wanted,))
+                known = {r[0] for r in cur.fetchall()}
+                unknown = [c for c in wanted if c not in known]
+                if unknown:
+                    raise ValidationError(f"Type d'intervention inconnu : {', '.join(unknown)}")
+            before = self._read_allowed_types(cur, class_id)
+            if before != wanted:
+                cur.execute(
+                    "DELETE FROM equipement_class_intervention_type WHERE equipement_class_id = %s",
+                    (class_id,),
+                )
+                for code in wanted:
+                    cur.execute(
+                        """
+                        INSERT INTO equipement_class_intervention_type
+                            (equipement_class_id, intervention_type_code)
+                        VALUES (%s, %s)
+                        """,
+                        (class_id, code),
+                    )
+                record_audit_event(
+                    "equipement_class",
+                    class_id,
+                    "intervention_types_changed",
+                    old_value={"intervention_types": before},
+                    new_value={"intervention_types": wanted},
+                )
+            conn.commit()
+        except (NotFoundError, ValidationError):
+            conn.rollback()
+            raise
+        except HTTPException:
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "opération")
+        finally:
+            release_connection(conn)
+        return self.get_by_id(class_id)
 
     def get_by_id(self, class_id: str) -> Dict[str, Any]:
         """Récupère une classe d'équipement par ID"""
@@ -53,7 +131,9 @@ class EquipementClassRepository:
                 raise NotFoundError(f"Classe d'équipement {class_id} non trouvée")
 
             cols = [desc[0] for desc in cur.description]
-            return dict(zip(cols, row))
+            result = dict(zip(cols, row))
+            result["allowed_intervention_types"] = self._read_allowed_types(cur, class_id)
+            return result
         except NotFoundError:
             raise
         except HTTPException:
@@ -91,7 +171,7 @@ class EquipementClassRepository:
             conn.commit()
 
             cols = [desc[0] for desc in cur.description]
-            return dict(zip(cols, row))
+            return {**dict(zip(cols, row)), "allowed_intervention_types": []}
         except ValidationError:
             raise
         except HTTPException:
@@ -157,7 +237,9 @@ class EquipementClassRepository:
             conn.commit()
 
             cols = [desc[0] for desc in cur.description]
-            return dict(zip(cols, row))
+            result = dict(zip(cols, row))
+            result["allowed_intervention_types"] = self._read_allowed_types(cur, class_id)
+            return result
         except (NotFoundError, ValidationError):
             raise
         except HTTPException:

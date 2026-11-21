@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 from api.intervention_tasks.schemas import InterventionTaskOut
 
@@ -27,17 +27,6 @@ class PreventiveOccurrenceOut(BaseModel):
     tasks: list[InterventionTaskOut] = []
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class OccurrenceSkipIn(BaseModel):
-    skip_reason: str
-
-    @field_validator("skip_reason")
-    @classmethod
-    def skip_reason_not_empty(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("skip_reason ne peut pas être vide")
-        return v.strip()
 
 
 class GenerateOccurrencesResult(BaseModel):

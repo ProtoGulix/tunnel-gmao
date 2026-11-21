@@ -49,7 +49,6 @@ export default function PreventiveOccurrencesTab() {
   const [generating, setGenerating] = useState(false);
   const [genResult, setGenResult] = useState(null);
   const [toSkip, setToSkip] = useState(null);
-  const [skipReason, setSkipReason] = useState('');
   const [confirmGen, setConfirmGen] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const [repairResult, setRepairResult] = useState(null);
@@ -100,11 +99,13 @@ export default function PreventiveOccurrencesTab() {
 
   const handleSkip = async () => {
     if (!toSkip) return;
+    const occurrence = toSkip;
+    setToSkip(null);
     try {
-      await skipOccurrence(toSkip.id, skipReason);
-    } finally {
-      setToSkip(null);
-      setSkipReason('');
+      // Le motif est demandé par la fenêtre commune (auditGuard), pas saisi ici (CLAUDE.md 2.4).
+      await skipOccurrence(occurrence.id);
+    } catch (err) {
+      if (!err?.isAuditCancelled) throw err;
     }
   };
 
@@ -354,23 +355,17 @@ export default function PreventiveOccurrencesTab() {
       </AlertDialog.Root>
 
       {/* Skip occurrence */}
-      <AlertDialog.Root open={!!toSkip} onOpenChange={(open) => { if (!open) { setToSkip(null); setSkipReason(''); } }}>
+      <AlertDialog.Root open={!!toSkip} onOpenChange={(open) => { if (!open) setToSkip(null); }}>
         <AlertDialog.Content maxWidth="420px">
           <AlertDialog.Title>Ignorer l'occurrence</AlertDialog.Title>
           <AlertDialog.Description>
-            Plan : <strong>{toSkip?.plan_label}</strong> — Machine : <strong>{toSkip?.machine_code}</strong>
+            Plan : <strong>{toSkip?.plan_label}</strong> — Machine : <strong>{toSkip?.machine_code}</strong>.
+            Un motif vous sera demandé.
           </AlertDialog.Description>
-          <Box mt="2">
-            <TextField.Root
-              value={skipReason}
-              onChange={(e) => setSkipReason(e.target.value)}
-              placeholder="Raison de l'exclusion (obligatoire)…"
-            />
-          </Box>
           <Flex gap="3" mt="4" justify="end">
             <AlertDialog.Cancel><Button variant="soft" color="gray">Annuler</Button></AlertDialog.Cancel>
             <AlertDialog.Action>
-              <Button color="orange" onClick={handleSkip} disabled={!skipReason.trim()}>Ignorer</Button>
+              <Button color="orange" onClick={handleSkip}>Ignorer</Button>
             </AlertDialog.Action>
           </Flex>
         </AlertDialog.Content>

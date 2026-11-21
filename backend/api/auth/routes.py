@@ -17,6 +17,7 @@ from api.auth.antiflood import (
 from api.auth.jwt_handler import create_access_token, create_refresh_token
 from api.auth.permissions import permission_cache, require_authenticated
 from api.db import get_connection, release_connection
+from api.intervention_tasks.validators import task_capabilities
 from api.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -370,6 +371,7 @@ async def get_me(request: Request, user_id: str = Depends(require_authenticated)
             "initial": initial,
             "role": role_code,
             "permissions": permissions,
+            "capabilities": task_capabilities(role_code),
         }
     except HTTPException:
         raise

@@ -1,8 +1,63 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
-from api.constants import CLOSED_STATUS_CODE, INTERVENTION_TYPE_IDS
+from api.audits.schemas import AuditRules
+from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
-from api.errors.exceptions import ConflictError, ValidationError
+from api.errors.exceptions import AuditReasonRequiredError, ConflictError, ValidationError
+from api.interventions.types import check_allowed_for_machine, check_assignable
+
+# Décision d'audit (decision_types) d'une réouverture (ADR 0028)
+REOPEN_DECISION = "intervention_reopened"
+
+
+def is_intervention_locked(status_actual: Optional[str]) -> bool:
+    """Vrai si l'intervention est fermée : plus aucune écriture sur elle ni ses actions/tâches.
+
+    Règle unique (ADR 0030) : sert aux refus d'écriture et à l'indicateur `is_locked`.
+    """
+    return str(status_actual or "").strip().lower() == CLOSED_STATUS_CODE
+
+
+def is_reopening(current_status: Optional[str], new_status: Optional[str]) -> bool:
+    """Vrai si la mise à jour fait sortir l'intervention de « ferme »."""
+    return (
+        new_status is not None
+        and current_status == CLOSED_STATUS_CODE
+        and str(new_status) != CLOSED_STATUS_CODE
+    )
+
+
+def ensure_reopen_reason(
+    reason_code: Optional[str],
+    reason_text: Optional[str],
+    reasons: List[Dict[str, Any]],
+) -> None:
+    """Vérifie le motif explicite d'une réouverture (ADR 0028, même mécanisme que ADR 0016).
+
+    Rouvrir n'est jamais routinier : sans motif choisi par l'utilisateur (ROUTINE injecté
+    par le middleware, motif auto ou system), on répond la demande de motif standard.
+    `reasons` = motifs actifs de l'entité intervention ; seuls ceux dont decision_types
+    contient `intervention_reopened` sont proposés et acceptés.
+    """
+    from api.utils.audit import build_picker_reasons
+
+    proposed = [r for r in reasons if REOPEN_DECISION in (r.get("decision_types") or [])]
+    reason = {r["code"]: r for r in reasons}.get(reason_code or "")
+    if reason is None:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une intervention")
+    if reason.get("category") not in ("manual", "user"):
+        raise AuditReasonRequiredError(
+            AuditRules(
+                required=True,
+                silent=False,
+                default_reason_code=None,
+                reasons=build_picker_reasons(proposed),
+            ).model_dump()
+        )
+    if reason not in proposed:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une réouverture")
+    if reason_code == "OTHER" and not (reason_text or "").strip():
+        raise ValidationError("reason_text obligatoire quand reason_code = OTHER")
 
 
 class InterventionValidator:
@@ -50,18 +105,15 @@ class InterventionValidator:
             release_connection(conn)
 
     @staticmethod
-    def validate_type_inter(type_inter: str) -> None:
-        """Valide que le type d'intervention est connu."""
-        if type_inter not in INTERVENTION_TYPE_IDS:
-            raise ConflictError(
-                f"Type d'intervention '{type_inter}' inconnu. "
-                f"Valeurs autorisées : {', '.join(INTERVENTION_TYPE_IDS)}"
-            )
+    def validate_type_inter(type_inter: str, current: str | None = None) -> None:
+        """Valide que le type est connu en base et actif (sauf s'il est inchangé : `current`)."""
+        check_assignable(type_inter, current)
 
     @staticmethod
-    def validate_request_required(data: Dict[str, Any]) -> None:
-        """RÈGLE MÉTIER : Toute intervention doit être liée à une demande (request_id obligatoire)."""
-        if not data.get('request_id'):
+    def validate_request_required(data: Dict[str, Any], has_new_request: bool = False) -> None:
+        """RÈGLE MÉTIER : Toute intervention est issue d'une demande : existante (request_id)
+        ou créée dans le même geste (ADR 0025, has_new_request)."""
+        if not data.get('request_id') and not has_new_request:
             raise ValidationError(
                 "Une intervention doit obligatoirement être liée à une demande d'intervention (request_id manquant)."
             )
@@ -123,10 +175,19 @@ class InterventionValidator:
             release_connection(conn)
 
     @classmethod
-    def validate_create(cls, data: Dict[str, Any]) -> None:
-        """Valide les règles métier avant création d'une intervention."""
+    def validate_create(
+        cls, data: Dict[str, Any], suggested_type: str | None = None, from_plan: bool = False
+    ) -> None:
+        """Valide les règles métier avant création d'une intervention.
+
+        `suggested_type` : type suggéré par la demande liée, accepté même désactivé.
+        `from_plan` : intervention issue d'un plan préventif (type PRE toujours permis)."""
         if data.get("type_inter"):
-            cls.validate_type_inter(data["type_inter"])
+            cls.validate_type_inter(data["type_inter"], suggested_type)
+            # Le type de la classe de l'équipement l'emporte, même sur le type suggéré (ADR 0031).
+            check_allowed_for_machine(
+                data["type_inter"], data.get("machine_id"), from_plan=from_plan
+            )
         if data.get("machine_id"):
             from api.equipement_statuts.repo import check_equipement_statut_allows_interventions
 

@@ -47,18 +47,6 @@ export const PRIORITIES = {
   faible:    { label: 'Faible',    color: '#616161', variant: 'secondary' },
 }
 
-// ─── Types d'intervention ────────────────────────────────────────────────────
-export const INTERVENTION_TYPES = {
-  CUR: { label: 'Curatif',      color: '#ED6C02' },
-  PRE: { label: 'Préventif',    color: '#1F3A5F' },
-  REA: { label: 'Réajustement', color: '#2E7D32' },
-  BAT: { label: 'Bâtiment',     color: '#616161' },
-  PRO: { label: 'Projet',       color: '#1F3A5F' },
-  COF: { label: 'Coffret',      color: '#616161' },
-  PIL: { label: 'Pilote',       color: '#7B1FA2' },
-  MES: { label: 'Mise en service', color: '#0288D1' },
-}
-
 // ─── États machine ───────────────────────────────────────────────────────────
 export const MACHINE_STATES = {
   ok:          { label: 'OK',          color: '#2E7D32', variant: 'success' },

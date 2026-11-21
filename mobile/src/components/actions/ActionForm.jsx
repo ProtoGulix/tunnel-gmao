@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { X, ChevronLeft, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, FileText, Hammer, Lock, CheckSquare } from 'lucide-react'
+import { X, ChevronLeft, Check, Loader2, Clock, CalendarDays, Tag, AlignLeft, BarChart3, ChevronDown, Wrench, Plus, ChevronRight, Hammer, Lock, CheckSquare } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { TaskStatusBadge } from '../ui/TaskStatusBadge'
@@ -7,11 +7,13 @@ import { useActionForm } from '../../hooks/interventions/useActionForm'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
 import { SheetPicker } from '../ui/SheetPicker'
-import { getEquipements, getServices } from '../../api/interventions'
-import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI, createDI, createIntervention, getInterventionTypes } from '../../api/planning'
+import { getEquipements } from '../../api/interventions'
+import { getActionCategories, getComplexityFactors, createAction, searchInterventions, searchDI } from '../../api/planning'
 import { getOpenTasksByIntervention, createTask } from '../../api/tasks'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
+import { InterventionCreateForm } from './InterventionCreateForm'
+import { CloseInterventionPrompt } from '../interventions/CloseInterventionPrompt'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
@@ -99,87 +101,6 @@ function CollapsibleSection({ icon: Icon, iconColor = '#64748b', title, badge, o
           {children}
         </div>
       )}
-    </div>
-  )
-}
-
-// ─── Formulaire DI inline ──────────────────────────────────────────────────────
-function DIInlineForm({ equip, user, onCreated, onCancel }) {
-  const [demandeurNom, setDemandeurNom] = useState(
-    user ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() : ''
-  )
-  const [serviceId, setServiceId] = useState('')
-  const [services, setServices] = useState([])
-  const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    getServices().then(setServices).catch(() => {})
-  }, [])
-
-  const serviceOptions = [
-    { value: '', label: '— Aucun —' },
-    ...services.map(s => ({ value: s.id, label: s.label }))
-  ]
-
-  async function handleSubmit() {
-    if (!demandeurNom.trim()) { setError('Le nom du demandeur est requis'); return }
-    if (!description.trim()) { setError('La description est requise'); return }
-    setLoading(true)
-    setError(null)
-    try {
-      const di = await createDI({
-        machine_id: equip.id,
-        demandeur_nom: demandeurNom.trim(),
-        service_id: serviceId || undefined,
-        description: description.trim(),
-      })
-      onCreated(di)
-    } catch (err) {
-      setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la création')
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      {error && (
-        <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>
-      )}
-      <div>
-        <label className="text-xs font-bold text-tunnel-text mb-1 block">Nom du demandeur *</label>
-        <input className={inputCls} value={demandeurNom} onChange={e => setDemandeurNom(e.target.value)}
-          placeholder="Jean Dupont" />
-      </div>
-      <div>
-        <label className="text-xs font-bold text-tunnel-text mb-1 block">Service</label>
-        <SheetPicker
-          title="Service"
-          options={serviceOptions}
-          value={serviceId}
-          onChange={setServiceId}
-          placeholder="Sélectionner un service…"
-          zIndex={65}
-        />
-      </div>
-      <div>
-        <label className="text-xs font-bold text-tunnel-text mb-1 block">Description *</label>
-        <textarea className={`${inputCls} resize-none`} rows={3} value={description}
-          onChange={e => setDescription(e.target.value)}
-          placeholder="Décris le problème constaté..." />
-      </div>
-      <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onCancel}
-          className="flex-1 py-2 rounded-lg border border-tunnel-border text-xs font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
-          Annuler
-        </button>
-        <button type="button" disabled={loading} onClick={handleSubmit}
-          className="flex-1 py-2 rounded-lg bg-tunnel-accent text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">
-          {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-          Créer la DI
-        </button>
-      </div>
     </div>
   )
 }
@@ -309,118 +230,6 @@ const COMPLEXITY_OPTIONS = [
   { value: '10', label: '10 — Expert' },
 ]
 
-// ─── Formulaire Intervention inline (dans ActionForm) ────────────────────────
-const PRIORITY_OPTIONS_INLINE = [
-  { value: 'faible',    label: 'Faible' },
-  { value: 'normale',   label: 'Normale' },
-  { value: 'important', label: 'Important' },
-  { value: 'urgent',    label: 'Urgent' },
-]
-
-function InterventionInlineForm({ equip, di, user, onCreated, onCancel }) {
-  const [title, setTitle] = useState(di?.description ?? '')
-  const [typeInter, setTypeInter] = useState('')
-  const [typeOptions, setTypeOptions] = useState([])
-  const [priority, setPriority] = useState('normale')
-  const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const techInitials = user?.initial ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : 'XX')
-
-  useEffect(() => {
-    getInterventionTypes().then(types => {
-      setTypeOptions(types)
-      if (types.length > 0) setTypeInter(types[0].id)
-    }).catch(() => {})
-  }, [])
-
-  const handleSubmit = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const inter = await createIntervention({
-        machine_id: equip.id,
-        type_inter: typeInter,
-        // tech_id est exigé par POST /interventions ; les initiales seules étaient refusées (422).
-        tech_id: user?.id,
-        tech_initials: techInitials,
-        title: title.trim() || undefined,
-        priority,
-        reported_date: reportedDate || undefined,
-        request_id: di?.id,
-      })
-      onCreated(inter)
-    } catch (err) {
-      setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la création')
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      {di && (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-100">
-          <FileText size={13} className="text-tunnel-accent shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold text-tunnel-accent">{di.code}</p>
-            <p className="text-[11px] text-tunnel-muted line-clamp-1">{di.description}</p>
-          </div>
-        </div>
-      )}
-      {error && (
-        <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>
-      )}
-      <div>
-        <label className="text-xs font-bold text-tunnel-text mb-1 block">Titre</label>
-        <input className={inputCls} value={title} onChange={e => setTitle(e.target.value)}
-          placeholder="Titre de l'intervention" />
-      </div>
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <label className="text-xs font-bold text-tunnel-text mb-1 block">Type *</label>
-          <SheetPicker
-            title="Type d'intervention"
-            options={typeOptions.map(o => ({ value: o.id, label: o.title }))}
-            value={typeInter}
-            onChange={setTypeInter}
-            placeholder="Sélectionner un type..."
-          />
-        </div>
-        <div className="flex-1">
-          <label className="text-xs font-bold text-tunnel-text mb-1 block">Priorité</label>
-          <SheetPicker
-            title="Priorité"
-            options={PRIORITY_OPTIONS_INLINE}
-            value={priority}
-            onChange={setPriority}
-            placeholder="Sélectionner une priorité..."
-          />
-        </div>
-      </div>
-      <div>
-        <label className="text-xs font-bold text-tunnel-text mb-1 block">Date de signalement</label>
-        <input type="date" className={inputCls} value={reportedDate}
-          onChange={e => setReportedDate(e.target.value)} />
-      </div>
-      <div className="text-[11px] text-tunnel-muted">
-        Initiales technicien : <span className="font-mono font-bold text-tunnel-text">{techInitials}</span>
-      </div>
-      <div className="flex gap-2 pt-1">
-        <button type="button" onClick={onCancel}
-          className="flex-1 py-2 rounded-lg border border-tunnel-border text-xs font-medium text-tunnel-muted bg-white active:bg-tunnel-bg">
-          Annuler
-        </button>
-        <button type="button" disabled={loading || !di} onClick={handleSubmit}
-          className="flex-1 py-2 rounded-lg bg-tunnel-accent text-white text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">
-          {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-          Créer l'intervention
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ─── Formulaire principal ─────────────────────────────────────────────────────
 export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, defaultIntervention = null, mode = 'modal' }) {
   const { user } = useAuth()
@@ -433,12 +242,8 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
 
   // DI chargées pour l'équipement
   const [dis, setDis] = useState([])
-  const [loadingDI, setLoadingDI] = useState(false)
-  // DI sélectionnée (pour créer une intervention dessus)
-  const [selectedDI, setSelectedDI] = useState(null)
 
   // Sections inline
-  const [showDIForm, setShowDIForm] = useState(false)
   const [showInterForm, setShowInterForm] = useState(false)
 
   // Intervention sélectionnée
@@ -467,6 +272,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [done, setDone] = useState(false)
+  const [proposeClose, setProposeClose] = useState(false)
 
   const dirty = !!(equip || intervention || formState.description || formState.time || timeStart || timeEnd || formState.category)
   const { guardedClose, ConfirmDialog } = useFormGuard({ dirty, onClose })
@@ -480,15 +286,15 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   useEffect(() => {
     if (!equip) {
       setInterventions([]); if (!defaultIntervention) setIntervention(null)
-      setDis([]); setSelectedDI(null)
-      setShowDIForm(false); setShowInterForm(false)
+      setDis([])
+      setShowInterForm(false)
       return
     }
     // Si l'intervention est déjà verrouillée, pas besoin de charger la liste
     if (defaultIntervention) return
     setLoadingInter(true)
     setIntervention(null)
-    setShowDIForm(false); setShowInterForm(false)
+    setShowInterForm(false)
 
     Promise.all([
       searchInterventions({ equipement_id: equip.id, status: 'ouvert,en_cours,en_attente_pieces,en_attente_prod', limit: 30 }),
@@ -516,24 +322,30 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
     return null
   }, [categories, formState.category])
 
-  // Aucune intervention ouverte → proposer création
-  const noOpenInterventions = !loadingInter && equip && interventions.length === 0
   // DI disponibles (nouvelle) pour lier à une intervention
   const availableDIs = dis.filter(d => d.statut === 'nouvelle' || d.statut === 'en_attente')
-  const noDI = !loadingInter && equip && availableDIs.length === 0
-
-  function handleDICreated(di) {
-    setDis(prev => [di, ...prev])
-    setSelectedDI(di)
-    setShowDIForm(false)
-    setShowInterForm(true)
-  }
 
   function handleInterCreated(inter) {
     setInterventions(prev => [inter, ...prev])
     setIntervention(inter)
     setShowInterForm(false)
-    setSelectedDI(null)
+  }
+
+  // Après une action qui clôt sa tâche : plus aucune tâche ouverte et droit de
+  // clore ? Alors on propose de clore l'intervention (ADR 0025 point 5). Un
+  // échec de lecture n'empêche pas la fin normale de l'envoi.
+  async function isLastTaskClosed() {
+    if (!closeTask || !can(PERM.intervention.update)) return false
+    try {
+      return (await getOpenTasksByIntervention(intervention.id)).length === 0
+    } catch {
+      return false
+    }
+  }
+
+  function finishAfterPrompt() {
+    onDone()
+    onClose()
   }
 
   async function handleSubmit(e) {
@@ -568,6 +380,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
     try {
       await createAction(payload)
       setDone(true)
+      if (await isLastTaskClosed()) { setProposeClose(true); return }
       setTimeout(() => { onDone(); onClose() }, 700)
     } catch (err) {
       setSubmitError(err?.data?.detail ?? err.message)
@@ -586,6 +399,13 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
         <Check size={24} className="text-green-600" />
       </div>
       <p className="text-sm font-medium text-tunnel-text">Action enregistrée !</p>
+      {proposeClose && (
+        <CloseInterventionPrompt
+          intervention={intervention}
+          onClosed={finishAfterPrompt}
+          onDismiss={finishAfterPrompt}
+        />
+      )}
     </div>
   )
 
@@ -707,76 +527,25 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
                   </div>
                 ) : null}
 
-                {/* Aucune intervention ouverte → création en cascade */}
-                {noOpenInterventions && !intervention && (
-                  <div className="mt-3 space-y-3">
-                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
-                      <p className="text-xs font-semibold text-amber-800 mb-0.5">Aucune intervention ouverte</p>
-                      <p className="text-[11px] text-amber-700">Cet équipement n'a pas d'intervention active. Sélectionne une DI existante ou crée-en une nouvelle pour démarrer.</p>
-                    </div>
-
-                    {/* DI disponibles */}
-                    {availableDIs.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-tunnel-text mb-2">Demandes d'intervention disponibles</p>
-                        <div className="rounded-lg border border-tunnel-border overflow-hidden">
-                          {availableDIs.map((di, i) => (
-                            <button key={di.id} type="button"
-                              onClick={() => { setSelectedDI(di); setShowInterForm(true); setShowDIForm(false) }}
-                              className={`w-full flex items-start gap-3 px-4 py-3 text-left active:bg-tunnel-bg ${i > 0 ? 'border-t border-tunnel-border' : ''} ${selectedDI?.id === di.id ? 'bg-blue-50' : ''}`}>
-                              <FileText size={13} className="text-tunnel-accent shrink-0 mt-0.5" />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-mono text-[11px] font-bold text-tunnel-accent">{di.code}</p>
-                                <p className="text-xs text-tunnel-muted line-clamp-1 mt-0.5">{di.description}</p>
-                              </div>
-                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 mt-0.5"
-                                style={{ backgroundColor: (di.statut_color ?? '#6b7280') + '22', color: di.statut_color ?? '#6b7280' }}>
-                                {di.statut_label}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Boutons d'action */}
-                    <div className="flex gap-2">
-                      {noDI && !showDIForm && can(PERM.actions.createRequest) && (
-                        <button type="button" onClick={() => { setShowDIForm(true); setShowInterForm(false) }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-tunnel-accent text-tunnel-accent text-xs font-semibold active:bg-blue-50">
-                          <Plus size={13} /> Nouvelle DI
-                        </button>
-                      )}
-                      {!noDI && !showDIForm && !showInterForm && can(PERM.actions.createRequest) && (
-                        <button type="button" onClick={() => { setShowDIForm(true) }}
-                          className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-dashed border-tunnel-border text-tunnel-muted text-xs font-medium active:bg-tunnel-bg">
-                          <Plus size={12} /> Nouvelle DI
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Formulaire DI inline */}
-                    {showDIForm && (
-                      <CollapsibleSection icon={FileText} iconColor="#3B82F6" title="Nouvelle demande d'intervention"
-                        open={true} onToggle={() => {}}>
-                        <DIInlineForm equip={equip} user={user}
-                          onCreated={handleDICreated}
-                          onCancel={() => setShowDIForm(false)} />
-                      </CollapsibleSection>
-                    )}
-
-                    {/* Formulaire Intervention inline */}
-                    {showInterForm && (
+                {/* Création toujours proposée, même avec des interventions ouvertes */}
+                {!loadingInter && !intervention && (
+                  <div className="mt-3">
+                    {showInterForm ? (
                       <CollapsibleSection icon={Hammer} iconColor="#F59E0B" title="Nouvelle intervention"
-                        badge={selectedDI?.code}
                         open={true} onToggle={() => {}}>
-                        <InterventionInlineForm
+                        <InterventionCreateForm
                           equip={equip}
-                          di={selectedDI}
+                          availableDIs={availableDIs}
                           user={user}
+                          canCreateRequest={can(PERM.actions.createRequest)}
                           onCreated={handleInterCreated}
-                          onCancel={() => { setShowInterForm(false); setSelectedDI(null) }} />
+                          onCancel={() => setShowInterForm(false)} />
                       </CollapsibleSection>
+                    ) : (
+                      <button type="button" onClick={() => setShowInterForm(true)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-tunnel-accent text-tunnel-accent text-xs font-semibold active:bg-blue-50">
+                        <Plus size={13} /> Nouvelle intervention
+                      </button>
                     )}
                   </div>
                 )}

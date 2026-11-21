@@ -6,6 +6,232 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.11.0] — 2026-11-21
+
+### Ajouté
+- API : `GET /stats/audit-synthese` renvoie `trends` (hausse, baisse, stable ou null sur la
+  période) pour les cinq parts et `decisions_total` ; stable sous 2 points ou 2 décisions
+  (BIL-07, ADR 0035).
+- API : `GET /stats/service-status` renvoie ses seuils (`thresholds`, définis une seule fois,
+  valeurs inchangées : charge 75 / 100 %, fragmentation 5 / 15 %, pilotage 20 / 10 %) et des
+  textes de statut d'un mot (Normale / Élevée / Au plafond, Maîtrisée / Notable / Élevée,
+  Présent / Limité / Absent) ; `GET /stats/organisation` renvoie `trends` (hausse, baisse,
+  stable ou null sur la période) et `preventive_hours_share` par mois (BIL-03, ADR 0034).
+- API : `GET /stats/service-status` renvoie `monthly` (heures, capacité proratisée, charge,
+  fragmentation et pilotage par mois, classés comme les totaux) et `trends` ;
+  `GET /stats/organisation` ajoute `waiting_parts_count` par mois (reconstitué depuis le
+  journal des statuts) et sa tendance (BIL-05, ADR 0034 point 12).
+
+- Web : les huit chiffres clés de l'onglet « État » du Bilan portent une mini-courbe et une
+  flèche de tendance grise (charge, fragmentation, pilotage et attente de pièces s'ajoutent
+  aux quatre déjà équipés) ; rien ne s'affiche si l'API ne fournit pas la série (BIL-06,
+  ADR 0034 point 12).
+
+- Web : l'onglet « Audit » du Bilan prend la présentation de l'onglet « État » : six cartes
+  sans badge (définition derrière l'icône d'aide, mini-courbe par mois, tendance grise
+  donnée par l'API quand elle la fournit), les cinq graphiques mensuels sont retirés, les
+  tableaux « Valeurs par mois » et des décisions sont repliés (BIL-08, ADR 0035).
+- Web, Bilan du service : le choix de la période passe dans l'en-tête de la page, au modèle de
+  l'accueil (boutons 3, 6, 12 et 24 mois, séparateur, plage de dates « 1 septembre –
+  21 novembre 2026 ») ; il est masqué sur l'onglet Qualité. Le libellé de semaine de l'accueil
+  et du planning répète désormais l'année au début quand la semaine change d'année.
+- Web : page « Synthèse de l'audit » (menu Production, à côté d'Organisation, droit
+  `stats:get_audit_synthese`) : tâches sans garant, faites sans action du garant, repérées sur le
+  terrain, partagées, décisions hors travail normal par type et motif, part automatique ; 3 mois
+  par défaut, définitions en clair, mois avant le 2026-11-20 signalés « données incomplètes »
+  (SYN-02, ADR 0032).
+- API : `GET /stats/audit-synthese?months=N` (défaut 3), synthèse de l'audit et du partage des
+  tâches par mois (tâches sans garant, faites sans action du garant, repérées sur le terrain,
+  partagées, décisions hors travail normal par type et motif, part des modifications
+  automatiques), chiffres d'équipe sans aucune donnée de personne ; droit
+  `stats:get_audit_synthese` ouvert par défaut, à rejouer en production par le bootstrap
+  (SYN-01, ADR 0032).
+- Mobile : le sélecteur de type d'intervention (création et acceptation d'une demande) ne propose
+  que les types permis pour l'équipement ; un type devenu non permis est vidé, un type suggéré non
+  permis n'est pas verrouillé (TPE-04, ADR 0031).
+- Web : le sélecteur de type d'une nouvelle intervention ne propose que les types permis pour
+  l'équipement choisi (rechargé au changement d'équipement, type devenu non permis vidé, type
+  imposé par une demande préventive conservé), et l'administration des classes d'équipement
+  permet de régler les types permis en matrice dans la liste des classes : une colonne par type
+  (pastille de couleur), une case par classe enregistrée à chaque clic ; aucune case cochée :
+  tous permis (TPE-03, TPE-05, ADR 0031).
+- Types d'intervention permis par classe d'équipement appliqués par l'API (TPE-02, ADR 0031) :
+  refus en 400 (types permis listés) à la création d'une intervention et quand son type ou son
+  équipement change ; `GET /interventions/types?machine_id=` ne renvoie que les types permis ;
+  un type suggéré non permis par une demande n'est plus imposé à l'acceptation ;
+  `GET` et `PUT /equipement-class/{id}/intervention-types` lisent et remplacent la liste (même
+  droit que la modification d'une classe, audit `intervention_types_changed`), et les classes
+  portent `allowed_intervention_types`. Sans liste, tout reste permis. Exemption : le type PRE reste toujours permis pour une
+  intervention issue d'un plan préventif (génération automatique, acceptation d'une demande
+  préventive), pour ne pas bloquer la génération quotidienne ; un PRE manuel sans plan reste soumis
+  à la règle.
+- Types d'intervention par classe d'équipement (TPE-01, ADR 0031) : migration 0023, table
+  `equipement_class_intervention_type` (vide, aucune donnée créée ni modifiée). Retour arrière :
+  suppression de la table.
+- Règles données par l'API (REG-01, ADR 0030) : `is_locked` sur chaque intervention,
+  `can_delete` sur chaque action et chaque tâche, `capabilities` (`skip_obligatory_step`,
+  `close_task_without_action`) sur `GET /auth/me`, calculés par les fonctions qui servent déjà
+  au refus. La suppression d'une tâche est désormais refusée (400) si elle n'est pas « à
+  faire », en plus des cas existants (action liée, intervention fermée).
+- Fronts : verrouillage et droits lus dans l'API (REG-02, ADR 0030). Web et mobile utilisent
+  `is_locked` (interventions) et `can_delete` (actions et tâches), et le web lit
+  `capabilities` de `/auth/me` pour « Ignorer » une étape obligatoire et « Terminé/Annuler »
+  sans action ; plus de statut « cancelled » ni de liste de rôles ou de statuts de demande
+  d'achat recopiés. Champ absent : action masquée.
+- Transitions de demande lues dans l'API (CASC-04, ADR 0029) : le web et le mobile ne recopient
+  plus le graphe des statuts ; un bouton n'apparaît que si sa cible figure dans
+  `allowed_transitions` (sans ce champ, aucun bouton). « Créer l'intervention » du mobile suit la
+  même liste.
+- Auteur des journaux de statut (CASC-01, ADR 0029) : la transaction de requête transmet
+  l'utilisateur de la requête aux triggers (`app.user_id`, local à la transaction), qui le
+  consignent dans `request_status_log.changed_by` et dans la nouvelle colonne
+  `intervention_status_log.changed_by`. Migration 0022 : aucune ligne passée modifiée ; les
+  écritures hors requête (tâche planifiée) restent sans auteur.
+  CASC-05 : la ligne « ouvert » de l'intervention (trigger `trg_init_status_log`), les
+  clôtures de /repair et `POST /intervention-status-log` portent aussi l'auteur ; le
+  `technician_id` reste déclaratif.
+- Audit des cascades (CASC-03, ADR 0029) : chaque écriture en cascade dépose un événement
+  du système (`is_system`, `SYSTEM_CASCADE`, auteur = utilisateur de la requête) sur l'entité
+  modifiée : occurrence préventive passée « in_progress » ou « completed » (y compris par le
+  trigger de fermeture), tâches rattachées, affectées ou datées à l'acceptation, corrections
+  des routes `/repair` des demandes et des occurrences, lignes de commande créées ou cumulées
+  au regroupement des demandes d'achat, sous-équipements rattachés. `closed_by` est rempli
+  quand une action clôt une tâche (faite ou ignorée), et la ligne « ouvert » du journal
+  d'une intervention porte l'auteur de la création. Aucune migration.
+- Types d'intervention en base : les 8 types (et ceux que l'administration ajoute) vivent
+  dans la table `intervention_type`, avec une description courte affichée sous chaque type
+  dans le sélecteur. À la création d'une intervention, sur le web comme sur le mobile, le
+  type est vide et obligatoire (plus de « Curatif » prérempli) ; le type suggéré par une
+  demande le préremplit toujours. L'API (`GET /interventions/types`, `?include_inactive=true`
+  pour l'historique), les validations, les filtres, les exports et la santé des équipements
+  lisent la base. Un type inconnu ou désactivé est refusé pour une nouvelle valeur. Le
+  libellé, la couleur, la description et l'état actif se modifient en Administration, le
+  code non ; un type utilisé ne se supprime pas, il se désactive. Migration 0020 : colonne
+  `description` et clés étrangères sur `intervention.type_inter` et
+  `intervention_request.suggested_type_inter`. ADR 0026.
+  Changement d'API : un type inconnu à la création d'une intervention répond désormais
+  400 (au lieu de 409). Le type suggéré par une demande reste accepté pour son
+  intervention même s'il a été désactivé depuis.
+- Création d'une intervention : le type et la priorité se choisissent dans des listes
+  qui montrent, pour chaque choix, une pastille de couleur, le libellé et une description
+  courte ; la description du choix fait s'affiche sous le champ. Un type imposé par une
+  demande système s'affiche dans le même sélecteur, grisé et cadenassé (web et mobile).
+- Interventions : `POST /interventions` peut créer, dans une seule transaction, la demande
+  d'origine (`request`, à la place de `request_id`) et les tâches (`tasks`). Un échec
+  n'écrit plus rien, donc plus de demande orpheline ni de doublon. La demande créée ainsi
+  est « directe » : aucune notification, aucun mail « à traiter ». Le droit de créer une
+  demande, et celui de créer une tâche, sont exigés en plus. Accepter une demande garde
+  maintenant le titre et le technicien (`tech_id`) reçus. ADR 0025.
+- Mobile : quand une action clôt la dernière tâche ouverte, le mobile propose de clore
+  l'intervention (avec la fenêtre de motif si les règles d'audit en exigent un) ; refuser
+  ne change rien.
+
+### Modifié
+- Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données
+  sont regroupées dans une page « Bilan du service » (`/bilan`, menu Production) à trois
+  onglets : « État » (bandeau de huit chiffres clés, temps et capacité, organisation du
+  travail, préventif), « Audit » (synthèse de l'audit, droit `stats:get_audit_synthese`) et
+  « Qualité » (qualité des données). Une période commune en mois calendaires (3, 6, 12 ou 24,
+  3 par défaut) remplace les dates libres pour les deux premiers. Les anciennes adresses
+  (`/service-status`, `/organisation`, `/audit-synthese`, `/quality-data`) sont retirées
+  (BIL-01, ADR 0033).
+
+- Web : l'onglet « État » du Bilan est allégé. Les définitions passent derrière une icône
+  d'aide au survol (plus de paragraphe sous chaque chiffre) ; chaque chiffre clé porte un
+  badge de statut (charge, fragmentation, pilotage) et une mini-courbe sur la période ; les
+  nombres ont un format unique (« 115,2 % », « 807 h ») ; le temps est montré en deux barres
+  (catégories de travail, types d'intervention) ; les causes de fragmentation et le temps par
+  site sont repliés ; les cinq graphiques mensuels, les règles de lecture et l'alerte critique
+  sont retirés (les valeurs par mois restent dans un tableau replié, avec les heures par type) ;
+  le préventif tient en trois chiffres courts (BIL-02, ADR 0034).
+
+- Web : rendu de l'onglet « État » affiné. Les badges de charge, fragmentation et pilotage
+  tiennent en un mot, texte et couleur donnés par l'API, sans seuil de repli côté web (sans
+  statut, pas de badge) ; les définitions affichent les seuils fournis par l'API au lieu de
+  seuils recopiés ; les urgences, chantiers coupés, interventions par journée et part du
+  préventif portent une tendance neutre (flèche grise et « en hausse », « stable » ou « en
+  baisse ») ; les mini-courbes sont lissées ; les barres de temps écrivent libellé, heures et
+  part dans chaque segment, sans légende (BIL-04, ADR 0034).
+- Création d'une intervention : un seul formulaire, celui de l'accueil, partout. Le bouton
+  « Nouvelle intervention » de la page Interventions ouvre une fenêtre au lieu d'une page
+  (l'ancienne page bloquait sur « Le titre est obligatoire » sans demande choisie) ; la
+  fenêtre de Coordination et le Briefing utilisent le même formulaire ; le mobile suit
+  les mêmes règles : demande choisie ou saisie, sa description sert de titre, date de prise
+  en charge, technicien pilote, type, priorité. Les tâches s'ajoutent après la création.
+  Tout part en un seul envoi : une erreur ne laisse plus de demande à moitié créée. Sur le
+  mobile, la création reste possible même si une intervention est déjà ouverte sur
+  l'équipement ; le champ « Initiales technicien » disparaît.
+- Préventif : ignorer une occurrence demande désormais un motif choisi dans la fenêtre de
+  motif commune (machine arrêtée, fait hors de l'outil, plan obsolète, ou autre avec un
+  texte), comme les autres décisions tracées, au lieu d'une raison libre. Le motif est
+  inscrit au journal d'audit. Migration 0019 : trois motifs ajoutés, règle d'audit de
+  l'occurrence rendue non routinière.
+
+### Corrigé
+- Web : la catégorie BAT (bâtiment, travaux) est rangée en production dans la description du
+  temps, comme le calcul du backend (elle apparaissait sous la fragmentation).
+- Préventif : rouvrir une intervention fermée repasse son occurrence préventive « en cours » ;
+  elle se termine de nouveau à la prochaine clôture, qui devient la référence de l'échéance
+  suivante. Changement tracé dans l'audit (REO-04, amendement de l'ADR 0028).
+- Clôturer une demande ne ferme plus l'intervention liée : la transition vers « clôturée »
+  est refusée tant que l'intervention est ouverte (« Clore l'intervention : elle clôturera la
+  demande. »), c'est la clôture de l'intervention, avec ses contrôles, qui clôture la demande.
+  Chaque demande renvoyée par l'API porte `allowed_transitions`, la liste des transitions que
+  l'utilisateur peut déclencher (statut, intervention liée, permission).
+- Journal des demandes : la clôture d'une demande par la fermeture de son intervention
+  n'écrit plus deux lignes identiques (migration 0022, CASC-01). Les doublons passés restent.
+- Clôture d'une intervention : une seule porte, la fiche de l'intervention
+  (`PUT /interventions/{id}`), avec le contrôle des tâches obligatoires et le motif d'audit
+  si la règle l'exige. Le journal de statut refuse désormais « fermé » (400) ; le bouton
+  « Statut » du mobile ouvre la confirmation de clôture. La clôture de la demande liée par
+  la mise à jour laisse maintenant sa trace du système dans l'audit (elle manquait pour les
+  clôtures faites depuis le web). ADR 0027. Changement d'API.
+- Réouverture d'une intervention fermée : elle exige désormais un motif (« Clôturée par
+  erreur », « Travail à reprendre » ou « Autre » avec un texte), choisi dans la fenêtre de
+  motif habituelle, sur le web comme sur le mobile. Elle passe par la fiche de
+  l'intervention (`PUT /interventions/{id}`) ; le journal de statut refuse de sortir de
+  « fermé » (400). La demande liée, clôturée, repasse « acceptée » avec une trace du
+  système ; sur le web, le statut d'une intervention fermée n'est plus grisé. Migration
+  0021 (motifs). ADR 0028. Changement d'API.
+- Mobile : les boutons « Oui, clore l'intervention » et « Valider » de la fenêtre de motif
+  étaient invisibles (couleur inexistante, texte blanc sur fond blanc).
+- Mobile : la session ne coupe plus toutes les 15 minutes. Le mobile renouvelle seul son
+  jeton de connexion, comme le web, pendant toute la journée de poste (8 heures par
+  défaut). Les durées de session réglées dans `deploy/.env` (`ACCESS_TOKEN_EXPIRE_MINUTES`,
+  `REFRESH_TOKEN_EXPIRE_HOURS`) sont désormais prises en compte.
+- Accueil « Direction technique » : la partie « Idées d'amélioration », qui affichait
+  « Erreur » faute de fonctionnement côté serveur, est retirée ; la vue garde les demandes
+  d'intervention.
+- Suppression d'une action : une tâche « en cours » qui n'a plus aucune action revient à
+  « à faire » (événement d'audit système), et le lien action-tâche ne reste plus orphelin ni
+  ne bloque la suppression de la tâche. Migration 0017 : clés étrangères en cascade sur
+  `intervention_action_task`, après suppression des éventuels liens orphelins.
+- Export courriel d'une commande fournisseur : l'export n'écrit plus quatre lignes parasites
+  dans le journal d'audit (numéro, statut, fournisseur, montant) à chaque appel ; il ne
+  modifie rien et ne trace plus rien. Le contenu du courriel est inchangé.
+- Installation neuve : migration 0018, les 72 clés étrangères, 15 contraintes CHECK et
+  65 index de la production sont ajoutés à toute base qui ne les avait pas (une base issue de
+  la production n'est pas modifiée). Les saisies que la production refusait (lien vers un
+  élément inexistant, tâche ignorée sans motif, quantité nulle) sont désormais refusées aussi
+  sur une installation neuve.
+
+### [interne] Sécurité
+- Messages d'erreur de la base : seuls les refus métier connus (durée d'une action, bornes
+  horaires, motif d'audit…) sont renvoyés tels quels ; tout autre message devient
+  « Opération refusée par la base de données », le détail restant dans les logs.
+- QR code d'une intervention (`GET /exports/interventions/{id}/qrcode`) : l'exception
+  « route publique » du middleware d'authentification est retirée. La route, déjà fermée
+  sans jeton par le routeur des exports, refusait aussi les utilisateurs connectés ; elle
+  est désormais servie à tout utilisateur connecté.
+- Journaux en ajout seul : la table de version d'alembic (`alembic_version_backend`) rejoint
+  `audit_log`, `permission_audit_log` et `security_log` parmi les tables que le rôle de
+  l'application ne peut ni modifier, ni supprimer, ni vider (REVOKE rejoué à chaque
+  démarrage). Test d'intégration ajouté.
+
+### [interne] Ménage
+- Mobile : fichier de menu `config/navigation.js` supprimé ; il n'était importé nulle part
+  et citait encore les anciennes pages `/service-status` et `/quality-data`.
+
 ## [5.10.0] — 2026-11-19
 
 ### Ajouté

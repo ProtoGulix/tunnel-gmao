@@ -14,6 +14,32 @@ SKIP_OBLIGATORY_ROLES = ("RESP", "ADMIN")
 CLOSE_WITHOUT_ACTION_ROLES = ("RESP", "ADMIN")
 
 
+def task_delete_blocker(status: Optional[str], action_count: int, locked: bool) -> Optional[str]:
+    """Retourne le motif de refus de suppression d'une tâche, ou None si elle est supprimable.
+
+    Règle unique (ADR 0030) : sert au refus (repo.delete) et à l'indicateur `can_delete`.
+    Une tâche n'est supprimable que « à faire », sans action, sur une intervention non fermée.
+    """
+    if locked:
+        return "Intervention fermée : aucune modification des tâches n'est autorisée"
+    if status != "todo":
+        return "Seule une tâche à faire peut être supprimée"
+    if action_count > 0:
+        return (
+            f"Cette tâche est liée à {action_count} action{'s' if action_count > 1 else ''}"
+            " — suppression impossible"
+        )
+    return None
+
+
+def task_capabilities(role: Optional[str]) -> Dict[str, bool]:
+    """Droits du rôle sur les tâches, dérivés des mêmes listes que les refus (ADR 0030)."""
+    return {
+        "skip_obligatory_step": role in SKIP_OBLIGATORY_ROLES,
+        "close_task_without_action": role in CLOSE_WITHOUT_ACTION_ROLES,
+    }
+
+
 def ensure_can_close(role: Optional[str]) -> None:
     """Lève ForbiddenError si le rôle ne peut pas clôturer une tâche sans action."""
     if role not in CLOSE_WITHOUT_ACTION_ROLES:

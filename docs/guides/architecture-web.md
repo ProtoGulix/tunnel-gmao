@@ -43,7 +43,6 @@ src/
 │   ├── interventions/
 │   │   ├── useInterventions.js
 │   │   ├── useInterventionDetail.js
-│   │   ├── useInterventionCreate.js
 │   │   ├── useInterventionDuration.js
 │   │   └── useInterventionStatusRefs.js
 │   ├── machines/

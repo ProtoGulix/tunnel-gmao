@@ -1,3 +1,5 @@
+**TRAITÉ (constaté le 2026-11-19, SEC-01) : déjà corrigé avec l'ADR 0017 (`ctx` converti en texte dans pydantic_validation_error_handler, test tests/test_erreurs_validation.py).**
+
 # Erreur 500 au lieu de 422 sur un model_validator Pydantic
 
 Reproduit le 2026-11-13 (CLO-01) : une ValueError levée dans un `model_validator`

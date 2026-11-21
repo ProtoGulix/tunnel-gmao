@@ -167,9 +167,8 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
   if (loading && !intervention) return <LoadingState message="Chargement de l'intervention..." />;
   if (!intervention) return null;
 
-  const statusKey = mapDtoStatusToConfigKey(intervention?.status);
-  const deleteBlockReason = getDeleteBlockReason(intervention, statusKey);
-  const isLocked = ['ferme', 'cancelled'].includes(statusKey);
+  const deleteBlockReason = getDeleteBlockReason(intervention);
+  const isLocked = intervention.isLocked !== false;
 
   const tabsContent = (
     <Tabs.Root value={activeTab} onValueChange={handleTabChange} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -282,6 +281,9 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
         statusKey={mapDtoStatusToConfigKey(intervention.status)}
         priorityKey={mapPriorityToConfigKey(intervention.priority)}
         canEditProperties={!isLocked && can(PERM.interventions.update)}
+        // Le statut reste modifiable une fois fermée : rouvrir exige un motif, demandé par
+        // l'API et la fenêtre de motif globale (ADR 0028)
+        canChangeStatus={can(PERM.interventions.update)}
         onStatusChange={handleStatusChange}
         onPriorityChange={handlePriorityChange}
         onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}

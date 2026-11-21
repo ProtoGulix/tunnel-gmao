@@ -2,9 +2,10 @@ from datetime import date
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 
 from api.audits.declaration import audit
+from api.audits.middleware import REASON_CODE_ATTR, REASON_TEXT_ATTR
 from api.auth.permissions import require_authenticated
 from api.errors.exceptions import ValidationError
 from api.notifications.mailer import send_di_a_traiter_mails
@@ -13,11 +14,12 @@ from api.preventive_occurrences.schedule import SCHEDULE_STATES
 from api.preventive_occurrences.schemas import (
     AnticipateIn,
     HistoryOut,
-    OccurrenceSkipIn,
     PreventiveOccurrenceOut,
     ScheduleEntryOut,
 )
+from api.preventive_occurrences.validators import skip_reason_from_choice
 from api.settings import settings
+from api.utils.audit import list_entity_reasons
 from api.utils.response import single
 
 router = APIRouter(
@@ -128,10 +130,21 @@ def anticipate_occurrence(data: AnticipateIn, background_tasks: BackgroundTasks)
         audit("preventive_occurrence", id_from_path="occurrence_id", table="preventive_occurrence")
     ],
 )
-def skip_occurrence(occurrence_id: str, data: OccurrenceSkipIn):
-    """Ignore une occurrence en statut 'pending'"""
+def skip_occurrence(occurrence_id: str, request: Request):
+    """Ignore une occurrence en statut 'pending'.
+
+    Décision hors travail normal : un motif choisi est obligatoire (`reason_code` du corps,
+    validé par AuditMiddleware ; 400 avec la liste des motifs sinon), `reason_text` est
+    obligatoire avec OTHER. `skip_reason` n'est plus saisi : il est déduit du motif
+    (libellé, ou texte libre pour OTHER). Le corps n'a pas d'autre champ.
+    """
+    skip_reason = skip_reason_from_choice(
+        getattr(request.state, REASON_CODE_ATTR, None),
+        getattr(request.state, REASON_TEXT_ATTR, None),
+        list_entity_reasons("preventive_occurrence"),
+    )
     repo = PreventiveOccurrenceRepository()
-    return single(repo.skip_occurrence(occurrence_id, data.skip_reason))
+    return single(repo.skip_occurrence(occurrence_id, skip_reason))
 
 
 @router.post("/repair", dependencies=[audit("request", events_only=True)])

@@ -43,12 +43,12 @@ function TaskLabel({ task }) {
 TaskLabel.propTypes = { task: PropTypes.object.isRequired };
 
 function useTaskRights(task, readOnly) {
-  const { can, canSkipObligatory, isElevated } = usePermissions();
+  const { can, canSkipObligatory, canCloseWithoutAction } = usePermissions();
   return {
     locked: readOnly || !can(PERM.interventions.updateTask),
     canSkip: canSkipTask(task, canSkipObligatory),
     canDelete: canDeleteTask(task, can(PERM.interventions.removeTask)),
-    canClose: canCloseTask(task.status, isElevated),
+    canClose: canCloseTask(task.status, canCloseWithoutAction),
   };
 }
 

@@ -1,3 +1,5 @@
+**TRAITÉ (constaté le 2026-11-19, SEC-01) : déjà corrigé par la migration 0006_audit_erreurs_visibles (ADR 0017, point 2) : fn_audit_log_decision laisse remonter ses erreurs.**
+
 # fn_audit_log_decision avale ses erreurs
 
 Constaté le 2026-11-13 (CLO-03), vérifié par l'agent principal dans backend/db/schema.sql :

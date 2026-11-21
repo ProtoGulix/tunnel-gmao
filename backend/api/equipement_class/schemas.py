@@ -27,10 +27,19 @@ class EquipementClassUpdate(BaseModel):
     description: str | None = None
 
 
+class AllowedInterventionTypesUpdate(BaseModel):
+    """Remplacement de la liste des types permis d'une classe (vide = tous permis)."""
+
+    intervention_types: list[str]
+
+
 class EquipementClass(EquipementClassBase):
-    """Schéma complet d'une classe d'équipement"""
+    """Schéma complet d'une classe d'équipement.
+
+    `allowed_intervention_types` : codes des types permis (ADR 0031) ; liste vide = tous."""
 
     id: UUID
+    allowed_intervention_types: list[str] = []
 
     class Config:
         from_attributes = True

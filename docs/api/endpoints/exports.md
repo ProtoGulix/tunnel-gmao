@@ -143,7 +143,8 @@ curl -X GET "http://localhost:8000/exports/interventions/5ecf60d5-8471-4739-8ba8
 
 Génère un QR code pointant vers la page détail de l'intervention dans le frontend.
 
-**Auth** : Public (conçu pour impression sur rapports physiques)
+**Auth** : JWT Bearer (utilisateur connecté), comme les autres exports. Les fiches PDF
+n'appellent pas cette route : elles produisent leur QR code en interne.
 
 ### Réponse `200`
 
@@ -175,7 +176,7 @@ Exemple : `http://localhost:5173/interventions/5ecf60d5-8471-4739-8ba8-0fdad7b51
 
 ```bash
 curl -X GET "http://localhost:8000/exports/interventions/5ecf60d5-8471-4739-8ba8-0fdad7b51781/qrcode" \
-     -o qrcode.png
+     -H "Authorization: Bearer <jeton>" -o qrcode.png
 ```
 
 ---

@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ class Capacity(BaseModel):
     total_hours: float
     capacity_hours: float
     charge_percent: float
-    status: StatusLabel
+    status: Optional[StatusLabel]  # None : période sans heures, pas de statut
 
 
 class TopCause(BaseModel):
@@ -36,14 +36,14 @@ class Fragmentation(BaseModel):
     short_action_count: int
     short_action_percent: float
     frag_percent: float
-    status: StatusLabel
+    status: Optional[StatusLabel]  # None : période sans heures, pas de statut
     top_causes: List[TopCause]
 
 
 class Pilotage(BaseModel):
     pilot_hours: float
     pilot_percent: float
-    status: StatusLabel
+    status: Optional[StatusLabel]  # None : période sans heures, pas de statut
 
 
 class SiteConsumption(BaseModel):
@@ -60,13 +60,53 @@ class Period(BaseModel):
     days: int
 
 
+class StatusThreshold(BaseModel):
+    """Seuils d'un statut, bornes incluses.
+
+    above : orange dès valeur >= orange, rouge dès valeur >= red.
+    below : orange dès valeur <= orange, rouge dès valeur <= red.
+    """
+
+    direction: Literal["above", "below"]
+    orange: float
+    red: float
+
+
+class StatusThresholds(BaseModel):
+    charge: StatusThreshold
+    fragmentation: StatusThreshold
+    pilotage: StatusThreshold
+
+
+class ServiceMonth(BaseModel):
+    """Un mois calendaire touché par la période ; pourcentages null pour un mois sans heure."""
+
+    month: str
+    total_hours: float
+    capacity_hours: float
+    charge_percent: Optional[float] = None
+    frag_percent: Optional[float] = None
+    pilot_percent: Optional[float] = None
+
+
+class ServiceTrends(BaseModel):
+    """Tendance sur la période : 'up', 'down', 'stable' ou null (moins de 3 mois de valeurs)."""
+
+    charge_percent: Optional[Literal["up", "down", "stable"]] = None
+    frag_percent: Optional[Literal["up", "down", "stable"]] = None
+    pilot_percent: Optional[Literal["up", "down", "stable"]] = None
+
+
 class ServiceStatusResponse(BaseModel):
+    thresholds: StatusThresholds
     period: Period
     capacity: Capacity
     breakdown: Breakdown
     fragmentation: Fragmentation
     pilotage: Pilotage
     site_consumption: List[SiteConsumption]
+    monthly: List[ServiceMonth] = []
+    trends: ServiceTrends = ServiceTrends()
 
     class Config:
         from_attributes = True
@@ -414,10 +454,13 @@ class OrganisationMonth(BaseModel):
     tech_days: int
     avg_interventions_per_tech_day: Optional[float] = None
     scattered_days_share: Optional[float] = None
+    preventive_hours_share: Optional[float] = None
 
 
 class OrganisationMonthly(OrganisationMonth):
     month: str
+    # Interventions en attente de pièces au dernier jour du mois ; null avant le journal
+    waiting_parts_count: Optional[int] = None
 
 
 class OrganisationProjects(BaseModel):
@@ -442,10 +485,73 @@ class OrganisationWaitingParts(BaseModel):
     max_age_days: Optional[int] = None
 
 
+class OrganisationTrends(BaseModel):
+    """Tendance sur la période : 'up', 'down', 'stable' ou null (moins de 3 mois de valeurs)."""
+
+    urgent_share: Optional[Literal["up", "down", "stable"]] = None
+    interrupted_share: Optional[Literal["up", "down", "stable"]] = None
+    avg_interventions_per_tech_day: Optional[Literal["up", "down", "stable"]] = None
+    scattered_days_share: Optional[Literal["up", "down", "stable"]] = None
+    preventive_hours_share: Optional[Literal["up", "down", "stable"]] = None
+    waiting_parts_count: Optional[Literal["up", "down", "stable"]] = None
+
+
 class OrganisationResponse(BaseModel):
     period: OrganisationPeriod
     monthly: List[OrganisationMonthly]
+    trends: OrganisationTrends = OrganisationTrends()
     totals: OrganisationMonth
     projects: OrganisationProjects
     preventive: OrganisationPreventive
     waiting_parts: OrganisationWaitingParts
+
+
+class AuditSyntheseCounters(BaseModel):
+    tasks_created: int
+    tasks_without_guarantor: int
+    without_guarantor_share: Optional[float] = None
+    tasks_done: int
+    tasks_done_with_guarantor: int
+    done_without_guarantor_action: int
+    done_without_guarantor_action_share: Optional[float] = None
+    spotted_in_field: int
+    spotted_in_field_share: Optional[float] = None
+    shared_tasks: int
+    shared_tasks_share: Optional[float] = None
+    decisions_total: int
+    audit_events: int
+    system_events: int
+    system_share: Optional[float] = None
+
+
+class AuditSyntheseMonth(AuditSyntheseCounters):
+    month: str
+    incomplete_data: bool
+
+
+class AuditSyntheseDecision(BaseModel):
+    month: str
+    decision_type: str
+    reason_code: str
+    reason_label: str
+    count: int
+
+
+class AuditSyntheseTrends(BaseModel):
+    """Tendance sur la période : 'up', 'down', 'stable' ou null (moins de 3 mois de valeurs)."""
+
+    without_guarantor_share: Optional[Literal["up", "down", "stable"]] = None
+    done_without_guarantor_action_share: Optional[Literal["up", "down", "stable"]] = None
+    spotted_in_field_share: Optional[Literal["up", "down", "stable"]] = None
+    shared_tasks_share: Optional[Literal["up", "down", "stable"]] = None
+    system_share: Optional[Literal["up", "down", "stable"]] = None
+    decisions_total: Optional[Literal["up", "down", "stable"]] = None
+
+
+class AuditSyntheseResponse(BaseModel):
+    period: OrganisationPeriod
+    cascades_traced_from: date
+    monthly: List[AuditSyntheseMonth]
+    trends: AuditSyntheseTrends = AuditSyntheseTrends()
+    totals: AuditSyntheseCounters
+    decisions: List[AuditSyntheseDecision]

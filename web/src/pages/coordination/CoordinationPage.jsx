@@ -8,7 +8,8 @@ import { fetchInterventionTasksList } from '@/api/interventionTasks';
 import { fetchInterventions, updateIntervention } from '@/api/interventions';
 import { fetchEquipements } from '@/api/equipements';
 import { fetchInterventionRequests } from '@/api/intervention-requests';
-import { INTERVENTION_TYPES, STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
+import { STATUS_CONFIG, PRIORITY_CONFIG } from '@/config/interventionTypes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { GroupCard } from '@/components/shared/GroupCard';
 import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 import TaskLine from '@/components/tasks/TaskLine';
@@ -348,7 +349,8 @@ function InlineIvPriority({ ivId, priority, onSaved }) {
 
 function InterventionTasksBlock({ intervention, users, onTaskCreated, onTaskStatusChanged, onTaskDeleted, onIvChanged }) {
   const { can } = usePermissions();
-  const typeColor = INTERVENTION_TYPES.find((t) => t.id === intervention.type)?.color ?? 'gray';
+  const { colorOf } = useInterventionTypeRefs();
+  const typeColor = colorOf(intervention.type);
   const tasks     = intervention.tasks ?? null;
   const planned   = tasks ? tasks.filter((t) => t.due_date)  : null;
   const unplanned = tasks ? tasks.filter((t) => !t.due_date) : null;

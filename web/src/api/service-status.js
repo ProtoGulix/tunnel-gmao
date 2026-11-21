@@ -52,6 +52,20 @@ const mapSiteConsumption = (siteConsumption) => {
 };
 
 /**
+ * Mappe la série mensuelle ; un pourcentage null (mois sans heure) reste null, jamais 0.
+ * Absente (ancienne API) : null.
+ */
+const mapMonthly = (monthly) => {
+  if (!Array.isArray(monthly)) return null;
+  return monthly.map((m) => ({
+    month: m?.month,
+    chargePercent: m?.charge_percent ?? null,
+    fragPercent: m?.frag_percent ?? null,
+    pilotPercent: m?.pilot_percent ?? null,
+  }));
+};
+
+/**
  * Mappe les données de l'API vers le format domain
  */
 const mapServiceStatusResponse = (raw) => {
@@ -87,6 +101,11 @@ const mapServiceStatusResponse = (raw) => {
     siteConsumption: {
       items: mapSiteConsumption(raw.site_consumption),
     },
+    // Courbe et tendance (ADR 0034 point 12) ; absentes sur une ancienne API
+    monthly: mapMonthly(raw.monthly),
+    trends: raw.trends ?? null,
+    // Seuils de statut fournis par l'API ; absents sur une ancienne API
+    thresholds: raw.thresholds ?? null,
     statuses: {
       charge: capacity.status,
       frag: fragmentation.status,
@@ -97,15 +116,15 @@ const mapServiceStatusResponse = (raw) => {
 
 /**
  * Récupère les données d'état du service pour une période donnée
- * @param {Date} startDate - Date de début
- * @param {Date} endDate - Date de fin
+ * @param {string} startDate - Début de période, AAAA-MM-JJ
+ * @param {string} endDate - Fin de période, AAAA-MM-JJ
  * @returns {Promise<Object>} Données d'état du service (charge, fragmentation, pilotage)
  */
 export async function fetchServiceStatus(startDate, endDate) {
   const response = await api.get('/stats/service-status', {
     params: {
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
+      start_date: startDate,
+      end_date: endDate,
     },
   });
 

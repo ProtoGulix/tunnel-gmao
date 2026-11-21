@@ -8,6 +8,8 @@ export function mapInterventionResponse(raw = {}) {
     code: raw.code || '',
     title: raw.title || '',
     status: raw.status_actual || raw.status || '',
+    // Verrouillage décidé par l'API (ADR 0030) : champ absent = verrouillé
+    isLocked: raw.is_locked !== false,
     type: typeCode,
     priority: raw.priority || 'normal',
     reportedDate: raw.reported_date,
@@ -79,6 +81,7 @@ function mapAction(a) {
       ? { id: a.tech.id?.toString() || '', firstName: a.tech.first_name || '', lastName: a.tech.last_name || '', initial: a.tech.initial || '' }
       : null,
     purchaseRequests: a.purchase_requests || [],
+    canDelete: a.can_delete === true,
     tasks: Array.isArray(a.tasks) ? a.tasks : a.task ? [a.task] : [],
     task: Array.isArray(a.tasks) ? (a.tasks[0] ?? null) : (a.task ?? null),
   };

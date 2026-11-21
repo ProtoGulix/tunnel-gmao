@@ -49,7 +49,8 @@ def create_status_log(log: InterventionStatusLogIn, request: Request):
     Règles de validation:
     - intervention_id, status_to, technician_id, date sont obligatoires
     - status_from doit correspondre au statut actuel de l'intervention (sauf si null)
-    - Toutes les transitions de statut sont autorisées
+    - Toutes les transitions sont autorisées, sauf la clôture ('ferme') : 400, elle passe par
+      PUT /interventions/{id} (ADR 0027)
     """
     repo = InterventionStatusLogRepository()
     try:

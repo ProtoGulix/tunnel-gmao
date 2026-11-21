@@ -9,21 +9,17 @@ import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Spinner, Tex
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
 import { AlertCircle, Ban, Bot, Clock, Trash2, User, Wrench, Zap, ShoppingCart, ArrowUpRight } from 'lucide-react';
-import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 /**
- * Transitions autorisées par statut (source : doc API /intervention-requests/{id}/transition).
- * Seul le rejet est piloté manuellement — l'acceptation résulte uniquement de la création
- * d'une intervention liée (voir InterventionCreateModal), jamais d'un clic direct ici.
+ * Seul le rejet est piloté manuellement : l'acceptation résulte de la création d'une
+ * intervention liée (voir InterventionCreateModal), jamais d'un clic direct ici.
+ * La règle (quelles transitions sont possibles) vient de `allowed_transitions` (API).
  */
-const TRANSITIONS = {
-  nouvelle:   [{ to: 'rejetee', label: 'Rejeter', color: 'red', requiresNotes: true }],
-  en_attente: [{ to: 'rejetee', label: 'Rejeter', color: 'red', requiresNotes: true }],
-};
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -103,7 +99,7 @@ function InterventionProgress({ iv, interventionId }) {
             </Text>
             {iv.type_inter && (
               <Badge size="1" variant="soft" color="blue">
-                {TYPE_INTER_LABELS[iv.type_inter] ?? iv.type_inter}
+                <InterventionTypeLabel code={iv.type_inter} />
               </Badge>
             )}
             {iv.status_label && (
@@ -245,8 +241,9 @@ DeleteRequestDialog.propTypes = {
 };
 
 // Zone d'actions en en-tête — Rejeter (transition) et Supprimer (doublon) côte à côte
-function RequestHeaderActions({ statut, code, transitioning, transitionError, onTransition, canTransition, canDelete, deleting, deleteError, onDelete }) {
-  const canReject = canTransition && (TRANSITIONS[statut] ?? []).length > 0;
+function RequestHeaderActions({ allowedTransitions, code, transitioning, transitionError, onTransition, canTransition, canDelete, deleting, deleteError, onDelete }) {
+  // Ancienne API sans le champ : aucun bouton plutôt que deviner
+  const canReject = canTransition && (allowedTransitions ?? []).includes('rejetee');
 
   // Pas de modal custom : le motif de rejet EST la raison d'audit (reason_text). Le backend
   // n'est plus silencieux pour cette entité (voir _SILENT_FIELDS_BY_ENTITY["request"]), donc
@@ -280,7 +277,7 @@ function RequestHeaderActions({ statut, code, transitioning, transitionError, on
   );
 }
 RequestHeaderActions.propTypes = {
-  statut: PropTypes.string.isRequired,
+  allowedTransitions: PropTypes.arrayOf(PropTypes.string),
   code: PropTypes.string,
   transitioning: PropTypes.bool,
   transitionError: PropTypes.string,
@@ -322,7 +319,7 @@ function RequestWhoWhat({ detail }) {
           <Flex gap="2" align="center" mt="2">
             <Text size="1" color="gray">Type suggéré</Text>
             <Badge color="blue" variant="soft" size="1">
-              {TYPE_INTER_LABELS[detail.suggested_type_inter] ?? detail.suggested_type_inter}
+              <InterventionTypeLabel code={detail.suggested_type_inter} />
             </Badge>
           </Flex>
         )}
@@ -372,7 +369,7 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
         <Flex align="center" gap="3" wrap="wrap" justify="end">
           <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>{formatDate(detail.created_at)}</Text>
           <RequestHeaderActions
-            statut={detail.statut}
+            allowedTransitions={detail.allowed_transitions}
             code={detail.code}
             transitioning={transitioning}
             transitionError={transitionError}

@@ -23,7 +23,12 @@ def test_other_couvre_toutes_entites_et_deleted(instance):
     ligne = instance.sql(
         "SELECT entity_types, decision_types FROM audit_reason_code WHERE code = 'OTHER'"
     )
-    assert ligne == [(None, ["task_done", "task_skipped", "deleted"])]
+    assert ligne == [
+        (
+            None,
+            ["task_done", "task_skipped", "deleted", "occurrence_skipped", "intervention_reopened"],
+        )
+    ]
     # Une entité hors de l'ancienne liste (action) est désormais couverte.
     proposes = instance.sql(
         "SELECT code FROM audit_reason_code WHERE is_active "

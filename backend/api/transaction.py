@@ -36,6 +36,7 @@ from api.db import (
     bind_request_connection,
     close_request_connection,
     open_request_connection,
+    set_request_author,
     unbind_request_connection,
 )
 
@@ -87,6 +88,14 @@ class TransactionMiddleware:
 
         # psycopg2 est bloquant : emprunt, validation et annulation passent par le threadpool.
         conn = await run_in_threadpool(open_request_connection)
+        # Auteur pour les triggers de journal (ADR 0029) : posé avant toute écriture de la
+        # route. Le jeton est déjà validé (JWT est en amont) ; sinon l'erreur annule tout.
+        try:
+            await run_in_threadpool(set_request_author, conn, scope.get("state", {}).get("user_id"))
+        except BaseException:
+            with anyio.CancelScope(shield=True):
+                await run_in_threadpool(close_request_connection, conn, False)
+            raise
         token = bind_request_connection(conn)
         decided = False
         aborted = False

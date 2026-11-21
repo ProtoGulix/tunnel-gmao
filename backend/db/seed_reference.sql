@@ -431,3 +431,55 @@ INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reaso
 UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'audit_rule') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('audit_rule' = ANY(entity_types));
 INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'audit_rule', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'audit_rule' AND field IS NULL);
 SELECT setval(pg_get_serial_sequence('public.audit_rule','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_rule;
+
+--
+-- Motifs pour ignorer une occurrence préventive (CONT-03), cohérents avec la migration 0019 :
+-- motifs de la décision occurrence_skipped, règle de l'entité non routinière. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_MACHINE_DOWN', 'Machine arrêtée', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#d97706', 'L''équipement est à l''arrêt : le préventif ne peut pas être réalisé à cette échéance.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_MACHINE_DOWN') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_DONE_OFFLINE', 'Fait hors de l''outil', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#16a34a', 'Le préventif a été réalisé sans être saisi dans l''outil.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_DONE_OFFLINE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'OCCURRENCE_PLAN_OBSOLETE', 'Plan obsolète', 'user', '{preventive_occurrence}', '{occurrence_skipped}', '#6b7280', 'Le plan préventif ne correspond plus à l''équipement ou à son usage.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'OCCURRENCE_PLAN_OBSOLETE') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'occurrence_skipped') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('occurrence_skipped' = ANY(decision_types));
+UPDATE public.audit_reason_code SET entity_types = array_remove(entity_types, 'preventive_occurrence') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL;
+UPDATE public.audit_rule SET is_routine = false, default_reason_code = NULL WHERE entity_type = 'preventive_occurrence' AND field IS NULL AND is_routine;
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));
+
+--
+-- Types d'intervention en base (TYP-01, ADR 0026), cohérents avec la migration 0020 : colonne
+-- description, les 8 types, clés étrangères vers intervention_type(code). Idempotent. Ce
+-- fichier s'exécute avant 0020 (migration 0002) : les instructions sont donc complètes.
+--
+
+ALTER TABLE public.intervention_type ADD COLUMN IF NOT EXISTS description text;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'CUR', 'Curatif', 'red', true, 'Réparer une panne ou un défaut constaté sur un équipement.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'CUR') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Réparer une panne ou un défaut constaté sur un équipement.' WHERE code = 'CUR' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'PRE', 'Préventif', 'green', true, 'Entretien planifié pour éviter la panne (plan préventif).' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'PRE') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Entretien planifié pour éviter la panne (plan préventif).' WHERE code = 'PRE' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'REA', 'Réapprovisionnement', 'blue', true, 'Réapprovisionner des pièces ou des consommables.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'REA') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Réapprovisionner des pièces ou des consommables.' WHERE code = 'REA' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'BAT', 'Batiment', 'gray', true, 'Travaux sur les locaux et les réseaux du bâtiment, hors équipement de production.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'BAT') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Travaux sur les locaux et les réseaux du bâtiment, hors équipement de production.' WHERE code = 'BAT' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'PRO', 'Projet', 'blue', true, 'Amélioration, modification ou ajout sur un équipement ou une installation.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'PRO') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Amélioration, modification ou ajout sur un équipement ou une installation.' WHERE code = 'PRO' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'COF', 'Remise en conformité', 'amber', true, 'Mise aux normes ou correction suite à un contrôle (sécurité, réglementaire).' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'COF') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Mise aux normes ou correction suite à un contrôle (sécurité, réglementaire).' WHERE code = 'COF' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'PIL', 'Pilotage', 'blue', true, 'Organisation et suivi du service : documentation, réunions, formation.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'PIL') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Organisation et suivi du service : documentation, réunions, formation.' WHERE code = 'PIL' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, color, is_active, description) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.intervention_type), 'MES', 'Mise en service', 'amber', true, 'Installation et démarrage d''un équipement neuf ou déplacé.' WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type WHERE code = 'MES') ON CONFLICT (code) DO NOTHING;
+UPDATE public.intervention_type SET description = 'Installation et démarrage d''un équipement neuf ou déplacé.' WHERE code = 'MES' AND description IS NULL;
+INSERT INTO public.intervention_type (id, code, label, is_active) SELECT (SELECT COALESCE(MAX(id), 0) FROM public.intervention_type) + row_number() OVER (ORDER BY o.code), o.code, o.code, false FROM (SELECT code FROM (SELECT type_inter AS code FROM public.intervention UNION SELECT suggested_type_inter FROM public.intervention_request WHERE suggested_type_inter IS NOT NULL AND length(suggested_type_inter) <= 10) u WHERE NOT EXISTS (SELECT 1 FROM public.intervention_type t WHERE t.code = u.code) ORDER BY code) o ON CONFLICT (code) DO NOTHING;
+SELECT setval('public.intervention_type_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.intervention_type), (SELECT last_value FROM public.intervention_type_id_seq)));
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'intervention_type_inter_fkey' AND conrelid = 'public.intervention'::regclass) THEN ALTER TABLE public.intervention ADD CONSTRAINT intervention_type_inter_fkey FOREIGN KEY (type_inter) REFERENCES public.intervention_type(code); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'intervention_request_suggested_type_inter_fkey' AND conrelid = 'public.intervention_request'::regclass) THEN ALTER TABLE public.intervention_request ADD CONSTRAINT intervention_request_suggested_type_inter_fkey FOREIGN KEY (suggested_type_inter) REFERENCES public.intervention_type(code); END IF; END $$;
+ALTER TABLE public.intervention_request DROP CONSTRAINT IF EXISTS chk_suggested_type_inter;
+
+--
+-- Motifs de réouverture d'une intervention (REO-01, ADR 0028), cohérents avec la migration 0021 :
+-- motifs de la décision intervention_reopened. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'INTERVENTION_CLOSED_BY_MISTAKE', 'Clôturée par erreur', 'user', '{intervention}', '{intervention_reopened}', '#d97706', 'L''intervention a été fermée par erreur : elle n''était pas terminée.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'INTERVENTION_CLOSED_BY_MISTAKE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'INTERVENTION_REWORK', 'Travail à reprendre', 'user', '{intervention}', '{intervention_reopened}', '#dc2626', 'Le travail est à reprendre : le défaut est revenu ou la réparation est incomplète.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'INTERVENTION_REWORK') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'intervention_reopened') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('intervention_reopened' = ANY(decision_types));
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));

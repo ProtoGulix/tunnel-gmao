@@ -40,7 +40,13 @@ ROLE_HOME_VIEWS = {
 
 
 # Tables de journal : le rôle applicatif les lit et y ajoute, sans modifier ni supprimer.
-APPEND_ONLY_TABLES = ("audit_log", "permission_audit_log", "security_log")
+# La table de version alembic n'est écrite que par les migrations (rôle propriétaire).
+APPEND_ONLY_TABLES = (
+    "audit_log",
+    "permission_audit_log",
+    "security_log",
+    "alembic_version_backend",
+)
 
 
 class BootstrapError(Exception):
@@ -132,7 +138,7 @@ def ensure_app_role(conn, app_user: str, app_password: str) -> None:
             )
         # Journaux infalsifiables par l'application (ADR 0007, point 6) : ajout seul.
         # Les privilèges par défaut ne sont pas concernés : ils ne portent que sur les
-        # tables futures, et ces trois tables existent déjà.
+        # tables futures, et ces tables existent déjà (migrations jouées avant).
         for table in APPEND_ONLY_TABLES:
             cur.execute(
                 sql.SQL("REVOKE UPDATE, DELETE, TRUNCATE ON {} FROM {}").format(

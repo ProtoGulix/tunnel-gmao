@@ -76,6 +76,14 @@ export async function updateEquipementClass(id, data) {
   const r = await api.patch(`/equipement-class/${id}`, data);
   return r.data;
 }
+export async function fetchClassInterventionTypes(id) {
+  const r = await api.get(`/equipement-class/${id}/intervention-types`);
+  return r.data?.data?.intervention_types ?? [];
+}
+export async function replaceClassInterventionTypes(id, interventionTypes) {
+  const r = await api.put(`/equipement-class/${id}/intervention-types`, { intervention_types: interventionTypes });
+  return r.data?.data ?? r.data;
+}
 export async function deleteEquipementClass(id) {
   const r = await api.delete(`/equipement-class/${id}`);
   return r.data;

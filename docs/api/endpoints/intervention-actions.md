@@ -29,6 +29,8 @@ Tous les endpoints `GET` de cette ressource retournent une enveloppe `{ data, au
 
 Le champ `audit` est identique en liste et en détail — le front le charge une seule fois au montage du composant.
 
+> **Indicateurs de règle** (ADR 0030) : chaque action renvoyée (liste, détail, actions d'une intervention) porte `can_delete` (`false` si l'intervention est fermée ou si une demande d'achat liée a déjà été répartie : la même règle que le refus de `DELETE`), et son objet `intervention` porte `is_locked`. Un champ absent se lit comme « non ».
+
 ---
 
 ## `GET /intervention-actions`

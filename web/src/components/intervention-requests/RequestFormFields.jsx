@@ -6,19 +6,14 @@
 
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Select, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
-import RequestTypePicker from '@/components/intervention-requests/RequestTypePicker';
 import EquipmentPickerField from '@/components/intervention-requests/EquipmentPickerField';
 
 export default function RequestFormFields({
   form, set, services, machineLocked, onMachineSelect, onMachineClear,
-  allowTypeSelection, saving, onCancel, submitLabel,
+  saving, onCancel, submitLabel,
 }) {
   return (
     <Flex direction="column" gap="3">
-
-      {allowTypeSelection && (
-        <RequestTypePicker value={form.type} onChange={(v) => set('type', v)} />
-      )}
 
       <EquipmentPickerField
         machineId={form.machineId}
@@ -89,7 +84,6 @@ RequestFormFields.propTypes = {
   machineLocked: PropTypes.bool.isRequired,
   onMachineSelect: PropTypes.func.isRequired,
   onMachineClear: PropTypes.func.isRequired,
-  allowTypeSelection: PropTypes.bool.isRequired,
   saving: PropTypes.bool.isRequired,
   onCancel: PropTypes.func.isRequired,
   submitLabel: PropTypes.string.isRequired,

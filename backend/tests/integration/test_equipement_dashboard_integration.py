@@ -83,7 +83,7 @@ def parc(instance):
     i2 = _intervention(instance, p, "PRE", "2033-03-05", "ouvert")
     # C : I3 curatif fermé le 10/03 (délai 49 j), I4 de type inconnu ouvert, I5 hors période.
     i3 = _intervention(instance, c, "CUR", "2033-01-20", "ferme", False, "2033-03-10 08:00:00")
-    i4 = _intervention(instance, c, "ZZZ", "2033-02-02", "ouvert")
+    i4 = _intervention(instance, c, "PIL", "2033-02-02", "ouvert")
     _intervention(instance, c, "CUR", "2032-12-31", "ouvert")
     _action(instance, i1, "2033-01-11 09:00:00+00", 1.5, 3, "DIAG", s1)
     _action(instance, i1, "2033-01-12 09:00:00+00", 0.5, 5, "DIAG", s1)
@@ -167,12 +167,12 @@ def test_dashboard_avec_descendants(client, admin, parc):
     mois = {m["month"]: m for m in d["monthly"]}
     assert mois["2033-02"]["reported"] == 1 and mois["2033-02"]["time_spent_hours"] == 4.0
     assert mois["2033-03"]["closed"] == 1
-    assert mois["2033-02"]["reported_by_type"]["null"] == 1
+    assert mois["2033-02"]["reported_by_type"]["PIL"] == 1
 
     types = _par_code(d["by_type"])
     assert (types["CUR"]["count"], types["CUR"]["time_spent_hours"]) == (2, 6.0)
-    # Type inconnu du référentiel : code null et libellé « Non renseigné », pas omis
-    assert types[None]["label"] == "Non renseigné" and types[None]["count"] == 1
+    # Un type inconnu ne peut plus exister en base (clé étrangère, migration 0020).
+    assert types["PIL"]["count"] == 1
     assert _par_code(d["by_action_category"])[parc["cat2"]]["actions_count"] == 1
     assert _par_code(d["by_complexity_factor"])["ACC"]["count"] == 1
 
@@ -268,7 +268,7 @@ def test_interventions_filtre_type_et_dates(client, admin, parc):
 
     assert types(cur) == ["CUR", "CUR"]  # I5 (30/12/2032) et I3 ; I1 est archivée
     assert types(pre_zzz) == ["PRE"]
-    assert types(fenetre) == ["CUR", "ZZZ"]  # bornes incluses : I3 (20/01) et I4 (02/02)
+    assert types(fenetre) == ["CUR", "PIL"]  # bornes incluses : I3 (20/01) et I4 (02/02)
     assert sans_filtre == 4  # I2, I3, I4, I5
 
 

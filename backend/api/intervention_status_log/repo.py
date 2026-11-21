@@ -234,8 +234,10 @@ class InterventionStatusLogRepository:
                 cur.execute(
                     """
                     INSERT INTO intervention_status_log
-                    (id, intervention_id, status_from, status_to, technician_id, date, notes)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    (id, intervention_id, status_from, status_to, technician_id, date, notes,
+                     changed_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s,
+                            NULLIF(current_setting('app.user_id', true), '')::uuid)
                     RETURNING id
                     """,
                     (

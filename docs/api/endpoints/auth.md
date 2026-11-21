@@ -111,9 +111,12 @@ Retourne le profil complet de l'utilisateur connecté avec ses permissions.
   "last_name": "Dupont",
   "initial": "JD",
   "role": "TECH",
-  "permissions": ["interventions:list", "interventions:create", "actions:create"]
+  "permissions": ["interventions:list", "interventions:create", "actions:create"],
+  "capabilities": { "skip_obligatory_step": false, "close_task_without_action": false }
 }
 ```
+
+`capabilities` : droits de l'utilisateur sur les tâches, calculés par le backend depuis les mêmes listes de rôles que les refus (ADR 0030). `skip_obligatory_step` : ignorer une étape obligatoire de gamme. `close_task_without_action` : clôturer une tâche sans action. Vrai pour `RESP` et `ADMIN` seulement ; les fronts ne recopient pas ces listes.
 
 ---
 

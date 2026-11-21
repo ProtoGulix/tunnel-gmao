@@ -56,9 +56,11 @@ def _demande(instance, machine, cloturee_le=None):
 
 def _occurrence(instance, plan, machine, sched, status, di=None):
     return instance.sql(
-        "INSERT INTO preventive_occurrence (plan_id, machine_id, scheduled_date, status, di_id) "
-        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
-        (plan, machine, sched, status, di),
+        "INSERT INTO preventive_occurrence "
+        "(plan_id, machine_id, scheduled_date, status, di_id, skip_reason) "
+        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+        # La production refuse une occurrence ignorée sans motif (CONT-01).
+        (plan, machine, sched, status, di, "Motif de test" if status == "skipped" else None),
     )[0][0]
 
 

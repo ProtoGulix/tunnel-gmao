@@ -2,6 +2,7 @@
 
 import pytest
 
+from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
 from api.equipements.repo import EquipementRepository
 from api.equipements.validators import (
     MAX_TREE_DEPTH,
@@ -128,6 +129,17 @@ def test_assign_children_refuse_un_cycle_sans_rien_ecrire():
 
 
 def test_assign_children_rattache_quand_tout_est_valide():
-    cur = FakeCursor([(None,), (1,), (1,), [("c1", 1)]])
-    EquipementRepository()._assign_children(cur, "P", ["c1"])
-    assert cur.writes == [("P", "c1")]
+    # Le rattachement dépose l'événement du système (CASC-03) : il faut une unité d'audit,
+    # et un identifiant d'équipement valide.
+    enfant = "00000000-0000-0000-0000-0000000000c1"
+    unit = AuditUnit()
+    token = bind_audit_unit(unit)
+    try:
+        cur = FakeCursor([(None,), (1,), (1,), [(enfant, 1)]])
+        EquipementRepository()._assign_children(cur, "P", [enfant])
+    finally:
+        unbind_audit_unit(token)
+    assert cur.writes == [("P", enfant)]
+    assert [(e.entity_type, e.decision_type, e.is_system) for e in unit.events] == [
+        ("equipement", "equipement_mere_changed", True)
+    ]

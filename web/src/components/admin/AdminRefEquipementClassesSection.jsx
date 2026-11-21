@@ -5,19 +5,24 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, Flex, Text, Dialog, AlertDialog } from '@radix-ui/themes';
+import { Box, Button, Flex, Text, Dialog, AlertDialog, Badge, Tooltip } from '@radix-ui/themes';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
+import { typeColumns } from '@/components/admin/classTypeColumns';
 import ClassForm from '@/components/admin/AdminRefEquipementClassForm';
 
-export function EquipementClassesSection({ items, loading, onCreate, onUpdate, onDelete }) {
+export function EquipementClassesSection({ items, loading, onCreate, onUpdate, onSaveTypes, onDelete }) {
   const { can } = usePermissions();
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [toggling, setToggling] = useState(null);
+  const { activeTypes } = useInterventionTypeRefs();
+  const canSetTypes = can(PERM.adminRef.replaceClassInterventionTypes);
   const [form, setForm] = useState({ code: '', label: '', description: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,6 +64,19 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
     }
   }, [form, selected, onUpdate]);
 
+  // Enregistre à chaque clic ; la liste n'est mise à jour qu'après la réponse de l'API,
+  // donc en cas d'erreur la case revient d'elle-même à l'état précédent (message dans la section).
+  const handleToggleType = useCallback(async (item, code, on) => {
+    const current = item.allowed_intervention_types ?? [];
+    const next = on ? [...current, code] : current.filter((c) => c !== code);
+    setToggling(`${item.id}:${code}`);
+    try {
+      await onSaveTypes(item.id, next);
+    } finally {
+      setToggling(null);
+    }
+  }, [onSaveTypes]);
+
   const handleDelete = useCallback(async () => {
     setSubmitting(true);
     try {
@@ -84,7 +102,22 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
     {
       key: 'description',
       header: 'Description',
-      render: (i) => <Text size="2" color="gray">{i.description || '—'}</Text>,
+      render: (i) => (
+        <Tooltip content={i.description || 'Aucune description'}>
+          <Text size="2" color="gray" as="div"
+            style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {i.description || '—'}
+          </Text>
+        </Tooltip>
+      ),
+    },
+    ...typeColumns({ activeTypes, canSetTypes, toggling, onToggle: handleToggleType }),
+    {
+      key: 'all',
+      header: '',
+      width: 90,
+      render: (i) => ((i.allowed_intervention_types ?? []).length === 0
+        ? <Badge color="gray" variant="soft" size="1">tous permis</Badge> : null),
     },
     {
       key: 'actions',
@@ -106,14 +139,14 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
         </Flex>
       ),
     },
-  ], [can]); // eslint-disable-line react-hooks/exhaustive-deps
+  ], [can, activeTypes, canSetTypes, toggling, handleToggleType]);
 
   return (
     <Box mb="6">
       {/* Création */}
       <Dialog.Root open={createOpen} onOpenChange={setCreateOpen}>
         <Dialog.Content style={{ maxWidth: 420 }}>
-          <Dialog.Title>Nouvelle classe d'équipement</Dialog.Title>
+          <Dialog.Title>Nouvelle classe d&apos;équipement</Dialog.Title>
           <ClassForm form={form} setForm={setForm} submitting={submitting} onSubmit={handleCreate} submitLabel="Créer" />
         </Dialog.Content>
       </Dialog.Root>
@@ -122,7 +155,9 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
       <Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
         <Dialog.Content style={{ maxWidth: 420 }}>
           <Dialog.Title>Modifier la classe</Dialog.Title>
-          <ClassForm form={form} setForm={setForm} submitting={submitting} onSubmit={handleEdit} submitLabel="Enregistrer" />
+          <ClassForm
+            form={form} setForm={setForm} submitting={submitting} onSubmit={handleEdit} submitLabel="Enregistrer"
+          />
         </Dialog.Content>
       </Dialog.Root>
 
@@ -147,6 +182,9 @@ export function EquipementClassesSection({ items, loading, onCreate, onUpdate, o
         </AlertDialog.Content>
       </AlertDialog.Root>
 
+      <Text size="1" color="gray" as="p" mb="2">
+        Aucune case cochée : tous les types sont permis.
+      </Text>
       <DataTable
         headerProps={{
           title: "Classes d'équipement",
@@ -172,5 +210,6 @@ EquipementClassesSection.propTypes = {
   loading: PropTypes.bool,
   onCreate: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  onSaveTypes: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
 };

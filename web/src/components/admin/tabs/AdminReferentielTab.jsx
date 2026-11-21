@@ -6,6 +6,7 @@
 import { useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
 import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench, Cpu } from 'lucide-react';
+import { reloadInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import {
   ActionCategoriesSection,
   ComplexityFactorsSection,
@@ -61,17 +62,20 @@ export default function AdminReferentielTab() {
     wrap(async () => {
       await refApi.createInterventionType(payload);
       intTypes.refresh();
+      reloadInterventionTypeRefs();
     }, 'Type créé'), [intTypes, wrap]);
 
   const handleUpdateIntType = useCallback((id, payload) =>
     wrap(async () => {
       const updated = await refApi.updateInterventionType(id, payload);
+      reloadInterventionTypeRefs();
       intTypes.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Type modifié'), [intTypes, wrap]);
 
   const handleToggleIntTypeActive = useCallback((id, is_active) =>
     wrap(async () => {
       const updated = await refApi.toggleInterventionTypeActive(id, is_active);
+      reloadInterventionTypeRefs();
       intTypes.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, is_active ? 'Activé' : 'Désactivé'), [intTypes, wrap]);
 
@@ -94,6 +98,13 @@ export default function AdminReferentielTab() {
       const updated = await refApi.updateEquipementClass(id, payload);
       equipClasses.setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
     }, 'Classe modifiée'), [equipClasses, wrap]);
+
+  const handleSaveClassTypes = useCallback((id, codes) =>
+    wrap(async () => {
+      const saved = await refApi.replaceClassInterventionTypes(id, codes);
+      equipClasses.setItems((prev) => prev.map((i) => (i.id === id
+        ? { ...i, allowed_intervention_types: saved?.allowed_intervention_types ?? codes } : i)));
+    }, 'Types permis enregistrés'), [equipClasses, wrap]);
 
   const handleDeleteEquipClass = useCallback((id) =>
     wrap(async () => {
@@ -176,6 +187,7 @@ export default function AdminReferentielTab() {
               loading={equipClasses.loading}
               onCreate={handleCreateEquipClass}
               onUpdate={handleUpdateEquipClass}
+              onSaveTypes={handleSaveClassTypes}
               onDelete={handleDeleteEquipClass}
             />
           )}

@@ -31,6 +31,7 @@ export default function DayContextPanel({
       _intervention: {
         id: iv.id, code: iv.code ?? '', title: iv.title ?? '',
         status_actual: iv.status_actual ?? null,
+        is_locked: iv.is_locked ?? iv.isLocked ?? null,
         type_inter: iv.type_inter ?? null, plan_id: iv.plan_id ?? null,
         equipement: eq ? { id: eq.id, code: eq.code ?? '', name: eq.name ?? '' } : null,
       },

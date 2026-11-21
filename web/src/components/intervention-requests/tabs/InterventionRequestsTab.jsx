@@ -12,7 +12,7 @@ import { Badge, Box, Button, Callout, Dialog, Flex, Select, Spinner, Text, Toolt
 import { Bot, ClipboardList, Plus, Wrench } from 'lucide-react';
 import { useInterventionRequests } from '@/hooks/intervention-requests/useInterventionRequests';
 import { createInterventionRequest, repairInterventionRequests } from '@/api/intervention-requests';
-import { TYPE_INTER_LABELS } from '@/config/interventionTypes';
+import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 import TableHeader from '@/components/ui/TableHeader';
 import DataTable from '@/components/ui/DataTable';
 import ErrorState from '@/components/ui/ErrorState';
@@ -61,7 +61,7 @@ const columns = [
         {row.suggested_type_inter && (
           <Tooltip content="Type d'intervention suggéré">
             <Badge color="blue" variant="soft" size="1" style={{ cursor: 'default', width: 'fit-content' }}>
-              {TYPE_INTER_LABELS[row.suggested_type_inter] ?? row.suggested_type_inter}
+              <InterventionTypeLabel code={row.suggested_type_inter} />
             </Badge>
           </Tooltip>
         )}

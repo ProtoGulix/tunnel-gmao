@@ -140,6 +140,7 @@ class InterventionRef(BaseModel):
     code: Optional[str] = None
     title: Optional[str] = None
     status_actual: Optional[str] = None
+    is_locked: bool = False
     equipement_id: Optional[UUID] = None
     equipement_code: Optional[str] = None
     equipement_name: Optional[str] = None
@@ -165,6 +166,7 @@ class InterventionDetail(BaseModel):
     code: Optional[str] = None
     title: Optional[str] = None
     status_actual: Optional[str] = None
+    is_locked: bool = False
     type_inter: Optional[str] = None
     priority: Optional[str] = None
     reported_by: Optional[str] = None
@@ -203,6 +205,7 @@ class InterventionActionOut(BaseModel):
         default_factory=list,
         description="Tâches taggées par cette action",
     )
+    can_delete: bool = False
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 
@@ -231,6 +234,7 @@ class InterventionActionDetail(BaseModel):
         default_factory=list,
         description="Tâches traitées par cette action — détail complet avec statut, assigned_to, skip_reason, temps passé",
     )
+    can_delete: bool = False
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 

@@ -361,7 +361,9 @@ def list_intervention_types(repo: ReferentielRepository = Depends(_referentiel_r
 def create_intervention_type(
     payload: InterventionTypeCreate, repo: ReferentielRepository = Depends(_referentiel_repo)
 ):
-    new_id = repo.create_intervention_type(payload.code, payload.label)
+    new_id = repo.create_intervention_type(
+        payload.code, payload.label, payload.description, payload.color
+    )
     return {"id": new_id, "message": "Type créé"}
 
 
@@ -374,7 +376,7 @@ def patch_intervention_type(
     payload: InterventionTypePatch,
     repo: ReferentielRepository = Depends(_referentiel_repo),
 ):
-    repo.patch_intervention_type(type_id, payload.label)
+    repo.patch_intervention_type(type_id, payload.label, payload.description, payload.color)
     return {"message": "Type mis à jour"}
 
 

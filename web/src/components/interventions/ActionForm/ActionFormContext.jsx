@@ -17,6 +17,7 @@ import { fetchActiveUsers } from '@/api/planning';
 import EquipementSearch from '@/components/planning/EquipementSearch';
 import InterventionSelector from '@/components/planning/InterventionSelector';
 import InterventionRequestSelector from '@/components/intervention-requests/InterventionRequestSelector';
+import { TYPE_REQUIRED_MESSAGE } from '@/lib/interventionTypesStore';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
 import LockedBadge from '@/components/ui/LockedBadge';
 
@@ -28,7 +29,7 @@ const getDefaultDateTimeLocal = () => {
 function buildFormData(equipementId, equipementLabel, req = null) {
   return {
     title: req?.description ?? '',
-    type: req?.suggested_type_inter ?? 'CUR',
+    type: req?.suggested_type_inter ?? '',
     priority: 'normale',
     equipementId,
     equipementLabel: equipementLabel ?? '',
@@ -89,7 +90,7 @@ export function ContextSection({
     setCreateError(null);
     if (!formData?.title?.trim()) { setCreateError('Le titre est obligatoire'); return; }
     if (!formData?.requestId) { setCreateError("Sélectionnez la demande d'intervention à l'origine"); return; }
-    if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; }
+    if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; } if (!formData?.type) { setCreateError(TYPE_REQUIRED_MESSAGE); return; }
     setSaving(true);
     try {
       const created = await createIntervention({

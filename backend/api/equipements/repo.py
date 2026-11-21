@@ -8,12 +8,8 @@ from uuid import UUID, uuid4
 import psycopg2
 from fastapi import HTTPException
 
-from api.constants import (
-    CLOSED_STATUS_CODE,
-    INTERVENTION_TYPES,
-    INTERVENTION_TYPES_MAP,
-    PRIORITY_TYPES,
-)
+from api.audits.cascade import record_cascade
+from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.validators import (
     build_equipement_code,
@@ -28,6 +24,7 @@ from api.errors.exceptions import (
     ValidationError,
     raise_db_error,
 )
+from api.interventions.types import read_types
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -458,15 +455,17 @@ class EquipementRepository:
             int_cols = [desc[0] for desc in cur.description]
             interventions_items = [dict(zip(int_cols, r)) for r in int_rows]
 
-            # Enrichir type_inter avec code et label
+            # Enrichir type_inter avec code et label (types inactifs compris : historique)
+            labels = {t['id']: t['title'] for t in read_types(cur, include_inactive=True)}
             for item in interventions_items:
                 type_inter_code = item.get('type_inter')
-                if type_inter_code and type_inter_code in INTERVENTION_TYPES_MAP:
-                    type_info = INTERVENTION_TYPES_MAP[type_inter_code]
-                    item['type_inter'] = {'code': type_inter_code, 'label': type_info.get('title')}
-                elif type_inter_code:
-                    # Si le code n'est pas dans le mapping, retourner juste le code
-                    item['type_inter'] = {'code': type_inter_code, 'label': None}
+                if type_inter_code:
+                    # Un code absent du référentiel ne peut plus exister (clé étrangère) ;
+                    # par sûreté on renvoie le code sans libellé plutôt que d'échouer.
+                    item['type_inter'] = {
+                        'code': type_inter_code,
+                        'label': labels.get(type_inter_code),
+                    }
                 else:
                     item['type_inter'] = None
 
@@ -803,6 +802,15 @@ class EquipementRepository:
             self._check_attachment(cur, child_id, parent_id)
             cur.execute(
                 "UPDATE machine SET equipement_mere = %s WHERE id = %s", (parent_id, child_id)
+            )
+            # Le sous-équipement change de parent sans que la route le déclare : son
+            # rattachement est tracé sur lui (événement du système, ADR 0029).
+            record_cascade(
+                "equipement",
+                child_id,
+                "equipement_mere_changed",
+                old_value={"equipement_mere": row[0]},
+                new_value={"equipement_mere": str(parent_id)},
             )
 
     def _default_code(self, cur, data: Dict[str, Any]) -> str:
@@ -1220,13 +1228,16 @@ class EquipementRepository:
             out[key] = cur.fetchone() if key == "total" else cur.fetchall()
         return out
 
-    def _dashboard_by_type(self, reported, actions_by_type) -> List[Dict[str, Any]]:
-        """Types connus (même à zéro), puis un code null « Non renseigné » si besoin."""
+    def _dashboard_by_type(self, reported, actions_by_type, types) -> List[Dict[str, Any]]:
+        """Types actifs (même à zéro) et types inactifs utilisés dans la période, puis, par
+        sûreté, un code null « Non renseigné » pour un code hors référentiel (n'arrive plus
+        depuis la clé étrangère de la migration 0020)."""
         count: Dict[Any, int] = {}
         for _month, type_code, n in reported:
             count[type_code] = count.get(type_code, 0) + n
         hours = {type_code: hrs for type_code, hrs in actions_by_type}
-        known = {t["id"] for t in INTERVENTION_TYPES}
+        known = {t["id"] for t in types}
+        shown = [t for t in types if t["is_active"] or count.get(t["id"]) or hours.get(t["id"])]
         rows = [
             {
                 "code": t["id"],
@@ -1235,7 +1246,7 @@ class EquipementRepository:
                 "count": count.get(t["id"], 0),
                 "time_spent_hours": self._hours(hours.get(t["id"])),
             }
-            for t in INTERVENTION_TYPES
+            for t in shown
         ]
         unknown = [c for c in {*count, *hours} if c not in known]
         if unknown:
@@ -1250,9 +1261,9 @@ class EquipementRepository:
             )
         return rows
 
-    def _dashboard_monthly(self, start, end, inter, acts) -> List[Dict[str, Any]]:
+    def _dashboard_monthly(self, start, end, inter, acts, types) -> List[Dict[str, Any]]:
         """Une ligne par mois de la période, vide comprise."""
-        known = [t["id"] for t in INTERVENTION_TYPES]
+        known = [t["id"] for t in types]
         by_month = {
             key: {
                 "month": key,
@@ -1267,7 +1278,7 @@ class EquipementRepository:
         for month, type_code, n in inter["reported"]:
             row = by_month[month]
             row["reported"] += n
-            # Un type inconnu du référentiel est regroupé sous la clé "null".
+            # Un code hors référentiel (impossible depuis la clé étrangère) irait sous "null".
             key = type_code if type_code in known else "null"
             row["reported_by_type"][key] = row["reported_by_type"].get(key, 0) + n
         for month, n, _sum_delay, _n_delay in inter["closed"]:
@@ -1301,6 +1312,7 @@ class EquipementRepository:
                     ids += self._descendant_ids(cur, equipement_id)
                 inter = self._dashboard_interventions(cur, ids, start, end)
                 acts = self._dashboard_actions(cur, ids, start, end)
+                types = read_types(cur, include_inactive=True)
             conn.commit()
         except NotFoundError:
             conn.rollback()
@@ -1330,8 +1342,8 @@ class EquipementRepository:
                 "avg_complexity": self._avg(avg_complexity),
                 "avg_close_delay_days": self._avg(delay_sum / delay_n) if delay_n else None,
             },
-            "monthly": self._dashboard_monthly(start, end, inter, acts),
-            "by_type": self._dashboard_by_type(inter["reported"], acts["type"]),
+            "monthly": self._dashboard_monthly(start, end, inter, acts, types),
+            "by_type": self._dashboard_by_type(inter["reported"], acts["type"], types),
             "by_action_category": [
                 {
                     "code": code,

@@ -17,13 +17,6 @@ import { formatDateFr } from '../../utils/dateUtils'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
 
-// Transitions autorisées par statut
-const ALLOWED_TRANSITIONS = {
-  nouvelle:   ['en_attente', 'acceptee', 'rejetee'],
-  en_attente: ['acceptee', 'rejetee'],
-  acceptee:   ['cloturee'],
-}
-
 // ── Historique des statuts ────────────────────────────────────────────────────
 const StatusLogEntry = ({ entry, isLast }) => (
   <div className="flex gap-3">
@@ -118,7 +111,8 @@ const AcceptDISheet = ({ item, onClose, onDone }) => {
 
   return (
     <InterventionForm
-      di={{ id: item.id, code: item.code, description: item.description }}
+      machineId={item.equipement?.id}
+      di={{ id: item.id, code: item.code, description: item.description, suggested_type_inter: item.suggested_type_inter, is_system: item.is_system }}
       onSubmit={handleSubmit}
       onCancel={onClose}
       loading={loading}
@@ -140,7 +134,7 @@ const DIDetail = ({ id, onNavigateIntervention }) => {
   )
 
   const eq = item.equipement
-  const canAccept = ALLOWED_TRANSITIONS[item.statut]?.includes('acceptee') && !item.intervention_id
+  const canAccept = item.allowed_transitions?.includes('acceptee') && !item.intervention_id
     && can(PERM.requests.accept)
   const hasIntervention = !!item.intervention_id
 
