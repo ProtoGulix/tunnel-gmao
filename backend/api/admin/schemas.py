@@ -2,18 +2,41 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from api.users.schemas import check_password_strength
 
 # --- Utilisateurs ---
+
+# Rôle des clés d'API machine à machine (api_keys) : jamais attribué à un compte humain.
+MACHINE_ROLE_CODES = frozenset({"MCP"})
+
+
+def check_human_role(code: str) -> str:
+    """Refuse un rôle machine pour un compte de personne (décision de l'utilisateur, ADM-01)."""
+    if code.upper() in MACHINE_ROLE_CODES:
+        raise ValueError("Le rôle MCP est réservé aux clés d'API, pas aux comptes de personnes")
+    return code
 
 
 class AdminUserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, max_length=256)
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     initial: str
     role_code: str
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        """Même règle que le changement de mot de passe par l'utilisateur (ADM-01)."""
+        return check_password_strength(v)
+
+    @field_validator("role_code")
+    @classmethod
+    def human_role(cls, v: str) -> str:
+        return check_human_role(v)
 
 
 class AdminUserUpdate(BaseModel):
@@ -25,6 +48,11 @@ class AdminUserUpdate(BaseModel):
 
 class AdminUserRolePatch(BaseModel):
     role_code: str
+
+    @field_validator("role_code")
+    @classmethod
+    def human_role(cls, v: str) -> str:
+        return check_human_role(v)
 
 
 class AdminUserActivePatch(BaseModel):

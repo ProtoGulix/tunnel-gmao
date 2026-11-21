@@ -154,7 +154,7 @@ def reset_password(user_id: str, _=_admin_only):
     temp_pwd = AdminUserRepository().reset_password(user_id)
     return PasswordResetOut(
         temporary_password=temp_pwd,
-        message="Mot de passe temporaire généré — valide pour une seule connexion.",
+        message="Mot de passe temporaire généré : à transmettre à l'utilisateur, qui pourra le changer depuis son profil.",
     )
 
 

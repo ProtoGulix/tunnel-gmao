@@ -33,9 +33,11 @@ async def send_mail(to: str, subject: str, body: str) -> None:
     (dépendance `aiosmtplib` manquante ou erreur SMTP) — à l'appelant de
     décider comment réagir (voir docstring de module).
     """
-    if not settings.MAIL_ENABLED:
+    # Le mode démo coupe l'envoi même avec MAIL_ENABLED=true (ADR 0036) : les comptes
+    # de la démonstration sont publics, aucun courriel ne doit en sortir.
+    if not settings.MAIL_ENABLED or settings.DEMO_MODE:
         logger.debug(
-            "send_mail ignoré (MAIL_ENABLED=false) — destinataire=%s, sujet=%s",
+            "send_mail ignoré (mail désactivé ou mode démo) — destinataire=%s, sujet=%s",
             to,
             subject,
         )

@@ -1399,7 +1399,7 @@ class StatsRepository:
         "intervention_en_cours_inactive": "Intervention en cours sans activité depuis 14 jours",
         "stock_sans_seuil_min": "Article sans seuil de stock minimum",
         "stock_sans_fournisseur": "Article sans fournisseur référencé",
-        "demande_sans_stock_item": "Demande d'achat sans article de stock lié",
+        "demande_sans_stock_item": "Demande d'achat sans pièce liée",
     }
 
     def get_qualite_donnees(
@@ -1883,13 +1883,17 @@ class StatsRepository:
     # -- Détecteur purchase_request --
 
     def _qd_demande_sans_stock_item(self) -> List[QualiteDonneesProbleme]:
+        """Demande d'achat liée ni à une pièce (part_id, modèle actuel) ni à un ancien article.
+
+        Le code du problème garde son nom historique : il est exposé par l'API.
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
             cur.execute("""
                 SELECT id, created_at
                 FROM purchase_request
-                WHERE stock_item_id IS NULL
+                WHERE part_id IS NULL AND stock_item_id IS NULL
                 ORDER BY created_at DESC
             """)
             rows = cur.fetchall()

@@ -1,0 +1,31 @@
+# Instance de démonstration (ADR 0036, DEMO-06) : surcharge de deploy/docker-compose.yml.
+# Toujours lancée par reset-demo.sh, avec -p tunnel-demo et --env-file deploy/demo/.env.demo :
+# projet Compose isolé (réseau et volume propres, jamais ceux du projet « tunnel »).
+#
+# Trois changements seulement :
+#   - le nom de la base (DEMO_DB_NAME) contient « demo », exigé par le chargeur ;
+#   - des étiquettes d'image distinctes : construire la démo ne retague jamais
+#     tunnel-api:local ni tunnel-web:local, utilisées par une installation normale ;
+#   - le contrôle de santé de la base ne vise plus une base nommée « tunnel ».
+# Aucun port n'est publié pour la base ni pour l'API ; le seul port publié est celui du
+# service web (HTTP_BIND:HTTP_PORT du .env.demo, 127.0.0.1:8090).
+
+services:
+  db:
+    environment:
+      POSTGRES_DB: ${DEMO_DB_NAME:?DEMO_DB_NAME manquant dans deploy/demo/.env.demo}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tunnel_owner -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    image: tunnel-demo-api:local
+    environment:
+      DATABASE_URL_OWNER: postgresql://tunnel_owner:${DB_OWNER_PASSWORD}@db:5432/${DEMO_DB_NAME}
+      DATABASE_URL: postgresql://tunnel_app:${DB_APP_PASSWORD}@db:5432/${DEMO_DB_NAME}
+
+  web:
+    image: tunnel-demo-web:local

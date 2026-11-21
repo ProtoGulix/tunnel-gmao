@@ -46,6 +46,8 @@ services:
       EXPORT_QR_BASE_URL: ${PUBLIC_URL:-http://localhost:8080}/interventions
       UVICORN_WORKERS: ${UVICORN_WORKERS:-2}
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      # Mode démonstration (ADR 0036) : comptes et sécurité verrouillés, aucun courriel.
+      DEMO_MODE: ${DEMO_MODE:-false}
       SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

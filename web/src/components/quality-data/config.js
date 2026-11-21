@@ -53,7 +53,7 @@ export const RULE_DESCRIPTIONS = {
   stock_sans_fournisseur: 'Sans fournisseur',
 
   // Achats
-  demande_sans_stock_item: 'Sans article stock lié',
+  demande_sans_stock_item: 'Sans pièce liée',
 };
 
 /**

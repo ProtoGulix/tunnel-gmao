@@ -8,12 +8,11 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Button, AlertDialog, Select, Callout, Code } from '@radix-ui/themes';
 import { Copy, AlertTriangle } from 'lucide-react';
-
-const ROLES = ['RESP', 'TECH', 'OPE', 'ADMIN'];
+import { toRoleOptions } from '@/components/admin/roleOptions';
 
 // ---- Modal changement de rôle ----
 
-export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submitting }) {
+export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submitting, roles }) {
   const [newRole, setNewRole] = useState('');
 
   const handleSubmit = async (e) => {
@@ -49,8 +48,8 @@ export function AdminChangeRoleModal({ open, onOpenChange, user, onSubmit, submi
               <Select.Root value={newRole} onValueChange={setNewRole}>
                 <Select.Trigger placeholder="Choisir..." style={{ width: '100%' }} />
                 <Select.Content>
-                  {ROLES.filter((r) => r !== user.role_code?.toUpperCase()).map((r) => (
-                    <Select.Item key={r} value={r}>{r}</Select.Item>
+                  {toRoleOptions(roles, user.role_code).map((o) => (
+                    <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
@@ -76,6 +75,7 @@ AdminChangeRoleModal.propTypes = {
   user: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
   submitting: PropTypes.bool,
+  roles: PropTypes.array,
 };
 
 // ---- Modal activation / désactivation ----

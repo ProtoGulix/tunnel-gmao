@@ -358,7 +358,7 @@ function DemandesView() {
       />
       <DIForm
         onSubmit={handleCreate}
-        onCancel={() => setShowForm(false)}
+        onClose={() => setShowForm(false)}
         status={createStatus.status}
         error={createStatus.error}
       />

@@ -1,26 +1,34 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-20
+Dernière mise à jour : 2026-11-21
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.11.0** (2026-11-21, tag sur main) : 20 fusions dans develop depuis la
+- **v5.12.0** (2026-11-21, en préparation, PR develop → main à ouvrir par l'utilisateur) :
+  base de démonstration fictive et mode démo (ADR 0036), demo.frezille.fr en service ;
+  guide utilisateur publié sur tunnel.frezille.fr/docs à la fusion dans main (ADR 0037) ;
+  rejet d'une demande avec motif obligatoire (ADR 0038, migration 0024 jouée au démarrage de
+  l'API) ; corrections : onglet Qualité et demandes d'achat liées aux pièces (QUAL-01,
+  DAP-01), rôles de l'administration (ADM-01), données de départ (règle request.status_to),
+  bouton Annuler du mobile (MOB-01). Production (en 5.10.0) : à mettre à jour par
+  l'utilisateur, migrations 0017 à 0024 au démarrage.
+- Dernière version publiée : **v5.11.0** (2026-11-21, PR #16, tag sur main) : 20 fusions dans develop depuis la
   5.10.0, dont SEC-01 et TRI (sécurité, ménage), audit des cascades et auteur des journaux
   (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
   règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
   « Bilan du service » à trois onglets avec seuils, séries et tendances données par l'API
-  (ADR 0032 à 0035). Production (5.6.1) à mettre à jour par l'utilisateur directement en
-  5.11.0 : migrations jusqu'à 0023 jouées au démarrage de l'API (base de dev déjà en 0023),
-  le bootstrap ouvre les nouveaux droits (dont `stats:get_audit_synthese`) ; consignes de la
-  5.9.0 toujours valables (tâche quotidienne, premier passage).
+  (ADR 0032 à 0035). Production en 5.10.0 (constaté par l'utilisateur le 2026-11-21), à
+  mettre à jour par l'utilisateur en 5.11.0 : migrations 0017 à 0023 jouées au démarrage de
+  l'API (base de dev déjà en 0023), le bootstrap ouvre les nouveaux droits (dont
+  `stats:get_audit_synthese`).
 - v5.10.0 (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
   fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
   de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
   PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
-  (EXPM-03). Pas de migration nouvelle. Production (5.6.1) à mettre à jour par l'utilisateur
+  (EXPM-03). Pas de migration nouvelle. Production (alors en 5.6.1, passée depuis en 5.10.0) à mettre à jour par l'utilisateur
   directement en 5.10.0 : consignes de la 5.9.0 (migrations 0014 à 0016 au démarrage, tâche
   quotidienne active par défaut, premier passage au démarrage).
 - v5.9.1 (2026-11-19, PR #14, tag sur main) : correctif, une relance part un intervalle après
@@ -72,6 +80,14 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-21) | Mobile : « Annuler » du formulaire de demande de l'onglet Demandes (essai à l'écran par l'utilisateur à faire) | fusionnée dans develop | [MOB-01](taches/MOB-01-annuler-formulaire-demande.md) |
+| fait (2026-11-21) | Demandes d'achat liées à une pièce : « à qualifier » lu dans le statut dérivé de l'API (web), export PDF d'intervention qui joint les pièces (accord de l'utilisateur) | fusionnée dans develop | [DAP-01](taches/DAP-01-demandes-achat-liees-aux-pieces.md) |
+| fait (2026-11-21) | Administration : rôles lus depuis l'API (ACHETEUR proposé, OPE retiré), MCP refusé pour une personne, règle de mot de passe à la création, message de réinitialisation exact (accords de l'utilisateur) | fusionnée dans develop | [ADM-01](taches/ADM-01-roles-depuis-l-api.md) |
+| fait (2026-11-21) | Rejet d'une demande d'intervention avec un motif choisi parmi les motifs de rejet (ADR 0038, migration 0024 à jouer en production au démarrage de l'API) | fusionnée dans develop | ADR 0038, [REJ-01](taches/REJ-01-motifs-de-rejet.md), [REJ-02](taches/REJ-02-rejet-exige-un-motif.md) |
+| fait (2026-11-21) | Guide utilisateur (ADR 0037 accepté : VitePress, français seul, GitHub Pages, captures par script sur la démonstration) : GUIDE-01 à GUIDE-03 | feat/guide-utilisateur | ADR 0037, [GUIDE-01](taches/GUIDE-01-squelette-vitepress.md), [GUIDE-02](taches/GUIDE-02-captures-par-script.md), [GUIDE-03](taches/GUIDE-03-pages-par-role.md) |
+| fait (2026-11-21) | Onglet Qualité du Bilan : demande d'achat « sans article » testée sur les pièces (part_id) et non plus sur l'ancien stock_item (accord de l'utilisateur) | fusionnée dans develop | [QUAL-01](taches/QUAL-01-demande-sans-piece.md) |
+| fait (2026-11-21) | Base de démonstration fictive et mode démo (ADR 0036 accepté ; décisions de l'utilisateur du 2026-11-21 : profil tiré de la production, un agent par rôle, mode démo dans le modèle actuel verrouillé par le .env) : DEMO-01 à DEMO-08 ; démo en ligne sur demo.frezille.fr depuis le 2026-11-21 (Compose isolé tunnel-demo, clone /home/tunnel/tunnel-demo, cron 3 h) | feat/base-demonstration | ADR 0036, [DEMO-01](taches/DEMO-01-sites-depuis-l-api.md) à [DEMO-07](taches/DEMO-07-parcours-par-role.md) |
+| en cours (2026-11-21) | Cahier fonctionnel (livré, en cours, vision), puis base de démonstration et documentation utilisateur : inventaire du livré (CAH-01), cahier et résumé pour le site validés par l'utilisateur le 2026-11-21 (CAH-02, CAH-03) ; base de démonstration à planifier | cahier fusionné dans develop | [cahier](cahier-fonctionnel.md), [CAH-01](taches/CAH-01-inventaire-du-livre.md), [CAH-02](taches/CAH-02-redaction-du-cahier.md), [CAH-03](taches/CAH-03-resume-site-vitrine.md) |
 | fait (2026-11-21) | Onglet « Audit » du Bilan allégé (ADR 0035, accord de l'utilisateur du 2026-11-21) : tendances de la synthèse par l'API (BIL-07), onglet web (BIL-08) | fusionnée dans develop | ADR 0035, [BIL-07](taches/BIL-07-backend-tendances-audit.md), [BIL-08](taches/BIL-08-web-onglet-audit-allege.md) |
 | fait (2026-11-21) | Onglet « État » du Bilan allégé (ADR 0034, décisions de l'utilisateur du 2026-11-21 : bandeau gardé, définitions derrière ⓘ, mini-courbes ; puis seuils et badges d'un mot donnés par l'API, tendances sur la période) | fusionnée dans develop | ADR 0034, [BIL-02](taches/BIL-02-web-onglet-etat-allege.md), [BIL-03](taches/BIL-03-backend-seuils-et-tendances.md), [BIL-04](taches/BIL-04-web-badges-courbes-barres-tendances.md), [BIL-05](taches/BIL-05-backend-series-mensuelles.md), [BIL-06](taches/BIL-06-web-courbes-huit-chiffres.md) |
 | fait (2026-11-21) | Bilan du service (ADR 0033, décisions de l'utilisateur du 2026-11-21 : trois onglets « État », « Audit » et « Qualité », période commune en mois, 3 par défaut) : page web regroupée (BIL-01) | fusionnée dans develop | ADR 0033, [BIL-01](taches/BIL-01-web-page-bilan-du-service.md) |
@@ -129,6 +145,8 @@ Fiches ouvertes : TYP-01 à TYP-04. Closes aussi : INT-01 à INT-06, CONT-01 à 
 
 ## Dernière décision
 
+2026-11-21 : cahier fonctionnel validé (docs/cahier-fonctionnel.md) ; « en cours » ne reprend que ce que ETAT.md et les ADR montrent (pas d'extrapolation) ; le dépôt du site vitrine est privé et n'est pas nommé dans ce dépôt.
+
 2026-11-20 : types d'intervention en base, type vide et obligatoire à la création avec une description par type, clés étrangères (ADR 0026, décisions de l'utilisateur).
 
 2026-11-20 : création d'une intervention en une seule transaction (ADR 0025) ; fenêtre de création du web comme référence, demande créée dans le même geste sans notification, création toujours permise sur le mobile, clôture proposée après la dernière tâche (décisions de l'utilisateur).
@@ -167,8 +185,12 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
+   chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
+   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages à tunnel.frezille.fr/docs (amendement de l'ADR 0037 ; DNS et réglages Pages par l'utilisateur).
+
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
-   production par l'utilisateur (migrations jusqu'à 0023 au démarrage de l'API).
+   production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).
 
 0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :

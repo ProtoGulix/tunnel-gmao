@@ -6,6 +6,63 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.12.0] — 2026-11-21
+
+### Ajouté
+- Base : migration 0024, quatre motifs de rejet d'une demande (hors périmètre, doublon, déjà
+  traité, incomplète) et type de décision `request_rejected`, que REJ-02 appliquera au rejet
+  (ADR 0038, REJ-01).
+- API : mode démonstration `DEMO_MODE=true` (ADR 0036) : les écritures sur les comptes,
+  les droits, les clés d'API, les vues d'accueil par rôle et les règles de sécurité
+  répondent 403 `DEMO_MODE_LOCKED` ; les lectures et le travail métier restent permis ;
+  aucun courriel n'est envoyé (DEMO-04).
+- Démonstration : chargeur de la base fictive (`deploy/demo/load_demo.py`, dates recalées sur
+  le jour du chargement, journaux et audit attribués aux auteurs fictifs), script de
+  réinitialisation nocturne `reset-demo.sh` (projet Compose isolé `tunnel-demo`) et procédure
+  `deploy/demo/README.md` (DEMO-06, ADR 0036).
+
+### Modifié
+- API : rejeter une demande exige un motif choisi parmi les motifs de rejet (`request_rejected`),
+  quelle que soit la règle d'audit routinière ; sans motif, 400 « reason_code obligatoire »
+  avec ces seuls motifs, que la fenêtre commune du web affiche déjà ; un motif hors rejet est
+  refusé. Acceptation et mise en attente restent sans motif (ADR 0038, REJ-02).
+
+### Corrigé
+- Mobile : le bouton « Annuler » du formulaire de demande de l'onglet « Demandes » ferme
+  de nouveau le formulaire.
+- Web : dans les demandes d'achat d'une intervention, « à qualifier » suit le statut calculé
+  par l'API ; une demande liée à une pièce n'y apparaît plus à qualifier (DAP-01).
+- Export PDF de la fiche d'intervention : une demande d'achat liée à une pièce affiche sa référence, sa désignation, sa référence fabricant et son fournisseur préférés (l'ancien article reste lu en repli) (DAP-01).
+- Administration : le rôle MCP, réservé aux clés d'API, ne peut plus être attribué à un
+  compte de personne.
+- Administration : le mot de passe fixé à la création d'un compte suit la règle commune
+  (8 caractères, une majuscule, un chiffre) ; le message de réinitialisation ne promet
+  plus un mot de passe valable pour une seule connexion.
+- Web : la création d'un compte et le changement de rôle lisent les rôles depuis l'API (ACHETEUR proposé, le rôle OPE inexistant n'est plus listé).
+- Bilan du service, onglet Qualité : une demande d'achat liée à une pièce n'est plus
+  signalée « sans article » ; seules les demandes sans pièce ni article le sont.
+- Données de départ : accepter ou mettre en attente une demande d'intervention n'exige plus
+  de motif d'audit sur une nouvelle installation (règle `request.status_to` routinière,
+  comme en production) (DEMO-07).
+- Web : le filtre de site de l'accueil direction technique lit les sites depuis les équipements racines (filtre réel, masqué s'il y a moins de deux sites) ; sur l'accueil acheteur, le filtre de site, sans effet, est retiré (DEMO-01).
+- Démonstration : le chargeur crée les articles comme pièces (`part`, références fabricant et fournisseur, `part_id` sur demandes et lignes de commande) et `reset-demo.sh` redémarre l'API après le chargement, pour que l'écran Stock et les notifications ne soient plus vides (DEMO-08).
+
+### [interne] Documentation
+- Guide utilisateur publié automatiquement sur GitHub Pages à chaque version sur `main`.
+- Guide utilisateur publié sous `tunnel.frezille.fr/docs/` (amendement de l'ADR 0037).
+- Guide utilisateur (docs/site, ADR 0037) : pages par rôle (technicien, responsable,
+  acheteur, administrateur, installation), barre latérale par section, captures prises par
+  script sur une démonstration jetable ; cahier fonctionnel précisé (quantités des pièces
+  non suivies, rejet d'une demande sans motif aujourd'hui) (GUIDE-03).
+- Guide utilisateur : squelette VitePress en français dans `docs/site/` (accueil, plan par rôle,
+  feuille de route), construction en CI quand `docs/site` change, publication GitHub Pages
+  manuelle (GUIDE-01, ADR 0037).
+- Guide utilisateur : `npm run docs:screenshots` (dans `docs/site/`) prend 16 captures WebP sur
+  une démonstration jetable `tunnel-demo-guide` supprimée ensuite (GUIDE-02, ADR 0037).
+- Cahier fonctionnel (`docs/cahier-fonctionnel.md`) : ce que Tunnel fait réellement en
+  5.11.0, preuve à l'appui, séparé de ce qui est à concevoir (constats) et de la vision ;
+  résumé des affirmations publiables pour le site vitrine.
+
 ## [5.11.0] — 2026-11-21
 
 ### Ajouté

@@ -349,3 +349,26 @@ def test_rollback_de_repo_dans_une_route_2xx_annule_toute_la_requete(
     etat = f"code {resp.status_code}, machine présente : {nb}"
     assert resp.status_code >= 500, etat
     assert nb == 0, etat
+
+
+def test_transition_de_demande_routiniere_sans_motif(instance, client, admin, intervention):
+    """Accepter ou mettre en attente une demande est du travail normal : aucun motif exigé.
+
+    Le seed livrait la règle request.status_to non routinière ; toute nouvelle installation
+    demandait un motif à chaque acceptation (constat DEMO-07, aligné sur la production).
+    """
+    machine_id = instance.sql("SELECT machine_id FROM intervention WHERE id = %s", (intervention,))[
+        0
+    ][0]
+    demande = client.post(
+        "/intervention-requests",
+        headers=admin.headers,
+        json={"machine_id": str(machine_id), "demandeur_nom": "Atelier", "description": "Routine"},
+    )
+    assert demande.status_code == 201, demande.text
+    resp = client.post(
+        f"/intervention-requests/{_data(demande)['id']}/transition",
+        headers=admin.headers,
+        json={"status_to": "en_attente"},
+    )
+    assert resp.status_code == 200, resp.text

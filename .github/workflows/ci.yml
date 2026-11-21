@@ -50,3 +50,36 @@ jobs:
       - name: Dépendances backend
         run: python -m venv backend/.venv && backend/.venv/bin/pip install -r backend/requirements-dev.txt
       - run: ./scripts/test-integration.sh
+
+  guide:
+    name: guide utilisateur (construction VitePress)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Le guide ne se construit que si docs/site change (ADR 0037).
+      - name: Le guide a-t-il changé ?
+        id: filtre
+        env:
+          BASE_PR: ${{ github.event.pull_request.base.sha }}
+          BASE_PUSH: ${{ github.event.before }}
+        run: |
+          base="${BASE_PR:-$BASE_PUSH}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base" 2>/dev/null \
+             || ! git diff --quiet "$base" HEAD -- docs/site; then
+            echo "guide=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "guide=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v7
+        if: steps.filtre.outputs.guide == 'true'
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: docs/site/package-lock.json
+      - name: Construire le guide
+        if: steps.filtre.outputs.guide == 'true'
+        working-directory: docs/site
+        run: npm ci --no-audit --no-fund && npm run docs:build

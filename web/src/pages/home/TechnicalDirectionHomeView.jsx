@@ -14,18 +14,14 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import SpontaneousInterventionRequestModal from '@/components/home/SpontaneousInterventionRequestModal';
 import StandardRequestsSummary from '@/pages/home/StandardRequestsSummary';
+import { useSiteOptions } from '@/hooks/home/useSiteOptions';
 import { useTechnicalDirectionRequests } from '@/hooks/home/useTechnicalDirectionRequests';
-
-const SITE_OPTIONS = [
-  { value: '', label: 'Tous les sites' },
-  { value: 'VLT', label: 'Les Villettes' },
-  { value: 'SML', label: 'Saint Maurice de Lignon' },
-];
 
 export default function TechnicalDirectionHomeView() {
   const [site, setSite] = useState('');
+  const siteOptions = useSiteOptions();
   const { items, statuses, loading, error, reload } =
-    useTechnicalDirectionRequests({ site });
+    useTechnicalDirectionRequests({ siteId: site });
   const [createModal, setCreateModal] = useState(false);
 
   if (loading && items.length === 0) return <LoadingState fullscreen message="Chargement des demandes…" />;
@@ -52,16 +48,19 @@ export default function TechnicalDirectionHomeView() {
       />
 
       <Container size="4">
+        {siteOptions.length > 0 && (
         <Flex justify="end" mb="4">
           <Select.Root value={site || '__all__'} onValueChange={(v) => setSite(v === '__all__' ? '' : v)}>
             <Select.Trigger />
             <Select.Content>
-              {SITE_OPTIONS.map((o) => (
-                <Select.Item key={o.value || '__all__'} value={o.value || '__all__'}>{o.label}</Select.Item>
+              <Select.Item value="__all__">Tous les sites</Select.Item>
+              {siteOptions.map((o) => (
+                <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
               ))}
             </Select.Content>
           </Select.Root>
         </Flex>
+        )}
 
         <Box mb="6">
           <Heading size="4" mb="3">Demandes d&rsquo;intervention</Heading>
@@ -69,7 +68,7 @@ export default function TechnicalDirectionHomeView() {
         </Box>
 
         {items.length === 0 && (
-          <Text color="gray">Aucune demande pour ce site.</Text>
+          <Text color="gray">Aucune demande.</Text>
         )}
       </Container>
     </>

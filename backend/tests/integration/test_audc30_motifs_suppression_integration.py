@@ -26,7 +26,14 @@ def test_other_couvre_toutes_entites_et_deleted(instance):
     assert ligne == [
         (
             None,
-            ["task_done", "task_skipped", "deleted", "occurrence_skipped", "intervention_reopened"],
+            [
+                "task_done",
+                "task_skipped",
+                "deleted",
+                "occurrence_skipped",
+                "intervention_reopened",
+                "request_rejected",
+            ],
         )
     ]
     # Une entité hors de l'ancienne liste (action) est désormais couverte.

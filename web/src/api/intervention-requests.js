@@ -25,7 +25,6 @@ const _LIST_OPTIONAL_FILTERS = [
   ['includeDescendants', 'include_descendants', (v) => v !== undefined && v !== null],
   ['isSystem', 'is_system', (v) => v !== undefined && v !== null],
   ['search', 'search', (v) => !!v?.trim()],
-  ['site', 'site', (v) => !!v],
 ];
 
 function buildListQueryParams(params) {
@@ -52,7 +51,6 @@ function buildListQueryParams(params) {
  * @param {string} [params.machineId] - Filtrer par UUID équipement
  * @param {boolean} [params.includeDescendants] - Avec machineId : inclut les équipements descendants
  * @param {string} [params.search] - Recherche libre (code, demandeur_nom, description)
- * @param {string} [params.site] - Filtrer par code de site (machine racine), ex: 'VLT', 'SML'
  * @returns {Promise<{items: Array, pagination: Object, facets: Object}>}
  */
 export async function fetchInterventionRequests(params = {}) {

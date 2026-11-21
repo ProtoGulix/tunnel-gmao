@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 
 from api.audits.declaration import audit, declare_created_id
-from api.audits.middleware import REASON_CODE_ATTR
+from api.audits.middleware import REASON_CODE_ATTR, REASON_TEXT_ATTR
 from api.auth.permissions import permission_cache, require_authenticated
 from api.endpoints_catalog import endpoint_code
 from api.intervention_requests.repo import InterventionRequestRepository
@@ -16,12 +16,13 @@ from api.intervention_requests.schemas import (
     RequestStatusRef,
     StatusTransitionIn,
 )
-from api.intervention_requests.validators import compute_allowed_transitions
+from api.intervention_requests.validators import compute_allowed_transitions, ensure_reject_reason
 
 # Résolution des références circulaires : InterventionRequestListItem.intervention
 # référence InterventionRef (interventions.schemas → intervention_actions.schemas → ici)
 from api.interventions.schemas import InterventionRef
 from api.notifications.mailer import send_di_a_traiter_mails
+from api.utils.audit import list_entity_reasons
 from api.utils.response import paginated, referentiel, single
 
 _ns = {"Optional": Optional, "InterventionRef": InterventionRef}
@@ -202,7 +203,10 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
     `title` reçu (à défaut, la description de la demande) et le `tech_id` reçu.
 
     **Audit** : le motif est validé par AuditMiddleware (`reason_code` du corps, voir
-    `GET /audit/reasons`) ; une règle routine s'applique si le corps n'en porte pas.
+    `GET /audit/reasons`) ; une règle routine s'applique si le corps n'en porte pas, sauf
+    pour `rejetee` (ADR 0038) : le rejet exige un motif choisi parmi ceux dont la décision
+    est `request_rejected` ; sans motif, 400 « reason_code obligatoire » avec ces motifs
+    dans `audit`.
     Pour le statut `rejetee`, le motif est porté par `reason_text` (pas de champ `notes`
     séparé) : le motif de rejet EST la raison d'audit, saisie une seule fois via le picker
     de raisons. `reason_text` est copié dans l'historique (request_status_log.notes).
@@ -210,6 +214,13 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
     `AuditRuleReason.requires_text` exposé par `GET /audit/rules`) — les autres raisons
     du picker n'exigent pas de texte libre.
     """
+    if body.status_to == "rejetee":
+        # Rejeter exige un motif choisi, quelle que soit la règle routinière (ADR 0038)
+        ensure_reject_reason(
+            getattr(request.state, REASON_CODE_ATTR, None),
+            getattr(request.state, REASON_TEXT_ATTR, None),
+            list_entity_reasons("request"),
+        )
     intervention_data = None
     if body.status_to == "acceptee":
         intervention_data = {

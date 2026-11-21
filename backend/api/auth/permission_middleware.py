@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
+from api.auth.demo_mode import DEMO_LOCKED_MESSAGE, DEMO_MODE_LOCKED, is_demo_locked
 from api.auth.permissions import check_matrix
 from api.errors.exceptions import ForbiddenError
 
@@ -43,5 +44,14 @@ class PermissionMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=403,
                 content={"detail": exc.detail, "error_type": "ForbiddenError"},
+            )
+        if is_demo_locked(request.method, request.url.path):
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": DEMO_LOCKED_MESSAGE,
+                    "error_type": "ForbiddenError",
+                    "code": DEMO_MODE_LOCKED,
+                },
             )
         return await call_next(request)

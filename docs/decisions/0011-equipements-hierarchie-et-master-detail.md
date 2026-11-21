@@ -228,8 +228,8 @@ Ajout factuel, la décision ne change pas.
    inexistant, ni auto-rattachement, ni cycle, ni classe ou statut orphelin. La
    profondeur maximale actuelle est de 2.
 2. Le découpage par ligne n'existe pas encore dans les données :
-   - 338 des 346 équipements sont rattachés directement à un site (VLT : 244,
-     SML : 94) ;
+   - presque tous les équipements (plus de 95 %) sont rattachés directement à un
+     site (deux sites) ;
    - les lignes existent comme équipements mères (L000 à L025), mais n'ont aucune
      fille ;
    - ces lignes sont en classe EXT, et non dans la classe LIG « Ligne », que
