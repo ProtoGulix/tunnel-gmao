@@ -13,7 +13,6 @@ Anciens points H-7, M-1 à M-8, P-1 à P-5, toujours ouverts.
 - Couleurs hex en dur dans 27 fichiers malgré le jeton Tailwind `tunnel`.
 - Pas de React.memo sur les lignes de liste, pas de chargement paresseux des routes.
 - Paramètre de route non uniforme (`stock/items/:itemId`).
-- `BOTTOM_NAV_ITEMS` inutilisée (config/navigation.js:42).
 - Accessibilité : 2 aria-label, 7 `<div onClick>`.
 - Validation des formulaires hors ActionForm non harmonisée (non mesurée).
 - PWA sans page hors ligne (vite.config.js:14-33), logo PNG sans lazy ni WebP,

@@ -222,6 +222,10 @@ mobile/CHANGELOG.md.
   l'application ne peut ni modifier, ni supprimer, ni vider (REVOKE rejoué à chaque
   démarrage). Test d'intégration ajouté.
 
+### [interne] Ménage
+- Mobile : fichier de menu `config/navigation.js` supprimé ; il n'était importé nulle part
+  et citait encore les anciennes pages `/service-status` et `/quality-data`.
+
 ## [5.10.0] — 2026-11-19
 
 ### Ajouté
