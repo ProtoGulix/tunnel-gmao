@@ -1,8 +1,10 @@
-# Publication du guide utilisateur sur GitHub Pages (ADR 0037) : déclenchement manuel
-# seulement, depuis la branche main.
+# Publication du guide utilisateur sur GitHub Pages (ADR 0037) : à chaque version sur main
+# (tunnel.frezille.fr/docs, Pages réglé par l'utilisateur le 2026-11-21), ou à la main.
 name: Guide
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

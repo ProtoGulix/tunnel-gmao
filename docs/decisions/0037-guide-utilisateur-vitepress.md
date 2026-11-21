@@ -81,3 +81,6 @@ demanderait un dépôt de plus et une synchronisation). Le site est construit av
 site vitrine). Le point 5 est modifié en conséquence : l'enregistrement DNS
 `tunnel.frezille.fr` vers GitHub Pages et le domaine du dépôt restent des actions de
 l'utilisateur.
+
+Le 2026-11-21, l'utilisateur a réglé le DNS et GitHub Pages : le workflow se déclenche
+désormais à chaque poussée sur `main` (et reste lançable à la main).
