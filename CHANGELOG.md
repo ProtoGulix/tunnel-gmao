@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.12.0] — 2026-11-21
 
 ### Ajouté
 - Base : migration 0024, quatre motifs de rejet d'une demande (hors périmètre, doublon, déjà
