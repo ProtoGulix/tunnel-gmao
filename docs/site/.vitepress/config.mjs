@@ -12,7 +12,15 @@ const section = (text, base, pages) => ({
 });
 
 const roleSidebar = [
-  { text: "Découvrir Tunnel", link: "/decouvrir/" },
+  section("Comprendre Tunnel", "/comprendre", [
+    ["Vue d'ensemble", ""],
+    ["Les codes", "codes"],
+    ["Interventions et tâches", "interventions-taches"],
+    ["Les actions", "actions"],
+    ["Le préventif", "preventif"],
+    ["Achats", "achats"],
+    ["Audit et motifs", "audit"],
+  ]),
   section("Technicien", "/technicien", [
     ["Mes tâches", "mes-taches"],
     ["Saisir une action", "saisir-une-action"],
@@ -63,7 +71,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: "Accueil", link: "/" },
-      { text: "Découvrir Tunnel", link: "/decouvrir/" },
+      { text: "Comprendre Tunnel", link: "/comprendre/" },
       {
         text: "Par rôle",
         items: [
@@ -75,6 +83,7 @@ export default defineConfig({
       },
       { text: "Installation", link: "/installation/" },
       { text: "Feuille de route", link: "/feuille-de-route" },
+      { text: "Site Tunnel", link: "https://frezille.fr" },
     ],
     sidebar: roleSidebar,
     socialLinks: [{ icon: "github", link: repoLink }],

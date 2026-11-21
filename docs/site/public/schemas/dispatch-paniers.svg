@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 390" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Le dispatch : une demande d'achat entre dans un panier par fournisseur référencé, en réutilisant le panier ouvert de ce fournisseur s'il existe</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .new { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; stroke-dasharray: 6 3; }
+    .inner { fill: #ffffff; stroke: #d97706; stroke-width: 1; }
+    .grey { fill: #f8fafc; stroke: #475569; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="799" height="389" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <rect class="grey" x="215" y="12" width="370" height="30" rx="15"/>
+  <text x="400" y="32" text-anchor="middle">Dispatcher (aperçu puis confirmation)</text>
+
+  <!-- Flèches -->
+  <path class="arrow" d="M190 75 H568"/>
+  <path class="arrow" d="M190 85 L568 190"/>
+  <path class="arrow" d="M190 95 L568 295"/>
+  <path class="arrow" d="M190 185 L568 90"/>
+  <path class="arrow" d="M190 325 H568"/>
+
+  <!-- Demandes d'achat -->
+  <rect class="orange" x="20" y="50" width="170" height="50" rx="8"/>
+  <text x="105" y="80" text-anchor="middle">Demande d'achat A</text>
+  <text class="note" x="20" y="120">un panier par fournisseur</text>
+  <text class="note" x="20" y="135">référencé : consultation</text>
+  <rect class="orange" x="20" y="170" width="170" height="50" rx="8"/>
+  <text x="105" y="200" text-anchor="middle">Demande d'achat B</text>
+  <rect class="orange" x="20" y="290" width="170" height="50" rx="8"/>
+  <text x="105" y="320" text-anchor="middle">Demande d'achat C</text>
+
+  <!-- Paniers -->
+  <rect class="orange" x="570" y="50" width="210" height="50" rx="8"/>
+  <text x="675" y="80" text-anchor="middle">Panier FOU-A (ouvert)</text>
+  <text class="note" x="675" y="120" text-anchor="middle">panier ouvert réutilisé :</text>
+  <text class="note" x="675" y="135" text-anchor="middle">mutualisation</text>
+
+  <rect class="new" x="570" y="170" width="210" height="50" rx="8"/>
+  <text x="675" y="200" text-anchor="middle">Panier FOU-B (nouveau)</text>
+  <text class="note" x="675" y="240" text-anchor="middle">aucun panier ouvert :</text>
+  <text class="note" x="675" y="255" text-anchor="middle">un panier est créé</text>
+
+  <rect class="orange" x="570" y="280" width="210" height="84" rx="8"/>
+  <text x="675" y="303" text-anchor="middle">Panier FOU-C (ouvert)</text>
+  <rect class="inner" x="582" y="314" width="186" height="40" rx="6"/>
+  <text class="note" x="675" y="330" text-anchor="middle">une pièce = une ligne,</text>
+  <text class="note" x="675" y="345" text-anchor="middle">les quantités s'additionnent</text>
+</svg>

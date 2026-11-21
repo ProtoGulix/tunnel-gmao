@@ -43,7 +43,7 @@ l'utiliser, mais ces pages décrivent les écrans web.
 ## Les notions à connaître
 
 Les définitions de base (demande, intervention, tâche, action, préventif, audit) sont dans
-[Découvrir Tunnel](/decouvrir/). Deux mots reviennent souvent ici :
+[Comprendre Tunnel](/comprendre/). Deux mots reviennent souvent ici :
 
 - **Garant** : la personne affectée à une tâche. Elle répond de sa finalisation. Les
   **exécutants** sont les techniciens qui ont saisi des actions sur cette tâche. Garant et

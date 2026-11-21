@@ -6,8 +6,8 @@ hero:
   tagline: Une GMAO open source pour les équipes de maintenance de 1 à 10 personnes, installée chez vous.
   actions:
     - theme: brand
-      text: Découvrir Tunnel
-      link: /decouvrir/
+      text: Comprendre Tunnel
+      link: /comprendre/
     - theme: alt
       text: Essayer la démonstration
       link: https://demo.frezille.fr

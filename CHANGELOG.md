@@ -6,6 +6,15 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne] Documentation
+- Guide utilisateur : section « Comprendre Tunnel » (chaîne du travail, codes, cycles de vie,
+  actions, préventif, achats et paniers, audit) avec dix schémas SVG ; lien vers frezille.fr.
+- README refait : en-tête avec liens et badges, aperçu en captures, fonctionnalités en
+  listes courtes (d'après les affirmations livrées du cahier fonctionnel), démarrage rapide,
+  liens vers frezille.fr, la démonstration et le guide utilisateur.
+
 ## [5.12.1] — 2026-11-21
 
 ### Corrigé

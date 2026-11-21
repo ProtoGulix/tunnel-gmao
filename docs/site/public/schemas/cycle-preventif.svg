@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 495" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Le cycle du préventif : le plan et sa gamme, la génération une semaine avant l'échéance, la demande système, l'intervention et ses tâches, la clôture qui fait glisser l'échéance suivante</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .violet { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 1.5; }
+    .sub { fill: #ffffff; stroke: #7c3aed; stroke-width: 1; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .thick { stroke: #7c3aed; stroke-width: 4; fill: none; marker-end: url(#headthick); }
+    .memo { fill: #f8fafc; stroke: #475569; stroke-width: 1; }
+    .axis { stroke: #475569; stroke-width: 2; }
+    .late { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: 5 3; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="headthick" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="494" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Boucle, sens horaire -->
+  <rect class="violet" x="30" y="30" width="240" height="90" rx="10"/>
+  <text x="150" y="54" text-anchor="middle">Plan (par classe d'équipement)</text>
+  <rect class="sub" x="60" y="70" width="180" height="32" rx="6"/>
+  <text x="150" y="91" text-anchor="middle">Gamme : étapes</text>
+
+  <rect class="violet" x="330" y="30" width="240" height="90" rx="10"/>
+  <text x="450" y="70" text-anchor="middle">Échéance = clôture précédente</text>
+  <text x="450" y="88" text-anchor="middle">+ périodicité</text>
+
+  <rect class="violet" x="630" y="30" width="240" height="90" rx="10"/>
+  <text x="750" y="70" text-anchor="middle">Génération une semaine avant</text>
+  <text x="750" y="88" text-anchor="middle">(tâche quotidienne)</text>
+
+  <rect class="violet" x="630" y="190" width="240" height="80" rx="10"/>
+  <text x="750" y="235" text-anchor="middle">Demande créée par le système</text>
+
+  <rect class="violet" x="330" y="190" width="240" height="80" rx="10"/>
+  <text x="450" y="226" text-anchor="middle">Intervention préventive,</text>
+  <text x="450" y="244" text-anchor="middle">une tâche par étape</text>
+
+  <rect class="violet" x="30" y="190" width="240" height="80" rx="10"/>
+  <text x="150" y="235" text-anchor="middle">Clôture de la demande</text>
+
+  <path class="arrow" d="M270 75 H328"/>
+  <path class="arrow" d="M570 75 H628"/>
+  <path class="arrow" d="M750 120 V188"/>
+  <path class="arrow" d="M630 230 H572"/>
+  <path class="arrow" d="M330 230 H272"/>
+  <path class="thick" d="M210 190 L358 122"/>
+  <text class="note halo" x="332" y="160">l'échéance glisse : la prochaine</text>
+  <text class="note halo" x="332" y="175">part de cette clôture</text>
+
+  <!-- Annotations -->
+  <rect class="memo" x="30" y="292" width="540" height="28" rx="6"/>
+  <text x="44" y="311">Rejet de la demande : occurrence ignorée, l'échéance reste celle d'avant</text>
+  <rect class="memo" x="30" y="330" width="420" height="28" rx="6"/>
+  <text x="44" y="349">Lancer en avance : la demande est créée tout de suite</text>
+
+  <!-- Frise temporelle -->
+  <path class="arrow" d="M60 398 H638"/>
+  <text x="350" y="388" text-anchor="middle">périodicité (jours)</text>
+  <rect class="late" x="640" y="411" width="220" height="28" rx="6"/>
+  <text x="750" y="430" text-anchor="middle" fill="#dc2626" style="fill:#dc2626">en retard</text>
+  <line class="axis" x1="40" y1="425" x2="640" y2="425"/>
+  <line class="axis" x1="60" y1="415" x2="60" y2="435"/>
+  <line class="axis" x1="505" y1="415" x2="505" y2="435"/>
+  <line class="axis" x1="640" y1="415" x2="640" y2="435"/>
+  <text x="40" y="458">clôture précédente</text>
+  <text x="505" y="458" text-anchor="middle">échéance - 7 jours</text>
+  <text x="505" y="474" text-anchor="middle" class="note">génération</text>
+  <text x="640" y="474" text-anchor="middle">échéance</text>
+</svg>

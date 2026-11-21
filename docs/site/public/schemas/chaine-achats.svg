@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>De la demande d'achat à la réception : la demande, la pièce et ses références, la répartition en paniers par fournisseur, le devis, la commande, la réception</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .pill { font-size: 13px; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .green { fill: #ecfdf5; stroke: #059669; stroke-width: 1.5; }
+    .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dots { stroke: #d97706; stroke-width: 1.2; stroke-dasharray: 2 4; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="399" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Sources de la demande d'achat -->
+  <rect class="green" x="20" y="14" width="170" height="46" rx="8"/>
+  <text x="105" y="34" text-anchor="middle">Action</text>
+  <text x="105" y="51" text-anchor="middle">(une pièce manque)</text>
+  <rect class="orange" x="215" y="14" width="190" height="46" rx="8"/>
+  <text x="310" y="34" text-anchor="middle">Saisie autonome</text>
+  <text x="310" y="51" text-anchor="middle">(réapprovisionnement)</text>
+  <path class="arrow" d="M50 60 V128"/>
+  <path class="arrow" d="M310 60 V92 H110 V128"/>
+
+  <!-- Liens vers les statuts (derrière les pastilles) -->
+  <path class="dots" d="M75 180 V232"/>
+  <path class="dots" d="M225 180 V232"/>
+  <path class="dots" d="M375 180 V232"/>
+  <path class="dots" d="M525 180 V232"/>
+  <path class="dots" d="M675 180 V232"/>
+  <path class="dots" d="M825 180 V232"/>
+
+  <!-- Rangée principale -->
+  <rect class="orange" x="20" y="130" width="110" height="50" rx="8"/>
+  <text x="75" y="151" text-anchor="middle">Demande</text><text x="75" y="168" text-anchor="middle">d'achat</text>
+  <rect class="orange" x="170" y="130" width="110" height="50" rx="8"/>
+  <text x="225" y="151" text-anchor="middle">Pièce du</text><text x="225" y="168" text-anchor="middle">catalogue</text>
+  <rect class="orange" x="320" y="130" width="110" height="50" rx="8"/>
+  <text x="375" y="151" text-anchor="middle">Paniers par</text><text x="375" y="168" text-anchor="middle">fournisseur</text>
+  <rect class="orange" x="470" y="130" width="110" height="50" rx="8"/>
+  <text x="525" y="160" text-anchor="middle">Devis</text>
+  <rect class="orange" x="620" y="130" width="110" height="50" rx="8"/>
+  <text x="675" y="160" text-anchor="middle">Commande</text>
+  <rect class="orange" x="770" y="130" width="110" height="50" rx="8"/>
+  <text x="825" y="160" text-anchor="middle">Réception</text>
+
+  <path class="arrow" d="M132 155 H168"/>
+  <path class="arrow" d="M282 155 H318"/>
+  <path class="arrow" d="M432 155 H468"/>
+  <path class="arrow" d="M582 155 H618"/>
+  <path class="arrow" d="M732 155 H768"/>
+  <text class="note" x="150" y="120" text-anchor="middle">qualifier</text>
+  <text class="note" x="300" y="120" text-anchor="middle">répartir</text>
+  <text class="note" x="450" y="120" text-anchor="middle">envoyer</text>
+  <text class="note" x="600" y="120" text-anchor="middle">retenir une ligne</text>
+  <text class="note" x="750" y="120" text-anchor="middle">clôturer le panier</text>
+
+  <!-- Statuts dérivés -->
+  <rect class="blue" x="10" y="232" width="130" height="26" rx="13"/><text class="pill" x="75" y="250" text-anchor="middle">À qualifier</text>
+  <rect class="blue" x="160" y="232" width="130" height="26" rx="13"/><text class="pill" x="225" y="250" text-anchor="middle">Sans fournisseur</text>
+  <rect class="blue" x="160" y="266" width="130" height="26" rx="13"/><text class="pill" x="225" y="284" text-anchor="middle">À dispatcher</text>
+  <rect class="blue" x="310" y="232" width="130" height="26" rx="13"/><text class="pill" x="375" y="250" text-anchor="middle">Mutualisation</text>
+  <rect class="blue" x="460" y="232" width="130" height="26" rx="13"/><text class="pill" x="525" y="250" text-anchor="middle">En chiffrage</text>
+  <rect class="blue" x="460" y="266" width="130" height="26" rx="13"/><text class="pill" x="525" y="284" text-anchor="middle">Devis reçu</text>
+  <rect class="blue" x="610" y="232" width="130" height="26" rx="13"/><text class="pill" x="675" y="250" text-anchor="middle">Commandé</text>
+  <rect class="blue" x="756" y="232" width="138" height="26" rx="13"/><text class="pill" x="825" y="250" text-anchor="middle">Partiellement reçu</text>
+  <rect class="blue" x="756" y="266" width="138" height="26" rx="13"/><text class="pill" x="825" y="284" text-anchor="middle">Reçu</text>
+  <rect class="red" x="10" y="318" width="130" height="26" rx="13"/><text class="pill" x="75" y="336" text-anchor="middle">Refusé</text>
+
+  <text x="20" y="380">Le statut de la demande d'achat se déduit, il ne se saisit pas.</text>
+</svg>

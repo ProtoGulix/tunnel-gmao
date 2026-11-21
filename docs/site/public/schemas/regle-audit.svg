@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Une modification passe par une règle d'audit : si elle est routinière, elle s'enregistre avec un motif par défaut ; si elle est sensible, la fenêtre de motif s'ouvre et la modification est refusée sans motif ; dans les deux cas elle entre dans le journal</title>
+  <style>
+    text { font-size: 13px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .grey { fill: #f8fafc; stroke: #475569; stroke-width: 1.5; }
+    .strong { fill: #f8fafc; stroke: #475569; stroke-width: 2.5; }
+    .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #475569; stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; marker-end: url(#head); }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="799" height="479" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Flèches -->
+  <path class="arrow" d="M190 185 H218"/>
+  <path class="arrow" d="M300 140 V85 H408"/>
+  <path class="arrow" d="M300 230 V315 H408"/>
+  <path class="arrow" d="M580 85 H700 V158"/>
+  <path class="arrow" d="M580 315 H660 V272"/>
+  <path class="arrow" d="M270 424 H350 V345 H408"/>
+  <path class="arrow" d="M495 360 V393"/>
+  <path class="dash" d="M730 345 V272"/>
+  <text class="note halo" x="312" y="77">routinière</text>
+  <text class="note halo" x="312" y="307">sensible</text>
+  <text class="note" x="505" y="380">fenêtre fermée</text>
+
+  <!-- Boîtes -->
+  <rect class="blue" x="20" y="150" width="170" height="70" rx="8"/>
+  <text x="105" y="171" text-anchor="middle">Modification</text>
+  <text x="105" y="188" text-anchor="middle">(clôture, réouverture,</text>
+  <text x="105" y="205" text-anchor="middle">tâche, rejet...)</text>
+
+  <path class="grey" d="M300 140 L380 185 L300 230 L220 185 Z"/>
+  <text x="300" y="190" text-anchor="middle">Règle d'audit ?</text>
+
+  <rect class="grey" x="410" y="50" width="170" height="70" rx="8"/>
+  <text x="495" y="77" text-anchor="middle">Motif par défaut</text>
+  <text x="495" y="94" text-anchor="middle">enregistré,</text>
+  <text x="495" y="111" text-anchor="middle">sans saisie</text>
+
+  <rect class="strong" x="410" y="270" width="170" height="90" rx="8"/>
+  <text x="495" y="293" text-anchor="middle">Fenêtre de motif :</text>
+  <text x="495" y="310" text-anchor="middle">choisir une raison</text>
+  <text x="495" y="327" text-anchor="middle">(précision si</text>
+  <text x="495" y="344" text-anchor="middle">Autre raison)</text>
+
+  <rect class="red" x="430" y="395" width="150" height="36" rx="8"/>
+  <text x="505" y="418" text-anchor="middle">rien n'est modifié</text>
+
+  <rect class="grey" x="20" y="382" width="250" height="84" rx="8"/>
+  <text x="32" y="402">Toujours un motif choisi :</text>
+  <text x="32" y="419">rejet, réouverture, clôture de</text>
+  <text x="32" y="436">tâche sans action, tâche ignorée,</text>
+  <text x="32" y="453">occurrence ignorée</text>
+
+  <rect class="strong" x="620" y="160" width="160" height="112" rx="8"/>
+  <text x="700" y="185" text-anchor="middle">Journal d'audit,</text>
+  <text x="700" y="202" text-anchor="middle">ajout seul :</text>
+  <text x="700" y="219" text-anchor="middle">auteur, date,</text>
+  <text x="700" y="236" text-anchor="middle">ancienne et nouvelle</text>
+  <text x="700" y="253" text-anchor="middle">valeur, motif</text>
+
+  <rect class="grey" x="600" y="345" width="180" height="112" rx="8"/>
+  <text x="690" y="370" text-anchor="middle">Événements du système :</text>
+  <text x="690" y="387" text-anchor="middle">cascades (auteur de</text>
+  <text x="690" y="404" text-anchor="middle">la requête), tâche</text>
+  <text x="690" y="421" text-anchor="middle">quotidienne</text>
+  <text x="690" y="438" text-anchor="middle">(SYSTEM_SCHEDULE)</text>
+</svg>

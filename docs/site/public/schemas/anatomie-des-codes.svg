@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 530" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Anatomie des six codes de Tunnel : intervention, demande d'intervention, demande d'achat, commande fournisseur, pièce et équipement, avec l'origine de chaque morceau</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .name { font-size: 15px; font-weight: 600; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .code { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 16px; font-weight: 600; }
+    .sep { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 16px; fill: #6b7280; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .neutral { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+    .tag { fill: #f8fafc; stroke: #475569; stroke-width: 1; }
+    .tagtext { font-size: 12px; fill: #475569; }
+  </style>
+  <rect x="0.5" y="0.5" width="899" height="529" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- 1. Intervention -->
+  <text class="name" x="20" y="45">Intervention</text>
+  <rect class="blue" x="190" y="24" width="120" height="32" rx="4"/><text class="code" x="250" y="46" text-anchor="middle">PR-01</text>
+  <text class="sep" x="317" y="46" text-anchor="middle">-</text>
+  <rect class="blue" x="324" y="24" width="120" height="32" rx="4"/><text class="code" x="384" y="46" text-anchor="middle">CUR</text>
+  <text class="sep" x="451" y="46" text-anchor="middle">-</text>
+  <rect class="blue" x="458" y="24" width="120" height="32" rx="4"/><text class="code" x="518" y="46" text-anchor="middle">20261105</text>
+  <text class="sep" x="585" y="46" text-anchor="middle">-</text>
+  <rect class="blue" x="592" y="24" width="150" height="32" rx="4"/><text class="code" x="667" y="46" text-anchor="middle">JM</text>
+  <text class="note" x="250" y="74" text-anchor="middle">code de</text><text class="note" x="250" y="88" text-anchor="middle">l'équipement</text>
+  <text class="note" x="384" y="74" text-anchor="middle">type</text><text class="note" x="384" y="88" text-anchor="middle">d'intervention</text>
+  <text class="note" x="518" y="74" text-anchor="middle">jour de création</text>
+  <text class="note" x="667" y="74" text-anchor="middle">initiales du technicien</text><text class="note" x="667" y="88" text-anchor="middle">pilote</text>
+  <rect class="tag" x="768" y="28" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="44" text-anchor="middle">généré</text>
+
+  <!-- 2. Demande d'intervention -->
+  <text class="name" x="20" y="116">Demande</text><text class="name" x="20" y="134">d'intervention</text>
+  <rect class="blue" x="190" y="102" width="120" height="32" rx="4"/><text class="code" x="250" y="124" text-anchor="middle">DI</text>
+  <text class="sep" x="317" y="124" text-anchor="middle">-</text>
+  <rect class="blue" x="324" y="102" width="120" height="32" rx="4"/><text class="code" x="384" y="124" text-anchor="middle">2026</text>
+  <text class="sep" x="451" y="124" text-anchor="middle">-</text>
+  <rect class="blue" x="458" y="102" width="160" height="32" rx="4"/><text class="code" x="538" y="124" text-anchor="middle">0042</text>
+  <text class="note" x="250" y="152" text-anchor="middle">demande</text><text class="note" x="250" y="166" text-anchor="middle">d'intervention</text>
+  <text class="note" x="384" y="152" text-anchor="middle">année de création</text>
+  <text class="note" x="538" y="152" text-anchor="middle">numéro de l'année,</text><text class="note" x="538" y="166" text-anchor="middle">recommence chaque année</text>
+  <rect class="tag" x="768" y="106" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="122" text-anchor="middle">généré</text>
+
+  <!-- 3. Demande d'achat -->
+  <text class="name" x="20" y="201">Demande d'achat</text>
+  <rect class="orange" x="190" y="180" width="120" height="32" rx="4"/><text class="code" x="250" y="202" text-anchor="middle">DA</text>
+  <text class="sep" x="317" y="202" text-anchor="middle">-</text>
+  <rect class="orange" x="324" y="180" width="120" height="32" rx="4"/><text class="code" x="384" y="202" text-anchor="middle">2026</text>
+  <text class="sep" x="451" y="202" text-anchor="middle">-</text>
+  <rect class="orange" x="458" y="180" width="160" height="32" rx="4"/><text class="code" x="538" y="202" text-anchor="middle">0017</text>
+  <text class="note" x="250" y="230" text-anchor="middle">demande d'achat</text>
+  <text class="note" x="384" y="230" text-anchor="middle">année de création</text>
+  <text class="note" x="538" y="230" text-anchor="middle">numéro de l'année,</text><text class="note" x="538" y="244" text-anchor="middle">recommence chaque année</text>
+  <rect class="tag" x="768" y="184" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="200" text-anchor="middle">généré</text>
+
+  <!-- 4. Commande fournisseur -->
+  <text class="name" x="20" y="272">Commande</text><text class="name" x="20" y="290">fournisseur</text>
+  <rect class="orange" x="190" y="258" width="120" height="32" rx="4"/><text class="code" x="250" y="280" text-anchor="middle">CMD</text>
+  <text class="sep" x="317" y="280" text-anchor="middle">-</text>
+  <rect class="orange" x="324" y="258" width="130" height="32" rx="4"/><text class="code" x="389" y="280" text-anchor="middle">20261105</text>
+  <text class="sep" x="461" y="280" text-anchor="middle">-</text>
+  <rect class="orange" x="468" y="258" width="160" height="32" rx="4"/><text class="code" x="548" y="280" text-anchor="middle">0007</text>
+  <text class="note" x="250" y="308" text-anchor="middle">commande</text>
+  <text class="note" x="389" y="308" text-anchor="middle">jour de création</text>
+  <text class="note" x="548" y="308" text-anchor="middle">numéro d'une</text><text class="note" x="548" y="322" text-anchor="middle">séquence unique</text>
+  <rect class="tag" x="768" y="262" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="278" text-anchor="middle">généré</text>
+
+  <!-- 5. Pièce -->
+  <text class="name" x="20" y="357">Pièce</text>
+  <rect class="orange" x="190" y="336" width="120" height="32" rx="4"/><text class="code" x="250" y="358" text-anchor="middle">P</text>
+  <text class="sep" x="317" y="358" text-anchor="middle">-</text>
+  <rect class="orange" x="324" y="336" width="130" height="32" rx="4"/><text class="code" x="389" y="358" text-anchor="middle">000123</text>
+  <text class="note" x="250" y="386" text-anchor="middle">pièce</text>
+  <text class="note" x="389" y="386" text-anchor="middle">six chiffres,</text><text class="note" x="389" y="400" text-anchor="middle">séquence</text>
+  <rect class="tag" x="768" y="340" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="356" text-anchor="middle">généré</text>
+
+  <!-- 6. Équipement -->
+  <text class="name" x="20" y="435">Équipement</text>
+  <rect class="neutral" x="190" y="414" width="120" height="32" rx="4"/><text class="code" x="250" y="436" text-anchor="middle">PR-01</text>
+  <text class="note" x="190" y="464">saisi, ou calculé : classe + numéro sur 3 chiffres,</text>
+  <text class="note" x="190" y="478">sinon EQ + 3 chiffres</text>
+  <rect class="tag" x="768" y="418" width="116" height="24" rx="12"/><text class="tagtext" x="826" y="434" text-anchor="middle">saisi ou calculé</text>
+
+  <text x="20" y="512">Le code d'une intervention est posé à la création et ne change plus.</text>
+</svg>

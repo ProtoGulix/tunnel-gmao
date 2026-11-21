@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Cycle de vie d'une tâche : à faire, en cours, terminée ou ignorée, avec ce qui déclenche chaque passage</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .green { fill: #ecfdf5; stroke: #059669; stroke-width: 1.5; }
+    .neutral { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #475569; stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; marker-end: url(#head); }
+    .join { stroke: #475569; stroke-width: 1.8; fill: none; }
+    .dashjoin { stroke: #475569; stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="799" height="399" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Flèches -->
+  <path class="arrow" d="M150 172 H340"/>
+  <text class="note" x="245" y="162" text-anchor="middle">une action est liée</text>
+
+  <path class="arrow" d="M460 165 L640 90"/>
+  <text class="note halo" x="515" y="160">l'action termine la tâche</text>
+
+  <path class="arrow" d="M90 150 V68 H640"/>
+  <text class="note" x="365" y="22" text-anchor="middle">action qui termine la tâche,</text>
+  <text class="note" x="365" y="37" text-anchor="middle">ou clôture en coordination</text>
+  <text class="note" x="365" y="52" text-anchor="middle">(responsable, motif)</text>
+
+  <path class="arrow" d="M90 194 V244 H640"/>
+  <path class="join" d="M400 194 V244"/>
+  <circle cx="400" cy="244" r="3" fill="#475569"/>
+  <text class="note" x="365" y="268" text-anchor="middle">abandon avec motif</text>
+  <text class="note" x="365" y="283" text-anchor="middle">(étape obligatoire d'un plan :</text>
+  <text class="note" x="365" y="298" text-anchor="middle">responsable)</text>
+
+  <!-- Retours pointillés -->
+  <path class="dash" d="M760 76 H785 V332 H60 V194"/>
+  <path class="dashjoin" d="M700 266 V332"/>
+  <circle cx="700" cy="332" r="3" fill="#475569"/>
+  <text class="note" x="400" y="324" text-anchor="middle">Remettre à faire</text>
+
+  <!-- États -->
+  <rect class="green" x="30" y="150" width="120" height="44" rx="10"/>
+  <text x="90" y="177" text-anchor="middle">À faire</text>
+  <rect class="green" x="340" y="150" width="120" height="44" rx="10"/>
+  <text x="400" y="177" text-anchor="middle">En cours</text>
+  <rect class="green" x="640" y="54" width="120" height="44" rx="10"/>
+  <text x="700" y="81" text-anchor="middle">Terminée</text>
+  <rect class="neutral" x="640" y="222" width="120" height="44" rx="10"/>
+  <text x="700" y="249" text-anchor="middle">Ignorée</text>
+
+  <text x="20" y="366">Obligatoire : bloque la fermeture de l'intervention tant qu'elle est à faire ou en cours.</text>
+  <text x="20" y="384">Facultative : ne bloque jamais.</text>
+</svg>
