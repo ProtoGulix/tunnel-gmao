@@ -68,16 +68,17 @@ Sur une demande « nouvelle » ou « en attente », le bouton **Rejeter** appara
 détail.
 
 1. Cliquez sur **Rejeter**.
-2. Si la règle d'audit le demande, la fenêtre « Raison de la modification » s'ouvre.
-   Choisissez une raison dans la liste. Avec « Autre raison », la **Précision** devient
-   obligatoire.
+2. La fenêtre « Raison de la modification » s'ouvre : le rejet exige toujours un motif.
+   Choisissez-le dans la liste des motifs de rejet (hors du périmètre de la maintenance,
+   doublon, déjà traité, demande incomplète, autre raison). Avec « Autre raison », la
+   **Précision** devient obligatoire.
 3. Cliquez sur **Confirmer**.
 
 Le texte de la précision est copié dans l'**Historique** de la demande. Une demande
 préventive rejetée marque son occurrence comme « Ignorée ».
 
-Quand la fenêtre s'ouvre ou non dépend des règles d'audit de votre installation, que seul
-l'administrateur modifie. Voir [Audit et motifs](/responsable/audit-motifs).
+Ce motif est obligatoire quelle que soit la règle d'audit de votre installation. Voir
+[Audit et motifs](/responsable/audit-motifs).
 
 ## Supprimer une demande
 

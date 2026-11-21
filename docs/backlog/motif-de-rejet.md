@@ -1,5 +1,7 @@
 # Rejet d'une demande d'intervention sans motif
 
+TRAITÉ : ADR 0038, REJ-01 (motifs) et REJ-02 (le rejet exige un motif choisi).
+
 Relevé le 2026-11-21 (rédaction du guide, GUIDE-03), vérifié par l'agent principal.
 
 Le web ne porte pas de fenêtre propre au rejet : il compte sur la règle d'audit pour

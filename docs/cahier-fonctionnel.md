@@ -47,9 +47,9 @@ portés par l'action, pas par l'intervention.
   `request_status_log`.
 - Routes `api/intervention_requests/routes.py` : liste, détail, création, `POST /{id}/transition`,
   suppression, `POST /repair`. Accepter exige un type et un technicien et crée l'intervention ;
-  rejeter passe par la règle d'audit `request.status_to`, routinière en production et dans
-  les données de départ : aucun motif n'est demandé aujourd'hui, sauf « Autre raison » qui
-  exige un texte (constat du 2026-11-21, question ouverte, backlog motif-de-rejet) ;
+  rejeter exige un motif choisi parmi les motifs de rejet (décision `request_rejected`,
+  ADR 0038), quelle que soit la règle d'audit routinière `request.status_to` ; « Autre raison »
+  exige un texte ;
   clôturer est refusé tant que l'intervention est ouverte.
 - Une demande porte au plus une intervention (contrainte d'unicité). Une intervention vient
   toujours d'une demande (ADR 0019, règle tenue par l'API ; des interventions anciennes

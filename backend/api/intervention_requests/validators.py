@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
+from api.audits.schemas import AuditRules
 from api.constants import CLOSED_STATUS_CODE
-from api.errors.exceptions import ValidationError
+from api.errors.exceptions import AuditReasonRequiredError, ValidationError
 from api.interventions.types import check_assignable
 
 # Transitions autorisées : statut_from → [statuts_to possibles]
@@ -12,6 +13,9 @@ ALLOWED_TRANSITIONS: Dict[str, List[str]] = {
     "rejetee": [],
     "cloturee": [],
 }
+
+# Décision d'audit (decision_types) d'un rejet de demande (ADR 0038)
+REJECT_DECISION = "request_rejected"
 
 CLOSE_VIA_INTERVENTION_MESSAGE = "Clore l'intervention : elle clôturera la demande."
 
@@ -44,6 +48,39 @@ def compute_allowed_transitions(
         for target in ALLOWED_TRANSITIONS.get(statut, [])
         if target != "cloturee" or _is_closable(intervention_status, has_intervention)
     ]
+
+
+def ensure_reject_reason(
+    reason_code: Optional[str],
+    reason_text: Optional[str],
+    reasons: List[Dict[str, Any]],
+) -> None:
+    """Vérifie le motif explicite d'un rejet de demande (ADR 0038, même mécanisme que ADR 0028).
+
+    Rejeter n'est jamais routinier : sans motif choisi par l'utilisateur (ROUTINE injecté
+    par le middleware, motif auto ou system), on répond la demande de motif standard.
+    `reasons` = motifs actifs de l'entité demande ; seuls ceux dont decision_types
+    contient `request_rejected` sont proposés et acceptés.
+    """
+    from api.utils.audit import build_picker_reasons
+
+    proposed = [r for r in reasons if REJECT_DECISION in (r.get("decision_types") or [])]
+    reason = {r["code"]: r for r in reasons}.get(reason_code or "")
+    if reason is None:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une demande")
+    if reason.get("category") not in ("manual", "user"):
+        raise AuditReasonRequiredError(
+            AuditRules(
+                required=True,
+                silent=False,
+                default_reason_code=None,
+                reasons=build_picker_reasons(proposed),
+            ).model_dump()
+        )
+    if reason not in proposed:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à un rejet")
+    if reason_code == "OTHER" and not (reason_text or "").strip():
+        raise ValidationError("reason_text obligatoire quand reason_code = OTHER")
 
 
 class InterventionRequestValidator:

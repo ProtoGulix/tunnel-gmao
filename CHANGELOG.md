@@ -9,6 +9,9 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Base : migration 0024, quatre motifs de rejet d'une demande (hors périmètre, doublon, déjà
+  traité, incomplète) et type de décision `request_rejected`, que REJ-02 appliquera au rejet
+  (ADR 0038, REJ-01).
 - API : mode démonstration `DEMO_MODE=true` (ADR 0036) : les écritures sur les comptes,
   les droits, les clés d'API, les vues d'accueil par rôle et les règles de sécurité
   répondent 403 `DEMO_MODE_LOCKED` ; les lectures et le travail métier restent permis ;
@@ -17,6 +20,12 @@ mobile/CHANGELOG.md.
   le jour du chargement, journaux et audit attribués aux auteurs fictifs), script de
   réinitialisation nocturne `reset-demo.sh` (projet Compose isolé `tunnel-demo`) et procédure
   `deploy/demo/README.md` (DEMO-06, ADR 0036).
+
+### Modifié
+- API : rejeter une demande exige un motif choisi parmi les motifs de rejet (`request_rejected`),
+  quelle que soit la règle d'audit routinière ; sans motif, 400 « reason_code obligatoire »
+  avec ces seuls motifs, que la fenêtre commune du web affiche déjà ; un motif hors rejet est
+  refusé. Acceptation et mise en attente restent sans motif (ADR 0038, REJ-02).
 
 ### Corrigé
 - Mobile : le bouton « Annuler » du formulaire de demande de l'onglet « Demandes » ferme
