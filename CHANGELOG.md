@@ -9,6 +9,17 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Web : page « Synthèse de l'audit » (menu Production, à côté d'Organisation, droit
+  `stats:get_audit_synthese`) : tâches sans garant, faites sans action du garant, repérées sur le
+  terrain, partagées, décisions hors travail normal par type et motif, part automatique ; 3 mois
+  par défaut, définitions en clair, mois avant le 2026-11-20 signalés « données incomplètes »
+  (SYN-02, ADR 0032).
+- API : `GET /stats/audit-synthese?months=N` (défaut 3), synthèse de l'audit et du partage des
+  tâches par mois (tâches sans garant, faites sans action du garant, repérées sur le terrain,
+  partagées, décisions hors travail normal par type et motif, part des modifications
+  automatiques), chiffres d'équipe sans aucune donnée de personne ; droit
+  `stats:get_audit_synthese` ouvert par défaut, à rejouer en production par le bootstrap
+  (SYN-01, ADR 0032).
 - Mobile : le sélecteur de type d'intervention (création et acceptation d'une demande) ne propose
   que les types permis pour l'équipement ; un type devenu non permis est vidé, un type suggéré non
   permis n'est pas verrouillé (TPE-04, ADR 0031).

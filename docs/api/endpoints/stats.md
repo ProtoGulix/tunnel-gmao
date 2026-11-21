@@ -328,3 +328,69 @@ Indicateurs d'organisation de l'équipe (ADR 0021). Lecture seule, 10 requêtes 
   "waiting_parts": { "count": 4, "median_age_days": 9.5, "max_age_days": 40 }
 }
 ```
+
+---
+
+## `GET /stats/audit-synthese`
+
+Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 requêtes par minute. Droit : `stats:get_audit_synthese`, ouvert par défaut aux rôles qui lisent comme `stats:get_organisation` (à rejouer en production par le bootstrap à la mise à jour). Chiffres d'équipe uniquement : aucun identifiant, nom ni initiale de personne.
+
+### Query params
+
+| Param | Type | Défaut |
+|---|---|---|
+| `months` | int, 1 à 120 | 3 (mois calendaires, mois courant compris, du 1er du premier mois à aujourd'hui) |
+
+`400` hors bornes.
+
+### Définitions
+
+- Garant d'une tâche : `assigned_to`. Exécutants : techniciens distincts des actions liées (`intervention_action_task`). Les indicateurs de tâches sont rattachés au mois de création de la tâche (`created_at`) et ne dépendent pas de `closed_by`.
+- `tasks_without_guarantor` : tâches créées sans `assigned_to`.
+- `done_without_guarantor_action` : tâches `done` avec garant dont le garant n'est le technicien d'aucune action liée. Part sur `tasks_done_with_guarantor`.
+- `spotted_in_field` : tâches `done` créées par leur garant, qui en est aussi l'un des exécutants. Part sur `tasks_done_with_guarantor`.
+- `shared_tasks` : tâches `done` avec au moins deux exécutants distincts. Part sur `tasks_done`.
+- `decisions` : événements d'audit non système dont le motif est de catégorie `user` ou `manual`, par mois, type de décision et motif ; `decisions_total` en est le total du mois. Les événements sans motif n'y figurent pas, ni ceux du motif `LEGACY_STATUS_CHANGE` (journaux migrés, créations et suppressions mal étiquetées par l'ancien code : pas des décisions) ; ils restent comptés dans `audit_events`.
+- `system_share` : événements `is_system` parmi tous les événements du mois (`audit_events`).
+- `incomplete_data` : vrai si le mois commence avant `cascades_traced_from` (2026-11-20, ADR 0029) : `closed_by` et cascades y sont incomplets (novembre 2026 est donc signalé). Les indicateurs de tâches n'en dépendent pas, mais les décisions et la part système oui.
+- Parts en % à 1 décimale, `null` si le dénominateur vaut 0 ; tous les mois de la période sont présents.
+
+### Réponse `200`
+
+```json
+{
+  "period": { "start": "2026-09-01", "end": "2026-11-20" },
+  "cascades_traced_from": "2026-11-20",
+  "monthly": [
+    {
+      "month": "2026-09",
+      "incomplete_data": true,
+      "tasks_created": 66,
+      "tasks_without_guarantor": 0,
+      "without_guarantor_share": 0.0,
+      "tasks_done": 59,
+      "tasks_done_with_guarantor": 59,
+      "done_without_guarantor_action": 17,
+      "done_without_guarantor_action_share": 28.8,
+      "spotted_in_field": 35,
+      "spotted_in_field_share": 59.3,
+      "shared_tasks": 19,
+      "shared_tasks_share": 32.2,
+      "decisions_total": 20,
+      "audit_events": 307,
+      "system_events": 134,
+      "system_share": 43.6
+    }
+  ],
+  "totals": { "...": "mêmes compteurs et parts que monthly, sans month ni incomplete_data" },
+  "decisions": [
+    {
+      "month": "2026-09",
+      "decision_type": "assigned_to_changed",
+      "reason_code": "TECHNICIAN_UNAVAILABLE",
+      "reason_label": "Technicien indisponible",
+      "count": 9
+    }
+  ]
+}
+```

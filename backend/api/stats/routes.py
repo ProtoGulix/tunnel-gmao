@@ -7,10 +7,12 @@ from api.auth.permissions import require_authenticated
 from api.equipements.validators import resolve_dashboard_period
 from api.errors.exceptions import ValidationError
 from api.limiter import limiter
+from api.stats.audit_synthese_repo import AuditSyntheseRepository
 from api.stats.organisation_repo import OrganisationRepository
 from api.stats.repo import StatsRepository
 from api.stats.schemas import (
     AnomaliesSaisieResponse,
+    AuditSyntheseResponse,
     ChargeTechniqueResponse,
     OrganisationResponse,
     QualiteDonneesResponse,
@@ -112,3 +114,21 @@ def get_organisation(
     """Indicateurs d'organisation de l'équipe (ADR 0021) : chiffres d'équipe, jamais par technicien."""
     start, end = resolve_dashboard_period(start_date, end_date)
     return OrganisationRepository().get_organisation(start, end)
+
+
+AUDIT_SYNTHESE_MAX_MONTHS = 120  # 10 ans, comme la borne de la période d'Organisation
+
+
+@router.get("/audit-synthese", response_model=AuditSyntheseResponse)
+@limiter.limit("10/minute")
+def get_audit_synthese(
+    request: Request,
+    months: int = Query(3, description="Nombre de mois calendaires, mois courant compris"),
+):
+    """Synthèse de l'audit et du partage des tâches (ADR 0032) : chiffres d'équipe, jamais par personne."""
+    if not 1 <= months <= AUDIT_SYNTHESE_MAX_MONTHS:
+        raise ValidationError(f"months doit être compris entre 1 et {AUDIT_SYNTHESE_MAX_MONTHS}")
+    end = date.today()
+    index = end.year * 12 + (end.month - 1) - (months - 1)
+    start = date(index // 12, index % 12 + 1, 1)
+    return AuditSyntheseRepository().get_synthese(start, end)

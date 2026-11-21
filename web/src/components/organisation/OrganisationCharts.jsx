@@ -55,7 +55,7 @@ function seriesTooltip(rowsOf) {
 }
 
 // Cadre commun : titre, graphique, légende éventuelle, définition en une phrase
-function ChartBlock({ title, ariaLabel, definition, legend, height = 160, children }) {
+export function ChartBlock({ title, ariaLabel, definition, legend, height = 160, children }) {
   return (
     <Box mt="4">
       <Text as="div" size="2" weight="medium" mb="1">{title}</Text>
@@ -83,7 +83,7 @@ ChartBlock.propTypes = {
 };
 
 // Un mois sans dénominateur (valeur null) n'a pas de barre : le tooltip écrit « — »
-function ShareChart({ monthly, field, title, definition, color, label }) {
+export function ShareChart({ monthly, field, title, definition, color, label }) {
   const rows = monthly.map((m) => ({ month: m.month, value: m[field] }));
   const tooltip = seriesTooltip((r) => [{ key: field, label, color, value: formatPct(r.value) }]);
   return (

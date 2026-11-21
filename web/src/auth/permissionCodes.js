@@ -40,6 +40,8 @@ export const PERM = {
     // Le code du catalogue contient « _or » : faux positif de la règle sur les filtres Directus
     // eslint-disable-next-line no-restricted-syntax
     organisation: 'stats:get_organisation',
+    // Page Synthèse de l'audit (ADR 0032)
+    auditSynthese: 'stats:get_audit_synthese',
   },
   stock: {
     createItem: 'stock-items:create_stock_item',

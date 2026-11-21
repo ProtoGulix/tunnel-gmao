@@ -1,5 +1,7 @@
 # Page de synthèse de l'audit
 
+Traité (2026-11-20) : ADR 0032, SYN-01 (API) et SYN-02 (page web).
+
 Demande de l'utilisateur du 2026-11-20 : à faire en fin de chantier, après les autres
 sujets en cours (« garde la page pour la fin »). Données fiables depuis l'ADR 0029
 (auteur des journaux, événements des cascades, `closed_by` toujours rempli).

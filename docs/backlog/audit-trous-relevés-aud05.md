@@ -13,3 +13,12 @@ Mise à jour du 2026-11-19 (CONT-02).
 - TRAITÉ : DELETE de tâche, `reason_text` et test de suppression (route déclarée, ADR 0018).
 - TRAITÉ : `except ValidationError: raise` de `create` (intervention_requests/repo.py) :
   branche morte (le bloc n'exécute que du SQL), retirée.
+
+## Motif LEGACY_STATUS_CHANGE encore posé sur des tâches (constat du 2026-11-20)
+
+Lecture seule, base de dev : 59 événements de tâche (created 43, deleted 4,
+due_date_changed 4, assigned_to_changed 1…) portent le motif LEGACY_STATUS_CHANGE entre
+août et le 2026-11-12, alors que ce motif est inactif depuis la migration 0013. Plus aucun
+depuis le 2026-11-12 (corrections d'audit du 2026-11-14 probables, NON VÉRIFIÉ). Ces
+événements ne sont pas des décisions : la synthèse de l'audit (ADR 0032, SYN-01) les exclut
+des décisions. Aucune correction des données passées.

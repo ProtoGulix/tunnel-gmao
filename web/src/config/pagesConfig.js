@@ -161,6 +161,17 @@ export const PAGES_CONFIG = [
     requiredPermission: PERM.stats.organisation,
   },
   {
+    id: 'audit-synthese',
+    path: '/audit-synthese',
+    label: "Synthèse de l'audit",
+    icon: ClipboardList,
+    pageTitle: "Synthèse de l'audit",
+    pageSubtitle: 'Partage des tâches et décisions',
+    section: 'production',
+    requiresAuth: true,
+    requiredPermission: PERM.stats.auditSynthese,
+  },
+  {
     id: 'quality-data',
     path: '/quality-data',
     label: 'Qualité Données',

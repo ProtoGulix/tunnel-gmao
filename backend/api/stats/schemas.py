@@ -449,3 +449,42 @@ class OrganisationResponse(BaseModel):
     projects: OrganisationProjects
     preventive: OrganisationPreventive
     waiting_parts: OrganisationWaitingParts
+
+
+class AuditSyntheseCounters(BaseModel):
+    tasks_created: int
+    tasks_without_guarantor: int
+    without_guarantor_share: Optional[float] = None
+    tasks_done: int
+    tasks_done_with_guarantor: int
+    done_without_guarantor_action: int
+    done_without_guarantor_action_share: Optional[float] = None
+    spotted_in_field: int
+    spotted_in_field_share: Optional[float] = None
+    shared_tasks: int
+    shared_tasks_share: Optional[float] = None
+    decisions_total: int
+    audit_events: int
+    system_events: int
+    system_share: Optional[float] = None
+
+
+class AuditSyntheseMonth(AuditSyntheseCounters):
+    month: str
+    incomplete_data: bool
+
+
+class AuditSyntheseDecision(BaseModel):
+    month: str
+    decision_type: str
+    reason_code: str
+    reason_label: str
+    count: int
+
+
+class AuditSyntheseResponse(BaseModel):
+    period: OrganisationPeriod
+    cascades_traced_from: date
+    monthly: List[AuditSyntheseMonth]
+    totals: AuditSyntheseCounters
+    decisions: List[AuditSyntheseDecision]
