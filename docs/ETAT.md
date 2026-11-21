@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-20
+Dernière mise à jour : 2026-11-21
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
@@ -72,6 +72,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| en cours (2026-11-21) | Cahier fonctionnel (livré, en cours, vision), puis base de démonstration et documentation utilisateur : inventaire du livré (CAH-01), cahier et résumé pour le site validés par l'utilisateur le 2026-11-21 (CAH-02, CAH-03) ; base de démonstration à planifier | cahier fusionné dans develop | [cahier](cahier-fonctionnel.md), [CAH-01](taches/CAH-01-inventaire-du-livre.md), [CAH-02](taches/CAH-02-redaction-du-cahier.md), [CAH-03](taches/CAH-03-resume-site-vitrine.md) |
 | fait (2026-11-21) | Onglet « Audit » du Bilan allégé (ADR 0035, accord de l'utilisateur du 2026-11-21) : tendances de la synthèse par l'API (BIL-07), onglet web (BIL-08) | fusionnée dans develop | ADR 0035, [BIL-07](taches/BIL-07-backend-tendances-audit.md), [BIL-08](taches/BIL-08-web-onglet-audit-allege.md) |
 | fait (2026-11-21) | Onglet « État » du Bilan allégé (ADR 0034, décisions de l'utilisateur du 2026-11-21 : bandeau gardé, définitions derrière ⓘ, mini-courbes ; puis seuils et badges d'un mot donnés par l'API, tendances sur la période) | fusionnée dans develop | ADR 0034, [BIL-02](taches/BIL-02-web-onglet-etat-allege.md), [BIL-03](taches/BIL-03-backend-seuils-et-tendances.md), [BIL-04](taches/BIL-04-web-badges-courbes-barres-tendances.md), [BIL-05](taches/BIL-05-backend-series-mensuelles.md), [BIL-06](taches/BIL-06-web-courbes-huit-chiffres.md) |
 | fait (2026-11-21) | Bilan du service (ADR 0033, décisions de l'utilisateur du 2026-11-21 : trois onglets « État », « Audit » et « Qualité », période commune en mois, 3 par défaut) : page web regroupée (BIL-01) | fusionnée dans develop | ADR 0033, [BIL-01](taches/BIL-01-web-page-bilan-du-service.md) |
@@ -129,6 +130,8 @@ Fiches ouvertes : TYP-01 à TYP-04. Closes aussi : INT-01 à INT-06, CONT-01 à 
 
 ## Dernière décision
 
+2026-11-21 : cahier fonctionnel validé (docs/cahier-fonctionnel.md) ; « en cours » ne reprend que ce que ETAT.md et les ADR montrent (pas d'extrapolation) ; le dépôt du site vitrine est privé et n'est pas nommé dans ce dépôt.
+
 2026-11-20 : types d'intervention en base, type vide et obligatoire à la création avec une description par type, clés étrangères (ADR 0026, décisions de l'utilisateur).
 
 2026-11-20 : création d'une intervention en une seule transaction (ADR 0025) ; fenêtre de création du web comme référence, demande créée dans le même geste sans notification, création toujours permise sur le mobile, clôture proposée après la dernière tâche (décisions de l'utilisateur).
@@ -166,6 +169,10 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
+
+0. Chantier CAH : cahier validé ; proposer le plan de la base de démonstration (sites codés
+   en dur à traiter d'abord, backlog sites-codes-en-dur), puis l'ADR de la documentation
+   utilisateur.
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
    production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).

@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne] Documentation
+- Cahier fonctionnel (`docs/cahier-fonctionnel.md`) : ce que Tunnel fait réellement en
+  5.11.0, preuve à l'appui, séparé de ce qui est à concevoir (constats) et de la vision ;
+  résumé des affirmations publiables pour le site vitrine.
+
 ## [5.11.0] — 2026-11-21
 
 ### Ajouté
