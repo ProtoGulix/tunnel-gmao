@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- **v5.12.0** (2026-11-21, en préparation, PR develop → main à ouvrir par l'utilisateur) :
+- **v5.12.0** (2026-11-21, PR #17, tag sur main) :
   base de démonstration fictive et mode démo (ADR 0036), demo.frezille.fr en service ;
   guide utilisateur publié sur tunnel.frezille.fr/docs à la fusion dans main (ADR 0037) ;
   rejet d'une demande avec motif obligatoire (ADR 0038, migration 0024 jouée au démarrage de
@@ -15,7 +15,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
   DAP-01), rôles de l'administration (ADM-01), données de départ (règle request.status_to),
   bouton Annuler du mobile (MOB-01). Production (en 5.10.0) : à mettre à jour par
   l'utilisateur, migrations 0017 à 0024 au démarrage.
-- Dernière version publiée : **v5.11.0** (2026-11-21, PR #16, tag sur main) : 20 fusions dans develop depuis la
+- Version précédente : **v5.11.0** (2026-11-21, PR #16, tag sur main) : 20 fusions dans develop depuis la
   5.10.0, dont SEC-01 et TRI (sécurité, ménage), audit des cascades et auteur des journaux
   (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
   règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
