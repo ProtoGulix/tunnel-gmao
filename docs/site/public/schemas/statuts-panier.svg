@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 370" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Statuts d'un panier fournisseur et passages permis : En mutualisation, Devis envoyé, En négociation, En cours de livraison, Clôturé, Annulé</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .final { fill: none; stroke: #d97706; stroke-width: 1.5; }
+    .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+    .redfinal { fill: none; stroke: #dc2626; stroke-width: 1.5; }
+    .lock { fill: #f8fafc; stroke: #475569; stroke-width: 1; }
+    .locktext { font-size: 12px; fill: #475569; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #475569; stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; marker-end: url(#head); }
+    .join { stroke: #475569; stroke-width: 1.8; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="369" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Flèches de la rangée -->
+  <path class="arrow" d="M133 145 H207"/>
+  <path class="arrow" d="M319 145 H393"/>
+  <text class="note" x="356" y="112" text-anchor="middle">réponse du</text>
+  <text class="note" x="356" y="126" text-anchor="middle">fournisseur</text>
+  <path class="arrow" d="M505 145 H579"/>
+  <text class="note" x="542" y="98" text-anchor="middle">ligne</text>
+  <text class="note" x="542" y="112" text-anchor="middle">retenue</text>
+  <text class="note" x="542" y="126" text-anchor="middle">exigée</text>
+  <path class="arrow" d="M691 145 H765"/>
+  <text class="note" x="728" y="112" text-anchor="middle">tout est</text>
+  <text class="note" x="728" y="126" text-anchor="middle">reçu</text>
+
+  <!-- Commande directe, au-dessus -->
+  <path class="arrow" d="M264 120 C264 44, 636 44, 636 120"/>
+  <text class="note" x="450" y="42" text-anchor="middle">commande directe</text>
+
+  <!-- Réouverture -->
+  <path class="dash" d="M240 190 V232 H100 V192"/>
+  <text class="note" x="170" y="250" text-anchor="middle">réouverture, lignes conservées</text>
+
+  <!-- Annulation -->
+  <path class="arrow" d="M50 190 V315 H393"/>
+  <path class="join" d="M290 190 V315"/>
+  <circle cx="290" cy="315" r="3" fill="#475569"/>
+  <path class="arrow" d="M450 190 V288"/>
+
+  <!-- États -->
+  <rect class="orange" x="23" y="120" width="110" height="70" rx="10"/>
+  <text x="78" y="140" text-anchor="middle">En</text>
+  <text x="78" y="157" text-anchor="middle">mutualisation</text>
+  <text class="note" x="78" y="94" text-anchor="middle">nouvelles demandes</text>
+  <text class="note" x="78" y="108" text-anchor="middle">acceptées</text>
+
+  <rect class="orange" x="209" y="120" width="110" height="70" rx="10"/>
+  <text x="264" y="148" text-anchor="middle">Devis envoyé</text>
+  <rect class="lock" x="227" y="164" width="74" height="18" rx="9"/>
+  <text class="locktext" x="264" y="177" text-anchor="middle">verrouillé</text>
+
+  <rect class="orange" x="395" y="120" width="110" height="70" rx="10"/>
+  <text x="450" y="140" text-anchor="middle">En</text>
+  <text x="450" y="157" text-anchor="middle">négociation</text>
+  <rect class="lock" x="413" y="167" width="74" height="18" rx="9"/>
+  <text class="locktext" x="450" y="180" text-anchor="middle">verrouillé</text>
+
+  <rect class="orange" x="581" y="120" width="110" height="70" rx="10"/>
+  <text x="636" y="140" text-anchor="middle">En cours de</text>
+  <text x="636" y="157" text-anchor="middle">livraison</text>
+  <rect class="lock" x="599" y="167" width="74" height="18" rx="9"/>
+  <text class="locktext" x="636" y="180" text-anchor="middle">verrouillé</text>
+
+  <rect class="orange" x="767" y="120" width="110" height="70" rx="10"/>
+  <rect class="final" x="771" y="124" width="102" height="62" rx="7"/>
+  <text x="822" y="146" text-anchor="middle">Clôturé</text>
+  <rect class="lock" x="785" y="160" width="74" height="18" rx="9"/>
+  <text class="locktext" x="822" y="173" text-anchor="middle">verrouillé</text>
+
+  <rect class="red" x="395" y="290" width="110" height="50" rx="10"/>
+  <rect class="redfinal" x="399" y="294" width="102" height="42" rx="7"/>
+  <text x="450" y="320" text-anchor="middle">Annulé</text>
+</svg>

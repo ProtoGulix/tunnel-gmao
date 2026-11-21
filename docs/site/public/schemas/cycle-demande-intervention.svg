@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Cycle de vie d'une demande d'intervention et de l'intervention liée : la création de l'intervention accepte la demande, la clôture de l'intervention clôt la demande, la réouverture la remet à acceptée</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .title { font-size: 16px; font-weight: 600; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .final { fill: none; stroke: #2563eb; stroke-width: 1.5; }
+    .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+    .redfinal { fill: none; stroke: #dc2626; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #475569; stroke-width: 1.6; stroke-dasharray: 6 4; fill: none; marker-end: url(#head); }
+    .dots { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; }
+    .sep { stroke: #e2e2e3; stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="449" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Liens pointillés entre les deux bandes (dessinés d'abord) -->
+  <path class="dots" d="M445 135 V330"/>
+  <path class="dots" d="M795 135 V330"/>
+
+  <!-- Bande du haut : la demande -->
+  <text class="title" x="20" y="30">Demande d'intervention</text>
+
+  <path class="arrow" d="M99 85 V150"/>
+  <text class="note halo" x="109" y="123">mise de côté</text>
+  <path class="arrow" d="M154 60 L390 105"/>
+  <text class="note halo" x="190" y="56">création de l'intervention</text>
+  <path class="arrow" d="M154 175 L390 125"/>
+  <text class="note halo" x="190" y="192">création de l'intervention</text>
+
+  <path class="arrow" d="M44 65 H26 V236 H435 a10 10 0 0 1 20 0 H610"/>
+  <path d="M99 190 V236" stroke="#475569" stroke-width="1.8" fill="none"/>
+  <circle cx="99" cy="236" r="3" fill="#475569"/>
+  <text class="note halo" x="300" y="228" text-anchor="middle">motif obligatoire</text>
+
+  <path class="arrow" d="M500 115 H740"/>
+  <text class="note halo" x="620" y="106" text-anchor="middle">clôture de l'intervention</text>
+
+  <path class="dash" d="M820 95 V70 H480 V95"/>
+  <text class="note halo" x="650" y="62" text-anchor="middle">réouverture, motif obligatoire</text>
+
+  <text class="note halo" x="455" y="164">la création accepte la demande</text>
+  <text class="note halo" x="785" y="194" text-anchor="end">la fermeture clôt la demande</text>
+
+  <rect class="blue" x="44" y="45" width="110" height="40" rx="10"/>
+  <text x="99" y="70" text-anchor="middle">Nouvelle</text>
+  <rect class="blue" x="44" y="150" width="110" height="40" rx="10"/>
+  <text x="99" y="175" text-anchor="middle">En attente</text>
+  <rect class="blue" x="390" y="95" width="110" height="40" rx="10"/>
+  <text x="445" y="120" text-anchor="middle">Acceptée</text>
+  <rect class="blue" x="740" y="95" width="110" height="40" rx="10"/>
+  <rect class="final" x="744" y="99" width="102" height="32" rx="7"/>
+  <text x="795" y="120" text-anchor="middle">Clôturée</text>
+  <rect class="red" x="610" y="216" width="110" height="40" rx="10"/>
+  <rect class="redfinal" x="614" y="220" width="102" height="32" rx="7"/>
+  <text x="665" y="241" text-anchor="middle">Rejetée</text>
+
+  <line class="sep" x1="20" y1="276" x2="880" y2="276"/>
+
+  <!-- Bande du bas : l'intervention -->
+  <text class="title" x="20" y="302">Intervention</text>
+  <rect class="blue" x="330" y="330" width="230" height="42" rx="10"/>
+  <text x="445" y="356" text-anchor="middle">Ouverte (statuts de travail)</text>
+  <rect class="blue" x="720" y="330" width="150" height="42" rx="10"/>
+  <rect class="final" x="724" y="334" width="142" height="34" rx="7"/>
+  <text x="795" y="356" text-anchor="middle">Fermée</text>
+  <path class="arrow" d="M560 351 H720"/>
+  <path class="dash" d="M795 372 V398 H445 V372"/>
+  <text class="note halo" x="620" y="416" text-anchor="middle">réouverture</text>
+
+  <text x="20" y="438">Tâches obligatoires réglées exigées pour fermer.</text>
+</svg>

@@ -15,3 +15,13 @@ Relevés par le rédacteur GUIDE-03 dans le code, NON VÉRIFIÉS à l'écran par
   « En cours/Terminée » dans la fiche) ; sur une tâche, « Annuler » met le statut « Ignoré ».
 - Onglet Qualité : filtre « Articles de stock » et règles « Sans seuil minimum », « Sans
   fournisseur » portent sur l'ancien modèle `stock_item`.
+
+## Constats de la section « Comprendre Tunnel » (GUIDE-05), NON VÉRIFIÉS à l'écran
+
+- Priorités : `PRIORITY_TYPES` (api/constants.py) dit `normal`, une partie du code écrit
+  `normale` (création depuis une demande, préventif, filtre des interventions) ; les deux
+  valeurs coexistent en base (profil de la production, spike 0005).
+- Codes de plan préventif : le formulaire web impose `^[A-Z0-9_]+$`, l'API n'impose rien ;
+  les codes à tirets (scénario de démonstration) ne passeraient pas par le formulaire.
+- Quantité reçue d'une ligne de commande : modifiable par l'API, prise en compte par les
+  statuts « Reçu » et « Partiellement reçu », sans écran de saisie.

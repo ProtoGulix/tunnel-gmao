@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 390" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>La chaîne du travail de Tunnel, de la demande d'intervention à la réception de la pièce, avec le préventif qui l'alimente et l'audit qui la trace</title>
+  <style>
+    text { font-size: 13px; fill: #1f2937; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .green { fill: #ecfdf5; stroke: #059669; stroke-width: 1.5; }
+    .violet { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 1.5; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .grey { fill: #f8fafc; stroke: #475569; stroke-width: 1.5; }
+    .neutral { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dots { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+    .brace { stroke: #059669; stroke-width: 1.5; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="389" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Audit : traits pointillés derrière les barres -->
+  <path class="dots" d="M198 320 V160"/>
+  <path class="dots" d="M324 320 V160"/>
+
+  <!-- Préventif -->
+  <rect class="violet" x="19" y="16" width="236" height="48" rx="8"/>
+  <text x="137" y="36" text-anchor="middle">Préventif</text>
+  <text x="137" y="53" text-anchor="middle">(plan par classe d'équipement)</text>
+  <path class="arrow" d="M72 64 V108"/>
+  <text class="note" x="84" y="83">demande créée</text>
+  <text class="note" x="84" y="97">par le système</text>
+
+  <!-- Accolade -->
+  <path class="brace" d="M271 104 q0 -8 8 -8 H495 q8 0 8 8"/>
+  <text x="387" y="64" text-anchor="middle">Le temps, la nature et la complexité</text>
+  <text x="387" y="82" text-anchor="middle">se portent par l'action</text>
+
+  <!-- Rangée principale -->
+  <rect class="blue" x="19" y="110" width="106" height="50" rx="8"/>
+  <text x="72" y="131" text-anchor="middle">Demande</text><text x="72" y="148" text-anchor="middle">d'intervention</text>
+  <rect class="blue" x="145" y="110" width="106" height="50" rx="8"/>
+  <text x="198" y="140" text-anchor="middle">Intervention</text>
+  <rect class="green" x="271" y="110" width="106" height="50" rx="8"/>
+  <text x="324" y="140" text-anchor="middle">Tâches</text>
+  <rect class="green" x="397" y="110" width="106" height="50" rx="8"/>
+  <text x="450" y="140" text-anchor="middle">Actions</text>
+  <rect class="orange" x="523" y="110" width="106" height="50" rx="8"/>
+  <text x="576" y="131" text-anchor="middle">Demande</text><text x="576" y="148" text-anchor="middle">d'achat</text>
+  <rect class="orange" x="649" y="110" width="106" height="50" rx="8"/>
+  <text x="702" y="131" text-anchor="middle">Panier</text><text x="702" y="148" text-anchor="middle">fournisseur</text>
+  <rect class="orange" x="775" y="110" width="106" height="50" rx="8"/>
+  <text x="828" y="140" text-anchor="middle">Réception</text>
+
+  <path class="arrow" d="M125 135 H143"/>
+  <path class="arrow" d="M251 135 H269"/>
+  <path class="arrow" d="M377 135 H395"/>
+  <path class="arrow" d="M503 135 H521"/>
+  <path class="arrow" d="M629 135 H647"/>
+  <path class="arrow" d="M755 135 H773"/>
+
+  <!-- Étiquettes sous les flèches -->
+  <text class="note" x="135" y="182" text-anchor="middle">acceptée =</text>
+  <text class="note" x="135" y="196" text-anchor="middle">intervention créée</text>
+  <text class="note" x="387" y="182" text-anchor="middle">une action fait</text>
+  <text class="note" x="387" y="196" text-anchor="middle">avancer la tâche</text>
+  <text class="note" x="513" y="182" text-anchor="middle">une pièce</text>
+  <text class="note" x="513" y="196" text-anchor="middle">manque</text>
+  <text class="note" x="639" y="182" text-anchor="middle">répartition par</text>
+  <text class="note" x="639" y="196" text-anchor="middle">fournisseur</text>
+  <text class="note" x="765" y="182" text-anchor="middle">panier clôturé</text>
+
+  <!-- Équipements -->
+  <rect class="neutral" x="19" y="232" width="862" height="36" rx="8"/>
+  <text x="450" y="255" text-anchor="middle">Équipements : chaque demande et chaque intervention porte sur un équipement</text>
+
+  <!-- Audit -->
+  <rect class="grey" x="19" y="320" width="862" height="40" rx="8"/>
+  <text x="450" y="345" text-anchor="middle">Audit : qui, quand, et pourquoi pour toute décision</text>
+</svg>

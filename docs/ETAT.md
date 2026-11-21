@@ -82,6 +82,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-21) | Guide : section « Comprendre Tunnel » (7 pages, 10 schémas SVG : chaîne du travail, codes, cycles de vie, actions, préventif, achats et paniers, audit), demande de l'utilisateur | fusionnée dans develop | [GUIDE-05](taches/GUIDE-05-comprendre-tunnel.md) |
 | fait (2026-11-21) | Mobile : « Annuler » du formulaire de demande de l'onglet Demandes (essai à l'écran par l'utilisateur à faire) | fusionnée dans develop | [MOB-01](taches/MOB-01-annuler-formulaire-demande.md) |
 | fait (2026-11-21) | Demandes d'achat liées à une pièce : « à qualifier » lu dans le statut dérivé de l'API (web), export PDF d'intervention qui joint les pièces (accord de l'utilisateur) | fusionnée dans develop | [DAP-01](taches/DAP-01-demandes-achat-liees-aux-pieces.md) |
 | fait (2026-11-21) | Administration : rôles lus depuis l'API (ACHETEUR proposé, OPE retiré), MCP refusé pour une personne, règle de mot de passe à la création, message de réinitialisation exact (accords de l'utilisateur) | fusionnée dans develop | [ADM-01](taches/ADM-01-roles-depuis-l-api.md) |
@@ -189,7 +190,7 @@ subagents, format de compte rendu imposé aux agents).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
-   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages à tunnel.frezille.fr/docs (amendement de l'ADR 0037 ; DNS et réglages Pages par l'utilisateur).
+   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 et GUIDE-05 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages à tunnel.frezille.fr/docs (amendement de l'ADR 0037 ; DNS et réglages Pages par l'utilisateur).
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
    production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).
