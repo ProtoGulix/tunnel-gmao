@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Le modèle des pièces : une pièce classée par famille et sous-famille, ses références fabricant, les références fournisseur rattachées à chaque référence fabricant, et la demande d'achat liée à la pièce</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .bold { font-weight: 600; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .warn { font-size: 12px; fill: #dc2626; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .grey { fill: #f8fafc; stroke: #475569; stroke-width: 1.5; }
+    .neutral { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dots { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 3 4; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="429" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Classement -->
+  <rect class="neutral" x="30" y="60" width="170" height="50" rx="10"/>
+  <text x="115" y="90" text-anchor="middle">Famille</text>
+  <rect class="neutral" x="30" y="150" width="170" height="50" rx="10"/>
+  <text x="115" y="180" text-anchor="middle">Sous-famille</text>
+  <path class="arrow" d="M115 110 L115 147"/>
+  <path class="arrow" d="M200 175 L277 175"/>
+  <text class="note" x="238" y="165" text-anchor="middle">classe</text>
+
+  <!-- Pièce -->
+  <rect class="orange" x="280" y="110" width="220" height="150" rx="12"/>
+  <text class="bold" x="390" y="140" text-anchor="middle">Pièce</text>
+  <text class="note" x="390" y="164" text-anchor="middle">référence interne P000001</text>
+  <text x="390" y="192" text-anchor="middle">Unité, emplacement</text>
+  <text class="warn" x="390" y="222" text-anchor="middle">Quantité : non suivie</text>
+
+  <!-- Références fabricant -->
+  <rect class="orange" x="560" y="60" width="150" height="56" rx="10"/>
+  <text x="635" y="84" text-anchor="middle">Réf. fabricant</text>
+  <text class="note" x="635" y="104" text-anchor="middle">préférée</text>
+  <rect class="orange" x="560" y="150" width="150" height="56" rx="10"/>
+  <text x="635" y="174" text-anchor="middle">Réf. fabricant</text>
+  <text class="note" x="635" y="194" text-anchor="middle">autre</text>
+  <path class="arrow" d="M500 150 L557 92"/>
+  <path class="arrow" d="M500 190 L557 180"/>
+
+  <!-- Références fournisseur -->
+  <rect class="orange" x="745" y="36" width="135" height="56" rx="10"/>
+  <text x="812" y="60" text-anchor="middle">Réf. fournisseur</text>
+  <text class="note" x="812" y="80" text-anchor="middle">FOU-A, préférée</text>
+  <rect class="orange" x="745" y="112" width="135" height="56" rx="10"/>
+  <text x="812" y="136" text-anchor="middle">Réf. fournisseur</text>
+  <text class="note" x="812" y="156" text-anchor="middle">FOU-B</text>
+  <path class="arrow" d="M710 80 L742 66"/>
+  <path class="arrow" d="M710 96 L742 136"/>
+  <text class="note" x="812" y="190" text-anchor="middle">prix, minimum,</text>
+  <text class="note" x="812" y="206" text-anchor="middle">délai</text>
+
+  <!-- Achats -->
+  <rect class="orange" x="280" y="320" width="220" height="56" rx="10"/>
+  <text x="390" y="344" text-anchor="middle">Demande d'achat</text>
+  <text class="note" x="390" y="364" text-anchor="middle">DA-2026-0050</text>
+  <path class="arrow" d="M390 318 L390 263"/>
+  <text class="note" x="400" y="286">liée à la pièce</text>
+  <text class="note" x="400" y="302">(« À qualifier » sinon)</text>
+
+  <rect class="grey" x="700" y="320" width="180" height="56" rx="10"/>
+  <text x="790" y="353" text-anchor="middle">Paniers fournisseurs</text>
+  <path class="arrow" d="M500 348 L697 348"/>
+  <text class="note" x="598" y="328" text-anchor="middle">répartition : un panier</text>
+  <text class="note" x="598" y="370" text-anchor="middle">par fournisseur référencé</text>
+  <path class="dots" d="M812 222 L812 318"/>
+
+  <text class="note" x="30" y="410">Pas de mouvements d'entrée ou de sortie, pas d'inventaire ni de seuil.</text>
+</svg>

@@ -70,4 +70,5 @@ Deux précisions, vérifiées dans le code :
 - [Les actions](/comprendre/actions) : l'unité de travail réel.
 - [Le préventif](/comprendre/preventif) : l'échéancier glissant.
 - [Achats](/comprendre/achats) : de la demande d'achat à la réception.
+- [Le stock et les pièces](/comprendre/stock) : le catalogue qui relie les achats aux fournisseurs.
 - [Audit et motifs](/comprendre/audit) : travail routinier ou décision.

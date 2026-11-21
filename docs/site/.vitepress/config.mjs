@@ -19,6 +19,7 @@ const roleSidebar = [
     ["Les actions", "actions"],
     ["Le préventif", "preventif"],
     ["Achats", "achats"],
+    ["Le stock et les pièces", "stock"],
     ["Audit et motifs", "audit"],
   ]),
   section("Technicien", "/technicien", [

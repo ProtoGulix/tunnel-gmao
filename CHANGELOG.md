@@ -9,6 +9,9 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### [interne] Documentation
+- Guide utilisateur : page « Le stock et les pièces » dans « Comprendre Tunnel » (catalogue,
+  références fabricant et fournisseur, lien avec les achats, limites) avec son schéma ;
+  capture du Bilan du service sur la page d'accueil.
 - Guide utilisateur : section « Comprendre Tunnel » (chaîne du travail, codes, cycles de vie,
   actions, préventif, achats et paniers, audit) avec dix schémas SVG ; lien vers frezille.fr.
 - README refait : en-tête avec liens et badges, aperçu en captures, fonctionnalités en

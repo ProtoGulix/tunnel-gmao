@@ -127,6 +127,8 @@ changement de statut du panier.
 
 ## La limite : pas de suivi de quantités en stock
 
+Le catalogue des pièces est décrit dans [Le stock et les pièces](/comprendre/stock).
+
 Le stock de Tunnel est un **catalogue de pièces**, pas une gestion de stock. Il garde les
 familles, l'emplacement, les références fabricant et fournisseur. Il ne suit **ni quantités,
 ni mouvements d'entrée et de sortie**. Aucune action ne décrémente de quantité, aucune

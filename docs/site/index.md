@@ -26,6 +26,8 @@ features:
     details: Open source (AGPL-3.0), installé par Docker Compose ; aucune donnée ne sort de l'entreprise.
 ---
 
+![Le Bilan du service de Tunnel : charge, fragmentation, temps de pilotage, part d'urgences et leurs tendances](/captures/web-direction-bilan-etat.webp)
+
 ## Essayer la démonstration
 
 La démonstration est ouverte sur [demo.frezille.fr](https://demo.frezille.fr). Trois comptes
