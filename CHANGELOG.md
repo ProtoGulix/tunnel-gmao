@@ -9,9 +9,9 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### [interne] Documentation
-- README : positionnement (« Faites-la progresser »), ce que fait Tunnel d'après les
-  affirmations livrées du cahier fonctionnel (catalogue de pièces sans suivi des quantités,
-  rejet avec motif), liens vers frezille.fr, la démonstration et le guide utilisateur.
+- README refait : en-tête avec liens et badges, aperçu en captures, fonctionnalités en
+  listes courtes (d'après les affirmations livrées du cahier fonctionnel), démarrage rapide,
+  liens vers frezille.fr, la démonstration et le guide utilisateur.
 
 ## [5.12.1] — 2026-11-21
 
