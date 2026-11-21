@@ -8,6 +8,22 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- API : `GET /stats/service-status` renvoie ses seuils (`thresholds`, définis une seule fois,
+  valeurs inchangées : charge 75 / 100 %, fragmentation 5 / 15 %, pilotage 20 / 10 %) et des
+  textes de statut d'un mot (Normale / Élevée / Au plafond, Maîtrisée / Notable / Élevée,
+  Présent / Limité / Absent) ; `GET /stats/organisation` renvoie `trends` (hausse, baisse,
+  stable ou null sur la période) et `preventive_hours_share` par mois (BIL-03, ADR 0034).
+- API : `GET /stats/service-status` renvoie `monthly` (heures, capacité proratisée, charge,
+  fragmentation et pilotage par mois, classés comme les totaux) et `trends` ;
+  `GET /stats/organisation` ajoute `waiting_parts_count` par mois (reconstitué depuis le
+  journal des statuts) et sa tendance (BIL-05, ADR 0034 point 12).
+
+- Web : les huit chiffres clés de l'onglet « État » du Bilan portent une mini-courbe et une
+  flèche de tendance grise (charge, fragmentation, pilotage et attente de pièces s'ajoutent
+  aux quatre déjà équipés) ; rien ne s'affiche si l'API ne fournit pas la série (BIL-06,
+  ADR 0034 point 12).
+
 ### Modifié
 - Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données
   sont regroupées dans une page « Bilan du service » (`/bilan`, menu Production) à trois
@@ -17,6 +33,23 @@ mobile/CHANGELOG.md.
   3 par défaut) remplace les dates libres pour les deux premiers. Les anciennes adresses
   (`/service-status`, `/organisation`, `/audit-synthese`, `/quality-data`) sont retirées
   (BIL-01, ADR 0033).
+
+- Web : l'onglet « État » du Bilan est allégé. Les définitions passent derrière une icône
+  d'aide au survol (plus de paragraphe sous chaque chiffre) ; chaque chiffre clé porte un
+  badge de statut (charge, fragmentation, pilotage) et une mini-courbe sur la période ; les
+  nombres ont un format unique (« 115,2 % », « 807 h ») ; le temps est montré en deux barres
+  (catégories de travail, types d'intervention) ; les causes de fragmentation et le temps par
+  site sont repliés ; les cinq graphiques mensuels, les règles de lecture et l'alerte critique
+  sont retirés (les valeurs par mois restent dans un tableau replié, avec les heures par type) ;
+  le préventif tient en trois chiffres courts (BIL-02, ADR 0034).
+
+- Web : rendu de l'onglet « État » affiné. Les badges de charge, fragmentation et pilotage
+  tiennent en un mot, texte et couleur donnés par l'API, sans seuil de repli côté web (sans
+  statut, pas de badge) ; les définitions affichent les seuils fournis par l'API au lieu de
+  seuils recopiés ; les urgences, chantiers coupés, interventions par journée et part du
+  préventif portent une tendance neutre (flèche grise et « en hausse », « stable » ou « en
+  baisse ») ; les mini-courbes sont lissées ; les barres de temps écrivent libellé, heures et
+  part dans chaque segment, sans légende (BIL-04, ADR 0034).
 
 ### Corrigé
 - Web : la catégorie BAT (bâtiment, travaux) est rangée en production dans la description du

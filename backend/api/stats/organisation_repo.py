@@ -4,12 +4,14 @@ Aucune donnée par technicien ne sort d'ici : le technicien sert seulement à fo
 couples (technicien, intervention) et (technicien, jour) dans le SQL.
 """
 
+from calendar import monthrange
 from datetime import date
 from typing import Any, Dict, List, Optional
 
 from api.db import get_connection, release_connection
 from api.equipements.validators import month_keys
 from api.errors.exceptions import raise_db_error
+from api.stats.trends import compute_trends, compute_waiting_trend
 
 # Types d'intervention comptés séparément ; tout le reste tombe dans « other ».
 HOUR_TYPES = ("CUR", "PRE", "PRO")
@@ -60,6 +62,10 @@ def _finish(m: Dict[str, Any]) -> Dict[str, Any]:
     out["interrupted_share"] = _share(m["chantiers_interrupted"], m["chantiers_started"])
     out["avg_interventions_per_tech_day"] = _avg(m["sum_interventions"], m["tech_days"])
     out["scattered_days_share"] = _share(m["scattered_days"], m["tech_days"])
+    # Part du préventif dans les heures : null pour un mois sans heures (jamais 0).
+    out["preventive_hours_share"] = (
+        round(100.0 * hours["PRE"] / hours["total"], 1) if hours["total"] else None
+    )
     return out
 
 
@@ -216,6 +222,35 @@ class OrganisationRepository:
             "max_age_days": oldest,
         }
 
+    def _waiting_parts_by_month(
+        self, cur, keys: List[str], today: date
+    ) -> Dict[str, Optional[int]]:
+        """Interventions en attente de pièces au dernier jour de chaque mois (une requête).
+
+        Reconstitué depuis le journal des statuts : dernier changement de chaque intervention
+        jusqu'à la fin de ce jour. Le mois courant s'arrête à aujourd'hui ; un mois futur, ou
+        dont la date précède le premier enregistrement du journal, donne null.
+        """
+        # Un mois postérieur au mois courant n'a pas d'état : null (pas de projection)
+        snapshots = {k: min(_month_end(k), today) for k in keys if k <= today.strftime("%Y-%m")}
+        cur.execute(
+            """
+            SELECT s.d, (SELECT MIN(date)::date FROM intervention_status_log),
+                   (SELECT COUNT(*) FROM (
+                        SELECT DISTINCT ON (l.intervention_id) l.status_to
+                        FROM intervention_status_log l
+                        WHERE l.date < s.d + 1
+                        ORDER BY l.intervention_id, l.date DESC, l.id DESC
+                    ) last WHERE last.status_to = 'attente_pieces')
+            FROM unnest(%s::date[]) AS s(d)
+            """,
+            (list(snapshots.values()),),
+        )
+        counts = {}
+        for day, first_logged, count in cur.fetchall():
+            counts[day] = None if first_logged is None or day < first_logged else count
+        return {k: counts[snapshots[k]] if k in snapshots else None for k in keys}
+
     def get_organisation(self, start: date, end: date, today: Optional[date] = None):
         """Indicateurs d'organisation de la période [start, end] (lecture seule)."""
         today = today or date.today()
@@ -231,6 +266,7 @@ class OrganisationRepository:
                 projects = self._projects(cur, start, end)
                 preventive = self._preventive(cur, today)
                 waiting = self._waiting_parts(cur, today)
+                waiting_by_month = self._waiting_parts_by_month(cur, list(months), today)
             conn.commit()
         except Exception as e:
             if conn:
@@ -240,14 +276,24 @@ class OrganisationRepository:
             if conn:
                 release_connection(conn)
 
+        monthly = [
+            {**_finish(m), "waiting_parts_count": waiting_by_month[k]} for k, m in months.items()
+        ]
+        trends = {**compute_trends(monthly), "waiting_parts_count": compute_waiting_trend(monthly)}
         return {
             "period": {"start": start, "end": end},
-            "monthly": [_finish(m) for m in months.values()],
+            "monthly": monthly,
+            "trends": trends,
             "totals": _finish(_sum_months(list(months.values()))),
             "projects": projects,
             "preventive": preventive,
             "waiting_parts": waiting,
         }
+
+
+def _month_end(key: str) -> date:
+    year, month = int(key[:4]), int(key[5:])
+    return date(year, month, monthrange(year, month)[1])
 
 
 def _sum_months(months: List[Dict[str, Any]]) -> Dict[str, Any]:

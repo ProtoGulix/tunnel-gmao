@@ -1,12 +1,12 @@
 /**
- * @fileoverview Composant affichant le Top 10 des causes de fragmentation du service
+ * @fileoverview Tableau du Top 10 des causes de fragmentation du service (titre et définition dans l'onglet État)
  * @module components/service-status/FragmentationCausesList
  */
 
 import PropTypes from 'prop-types';
-import { Box, Text, Badge, Callout } from '@radix-ui/themes';
-import { Info } from 'lucide-react';
+import { Box, Text, Badge } from '@radix-ui/themes';
 import DataTable from '@/components/ui/DataTable';
+import { formatHours, formatPct } from '@/hooks/organisation/organisationFormat';
 
 const COLUMNS = [
   {
@@ -43,7 +43,7 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Text size="2" weight="bold">
-        {row.totalHours.toFixed(1)}h
+        {formatHours(row.totalHours)}
       </Text>
     ),
   },
@@ -61,13 +61,11 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Badge color="orange" variant="soft">
-        {row.percent}%
+        {typeof row.percent === 'number' ? formatPct(row.percent) : row.percent}
       </Badge>
     ),
   },
 ];
-
-const EXPLANATION_TEXT = 'Les causes ci-dessus représentent les principales sources de fragmentation du temps du service. Elles correspondent à du support diffus, des interruptions ou des micro-actions répétées. Réduire la fragmentation passe par une action sur ces causes, pas par l\'ajout de ressources.';
 
 const prepareTableData = (items) => {
   const rankedItems = items.map((cause, index) => ({
@@ -91,45 +89,20 @@ const prepareTableData = (items) => {
 export default function FragmentationCausesList({ fragmentation }) {
   if (!fragmentation || !fragmentation.items || fragmentation.items.length === 0) {
     return (
-      <Box mb="6">
-        <Box p="4">
-          <Text color="gray" align="center">
-            Aucune fragmentation détectée sur la période
-          </Text>
-        </Box>
+      <Box p="3">
+        <Text color="gray">Aucune fragmentation détectée sur la période</Text>
       </Box>
     );
   }
 
-  const tableData = prepareTableData(fragmentation.items);
-
   return (
-    <Box mb="6">
-      <Box mb="4">
-        <Text as="div" size="3" weight="bold" mb="3">
-          Causes de la fragmentation
-        </Text>
-
-        <DataTable
-          columns={COLUMNS}
-          data={tableData}
-          getRowKey={(row, index) => row.subcategoryId || `special-${index}`}
-          rowHover
-          variant="surface"
-        />
-      </Box>
-
-      <Callout.Root>
-        <Callout.Icon>
-          <Info size={18} />
-        </Callout.Icon>
-        <Callout.Text>
-          <Text as="span" size="2">
-            {EXPLANATION_TEXT}
-          </Text>
-        </Callout.Text>
-      </Callout.Root>
-    </Box>
+    <DataTable
+      columns={COLUMNS}
+      data={prepareTableData(fragmentation.items)}
+      getRowKey={(row, index) => row.subcategoryId || `special-${index}`}
+      rowHover
+      variant="surface"
+    />
   );
 }
 

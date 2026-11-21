@@ -52,6 +52,20 @@ const mapSiteConsumption = (siteConsumption) => {
 };
 
 /**
+ * Mappe la série mensuelle ; un pourcentage null (mois sans heure) reste null, jamais 0.
+ * Absente (ancienne API) : null.
+ */
+const mapMonthly = (monthly) => {
+  if (!Array.isArray(monthly)) return null;
+  return monthly.map((m) => ({
+    month: m?.month,
+    chargePercent: m?.charge_percent ?? null,
+    fragPercent: m?.frag_percent ?? null,
+    pilotPercent: m?.pilot_percent ?? null,
+  }));
+};
+
+/**
  * Mappe les données de l'API vers le format domain
  */
 const mapServiceStatusResponse = (raw) => {
@@ -87,6 +101,11 @@ const mapServiceStatusResponse = (raw) => {
     siteConsumption: {
       items: mapSiteConsumption(raw.site_consumption),
     },
+    // Courbe et tendance (ADR 0034 point 12) ; absentes sur une ancienne API
+    monthly: mapMonthly(raw.monthly),
+    trends: raw.trends ?? null,
+    // Seuils de statut fournis par l'API ; absents sur une ancienne API
+    thresholds: raw.thresholds ?? null,
     statuses: {
       charge: capacity.status,
       frag: fragmentation.status,

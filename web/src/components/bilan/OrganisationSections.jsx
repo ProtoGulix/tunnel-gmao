@@ -1,42 +1,35 @@
 /**
- * @fileoverview Sections « Organisation du travail » (courbes et valeurs par mois) et
- * « Préventif » (tuiles d'état) de l'onglet État du service (ADR 0021, 0033)
+ * @fileoverview Sections « Organisation du travail » (valeurs par mois, repliées) et
+ * « Préventif » (trois chiffres d'état) de l'onglet État du service (ADR 0021, 0033, 0034)
  * @module components/bilan/OrganisationSections
  */
 
-import { lazy, Suspense } from 'react';
 import PropTypes from 'prop-types';
 import { Text } from '@radix-ui/themes';
-import LoadingState from '@/components/ui/LoadingState';
 import SectionTitle from '@/components/bilan/SectionTitle';
-import { StateTiles, MonthlyTable } from '@/components/organisation/OrganisationFigures';
+import PreventiveFigures from '@/components/bilan/PreventiveFigures';
+import InfoLabel from '@/components/ui/InfoLabel';
+import { MonthlyTable } from '@/components/organisation/OrganisationFigures';
 import { DEFINITIONS } from '@/components/organisation/definitions';
-
-// Recharts n'est téléchargé qu'à l'affichage des graphiques (ADR 0020)
-const Charts = lazy(() => import('@/components/organisation/OrganisationCharts'));
 
 /**
  * @param {Object} data - réponse de /stats/organisation
- * @param {number|null} overdueCount - préventifs en retard ; null : tuile omise
+ * @param {number|null} overdueCount - préventifs en retard ; null : chiffre omis
  */
 export default function OrganisationSections({ data, overdueCount }) {
   const empty = data.totals.interventions_reported === 0 && data.totals.hours.total === 0;
   return (
     <>
-      <SectionTitle>Organisation du travail</SectionTitle>
+      <SectionTitle>
+        <InfoLabel label="Organisation du travail" definition={DEFINITIONS.date} size="4" weight="bold" />
+      </SectionTitle>
       {empty ? (
         <Text size="2" color="gray">Aucune activité sur cette période.</Text>
       ) : (
-        <>
-          <Suspense fallback={<LoadingState fullscreen={false} message="Chargement des graphiques…" />}>
-            <Charts monthly={data.monthly} />
-          </Suspense>
-          <MonthlyTable monthly={data.monthly} />
-        </>
+        <MonthlyTable monthly={data.monthly} />
       )}
-      <Text as="p" size="1" color="gray" mt="3">{DEFINITIONS.date}</Text>
       <SectionTitle>Préventif</SectionTitle>
-      <StateTiles preventive={data.preventive} overdueCount={overdueCount} />
+      <PreventiveFigures preventive={data.preventive} overdueCount={overdueCount} />
     </>
   );
 }

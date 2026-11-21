@@ -123,11 +123,21 @@ def test_organisation_mois_totaux_et_projets(client, admin, equipe):
     assert jan["tech_days"] == 12
     assert jan["avg_interventions_per_tech_day"] == 1.17  # 14 / 12
     assert jan["scattered_days_share"] == 8.3  # 1 / 12
+    assert jan["preventive_hours_share"] == 38.1  # 6 / 15,75
+    assert d["trends"] == {  # un seul mois avec valeurs (moins de 3) : aucune tendance
+        "urgent_share": None,
+        "interrupted_share": None,
+        "avg_interventions_per_tech_day": None,
+        "scattered_days_share": None,
+        "preventive_hours_share": None,
+        "waiting_parts_count": None,
+    }
 
     fev = mois["2034-02"]
     assert fev["interventions_reported"] == 0 and fev["hours"] == HEURES_VIDES
     assert fev["urgent_share"] is None and fev["interrupted_share"] is None
     assert fev["avg_interventions_per_tech_day"] is None and fev["scattered_days_share"] is None
+    assert fev["preventive_hours_share"] is None  # mois sans heures
 
     mar = mois["2034-03"]
     assert (mar["interventions_reported"], mar["urgent_share"]) == (1, 0.0)
@@ -320,3 +330,38 @@ def test_organisation_lisible_par_une_cle_mcp(client, admin):
     )
     assert cle.status_code == 201, cle.text
     assert client.get(URL, headers={"X-API-Key": cle.json()["secret"]}).status_code == 200
+
+
+# --- Pièces en attente par mois (BIL-05, ADR 0034 point 12) ---
+
+
+def _journal(instance, iid, vers, quand):
+    instance.sql(
+        "INSERT INTO intervention_status_log (id, intervention_id, status_to, date) "
+        "VALUES (gen_random_uuid(), %s, %s, %s)",
+        (iid, vers, quand),
+    )
+
+
+def test_pieces_en_attente_reconstituees_par_mois(client, admin, instance):
+    """Journal posé en 1998, avant toute autre ligne : janvier précède le journal (null)."""
+    m = _machine(instance)
+    a, b, c, d = (_intervention(instance, m, "CUR", "1998-01-05") for _ in range(4))
+    _journal(instance, a, "attente_pieces", "1998-02-10 09:00:00")
+    _journal(instance, a, "ferme", "1998-03-05 09:00:00")  # sortie : plus comptée en mars
+    _journal(instance, b, "attente_pieces", "1998-02-20 09:00:00")
+    _journal(instance, c, "attente_pieces", "1998-03-31 23:30:00")  # dernier jour : compté
+    _journal(instance, d, "attente_pieces", "1998-04-02 09:00:00")
+    r = _organisation(client, admin.headers, start_date="1998-01-01", end_date="1998-04-30")
+    mois = {x["month"]: x["waiting_parts_count"] for x in r["monthly"]}
+    assert mois == {"1998-01": None, "1998-02": 2, "1998-03": 2, "1998-04": 3}
+    # Trois mois de valeurs, hausse estimée de 1,5 intervention : au-dessus du seuil de 1
+    assert r["trends"]["waiting_parts_count"] == "up"
+
+
+def test_pieces_en_attente_mois_courant_egal_etat_actuel(client, admin, instance):
+    m = _machine(instance)
+    for _ in range(2):
+        _mettre_en_attente_de_pieces(instance, _intervention(instance, m, "CUR", "1999-02-01"))
+    d = client.get(URL, headers=admin.headers).json()
+    assert d["monthly"][-1]["waiting_parts_count"] == d["waiting_parts"]["count"] >= 2

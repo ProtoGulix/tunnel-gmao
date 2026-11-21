@@ -37,8 +37,8 @@ export default function ServiceTab({ startDate, endDate }) {
   const canSchedule = can(PERM.preventive.schedule);
   const service = useServiceData(startDate, endDate);
   const organisation = useOrganisation(startDate, canOrganisation);
-  // Tuile « Préventifs en retard » : sans appel si l'échéancier n'est pas lisible (un 403
-  // afficherait une erreur globale) ; omise tant qu'il n'a pas répondu
+  // Chiffre « Préventifs en retard » : sans appel si l'échéancier n'est pas lisible (un 403
+  // afficherait une erreur globale) ; omis tant qu'il n'a pas répondu
   const overdue = usePreventiveSchedule({ state: 'overdue' }, canOrganisation && canSchedule);
   const overdueCount = !canSchedule || overdue.loading || overdue.error ? null : overdue.items.length;
 
@@ -46,7 +46,7 @@ export default function ServiceTab({ startDate, endDate }) {
     <Box>
       <ServiceKeyFigures service={service.data} organisation={organisation.data} showOrganisation={canOrganisation} />
       <SectionTitle>Temps et capacité</SectionTitle>
-      <Block state={service} onRetry={service.refetch}>{(data) => <TimeCapacitySection data={data} />}</Block>
+      <Block state={service} onRetry={service.refetch}>{(data) => <TimeCapacitySection data={data} hours={organisation.data?.totals?.hours ?? null} />}</Block>
       {canOrganisation && (
         <Block state={organisation} onRetry={organisation.reload}>
           {(data) => <OrganisationSections data={data} overdueCount={overdueCount} />}

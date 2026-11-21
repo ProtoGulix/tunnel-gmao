@@ -1,6 +1,6 @@
 from calendar import monthrange
 from datetime import date, timedelta
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from api.db import get_connection, release_connection
 from api.errors.exceptions import DatabaseError
@@ -43,12 +43,16 @@ from api.stats.schemas import (
     ServiceStatusResponse,
     SiteConsumption,
     StatusLabel,
+    StatusThresholds,
     TauxDepannageEvitable,
     TauxEvitableSeuil,
     TooLongAnomaly,
     TooLongThresholds,
     TopCause,
 )
+from api.stats.service_monthly import MONTHLY_SQL_TAIL, build_monthly, compute_service_trends
+from api.stats.status_rules import evaluate_status, thresholds_payload
+from api.stats.time_classification import CLASSIFIED_ACTIONS_CTE
 
 
 class StatsRepository:
@@ -65,39 +69,9 @@ class StatsRepository:
 
             # Calcul #1-2-3 : Filtrer, classifier, agréger
             cur.execute(
-                """
-                WITH classified_actions AS (
-                  SELECT
-                    ia.id,
-                    ia.time_spent,
-                    ia.created_at,
-                    ia.action_subcategory,
-                    s.name as subcategory_name,
-                    c.id as category_id,
-                    c.code as category_code,
-                    i.machine_id,
-                    m.equipement_mere,
-                    m.is_mere,
-                    m.name as machine_name,
-                    parent.name as parent_name,
-                    CASE
-                      WHEN c.id = 23 THEN 'FRAG'
-                      WHEN c.code = 'SUP' THEN 'FRAG'
-                      WHEN ia.time_spent < 0.5 AND c.code NOT IN ('DEP', 'PREV') THEN 'FRAG'
-                      WHEN c.id = 19 THEN 'DEP'
-                      WHEN c.id IN (20, 24) THEN 'PROD'
-                      WHEN c.id IN (21, 22) THEN 'PILOT'
-                      ELSE 'PROD'
-                    END as time_type
-                  FROM intervention_action ia
-                  JOIN intervention i ON ia.intervention_id = i.id
-                  LEFT JOIN action_subcategory s ON ia.action_subcategory = s.id
-                  LEFT JOIN action_category c ON s.category_id = c.id
-                  LEFT JOIN machine m ON i.machine_id = m.id
-                  LEFT JOIN machine parent ON m.equipement_mere = parent.id
-                  WHERE ia.created_at >= %s AND ia.created_at <= %s
-                ),
-                                breakdown AS (
+                f"""
+                WITH {CLASSIFIED_ACTIONS_CTE},
+                breakdown AS (
                                     SELECT
                                         COALESCE(SUM(CASE WHEN time_type = 'PROD' THEN time_spent ELSE 0 END), 0) as prod_hours,
                                         COALESCE(SUM(CASE WHEN time_type = 'DEP' THEN time_spent ELSE 0 END), 0) as dep_hours,
@@ -145,6 +119,10 @@ class StatsRepository:
 
             if not result or not result[0]:
                 return self._empty_metrics(start_date, end_date)
+
+            # Série mensuelle : une seule requête groupée, même classement que les totaux
+            cur.execute(f"WITH {CLASSIFIED_ACTIONS_CTE} {MONTHLY_SQL_TAIL}", (start_date, end_date))
+            monthly = build_monthly(cur.fetchall(), start_date, end_date)
 
             breakdown = result[0]
             top_frag = result[1] or []
@@ -201,6 +179,7 @@ class StatsRepository:
                 pilot_status=pilot_status,
                 top_causes=top_frag_formatted,
                 site_consumption=site_consumption_formatted,
+                monthly=monthly,
             )
 
         except Exception as e:
@@ -222,7 +201,8 @@ class StatsRepository:
             total_hours=0,
             capacity_hours=capacity_hours,
             charge_percent=0,
-            charge_status=self._status('green', 'Aucune charge'),
+            # Aucune heure saisie : pas de statut (un « Absent » rouge ferait croire à un manque)
+            charge_status=None,
             breakdown={},
             pilot_hours=0,
             frag_hours=0,
@@ -230,11 +210,12 @@ class StatsRepository:
             short_count=0,
             short_percent=0,
             frag_percent=0,
-            frag_status=self._status('green', 'Aucune fragmentation'),
+            frag_status=None,
             pilot_percent=0,
-            pilot_status=self._status('red', 'Aucune capacité'),
+            pilot_status=None,
             top_causes=[],
             site_consumption=[],
+            monthly=build_monthly([], start_date, end_date),
         )
 
     def _format_top_causes(
@@ -282,7 +263,7 @@ class StatsRepository:
         total_hours: float,
         capacity_hours: float,
         charge_percent: float,
-        charge_status: StatusLabel,
+        charge_status: Optional[StatusLabel],
         breakdown: Dict[str, Any],
         pilot_hours: float,
         frag_hours: float,
@@ -290,14 +271,16 @@ class StatsRepository:
         short_count: int,
         short_percent: float,
         frag_percent: float,
-        frag_status: StatusLabel,
+        frag_status: Optional[StatusLabel],
         pilot_percent: float,
-        pilot_status: StatusLabel,
+        pilot_status: Optional[StatusLabel],
         top_causes: List[TopCause],
         site_consumption: List[SiteConsumption],
+        monthly: List[Dict[str, Any]],
     ) -> ServiceStatusResponse:
         """Assemble la réponse selon le schéma Pydantic"""
         return ServiceStatusResponse(
+            thresholds=StatusThresholds(**thresholds_payload()),
             period=Period(
                 start_date=start_date.isoformat(),
                 end_date=end_date.isoformat(),
@@ -330,34 +313,24 @@ class StatsRepository:
                 status=pilot_status,
             ),
             site_consumption=site_consumption,
+            monthly=monthly,
+            trends=compute_service_trends(monthly),
         )
 
     def _status(self, color: str, text: str) -> StatusLabel:
         return StatusLabel(color=color, text=text)
 
     def _get_charge_status(self, charge_percent: float) -> StatusLabel:
-        """Calcule statut de charge"""
-        if charge_percent < 75:
-            return self._status('green', 'Charge normale')
-        if charge_percent < 100:
-            return self._status('orange', 'Charge élevée')
-        return self._status('red', 'Service au plafond')
+        """Statut de charge (seuils dans status_rules)."""
+        return self._status(*evaluate_status('charge', charge_percent))
 
     def _get_frag_status(self, frag_percent: float) -> StatusLabel:
-        """Calcule statut de fragmentation"""
-        if frag_percent < 5:
-            return self._status('green', 'Fragmentation maîtrisée')
-        if frag_percent < 15:
-            return self._status('orange', 'Fragmentation notable')
-        return self._status('red', 'Fragmentation élevée')
+        """Statut de fragmentation (seuils dans status_rules)."""
+        return self._status(*evaluate_status('fragmentation', frag_percent))
 
     def _get_pilot_status(self, pilot_percent: float) -> StatusLabel:
-        """Calcule statut capacité de pilotage"""
-        if pilot_percent > 20:
-            return self._status('green', 'Capacité présente')
-        if pilot_percent > 10:
-            return self._status('orange', 'Capacité limitée')
-        return self._status('red', 'Aucune capacité')
+        """Statut de capacité de pilotage (seuils dans status_rules)."""
+        return self._status(*evaluate_status('pilotage', pilot_percent))
 
     # ── Charge Technique ──────────────────────────────────────────────
 

@@ -1,12 +1,12 @@
 /**
- * @fileoverview Composant affichant la consommation de capacité par équipement mère (site)
+ * @fileoverview Tableau de la consommation de capacité par équipement mère (site) (titre et définition dans l'onglet État)
  * @module components/service-status/SiteConsumptionTable
  */
 
 import PropTypes from 'prop-types';
-import { Box, Text, Badge, Callout } from '@radix-ui/themes';
-import { Info } from 'lucide-react';
+import { Box, Text, Badge } from '@radix-ui/themes';
 import DataTable from '@/components/ui/DataTable';
+import { formatHours, formatPct } from '@/hooks/organisation/organisationFormat';
 
 const COLUMNS = [
   {
@@ -25,7 +25,7 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Text size="2" weight="bold">
-        {row.totalHours.toFixed(1)}h
+        {formatHours(row.totalHours)}
       </Text>
     ),
   },
@@ -36,7 +36,7 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Badge color="blue" variant="soft">
-        {row.percentTotal.toFixed(1)}%
+        {formatPct(row.percentTotal)}
       </Badge>
     ),
   },
@@ -47,7 +47,7 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Text size="2" weight="bold" color="orange">
-        {row.fragHours.toFixed(1)}h
+        {formatHours(row.fragHours)}
       </Text>
     ),
   },
@@ -58,54 +58,29 @@ const COLUMNS = [
     align: 'end',
     render: (row) => (
       <Badge color="orange" variant="soft">
-        {row.percentFrag.toFixed(1)}%
+        {formatPct(row.percentFrag)}
       </Badge>
     ),
   },
 ];
 
-const EXPLANATION_TEXT = 'Cette analyse montre quels sites consomment la capacité du service maintenance. Elle reflète des contraintes organisationnelles (distance, support, coordination), et non la performance des équipes ou des équipements.';
-
 export default function SiteConsumptionTable({ siteConsumption }) {
   if (!siteConsumption || !siteConsumption.items || siteConsumption.items.length === 0) {
     return (
-      <Box mb="6">
-        <Box p="4">
-          <Text color="gray" align="center">
-            Aucune donnée de consommation par site disponible
-          </Text>
-        </Box>
+      <Box p="3">
+        <Text color="gray">Aucune donnée de consommation par site disponible</Text>
       </Box>
     );
   }
 
   return (
-    <Box mb="6">
-      <Box mb="4">
-        <Text as="div" size="3" weight="bold" mb="3">
-          Consommation de capacité par site
-        </Text>
-
-        <DataTable
-          columns={COLUMNS}
-          data={siteConsumption.items}
-          getRowKey={(row) => row.equipmentId}
-          rowHover
-          variant="surface"
-        />
-      </Box>
-
-      <Callout.Root>
-        <Callout.Icon>
-          <Info size={18} />
-        </Callout.Icon>
-        <Callout.Text>
-          <Text as="span" size="2">
-            {EXPLANATION_TEXT}
-          </Text>
-        </Callout.Text>
-      </Callout.Root>
-    </Box>
+    <DataTable
+      columns={COLUMNS}
+      data={siteConsumption.items}
+      getRowKey={(row) => row.equipmentId}
+      rowHover
+      variant="surface"
+    />
   );
 }
 

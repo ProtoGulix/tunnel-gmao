@@ -1,88 +1,111 @@
 /**
- * @fileoverview Bandeau des huit chiffres clés de l'onglet État du service (ADR 0033).
+ * @fileoverview Bandeau des huit chiffres clés de l'onglet État du service (ADR 0033, 0034).
  * Charge, fragmentation et pilotage viennent de /stats/service-status, les cinq autres de
- * /stats/organisation (absents sans le droit). Chaque chiffre garde sa définition.
+ * /stats/organisation (absents sans le droit). Définitions derrière l'icône d'aide.
  * @module components/bilan/ServiceKeyFigures
  */
 
 import PropTypes from 'prop-types';
-import { Box, Grid, Text } from '@radix-ui/themes';
+import { Grid, Text } from '@radix-ui/themes';
+import FigureCard, { levelOfColor } from '@/components/bilan/FigureCard';
 import { DEFINITIONS } from '@/components/organisation/definitions';
-import { calculateMetrics } from '@/components/service-status/serviceMetrics';
+import { SERVICE_DEFINITIONS } from '@/components/service-status/config';
+import { thresholdsLine } from '@/hooks/bilan/figureNotes';
 import {
   formatPct, formatNumber, formatDays, formatHours, shareOf,
 } from '@/hooks/organisation/organisationFormat';
 
-const CHARGE_NOTICE = 'Temps total heures / Capacité ETP proratisée sur la période. Charge > 85% : service saturé.';
-const PILOT_NOTICE = "% temps long protégé (documentation, préventif, dépannage réel). Pilotage < 15% : aucune capacité d'amélioration.";
-const FRAG_NOTICE = '% temps fragmenté (support, actions courtes < 0,5h non-dépannage). Fragmentation > 25% : fuite organisationnelle.';
+// Badge d'après le statut de l'API (couleur et texte tels quels) ; sans statut, pas de badge
+const statusOf = (apiStatus) => (
+  apiStatus?.text ? { level: levelOfColor(apiStatus.color), label: apiStatus.text } : null
+);
 
-function Figure({ label, value, detail, definition, color }) {
+// Définition de l'indicateur suivie de sa ligne de seuils, construite depuis ceux de l'API
+function definitionWithThresholds(text, kind, thresholds) {
+  const line = thresholdsLine(kind, thresholds?.[kind]);
+  if (!line) return text;
   return (
-    <Box style={{ border: '1px solid var(--gray-a5)', borderRadius: 'var(--radius-3)', padding: '6px 10px' }}>
-      <Text as="div" size="1" color="gray">{label}</Text>
-      <Text as="div" size="5" weight="bold" color={color}>{value}</Text>
-      {detail && <Text as="div" size="1" color="gray">{detail}</Text>}
-      <Text as="div" size="1" color="gray" mt="1">{definition}</Text>
-    </Box>
+    <>
+      {text}
+      <Text as="div" size="1" mt="1" weight="medium">{line}</Text>
+    </>
   );
 }
-Figure.propTypes = {
-  label: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  detail: PropTypes.string,
-  definition: PropTypes.string.isRequired,
-  color: PropTypes.string,
-};
 
 function serviceFigures(data) {
   if (!data) return [];
-  const m = calculateMetrics(data);
+  const { statuses = {}, thresholds, monthly, trends } = data;
   return [
-    { label: 'Charge du service', value: `${data.chargePercent.toFixed(1)} %`, detail: m.chargeText, color: m.chargeColor, definition: CHARGE_NOTICE },
-    { label: 'Fragmentation', value: `${data.fragPercent.toFixed(1)} %`, detail: m.fragText, color: m.fragColor, definition: FRAG_NOTICE },
-    { label: 'Temps de pilotage', value: `${data.pilotPercent.toFixed(1)} %`, detail: m.pilotText, color: m.pilotColor, definition: PILOT_NOTICE },
+    {
+      label: 'Charge du service', value: formatPct(data.chargePercent), status: statusOf(statuses.charge),
+      definition: definitionWithThresholds(SERVICE_DEFINITIONS.charge, 'charge', thresholds),
+      trend: trends?.charge_percent, series: series(monthly, (m) => m.chargePercent), seriesFormat: formatPct,
+    },
+    {
+      label: 'Fragmentation', value: formatPct(data.fragPercent), status: statusOf(statuses.frag),
+      definition: definitionWithThresholds(SERVICE_DEFINITIONS.fragmentation, 'fragmentation', thresholds),
+      trend: trends?.frag_percent, series: series(monthly, (m) => m.fragPercent), seriesFormat: formatPct,
+    },
+    {
+      label: 'Temps de pilotage', value: formatPct(data.pilotPercent), status: statusOf(statuses.pilot),
+      definition: definitionWithThresholds(SERVICE_DEFINITIONS.pilot, 'pilotage', thresholds),
+      trend: trends?.pilot_percent, series: series(monthly, (m) => m.pilotPercent), seriesFormat: formatPct,
+    },
   ];
 }
 
+// Une valeur par mois de la période, null si le mois n'a pas de valeur ; sans série (ancienne API), undefined
+const series = (monthly, pick) => monthly?.map(pick);
+
 // Un bloc Organisation sans réponse (chargement ou erreur) affiche « — », jamais 0
-function interventionFigures(totals) {
+function interventionFigures(totals, monthly, trends) {
   return [
     {
       label: "Part d'urgences", value: formatPct(totals?.urgent_share), definition: DEFINITIONS.urgent,
       detail: totals && `${totals.urgent_count} sur ${totals.interventions_reported}`,
+      trend: trends?.urgent_share,
+      series: series(monthly, (m) => m.urgent_share), seriesFormat: formatPct,
     },
     {
       label: 'Chantiers coupés par une urgence', value: formatPct(totals?.interrupted_share),
       definition: DEFINITIONS.interrupted,
       detail: totals && `${totals.chantiers_interrupted} sur ${totals.chantiers_started}`,
+      trend: trends?.interrupted_share,
+      series: series(monthly, (m) => m.interrupted_share), seriesFormat: formatPct,
     },
     {
       label: 'Interventions par journée de technicien', value: formatNumber(totals?.avg_interventions_per_tech_day),
       definition: DEFINITIONS.average, detail: totals && `${totals.tech_days} journées`,
+      trend: trends?.avg_interventions_per_tech_day,
+      series: series(monthly, (m) => m.avg_interventions_per_tech_day), seriesFormat: formatNumber,
     },
   ];
 }
 
-function preventiveShareFigure(hours) {
+function preventiveShareFigure(hours, monthly, trends) {
   return {
     label: 'Part du préventif dans les heures', value: formatPct(hours && shareOf(hours.PRE, hours.total)),
     definition: DEFINITIONS.hours, detail: hours && `${formatHours(hours.PRE)} sur ${formatHours(hours.total)}`,
+    trend: trends?.preventive_hours_share,
+    series: series(monthly, (m) => shareOf(m.hours.PRE, m.hours.total)), seriesFormat: formatPct,
   };
 }
 
-function waitingPartsFigure(waiting) {
+function waitingPartsFigure(waiting, monthly, trends) {
   return {
     label: 'Attente de pièces', value: waiting ? String(waiting.count) : '—', definition: DEFINITIONS.waitingParts,
     detail: waiting && `interventions, âge médian ${formatDays(waiting.median_age_days)}`,
+    trend: trends?.waiting_parts_count,
+    series: series(monthly, (m) => m.waiting_parts_count), seriesFormat: (v) => String(v),
   };
 }
 
 function organisationFigures(org) {
+  const { totals, monthly, trends, waiting_parts: waiting } = org ?? {};
   return [
-    ...interventionFigures(org?.totals),
-    preventiveShareFigure(org?.totals?.hours),
-    waitingPartsFigure(org?.waiting_parts),
+    ...interventionFigures(totals, monthly, trends),
+    preventiveShareFigure(totals?.hours, monthly, trends),
+    waitingPartsFigure(waiting, monthly, trends),
   ];
 }
 
@@ -94,8 +117,8 @@ function organisationFigures(org) {
 export default function ServiceKeyFigures({ service, organisation, showOrganisation }) {
   const figures = [...serviceFigures(service), ...(showOrganisation ? organisationFigures(organisation) : [])];
   return (
-    <Grid columns={{ initial: '1', sm: '2', lg: '4' }} gap="2" mb="2">
-      {figures.map((f) => <Figure key={f.label} {...f} />)}
+    <Grid columns={{ initial: '1', xs: '2', lg: '4' }} gap="2" mb="2">
+      {figures.map((f) => <FigureCard key={f.label} {...f} />)}
     </Grid>
   );
 }
