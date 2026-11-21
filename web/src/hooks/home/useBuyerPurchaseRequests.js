@@ -1,6 +1,5 @@
 /**
- * @fileoverview Données de la vue "acheteur" : DA groupées par statut dérivé,
- * filtrables par site.
+ * @fileoverview Données de la vue "acheteur" : DA groupées par statut dérivé.
  * @module hooks/home/useBuyerPurchaseRequests
  */
 
@@ -9,7 +8,7 @@ import { fetchPurchaseRequests } from '@/api/purchaseRequests';
 
 const PAGE_SIZE = 200;
 
-export function useBuyerPurchaseRequests({ site } = {}) {
+export function useBuyerPurchaseRequests() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,7 +19,6 @@ export function useBuyerPurchaseRequests({ site } = {}) {
     try {
       const data = await fetchPurchaseRequests({
         limit: PAGE_SIZE,
-        site: site || undefined,
       });
       setItems(data);
     } catch (err) {
@@ -28,7 +26,7 @@ export function useBuyerPurchaseRequests({ site } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [site]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 

@@ -1,23 +1,17 @@
 /**
  * @fileoverview Vue d'accueil "acheteur" — demandes d'achat groupées par
- * statut dérivé, filtrables par site, avec accès à la DI d'origine.
+ * statut dérivé, avec accès à la DI d'origine.
  * @module pages/home/BuyerHomeView
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Container, Flex, Select, Badge, Text, Box, Heading } from '@radix-ui/themes';
+import { Container, Badge, Text, Box, Heading } from '@radix-ui/themes';
 import PageHeader from '@/components/layout/PageHeader';
 import DataTable from '@/components/ui/DataTable';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import { useBuyerPurchaseRequests } from '@/hooks/home/useBuyerPurchaseRequests';
-
-const SITE_OPTIONS = [
-  { value: '', label: 'Tous les sites' },
-  { value: 'VLT', label: 'Les Villettes' },
-  { value: 'SML', label: 'Saint Maurice de Lignon' },
-];
 
 // Regroupement d'affichage : les statuts dérivés fins (TO_QUALIFY,
 // NO_SUPPLIER_REF, PENDING_DISPATCH, OPEN, CONSULTATION, QUOTED) sont tous
@@ -58,8 +52,7 @@ RequestOriginCell.propTypes = {
 };
 
 export default function BuyerHomeView() {
-  const [site, setSite] = useState('');
-  const { items, loading, error } = useBuyerPurchaseRequests({ site });
+  const { items, loading, error } = useBuyerPurchaseRequests();
 
   const grouped = useMemo(() => {
     const groups = new Map();
@@ -113,17 +106,6 @@ export default function BuyerHomeView() {
         subtitle="Demandes d'achat par statut"
       />
       <Container size="4">
-        <Flex justify="end" mb="3">
-          <Select.Root value={site || '__all__'} onValueChange={(v) => setSite(v === '__all__' ? '' : v)}>
-            <Select.Trigger />
-            <Select.Content>
-              {SITE_OPTIONS.map((o) => (
-                <Select.Item key={o.value || '__all__'} value={o.value || '__all__'}>{o.label}</Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
-        </Flex>
-
         {GROUP_ORDER.filter((key) => grouped.has(key)).map((key) => {
           const groupItems = grouped.get(key);
           return (
@@ -137,7 +119,7 @@ export default function BuyerHomeView() {
         })}
 
         {items.length === 0 && (
-          <Text color="gray">Aucune demande d&rsquo;achat pour ce site.</Text>
+          <Text color="gray">Aucune demande d&rsquo;achat.</Text>
         )}
       </Container>
     </>

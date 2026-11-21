@@ -12,7 +12,7 @@ _TYPE_MAP = {
 
 
 def _infer_type(inter_code: Optional[str]) -> str:
-    """Inférer type depuis le code intervention (ex: VLT-PRE-... → preventif)."""
+    """Inférer type depuis le code intervention (ex: XXX-PRE-... → preventif)."""
     if not inter_code:
         return "projet"
     parts = inter_code.split("-")

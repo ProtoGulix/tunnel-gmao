@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     REFRESH_TOKEN_EXPIRE_HOURS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_HOURS", "8"))
+
+    # Mode démonstration (ADR 0036) : verrouille les écritures sensibles (comptes, droits,
+    # sécurité) et coupe tout envoi de courriel. Actif seulement si la valeur vaut "true".
+    DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
 
     # Mail
     MAIL_ENABLED: bool = os.getenv("MAIL_ENABLED", "false").lower() == "true"
@@ -90,6 +95,12 @@ class Settings(BaseSettings):
     def FRONTEND_CHANGELOG_URL(self) -> str:
         """URL de CHANGELOG.md, dérivée de FRONTEND_URL (feature "Nouveautés")"""
         return f"{self.FRONTEND_URL.rstrip('/')}/CHANGELOG.md"
+
+    @field_validator("DEMO_MODE", mode="before")
+    @classmethod
+    def _demo_mode_only_true(cls, value):
+        """Actif seulement si la valeur vaut « true » : « 1 », « yes » ou vide restent inactifs."""
+        return str(value).strip().lower() == "true"
 
     class Config:
         env_file = ".env"

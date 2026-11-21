@@ -1,0 +1,586 @@
+{
+  "entreprise": "Morvance Industrie",
+  "services": [
+    {
+      "code": "PROD",
+      "label": "Production"
+    },
+    {
+      "code": "QUAL",
+      "label": "Qualité et méthodes"
+    },
+    {
+      "code": "LOG",
+      "label": "Logistique et expédition"
+    }
+  ],
+  "classes": [
+    {
+      "code": "PRESSE",
+      "label": "Presses à injecter",
+      "description": "Presses à injecter les thermoplastiques, avec leur groupe hydraulique et leur régulation.",
+      "types": [
+        "CUR",
+        "PRE",
+        "PRO",
+        "MES",
+        "COF"
+      ]
+    },
+    {
+      "code": "USINAGE",
+      "label": "Centres d'usinage",
+      "description": "Machines-outils à commande numérique (fraisage, tournage).",
+      "types": [
+        "CUR",
+        "PRE",
+        "PRO",
+        "MES"
+      ]
+    },
+    {
+      "code": "ROBOT",
+      "label": "Robots et automatismes",
+      "description": "Robots de prélèvement, de chargement et de palettisation."
+    },
+    {
+      "code": "CONVOY",
+      "label": "Convoyeurs",
+      "description": "Convoyeurs à bande et à rouleaux entre postes."
+    },
+    {
+      "code": "UTILITE",
+      "label": "Utilités",
+      "description": "Air comprimé, froid de process, sécheurs : tout ce qui alimente les machines."
+    },
+    {
+      "code": "BATIMENT",
+      "label": "Bâtiment",
+      "description": "Toitures, portes, chauffage, ventilation, locaux.",
+      "types": [
+        "CUR",
+        "BAT",
+        "PRE",
+        "COF"
+      ]
+    },
+    {
+      "code": "OUTILL",
+      "label": "Outillages et contrôle",
+      "description": "Moules, gabarits et moyens de contrôle.",
+      "types": [
+        "CUR",
+        "PRE",
+        "PRO"
+      ]
+    }
+  ],
+  "equipements": [
+    {
+      "code": "MRV",
+      "name": "Site de production Morvance",
+      "parent": null,
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -6000
+    },
+    {
+      "code": "ATL-INJ",
+      "name": "Atelier injection",
+      "parent": "MRV",
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -5800
+    },
+    {
+      "code": "ATL-USI",
+      "name": "Atelier usinage",
+      "parent": "MRV",
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -5500
+    },
+    {
+      "code": "ATL-ASM",
+      "name": "Atelier assemblage et expédition",
+      "parent": "MRV",
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -4800
+    },
+    {
+      "code": "UTI",
+      "name": "Local utilités",
+      "parent": "MRV",
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -5800
+    },
+    {
+      "code": "BAT",
+      "name": "Bâtiment et extérieurs",
+      "parent": "MRV",
+      "classe": null,
+      "marque": "",
+      "model": "",
+      "mise_en_service": -6000
+    },
+    {
+      "code": "PR-01",
+      "name": "Presse à injecter 80 t",
+      "parent": "ATL-INJ",
+      "classe": "PRESSE",
+      "marque": "Kordex",
+      "model": "KI-80",
+      "mise_en_service": -4200
+    },
+    {
+      "code": "PR-02",
+      "name": "Presse à injecter 120 t",
+      "parent": "ATL-INJ",
+      "classe": "PRESSE",
+      "marque": "Kordex",
+      "model": "KI-120",
+      "mise_en_service": -3900
+    },
+    {
+      "code": "PR-03",
+      "name": "Presse à injecter 120 t",
+      "parent": "ATL-INJ",
+      "classe": "PRESSE",
+      "marque": "Kordex",
+      "model": "KI-120",
+      "mise_en_service": -2800
+    },
+    {
+      "code": "PR-04",
+      "name": "Presse à injecter 200 t",
+      "parent": "ATL-INJ",
+      "classe": "PRESSE",
+      "marque": "Tavion",
+      "model": "T200-H",
+      "mise_en_service": -1900
+    },
+    {
+      "code": "PR-05",
+      "name": "Presse à injecter 350 t",
+      "parent": "ATL-INJ",
+      "classe": "PRESSE",
+      "marque": "Tavion",
+      "model": "T350-H",
+      "mise_en_service": -900
+    },
+    {
+      "code": "MO-01",
+      "name": "Moule boîtier 4 empreintes",
+      "parent": "PR-02",
+      "classe": "OUTILL",
+      "marque": "Atelier interne",
+      "model": "MB-04",
+      "mise_en_service": -1500
+    },
+    {
+      "code": "MO-02",
+      "name": "Moule couvercle 2 empreintes",
+      "parent": "PR-04",
+      "classe": "OUTILL",
+      "marque": "Atelier interne",
+      "model": "MC-02",
+      "mise_en_service": -1100
+    },
+    {
+      "code": "RB-01",
+      "name": "Robot de prélèvement presse PR-02",
+      "parent": "ATL-INJ",
+      "classe": "ROBOT",
+      "marque": "Brenmar",
+      "model": "BR-P3",
+      "mise_en_service": -1700
+    },
+    {
+      "code": "RB-02",
+      "name": "Robot de prélèvement presse PR-04",
+      "parent": "ATL-INJ",
+      "classe": "ROBOT",
+      "marque": "Brenmar",
+      "model": "BR-P5",
+      "mise_en_service": -1400
+    },
+    {
+      "code": "CV-01",
+      "name": "Convoyeur de sortie injection",
+      "parent": "ATL-INJ",
+      "classe": "CONVOY",
+      "marque": "Dalmor",
+      "model": "DT-400",
+      "mise_en_service": -3000
+    },
+    {
+      "code": "CU-01",
+      "name": "Centre d'usinage vertical",
+      "parent": "ATL-USI",
+      "classe": "USINAGE",
+      "marque": "Valmeca",
+      "model": "VM-500V",
+      "mise_en_service": -3600
+    },
+    {
+      "code": "CU-02",
+      "name": "Centre d'usinage vertical",
+      "parent": "ATL-USI",
+      "classe": "USINAGE",
+      "marque": "Valmeca",
+      "model": "VM-500V",
+      "mise_en_service": -3100
+    },
+    {
+      "code": "CU-03",
+      "name": "Centre d'usinage horizontal",
+      "parent": "ATL-USI",
+      "classe": "USINAGE",
+      "marque": "Valmeca",
+      "model": "VM-630H",
+      "mise_en_service": -2200
+    },
+    {
+      "code": "CU-04",
+      "name": "Centre d'usinage 5 axes",
+      "parent": "ATL-USI",
+      "classe": "USINAGE",
+      "marque": "Ortek",
+      "model": "OX-5A",
+      "mise_en_service": -600
+    },
+    {
+      "code": "RB-03",
+      "name": "Robot de chargement CU-03",
+      "parent": "ATL-USI",
+      "classe": "ROBOT",
+      "marque": "Brenmar",
+      "model": "BR-L8",
+      "mise_en_service": -500
+    },
+    {
+      "code": "CV-02",
+      "name": "Convoyeur d'assemblage",
+      "parent": "ATL-ASM",
+      "classe": "CONVOY",
+      "marque": "Dalmor",
+      "model": "DT-600",
+      "mise_en_service": -2500
+    },
+    {
+      "code": "CV-03",
+      "name": "Convoyeur d'expédition",
+      "parent": "ATL-ASM",
+      "classe": "CONVOY",
+      "marque": "Dalmor",
+      "model": "DT-400",
+      "mise_en_service": -2000
+    },
+    {
+      "code": "RB-04",
+      "name": "Robot de palettisation",
+      "parent": "ATL-ASM",
+      "classe": "ROBOT",
+      "marque": "Nivex",
+      "model": "NX-P120",
+      "mise_en_service": -800
+    },
+    {
+      "code": "OU-01",
+      "name": "Banc de contrôle dimensionnel",
+      "parent": "ATL-ASM",
+      "classe": "OUTILL",
+      "marque": "Pilcor",
+      "model": "PC-B2",
+      "mise_en_service": -1600
+    },
+    {
+      "code": "CP-01",
+      "name": "Compresseur à vis 30 kW",
+      "parent": "UTI",
+      "classe": "UTILITE",
+      "marque": "Aerolis",
+      "model": "AV-30",
+      "mise_en_service": -3300
+    },
+    {
+      "code": "CP-02",
+      "name": "Compresseur à vis 55 kW",
+      "parent": "UTI",
+      "classe": "UTILITE",
+      "marque": "Aerolis",
+      "model": "AV-55",
+      "mise_en_service": -1500
+    },
+    {
+      "code": "SE-01",
+      "name": "Sécheur d'air par réfrigération",
+      "parent": "UTI",
+      "classe": "UTILITE",
+      "marque": "Solvane",
+      "model": "SR-90",
+      "mise_en_service": -3300
+    },
+    {
+      "code": "GF-01",
+      "name": "Groupe froid de process",
+      "parent": "UTI",
+      "classe": "UTILITE",
+      "marque": "Solvane",
+      "model": "GF-250",
+      "mise_en_service": -2600
+    },
+    {
+      "code": "BT-01",
+      "name": "Toiture et verrières atelier",
+      "parent": "BAT",
+      "classe": "BATIMENT",
+      "marque": "",
+      "model": "",
+      "mise_en_service": -6000
+    },
+    {
+      "code": "BT-02",
+      "name": "Portes sectionnelles de quai",
+      "parent": "BAT",
+      "classe": "BATIMENT",
+      "marque": "",
+      "model": "",
+      "mise_en_service": -3500
+    },
+    {
+      "code": "BT-03",
+      "name": "Chauffage et ventilation atelier",
+      "parent": "BAT",
+      "classe": "BATIMENT",
+      "marque": "",
+      "model": "",
+      "mise_en_service": -2400
+    }
+  ],
+  "equipe": [
+    {
+      "key": "T1",
+      "first_name": "Julien",
+      "last_name": "Marchand",
+      "initial": "JM",
+      "role": "TECH",
+      "login": "technicien@demo.frezille.fr"
+    },
+    {
+      "key": "T2",
+      "first_name": "Thierry",
+      "last_name": "Lambert",
+      "initial": "TL",
+      "role": "TECH",
+      "login": null
+    },
+    {
+      "key": "T3",
+      "first_name": "Sébastien",
+      "last_name": "Roux",
+      "initial": "SR",
+      "role": "TECH",
+      "login": null
+    },
+    {
+      "key": "T4",
+      "first_name": "Nicolas",
+      "last_name": "Girard",
+      "initial": "NG",
+      "role": "TECH",
+      "login": null
+    },
+    {
+      "key": "R1",
+      "first_name": "Isabelle",
+      "last_name": "Fournier",
+      "initial": "IF",
+      "role": "RESP",
+      "login": "direction@demo.frezille.fr"
+    },
+    {
+      "key": "A1",
+      "first_name": "Patricia",
+      "last_name": "Mercier",
+      "initial": "PM",
+      "role": "ACHETEUR",
+      "login": "acheteur@demo.frezille.fr"
+    }
+  ],
+  "plans": [
+    {
+      "code": "PRE-PRESSE-TRIM",
+      "label": "Entretien trimestriel des presses à injecter",
+      "classe": "PRESSE",
+      "periodicity_days": 90,
+      "auto_accept": true,
+      "steps": [
+        {
+          "label": "Contrôler le niveau et la température de l'huile hydraulique",
+          "optional": false
+        },
+        {
+          "label": "Vérifier l'absence de fuite sur flexibles et raccords",
+          "optional": false
+        },
+        {
+          "label": "Contrôler le serrage des colliers de chauffe et les thermocouples",
+          "optional": false
+        },
+        {
+          "label": "Graisser les colonnes et le mécanisme de fermeture",
+          "optional": false
+        },
+        {
+          "label": "Nettoyer les filtres des échangeurs d'eau",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "code": "PRE-CONVOY-QUAD",
+      "label": "Contrôle quadrimestriel des convoyeurs",
+      "classe": "CONVOY",
+      "periodicity_days": 120,
+      "auto_accept": false,
+      "steps": [
+        {
+          "label": "Contrôler la tension et l'alignement de la bande",
+          "optional": false
+        },
+        {
+          "label": "Graisser les roulements de rouleaux",
+          "optional": false
+        },
+        {
+          "label": "Vérifier l'état des protecteurs et des arrêts d'urgence",
+          "optional": false
+        },
+        {
+          "label": "Contrôler le motoréducteur (bruit, température, niveau d'huile)",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "code": "PRE-USINAGE-TRIM",
+      "label": "Entretien trimestriel des centres d'usinage",
+      "classe": "USINAGE",
+      "periodicity_days": 90,
+      "auto_accept": false,
+      "steps": [
+        {
+          "label": "Vidanger et nettoyer le bac de liquide de coupe, vérifier la concentration",
+          "optional": false
+        },
+        {
+          "label": "Contrôler le niveau et la pression du circuit de graissage",
+          "optional": false
+        },
+        {
+          "label": "Nettoyer les filtres de l'armoire électrique",
+          "optional": false
+        },
+        {
+          "label": "Vérifier le serrage du cône de broche et l'état du tirant",
+          "optional": false
+        },
+        {
+          "label": "Contrôler les butées et les protections télescopiques",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "code": "PRE-UTILITE-SEM",
+      "label": "Entretien semestriel des compresseurs et sécheurs",
+      "classe": "UTILITE",
+      "periodicity_days": 180,
+      "auto_accept": false,
+      "steps": [
+        {
+          "label": "Remplacer le filtre à air et le filtre à huile",
+          "optional": false
+        },
+        {
+          "label": "Contrôler la courroie ou l'accouplement",
+          "optional": false
+        },
+        {
+          "label": "Purger les condenseurs et vérifier les purgeurs",
+          "optional": false
+        },
+        {
+          "label": "Relever la température de refoulement et la pression de service",
+          "optional": false
+        },
+        {
+          "label": "Contrôler les soupapes de sécurité",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "code": "PRE-ROBOT-SEM",
+      "label": "Contrôle semestriel des robots",
+      "classe": "ROBOT",
+      "periodicity_days": 180,
+      "auto_accept": false,
+      "steps": [
+        {
+          "label": "Contrôler l'état des câbles et des gaines de l'avant-bras",
+          "optional": false
+        },
+        {
+          "label": "Vérifier la préhension et l'usure des ventouses ou pinces",
+          "optional": false
+        },
+        {
+          "label": "Tester les arrêts d'urgence et les barrières de sécurité",
+          "optional": false
+        },
+        {
+          "label": "Sauvegarder le programme et noter la version",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "code": "PRE-BATIMENT-AN",
+      "label": "Contrôle annuel du bâtiment",
+      "classe": "BATIMENT",
+      "periodicity_days": 365,
+      "auto_accept": false,
+      "steps": [
+        {
+          "label": "Inspecter la toiture, les gouttières et les verrières",
+          "optional": false
+        },
+        {
+          "label": "Contrôler le fonctionnement et la sécurité des portes de quai",
+          "optional": false
+        },
+        {
+          "label": "Entretenir les centrales de chauffage et de ventilation",
+          "optional": false
+        },
+        {
+          "label": "Vérifier les extincteurs et les éclairages de secours",
+          "optional": false
+        },
+        {
+          "label": "Relever l'état des sols et des marquages",
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

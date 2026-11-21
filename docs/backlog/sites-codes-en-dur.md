@@ -1,3 +1,5 @@
+TRAITÉ (2026-11-21, DEMO-01)
+
 # Sites de l'usine codés en dur dans le front web
 
 Relevé le 2026-11-21 (fiche CAH-02). Les filtres de site des vues d'accueil direction

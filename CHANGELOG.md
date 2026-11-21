@@ -8,6 +8,19 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- API : mode démonstration `DEMO_MODE=true` (ADR 0036) : les écritures sur les comptes,
+  les droits, les clés d'API, les vues d'accueil par rôle et les règles de sécurité
+  répondent 403 `DEMO_MODE_LOCKED` ; les lectures et le travail métier restent permis ;
+  aucun courriel n'est envoyé (DEMO-04).
+- Démonstration : chargeur de la base fictive (`deploy/demo/load_demo.py`, dates recalées sur
+  le jour du chargement, journaux et audit attribués aux auteurs fictifs), script de
+  réinitialisation nocturne `reset-demo.sh` (projet Compose isolé `tunnel-demo`) et procédure
+  `deploy/demo/README.md` (DEMO-06, ADR 0036).
+
+### Corrigé
+- Web : le filtre de site de l'accueil direction technique lit les sites depuis les équipements racines (filtre réel, masqué s'il y a moins de deux sites) ; sur l'accueil acheteur, le filtre de site, sans effet, est retiré (DEMO-01).
+
 ### [interne] Documentation
 - Cahier fonctionnel (`docs/cahier-fonctionnel.md`) : ce que Tunnel fait réellement en
   5.11.0, preuve à l'appui, séparé de ce qui est à concevoir (constats) et de la vision ;

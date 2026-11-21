@@ -1,0 +1,3823 @@
+{
+  "familles": [
+    {
+      "code": "ROUL",
+      "label": "Roulements",
+      "sous_familles": [
+        {
+          "code": "ROUL-BILLE",
+          "label": "À billes"
+        },
+        {
+          "code": "ROUL-OBLIQ",
+          "label": "À contacts obliques"
+        },
+        {
+          "code": "ROUL-PALIER",
+          "label": "Paliers"
+        }
+      ]
+    },
+    {
+      "code": "TRANS",
+      "label": "Transmission",
+      "sous_familles": [
+        {
+          "code": "TRANS-COURR",
+          "label": "Courroies"
+        },
+        {
+          "code": "TRANS-ACCOU",
+          "label": "Accouplements"
+        },
+        {
+          "code": "TRANS-MECA",
+          "label": "Organes mécaniques"
+        }
+      ]
+    },
+    {
+      "code": "PNEU",
+      "label": "Pneumatique",
+      "sous_familles": [
+        {
+          "code": "PNEU-VERIN",
+          "label": "Vérins"
+        },
+        {
+          "code": "PNEU-VENT",
+          "label": "Préhension et vide"
+        },
+        {
+          "code": "PNEU-RACC",
+          "label": "Raccords et traitement d'air"
+        }
+      ]
+    },
+    {
+      "code": "HYDR",
+      "label": "Hydraulique",
+      "sous_familles": [
+        {
+          "code": "HYDR-FLEX",
+          "label": "Flexibles"
+        },
+        {
+          "code": "HYDR-VERIN",
+          "label": "Vérins et joints"
+        }
+      ]
+    },
+    {
+      "code": "ELEC",
+      "label": "Électrique",
+      "sous_familles": [
+        {
+          "code": "ELEC-CONT",
+          "label": "Contacteurs et protection"
+        },
+        {
+          "code": "ELEC-SECU",
+          "label": "Sécurité"
+        },
+        {
+          "code": "ELEC-CHAUF",
+          "label": "Chauffe et mesure"
+        }
+      ]
+    },
+    {
+      "code": "AUTO",
+      "label": "Automatisme",
+      "sous_familles": [
+        {
+          "code": "AUTO-CAPT",
+          "label": "Capteurs"
+        },
+        {
+          "code": "AUTO-PRESS",
+          "label": "Pression"
+        }
+      ]
+    },
+    {
+      "code": "CONS",
+      "label": "Consommables",
+      "sous_familles": [
+        {
+          "code": "CONS-LUB",
+          "label": "Lubrifiants"
+        },
+        {
+          "code": "CONS-FILT",
+          "label": "Filtration"
+        }
+      ]
+    },
+    {
+      "code": "QUIN",
+      "label": "Quincaillerie",
+      "sous_familles": [
+        {
+          "code": "QUIN-VIS",
+          "label": "Visserie"
+        },
+        {
+          "code": "QUIN-DIV",
+          "label": "Divers"
+        }
+      ]
+    }
+  ],
+  "fabricants": [
+    {
+      "key": "F1",
+      "name": "Norvane Mécanique",
+      "ref": "NV-GEN",
+      "designation": "Roulements et transmission"
+    },
+    {
+      "key": "F2",
+      "name": "Haldrex Fluides",
+      "ref": "HX-GEN",
+      "designation": "Hydraulique et pneumatique"
+    },
+    {
+      "key": "F3",
+      "name": "Ostrel Électrique",
+      "ref": "OS-GEN",
+      "designation": "Appareillage électrique et capteurs"
+    },
+    {
+      "key": "F4",
+      "name": "Mirvak Industrie",
+      "ref": "MK-GEN",
+      "designation": "Consommables et visserie"
+    }
+  ],
+  "fournisseurs": [
+    {
+      "code": "FOU-A",
+      "name": "Vandéral Mécanique",
+      "contact_name": "Alain Verdier",
+      "email": "contact@vanderal.example",
+      "phone": "00 00 00 00 00"
+    },
+    {
+      "code": "FOU-B",
+      "name": "Hydropneu Calmoor",
+      "contact_name": "Brigitte Lorand",
+      "email": "contact@calmoor.example",
+      "phone": "00 00 00 00 00"
+    },
+    {
+      "code": "FOU-C",
+      "name": "Électro-Négoce Brisval",
+      "contact_name": "Claude Marnier",
+      "email": "contact@brisval.example",
+      "phone": "00 00 00 00 00"
+    },
+    {
+      "code": "FOU-D",
+      "name": "Lubrex Fournitures",
+      "contact_name": "Denise Fabron",
+      "email": "contact@lubrex.example",
+      "phone": "00 00 00 00 00"
+    },
+    {
+      "code": "FOU-E",
+      "name": "Quincaillerie Industrielle Ormeau",
+      "contact_name": "Étienne Ormand",
+      "email": "contact@ormeau.example",
+      "phone": "00 00 00 00 00"
+    }
+  ],
+  "articles": [
+    {
+      "key": "ART001",
+      "name": "Roulement à billes 6204-2RS",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-BILLE",
+      "spec": "Étanche des deux côtés, graissé à vie",
+      "dimension": "20x47x14 mm",
+      "ref": "ISO 15 - 6204-2RS",
+      "quantity": 12,
+      "unit": "pce",
+      "location": "Magasin A1",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6204-2RS",
+          "unit_price": 4.8,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6204-2RS",
+          "unit_price": 5.23,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART002",
+      "name": "Roulement à billes 6205-2RS",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-BILLE",
+      "spec": "Étanche des deux côtés, graissé à vie",
+      "dimension": "25x52x15 mm",
+      "ref": "ISO 15 - 6205-2RS",
+      "quantity": 8,
+      "unit": "pce",
+      "location": "Magasin A1",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6205-2RS",
+          "unit_price": 5.9,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6205-2RS",
+          "unit_price": 6.43,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART003",
+      "name": "Roulement à billes 6206-2RS",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-BILLE",
+      "spec": "Étanche des deux côtés, graissé à vie",
+      "dimension": "30x62x16 mm",
+      "ref": "ISO 15 - 6206-2RS",
+      "quantity": 6,
+      "unit": "pce",
+      "location": "Magasin A1",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6206-2RS",
+          "unit_price": 7.6,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6206-2RS",
+          "unit_price": 8.28,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART004",
+      "name": "Roulement à billes 6305-2RS",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-BILLE",
+      "spec": "Série lourde, étanche",
+      "dimension": "25x62x17 mm",
+      "ref": "ISO 15 - 6305-2RS",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Magasin A1",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6305-2RS",
+          "unit_price": 8.9,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6305-2RS",
+          "unit_price": 9.7,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-6305-2RS",
+          "unit_price": 8.63,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART005",
+      "name": "Roulement à billes 6004-2RS",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-BILLE",
+      "spec": "Étanche des deux côtés",
+      "dimension": "20x42x12 mm",
+      "ref": "ISO 15 - 6004-2RS",
+      "quantity": 10,
+      "unit": "pce",
+      "location": "Magasin A1",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6004-2RS",
+          "unit_price": 3.9,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6004-2RS",
+          "unit_price": 4.25,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART006",
+      "name": "Roulement à contacts obliques 7014, paire appariée",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-OBLIQ",
+      "spec": "Paire appariée, précision P4, broche",
+      "dimension": "70x110x20 mm",
+      "ref": "ISO 15 - 7014-B-P4-DB",
+      "quantity": 0,
+      "unit": "jeu",
+      "location": "Magasin A2",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-7014-B-P4-DB",
+          "unit_price": 212.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-7014-B-P4-DB",
+          "unit_price": 231.08,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART007",
+      "name": "Roulement à contacts obliques 7208",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-OBLIQ",
+      "spec": "Contact 40 degrés, cage polyamide",
+      "dimension": "40x80x18 mm",
+      "ref": "ISO 15 - 7208-B",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A2",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-7208-B",
+          "unit_price": 21.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-7208-B",
+          "unit_price": 23.44,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART008",
+      "name": "Palier à semelle UCP205",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-PALIER",
+      "spec": "Fonte, bague d'excentrique, graisseur",
+      "dimension": "Alésage 25 mm",
+      "ref": "DIN 626 - UCP205",
+      "quantity": 3,
+      "unit": "pce",
+      "location": "Magasin A2",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-UCP205",
+          "unit_price": 14.2,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-UCP205",
+          "unit_price": 15.48,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-UCP205",
+          "unit_price": 13.77,
+          "delivery_time_days": 6,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART009",
+      "name": "Palier à semelle UCP206",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-PALIER",
+      "spec": "Fonte, bague d'excentrique, graisseur",
+      "dimension": "Alésage 30 mm",
+      "ref": "DIN 626 - UCP206",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A2",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-UCP206",
+          "unit_price": 17.8,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-UCP206",
+          "unit_price": 19.4,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART010",
+      "name": "Palier à bride carrée UCF205",
+      "famille": "ROUL",
+      "sous_famille": "ROUL-PALIER",
+      "spec": "Fonte, 4 trous de fixation",
+      "dimension": "Alésage 25 mm",
+      "ref": "DIN 626 - UCF205",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Magasin A2",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-UCF205",
+          "unit_price": 16.4,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-UCF205",
+          "unit_price": 17.88,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART011",
+      "name": "Courroie trapézoïdale SPB 1500",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-COURR",
+      "spec": "Section SPB, crantée",
+      "dimension": "Longueur 1500 mm",
+      "ref": "DIN 7753 - SPB1500",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-SPB1500",
+          "unit_price": 18.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-SPB1500",
+          "unit_price": 20.17,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART012",
+      "name": "Courroie trapézoïdale SPB 1800",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-COURR",
+      "spec": "Section SPB, crantée",
+      "dimension": "Longueur 1800 mm",
+      "ref": "DIN 7753 - SPB1800",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-SPB1800",
+          "unit_price": 22.4,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-SPB1800",
+          "unit_price": 24.42,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-SPB1800",
+          "unit_price": 21.73,
+          "delivery_time_days": 8,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART013",
+      "name": "Courroie trapézoïdale SPZ 1000",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-COURR",
+      "spec": "Section SPZ",
+      "dimension": "Longueur 1000 mm",
+      "ref": "DIN 7753 - SPZ1000",
+      "quantity": 3,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-SPZ1000",
+          "unit_price": 9.6,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-SPZ1000",
+          "unit_price": 10.46,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART014",
+      "name": "Courroie synchrone HTD 5M",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-COURR",
+      "spec": "Pas 5 mm, fibre de verre",
+      "dimension": "600 mm x 15 mm",
+      "ref": "HTD 5M-600-15",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-HTD5M-600-15",
+          "unit_price": 16.9,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-HTD5M-600-15",
+          "unit_price": 18.42,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART015",
+      "name": "Élastomère d'accouplement à crabots",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-ACCOU",
+      "spec": "Polyuréthane 92 Shore A, 6 branches",
+      "dimension": "Ø 150 mm",
+      "ref": "DIN 740 - GS150",
+      "quantity": 0,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-GS150",
+          "unit_price": 38.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-GS150",
+          "unit_price": 41.42,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART016",
+      "name": "Élastomère d'accouplement à crabots",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-ACCOU",
+      "spec": "Polyuréthane 92 Shore A, 4 branches",
+      "dimension": "Ø 90 mm",
+      "ref": "DIN 740 - GS90",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-GS90",
+          "unit_price": 14.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-GS90",
+          "unit_price": 15.81,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-GS90",
+          "unit_price": 14.06,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART017",
+      "name": "Moyeu d'accouplement à crabots",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-ACCOU",
+      "spec": "Acier, clavette et vis de blocage",
+      "dimension": "Alésage 28 mm",
+      "ref": "DIN 740 - MY28",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Magasin A3",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-MY28",
+          "unit_price": 46.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-MY28",
+          "unit_price": 50.14,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART018",
+      "name": "Galet de came",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-MECA",
+      "spec": "Acier trempé, axe fileté",
+      "dimension": "Ø 30 mm, axe M10",
+      "ref": "DIN 5412 - GC30",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Magasin A4",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-GC30",
+          "unit_price": 11.8,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-GC30",
+          "unit_price": 12.86,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART019",
+      "name": "Pion de verrouillage de tourelle",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-MECA",
+      "spec": "Acier trempé et rectifié",
+      "dimension": "Ø 12 mm, longueur 40 mm",
+      "ref": "ISO 2338 - PV12",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin A4",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-PV12",
+          "unit_price": 27.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-PV12",
+          "unit_price": 29.43,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART020",
+      "name": "Chaîne à rouleaux simple",
+      "famille": "TRANS",
+      "sous_famille": "TRANS-MECA",
+      "spec": "Acier, pas 12,7 mm",
+      "dimension": "Pas 08B-1",
+      "ref": "ISO 606 - 08B-1",
+      "quantity": 5,
+      "unit": "m",
+      "location": "Magasin A4",
+      "fabricant": "F1",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-08B-1",
+          "unit_price": 9.2,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-08B-1",
+          "unit_price": 10.03,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-08B-1",
+          "unit_price": 8.92,
+          "delivery_time_days": 6,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART021",
+      "name": "Vérin double effet ISO 15552",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VERIN",
+      "spec": "Profilé, amortissement réglable",
+      "dimension": "Ø 32 mm, course 100 mm",
+      "ref": "ISO 15552 - 32x100",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin B1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-32x100",
+          "unit_price": 58.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-32x100",
+          "unit_price": 63.22,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART022",
+      "name": "Vérin double effet ISO 15552",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VERIN",
+      "spec": "Profilé, amortissement réglable",
+      "dimension": "Ø 50 mm, course 200 mm",
+      "ref": "ISO 15552 - 50x200",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Magasin B1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-50x200",
+          "unit_price": 84.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-50x200",
+          "unit_price": 91.56,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART023",
+      "name": "Vérin compact double effet",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VERIN",
+      "spec": "Compact, piston magnétique",
+      "dimension": "Ø 16 mm, course 25 mm",
+      "ref": "ISO 21287 - 16x25",
+      "quantity": 3,
+      "unit": "pce",
+      "location": "Magasin B1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-16x25",
+          "unit_price": 31.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-16x25",
+          "unit_price": 33.79,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART024",
+      "name": "Ventouse à soufflet",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VENT",
+      "spec": "Nitrile, 1,5 soufflet, raccord M5",
+      "dimension": "Ø 30 mm",
+      "ref": "Ventouse S1.5-30-M5",
+      "quantity": 8,
+      "unit": "pce",
+      "location": "Magasin B2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-VentouseS1.5-30-M5",
+          "unit_price": 6.4,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-VentouseS1.5-30-M5",
+          "unit_price": 6.98,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-VentouseS1.5-30-M5",
+          "unit_price": 6.21,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART025",
+      "name": "Ventouse à soufflet",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VENT",
+      "spec": "Nitrile, 1,5 soufflet, raccord G1/8",
+      "dimension": "Ø 50 mm",
+      "ref": "Ventouse S1.5-50-G18",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Magasin B2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-VentouseS1.5-50-G18",
+          "unit_price": 9.8,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-VentouseS1.5-50-G18",
+          "unit_price": 10.68,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART026",
+      "name": "Éjecteur à vide",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-VENT",
+      "spec": "Multi-étages, silencieux intégré",
+      "dimension": "Buse 1,0 mm",
+      "ref": "Éjecteur EV-10",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin B2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-ÉjecteurEV-10",
+          "unit_price": 72.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-ÉjecteurEV-10",
+          "unit_price": 78.48,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART027",
+      "name": "Raccord instantané droit",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-RACC",
+      "spec": "Laiton nickelé, étanche",
+      "dimension": "Tube Ø 8 mm, filetage G1/8",
+      "ref": "ISO 16030 - R8-G18",
+      "quantity": 20,
+      "unit": "pce",
+      "location": "Magasin B3",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-R8-G18",
+          "unit_price": 2.1,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-R8-G18",
+          "unit_price": 2.29,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART028",
+      "name": "Tuyau polyuréthane pneumatique",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-RACC",
+      "spec": "Bleu, résistant aux huiles",
+      "dimension": "Ø 8x6 mm",
+      "ref": "ISO 14743 - T8x6",
+      "quantity": 50,
+      "unit": "m",
+      "location": "Magasin B3",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-T8x6",
+          "unit_price": 1.3,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-T8x6",
+          "unit_price": 1.42,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-T8x6",
+          "unit_price": 1.26,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART029",
+      "name": "Électrovanne 5/2 monostable",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-RACC",
+      "spec": "Bobine 24 V continu, rappel ressort",
+      "dimension": "G1/8",
+      "ref": "ISO 5599 - EV52-G18",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin B3",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-EV52-G18",
+          "unit_price": 44.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-EV52-G18",
+          "unit_price": 47.96,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART030",
+      "name": "Flexible hydraulique à deux embouts femelles",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-FLEX",
+      "spec": "2 tresses, 210 bar, joint torique",
+      "dimension": "DN10, longueur 1200 mm",
+      "ref": "ISO 4413 - FH10-1200",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin C1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-FH10-1200",
+          "unit_price": 52.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-FH10-1200",
+          "unit_price": 56.68,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART031",
+      "name": "Flexible hydraulique à deux embouts femelles",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-FLEX",
+      "spec": "2 tresses, 210 bar, joint torique",
+      "dimension": "DN10, longueur 800 mm",
+      "ref": "ISO 4413 - FH10-800",
+      "quantity": 3,
+      "unit": "pce",
+      "location": "Magasin C1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-FH10-800",
+          "unit_price": 43.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-FH10-800",
+          "unit_price": 46.87,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART032",
+      "name": "Flexible hydraulique à deux embouts femelles",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-FLEX",
+      "spec": "2 tresses, 160 bar",
+      "dimension": "DN16, longueur 1000 mm",
+      "ref": "ISO 4413 - FH16-1000",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Magasin C1",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-FH16-1000",
+          "unit_price": 68.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-FH16-1000",
+          "unit_price": 74.12,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-FH16-1000",
+          "unit_price": 65.96,
+          "delivery_time_days": 6,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART033",
+      "name": "Vérin hydraulique double effet",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-VERIN",
+      "spec": "Tirants, 160 bar",
+      "dimension": "Alésage 40 mm, course 100 mm, tige 22 mm",
+      "ref": "ISO 6020 - 40x100x22",
+      "quantity": 0,
+      "unit": "pce",
+      "location": "Magasin C2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-40x100x22",
+          "unit_price": 286.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-40x100x22",
+          "unit_price": 311.74,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART034",
+      "name": "Kit de joints de vérin d'injection",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-VERIN",
+      "spec": "Joints de tige et de piston, polyuréthane",
+      "dimension": "Alésage 80 mm",
+      "ref": "Kit JV-80",
+      "quantity": 0,
+      "unit": "jeu",
+      "location": "Magasin C2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-KitJV-80",
+          "unit_price": 94.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-KitJV-80",
+          "unit_price": 102.46,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART035",
+      "name": "Kit de joints de vérin",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-VERIN",
+      "spec": "Joints de tige et de piston",
+      "dimension": "Alésage 50 mm",
+      "ref": "Kit JV-50",
+      "quantity": 2,
+      "unit": "jeu",
+      "location": "Magasin C2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-KitJV-50",
+          "unit_price": 47.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-KitJV-50",
+          "unit_price": 51.23,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART036",
+      "name": "Assortiment de joints toriques",
+      "famille": "HYDR",
+      "sous_famille": "HYDR-VERIN",
+      "spec": "NBR 70 Shore, 382 pièces",
+      "dimension": "Ø 3 à 50 mm",
+      "ref": "ISO 3601 - ASS-NBR",
+      "quantity": 3,
+      "unit": "boîte",
+      "location": "Magasin C2",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-ASS-NBR",
+          "unit_price": 34.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-ASS-NBR",
+          "unit_price": 37.06,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-ASS-NBR",
+          "unit_price": 32.98,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART037",
+      "name": "Contacteur tripolaire",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CONT",
+      "spec": "Bobine 24 V continu, 1F+1O auxiliaire",
+      "dimension": "25 A",
+      "ref": "CEI 60947 - CT25-24",
+      "quantity": 3,
+      "unit": "pce",
+      "location": "Armoire élec. 1",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CT25-24",
+          "unit_price": 32.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CT25-24",
+          "unit_price": 34.88,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART038",
+      "name": "Contacteur tripolaire",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CONT",
+      "spec": "Bobine 24 V continu, 1F+1O auxiliaire",
+      "dimension": "40 A",
+      "ref": "CEI 60947 - CT40-24",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Armoire élec. 1",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CT40-24",
+          "unit_price": 58.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CT40-24",
+          "unit_price": 63.22,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART039",
+      "name": "Relais thermique",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CONT",
+      "spec": "Classe 10A, réglable",
+      "dimension": "17 à 23 A",
+      "ref": "CEI 60947 - RT17-23",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Armoire élec. 1",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-RT17-23",
+          "unit_price": 36.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-RT17-23",
+          "unit_price": 39.24,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART040",
+      "name": "Interrupteur de sécurité à clé codée",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-SECU",
+      "spec": "Contacts 2F+1O, boîtier plastique",
+      "dimension": "Entrée de câble M20",
+      "ref": "ISO 14119 - IS-2F1O",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Armoire élec. 2",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-IS-2F1O",
+          "unit_price": 74.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-IS-2F1O",
+          "unit_price": 80.66,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-IS-2F1O",
+          "unit_price": 71.78,
+          "delivery_time_days": 8,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART041",
+      "name": "Bouton d'arrêt d'urgence coup de poing",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-SECU",
+      "spec": "Rouge, déverrouillage par rotation",
+      "dimension": "Ø 40 mm, 1F+1O",
+      "ref": "ISO 13850 - AU40",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Armoire élec. 2",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-AU40",
+          "unit_price": 19.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-AU40",
+          "unit_price": 21.26,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART042",
+      "name": "Collier chauffant",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CHAUF",
+      "spec": "Mica, 230 V, fixation par vis",
+      "dimension": "Ø 60 mm, 700 W",
+      "ref": "Collier CC60-700",
+      "quantity": 6,
+      "unit": "pce",
+      "location": "Armoire élec. 2",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CollierCC60-700",
+          "unit_price": 28.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CollierCC60-700",
+          "unit_price": 30.52,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART043",
+      "name": "Collier chauffant",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CHAUF",
+      "spec": "Mica, 230 V, fixation par vis",
+      "dimension": "Ø 60 mm, 400 W",
+      "ref": "Collier CC60-400",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Armoire élec. 2",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CollierCC60-400",
+          "unit_price": 24.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CollierCC60-400",
+          "unit_price": 26.16,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART044",
+      "name": "Thermocouple type K à baïonnette",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CHAUF",
+      "spec": "Gaine inox, câble tressé 2 m",
+      "dimension": "Ø 3 mm, longueur 50 mm",
+      "ref": "CEI 60584 - TK3-50",
+      "quantity": 5,
+      "unit": "pce",
+      "location": "Armoire élec. 2",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-TK3-50",
+          "unit_price": 12.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-TK3-50",
+          "unit_price": 13.63,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-TK3-50",
+          "unit_price": 12.12,
+          "delivery_time_days": 6,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART045",
+      "name": "Fusible cylindrique gG",
+      "famille": "ELEC",
+      "sous_famille": "ELEC-CONT",
+      "spec": "Boîte de 10",
+      "dimension": "10x38 mm, 16 A",
+      "ref": "CEI 60269 - FG16",
+      "quantity": 3,
+      "unit": "boîte",
+      "location": "Armoire élec. 1",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-FG16",
+          "unit_price": 11.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-FG16",
+          "unit_price": 11.99,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART046",
+      "name": "Capteur inductif",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-CAPT",
+      "spec": "Cylindrique, blindé, sortie PNP NO",
+      "dimension": "M12, portée 4 mm",
+      "ref": "CEI 60947-5-2 - CI12-4",
+      "quantity": 6,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CI12-4",
+          "unit_price": 15.5,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CI12-4",
+          "unit_price": 16.89,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART047",
+      "name": "Capteur inductif",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-CAPT",
+      "spec": "Cylindrique, blindé, sortie PNP NO",
+      "dimension": "M18, portée 8 mm",
+      "ref": "CEI 60947-5-2 - CI18-8",
+      "quantity": 4,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CI18-8",
+          "unit_price": 18.2,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CI18-8",
+          "unit_price": 19.84,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART048",
+      "name": "Cellule photoélectrique réflex",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-CAPT",
+      "spec": "Sortie PNP, polarisée",
+      "dimension": "M18, portée 4 m",
+      "ref": "CEI 60947-5-2 - PH18-R",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-PH18-R",
+          "unit_price": 33.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-PH18-R",
+          "unit_price": 35.97,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-PH18-R",
+          "unit_price": 32.01,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART049",
+      "name": "Réflecteur pour cellule réflex",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-CAPT",
+      "spec": "Prismatique, fixation par vis",
+      "dimension": "Ø 80 mm",
+      "ref": "RF80",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-RF80",
+          "unit_price": 6.8,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-RF80",
+          "unit_price": 7.41,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART050",
+      "name": "Pressostat électromécanique",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-PRESS",
+      "spec": "0 à 10 bar, contact inverseur, sortie 24 V",
+      "dimension": "Raccord G1/4",
+      "ref": "PS10-G14",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-PS10-G14",
+          "unit_price": 41.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-PS10-G14",
+          "unit_price": 44.69,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART051",
+      "name": "Capteur de pression",
+      "famille": "AUTO",
+      "sous_famille": "AUTO-PRESS",
+      "spec": "Sortie 4-20 mA, inox",
+      "dimension": "0 à 250 bar, G1/4",
+      "ref": "CP250-420",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Armoire élec. 3",
+      "fabricant": "F3",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CP250-420",
+          "unit_price": 96.0,
+          "delivery_time_days": 3,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CP250-420",
+          "unit_price": 104.64,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART052",
+      "name": "Huile pour compresseur à vis",
+      "famille": "CONS",
+      "sous_famille": "CONS-LUB",
+      "spec": "Synthétique, grade ISO VG 46",
+      "dimension": "Bidon de 20 L",
+      "ref": "ISO 6743 - VG46-20",
+      "quantity": 2,
+      "unit": "bidon",
+      "location": "Magasin D1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-VG46-20",
+          "unit_price": 168.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-VG46-20",
+          "unit_price": 183.12,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-VG46-20",
+          "unit_price": 162.96,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART053",
+      "name": "Huile hydraulique HLP 46",
+      "famille": "CONS",
+      "sous_famille": "CONS-LUB",
+      "spec": "Minérale anti-usure, grade ISO VG 46",
+      "dimension": "Fût de 20 L",
+      "ref": "ISO 6743 - HLP46-20",
+      "quantity": 3,
+      "unit": "fût",
+      "location": "Magasin D1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-HLP46-20",
+          "unit_price": 92.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-HLP46-20",
+          "unit_price": 100.28,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART054",
+      "name": "Graisse multi-usage NLGI 2",
+      "famille": "CONS",
+      "sous_famille": "CONS-LUB",
+      "spec": "Savon au lithium, cartouche",
+      "dimension": "Cartouche de 400 g",
+      "ref": "DIN 51825 - K2K-400",
+      "quantity": 12,
+      "unit": "cartouche",
+      "location": "Magasin D1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-K2K-400",
+          "unit_price": 4.9,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-K2K-400",
+          "unit_price": 5.34,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART055",
+      "name": "Cartouche de filtre à air comprimé",
+      "famille": "CONS",
+      "sous_famille": "CONS-FILT",
+      "spec": "Élément filtrant, 1 micron",
+      "dimension": "Pour compresseur 55 kW",
+      "ref": "Élément FA-55",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin D2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-ÉlémentFA-55",
+          "unit_price": 39.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-ÉlémentFA-55",
+          "unit_price": 42.51,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART056",
+      "name": "Cartouche de filtre à air comprimé",
+      "famille": "CONS",
+      "sous_famille": "CONS-FILT",
+      "spec": "Élément filtrant, 1 micron",
+      "dimension": "Pour compresseur 30 kW",
+      "ref": "Élément FA-30",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin D2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-ÉlémentFA-30",
+          "unit_price": 31.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-ÉlémentFA-30",
+          "unit_price": 33.79,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-ÉlémentFA-30",
+          "unit_price": 30.07,
+          "delivery_time_days": 6,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART057",
+      "name": "Filtre à huile hydraulique de retour",
+      "famille": "CONS",
+      "sous_famille": "CONS-FILT",
+      "spec": "Cartouche, filtration 10 microns",
+      "dimension": "Longueur 250 mm",
+      "ref": "ISO 2941 - FR10-250",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin D2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-D",
+          "supplier_ref": "LF-FR10-250",
+          "unit_price": 27.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-FR10-250",
+          "unit_price": 29.43,
+          "delivery_time_days": 5,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART058",
+      "name": "Purgeur électronique de condensats",
+      "famille": "PNEU",
+      "sous_famille": "PNEU-RACC",
+      "spec": "Temporisé, 230 V, raccord G1/2",
+      "dimension": "G1/2",
+      "ref": "PE-230-G12",
+      "quantity": 1,
+      "unit": "pce",
+      "location": "Magasin B3",
+      "fabricant": "F2",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-PE-230-G12",
+          "unit_price": 64.0,
+          "delivery_time_days": 4,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-PE-230-G12",
+          "unit_price": 69.76,
+          "delivery_time_days": 2,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART059",
+      "name": "Vis à tête cylindrique six pans creux",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-VIS",
+      "spec": "Classe 12.9, boîte de 100",
+      "dimension": "M8x30 mm",
+      "ref": "ISO 4762 - M8x30",
+      "quantity": 3,
+      "unit": "boîte",
+      "location": "Magasin E1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-M8x30",
+          "unit_price": 14.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-M8x30",
+          "unit_price": 15.26,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART060",
+      "name": "Vis à tête hexagonale",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-VIS",
+      "spec": "Classe 8.8 zinguée, boîte de 100",
+      "dimension": "M10x40 mm",
+      "ref": "ISO 4017 - M10x40",
+      "quantity": 2,
+      "unit": "boîte",
+      "location": "Magasin E1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-M10x40",
+          "unit_price": 16.5,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-M10x40",
+          "unit_price": 17.99,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-B",
+          "supplier_ref": "HC-M10x40",
+          "unit_price": 16.0,
+          "delivery_time_days": 8,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART061",
+      "name": "Rondelle plate",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-VIS",
+      "spec": "Acier zingué, boîte de 200",
+      "dimension": "M8",
+      "ref": "ISO 7089 - M8",
+      "quantity": 4,
+      "unit": "boîte",
+      "location": "Magasin E1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-M8",
+          "unit_price": 5.2,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-M8",
+          "unit_price": 5.67,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART062",
+      "name": "Goupille cylindrique",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-VIS",
+      "spec": "Acier trempé, boîte de 100",
+      "dimension": "Ø 6x30 mm",
+      "ref": "ISO 8734 - 6x30",
+      "quantity": 2,
+      "unit": "boîte",
+      "location": "Magasin E1",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-6x30",
+          "unit_price": 9.4,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-6x30",
+          "unit_price": 10.25,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART063",
+      "name": "Ressort de torsion pour porte sectionnelle",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-DIV",
+      "spec": "Acier, enroulement à gauche",
+      "dimension": "Ø 50 mm, longueur 600 mm",
+      "ref": "DIN 2088 - RT50-600",
+      "quantity": 2,
+      "unit": "pce",
+      "location": "Magasin E2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-RT50-600",
+          "unit_price": 36.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-RT50-600",
+          "unit_price": 39.24,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART064",
+      "name": "Collier de serrage inox",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-DIV",
+      "spec": "Inox A2, boîte de 10",
+      "dimension": "Plage 40 à 60 mm",
+      "ref": "DIN 3017 - CS40-60",
+      "quantity": 3,
+      "unit": "boîte",
+      "location": "Magasin E2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-CS40-60",
+          "unit_price": 12.0,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-CS40-60",
+          "unit_price": 13.08,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        },
+        {
+          "fournisseur": "FOU-C",
+          "supplier_ref": "EB-CS40-60",
+          "unit_price": 11.64,
+          "delivery_time_days": 7,
+          "is_preferred": false
+        }
+      ]
+    },
+    {
+      "key": "ART065",
+      "name": "Serre-câble nylon",
+      "famille": "QUIN",
+      "sous_famille": "QUIN-DIV",
+      "spec": "Sachet de 100",
+      "dimension": "200x4,5 mm",
+      "ref": "SC200",
+      "quantity": 5,
+      "unit": "sachet",
+      "location": "Magasin E2",
+      "fabricant": "F4",
+      "fournisseurs": [
+        {
+          "fournisseur": "FOU-E",
+          "supplier_ref": "QO-SC200",
+          "unit_price": 4.2,
+          "delivery_time_days": 2,
+          "is_preferred": true
+        },
+        {
+          "fournisseur": "FOU-A",
+          "supplier_ref": "VM-SC200",
+          "unit_price": 4.58,
+          "delivery_time_days": 4,
+          "is_preferred": false
+        }
+      ]
+    }
+  ],
+  "demandes": [
+    {
+      "key": "DA001",
+      "article": "ART011",
+      "item_label": "courroie trapézoïdale SPB 1500",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -317,
+      "reason": ""
+    },
+    {
+      "key": "DA002",
+      "article": "ART055",
+      "item_label": "cartouche de filtre à air compresseur 55 kW",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -259,
+      "reason": ""
+    },
+    {
+      "key": "DA003",
+      "article": "ART024",
+      "item_label": "ventouse à soufflet Ø30 mm",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -246,
+      "reason": ""
+    },
+    {
+      "key": "DA004",
+      "article": "ART008",
+      "item_label": "palier à semelle UCP205 pour rouleau",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -225,
+      "reason": ""
+    },
+    {
+      "key": "DA005",
+      "article": "ART030",
+      "item_label": "flexible hydraulique DN10 longueur 1200 mm, deux raccords femelles",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -304,
+      "reason": ""
+    },
+    {
+      "key": "DA006",
+      "article": "ART037",
+      "item_label": "contacteur tripolaire 25 A bobine 24 V",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -274,
+      "reason": ""
+    },
+    {
+      "key": "DA007",
+      "article": "ART021",
+      "item_label": "vérin double effet Ø32 course 100 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T4",
+      "le": -260,
+      "reason": ""
+    },
+    {
+      "key": "DA008",
+      "article": "ART042",
+      "item_label": "résistance collier chauffant Ø60 mm 230 V 700 W",
+      "quantity": 3,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T3",
+      "le": -290,
+      "reason": ""
+    },
+    {
+      "key": "DA009",
+      "article": "ART001",
+      "item_label": "roulement à billes 6204-2RS",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -302,
+      "reason": ""
+    },
+    {
+      "key": "DA010",
+      "article": "ART046",
+      "item_label": "capteur inductif M12 4 mm sortie PNP",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "high",
+      "demandeur": "T3",
+      "le": -198,
+      "reason": ""
+    },
+    {
+      "key": "DA011",
+      "article": "ART063",
+      "item_label": "ressort de torsion pour porte sectionnelle Ø 50 mm, longueur 600 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T4",
+      "le": -212,
+      "reason": ""
+    },
+    {
+      "key": "DA012",
+      "article": "ART058",
+      "item_label": "purgeur électronique de condensats 230 V",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "high",
+      "demandeur": "T2",
+      "le": -200,
+      "reason": ""
+    },
+    {
+      "key": "DA101",
+      "article": "ART024",
+      "item_label": "ventouse à soufflet Ø 30 mm, raccord M5",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -170,
+      "reason": ""
+    },
+    {
+      "key": "DA102",
+      "article": "ART038",
+      "item_label": "contacteur tripolaire 40 A, bobine 24 V",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -163,
+      "reason": ""
+    },
+    {
+      "key": "DA103",
+      "article": "ART001",
+      "item_label": "roulement 6204-2RS, Ø 20x47x14",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T4",
+      "le": -156,
+      "reason": ""
+    },
+    {
+      "key": "DA104",
+      "article": "ART040",
+      "item_label": "interrupteur de sécurité à clé codée, contacts 2F+1O",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -149,
+      "reason": ""
+    },
+    {
+      "key": "DA105",
+      "article": "ART019",
+      "item_label": "pion de verrouillage de tourelle, acier trempé Ø 12 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -131,
+      "reason": ""
+    },
+    {
+      "key": "DA106",
+      "article": "ART018",
+      "item_label": "galet de came Ø 30 mm, axe M10",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -86,
+      "reason": ""
+    },
+    {
+      "key": "DA107",
+      "article": "ART033",
+      "item_label": "vérin hydraulique double effet Ø 40, course 100, tige Ø 22",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -80,
+      "reason": ""
+    },
+    {
+      "key": "DA108",
+      "article": "ART043",
+      "item_label": "collier chauffant Ø 60 mm, 400 W, 230 V",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -67,
+      "reason": ""
+    },
+    {
+      "key": "DA109",
+      "article": "ART050",
+      "item_label": "pressostat 0-10 bar, raccord G1/4, sortie 24 V",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "urgent",
+      "demandeur": "T2",
+      "le": -47,
+      "reason": ""
+    },
+    {
+      "key": "DA110",
+      "article": "ART034",
+      "item_label": "kit joints vérin d'injection, alésage Ø 80",
+      "quantity": 1,
+      "unit": "jeu",
+      "urgency": "urgent",
+      "demandeur": "T1",
+      "le": -12,
+      "reason": ""
+    },
+    {
+      "key": "DA111",
+      "article": "ART006",
+      "item_label": "roulement à contacts obliques 7014, paire appariée",
+      "quantity": 1,
+      "unit": "jeu",
+      "urgency": "urgent",
+      "demandeur": "T3",
+      "le": -9,
+      "reason": ""
+    },
+    {
+      "key": "DA112",
+      "article": "ART015",
+      "item_label": "élastomère d'accouplement à crabots, Ø 150 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "high",
+      "demandeur": "T2",
+      "le": -5,
+      "reason": ""
+    },
+    {
+      "key": "DA113",
+      "article": "ART048",
+      "item_label": "cellule photoélectrique réflex M18, sortie PNP",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -3,
+      "reason": ""
+    },
+    {
+      "key": "DA114",
+      "article": "ART031",
+      "item_label": "flexible hydraulique DN10, 2 embouts femelles, L = 800 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -118,
+      "reason": ""
+    },
+    {
+      "key": "DA115",
+      "article": "ART052",
+      "item_label": "huile compresseur à vis, bidon de 20 L, grade ISO VG 46",
+      "quantity": 3,
+      "unit": "bidon",
+      "urgency": "normal",
+      "demandeur": "T1",
+      "le": -86,
+      "reason": ""
+    },
+    {
+      "key": "DA301",
+      "article": "ART005",
+      "item_label": "Roulement à billes 6004-2RS 20x42x12 mm",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -317,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA302",
+      "article": "ART036",
+      "item_label": "Assortiment de joints toriques Ø 3 à 50 mm",
+      "quantity": 2,
+      "unit": "boîte",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -304,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA303",
+      "article": "ART002",
+      "item_label": "Roulement à billes 6205-2RS 25x52x15 mm",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T2",
+      "le": -302,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA304",
+      "article": "ART045",
+      "item_label": "Fusible cylindrique gG 10x38 mm, 16 A",
+      "quantity": 2,
+      "unit": "boîte",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -291,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA305",
+      "article": "ART044",
+      "item_label": "Thermocouple type K à baïonnette Ø 3 mm, longueur 50 mm",
+      "quantity": 5,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -275,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA306",
+      "article": "ART054",
+      "item_label": "Graisse multi-usage NLGI 2 Cartouche de 400 g",
+      "quantity": 12,
+      "unit": "cartouche",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -260,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA307",
+      "article": "ART025",
+      "item_label": "Ventouse à soufflet Ø 50 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -247,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA308",
+      "article": "ART003",
+      "item_label": "Roulement à billes 6206-2RS 30x62x16 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -226,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA309",
+      "article": "ART059",
+      "item_label": "Vis à tête cylindrique six pans creux M8x30 mm",
+      "quantity": 2,
+      "unit": "boîte",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -213,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA310",
+      "article": "ART046",
+      "item_label": "Capteur inductif M12, portée 4 mm",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -192,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA311",
+      "article": "ART026",
+      "item_label": "Éjecteur à vide Buse 1,0 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -171,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA312",
+      "article": "ART039",
+      "item_label": "Relais thermique 17 à 23 A",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -164,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA313",
+      "article": "ART017",
+      "item_label": "Moyeu d'accouplement à crabots Alésage 28 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -132,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA314",
+      "article": "ART032",
+      "item_label": "Flexible hydraulique à deux embouts femelles DN16, longueur 1000 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -119,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA315",
+      "article": "ART056",
+      "item_label": "Cartouche de filtre à air comprimé Pour compresseur 30 kW",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -87,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA316",
+      "article": "ART041",
+      "item_label": "Bouton d'arrêt d'urgence coup de poing Ø 40 mm, 1F+1O",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -68,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA317",
+      "article": "ART057",
+      "item_label": "Filtre à huile hydraulique de retour Longueur 250 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -62,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA318",
+      "article": "ART013",
+      "item_label": "Courroie trapézoïdale SPZ 1000 Longueur 1000 mm",
+      "quantity": 2,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "T3",
+      "le": -36,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA319",
+      "article": "ART047",
+      "item_label": "Capteur inductif M18, portée 8 mm",
+      "quantity": 4,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -26,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA320",
+      "article": "ART054",
+      "item_label": "Graisse multi-usage NLGI 2 Cartouche de 400 g",
+      "quantity": 12,
+      "unit": "cartouche",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -21,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA321",
+      "article": "ART007",
+      "item_label": "Roulement à contacts obliques 7208 40x80x18 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -9,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA322",
+      "article": "ART016",
+      "item_label": "Élastomère d'accouplement à crabots Ø 90 mm",
+      "quantity": 1,
+      "unit": "pce",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -4,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA323",
+      "article": "ART028",
+      "item_label": "Tuyau polyuréthane pneumatique Ø 8x6 mm",
+      "quantity": 50,
+      "unit": "m",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -2,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA324",
+      "article": "ART065",
+      "item_label": "Serre-câble nylon 200x4,5 mm",
+      "quantity": 1,
+      "unit": "sachet",
+      "urgency": "normal",
+      "demandeur": "T4",
+      "le": -1,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA325",
+      "article": "ART060",
+      "item_label": "Vis à tête hexagonale M10x40 mm",
+      "quantity": 2,
+      "unit": "boîte",
+      "urgency": "normal",
+      "demandeur": "A1",
+      "le": -16,
+      "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    }
+  ],
+  "commandes": [
+    {
+      "key": "CMD001",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -317,
+      "commandee_le": -316,
+      "recue_le": -314,
+      "lignes": [
+        {
+          "article": "ART011",
+          "quantity": 2,
+          "unit_price": 18.5,
+          "quantity_received": 2,
+          "demandes": [
+            "DA001"
+          ]
+        },
+        {
+          "article": "ART005",
+          "quantity": 4,
+          "unit_price": 3.9,
+          "quantity_received": 4,
+          "demandes": [
+            "DA301"
+          ]
+        },
+        {
+          "article": "ART062",
+          "quantity": 2,
+          "unit_price": 10.25,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD002",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -304,
+      "commandee_le": -304,
+      "recue_le": -302,
+      "lignes": [
+        {
+          "article": "ART030",
+          "quantity": 1,
+          "unit_price": 52.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA005"
+          ]
+        },
+        {
+          "article": "ART036",
+          "quantity": 2,
+          "unit_price": 34.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA302"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD003",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -302,
+      "commandee_le": -301,
+      "recue_le": -299,
+      "lignes": [
+        {
+          "article": "ART001",
+          "quantity": 2,
+          "unit_price": 4.8,
+          "quantity_received": 2,
+          "demandes": [
+            "DA009"
+          ]
+        },
+        {
+          "article": "ART002",
+          "quantity": 4,
+          "unit_price": 5.9,
+          "quantity_received": 4,
+          "demandes": [
+            "DA303"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 4,
+          "unit_price": 22.4,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD004",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -290,
+      "commandee_le": -290,
+      "recue_le": -288,
+      "lignes": [
+        {
+          "article": "ART042",
+          "quantity": 3,
+          "unit_price": 28.0,
+          "quantity_received": 3,
+          "demandes": [
+            "DA008"
+          ]
+        },
+        {
+          "article": "ART045",
+          "quantity": 2,
+          "unit_price": 11.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA304"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD005",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -274,
+      "commandee_le": -274,
+      "recue_le": -272,
+      "lignes": [
+        {
+          "article": "ART037",
+          "quantity": 2,
+          "unit_price": 32.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA006"
+          ]
+        },
+        {
+          "article": "ART044",
+          "quantity": 5,
+          "unit_price": 12.5,
+          "quantity_received": 5,
+          "demandes": [
+            "DA305"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD006",
+      "fournisseur": "FOU-D",
+      "status": "CLOSED",
+      "creee_le": -259,
+      "commandee_le": -258,
+      "recue_le": -256,
+      "lignes": [
+        {
+          "article": "ART055",
+          "quantity": 2,
+          "unit_price": 39.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA002"
+          ]
+        },
+        {
+          "article": "ART054",
+          "quantity": 12,
+          "unit_price": 4.9,
+          "quantity_received": 12,
+          "demandes": [
+            "DA306"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 4,
+          "unit_price": 92.0,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD007",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -260,
+      "commandee_le": -260,
+      "recue_le": -258,
+      "lignes": [
+        {
+          "article": "ART021",
+          "quantity": 1,
+          "unit_price": 58.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA007"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD008",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -246,
+      "commandee_le": -245,
+      "recue_le": -242,
+      "lignes": [
+        {
+          "article": "ART024",
+          "quantity": 4,
+          "unit_price": 6.4,
+          "quantity_received": 4,
+          "demandes": [
+            "DA003"
+          ]
+        },
+        {
+          "article": "ART025",
+          "quantity": 2,
+          "unit_price": 9.8,
+          "quantity_received": 2,
+          "demandes": [
+            "DA307"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 2,
+          "unit_price": 21.73,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD009",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -225,
+      "commandee_le": -224,
+      "recue_le": -221,
+      "lignes": [
+        {
+          "article": "ART008",
+          "quantity": 2,
+          "unit_price": 14.2,
+          "quantity_received": 2,
+          "demandes": [
+            "DA004"
+          ]
+        },
+        {
+          "article": "ART003",
+          "quantity": 2,
+          "unit_price": 7.6,
+          "quantity_received": 2,
+          "demandes": [
+            "DA308"
+          ]
+        },
+        {
+          "article": "ART010",
+          "quantity": 3,
+          "unit_price": 16.4,
+          "quantity_received": 3,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD010",
+      "fournisseur": "FOU-E",
+      "status": "CLOSED",
+      "creee_le": -212,
+      "commandee_le": -211,
+      "recue_le": -209,
+      "lignes": [
+        {
+          "article": "ART063",
+          "quantity": 2,
+          "unit_price": 36.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA011"
+          ]
+        },
+        {
+          "article": "ART059",
+          "quantity": 2,
+          "unit_price": 14.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA309"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 2,
+          "unit_price": 24.42,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD011",
+      "fournisseur": "FOU-C",
+      "status": "CANCELLED",
+      "creee_le": -192,
+      "commandee_le": null,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART046",
+          "quantity": 4,
+          "unit_price": 15.5,
+          "quantity_received": 0,
+          "demandes": [
+            "DA310"
+          ]
+        },
+        {
+          "article": "ART004",
+          "quantity": 4,
+          "unit_price": 8.63,
+          "quantity_received": 0,
+          "demandes": []
+        },
+        {
+          "article": "ART064",
+          "quantity": 3,
+          "unit_price": 11.64,
+          "quantity_received": 0,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD012",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -171,
+      "commandee_le": -171,
+      "recue_le": -169,
+      "lignes": [
+        {
+          "article": "ART058",
+          "quantity": 1,
+          "unit_price": 64.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA012"
+          ]
+        },
+        {
+          "article": "ART026",
+          "quantity": 2,
+          "unit_price": 72.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA311"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 2,
+          "unit_price": 100.28,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD013",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -198,
+      "commandee_le": -197,
+      "recue_le": -195,
+      "lignes": [
+        {
+          "article": "ART046",
+          "quantity": 2,
+          "unit_price": 15.5,
+          "quantity_received": 2,
+          "demandes": [
+            "DA010"
+          ]
+        },
+        {
+          "article": "ART064",
+          "quantity": 4,
+          "unit_price": 11.64,
+          "quantity_received": 4,
+          "demandes": []
+        },
+        {
+          "article": "ART049",
+          "quantity": 2,
+          "unit_price": 6.8,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD014",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -170,
+      "commandee_le": -169,
+      "recue_le": -167,
+      "lignes": [
+        {
+          "article": "ART024",
+          "quantity": 4,
+          "unit_price": 6.4,
+          "quantity_received": 4,
+          "demandes": [
+            "DA101"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 4,
+          "unit_price": 100.28,
+          "quantity_received": 4,
+          "demandes": []
+        },
+        {
+          "article": "ART012",
+          "quantity": 2,
+          "unit_price": 21.73,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD015",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -163,
+      "commandee_le": -163,
+      "recue_le": -162,
+      "lignes": [
+        {
+          "article": "ART038",
+          "quantity": 2,
+          "unit_price": 58.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA102"
+          ]
+        },
+        {
+          "article": "ART039",
+          "quantity": 2,
+          "unit_price": 36.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA312"
+          ]
+        },
+        {
+          "article": "ART046",
+          "quantity": 4,
+          "unit_price": 15.5,
+          "quantity_received": 4,
+          "demandes": [
+            "DA310"
+          ]
+        },
+        {
+          "article": "ART064",
+          "quantity": 2,
+          "unit_price": 11.64,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD016",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -156,
+      "commandee_le": -155,
+      "recue_le": -153,
+      "lignes": [
+        {
+          "article": "ART001",
+          "quantity": 4,
+          "unit_price": 4.8,
+          "quantity_received": 4,
+          "demandes": [
+            "DA103"
+          ]
+        },
+        {
+          "article": "ART004",
+          "quantity": 4,
+          "unit_price": 8.9,
+          "quantity_received": 4,
+          "demandes": []
+        },
+        {
+          "article": "ART009",
+          "quantity": 2,
+          "unit_price": 17.8,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD017",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -149,
+      "commandee_le": -149,
+      "recue_le": -147,
+      "lignes": [
+        {
+          "article": "ART040",
+          "quantity": 1,
+          "unit_price": 74.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA104"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD018",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -131,
+      "commandee_le": -131,
+      "recue_le": -128,
+      "lignes": [
+        {
+          "article": "ART019",
+          "quantity": 1,
+          "unit_price": 27.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA105"
+          ]
+        },
+        {
+          "article": "ART017",
+          "quantity": 1,
+          "unit_price": 46.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA313"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD019",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -118,
+      "commandee_le": -117,
+      "recue_le": -115,
+      "lignes": [
+        {
+          "article": "ART031",
+          "quantity": 2,
+          "unit_price": 43.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA114"
+          ]
+        },
+        {
+          "article": "ART032",
+          "quantity": 1,
+          "unit_price": 68.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA314"
+          ]
+        },
+        {
+          "article": "ART029",
+          "quantity": 3,
+          "unit_price": 44.0,
+          "quantity_received": 3,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD020",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -86,
+      "commandee_le": -85,
+      "recue_le": -83,
+      "lignes": [
+        {
+          "article": "ART018",
+          "quantity": 2,
+          "unit_price": 11.8,
+          "quantity_received": 2,
+          "demandes": [
+            "DA106"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 2,
+          "unit_price": 22.4,
+          "quantity_received": 2,
+          "demandes": []
+        },
+        {
+          "article": "ART061",
+          "quantity": 2,
+          "unit_price": 5.67,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD021",
+      "fournisseur": "FOU-D",
+      "status": "CLOSED",
+      "creee_le": -86,
+      "commandee_le": -85,
+      "recue_le": -83,
+      "lignes": [
+        {
+          "article": "ART052",
+          "quantity": 3,
+          "unit_price": 168.0,
+          "quantity_received": 3,
+          "demandes": [
+            "DA115"
+          ]
+        },
+        {
+          "article": "ART056",
+          "quantity": 2,
+          "unit_price": 31.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA315"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 4,
+          "unit_price": 92.0,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD022",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -80,
+      "commandee_le": -80,
+      "recue_le": -77,
+      "lignes": [
+        {
+          "article": "ART033",
+          "quantity": 1,
+          "unit_price": 286.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA107"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD023",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -67,
+      "commandee_le": -66,
+      "recue_le": -64,
+      "lignes": [
+        {
+          "article": "ART043",
+          "quantity": 2,
+          "unit_price": 24.0,
+          "quantity_received": 2,
+          "demandes": [
+            "DA108"
+          ]
+        },
+        {
+          "article": "ART041",
+          "quantity": 2,
+          "unit_price": 19.5,
+          "quantity_received": 2,
+          "demandes": [
+            "DA316"
+          ]
+        },
+        {
+          "article": "ART049",
+          "quantity": 2,
+          "unit_price": 6.8,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD024",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -47,
+      "commandee_le": -47,
+      "recue_le": -45,
+      "lignes": [
+        {
+          "article": "ART050",
+          "quantity": 1,
+          "unit_price": 41.0,
+          "quantity_received": 1,
+          "demandes": [
+            "DA109"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD025",
+      "fournisseur": "FOU-D",
+      "status": "CANCELLED",
+      "creee_le": -62,
+      "commandee_le": null,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART057",
+          "quantity": 2,
+          "unit_price": 27.0,
+          "quantity_received": 0,
+          "demandes": [
+            "DA317"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 2,
+          "unit_price": 92.0,
+          "quantity_received": 0,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD026",
+      "fournisseur": "FOU-B",
+      "status": "CLOSED",
+      "creee_le": -58,
+      "commandee_le": -57,
+      "recue_le": -55,
+      "lignes": [
+        {
+          "article": "ART057",
+          "quantity": 2,
+          "unit_price": 29.43,
+          "quantity_received": 2,
+          "demandes": [
+            "DA317"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 2,
+          "unit_price": 21.73,
+          "quantity_received": 2,
+          "demandes": []
+        },
+        {
+          "article": "ART029",
+          "quantity": 2,
+          "unit_price": 44.0,
+          "quantity_received": 2,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD027",
+      "fournisseur": "FOU-A",
+      "status": "CANCELLED",
+      "creee_le": -36,
+      "commandee_le": null,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART013",
+          "quantity": 2,
+          "unit_price": 9.6,
+          "quantity_received": 0,
+          "demandes": [
+            "DA318"
+          ]
+        },
+        {
+          "article": "ART064",
+          "quantity": 4,
+          "unit_price": 13.08,
+          "quantity_received": 0,
+          "demandes": []
+        },
+        {
+          "article": "ART014",
+          "quantity": 2,
+          "unit_price": 16.9,
+          "quantity_received": 0,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD028",
+      "fournisseur": "FOU-A",
+      "status": "CLOSED",
+      "creee_le": -32,
+      "commandee_le": -31,
+      "recue_le": -29,
+      "lignes": [
+        {
+          "article": "ART013",
+          "quantity": 2,
+          "unit_price": 9.6,
+          "quantity_received": 2,
+          "demandes": [
+            "DA318"
+          ]
+        },
+        {
+          "article": "ART004",
+          "quantity": 4,
+          "unit_price": 8.9,
+          "quantity_received": 4,
+          "demandes": []
+        },
+        {
+          "article": "ART014",
+          "quantity": 4,
+          "unit_price": 16.9,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD029",
+      "fournisseur": "FOU-C",
+      "status": "CLOSED",
+      "creee_le": -26,
+      "commandee_le": -25,
+      "recue_le": -23,
+      "lignes": [
+        {
+          "article": "ART047",
+          "quantity": 4,
+          "unit_price": 18.2,
+          "quantity_received": 4,
+          "demandes": [
+            "DA319"
+          ]
+        },
+        {
+          "article": "ART051",
+          "quantity": 2,
+          "unit_price": 96.0,
+          "quantity_received": 2,
+          "demandes": []
+        },
+        {
+          "article": "ART064",
+          "quantity": 4,
+          "unit_price": 11.64,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD030",
+      "fournisseur": "FOU-D",
+      "status": "CLOSED",
+      "creee_le": -21,
+      "commandee_le": -20,
+      "recue_le": -18,
+      "lignes": [
+        {
+          "article": "ART054",
+          "quantity": 12,
+          "unit_price": 4.9,
+          "quantity_received": 12,
+          "demandes": [
+            "DA320"
+          ]
+        },
+        {
+          "article": "ART053",
+          "quantity": 3,
+          "unit_price": 92.0,
+          "quantity_received": 3,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD031",
+      "fournisseur": "FOU-E",
+      "status": "RECEIVED",
+      "creee_le": -16,
+      "commandee_le": -15,
+      "recue_le": -11,
+      "lignes": [
+        {
+          "article": "ART060",
+          "quantity": 2,
+          "unit_price": 16.5,
+          "quantity_received": 2,
+          "demandes": [
+            "DA325"
+          ]
+        },
+        {
+          "article": "ART012",
+          "quantity": 3,
+          "unit_price": 24.42,
+          "quantity_received": 3,
+          "demandes": []
+        },
+        {
+          "article": "ART061",
+          "quantity": 4,
+          "unit_price": 5.2,
+          "quantity_received": 4,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD032",
+      "fournisseur": "FOU-B",
+      "status": "ACK",
+      "creee_le": -12,
+      "commandee_le": -12,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART034",
+          "quantity": 1,
+          "unit_price": 94.0,
+          "quantity_received": 0,
+          "demandes": [
+            "DA110"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "CMD033",
+      "fournisseur": "FOU-A",
+      "status": "SENT",
+      "creee_le": -9,
+      "commandee_le": -8,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART006",
+          "quantity": 1,
+          "unit_price": 212.0,
+          "quantity_received": 0,
+          "demandes": [
+            "DA111"
+          ]
+        },
+        {
+          "article": "ART007",
+          "quantity": 1,
+          "unit_price": 21.5,
+          "quantity_received": 0,
+          "demandes": [
+            "DA321"
+          ]
+        },
+        {
+          "article": "ART064",
+          "quantity": 4,
+          "unit_price": 13.08,
+          "quantity_received": 0,
+          "demandes": []
+        }
+      ]
+    },
+    {
+      "key": "CMD034",
+      "fournisseur": "FOU-A",
+      "status": "OPEN",
+      "creee_le": -4,
+      "commandee_le": null,
+      "recue_le": null,
+      "lignes": [
+        {
+          "article": "ART015",
+          "quantity": 1,
+          "unit_price": 38.0,
+          "quantity_received": 0,
+          "demandes": [
+            "DA112"
+          ]
+        },
+        {
+          "article": "ART016",
+          "quantity": 1,
+          "unit_price": 14.5,
+          "quantity_received": 0,
+          "demandes": [
+            "DA322"
+          ]
+        },
+        {
+          "article": "ART004",
+          "quantity": 4,
+          "unit_price": 8.9,
+          "quantity_received": 0,
+          "demandes": []
+        }
+      ]
+    }
+  ]
+}

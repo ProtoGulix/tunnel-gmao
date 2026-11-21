@@ -90,7 +90,7 @@ Liste les interventions avec filtres, tri et pagination.
         "has_affectation": true,
         "rules_triggered": ["OPEN_TOTAL > 0", "OVERDUE_TASKS > 0", "OPEN_REQUESTS > 0", "OPEN_TASKS > 0", "OPEN_PURCHASE_REQUESTS > 0"]
       }
-      "parent": { "id": "uuid", "code": "VLT", "name": "Site des villettes" },
+      "parent": { "id": "uuid", "code": "SITE-A", "name": "Site A" },
       "equipement_class": { "id": "uuid", "code": "SCIE", "label": "Scie" },
       "statut": {
         "id": 3,
@@ -263,7 +263,7 @@ Détail complet d'une intervention. **La structure est différente de la liste**
       "has_affectation": true,
       "rules_triggered": ["OPEN_TOTAL > 0", "OVERDUE_TASKS > 0", "OPEN_REQUESTS > 0", "OPEN_TASKS > 0", "OPEN_PURCHASE_REQUESTS > 0"]
     }
-    "parent": { "id": "uuid", "code": "VLT", "name": "Site des villettes" },
+    "parent": { "id": "uuid", "code": "SITE-A", "name": "Site A" },
     "equipement_class": { "id": "uuid", "code": "SCIE", "label": "Scie" },
     "statut": {
       "id": 3,
