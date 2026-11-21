@@ -47,7 +47,10 @@ portés par l'action, pas par l'intervention.
   `request_status_log`.
 - Routes `api/intervention_requests/routes.py` : liste, détail, création, `POST /{id}/transition`,
   suppression, `POST /repair`. Accepter exige un type et un technicien et crée l'intervention ;
-  rejeter exige un motif d'audit ; clôturer est refusé tant que l'intervention est ouverte.
+  rejeter passe par la règle d'audit `request.status_to`, routinière en production et dans
+  les données de départ : aucun motif n'est demandé aujourd'hui, sauf « Autre raison » qui
+  exige un texte (constat du 2026-11-21, question ouverte, backlog motif-de-rejet) ;
+  clôturer est refusé tant que l'intervention est ouverte.
 - Une demande porte au plus une intervention (contrainte d'unicité). Une intervention vient
   toujours d'une demande (ADR 0019, règle tenue par l'API ; des interventions anciennes
   sans demande subsistent).
@@ -205,8 +208,8 @@ passe absent du mobile (présent sur le web).
 ### 1.6 Pièces — livré (5.0.0) : un catalogue, pas une gestion de stock
 
 Formulation exacte : **le stock de Tunnel est un catalogue de pièces (familles et
-sous-familles, quantité, emplacement, références fabricant et fournisseurs), sans
-mouvements d'entrée ni de sortie.**
+sous-familles, emplacement, références fabricant et fournisseurs), sans suivi des
+quantités ni mouvements d'entrée et de sortie.**
 
 - Tables `part` (famille, sous-famille, unité, emplacement en texte libre, quantité entière
   `qty_in_stock`), `part_manufacturer_ref` (fabricant et référence, préférée ou non),
@@ -217,10 +220,12 @@ mouvements d'entrée ni de sortie.**
 - Les demandes d'achat et les lignes de commande pointent vers la pièce (`part_id`) :
   c'est ainsi que la production travaille (vérifié en lecture seule le 2026-11-21 : toutes
   les demandes d'achat liées à un article le sont par `part_id`).
-- La quantité est une valeur posée à la main (`PATCH /parts/{id}`), tracée par l'audit.
-  Aucune action ne la décrémente, aucune réception de commande ne l'incrémente ; ni seuil
-  minimal, ni alerte, ni inventaire (vérifié : aucune table ni route de mouvement dans
-  `backend/`).
+- Quantités non suivies : la colonne `qty_in_stock` existe et l'API l'accepte
+  (`PATCH /parts/{id}`), mais l'écran l'affiche « Non suivie » et son champ est désactivé
+  (« La gestion des quantités n'est pas encore disponible », `PartDetailPanel.jsx`,
+  `PartForm.jsx`) : ce n'est pas une fonction livrée. Aucune action ne la décrémente,
+  aucune réception ne l'incrémente ; ni seuil, ni alerte, ni inventaire (aucune table ni
+  route de mouvement dans `backend/`). Relevé le 2026-11-21 par la rédaction du guide.
 - Ancien modèle encore présent : `stock_item` et ses tables (`stock_item_supplier`,
   `manufacturer_item`, routes `/stock-items`) existent toujours mais ne portent plus les
   achats ; ne pas les présenter comme le catalogue. Gabarits de pièces : code présent mais

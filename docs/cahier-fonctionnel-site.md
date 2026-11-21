@@ -30,12 +30,12 @@ Chaque ligne peut se publier telle quelle. La preuve sert à la relecture, pas a
 | 15 | Un bilan du service donne la charge, l'organisation du travail, l'audit et la qualité des données, sans aucun chiffre individuel par technicien. | page Bilan, ADR 0021, 0032 à 0035 |
 | 16 | Chaque rôle a son accueil : technicien, acheteur, direction technique. | `home_view_ref`, `role_home_view` |
 | 17 | Les techniciens ont une interface mobile pour saisir sur le terrain. | `mobile/`, servi sous `/m` |
-| 18 | Un catalogue de pièces : familles, quantité, emplacement, références fabricant et fournisseurs, relié aux demandes d'achat. | `part`, `part_manufacturer_ref`, `part_supplier_ref`, `purchase_request.part_id` (corrigé le 2026-11-21) |
+| 18 | Un catalogue de pièces : familles, emplacement, références fabricant et fournisseurs, relié aux demandes d'achat. | `part`, `part_manufacturer_ref`, `part_supplier_ref`, `purchase_request.part_id` (corrigé le 2026-11-21) |
 | 19 | Les droits se règlent par rôle, endpoint par endpoint. | `tunnel_permission`, ADR 0007 |
 | 20 | Open source (AGPL-3.0), installé chez vous par Docker Compose ; aucune donnée ne sort de l'entreprise. | LICENSE, `deploy/docker-compose.yml`, CLAUDE.md 2.5 |
 
 À **ne pas** écrire sur le site :
-- « gestion de stock », « mouvements », « inventaire », « alerte de stock » : absents ;
+- « gestion de stock », « quantités en stock », « mouvements », « inventaire », « alerte de stock » : absents ;
 - « hors ligne » pour le mobile : absent ;
 - « compteur d'heures » ou « préventif à l'usage » : les plans par heures existent mais sans
   relevé réel ;

@@ -28,6 +28,15 @@ mobile/CHANGELOG.md.
 - Démonstration : le chargeur crée les articles comme pièces (`part`, références fabricant et fournisseur, `part_id` sur demandes et lignes de commande) et `reset-demo.sh` redémarre l'API après le chargement, pour que l'écran Stock et les notifications ne soient plus vides (DEMO-08).
 
 ### [interne] Documentation
+- Guide utilisateur (docs/site, ADR 0037) : pages par rôle (technicien, responsable,
+  acheteur, administrateur, installation), barre latérale par section, captures prises par
+  script sur une démonstration jetable ; cahier fonctionnel précisé (quantités des pièces
+  non suivies, rejet d'une demande sans motif aujourd'hui) (GUIDE-03).
+- Guide utilisateur : squelette VitePress en français dans `docs/site/` (accueil, plan par rôle,
+  feuille de route), construction en CI quand `docs/site` change, publication GitHub Pages
+  manuelle (GUIDE-01, ADR 0037).
+- Guide utilisateur : `npm run docs:screenshots` (dans `docs/site/`) prend 16 captures WebP sur
+  une démonstration jetable `tunnel-demo-guide` supprimée ensuite (GUIDE-02, ADR 0037).
 - Cahier fonctionnel (`docs/cahier-fonctionnel.md`) : ce que Tunnel fait réellement en
   5.11.0, preuve à l'appui, séparé de ce qui est à concevoir (constats) et de la vision ;
   résumé des affirmations publiables pour le site vitrine.

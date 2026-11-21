@@ -72,6 +72,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-21) | Guide utilisateur (ADR 0037 accepté : VitePress, français seul, GitHub Pages, captures par script sur la démonstration) : GUIDE-01 à GUIDE-03 | feat/guide-utilisateur | ADR 0037, [GUIDE-01](taches/GUIDE-01-squelette-vitepress.md), [GUIDE-02](taches/GUIDE-02-captures-par-script.md), [GUIDE-03](taches/GUIDE-03-pages-par-role.md) |
 | fait (2026-11-21) | Onglet Qualité du Bilan : demande d'achat « sans article » testée sur les pièces (part_id) et non plus sur l'ancien stock_item (accord de l'utilisateur) | fusionnée dans develop | [QUAL-01](taches/QUAL-01-demande-sans-piece.md) |
 | fait (2026-11-21) | Base de démonstration fictive et mode démo (ADR 0036 accepté ; décisions de l'utilisateur du 2026-11-21 : profil tiré de la production, un agent par rôle, mode démo dans le modèle actuel verrouillé par le .env) : DEMO-01 à DEMO-08 ; démo en ligne sur demo.frezille.fr depuis le 2026-11-21 (Compose isolé tunnel-demo, clone /home/tunnel/tunnel-demo, cron 3 h) | feat/base-demonstration | ADR 0036, [DEMO-01](taches/DEMO-01-sites-depuis-l-api.md) à [DEMO-07](taches/DEMO-07-parcours-par-role.md) |
 | en cours (2026-11-21) | Cahier fonctionnel (livré, en cours, vision), puis base de démonstration et documentation utilisateur : inventaire du livré (CAH-01), cahier et résumé pour le site validés par l'utilisateur le 2026-11-21 (CAH-02, CAH-03) ; base de démonstration à planifier | cahier fusionné dans develop | [cahier](cahier-fonctionnel.md), [CAH-01](taches/CAH-01-inventaire-du-livre.md), [CAH-02](taches/CAH-02-redaction-du-cahier.md), [CAH-03](taches/CAH-03-resume-site-vitrine.md) |
@@ -174,7 +175,7 @@ subagents, format de compte rendu imposé aux agents).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
-   git pull puis reset-demo.sh). Suite : ADR de la documentation utilisateur (priorité 3).
+   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages (DNS et réglages par l'utilisateur, docs.tunnel.frezille.fr proposé). Décisions en attente : motif de rejet (backlog motif-de-rejet), rôles de l'administration (backlog roles-codes-en-dur-admin), affichage des demandes liées à une pièce (backlog qualite-demande-sans-piece).
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
    production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).

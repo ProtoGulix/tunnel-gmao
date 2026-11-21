@@ -33,3 +33,8 @@ deploy/archives-bascule/
 
 # Archives et données locales, jamais versionnées
 private/
+
+# Guide utilisateur (VitePress) : dépendances, sortie de construction et cache
+docs/site/node_modules/
+docs/site/.vitepress/dist/
+docs/site/.vitepress/cache/

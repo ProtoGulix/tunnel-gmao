@@ -1,0 +1,31 @@
+{
+  "_aide": "Une entrée = une capture. compte : technicien | acheteur | direction. app : web (bureau 1440x900) | mobile (téléphone 390x844, sous /m). chemin : relatif à l'application. attente : { texte } ou { selecteur } à voir avant de capturer. etapes (facultatif), dans l'ordre : { clic: 'texte visible' } | { clicPremier: 'sélecteur CSS' } | { defiler: 'texte visible' } | { attendre: 'texte visible' }.",
+  "captures": [
+    { "id": "mobile-technicien-accueil", "compte": "technicien", "app": "mobile", "chemin": "/", "attente": { "texte": "Mes tâches" } },
+    { "id": "mobile-technicien-intervention", "compte": "technicien", "app": "mobile", "chemin": "/interventions?tab=liste", "attente": { "selecteur": "button:has(span.font-mono)" },
+      "etapes": [ { "clicPremier": "button:has(span.font-mono)" }, { "attendre": "Ajouter une action" } ] },
+    { "id": "mobile-technicien-action", "compte": "technicien", "app": "mobile", "chemin": "/interventions?tab=liste", "attente": { "selecteur": "button:has(span.font-mono)" },
+      "etapes": [ { "clicPremier": "button:has(span.font-mono)" }, { "clic": "Ajouter une action" }, { "attendre": "Enregistrer" } ] },
+    { "id": "mobile-technicien-demande", "compte": "technicien", "app": "mobile", "chemin": "/intervention-requests", "attente": { "texte": "Nouvelle demande" },
+      "etapes": [ { "clic": "Nouvelle demande" } ] },
+    { "id": "web-technicien-accueil", "compte": "technicien", "app": "web", "chemin": "/", "attente": { "selecteur": "main, [role='main'], h1, h2" } },
+
+    { "id": "web-direction-accueil", "compte": "direction", "app": "web", "chemin": "/", "attente": { "selecteur": "main, [role='main'], h1, h2" } },
+    { "id": "web-direction-interventions", "compte": "direction", "app": "web", "chemin": "/interventions", "attente": { "selecteur": "text=/^[A-Z]{2}-\\d{2}$/" },
+      "etapes": [ { "clicPremier": "text=/^[A-Z]{2}-\\d{2}$/" }, { "pause": 1500 } ] },
+    { "id": "web-direction-preventif-echeancier", "compte": "direction", "app": "web", "chemin": "/preventive", "attente": { "texte": "Échéancier" },
+      "etapes": [ { "clicPremier": "[role=tab]:has-text(\"Échéancier\")" }, { "pause": 2000 } ] },
+    { "id": "web-direction-equipement-preventif", "compte": "direction", "app": "web", "chemin": "/equipements", "attente": { "texte": "À plat" },
+      "etapes": [ { "clic": "À plat" }, { "pause": 1000 }, { "clic": "Presse à injecter 350 t" }, { "pause": 1500 }, { "defiler": "Préventif" } ] },
+    { "id": "web-direction-bilan-etat", "compte": "direction", "app": "web", "chemin": "/bilan?tab=service", "attente": { "texte": "État" } },
+    { "id": "web-direction-bilan-audit", "compte": "direction", "app": "web", "chemin": "/bilan?tab=audit", "attente": { "texte": "Décisions hors travail normal" } },
+    { "id": "web-direction-bilan-qualite", "compte": "direction", "app": "web", "chemin": "/bilan?tab=qualite", "attente": { "texte": "Qualité" } },
+
+    { "id": "web-acheteur-accueil", "compte": "acheteur", "app": "web", "chemin": "/", "attente": { "selecteur": "main, [role='main'], h1, h2" } },
+    { "id": "web-acheteur-demandes-achat", "compte": "acheteur", "app": "web", "chemin": "/achats?tab=requests", "attente": { "texte": "Nouvelle demande" },
+      "etapes": [ { "clic": "À qualifier" }, { "clic": "Tous les statuts" }, { "pause": 1500 } ] },
+    { "id": "web-acheteur-stock-pieces", "compte": "acheteur", "app": "web", "chemin": "/stock?tab=items", "attente": { "texte": "65 lignes" } },
+    { "id": "web-acheteur-commandes-fournisseurs", "compte": "acheteur", "app": "web", "chemin": "/achats?tab=orders", "attente": { "texte": "CMD-" },
+      "etapes": [ { "clic": "CMD-" }, { "pause": 1500 } ] }
+  ]
+}
