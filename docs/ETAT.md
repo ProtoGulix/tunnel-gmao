@@ -123,9 +123,8 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 | fait | Test de santé du front web derrière Cloudflare Access (SANTE-01), fusionné le 2026-11-15 ; vérification à l'écran en attente | — | décision de l'utilisateur du 2026-11-15 |
 | fait | Suites de l'audit centralisé avant la version 5.3.0 (fiches SUIT-01, SUIT-02), fusionnées le 2026-11-15 après essai à l'écran | — | décisions de l'utilisateur du 2026-11-15 |
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
-| à faire ensuite | Changements hors travail normal (remise à faire, occurrence préventive, nettoyage, migration des motifs) | à créer | CLAUDE.md section 2.4 |
-| à cadrer | Harmoniser la création des interventions (trois formulaires web, deux appels non atomiques), [backlog](backlog/creation-interventions-harmonisation.md) | à créer | inventaire du 2026-11-15 |
-| à cadrer | Types et statuts d'intervention en base (écran Référentiel sans effet), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
+| à faire ensuite | Changements hors travail normal : restent la remise à faire d'une tâche avec motif (`task_reopened`) et le motif de clôture « Oubli de clôture à la saisie » (absents du code au 2026-11-21) ; occurrence ignorée (CONT-03) et nettoyage faits | à créer | CLAUDE.md section 2.4 |
+| à cadrer | Statuts d'intervention en base : libellés et couleurs en dur dans les fronts, écran Référentiel sans effet (types faits, ADR 0026), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
 | à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
 
 Onglet Tâches (ADR 0015) : fusionné dans develop le 2026-11-13, après validation à
@@ -144,9 +143,11 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Fiches ouvertes : TYP-01 à TYP-04. Closes aussi : INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Aucune fiche ouverte (vérifié le 2026-11-21). Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-21 : backlog repris ; fiches périmées closes (création des interventions, synthèse de l'audit, hors travail normal pour l'occurrence, types en base) ; ordre validé par l'utilisateur : chantier « Coordination et priorités » (cadrage en lecture seule), puis erreurs métier en 500.
 
 2026-11-21 : cahier fonctionnel validé (docs/cahier-fonctionnel.md) ; « en cours » ne reprend que ce que ETAT.md et les ADR montrent (pas d'extrapolation) ; le dépôt du site vitrine est privé et n'est pas nommé dans ce dépôt.
 
@@ -210,7 +211,7 @@ subagents, format de compte rendu imposé aux agents).
    classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
-2. Chantier changements hors travail normal, décisions de l'utilisateur du 2026-11-13 :
+2. Chantier changements hors travail normal (occurrence ignorée et nettoyage faits, CONT-03 ; le reste ouvert au 2026-11-21), décisions de l'utilisateur du 2026-11-13 :
    remettre à faire exige un motif (task_reopened : « Clôturée par erreur », « Travail à
    reprendre », OTHER) ; nouveau motif de clôture task_done « Oubli de clôture à la
    saisie » ; occurrence préventive ignorée par motif d'audit ; nettoyage du ROUTINE en

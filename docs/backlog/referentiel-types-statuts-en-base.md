@@ -1,3 +1,5 @@
+**Types TRAITÉS (ADR 0026, TYP-01 à TYP-04, 2026-11-20). Statuts RESTENT OUVERTS (vérifié le 2026-11-21) : libellés et couleurs toujours écrits en dur dans les fronts, l'écran Référentiel modifie `label` et `color` que rien ne lit.**
+
 # Types et statuts d'intervention : la base comme source de vérité
 
 Constat du 2026-11-14 (essai à l'écran de l'étape 4 de l'audit centralisé) : l'écran
