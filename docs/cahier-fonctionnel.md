@@ -202,21 +202,31 @@ motif, catalogue (lecture), équipements, préventif à faire, notifications, sc
 **Pas de saisie hors ligne** : seule l'interface est mise en cache. Changement de mot de
 passe absent du mobile (présent sur le web).
 
-### 1.6 Articles — livré (5.0.0) : un catalogue, pas une gestion de stock
+### 1.6 Pièces — livré (5.0.0) : un catalogue, pas une gestion de stock
 
-Formulation exacte : **le stock de Tunnel est un catalogue d'articles (familles et
-sous-familles, quantité, emplacement, fournisseurs et références fabricant), sans
+Formulation exacte : **le stock de Tunnel est un catalogue de pièces (familles et
+sous-familles, quantité, emplacement, références fabricant et fournisseurs), sans
 mouvements d'entrée ni de sortie.**
 
-- Tables `stock_item` (quantité entière, unité, emplacement en texte libre), `stock_family`,
-  `stock_sub_family`, `supplier`, `stock_item_supplier` (référence, prix, minimum de
-  commande, délai, fournisseur préféré), `manufacturer_item`.
-- La quantité est une valeur posée à la main (`PATCH /stock-items/{id}/quantity`), tracée
-  par l'audit. Aucune action ne la décrémente, aucune réception de commande ne
-  l'incrémente ; ni seuil minimal, ni alerte, ni inventaire (vérifié : aucune table ni route
-  de mouvement dans `backend/`).
-- Gabarits de pièces : code présent mais abandonné, à retirer
-  ([backlog](backlog/gabarits-de-pieces-a-retirer.md)) ; ne pas présenter comme livré.
+- Tables `part` (famille, sous-famille, unité, emplacement en texte libre, quantité entière
+  `qty_in_stock`), `part_manufacturer_ref` (fabricant et référence, préférée ou non),
+  `part_supplier_ref` (fournisseur, référence, prix, minimum de commande, délai, préférée),
+  rattachée à une référence fabricant ; familles `stock_family` et `stock_sub_family` ;
+  fournisseurs `supplier`. Routes `api/parts/routes.py` ; écran web Stock, onglet « Pièces
+  référencées » (`PartsTab.jsx`).
+- Les demandes d'achat et les lignes de commande pointent vers la pièce (`part_id`) :
+  c'est ainsi que la production travaille (vérifié en lecture seule le 2026-11-21 : toutes
+  les demandes d'achat liées à un article le sont par `part_id`).
+- La quantité est une valeur posée à la main (`PATCH /parts/{id}`), tracée par l'audit.
+  Aucune action ne la décrémente, aucune réception de commande ne l'incrémente ; ni seuil
+  minimal, ni alerte, ni inventaire (vérifié : aucune table ni route de mouvement dans
+  `backend/`).
+- Ancien modèle encore présent : `stock_item` et ses tables (`stock_item_supplier`,
+  `manufacturer_item`, routes `/stock-items`) existent toujours mais ne portent plus les
+  achats ; ne pas les présenter comme le catalogue. Gabarits de pièces : code présent mais
+  abandonné, à retirer ([backlog](backlog/gabarits-de-pieces-a-retirer.md)).
+- Correction du 2026-11-21 (DEMO-08) : la première version de cette section décrivait
+  `stock_item` comme le catalogue ; erreur relevée par le parcours de la démonstration.
 
 ### 1.7 Rôles et sécurité — livré (5.1.0)
 

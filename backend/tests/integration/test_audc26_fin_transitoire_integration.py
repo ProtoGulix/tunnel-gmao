@@ -28,13 +28,22 @@ def test_un_corps_avec_reason_code_est_toujours_accepte(client, admin, instance)
 
 
 def test_une_transition_sans_motif_est_refusee_sans_motif_en_dur(client, admin, instance):
-    """Pas de règle routinière pour une transition : plus de repli silencieux sur OTHER."""
+    """Pas de règle routinière pour une transition : plus de repli silencieux sur OTHER.
+
+    Depuis DEMO-08, la règle request.status_to est routinière dans les données de départ
+    (comme en production) ; le test la rend non routinière le temps de son exécution.
+    """
     request_id = demande(client, admin, machine(instance))
-    resp = client.post(
-        f"/intervention-requests/{request_id}/transition",
-        headers=admin.headers,
-        json={"status_to": "en_attente"},
-    )
+    regle = "UPDATE audit_rule SET is_routine = %s WHERE entity_type = 'request' AND field = 'status_to'"
+    instance.sql(regle, (False,))
+    try:
+        resp = client.post(
+            f"/intervention-requests/{request_id}/transition",
+            headers=admin.headers,
+            json={"status_to": "en_attente"},
+        )
+    finally:
+        instance.sql(regle, (True,))
     assert resp.status_code == 400, resp.text
     assert resp.json()["audit"]["required"] is True
     statut = instance.sql("SELECT statut FROM intervention_request WHERE id = %s", (request_id,))

@@ -148,7 +148,32 @@ def test_achats_charges_quand_le_scenario_les_fournit(demo_db):
     owner = demo_db["owner"]
     assert _query(owner, "SELECT count(*) FROM purchase_request")[0][0] == len(shop["demandes"])
     assert _query(owner, "SELECT count(*) FROM supplier_order")[0][0] == len(shop["commandes"])
-    assert _query(owner, "SELECT count(*) FROM stock_item")[0][0] == len(shop["articles"])
+    # Modèle réel des pièces (DEMO-08) : une pièce par article, aucun ancien stock_item.
+    assert _query(owner, "SELECT count(*) FROM part")[0][0] == len(shop["articles"])
+    assert _query(owner, "SELECT count(*) FROM part_manufacturer_ref")[0][0] == len(
+        shop["articles"]
+    )
+    assert _query(owner, "SELECT count(*) FROM part_supplier_ref")[0][0] == sum(
+        len(a["fournisseurs"]) for a in shop["articles"]
+    )
+    assert _query(owner, "SELECT count(*) FROM stock_item")[0][0] == 0
+    with_article = sum(1 for d in shop["demandes"] if d.get("article"))
+    assert (
+        _query(owner, "SELECT count(*) FROM purchase_request WHERE part_id IS NOT NULL")[0][0]
+        == with_article
+    )
+    assert (
+        _query(owner, "SELECT count(*) FROM purchase_request WHERE stock_item_id IS NOT NULL")[0][0]
+        == 0
+    )
+    assert (
+        _query(
+            owner,
+            "SELECT count(*) FROM supplier_order_line WHERE part_id IS NULL "
+            "OR stock_item_id IS NOT NULL",
+        )[0][0]
+        == 0
+    )
     # Les triggers laissés actifs ont fait leur travail : total de commande et références.
     assert (
         _query(
@@ -158,7 +183,7 @@ def test_achats_charges_quand_le_scenario_les_fournit(demo_db):
         )[0][0]
         == 0
     )
-    assert _query(owner, "SELECT count(*) FROM stock_item WHERE ref IS NULL")[0][0] == 0
+    assert _query(owner, "SELECT count(*) FROM part WHERE internal_ref IS NULL")[0][0] == 0
 
 
 def test_comptes_publics_connectables_et_collegues_sans_connexion(demo_db):

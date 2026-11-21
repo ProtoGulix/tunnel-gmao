@@ -200,7 +200,7 @@ INSERT INTO public.audit_rule VALUES (22, 'request', 'changed_by', true, 'ROUTIN
 INSERT INTO public.audit_rule VALUES (23, 'task', 'due_date', false, NULL, '2026-07-23 05:25:24.191478+00', '2026-07-23 05:25:24.191478+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_rule VALUES (24, 'task', 'assigned_to', false, NULL, '2026-07-23 05:25:24.191478+00', '2026-07-23 05:25:24.191478+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_rule VALUES (25, 'task', NULL, true, 'ROUTINE', '2026-07-23 05:45:54.426838+00', '2026-07-23 05:45:54.426838+00') ON CONFLICT DO NOTHING;
-INSERT INTO public.audit_rule VALUES (11, 'request', 'status_to', false, 'ROUTINE', '2026-07-23 05:25:24.191478+00', '2026-07-24 04:15:46.578865+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.audit_rule VALUES (11, 'request', 'status_to', true, 'ROUTINE', '2026-07-23 05:25:24.191478+00', '2026-07-24 04:15:46.578865+00') ON CONFLICT DO NOTHING;
 INSERT INTO public.audit_rule VALUES (26, 'supplier_order', NULL, true, 'ROUTINE', '2026-07-26 18:26:47.231631+00', '2026-07-26 18:26:47.231631+00') ON CONFLICT DO NOTHING;
 
 

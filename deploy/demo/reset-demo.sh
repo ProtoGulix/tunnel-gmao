@@ -8,7 +8,9 @@
 #   3. installation normale : l'API démarre et son bootstrap applique migrations, rôles,
 #      données de référence et droits, comme à toute installation ;
 #   4. chargement du scénario (load_demo.py, joué dans le conteneur de l'API) ;
-#   5. publication du proxy web.
+#   5. redémarrage de l'API : la tâche quotidienne (notifications, occurrences préventives)
+#      passe au démarrage et doit voir le scénario chargé, pas la base vide du point 3 ;
+#   6. publication du proxy web.
 # Seul le projet Compose « tunnel-demo » est touché : jamais de « down », de « prune » ni de
 # commande sans -p. Un échec laisse le web arrêté plutôt que de publier une base incomplète.
 set -eu
@@ -96,6 +98,10 @@ dc exec -T api mkdir -p /tmp/demo
 dc cp "$DIR/load_demo.py" api:/tmp/demo/load_demo.py
 dc cp "$DIR/scenario" api:/tmp/demo
 dc exec -T -e DEMO_PASSWORD api python /tmp/demo/load_demo.py
+
+say "redémarrage de l'API (premier passage de la tâche quotidienne sur le scénario)"
+dc restart api
+dc up -d --wait api
 
 say "publication du proxy web"
 dc up -d --build --wait web

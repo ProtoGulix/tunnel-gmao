@@ -19,7 +19,11 @@ mobile/CHANGELOG.md.
   `deploy/demo/README.md` (DEMO-06, ADR 0036).
 
 ### Corrigé
+- Données de départ : accepter ou mettre en attente une demande d'intervention n'exige plus
+  de motif d'audit sur une nouvelle installation (règle `request.status_to` routinière,
+  comme en production) (DEMO-07).
 - Web : le filtre de site de l'accueil direction technique lit les sites depuis les équipements racines (filtre réel, masqué s'il y a moins de deux sites) ; sur l'accueil acheteur, le filtre de site, sans effet, est retiré (DEMO-01).
+- Démonstration : le chargeur crée les articles comme pièces (`part`, références fabricant et fournisseur, `part_id` sur demandes et lignes de commande) et `reset-demo.sh` redémarre l'API après le chargement, pour que l'écran Stock et les notifications ne soient plus vides (DEMO-08).
 
 ### [interne] Documentation
 - Cahier fonctionnel (`docs/cahier-fonctionnel.md`) : ce que Tunnel fait réellement en

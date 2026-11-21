@@ -52,7 +52,9 @@ Ne pas changer `DEMO_MODE`, `MAIL_ENABLED`, `API_ENV` ni le nom de base (il doit
 Le script contrôle l'environnement, recrée la base, laisse l'API s'installer (migrations,
 droits, données de référence : un compte ADMIN est créé, son mot de passe aléatoire reste dans
 `dcd logs api` et n'est pas publié), charge le scénario avec les dates
-recalées sur le jour du chargement, puis publie le proxy web. Compter quelques minutes la
+recalées sur le jour du chargement (articles chargés comme pièces : `part`, référence
+fabricant, références fournisseur), redémarre l'API pour que sa tâche quotidienne voie le
+scénario (notifications de retard), puis publie le proxy web. Compter quelques minutes la
 première fois (construction des images). Il peut être relancé à tout moment : il repart
 toujours d'une base neuve. En cas d'échec il s'arrête sans publier le web.
 

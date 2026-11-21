@@ -72,7 +72,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
-| en cours (2026-11-21) | Base de démonstration fictive et mode démo (ADR 0036 accepté ; décisions de l'utilisateur du 2026-11-21 : profil tiré de la production, un agent par rôle, mode démo dans le modèle actuel verrouillé par le .env) : DEMO-01 à DEMO-07 | feat/base-demonstration | ADR 0036, [DEMO-01](taches/DEMO-01-sites-depuis-l-api.md) à [DEMO-07](taches/DEMO-07-parcours-par-role.md) |
+| fait (2026-11-21) | Base de démonstration fictive et mode démo (ADR 0036 accepté ; décisions de l'utilisateur du 2026-11-21 : profil tiré de la production, un agent par rôle, mode démo dans le modèle actuel verrouillé par le .env) : DEMO-01 à DEMO-08 ; démo en ligne sur demo.frezille.fr depuis le 2026-11-21 (Compose isolé tunnel-demo, clone /home/tunnel/tunnel-demo, cron 3 h) | feat/base-demonstration | ADR 0036, [DEMO-01](taches/DEMO-01-sites-depuis-l-api.md) à [DEMO-07](taches/DEMO-07-parcours-par-role.md) |
 | en cours (2026-11-21) | Cahier fonctionnel (livré, en cours, vision), puis base de démonstration et documentation utilisateur : inventaire du livré (CAH-01), cahier et résumé pour le site validés par l'utilisateur le 2026-11-21 (CAH-02, CAH-03) ; base de démonstration à planifier | cahier fusionné dans develop | [cahier](cahier-fonctionnel.md), [CAH-01](taches/CAH-01-inventaire-du-livre.md), [CAH-02](taches/CAH-02-redaction-du-cahier.md), [CAH-03](taches/CAH-03-resume-site-vitrine.md) |
 | fait (2026-11-21) | Onglet « Audit » du Bilan allégé (ADR 0035, accord de l'utilisateur du 2026-11-21) : tendances de la synthèse par l'API (BIL-07), onglet web (BIL-08) | fusionnée dans develop | ADR 0035, [BIL-07](taches/BIL-07-backend-tendances-audit.md), [BIL-08](taches/BIL-08-web-onglet-audit-allege.md) |
 | fait (2026-11-21) | Onglet « État » du Bilan allégé (ADR 0034, décisions de l'utilisateur du 2026-11-21 : bandeau gardé, définitions derrière ⓘ, mini-courbes ; puis seuils et badges d'un mot donnés par l'API, tendances sur la période) | fusionnée dans develop | ADR 0034, [BIL-02](taches/BIL-02-web-onglet-etat-allege.md), [BIL-03](taches/BIL-03-backend-seuils-et-tendances.md), [BIL-04](taches/BIL-04-web-badges-courbes-barres-tendances.md), [BIL-05](taches/BIL-05-backend-series-mensuelles.md), [BIL-06](taches/BIL-06-web-courbes-huit-chiffres.md) |
@@ -171,9 +171,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Chantier DEMO : DEMO-01 à DEMO-06 faites ; reste le déploiement de l'instance isolée sur
-   cette VM (projet Compose tunnel-demo, 127.0.0.1:8090, tunnel Cloudflare posé par
-   l'utilisateur) et DEMO-07 (parcours par rôle) ; ensuite l'ADR de la documentation utilisateur.
+0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
+   chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
+   git pull puis reset-demo.sh). Suite : ADR de la documentation utilisateur (priorité 3).
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
    production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).

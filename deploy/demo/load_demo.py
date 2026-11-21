@@ -145,7 +145,8 @@ class Loader:
         self.classes: dict[str, str] = {}
         self.services: dict[str, str] = {}
         self.plans: dict[str, dict] = {}
-        self.stock_items: dict[str, str] = {}
+        self.parts: dict[str, str] = {}
+        self.part_makers: dict[str, tuple[str, str]] = {}
         self.stock_supplier_refs: dict[tuple[str, str], str] = {}
         self.suppliers: dict[str, str] = {}
         self.purchase_requests: dict[str, dict] = {}
@@ -986,14 +987,7 @@ class Loader:
                     "INSERT INTO stock_sub_family (family_code, code, label) VALUES (%s,%s,%s)",
                     (fam["code"], sub["code"], sub["label"]),
                 )
-        makers = {}
-        for maker in shop["fabricants"]:
-            makers[maker["key"]] = uid("maker", maker["key"])
-            cur.execute(
-                "INSERT INTO manufacturer_item (id, manufacturer_name, manufacturer_ref, "
-                "designation) VALUES (%s,%s,%s,%s)",
-                (makers[maker["key"]], maker["name"], maker["ref"], maker.get("designation")),
-            )
+        makers = {maker["key"]: maker for maker in shop["fabricants"]}
         for sup in shop["fournisseurs"]:
             self.suppliers[sup["code"]] = uid("supplier", sup["code"])
             cur.execute(
@@ -1010,41 +1004,56 @@ class Loader:
                     clock.at(-365, "07:30"),
                 ),
             )
+        # Modèle réel des pièces (comme en production) : une pièce, une référence fabricant
+        # préférée, ses références fournisseur. Pas de stock_item (ancien modèle).
+        generic = {"name": "Fabricant générique", "ref": "GEN"}
         for art in shop["articles"]:
-            item_id = uid("article", art["key"])
-            self.stock_items[art["key"]] = item_id
+            part_id = uid("part", art["key"])
+            self.parts[art["key"]] = part_id
             cur.execute(
-                "INSERT INTO stock_item (id, name, family_code, sub_family_code, spec, dimension, "
-                "quantity, unit, location, manufacturer_item_id) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "INSERT INTO part (id, family_code, sub_family_code, unit, location, "
+                "qty_in_stock, created_at, updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (
-                    item_id,
-                    art["name"],
+                    part_id,
                     art["famille"],
                     art["sous_famille"],
-                    art.get("spec") or None,
-                    art.get("dimension") or "",
-                    art["quantity"],
                     art["unit"],
                     art["location"],
-                    makers[art["fabricant"]] if art.get("fabricant") else None,
+                    art["quantity"],
+                    clock.at(-365, "07:30"),
+                    clock.at(-365, "07:30"),
+                ),
+            )
+            maker = makers[art["fabricant"]] if art.get("fabricant") else generic
+            mfr_id = uid("part_mfr", art["key"])
+            self.part_makers[art["key"]] = (maker["name"], art.get("ref") or maker["ref"])
+            cur.execute(
+                "INSERT INTO part_manufacturer_ref (id, part_id, manufacturer_name, "
+                "manufacturer_ref, label, is_preferred, created_at, updated_at) "
+                "VALUES (%s,%s,%s,%s,%s,true,%s,%s)",
+                (
+                    mfr_id,
+                    part_id,
+                    *self.part_makers[art["key"]],
+                    art["name"],
+                    clock.at(-365, "07:30"),
+                    clock.at(-365, "07:30"),
                 ),
             )
             for link in art["fournisseurs"]:
                 sup_id = self.lookup(self.suppliers, link["fournisseur"], "fournisseur")
                 self.stock_supplier_refs[(art["key"], link["fournisseur"])] = link["supplier_ref"]
                 cur.execute(
-                    "INSERT INTO stock_item_supplier (stock_item_id, supplier_id, supplier_ref, "
-                    "unit_price, delivery_time_days, is_preferred, manufacturer_item_id, "
-                    "created_at, updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    "INSERT INTO part_supplier_ref (part_manufacturer_ref_id, supplier_id, "
+                    "supplier_ref, unit_price, delivery_time_days, is_preferred, created_at, "
+                    "updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                     (
-                        item_id,
+                        mfr_id,
                         sup_id,
                         link["supplier_ref"],
                         link["unit_price"],
                         link.get("delivery_time_days"),
                         link["is_preferred"],
-                        makers[art["fabricant"]] if art.get("fabricant") else None,
                         clock.at(-365, "07:30"),
                         clock.at(-365, "07:30"),
                     ),
@@ -1080,10 +1089,10 @@ class Loader:
             entry["created"] = at
             entry["who"] = who
             entry["code"] = f"DA-{at.year}-{seq[at.year]:04d}"
-            item = self.stock_items.get(need["article"]) if need.get("article") else None
+            item = self.parts.get(need["article"]) if need.get("article") else None
             entry["article"] = need.get("article")
             cur.execute(
-                "INSERT INTO purchase_request (id, status, stock_item_id, item_label, quantity, "
+                "INSERT INTO purchase_request (id, status, part_id, item_label, quantity, "
                 "unit, requested_by, urgency, reason, created_at, updated_at, code, "
                 "requested_by_id) VALUES (%s,'open',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (
@@ -1169,13 +1178,14 @@ class Loader:
                 art = line["article"]
                 supplier_ref = self.stock_supplier_refs.get((art, order["fournisseur"]))
                 cur.execute(
-                    "INSERT INTO supplier_order_line (id, supplier_order_id, stock_item_id, "
+                    "INSERT INTO supplier_order_line (id, supplier_order_id, part_id, "
                     "supplier_ref_snapshot, quantity, unit_price, quantity_received, created_at, "
-                    "updated_at, is_selected) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    "updated_at, is_selected, manufacturer, manufacturer_ref) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                     (
                         line_id,
                         order_id,
-                        self.lookup(self.stock_items, art, "article"),
+                        self.lookup(self.parts, art, "article"),
                         supplier_ref,
                         line["quantity"],
                         line["unit_price"],
@@ -1183,6 +1193,7 @@ class Loader:
                         created,
                         received or ordered or created,
                         selected,
+                        *self.part_makers[art],
                     ),
                 )
                 for need_key in line["demandes"]:
