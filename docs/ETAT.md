@@ -7,6 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
+- **v5.12.1** (2026-11-21, correctif hotfix/5.12.1) : guide publié sous /docs/ (le workflow
+  déposait le site à la racine du domaine). Aucun changement de l'application.
 - **v5.12.0** (2026-11-21, en préparation, PR develop → main à ouvrir par l'utilisateur) :
   base de démonstration fictive et mode démo (ADR 0036), demo.frezille.fr en service ;
   guide utilisateur publié sur tunnel.frezille.fr/docs à la fusion dans main (ADR 0037) ;
