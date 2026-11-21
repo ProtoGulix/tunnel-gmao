@@ -70,3 +70,14 @@ VitePress, captures régénérées par script avec playwright-core).
   l'utilisateur.
 - Le script de captures dépend de Docker et de la base de démonstration : il casse si le
   scénario ou le chargeur cassent, ce qui les maintient en état.
+
+## Amendement (2026-11-21) : adresse de publication
+
+Choix de l'utilisateur : le guide est publié sur `tunnel.frezille.fr/docs/`, comme Pantin
+(`pantin.frezille.fr/docs/`), plutôt que sur un sous-domaine dédié ou sur un site commun
+`docs.frezille.fr/<projet>` (un dépôt par domaine avec GitHub Pages : un site commun
+demanderait un dépôt de plus et une synchronisation). Le site est construit avec
+`base: "/docs/"` ; la racine du sous-domaine reste libre (page d'accueil, renvoi vers le
+site vitrine). Le point 5 est modifié en conséquence : l'enregistrement DNS
+`tunnel.frezille.fr` vers GitHub Pages et le domaine du dépôt restent des actions de
+l'utilisateur.

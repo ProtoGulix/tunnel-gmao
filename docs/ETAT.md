@@ -177,7 +177,7 @@ subagents, format de compte rendu imposé aux agents).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
-   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages (DNS et réglages par l'utilisateur, docs.tunnel.frezille.fr proposé). Décisions en attente : motif de rejet (backlog motif-de-rejet), rôles de l'administration (backlog roles-codes-en-dur-admin), affichage des demandes liées à une pièce (backlog qualite-demande-sans-piece).
+   git pull puis reset-demo.sh). Guide utilisateur (ADR 0037) : GUIDE-01 à 03 faites ; suite : captures manquantes (GUIDE-04, à ouvrir), publication sur GitHub Pages à tunnel.frezille.fr/docs (amendement de l'ADR 0037 ; DNS et réglages Pages par l'utilisateur). Décisions en attente : motif de rejet (backlog motif-de-rejet), rôles de l'administration (backlog roles-codes-en-dur-admin), affichage des demandes liées à une pièce (backlog qualite-demande-sans-piece).
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
    production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).

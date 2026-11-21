@@ -33,6 +33,7 @@ mobile/CHANGELOG.md.
 - Démonstration : le chargeur crée les articles comme pièces (`part`, références fabricant et fournisseur, `part_id` sur demandes et lignes de commande) et `reset-demo.sh` redémarre l'API après le chargement, pour que l'écran Stock et les notifications ne soient plus vides (DEMO-08).
 
 ### [interne] Documentation
+- Guide utilisateur publié sous `tunnel.frezille.fr/docs/` (amendement de l'ADR 0037).
 - Guide utilisateur (docs/site, ADR 0037) : pages par rôle (technicien, responsable,
   acheteur, administrateur, installation), barre latérale par section, captures prises par
   script sur une démonstration jetable ; cahier fonctionnel précisé (quantités des pièces

@@ -57,7 +57,7 @@ export default defineConfig({
   title: "Tunnel GMAO",
   description: "Guide utilisateur de Tunnel, la GMAO open source des petites équipes de maintenance.",
   lang: "fr-FR",
-  base: "/",
+  base: "/docs/",
   lastUpdated: false,
   cleanUrls: true,
   themeConfig: {
