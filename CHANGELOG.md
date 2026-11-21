@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.11.0] — 2026-11-21
 
 ### Ajouté
 - API : `GET /stats/audit-synthese` renvoie `trends` (hausse, baisse, stable ou null sur la
@@ -35,39 +35,6 @@ mobile/CHANGELOG.md.
   l'accueil (boutons 3, 6, 12 et 24 mois, séparateur, plage de dates « 1 septembre –
   21 novembre 2026 ») ; il est masqué sur l'onglet Qualité. Le libellé de semaine de l'accueil
   et du planning répète désormais l'année au début quand la semaine change d'année.
-
-### Modifié
-- Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données
-  sont regroupées dans une page « Bilan du service » (`/bilan`, menu Production) à trois
-  onglets : « État » (bandeau de huit chiffres clés, temps et capacité, organisation du
-  travail, préventif), « Audit » (synthèse de l'audit, droit `stats:get_audit_synthese`) et
-  « Qualité » (qualité des données). Une période commune en mois calendaires (3, 6, 12 ou 24,
-  3 par défaut) remplace les dates libres pour les deux premiers. Les anciennes adresses
-  (`/service-status`, `/organisation`, `/audit-synthese`, `/quality-data`) sont retirées
-  (BIL-01, ADR 0033).
-
-- Web : l'onglet « État » du Bilan est allégé. Les définitions passent derrière une icône
-  d'aide au survol (plus de paragraphe sous chaque chiffre) ; chaque chiffre clé porte un
-  badge de statut (charge, fragmentation, pilotage) et une mini-courbe sur la période ; les
-  nombres ont un format unique (« 115,2 % », « 807 h ») ; le temps est montré en deux barres
-  (catégories de travail, types d'intervention) ; les causes de fragmentation et le temps par
-  site sont repliés ; les cinq graphiques mensuels, les règles de lecture et l'alerte critique
-  sont retirés (les valeurs par mois restent dans un tableau replié, avec les heures par type) ;
-  le préventif tient en trois chiffres courts (BIL-02, ADR 0034).
-
-- Web : rendu de l'onglet « État » affiné. Les badges de charge, fragmentation et pilotage
-  tiennent en un mot, texte et couleur donnés par l'API, sans seuil de repli côté web (sans
-  statut, pas de badge) ; les définitions affichent les seuils fournis par l'API au lieu de
-  seuils recopiés ; les urgences, chantiers coupés, interventions par journée et part du
-  préventif portent une tendance neutre (flèche grise et « en hausse », « stable » ou « en
-  baisse ») ; les mini-courbes sont lissées ; les barres de temps écrivent libellé, heures et
-  part dans chaque segment, sans légende (BIL-04, ADR 0034).
-
-### Corrigé
-- Web : la catégorie BAT (bâtiment, travaux) est rangée en production dans la description du
-  temps, comme le calcul du backend (elle apparaissait sous la fragmentation).
-
-### Ajouté
 - Web : page « Synthèse de l'audit » (menu Production, à côté d'Organisation, droit
   `stats:get_audit_synthese`) : tâches sans garant, faites sans action du garant, repérées sur le
   terrain, partagées, décisions hors travail normal par type et motif, part automatique ; 3 mois
@@ -160,6 +127,31 @@ mobile/CHANGELOG.md.
   ne change rien.
 
 ### Modifié
+- Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données
+  sont regroupées dans une page « Bilan du service » (`/bilan`, menu Production) à trois
+  onglets : « État » (bandeau de huit chiffres clés, temps et capacité, organisation du
+  travail, préventif), « Audit » (synthèse de l'audit, droit `stats:get_audit_synthese`) et
+  « Qualité » (qualité des données). Une période commune en mois calendaires (3, 6, 12 ou 24,
+  3 par défaut) remplace les dates libres pour les deux premiers. Les anciennes adresses
+  (`/service-status`, `/organisation`, `/audit-synthese`, `/quality-data`) sont retirées
+  (BIL-01, ADR 0033).
+
+- Web : l'onglet « État » du Bilan est allégé. Les définitions passent derrière une icône
+  d'aide au survol (plus de paragraphe sous chaque chiffre) ; chaque chiffre clé porte un
+  badge de statut (charge, fragmentation, pilotage) et une mini-courbe sur la période ; les
+  nombres ont un format unique (« 115,2 % », « 807 h ») ; le temps est montré en deux barres
+  (catégories de travail, types d'intervention) ; les causes de fragmentation et le temps par
+  site sont repliés ; les cinq graphiques mensuels, les règles de lecture et l'alerte critique
+  sont retirés (les valeurs par mois restent dans un tableau replié, avec les heures par type) ;
+  le préventif tient en trois chiffres courts (BIL-02, ADR 0034).
+
+- Web : rendu de l'onglet « État » affiné. Les badges de charge, fragmentation et pilotage
+  tiennent en un mot, texte et couleur donnés par l'API, sans seuil de repli côté web (sans
+  statut, pas de badge) ; les définitions affichent les seuils fournis par l'API au lieu de
+  seuils recopiés ; les urgences, chantiers coupés, interventions par journée et part du
+  préventif portent une tendance neutre (flèche grise et « en hausse », « stable » ou « en
+  baisse ») ; les mini-courbes sont lissées ; les barres de temps écrivent libellé, heures et
+  part dans chaque segment, sans légende (BIL-04, ADR 0034).
 - Création d'une intervention : un seul formulaire, celui de l'accueil, partout. Le bouton
   « Nouvelle intervention » de la page Interventions ouvre une fenêtre au lieu d'une page
   (l'ancienne page bloquait sur « Le titre est obligatoire » sans demande choisie) ; la
@@ -176,6 +168,8 @@ mobile/CHANGELOG.md.
   l'occurrence rendue non routinière.
 
 ### Corrigé
+- Web : la catégorie BAT (bâtiment, travaux) est rangée en production dans la description du
+  temps, comme le calcul du backend (elle apparaissait sous la fragmentation).
 - Préventif : rouvrir une intervention fermée repasse son occurrence préventive « en cours » ;
   elle se termine de nouveau à la prochaine clôture, qui devient la référence de l'échéance
   suivante. Changement tracé dans l'audit (REO-04, amendement de l'ADR 0028).

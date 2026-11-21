@@ -7,7 +7,16 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.10.0** (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
+- Dernière version publiée : **v5.11.0** (2026-11-21, tag sur main) : 20 fusions dans develop depuis la
+  5.10.0, dont SEC-01 et TRI (sécurité, ménage), audit des cascades et auteur des journaux
+  (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
+  règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
+  « Bilan du service » à trois onglets avec seuils, séries et tendances données par l'API
+  (ADR 0032 à 0035). Production (5.6.1) à mettre à jour par l'utilisateur directement en
+  5.11.0 : migrations jusqu'à 0023 jouées au démarrage de l'API (base de dev déjà en 0023),
+  le bootstrap ouvre les nouveaux droits (dont `stats:get_audit_synthese`) ; consignes de la
+  5.9.0 toujours valables (tâche quotidienne, premier passage).
+- v5.10.0 (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
   fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
   de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
   PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
@@ -51,7 +60,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 - Base de dev remplacée le 2026-11-16 par un dump de production du jour, avec l'accord
   de l'utilisateur (412 interventions, révision 0013) ; sauvegarde de l'ancienne base
   supprimée ensuite à sa demande.
-- develop contient depuis la 5.10.0 : SEC-01 (messages bruts de la base masqués, QR code réservé aux utilisateurs connectés), TRI-01 à TRI-04 (jeton du mobile rafraîchi, migration 0017 des liens action-tâche, version d'alembic en ajout seul, idées d'amélioration retirées du web). Base de dev en révision 0017.
+- develop contient depuis la 5.11.0 : rien.
 
 ## Feuille de route fondatrice
 
@@ -158,9 +167,8 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Version : décision de l'utilisateur du 2026-11-21, une seule grosse version regroupera les
-   chantiers non publiés (section « Non publié » du CHANGELOG) ; numéro et date à fixer avec
-   lui, migrations 0006 à 0023 à jouer en production à cette occasion, avec son accord.
+0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
+   production par l'utilisateur (migrations jusqu'à 0023 au démarrage de l'API).
 
 0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
