@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- Dernière version publiée : **v5.11.0** (2026-11-21, tag sur main) : 20 fusions dans develop depuis la
+- Dernière version publiée : **v5.11.0** (2026-11-21, PR #16, tag sur main) : 20 fusions dans develop depuis la
   5.10.0, dont SEC-01 et TRI (sécurité, ménage), audit des cascades et auteur des journaux
   (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
   règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
