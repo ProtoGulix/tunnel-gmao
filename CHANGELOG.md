@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne] Documentation
+- README : positionnement (« Faites-la progresser »), ce que fait Tunnel d'après les
+  affirmations livrées du cahier fonctionnel (catalogue de pièces sans suivi des quantités,
+  rejet avec motif), liens vers frezille.fr, la démonstration et le guide utilisateur.
+
 ## [5.12.1] — 2026-11-21
 
 ### Corrigé
