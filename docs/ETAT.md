@@ -12,15 +12,15 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
   (ADR 0029), types d'intervention en base puis par classe d'équipement (ADR 0026, 0031),
   règles lues dans l'API (ADR 0030), réouvertures (ADR 0028), synthèse de l'audit et page
   « Bilan du service » à trois onglets avec seuils, séries et tendances données par l'API
-  (ADR 0032 à 0035). Production (5.6.1) à mettre à jour par l'utilisateur directement en
-  5.11.0 : migrations jusqu'à 0023 jouées au démarrage de l'API (base de dev déjà en 0023),
-  le bootstrap ouvre les nouveaux droits (dont `stats:get_audit_synthese`) ; consignes de la
-  5.9.0 toujours valables (tâche quotidienne, premier passage).
+  (ADR 0032 à 0035). Production en 5.10.0 (constaté par l'utilisateur le 2026-11-21), à
+  mettre à jour par l'utilisateur en 5.11.0 : migrations 0017 à 0023 jouées au démarrage de
+  l'API (base de dev déjà en 0023), le bootstrap ouvre les nouveaux droits (dont
+  `stats:get_audit_synthese`).
 - v5.10.0 (2026-11-19, PR #15, tag sur main) : suivi du préventif sur la
   fiche équipement (section Préventif, liste des interventions préventives, courbe d'avance ou
   de retard, lancement en avance, santé en « Attention » si un préventif est en retard,
   PREV-14 à PREV-16) ; export de masse sans les fiches imprimées, rangé par équipement
-  (EXPM-03). Pas de migration nouvelle. Production (5.6.1) à mettre à jour par l'utilisateur
+  (EXPM-03). Pas de migration nouvelle. Production (alors en 5.6.1, passée depuis en 5.10.0) à mettre à jour par l'utilisateur
   directement en 5.10.0 : consignes de la 5.9.0 (migrations 0014 à 0016 au démarrage, tâche
   quotidienne active par défaut, premier passage au démarrage).
 - v5.9.1 (2026-11-19, PR #14, tag sur main) : correctif, une relance part un intervalle après
@@ -168,7 +168,7 @@ subagents, format de compte rendu imposé aux agents).
 ## Prochaine action
 
 0. Version 5.11.0 (décision de l'utilisateur du 2026-11-21) : publiée ; mise à jour de la
-   production par l'utilisateur (migrations jusqu'à 0023 au démarrage de l'API).
+   production (en 5.10.0) par l'utilisateur (migrations 0017 à 0023 au démarrage de l'API).
 
 0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :
