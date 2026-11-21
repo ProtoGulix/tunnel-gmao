@@ -24,7 +24,7 @@ Anciens points H-7, M-1 à M-8, P-1 à P-5, toujours ouverts.
   choix du technicien, passe par la transition `acceptee`). Relevé le 2026-11-20 (TYP-04) ;
   le type y est déjà vide et obligatoire.
 
-## Formulaire de demande de l'onglet « Demandes » (relevé le 2026-11-21, GUIDE-03)
+## Formulaire de demande de l'onglet « Demandes » (relevé le 2026-11-21, GUIDE-03) — TRAITÉ (2026-11-21, fix/mobile-annuler-demande)
 
 `mobile/src/pages/interventions/InterventionsPage.jsx` passe `onCancel` à `DIForm`, qui
 attend `onClose` : le bouton « Annuler » du formulaire ne ferme rien (la croix de l'en-tête,
