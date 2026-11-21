@@ -1,6 +1,7 @@
 /**
- * @fileoverview Carte d'un chiffre clé de l'onglet État : libellé avec définition au survol,
- * valeur, détail court, badge de statut et mini-courbe. Hauteur régulière (ADR 0034).
+ * @fileoverview Carte d'un chiffre clé du Bilan (onglets État et Audit) : libellé avec
+ * définition au survol, valeur, détail court, badge de statut s'il y en a un, mini-courbe et
+ * tendance. Hauteur régulière (ADR 0034, 0035).
  * @module components/bilan/FigureCard
  */
 
@@ -42,7 +43,7 @@ StatusBadge.propTypes = {
 
 const TREND_ICONS = { up: ArrowUpRight, stable: ArrowRight, down: ArrowDownRight };
 
-// Tendance en gris : un fait, pas un jugement (le badge porte le jugement)
+// Tendance en gris : un fait, pas un jugement (le badge, s'il existe, porte le jugement)
 function TrendMark({ trend }) {
   const view = trendView(trend);
   if (!view) return null;

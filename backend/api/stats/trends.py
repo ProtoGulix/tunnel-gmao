@@ -58,3 +58,24 @@ def compute_trends(monthly: List[Dict]) -> Dict[str, Optional[str]]:
 def compute_waiting_trend(monthly: List[Dict]) -> Optional[str]:
     """Tendance du nombre d'interventions en attente de pièces (ADR 0034 point 12)."""
     return compute_trend([m.get("waiting_parts_count") for m in monthly], WAITING_STABLE_BELOW)
+
+
+# Synthèse de l'audit (ADR 0035 point 4) : parts en points, total de décisions en nombre.
+DECISIONS_STABLE_BELOW = 2.0  # décisions d'écart estimé
+
+AUDIT_TREND_FIELDS: Dict[str, float] = {
+    "without_guarantor_share": SHARE_STABLE_BELOW,
+    "done_without_guarantor_action_share": SHARE_STABLE_BELOW,
+    "spotted_in_field_share": SHARE_STABLE_BELOW,
+    "shared_tasks_share": SHARE_STABLE_BELOW,
+    "system_share": SHARE_STABLE_BELOW,
+    "decisions_total": DECISIONS_STABLE_BELOW,
+}
+
+
+def compute_audit_trends(monthly: List[Dict]) -> Dict[str, Optional[str]]:
+    """Tendance de chaque indicateur de la synthèse de l'audit ; mois incomplets inclus."""
+    return {
+        field: compute_trend([m.get(field) for m in monthly], threshold)
+        for field, threshold in AUDIT_TREND_FIELDS.items()
+    }

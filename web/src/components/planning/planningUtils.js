@@ -44,15 +44,25 @@ export function isWeekend(dateStr) {
   return day === 0 || day === 6;
 }
 
-export function formatWeekLabel(monday) {
-  const sunday = addDays(monday, 6);
-  const from = new Date(monday).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-  const to = new Date(sunday).toLocaleDateString('fr-FR', {
+/**
+ * Libellé d'une plage de dates pour les en-têtes : « 16 novembre – 22 novembre 2026 ».
+ * L'année n'est répétée au début que si elle diffère de celle de la fin.
+ */
+export function formatDateRangeLabel(fromStr, toStr) {
+  const from = new Date(fromStr);
+  const to = new Date(toStr);
+  const sameYear = from.getFullYear() === to.getFullYear();
+  const fromLabel = from.toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
   });
-  return `${from} – ${to}`;
+  const toLabel = to.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return `${fromLabel} – ${toLabel}`;
+}
+
+export function formatWeekLabel(monday) {
+  return formatDateRangeLabel(monday, addDays(monday, 6));
 }
 
 export function formatTime(hhmms) {

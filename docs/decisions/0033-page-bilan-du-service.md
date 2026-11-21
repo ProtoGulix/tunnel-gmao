@@ -37,7 +37,8 @@ la fragmentation, alors que le calcul du backend la compte en production.
    complétude et de cohérence des données, inchangé, sans période (état actuel).
 4. **Une période commune** (décision de l'utilisateur) : un choix en mois calendaires
    (3, 6, 12 ou 24), 3 mois par défaut, qui vaut pour les onglets « État » et « Audit » ;
-   il est masqué sur « Qualité ». Les dates libres de l'ancienne page État du service disparaissent.
+   il est masqué sur « Qualité ». Il se trouve dans l'en-tête de la page, au modèle
+   de l'en-tête de l'accueil (précision de l'utilisateur du 2026-11-21). Les dates libres de l'ancienne page État du service disparaissent.
 5. **Droits inchangés** : le bloc État du service reste visible de tout utilisateur
    connecté ; les blocs Organisation suivent `stats:get_organisation` ; l'onglet Audit
    suit `stats:get_audit_synthese` et n'apparaît pas sans ce droit ; l'onglet Qualité est

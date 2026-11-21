@@ -9,6 +9,9 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- API : `GET /stats/audit-synthese` renvoie `trends` (hausse, baisse, stable ou null sur la
+  période) pour les cinq parts et `decisions_total` ; stable sous 2 points ou 2 décisions
+  (BIL-07, ADR 0035).
 - API : `GET /stats/service-status` renvoie ses seuils (`thresholds`, définis une seule fois,
   valeurs inchangées : charge 75 / 100 %, fragmentation 5 / 15 %, pilotage 20 / 10 %) et des
   textes de statut d'un mot (Normale / Élevée / Au plafond, Maîtrisée / Notable / Élevée,
@@ -23,6 +26,15 @@ mobile/CHANGELOG.md.
   flèche de tendance grise (charge, fragmentation, pilotage et attente de pièces s'ajoutent
   aux quatre déjà équipés) ; rien ne s'affiche si l'API ne fournit pas la série (BIL-06,
   ADR 0034 point 12).
+
+- Web : l'onglet « Audit » du Bilan prend la présentation de l'onglet « État » : six cartes
+  sans badge (définition derrière l'icône d'aide, mini-courbe par mois, tendance grise
+  donnée par l'API quand elle la fournit), les cinq graphiques mensuels sont retirés, les
+  tableaux « Valeurs par mois » et des décisions sont repliés (BIL-08, ADR 0035).
+- Web, Bilan du service : le choix de la période passe dans l'en-tête de la page, au modèle de
+  l'accueil (boutons 3, 6, 12 et 24 mois, séparateur, plage de dates « 1 septembre –
+  21 novembre 2026 ») ; il est masqué sur l'onglet Qualité. Le libellé de semaine de l'accueil
+  et du planning répète désormais l'année au début quand la semaine change d'année.
 
 ### Modifié
 - Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données

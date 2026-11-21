@@ -120,3 +120,45 @@ def test_code_de_droit_au_catalogue_et_matrice_par_defaut():
     assert CODE in codes
     for role in ("ADMIN", "RESP", "TECH", "ACHETEUR", "MCP"):
         assert default_allowed(role, ENDPOINT), role
+
+
+def _serie(champ, valeurs):
+    return [{champ: v} for v in valeurs]
+
+
+def test_tendance_decisions_stable_sous_deux_decisions():
+    from api.stats.trends import compute_audit_trends
+
+    # variation estimée 1 décision (pente 0,5 x 2 intervalles) : stable ; 4 : hausse
+    assert compute_audit_trends(_serie("decisions_total", [3, 3, 4]))["decisions_total"] == "stable"
+    assert compute_audit_trends(_serie("decisions_total", [3, 5, 7]))["decisions_total"] == "up"
+    assert compute_audit_trends(_serie("decisions_total", [7, 5, 3]))["decisions_total"] == "down"
+
+
+def test_tendance_part_seuil_deux_points_et_part_nulle_ignoree():
+    from api.stats.trends import compute_audit_trends
+
+    assert compute_audit_trends(_serie("system_share", [40.0, 40.5, 41.0]))["system_share"] == (
+        "stable"
+    )
+    assert compute_audit_trends(_serie("system_share", [40.0, 42.0, 45.0]))["system_share"] == "up"
+    # parts nulles ignorées : deux valeurs seulement, pas de tendance
+    assert compute_audit_trends(_serie("system_share", [None, 10.0, 50.0]))["system_share"] is None
+    # une part nulle au milieu est ignorée, les trois autres comptent
+    quatre = _serie("system_share", [50.0, None, 30.0, 10.0])
+    assert compute_audit_trends(quatre)["system_share"] == "down"
+
+
+def test_tendances_toutes_cles_presentes_et_nulles_sans_assez_de_mois():
+    from api.stats.trends import compute_audit_trends
+
+    t = compute_audit_trends([{"decisions_total": 1}])
+    assert set(t) == {
+        "without_guarantor_share",
+        "done_without_guarantor_action_share",
+        "spotted_in_field_share",
+        "shared_tasks_share",
+        "system_share",
+        "decisions_total",
+    }
+    assert all(v is None for v in t.values())

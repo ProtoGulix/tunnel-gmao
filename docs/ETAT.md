@@ -63,6 +63,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-21) | Onglet « Audit » du Bilan allégé (ADR 0035, accord de l'utilisateur du 2026-11-21) : tendances de la synthèse par l'API (BIL-07), onglet web (BIL-08) | fusionnée dans develop | ADR 0035, [BIL-07](taches/BIL-07-backend-tendances-audit.md), [BIL-08](taches/BIL-08-web-onglet-audit-allege.md) |
 | fait (2026-11-21) | Onglet « État » du Bilan allégé (ADR 0034, décisions de l'utilisateur du 2026-11-21 : bandeau gardé, définitions derrière ⓘ, mini-courbes ; puis seuils et badges d'un mot donnés par l'API, tendances sur la période) | fusionnée dans develop | ADR 0034, [BIL-02](taches/BIL-02-web-onglet-etat-allege.md), [BIL-03](taches/BIL-03-backend-seuils-et-tendances.md), [BIL-04](taches/BIL-04-web-badges-courbes-barres-tendances.md), [BIL-05](taches/BIL-05-backend-series-mensuelles.md), [BIL-06](taches/BIL-06-web-courbes-huit-chiffres.md) |
 | fait (2026-11-21) | Bilan du service (ADR 0033, décisions de l'utilisateur du 2026-11-21 : trois onglets « État », « Audit » et « Qualité », période commune en mois, 3 par défaut) : page web regroupée (BIL-01) | fusionnée dans develop | ADR 0033, [BIL-01](taches/BIL-01-web-page-bilan-du-service.md) |
 | fait (2026-11-21) | Synthèse de l'audit (ADR 0032, décisions de l'utilisateur du 2026-11-20 : toute l'équipe, 3 mois, chiffres d'équipe) : route de synthèse (SYN-01), page web (SYN-02) | fusionnée dans develop | ADR 0032, [SYN-01](taches/SYN-01-backend-synthese-audit.md), [SYN-02](taches/SYN-02-web-page-synthese-audit.md) |
@@ -156,6 +157,10 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
+
+0. Version : décision de l'utilisateur du 2026-11-21, une seule grosse version regroupera les
+   chantiers non publiés (section « Non publié » du CHANGELOG) ; numéro et date à fixer avec
+   lui, migrations 0006 à 0023 à jouer en production à cette occasion, avec son accord.
 
 0. Préventif automatisé : fusionné dans develop le 2026-11-18 (ADR 0023, PREV-01 à PREV-08). Tâche quotidienne activée par défaut dans Compose et active en dev depuis le 2026-11-18 (PREV-09). Reste à faire : à la mise en production, estimer d'abord le volume du premier passage (lecture seule ; tout le stock en retard part d'un coup) et constater le verrou (deux processus) ; migrations 0015 et 0016 jouées en dev, à jouer en production à sa mise à jour ; corrections de données à la main (docs/backlog/occurrences-incoherentes.md, occurrences-actives-en-double.md) ; suites au backlog : mail hebdomadaire, relevé des heures, code d'équipement cliquable partagé.
 0. Plans préventifs (2026-11-14, branche fix/plan-preventif-inactif-affiche fusionnée) :

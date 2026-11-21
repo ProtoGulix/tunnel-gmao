@@ -537,9 +537,21 @@ class AuditSyntheseDecision(BaseModel):
     count: int
 
 
+class AuditSyntheseTrends(BaseModel):
+    """Tendance sur la période : 'up', 'down', 'stable' ou null (moins de 3 mois de valeurs)."""
+
+    without_guarantor_share: Optional[Literal["up", "down", "stable"]] = None
+    done_without_guarantor_action_share: Optional[Literal["up", "down", "stable"]] = None
+    spotted_in_field_share: Optional[Literal["up", "down", "stable"]] = None
+    shared_tasks_share: Optional[Literal["up", "down", "stable"]] = None
+    system_share: Optional[Literal["up", "down", "stable"]] = None
+    decisions_total: Optional[Literal["up", "down", "stable"]] = None
+
+
 class AuditSyntheseResponse(BaseModel):
     period: OrganisationPeriod
     cascades_traced_from: date
     monthly: List[AuditSyntheseMonth]
+    trends: AuditSyntheseTrends = AuditSyntheseTrends()
     totals: AuditSyntheseCounters
     decisions: List[AuditSyntheseDecision]

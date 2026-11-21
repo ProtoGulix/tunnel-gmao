@@ -110,7 +110,7 @@ def jeu(instance, make_user):
     )
     assert legacy and legacy[0][1] in ("user", "manual")
     _evenement(instance, "2035-01-17", "created", legacy[0][0])
-    yield {"user": user_id, "manual": manual_id, "techs": (a, b, c)}
+    yield {"user": user_id, "manual": manual_id, "techs": (a, b, c), "iid": iid}
     # Nettoyage : chaque test repart d'un jeu neuf, les comptes exacts ne s'additionnent pas.
     instance.sql("DELETE FROM intervention_task WHERE intervention_id = %s", (iid,))
     instance.sql("DELETE FROM intervention_action WHERE intervention_id = %s", (iid,))
@@ -156,6 +156,30 @@ def test_indicateurs_par_mois_et_totaux(instance, client, jeu):
     assert t["shared_tasks_share"] == 40.0
     assert (t["audit_events"], t["system_events"], t["system_share"]) == (9, 2, 22.2)
     assert t["decisions_total"] == 4
+
+
+def test_tendances_presentes_et_calculees(instance, client, jeu):
+    # Deux mois seulement (janvier, février) : moins de 3 valeurs, aucune tendance
+    court = AuditSyntheseRepository().get_synthese(DEBUT, FIN)
+    assert set(court["trends"]) == {
+        "without_guarantor_share",
+        "done_without_guarantor_action_share",
+        "spotted_in_field_share",
+        "shared_tasks_share",
+        "system_share",
+        "decisions_total",
+    }
+    assert all(v is None for v in court["trends"].values())
+
+    # Mars : une tâche avec garant (part sans garant 33,3 -> 0 -> 0) et aucune décision
+    # (décisions 3 -> 1 -> 0). Les parts sans dénominateur (mars) sont ignorées.
+    a = jeu["techs"][0]
+    _tache(instance, jeu["iid"], "todo", a, a, "2035-03-05")
+    d = AuditSyntheseRepository().get_synthese(DEBUT, date(2035, 3, 31))
+    assert d["trends"]["without_guarantor_share"] == "down"
+    assert d["trends"]["decisions_total"] == "down"
+    # Parts de tâches faites : seulement janvier et février ont une valeur, donc null
+    assert d["trends"]["spotted_in_field_share"] is None
 
 
 def test_decisions_par_type_et_motif(instance, client, jeu):

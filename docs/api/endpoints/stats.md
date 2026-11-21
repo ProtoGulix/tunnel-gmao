@@ -387,6 +387,7 @@ Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 req
 - `system_share` : événements `is_system` parmi tous les événements du mois (`audit_events`).
 - `incomplete_data` : vrai si le mois commence avant `cascades_traced_from` (2026-11-20, ADR 0029) : `closed_by` et cascades y sont incomplets (novembre 2026 est donc signalé). Les indicateurs de tâches n'en dépendent pas, mais les décisions et la part système oui.
 - Parts en % à 1 décimale, `null` si le dénominateur vaut 0 ; tous les mois de la période sont présents.
+- `trends` (ADR 0035 point 4) : pour `without_guarantor_share`, `done_without_guarantor_action_share`, `spotted_in_field_share`, `shared_tasks_share`, `system_share` et `decisions_total`, `"up"`, `"down"`, `"stable"` ou `null`. Même calcul que `/stats/organisation` (pente des moindres carrés sur les valeurs mensuelles non nulles, au moins 3 valeurs sinon `null`, variation estimée = pente x (nombre de mois - 1)) ; `stable` sous 2 points pour une part, sous 2 décisions pour `decisions_total`. Les mois `incomplete_data` comptent comme les autres.
 
 ### Réponse `200`
 
@@ -415,6 +416,14 @@ Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 req
       "system_share": 43.6
     }
   ],
+  "trends": {
+    "without_guarantor_share": "stable",
+    "done_without_guarantor_action_share": "down",
+    "spotted_in_field_share": null,
+    "shared_tasks_share": "up",
+    "system_share": "stable",
+    "decisions_total": "down"
+  },
   "totals": { "...": "mêmes compteurs et parts que monthly, sans month ni incomplete_data" },
   "decisions": [
     {

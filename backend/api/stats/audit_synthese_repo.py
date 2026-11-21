@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 from api.db import get_connection, release_connection
 from api.equipements.validators import month_keys
 from api.errors.exceptions import raise_db_error
+from api.stats.trends import compute_audit_trends
 
 # ADR 0029 : avant cette date, closed_by et les cascades ne sont pas (ou mal) tracés.
 CASCADES_TRACED_FROM = date(2026, 11, 20)
@@ -184,6 +185,7 @@ class AuditSyntheseRepository:
             "period": {"start": start, "end": end},
             "cascades_traced_from": CASCADES_TRACED_FROM,
             "monthly": monthly,
+            "trends": compute_audit_trends(monthly),
             "totals": _finish(_sum_months(list(months.values()))),
             "decisions": decisions,
         }

@@ -16,6 +16,6 @@
   inutilisée dans InterventionSelector.
 - Règles en dur sur certains codes de type (relevé TYP-03, 2026-11-20) : PRO/PIL/MES traités
   à part dans `useInterventionsList.js` (l.~144), séries CUR/PRE/PRO dans
-  `OrganisationCharts.jsx`, type déduit du code d'intervention dans `CoordinationPage.jsx`
+  `OrganisationFigures.jsx` (tableau des valeurs par mois), type déduit du code d'intervention dans `CoordinationPage.jsx`
   (l.~85), repli 'CUR' d'affichage dans `interventionMappers.js`, `TaskSearchColumn.jsx`,
   `interventionCellRenderers.jsx`. À trancher : catégories de types en base ou règles assumées.
