@@ -19,6 +19,8 @@ mobile/CHANGELOG.md.
   `deploy/demo/README.md` (DEMO-06, ADR 0036).
 
 ### Corrigé
+- Bilan du service, onglet Qualité : une demande d'achat liée à une pièce n'est plus
+  signalée « sans article » ; seules les demandes sans pièce ni article le sont.
 - Données de départ : accepter ou mettre en attente une demande d'intervention n'exige plus
   de motif d'audit sur une nouvelle installation (règle `request.status_to` routinière,
   comme en production) (DEMO-07).
