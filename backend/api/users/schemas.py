@@ -57,6 +57,18 @@ class ProfileUpdate(BaseModel):
         return v
 
 
+def check_password_strength(v: str) -> str:
+    """Règle commune des mots de passe choisis : au moins une majuscule et un chiffre.
+
+    La longueur (8 caractères au moins) est portée par le champ de chaque schéma.
+    """
+    if not re.search(r"[A-Z]", v):
+        raise ValueError("Le mot de passe doit contenir au moins une majuscule")
+    if not re.search(r"[0-9]", v):
+        raise ValueError("Le mot de passe doit contenir au moins un chiffre")
+    return v
+
+
 class PasswordChange(BaseModel):
     """Changement de mot de passe"""
 
@@ -66,8 +78,4 @@ class PasswordChange(BaseModel):
     @field_validator("new_password")
     @classmethod
     def password_strength(cls, v: str) -> str:
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("Le mot de passe doit contenir au moins une majuscule")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("Le mot de passe doit contenir au moins un chiffre")
-        return v
+        return check_password_strength(v)

@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Flex, Text, Button, Dialog, TextField, Select } from '@radix-ui/themes';
+import { toRoleOptions } from '@/components/admin/roleOptions';
 
 const EMPTY_FORM = {
   first_name: '',
@@ -17,9 +18,7 @@ const EMPTY_FORM = {
   password_confirm: '',
 };
 
-const ROLES = ['RESP', 'TECH', 'OPE', 'ADMIN'];
-
-export default function AdminUserCreateModal({ open, onOpenChange, onSubmit, submitting }) {
+export default function AdminUserCreateModal({ open, onOpenChange, onSubmit, submitting, roles }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
 
@@ -96,7 +95,7 @@ export default function AdminUserCreateModal({ open, onOpenChange, onSubmit, sub
                 <Select.Root value={form.role} onValueChange={(v) => { setForm((p) => ({ ...p, role: v })); if (errors.role) setErrors((p) => ({ ...p, role: undefined })); }}>
                   <Select.Trigger placeholder="Choisir..." style={{ width: '100%' }} />
                   <Select.Content>
-                    {ROLES.map((r) => <Select.Item key={r} value={r}>{r}</Select.Item>)}
+                    {toRoleOptions(roles).map((o) => <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>)}
                   </Select.Content>
                 </Select.Root>
                 {errors.role && <Text size="1" color="red">{errors.role}</Text>}
@@ -132,4 +131,5 @@ AdminUserCreateModal.propTypes = {
   onOpenChange: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   submitting: PropTypes.bool,
+  roles: PropTypes.array,
 };

@@ -10,16 +10,17 @@ Actifs, Inactifs) et filtrer par rôle.
 
 1. Cliquez sur **Nouvel utilisateur**.
 2. Remplissez le prénom, le nom, le courriel, les initiales (5 caractères au plus) et le rôle.
-3. Saisissez le mot de passe, puis confirmez-le.
+3. Saisissez le mot de passe, puis confirmez-le. Il doit compter au moins 8 caractères,
+   dont une majuscule et un chiffre.
 4. Cliquez sur **Créer**.
 
 Les initiales sont enregistrées en majuscules. Elles servent à repérer la personne dans les
 listes.
 
-::: warning Limite connue
-Le formulaire de création et le changement de rôle ne proposent pas encore le rôle
-ACHETEUR. Un compte acheteur ne se crée donc pas depuis cet écran pour le moment.
-:::
+Le rôle se choisit dans une liste chargée depuis le serveur : elle présente tous les rôles
+définis dans Tunnel (par exemple Administrateur, Responsable, Technicien, Acheteur), avec leur
+libellé suivi du code. Un rôle ajouté côté serveur apparaît donc sans mise à jour de l'écran.
+Le même choix sert au changement de rôle et au filtre du tableau.
 
 ## Modifier un compte
 

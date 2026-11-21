@@ -17,6 +17,7 @@ import {
   AdminResetPasswordModal,
 } from '@/components/admin/AdminUserConfirmModals';
 import { useAdminUsers } from '@/hooks/admin/useAdminUsers';
+import { useAdminRoles } from '@/hooks/admin/useAdminRoles';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
@@ -30,6 +31,7 @@ export default function AdminUsersTab() {
     createUser, editUser, changeRole, toggleActive, resetPassword,
   } = useAdminUsers();
 
+  const { roles } = useAdminRoles();
   const { notification, notify } = useNotification();
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -140,6 +142,7 @@ export default function AdminUsersTab() {
         filterRole={filterRole}
         onFilterRoleChange={setFilterRole}
         pagination={{ ...pagination, goToPage }}
+        roles={roles}
         onCreateClick={() => setCreateOpen(true)}
         onEditClick={(u) => { setSelectedUser(u); setEditOpen(true); }}
         onChangeRoleClick={(u) => { setSelectedUser(u); setChangeRoleOpen(true); }}
@@ -151,6 +154,7 @@ export default function AdminUsersTab() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSubmit={handleCreate}
+        roles={roles}
         submitting={submitting}
       />
 
@@ -167,6 +171,7 @@ export default function AdminUsersTab() {
         onOpenChange={setChangeRoleOpen}
         user={selectedUser}
         onSubmit={handleChangeRole}
+        roles={roles}
         submitting={submitting}
       />
 

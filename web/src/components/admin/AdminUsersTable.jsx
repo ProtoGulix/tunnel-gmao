@@ -11,14 +11,7 @@ import DataTable from '@/components/ui/DataTable';
 import { ROLE_COLORS } from '@/config/adminConfig';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
-
-const ROLE_OPTIONS = [
-  { value: '__all__', label: 'Tous les rôles' },
-  { value: 'RESP', label: 'RESP' },
-  { value: 'TECH', label: 'TECH' },
-  { value: 'OPE', label: 'OPE' },
-  { value: 'ADMIN', label: 'ADMIN' },
-];
+import { toRoleOptions } from '@/components/admin/roleOptions';
 
 const ACTIVE_OPTIONS = [
   { value: '__all__', label: 'Tous' },
@@ -41,6 +34,7 @@ export default function AdminUsersTable({
   onChangeRoleClick,
   onToggleActiveClick,
   onResetPasswordClick,
+  roles,
 }) {
   const { can } = usePermissions();
   const columns = useMemo(() => [
@@ -150,7 +144,7 @@ export default function AdminUsersTable({
             <Select.Root value={filterRole || '__all__'} onValueChange={(v) => onFilterRoleChange(v === '__all__' ? '' : v)} size="2">
               <Select.Trigger placeholder="Rôle" />
               <Select.Content>
-                {ROLE_OPTIONS.map((o) => (
+                {[{ value: '__all__', label: 'Tous les rôles' }, ...toRoleOptions(roles)].map((o) => (
                   <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
                 ))}
               </Select.Content>
@@ -195,6 +189,7 @@ AdminUsersTable.propTypes = {
   onFilterActiveChange: PropTypes.func.isRequired,
   filterRole: PropTypes.string,
   onFilterRoleChange: PropTypes.func.isRequired,
+  roles: PropTypes.array,
   pagination: PropTypes.object,
   onCreateClick: PropTypes.func.isRequired,
   onEditClick: PropTypes.func.isRequired,

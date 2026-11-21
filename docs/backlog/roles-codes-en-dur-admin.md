@@ -1,5 +1,8 @@
 # Administration : rôles codés en dur, acheteur impossible à créer depuis l'écran
 
+TRAITÉ (2026-11-21, ADM-01), y compris le rôle MCP refusé pour un compte de personne
+(décision de l'utilisateur).
+
 Relevé le 2026-11-21 (rédaction du guide, GUIDE-03), vérifié par l'agent principal.
 
 - `web/src/components/admin/AdminUserCreateModal.jsx` et `AdminUserConfirmModals.jsx`

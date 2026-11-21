@@ -24,6 +24,12 @@ mobile/CHANGELOG.md.
 - Web : dans les demandes d'achat d'une intervention, « à qualifier » suit le statut calculé
   par l'API ; une demande liée à une pièce n'y apparaît plus à qualifier (DAP-01).
 - Export PDF de la fiche d'intervention : une demande d'achat liée à une pièce affiche sa référence, sa désignation, sa référence fabricant et son fournisseur préférés (l'ancien article reste lu en repli) (DAP-01).
+- Administration : le rôle MCP, réservé aux clés d'API, ne peut plus être attribué à un
+  compte de personne.
+- Administration : le mot de passe fixé à la création d'un compte suit la règle commune
+  (8 caractères, une majuscule, un chiffre) ; le message de réinitialisation ne promet
+  plus un mot de passe valable pour une seule connexion.
+- Web : la création d'un compte et le changement de rôle lisent les rôles depuis l'API (ACHETEUR proposé, le rôle OPE inexistant n'est plus listé).
 - Bilan du service, onglet Qualité : une demande d'achat liée à une pièce n'est plus
   signalée « sans article » ; seules les demandes sans pièce ni article le sont.
 - Données de départ : accepter ou mettre en attente une demande d'intervention n'exige plus
