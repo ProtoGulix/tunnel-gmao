@@ -21,6 +21,9 @@ mobile/CHANGELOG.md.
 ### Corrigé
 - Mobile : le bouton « Annuler » du formulaire de demande de l'onglet « Demandes » ferme
   de nouveau le formulaire.
+- Web : dans les demandes d'achat d'une intervention, « à qualifier » suit le statut calculé
+  par l'API ; une demande liée à une pièce n'y apparaît plus à qualifier (DAP-01).
+- Export PDF de la fiche d'intervention : une demande d'achat liée à une pièce affiche sa référence, sa désignation, sa référence fabricant et son fournisseur préférés (l'ancien article reste lu en repli) (DAP-01).
 - Bilan du service, onglet Qualité : une demande d'achat liée à une pièce n'est plus
   signalée « sans article » ; seules les demandes sans pièce ni article le sont.
 - Données de départ : accepter ou mettre en attente une demande d'intervention n'exige plus

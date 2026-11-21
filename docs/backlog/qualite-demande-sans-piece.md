@@ -1,10 +1,5 @@
-TRAITÉ (2026-11-21, QUAL-01) pour l'onglet Qualité. Restent à vérifier, relevés par le
-reviewer (NON VÉRIFIÉ) :
-- web/src/components/ui/PurchaseRequestItem.jsx : « à qualifier » calculé sur
-  `stock_item_id` seul ; une demande liée par `part_id` s'afficherait « à qualifier » ;
-- backend/api/exports/repo.py : l'export d'intervention joint l'article par `stock_item_id`
-  seul ; pour une demande liée à une pièce, référence, nom, fournisseur et fabricant
-  sortiraient vides ;
+TRAITÉ (2026-11-21) : onglet Qualité (QUAL-01), liste web « à qualifier » et export PDF
+(DAP-01). Reste à vérifier (NON VÉRIFIÉ) :
 - lignes de commande (supplier_order_lines, supplier_orders) : repli sur `part_id` à vérifier.
 
 # Qualité des données : « demande d'achat sans article » teste l'ancien modèle

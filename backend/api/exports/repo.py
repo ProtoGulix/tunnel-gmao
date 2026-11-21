@@ -377,13 +377,34 @@ class ExportRepository:
                 SELECT DISTINCT
                     pr.id, pr.item_label, pr.quantity, pr.unit,
                     pr.urgency, pr.requested_by AS requester_name, pr.created_at,
-                    si.ref  AS stock_item_ref, si.name AS stock_item_name,
-                    sis.supplier_ref,
-                    s.name  AS supplier_name, s.code AS supplier_code,
-                    mi.manufacturer_ref, mi.manufacturer_name
+                    COALESCE(p.internal_ref, si.ref) AS stock_item_ref,
+                    COALESCE(pmr.label, pmr.manufacturer_ref, si.name) AS stock_item_name,
+                    COALESCE(psr.supplier_ref, sis.supplier_ref) AS supplier_ref,
+                    COALESCE(ps.name, s.name) AS supplier_name,
+                    COALESCE(ps.code, s.code) AS supplier_code,
+                    COALESCE(pmr.manufacturer_ref, mi.manufacturer_ref) AS manufacturer_ref,
+                    COALESCE(pmr.manufacturer_name, mi.manufacturer_name) AS manufacturer_name
                 FROM purchase_request pr
                 JOIN intervention_action_purchase_request iapr ON iapr.purchase_request_id = pr.id
                 JOIN intervention_action ia ON ia.id = iapr.intervention_action_id
+                -- Modèle des pièces (cahier 1.6) : référence fabricant puis fournisseur préférés
+                LEFT JOIN part p                ON p.id   = pr.part_id
+                LEFT JOIN LATERAL (
+                    SELECT id, manufacturer_name, manufacturer_ref, label
+                    FROM part_manufacturer_ref
+                    WHERE part_id = p.id
+                    ORDER BY is_preferred DESC, created_at ASC
+                    LIMIT 1
+                ) pmr ON true
+                LEFT JOIN LATERAL (
+                    SELECT supplier_id, supplier_ref
+                    FROM part_supplier_ref
+                    WHERE part_manufacturer_ref_id = pmr.id
+                    ORDER BY is_preferred DESC, created_at ASC
+                    LIMIT 1
+                ) psr ON true
+                LEFT JOIN supplier ps           ON ps.id  = psr.supplier_id
+                -- Ancien article, en repli
                 LEFT JOIN stock_item si         ON si.id  = pr.stock_item_id
                 LEFT JOIN stock_item_supplier sis ON si.id = sis.stock_item_id AND sis.is_preferred = true
                 LEFT JOIN supplier s            ON s.id   = sis.supplier_id

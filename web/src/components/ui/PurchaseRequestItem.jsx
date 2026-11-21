@@ -114,7 +114,8 @@ export default function PurchaseRequestItem({ pr, onDelete }) {
   const derivedStatus = pr.derived_status;
   const basketNumber = getSelectedBasketNumber(pr);
 
-  const isToQualify = !pr.stock_item_id && !pr.stockItemId;
+  // Statut dérivé par l'API (ni pièce ni article lié) : pas de règle recopiée ici.
+  const isToQualify = derivedStatus?.code === 'TO_QUALIFY';
   const isConsultation = derivedStatus?.code === 'CONSULTATION';
   const consultationCount = isConsultation ? (pr.suppliers_count ?? pr.order_lines?.length ?? 0) : 0;
   const stockRef = pr.stock_item?.ref || pr.stockItemRef || pr.stock_item_ref || pr.stockItemCode;
