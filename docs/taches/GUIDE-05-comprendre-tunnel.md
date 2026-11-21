@@ -42,3 +42,9 @@ par le formulaire, quantité reçue modifiable par l'API sans écran. docs:build
 Reviewer APPROUVÉ (27 affirmations vérifiées dans le code, aucune fausse) ; réserves traitées :
 ETAT, fiche, lien https, issue de la demande à la suppression d'une intervention, tâche
 repassée « à faire » à la suppression de sa dernière action.
+
+Complément du 2026-11-21 (demande de l'utilisateur) : page « Le stock et les pièces » et
+schéma modele-pieces.svg écrits par l'agent principal (modèle part, références fabricant et
+fournisseur, liens avec les statuts « À qualifier » et « Sans fournisseur », répartition,
+quantités non suivies : vérifiés dans le schéma de base et le code), capture du Bilan sur
+l'accueil du guide ; rendu des deux pages contrôlé par capture, docs:build vert.
