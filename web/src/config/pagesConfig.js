@@ -7,14 +7,11 @@ import {
   Factory,
   Package,
   ShoppingCart,
-  Database,
   Activity,
   Truck,
   Settings,
   CalendarClock,
-  Users,
 } from 'lucide-react';
-import { PERM } from '@/auth/permissionCodes';
 
 export const PAGES_CONFIG = [
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -140,44 +137,12 @@ export const PAGES_CONFIG = [
 
   // ── Production ────────────────────────────────────────────────────────────
   {
-    id: 'service-status',
-    path: '/service-status',
-    label: 'État du service',
+    id: 'bilan',
+    path: '/bilan',
+    label: 'Bilan du service',
     icon: Activity,
-    pageTitle: 'État du service',
-    pageSubtitle: 'Charge, fragmentation, capacité réelle',
-    section: 'production',
-    requiresAuth: true,
-  },
-  {
-    id: 'organisation',
-    path: '/organisation',
-    label: 'Organisation',
-    icon: Users,
-    pageTitle: 'Organisation',
-    pageSubtitle: "Interruptions, urgences, préventif",
-    section: 'production',
-    requiresAuth: true,
-    requiredPermission: PERM.stats.organisation,
-  },
-  {
-    id: 'audit-synthese',
-    path: '/audit-synthese',
-    label: "Synthèse de l'audit",
-    icon: ClipboardList,
-    pageTitle: "Synthèse de l'audit",
-    pageSubtitle: 'Partage des tâches et décisions',
-    section: 'production',
-    requiresAuth: true,
-    requiredPermission: PERM.stats.auditSynthese,
-  },
-  {
-    id: 'quality-data',
-    path: '/quality-data',
-    label: 'Qualité Données',
-    icon: Database,
-    pageTitle: 'Qualité des données',
-    pageSubtitle: 'Contrôle de complétude et cohérence',
+    pageTitle: 'Bilan du service',
+    pageSubtitle: 'État du service, audit des décisions et qualité des données',
     section: 'production',
     requiresAuth: true,
   },

@@ -97,15 +97,15 @@ const mapServiceStatusResponse = (raw) => {
 
 /**
  * Récupère les données d'état du service pour une période donnée
- * @param {Date} startDate - Date de début
- * @param {Date} endDate - Date de fin
+ * @param {string} startDate - Début de période, AAAA-MM-JJ
+ * @param {string} endDate - Fin de période, AAAA-MM-JJ
  * @returns {Promise<Object>} Données d'état du service (charge, fragmentation, pilotage)
  */
 export async function fetchServiceStatus(startDate, endDate) {
   const response = await api.get('/stats/service-status', {
     params: {
-      start_date: startDate.toISOString().split('T')[0],
-      end_date: endDate.toISOString().split('T')[0],
+      start_date: startDate,
+      end_date: endDate,
     },
   });
 

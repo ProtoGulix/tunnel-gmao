@@ -15,10 +15,7 @@ import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 const Login = lazy(() => import('@/pages/auth/Login'));
 const HomeRouter = lazy(() => import('@/pages/HomeRouter'));
 const HomeBriefing = lazy(() => import('@/pages/HomeBriefing'));
-const ServiceStatusPage = lazy(() => import('@/pages/service-status/ServiceStatusPage'));
-const OrganisationPage = lazy(() => import('@/pages/organisation/OrganisationPage'));
-const AuditSynthesePage = lazy(() => import('@/pages/audit-synthese/AuditSynthesePage'));
-const QualityDataPage = lazy(() => import('@/pages/quality-data/QualityDataPage'));
+const BilanPage = lazy(() => import('@/pages/bilan/BilanPage'));
 const InterventionsListPage = lazy(() => import('@/pages/interventions/InterventionsListPage'));
 const PurchaseRequestPage = lazy(() => import('@/pages/purchase-requests/PurchaseRequestPage'));
 const EquipementsPage = lazy(() => import('@/pages/equipements/EquipementsPage'));
@@ -119,44 +116,11 @@ export default function AppRoutes() {
       />
 
       <Route
-        path="/service-status"
+        path="/bilan"
         element={
           <ProtectedRoute>
             <Layout>
-              <ServiceStatusPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/organisation"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <OrganisationPage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/audit-synthese"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <AuditSynthesePage />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/quality-data"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <QualityDataPage />
+              <BilanPage />
             </Layout>
           </ProtectedRoute>
         }

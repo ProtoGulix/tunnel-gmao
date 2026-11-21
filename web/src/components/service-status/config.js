@@ -18,7 +18,10 @@ export const SERVICE_TIME_TYPE_CATEGORIES = {
     label: 'Production',
     color: 'green',
     description: 'Travail de production et fabrication',
-    categories: [{ code: 'FAB', name: 'Fabrication / Modification', id: 20 }],
+    categories: [
+      { code: 'FAB', name: 'Fabrication / Modification', id: 20 },
+      { code: 'BAT', name: 'Bâtiment / Travaux / Aménagement', id: 24 },
+    ],
   },
   DEP: {
     label: 'Dépannage',
@@ -41,7 +44,6 @@ export const SERVICE_TIME_TYPE_CATEGORIES = {
     description: 'Support diffus et travaux ponctuels',
     categories: [
       { code: 'SUP', name: 'Support / Coordination', id: 23 },
-      { code: 'BAT', name: 'Bâtiment / Travaux / Aménagement', id: 24 },
     ],
   },
 };

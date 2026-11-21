@@ -1,57 +1,11 @@
 /**
- * @fileoverview Composants principaux pour la page ServiceStatus
+ * @fileoverview Répartition du temps de l'onglet État du service
  * @module components/service-status/ServiceStatusComponents
  */
 
 import PropTypes from 'prop-types';
 import { Box, Flex, Text, Grid, Badge, Progress } from '@radix-ui/themes';
-import KPICard from '@/components/ui/KPICard';
 import { SERVICE_TIME_TYPE_CATEGORIES } from './config';
-
-export function SynthesisCards({ chargePercent, chargeText, chargeColor, fragPercent, fragText, fragColor, pilotPercent, pilotText, pilotColor }) {
-  const clamp = (v) => Math.min(100, Math.max(0, v ?? 0));
-
-  return (
-    <Grid columns={{ initial: '1', sm: '3' }} gap="4" mb="4">
-      <KPICard
-        label="Charge service"
-        value={`${chargePercent.toFixed(1)}%`}
-        subtitle={chargeText}
-        color={chargeColor}
-        progress={clamp(chargePercent)}
-        notice="Temps total heures / Capacité ETP proratisée sur la période. Charge > 85% : service saturé."
-      />
-      <KPICard
-        label="Fragmentation"
-        value={`${fragPercent.toFixed(1)}%`}
-        subtitle={fragText}
-        color={fragColor}
-        progress={clamp(fragPercent)}
-        notice="% temps fragmenté (support, actions courtes < 0,5h non-dépannage). Fragmentation > 25% : fuite organisationnelle."
-      />
-      <KPICard
-        label="Temps de pilotage"
-        value={`${pilotPercent.toFixed(1)}%`}
-        subtitle={pilotText}
-        color={pilotColor}
-        progress={clamp(pilotPercent)}
-        notice="% temps long protégé (documentation, préventif, dépannage réel). Pilotage < 15% : aucune capacité d'amélioration."
-      />
-    </Grid>
-  );
-}
-
-SynthesisCards.propTypes = {
-  chargePercent: PropTypes.number.isRequired,
-  chargeText: PropTypes.string.isRequired,
-  chargeColor: PropTypes.string.isRequired,
-  fragPercent: PropTypes.number.isRequired,
-  fragText: PropTypes.string.isRequired,
-  fragColor: PropTypes.string.isRequired,
-  pilotPercent: PropTypes.number.isRequired,
-  pilotText: PropTypes.string.isRequired,
-  pilotColor: PropTypes.string.isRequired
-};
 
 export function TimeBreakdownSection({ timeBreakdown, totalHours }) {
   if (!timeBreakdown || typeof timeBreakdown !== 'object') {

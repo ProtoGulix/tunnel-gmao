@@ -8,6 +8,20 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Modifié
+- Web : les pages État du service, Organisation, Synthèse de l'audit et Qualité des données
+  sont regroupées dans une page « Bilan du service » (`/bilan`, menu Production) à trois
+  onglets : « État » (bandeau de huit chiffres clés, temps et capacité, organisation du
+  travail, préventif), « Audit » (synthèse de l'audit, droit `stats:get_audit_synthese`) et
+  « Qualité » (qualité des données). Une période commune en mois calendaires (3, 6, 12 ou 24,
+  3 par défaut) remplace les dates libres pour les deux premiers. Les anciennes adresses
+  (`/service-status`, `/organisation`, `/audit-synthese`, `/quality-data`) sont retirées
+  (BIL-01, ADR 0033).
+
+### Corrigé
+- Web : la catégorie BAT (bâtiment, travaux) est rangée en production dans la description du
+  temps, comme le calcul du backend (elle apparaissait sous la fragmentation).
+
 ### Ajouté
 - Web : page « Synthèse de l'audit » (menu Production, à côté d'Organisation, droit
   `stats:get_audit_synthese`) : tâches sans garant, faites sans action du garant, repérées sur le

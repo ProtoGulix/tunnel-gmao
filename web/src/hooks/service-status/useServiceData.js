@@ -13,8 +13,8 @@ import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
  * Hook pour charger les données d'état du service
- * @param {Date} startDate - Date de début de la période
- * @param {Date} endDate - Date de fin de la période
+ * @param {string} startDate - Début de période, AAAA-MM-JJ
+ * @param {string} endDate - Fin de période, AAAA-MM-JJ
  * @returns {Object} { data, loading, error, refetch }
  */
 export function useServiceData(startDate, endDate) {

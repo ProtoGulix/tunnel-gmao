@@ -1,6 +1,5 @@
 /**
- * @fileoverview Page Organisation sans graphique : tuiles d'état actuel, tuiles de la période,
- * tableau des valeurs par mois
+ * @fileoverview Organisation sans graphique : tuiles d'état du préventif, tableau des valeurs par mois
  * @module components/organisation/OrganisationFigures
  */
 
@@ -91,75 +90,21 @@ function overdueTile(count) {
   };
 }
 
-function partsTile(w) {
-  return {
-    title: 'Attente de pièces',
-    sentence: w.count === 0
-      ? 'Attente de pièces : aucune intervention.'
-      : `Attente de pièces : ${w.count} intervention${w.count > 1 ? 's' : ''}, âge médian ${formatDays(w.median_age_days)}.`,
-    level: w.count === 0 ? 'ok' : 'info',
-    statusLabel: w.count === 0 ? 'Aucune' : 'En cours',
-    definition: DEFINITIONS.waitingParts,
-  };
-}
-
-/** Tuiles d'état actuel (hors période) */
-export function StateTiles({ preventive, waitingParts, overdueCount, now }) {
-  const tiles = [preventiveTile(preventive), generationTile(preventive, now), partsTile(waitingParts)];
-  if (overdueCount != null) tiles.splice(2, 0, overdueTile(overdueCount));
+/** Tuiles d'état actuel du préventif (hors période) ; l'attente de pièces est dans le bandeau */
+export function StateTiles({ preventive, overdueCount, now }) {
+  const tiles = [preventiveTile(preventive), generationTile(preventive, now)];
+  if (overdueCount != null) tiles.push(overdueTile(overdueCount));
   return (
-    <Grid columns={{ initial: '1', md: '2', lg: tiles.length > 3 ? '4' : '3' }} gap="3" mb="4">
+    <Grid columns={{ initial: '1', md: '2', lg: String(tiles.length) }} gap="3" mb="4">
       {tiles.map((t) => <StateTile key={t.title} {...t} />)}
     </Grid>
   );
 }
 StateTiles.propTypes = {
   preventive: PropTypes.object.isRequired,
-  waitingParts: PropTypes.object.isRequired,
   overdueCount: PropTypes.number,
   now: PropTypes.instanceOf(Date),
 };
-
-function Figure({ label, value, detail }) {
-  return (
-    <Box style={{ border: '1px solid var(--gray-a5)', borderRadius: 'var(--radius-3)', padding: '6px 10px' }}>
-      <Text as="div" size="1" color="gray">{label}</Text>
-      <Text as="div" size="4" weight="bold">{value}</Text>
-      {detail && <Text as="div" size="1" color="gray">{detail}</Text>}
-    </Box>
-  );
-}
-Figure.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.string.isRequired, detail: PropTypes.string };
-
-/** Quatre chiffres de la période choisie */
-export function PeriodFigures({ totals }) {
-  const hours = totals.hours;
-  return (
-    <Grid columns={{ initial: '2', md: '4' }} gap="2" mb="4">
-      <Figure
-        label="Chantiers coupés par une urgence"
-        value={formatPct(totals.interrupted_share)}
-        detail={`${totals.chantiers_interrupted} sur ${totals.chantiers_started}`}
-      />
-      <Figure
-        label="Part d'urgences"
-        value={formatPct(totals.urgent_share)}
-        detail={`${totals.urgent_count} sur ${totals.interventions_reported}`}
-      />
-      <Figure
-        label="Interventions par journée de technicien"
-        value={formatNumber(totals.avg_interventions_per_tech_day)}
-        detail={`${totals.tech_days} journées`}
-      />
-      <Figure
-        label="Part du préventif dans les heures"
-        value={formatPct(shareOf(hours.PRE, hours.total))}
-        detail={`${formatHours(hours.PRE)} sur ${formatHours(hours.total)}`}
-      />
-    </Grid>
-  );
-}
-PeriodFigures.propTypes = { totals: PropTypes.object.isRequired };
 
 /** Valeurs par mois, repliées par défaut */
 export function MonthlyTable({ monthly }) {
