@@ -19,6 +19,9 @@ mobile/CHANGELOG.md.
   l'export ou l'archivage, un indicateur de chargement s'affiche ; seul « Fermer » reste en pied.
 
 ### Corrigé
+- Création d'une intervention liée à une demande : les refus (demande introuvable, déjà liée,
+  statut qui n'autorise pas la liaison, intervention déjà liée) renvoient 404, 409 ou 400 avec
+  un message lisible, au lieu d'une erreur 500.
 - Erreurs métier (404, 400, 409) qui remontaient en 500 : tous les accès base passent désormais
   par le même traitement d'erreur. Une violation d'unicité renvoie 409 et une violation de
   référence 400, au lieu d'une erreur 500 générique.

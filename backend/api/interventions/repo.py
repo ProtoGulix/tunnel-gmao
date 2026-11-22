@@ -10,7 +10,13 @@ from api.audits.events import record_audit_event, system_reason_code
 from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.equipements.repo import EquipementRepository
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
+from api.errors.exceptions import (
+    ConflictError,
+    DatabaseError,
+    NotFoundError,
+    ValidationError,
+    raise_db_error,
+)
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.intervention_tasks.validators import task_delete_blocker
@@ -995,22 +1001,22 @@ class InterventionRepository:
         )
         row = cur.fetchone()
         if not row:
-            raise DatabaseError(f"Demande d'intervention {request_id} introuvable")
+            raise NotFoundError(f"Demande d'intervention {request_id} introuvable")
 
         current_statut = row[1]
         existing_intervention_id = row[2]
 
         if existing_intervention_id is not None:
-            raise DatabaseError(
+            raise ConflictError(
                 f"La demande '{request_id}' est déjà liée à l'intervention '{existing_intervention_id}'. "
                 f"Une demande ne peut être liée qu'à une seule intervention."
             )
 
         linkable = ("nouvelle", "en_attente")
         if current_statut not in linkable:
-            raise DatabaseError(
+            raise ValidationError(
                 f"La demande '{request_id}' est au statut '{current_statut}' "
-                f"et ne peut pas être liée (statuts acceptés : {linkable})"
+                "et ne peut pas être liée (statuts acceptés : nouvelle, en_attente)"
             )
 
         # Vérifier que l'intervention n'est pas déjà liée à une autre demande
@@ -1019,7 +1025,7 @@ class InterventionRepository:
             (intervention_id, request_id),
         )
         if cur.fetchone():
-            raise DatabaseError(
+            raise ConflictError(
                 f"L'intervention '{intervention_id}' est déjà liée à une autre demande d'intervention."
             )
 

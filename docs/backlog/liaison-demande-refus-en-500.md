@@ -1,3 +1,5 @@
+TRAITÉ (2026-11-22, LIA-01).
+
 # Refus de liaison d'une demande renvoyés en 500
 
 Constat du reviewer, chantier ERR (2026-11-22). Gravité : bug.

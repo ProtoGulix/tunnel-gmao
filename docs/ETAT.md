@@ -84,6 +84,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Refus de liaison d'une demande en 404, 409 ou 400 au lieu de 500 (accord de l'utilisateur du 2026-11-22), reviewer APPROUVÉ, 622 tests d'intégration verts | fusionnée dans develop | [LIA-01](taches/LIA-01-refus-de-liaison-erreurs-metier.md) |
 | fait (2026-11-22) | Erreurs métier transformées en 500 : `raise_db_error` relance les HTTPException (ERR-01), 94 `raise DatabaseError` des repo passés par `raise_db_error` (ERR-02), 11 tests repo (ERR-03) ; check.sh et 622 tests d'intégration verts | fusionnée dans develop | [ERR-01](taches/ERR-01-raise-db-error-relance-les-erreurs-metier.md) à [ERR-03](taches/ERR-03-tests-erreurs-metier-pas-en-500.md) |
 | fait (2026-11-22) | Guide et fronts alignés sur les libellés de la 5.13.0, premier contrôle de la règle CLAUDE.md 12.3 (documentation avant la version), version de Tunnel affichée dans le guide, reviewer APPROUVÉ | fusionnée dans develop | [GUIDE-06](taches/GUIDE-06-guide-aligne-sur-5-13.md) |
 | fait (2026-11-22) | Scripts de sauvegarde et de répétition d'une mise à jour (demande de l'utilisateur du 2026-11-22, après l'échec de la commande documentée en production) : SAUV-01, SAUV-02 ; essais réels sur la stack de dev, reviewer APPROUVÉ (réserves corrigées) | fusionnée dans develop | [SAUV-01](taches/SAUV-01-script-sauvegarde.md), [SAUV-02](taches/SAUV-02-script-repetition-mise-a-jour.md) |
