@@ -14,7 +14,7 @@ export const STATUS_CONFIG = {
 export const PRIORITY_CONFIG = {
   urgent:    { color: 'red',    border: 'var(--red-7)',    bg: 'var(--red-2)',    label: 'Urgent'    },
   important: { color: 'orange', border: 'var(--orange-7)', bg: 'var(--orange-2)', label: 'Important' },
-  normal:    { color: 'blue',   border: 'var(--gray-4)',   bg: 'var(--gray-2)',   label: 'Normal'    },
+  normal:    { color: 'blue',   border: 'var(--gray-4)',   bg: 'var(--gray-2)',   label: 'Normale'   },
   faible:    { color: 'gray',   border: 'var(--gray-4)',   bg: 'var(--gray-2)',   label: 'Faible'    },
 };
 

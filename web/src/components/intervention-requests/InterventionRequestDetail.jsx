@@ -68,7 +68,7 @@ StatusLogEntry.propTypes = {
   isFirst: PropTypes.bool,
 };
 
-const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
+const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normal: 'Normale', faible: 'Faible' };
 const PRIORITY_COLOR = { urgent: 'var(--red-11)', important: 'var(--orange-11)', normal: 'var(--gray-11)', faible: 'var(--gray-9)' };
 
 function InterventionProgress({ iv, interventionId }) {

@@ -76,8 +76,8 @@ function TaskSummary({ tasks }) {
   const parts = [
     counts.in_progress > 0 && { label: `${counts.in_progress} en cours`, color: 'blue' },
     counts.todo > 0 && { label: `${counts.todo} à faire`, color: 'gray' },
-    counts.done > 0 && { label: `${counts.done} fait${counts.done > 1 ? 's' : ''}`, color: 'green' },
-    counts.skipped > 0 && { label: `${counts.skipped} ignoré${counts.skipped > 1 ? 's' : ''}`, color: 'gray' },
+    counts.done > 0 && { label: `${counts.done} terminée${counts.done > 1 ? 's' : ''}`, color: 'green' },
+    counts.skipped > 0 && { label: `${counts.skipped} annulée${counts.skipped > 1 ? 's' : ''}`, color: 'gray' },
   ].filter(Boolean);
 
   return (

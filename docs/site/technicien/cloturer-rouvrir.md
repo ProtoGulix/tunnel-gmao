@@ -1,6 +1,6 @@
 # Clore ou rouvrir une intervention
 
-Clore, rouvrir ou ignorer une tâche sont des décisions hors du travail normal. Tunnel
+Clore, rouvrir ou annuler une tâche sont des décisions hors du travail normal. Tunnel
 demande alors un **motif**, choisi dans une liste. Le motif et son auteur sont conservés
 dans le journal d'audit.
 
@@ -33,13 +33,13 @@ Ouvrez l'intervention fermée, touchez **Statut**, puis choisissez un autre stat
 feuille « Pourquoi rouvrir cette intervention ? » demande le motif. Une fois confirmé,
 l'intervention reprend le statut choisi.
 
-## Ignorer une tâche
+## Annuler une tâche
 
-Dans la liste des tâches d'une intervention, le bouton **Ignorer** met la tâche de côté. La
-feuille « Pourquoi ignorer cette tâche ? » demande un motif. Le motif s'affiche ensuite sous
+Dans la liste des tâches d'une intervention, le bouton **Annuler** met la tâche de côté. La
+feuille « Pourquoi annuler cette tâche ? » demande un motif. Le motif s'affiche ensuite sous
 la tâche.
 
-Sur une tâche terminée ou ignorée, le bouton **Remettre à faire** la rouvre. Ce geste ne
+Sur une tâche terminée ou annulée, le bouton **Remettre à faire** la rouvre. Ce geste ne
 demande pas de motif.
 
 Une tâche se termine par une action liée, pas par un bouton (voir

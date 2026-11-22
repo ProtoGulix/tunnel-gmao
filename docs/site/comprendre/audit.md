@@ -11,7 +11,7 @@ falsifier ne vaut rien. Cette page explique comment il distingue le **travail no
 - Le **travail normal** se raconte par les **actions** : temps, nature, complexité. Créer une
   demande, une intervention ou une action est routinier. Rien de plus n'est demandé.
 - Une **décision** est un changement qui ne vient pas d'une action : clôturer, rouvrir,
-  ignorer une tâche ou une occurrence, rejeter une demande, supprimer. Pour une décision,
+  annuler une tâche, ignorer une occurrence, rejeter une demande, supprimer. Pour une décision,
   Tunnel veut savoir **pourquoi**.
 
 Dans les deux cas, l'**auteur** et la date sont toujours enregistrés. L'auteur est la personne
@@ -60,7 +60,7 @@ n'a pas choisi un motif explicite.
 | Rejeter une demande d'intervention | Les motifs de rejet. Règle ajoutée par l'ADR 0038. |
 | Rouvrir une intervention fermée | Les motifs de réouverture. |
 | Terminer une tâche sans action | Les motifs de clôture de tâche. |
-| Ignorer une tâche | Les motifs d'abandon de tâche. |
+| Annuler une tâche | Les motifs d'abandon de tâche. |
 | Ignorer une occurrence préventive | Les motifs d'occurrence ignorée. |
 
 Les motifs de départ sont décrits dans les pages par rôle : voir

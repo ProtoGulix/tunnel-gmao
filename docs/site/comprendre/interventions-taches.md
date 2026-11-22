@@ -66,7 +66,7 @@ toujours exigé** : « Clôturée par erreur », « Travail à reprendre » ou �
 configuration de départ. La réouverture a ces effets, dans la même transaction :
 
 - la demande liée repasse « Acceptée » ;
-- l'occurrence préventive liée, si elle était « terminée », repasse « en cours » ;
+- l'occurrence préventive liée, si elle était « clôturée », repasse « en cours » ;
 - le journal garde l'événement, avec l'auteur et le motif.
 
 Voir [Clore ou rouvrir](/technicien/cloturer-rouvrir) et
@@ -80,7 +80,7 @@ liée : la rouvrir pour la traiter autrement, ou la supprimer avec l'interventio
 
 ## Les tâches
 
-![Cycle de vie d'une tâche : à faire, en cours, terminée ou ignorée, avec ce qui déclenche chaque passage](/schemas/cycle-tache.svg)
+![Cycle de vie d'une tâche : à faire, en cours, terminée ou annulée, avec ce qui déclenche chaque passage](/schemas/cycle-tache.svg)
 
 Une tâche est un morceau de l'intervention. Elle porte :
 
@@ -91,17 +91,17 @@ Une tâche est un morceau de l'intervention. Elle porte :
   celle qui fait le travail : les exécutants sont ceux qui saisissent des actions ;
 - une échéance et un ordre.
 
-Quatre statuts : **à faire**, **en cours**, **terminée**, **ignorée**.
+Quatre statuts : **à faire**, **en cours**, **terminée**, **annulée**.
 
 | Passage | Ce qui le provoque |
 | --- | --- |
 | À faire vers En cours | Une action est liée à la tâche. |
 | En cours ou À faire vers Terminée | Une action liée « termine la tâche ». |
 | Terminée sans action | Un responsable ou un administrateur la déclare faite, avec un motif. |
-| Vers Ignorée | Une personne l'abandonne, avec un motif, depuis la tâche ou en saisissant une action. Pour une étape obligatoire d'un plan, seuls le responsable et l'administrateur peuvent le faire. |
-| Terminée ou Ignorée vers À faire | « Remettre à faire ». |
+| Vers Annulée | Une personne l'abandonne, avec un motif, depuis la tâche ou en saisissant une action. Pour une étape obligatoire d'un plan, seuls le responsable et l'administrateur peuvent le faire. |
+| Terminée ou Annulée vers À faire | « Remettre à faire ». |
 
-Une tâche déjà terminée ou ignorée n'accepte plus de nouvelle action : il faut d'abord la
+Une tâche déjà terminée ou annulée n'accepte plus de nouvelle action : il faut d'abord la
 remettre à faire.
 
 Sources : `backend/api/intervention_actions/repo.py` (passage « en cours » et « terminée » par

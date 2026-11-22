@@ -36,7 +36,7 @@ confiez la tâche.
 dégradé), puis par charge. Une barre de couleur indique la santé. Deux badges signalent
 la charge :
 
-- **N iv** : le nombre d'interventions ouvertes ;
+- **N iv** : le nombre d'interventions non fermées (ouvertes ou en attente) ;
 - **N DI** : le nombre de demandes d'intervention « nouvelle ».
 
 Cliquez sur un équipement pour le sélectionner. Un second clic sur lui-même le
@@ -47,7 +47,8 @@ désélectionne. Tant qu'aucun équipement n'est choisi, la zone de droite vous 
 
 Deux onglets :
 
-- **Interventions** : les interventions ouvertes de l'équipement. Chaque bloc montre le
+- **Interventions** : les interventions non fermées de l'équipement, y compris celles en
+  « Attente pièces » ou « Attente production ». Chaque bloc montre le
   code, le titre, le type, puis le **statut** et la **priorité**, que vous modifiez d'un
   clic. Dessous, les tâches, avec les mêmes gestes que dans la fiche de l'intervention :
   affecter un garant, fixer une échéance, **Terminé** et **Annuler** avec motif, et
@@ -76,10 +77,8 @@ pour les raisons proposées.
 
 ## À savoir
 
-- Le statut d'une intervention proposé ici s'appelle « Ouvert », « Attente pièces »,
-  « Attente production » ou « Fermé ». Il s'agit des mêmes statuts que dans la fiche de
-  l'intervention, où ils se nomment « En cours », « Attente pièces », « Attente prod. » et
-  « Terminée ».
+- Les statuts d'une intervention portent les mêmes noms partout, ici comme dans la fiche
+  de l'intervention : « Ouvert », « Attente pièces », « Attente production » et « Fermé ».
 - Si vous modifiez le statut ou la priorité ici et que l'API refuse, aucun message n'est
   affiché. Pour **clore** une intervention, utilisez de préférence sa fiche, qui montre
   les refus (par exemple les tâches obligatoires en attente).

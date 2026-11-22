@@ -9,7 +9,7 @@ import type { BriefingSituation, InterventionDetail, InterventionTask } from '@/
 const PRIORITY_CFG: Record<string, { color: string; label: string }> = {
   urgent:    { color: 'red',    label: 'Urgent' },
   important: { color: 'orange', label: 'Important' },
-  normal:    { color: 'gray',   label: 'Normal' },
+  normal:    { color: 'gray',   label: 'Normale' },
   faible:    { color: 'gray',   label: 'Faible' },
 };
 

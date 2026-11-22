@@ -12,7 +12,7 @@ Le responsable (rôle RESP) lit tout le métier et peut tout y écrire : demande
 interventions, tâches, plans préventifs, équipements, achats. Trois points le distinguent
 du technicien :
 
-- il clôt une tâche sans action, avec un motif, et ignore une étape obligatoire d'un plan
+- il clôt une tâche sans action, avec un motif, et annule une étape obligatoire d'un plan
   préventif ;
 - il exporte en masse les fiches d'interventions fermées ;
 - il consulte le bilan du service et le journal d'audit.
@@ -48,7 +48,7 @@ Les définitions de base (demande, intervention, tâche, action, préventif, aud
 - **Garant** : la personne affectée à une tâche. Elle répond de sa finalisation. Les
   **exécutants** sont les techniciens qui ont saisi des actions sur cette tâche. Garant et
   exécutant peuvent être différents : c'est un fonctionnement normal.
-- **Décision hors travail normal** : clôture, réouverture, tâche ignorée, rejet. Ces choix
+- **Décision hors travail normal** : clôture, réouverture, tâche annulée, rejet. Ces choix
   s'enregistrent avec un motif et leur auteur.
 
 ## Limites à connaître

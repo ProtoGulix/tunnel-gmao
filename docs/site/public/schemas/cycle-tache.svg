@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
-  <title>Cycle de vie d'une tâche : à faire, en cours, terminée ou ignorée, avec ce qui déclenche chaque passage</title>
+  <title>Cycle de vie d'une tâche : à faire, en cours, terminée ou annulée, avec ce qui déclenche chaque passage</title>
   <style>
     text { font-size: 14px; fill: #1f2937; }
     .note { font-size: 12px; fill: #6b7280; }
@@ -51,7 +51,7 @@
   <rect class="green" x="640" y="54" width="120" height="44" rx="10"/>
   <text x="700" y="81" text-anchor="middle">Terminée</text>
   <rect class="neutral" x="640" y="222" width="120" height="44" rx="10"/>
-  <text x="700" y="249" text-anchor="middle">Ignorée</text>
+  <text x="700" y="249" text-anchor="middle">Annulée</text>
 
   <text x="20" y="366">Obligatoire : bloque la fermeture de l'intervention tant qu'elle est à faire ou en cours.</text>
   <text x="20" y="384">Facultative : ne bloque jamais.</text>

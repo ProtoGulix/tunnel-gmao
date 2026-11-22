@@ -41,7 +41,7 @@ function GammeProgress({ progress }) {
         <Text size="2" weight="medium" color="green">
           Gamme : {progress.done} / {progress.total} terminée(s)
         </Text>
-        {progress.skipped > 0 && <Text size="1" color="gray">{progress.skipped} ignorée(s)</Text>}
+        {progress.skipped > 0 && <Text size="1" color="gray">{progress.skipped} annulée(s)</Text>}
       </Flex>
       <Flex align="center" gap="2">
         <ProgressBar done={progress.done} total={progress.total} />

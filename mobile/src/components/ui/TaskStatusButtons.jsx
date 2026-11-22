@@ -53,7 +53,7 @@ export function TaskStatusButtons({ task, onChanged }) {
   if (reasons) {
     return (
       <AuditReasonSheet
-        title="Pourquoi ignorer cette tâche ?"
+        title="Pourquoi annuler cette tâche ?"
         reasons={reasons}
         onConfirm={audit => applyStatus('skipped', {}, audit)}
         onCancel={() => setReasons(null)}

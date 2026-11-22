@@ -1,7 +1,15 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vitepress";
+
+// Version de Tunnel que décrit ce guide : lue dans web/package.json, mis à jour par chaque
+// version (CLAUDE.md 12.3). Le guide ne peut donc pas afficher une version oubliée.
+const tunnelVersion = JSON.parse(
+  readFileSync(new URL("../../../web/package.json", import.meta.url), "utf8"),
+).version;
 
 // Guide utilisateur de Tunnel GMAO (ADR 0037) : français, rangé par rôle.
 const repoLink = "https://github.com/ProtoGulix/tunnel-gmao";
+const changelogLink = `${repoLink}/blob/main/CHANGELOG.md`;
 
 // Barre latérale : une section par rôle, repliée sauf la section ouverte.
 const section = (text, base, pages) => ({
@@ -85,6 +93,7 @@ export default defineConfig({
       { text: "Installation", link: "/installation/" },
       { text: "Feuille de route", link: "/feuille-de-route" },
       { text: "Site Tunnel", link: "https://frezille.fr" },
+      { text: `Tunnel ${tunnelVersion}`, link: changelogLink },
     ],
     sidebar: roleSidebar,
     socialLinks: [{ icon: "github", link: repoLink }],
@@ -127,7 +136,8 @@ export default defineConfig({
       linkText: "Retour à l'accueil",
     },
     footer: {
-      message: "Publié sous licence AGPL-3.0.",
+      message: `Guide de Tunnel ${tunnelVersion}. Publié sous licence AGPL-3.0.`,
     },
+    tunnelVersion,
   },
 });
