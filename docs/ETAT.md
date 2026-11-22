@@ -84,6 +84,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Remettre une tâche à faire exige un motif, décision nommée « Tâche remise à faire » (décisions de l'utilisateur du 2026-11-13 et du 2026-11-22) : motifs, migration 0027 (REM-01) ; API et journal (REM-02) ; fronts (REM-03) ; guide ; reviewer APPROUVÉ (remise à faire verrouillée contre une clôture concurrente : 409) ; 643 tests d'intégration verts ; migration 0027 jouée en dev le 2026-11-22 avec l'accord de l'utilisateur (2 motifs ajoutés, OTHER ouvert à task_reopened) ; essai à l'écran validé | fusionnée dans develop | ADR 0042, [REM-01](taches/REM-01-motifs-remise-a-faire.md) à [REM-03](taches/REM-03-fronts-motif-remise-a-faire.md) |
 | fait (2026-11-22) | Archivage irrévocable garanti par la base (décision de l'utilisateur du 2026-11-22) : déclencheur, migration 0026 (IRR-01) ; une intervention archivée ne se rouvre pas, fronts web et mobile (IRR-02) ; guide ; 631 tests d'intégration verts ; reviewer APPROUVÉ ; migration 0026 jouée en dev le 2026-11-22 avec l'accord de l'utilisateur (225 interventions archivées figées, aucune donnée modifiée) ; essai à l'écran validé (mention réduite à « Archivée ») | fusionnée dans develop | ADR 0041, [IRR-01](taches/IRR-01-declencheur-archivage-irrevocable.md), [IRR-02](taches/IRR-02-fronts-archivage-irrevocable.md) |
 | fait (2026-11-22) | Refus de liaison d'une demande en 404, 409 ou 400 au lieu de 500 (accord de l'utilisateur du 2026-11-22), reviewer APPROUVÉ, 622 tests d'intégration verts | fusionnée dans develop | [LIA-01](taches/LIA-01-refus-de-liaison-erreurs-metier.md) |
 | fait (2026-11-22) | Erreurs métier transformées en 500 : `raise_db_error` relance les HTTPException (ERR-01), 94 `raise DatabaseError` des repo passés par `raise_db_error` (ERR-02), 11 tests repo (ERR-03) ; check.sh et 622 tests d'intégration verts | fusionnée dans develop | [ERR-01](taches/ERR-01-raise-db-error-relance-les-erreurs-metier.md) à [ERR-03](taches/ERR-03-tests-erreurs-metier-pas-en-500.md) |
@@ -223,7 +224,7 @@ subagents, format de compte rendu imposé aux agents).
    classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
-2. Chantier changements hors travail normal (occurrence ignorée et nettoyage faits, CONT-03 ; le reste ouvert au 2026-11-21), décisions de l'utilisateur du 2026-11-13 :
+2. Chantier changements hors travail normal : CONT-03 fait ; remise à faire avec motif faite (chantier REM, ADR 0042) ; « Oubli de clôture à la saisie » abandonné (doublon de « Réalisée sans action saisie », décision du 2026-11-22). Historique, décisions de l'utilisateur du 2026-11-13 :
    remettre à faire exige un motif (task_reopened : « Clôturée par erreur », « Travail à
    reprendre », OTHER) ; nouveau motif de clôture task_done « Oubli de clôture à la
    saisie » ; occurrence préventive ignorée par motif d'audit ; nettoyage du ROUTINE en

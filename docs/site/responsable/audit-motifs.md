@@ -49,6 +49,7 @@ Dans la configuration de départ :
 | Décision | Motif |
 | --- | --- |
 | Clore une tâche (Terminé) ou l'abandonner (Annuler) | Toujours demandé |
+| Remettre une tâche à faire | Toujours demandé |
 | Rouvrir une intervention fermée | Toujours demandé |
 | Ignorer une occurrence préventive | Toujours demandé |
 | Supprimer (tâche, intervention, demande), désactiver un plan | Toujours demandé |

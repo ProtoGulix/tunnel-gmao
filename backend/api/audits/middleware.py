@@ -34,7 +34,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.routing import Match
 
 from api.audits.declaration import CREATED_ID_ATTR, find_declaration
-from api.audits.events import AuditUnit, bind_audit_unit, unbind_audit_unit
+from api.audits.events import AuditUnit, bind_audit_unit, replaced_fields, unbind_audit_unit
 from api.audits.exclusions import EXCLUDED, EXCLUSIONS, NO_WRITE
 from api.audits.repo import AuditRepository
 from api.audits.writer import (  # noqa: F401  (ré-exports : importés par les tests)
@@ -437,7 +437,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
         reason_text: Optional[str],
     ) -> None:
         """Une ligne `{champ}_changed` par champ réellement modifié, aucune sinon."""
+        # Les champs qu'une décision nommée déposée par le repo remplace n'ont pas de ligne propre.
+        covered = replaced_fields(target.entity_type, target.entity_id)
         for field, (old_val, new_val) in _compute_diff(old_state, new_state).items():
+            if field in covered:
+                continue
             await _write(
                 target.entity_type,
                 target.entity_id,

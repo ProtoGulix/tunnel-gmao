@@ -128,4 +128,5 @@ export const AUDIT_DECISION_LABELS = {
   created:               'Créé',
   deleted:               'Supprimé',
   status_changed:        'Statut modifié',
+  task_reopened:         'Tâche remise à faire',
 };

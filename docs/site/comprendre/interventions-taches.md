@@ -103,7 +103,7 @@ Quatre statuts : **à faire**, **en cours**, **terminée**, **annulée**.
 | En cours ou À faire vers Terminée | Une action liée « termine la tâche ». |
 | Terminée sans action | Un responsable ou un administrateur la déclare faite, avec un motif. |
 | Vers Annulée | Une personne l'abandonne, avec un motif, depuis la tâche ou en saisissant une action. Pour une étape obligatoire d'un plan, seuls le responsable et l'administrateur peuvent le faire. |
-| Terminée ou Annulée vers À faire | « Remettre à faire ». |
+| Terminée ou Annulée vers À faire | « Remettre à faire », avec un motif. Le journal note « Tâche remise à faire ». |
 
 Une tâche déjà terminée ou annulée n'accepte plus de nouvelle action : il faut d'abord la
 remettre à faire.

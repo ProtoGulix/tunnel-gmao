@@ -5,10 +5,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ConflictError, NotFoundError, ValidationError, raise_db_error
 from api.intervention_tasks.schemas import InterventionTaskIn, InterventionTaskPatch
-from api.intervention_tasks.validators import task_delete_blocker
+from api.intervention_tasks.validators import is_task_reopening, task_delete_blocker
 from api.interventions.validators import is_intervention_locked
 from api.utils.search import build_search_clause
 
@@ -361,9 +362,17 @@ class InterventionTaskRepository:
     # ── Mise à jour ───────────────────────────────────────────────
 
     def patch(
-        self, task_id: str, data: InterventionTaskPatch, closed_by: Optional[str] = None
+        self,
+        task_id: str,
+        data: InterventionTaskPatch,
+        closed_by: Optional[str] = None,
+        reopen_checked: bool = False,
     ) -> Dict[str, Any]:
-        """Met à jour partiellement une tâche."""
+        """Met à jour partiellement une tâche.
+
+        `reopen_checked` : la route a exigé le motif d'une remise à faire. Ligne verrouillée :
+        si la tâche a été close entre-temps, la remise à faire est refusée (409).
+        """
         conn = self._get_connection()
         try:
             cur = conn.cursor()
@@ -372,6 +381,7 @@ class InterventionTaskRepository:
                 SELECT status, intervention_id, label, assigned_to, due_date, sort_order, skip_reason,
                        closed_by
                 FROM intervention_task WHERE id = %s
+                FOR UPDATE
                 """,
                 (task_id,),
             )
@@ -402,7 +412,14 @@ class InterventionTaskRepository:
                 if data.status in ("done", "skipped"):
                     set_parts.append("closed_by = %s")
                     params.append(closed_by)
-            if data.skip_reason is not None and data.skip_reason != old_skip:
+            reopening = is_task_reopening(old_status, data.status)
+            if reopening and not reopen_checked:
+                raise ConflictError("La tâche a changé : réessayez")
+            if reopening:
+                # Remise à faire (ADR 0042) : l'auteur de la clôture et la raison d'abandon
+                # n'ont plus de sens ; la ligne `task_reopened` garde l'état d'avant.
+                set_parts.extend(["closed_by = NULL", "skip_reason = NULL"])
+            elif data.skip_reason is not None and data.skip_reason != old_skip:
                 set_parts.append("skip_reason = %s")
                 params.append(data.skip_reason)
             if data.assigned_to is not None and str(data.assigned_to) != str(old_assigned or ""):
@@ -425,6 +442,19 @@ class InterventionTaskRepository:
                 f"UPDATE intervention_task SET {', '.join(set_parts)} WHERE id = %s",
                 params,
             )
+            if reopening:
+                record_audit_event(
+                    "task",
+                    task_id,
+                    "task_reopened",
+                    old_value={
+                        "status": old_status,
+                        "closed_by": str(old_closed_by) if old_closed_by else None,
+                        "skip_reason": old_skip,
+                    },
+                    new_value={"status": "todo", "closed_by": None, "skip_reason": None},
+                    replaces_fields=("status", "closed_by", "skip_reason"),
+                )
 
             conn.commit()
         except (NotFoundError, ValidationError, ConflictError):

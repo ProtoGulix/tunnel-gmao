@@ -42,8 +42,8 @@ Dans la liste des tâches d'une intervention, le bouton **Annuler** met la tâch
 feuille « Pourquoi annuler cette tâche ? » demande un motif. Le motif s'affiche ensuite sous
 la tâche.
 
-Sur une tâche terminée ou annulée, le bouton **Remettre à faire** la rouvre. Ce geste ne
-demande pas de motif.
+Sur une tâche terminée ou annulée, le bouton **Remettre à faire** la rouvre, avec un motif
+(« Pourquoi remettre à faire ? »).
 
 Une tâche se termine par une action liée, pas par un bouton (voir
 [Saisir une action](/technicien/saisir-une-action)).

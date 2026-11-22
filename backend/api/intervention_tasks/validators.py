@@ -93,3 +93,43 @@ def ensure_explicit_close_reason(
     if reason_code == "OTHER" and not (reason_text or "").strip():
         raise ValidationError("reason_text obligatoire quand reason_code = OTHER")
     return reason["label"]
+
+
+# Décision d'audit (decision_types) d'une remise à faire (ADR 0042)
+REOPEN_DECISION = "task_reopened"
+
+
+def is_task_reopening(current_status: Optional[str], new_status: Optional[str]) -> bool:
+    """Vrai si la mise à jour remet à faire une tâche terminée ou annulée."""
+    return new_status == "todo" and current_status in ("done", "skipped")
+
+
+def ensure_task_reopen_reason(
+    reason_code: Optional[str],
+    reason_text: Optional[str],
+    reasons: List[Dict[str, Any]],
+) -> None:
+    """Vérifie le motif explicite d'une remise à faire (ADR 0042, même mécanisme que ADR 0016).
+
+    Remettre à faire n'est jamais routinier : sans motif choisi par l'utilisateur (ROUTINE
+    injecté par le middleware, motif auto ou system), on répond la demande de motif standard.
+    `reasons` = motifs actifs de l'entité task ; seuls ceux dont decision_types contient
+    `task_reopened` sont proposés et acceptés.
+    """
+    proposed = [r for r in reasons if REOPEN_DECISION in (r.get("decision_types") or [])]
+    reason = {r["code"]: r for r in reasons}.get(reason_code or "")
+    if reason is None:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une tâche")
+    if reason.get("category") not in ("manual", "user"):
+        raise AuditReasonRequiredError(
+            AuditRules(
+                required=True,
+                silent=False,
+                default_reason_code=None,
+                reasons=build_picker_reasons(proposed),
+            ).model_dump()
+        )
+    if reason not in proposed:
+        raise ValidationError(f"Motif '{reason_code}' non applicable à une remise à faire")
+    if reason_code == "OTHER" and not (reason_text or "").strip():
+        raise ValidationError("reason_text obligatoire quand reason_code = OTHER")

@@ -12,3 +12,6 @@ Correctif proposé : faire tourner ce test de retour arrière sur un état connu
 référencés), par exemple en lui faisant créer puis vérifier son propre état, ou en le
 déclarant explicitement en tête de suite ; toucher à cette assertion existante demande
 l'accord de l'utilisateur (CLAUDE.md 7.4).
+
+Même cas pour la migration 0027 (chantier REM) : test_motifs_remise_a_faire_migration_integration.py
+avant test_taches_remise_a_faire_integration.py.

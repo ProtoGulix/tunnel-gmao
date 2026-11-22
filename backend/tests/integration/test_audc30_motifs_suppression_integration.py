@@ -33,6 +33,7 @@ def test_other_couvre_toutes_entites_et_deleted(instance):
                 "occurrence_skipped",
                 "intervention_reopened",
                 "request_rejected",
+                "task_reopened",
             ],
         )
     ]

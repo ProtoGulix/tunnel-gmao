@@ -9,6 +9,6 @@ Tri du 2026-11-19 : les anciens backlogs des versions 1 à 4 et les fiches de su
 code ; les points faits ou périmés sont retirés (historique dans git), les points ouverts
 sont rangés par thème : integrite-taches-action-supprimee, audit-tables-modifiables,
 mobile-jeton-non-rafraichi, routes-amelioration-absentes, erreurs-metier-en-500,
-securite-petits-points, liaison-demande-refus-en-500, statuts-intervention-code-mort, tests-integration-dependants-de-l-ordre, dette-backend, dette-mobile, dette-web, donnees-reference-seed,
+securite-petits-points, liaison-demande-refus-en-500, statuts-intervention-code-mort, tests-integration-dependants-de-l-ordre, mobile-message-sans-motif, dette-backend, dette-mobile, dette-web, donnees-reference-seed,
 deploiement-et-bascule, decisions-en-attente, a-verifier-a-l-ecran. Une fiche marquée
 « TRAITÉ » en tête est close.

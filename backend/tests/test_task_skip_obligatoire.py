@@ -28,7 +28,7 @@ def patches(monkeypatch):
         def get_by_id(self, task_id):
             return etat["tache"]
 
-        def patch(self, task_id, data, closed_by=None):
+        def patch(self, task_id, data, closed_by=None, reopen_checked=False):
             recus.append(data)
             return {**etat["tache"], "status": data.status}
 

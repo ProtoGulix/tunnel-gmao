@@ -19,6 +19,9 @@ mobile/CHANGELOG.md.
   l'export ou l'archivage, un indicateur de chargement s'affiche ; seul « Fermer » reste en pied.
 
 ### Modifié
+- Remettre à faire une tâche terminée ou annulée exige un motif, pour tous les rôles (web,
+  mobile, API) ; l'auteur de la clôture est effacé ; le journal note « Tâche remise à faire »
+  (ADR 0042).
 - Archivage irrévocable (web et mobile) : une intervention fermée et archivée n'offre plus le
   changement de statut et affiche « Archivée » ; la confirmation
   d'archivage prévient que les fiches ne pourront plus être rouvertes. Une intervention fermée
@@ -28,6 +31,11 @@ mobile/CHANGELOG.md.
   intervention archivée fermée, pour toute écriture du rôle de l'application. L'API renvoie
   400 avec un message lisible. Migration 0026 à jouer en production : les interventions déjà
   archivées sont figées dès la montée de version ; aucune donnée n'est modifiée.
+
+### [interne] Base de données
+- Migration 0027 à jouer en production : ajoute les motifs « Clôturée par erreur » et « Travail à
+  reprendre » et la décision `task_reopened` (ajoutée aussi à « Autre raison »), pour la remise à
+  faire d'une tâche avec motif (ADR 0042). Aucune donnée existante modifiée.
 
 ### Corrigé
 - Création d'une intervention liée à une demande : les refus (demande introuvable, déjà liée,

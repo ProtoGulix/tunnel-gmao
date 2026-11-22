@@ -307,15 +307,17 @@ Met à jour partiellement une tâche. Seuls les champs fournis sont modifiés.
 | Champ         | Type   | Requis       | Description                              |
 | ------------- | ------ | ------------ | ---------------------------------------- |
 | `label`       | string | non          | Nouvel intitulé                          |
-| `status`      | string | non          | `todo`, `skipped` ou `done` via PATCH direct |
+| `status`      | string | non          | `todo`, `skipped` ou `done` via PATCH direct (`todo` depuis `done` ou `skipped` : voir ci-dessous) |
 | `skip_reason` | string | non          | Facultatif : si absent avec `status = "skipped"`, prend le libellé du motif (suivi de ` : ` et du `reason_text` s'il existe) |
 | `assigned_to` | uuid   | non          | Technicien assigné                       |
 | `due_date`    | date   | non          | Échéance                                 |
 | `sort_order`  | int    | non          | Ordre d'affichage                        |
-| `reason_code` | string | conditionnel | Requis si le corps porte `assigned_to` ou `due_date`, ou un `status` `done` ou `skipped` (voir ci-dessous) ; sinon routinier, `ROUTINE` injecté. Voir `GET /audit/reasons` |
+| `reason_code` | string | conditionnel | Requis si le corps porte `assigned_to` ou `due_date`, ou un `status` `done`, `skipped` ou une remise à faire (voir ci-dessous) ; sinon routinier, `ROUTINE` injecté. Voir `GET /audit/reasons` |
 | `reason_text` | string | conditionnel | Obligatoire si `reason_code = "OTHER"`   |
 
 > **Motif explicite pour `done` et `skipped`** (ADR 0016) : un passage direct vers `done` ou `skipped` n'est jamais routinier. Le `reason_code` doit être un motif de catégorie `manual` ou `user` applicable à l'entité `task` **et dont `decision_types` contient le décideur du bouton** : `task_done` pour `done` (`TASK_DONE_UNRECORDED`, `TASK_HANDLED_ELSEWHERE`, `OTHER` sur une base neuve), `task_skipped` pour `skipped` (`TASK_NO_LONGER_NEEDED`, `TASK_DUPLICATE`, `TASK_HANDLED_ELSEWHERE`, `OTHER`). Un motif sans `decision_types` est exclu. La même liste filtrée sert à la demande de motif (`audit.reasons`) et au contrôle du motif reçu. Si le motif est absent (le middleware injecte alors `ROUTINE`) ou de catégorie `auto` ou `system`, la réponse est la demande de motif standard : `400`, `error_type = "ValidationError"`, `detail = "reason_code obligatoire pour cette mutation"` et un champ `audit` (`required`, `silent = false`, `reasons` = motifs proposables). Le front rejoue la requête avec le motif choisi.
+
+> **Remise à faire** (ADR 0042) : `status = "todo"` sur une tâche `done` ou `skipped` exige aussi un motif explicite, pour tous les rôles (TECH compris). Le `reason_code` doit être de catégorie `manual` ou `user`, applicable à l'entité `task`, avec le décideur `task_reopened` (`TASK_CLOSED_BY_MISTAKE`, `TASK_REWORK`, `OTHER`). Sans motif ou avec un motif `auto` ou `system`, la réponse est la demande de motif standard (`400`, champ `audit`), comme ci-dessus. `closed_by` et `skip_reason` sont remis à `NULL`. Le journal reçoit une seule ligne `task_reopened`, avec le motif et l'auteur du jeton, et pas de ligne `status_changed`. Passer `todo` depuis `todo` ou `in_progress`, et le retour automatique à « à faire » après suppression de la dernière action, restent sans motif.
 
 > La transition vers `in_progress` passe par `POST /intervention-actions`. `done` peut aussi être posé par PATCH sans action (ADR 0016) : réservé à RESP et ADMIN (403 sinon), `closed_by` = utilisateur du jeton.
 
@@ -328,6 +330,7 @@ Tâche mise à jour.
 | Code | Cas                                     |
 | ---- | --------------------------------------- |
 | 400  | `status` `done` ou `skipped` sans motif explicite : demande de motif standard (champ `audit`) |
+| 400  | `status` `todo` sur une tâche `done` ou `skipped` sans motif explicite : demande de motif standard (champ `audit`) |
 | 400  | motif hors de la liste du bouton (inconnu, d'une autre entité, ou sans le bon `decision_types`), ou `OTHER` sans `reason_text` |
 | 422  | `status` invalide                       |
 | 403  | `status = "done"` par un rôle autre que RESP/ADMIN |

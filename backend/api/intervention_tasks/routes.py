@@ -15,6 +15,8 @@ from api.intervention_tasks.validators import (
     ensure_can_close,
     ensure_can_skip,
     ensure_explicit_close_reason,
+    ensure_task_reopen_reason,
+    is_task_reopening,
 )
 from api.utils.audit import list_entity_reasons
 from api.utils.response import single
@@ -132,7 +134,10 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
 
     La transition vers `in_progress` passe par une action (`POST /intervention-actions`).
     `done` peut aussi être posé par PATCH sans action (ADR 0016) : réservé aux rôles
-    RESP et ADMIN (403). Tout passage direct vers `done` ou `skipped` exige un motif
+    RESP et ADMIN (403). Remettre à faire (`todo`) une tâche `done` ou `skipped` exige aussi un
+    motif explicite de décision `task_reopened`, pour tous les rôles (ADR 0042) ; `closed_by`
+    et `skip_reason` sont alors effacés, et le journal porte une seule ligne `task_reopened`.
+    Tout passage direct vers `done` ou `skipped` exige un motif
     explicite (catégorie manual ou user, entité task) : sinon 400 « reason_code
     obligatoire » avec la liste des motifs dans `audit`. Pour `skipped`, `skip_reason`
     est alors facultatif (libellé du motif, plus `reason_text`).
@@ -149,6 +154,16 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
         ensure_can_close(getattr(request.state, "role", None))
     if data.status == "skipped":
         ensure_can_skip(repo.get_by_id(task_id), getattr(request.state, "role", None))
+    reopen_checked = False
+    if data.status == "todo":
+        current = repo.get_by_id(task_id).get("status")
+        reopen_checked = is_task_reopening(current, data.status)
+        if reopen_checked:
+            ensure_task_reopen_reason(
+                data.reason_code or getattr(request.state, REASON_CODE_ATTR, None),
+                data.reason_text,
+                list_entity_reasons("task"),
+            )
     if data.status in ("done", "skipped"):
         label = ensure_explicit_close_reason(
             data.reason_code or getattr(request.state, REASON_CODE_ATTR, None),
@@ -163,7 +178,9 @@ def patch_task(request: Request, task_id: str, data: InterventionTaskPatch):
                 if (data.reason_text or "").strip()
                 else label
             )
-    return single(repo.patch(task_id, data, closed_by=user_id or None))
+    return single(
+        repo.patch(task_id, data, closed_by=user_id or None, reopen_checked=reopen_checked)
+    )
 
 
 @router.delete(

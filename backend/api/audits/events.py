@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import contextvars
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 
@@ -34,6 +34,9 @@ class AuditEvent:
     # requête est réservé aux décisions d'un utilisateur). Sinon, motif propre à l'événement
     # quand la route l'a déjà résolu ; à défaut, celui de la requête.
     reason_code: Optional[str] = None
+    # Champs de l'entité que cette décision remplace dans le diff : le middleware n'écrit
+    # alors pas leur ligne `{champ}_changed`, la décision nommée les porte déjà.
+    replaces_fields: Tuple[str, ...] = ()
 
 
 # Motif des mutations du système qui suivent une décision d'utilisateur (ADR 0018).
@@ -87,8 +90,12 @@ def record_audit_event(
     new_value: Optional[Dict[str, Any]] = None,
     is_system: bool = False,
     reason_code: Optional[str] = None,
+    replaces_fields: Tuple[str, ...] = (),
 ) -> None:
     """Dépose un événement d'audit dans la requête en cours (à appeler depuis un repo).
+
+    `replaces_fields` : champs de l'entité déclarée par la route que cette décision remplace ;
+    leurs lignes `{champ}_changed` ne sont pas écrites en plus (ex. `task_reopened`).
 
     Le middleware l'écrit dans la même transaction que la mutation, avec l'auteur du jeton
     et le motif de la requête. Pour une mutation du système (`is_system=True`), `reason_code`
@@ -114,7 +121,24 @@ def record_audit_event(
             new_value=new_value,
             is_system=is_system,
             reason_code=reason_code,
+            replaces_fields=tuple(replaces_fields),
         )
+    )
+
+
+def replaced_fields(entity_type: str, entity_id: Any) -> frozenset:
+    """Champs d'une entité déjà couverts par un événement déposé dans la requête en cours.
+
+    Lu par le middleware avant d'écrire les diffs, pour ne pas doubler une décision nommée.
+    """
+    unit = _current_unit.get()
+    if unit is None:
+        return frozenset()
+    return frozenset(
+        field
+        for event in unit.events
+        if event.entity_type == entity_type and str(event.entity_id) == str(entity_id)
+        for field in event.replaces_fields
     )
 
 
