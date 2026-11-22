@@ -63,26 +63,46 @@ Contrôler le résultat dans les journaux de l'API après une connexion.
 cd tunnel-gmao
 git pull
 cd deploy
-docker compose up -d --build
+./sauvegarder.sh                                          # 1. sauvegarde
+./repeter-mise-a-jour.sh ~/sauvegardes-tunnel/tunnel-AAAA-MM-JJ-HHMM.sql.gz   # 2. répétition
+docker compose up -d --build                              # 3. seulement si la répétition est verte
 ```
 
-Les migrations s'appliquent au démarrage de l'API. Faire une sauvegarde avant.
+Les migrations s'appliquent au démarrage de l'API. Une migration qui échoue empêche l'API
+de démarrer : d'où la répétition. `repeter-mise-a-jour.sh` restaure la sauvegarde dans un
+PostgreSQL jetable (réseau jetable, aucun port publié, mot de passe aléatoire), construit
+l'image de l'API depuis le code récupéré (`docker compose build api`, sans rien lancer ni
+recréer) et y joue la commande de démarrage de l'API, `python -m scripts.bootstrap` :
+migrations, rôle applicatif et données de départ, comme en production. Il affiche la
+révision avant et après, l'erreur exacte de la migration en cause s'il y en a une, et le
+décompte des priorités d'intervention. Il se termine par un code non nul au moindre échec ;
+dans ce cas ne pas lancer l'étape 3. La production n'est jamais touchée, et conteneur,
+volume et réseau jetables sont supprimés dans tous les cas. La répétition demande de la
+place pour une copie de la base et quelques minutes pour la construction.
 
 ## Sauvegarde et restauration de la base
 
 ```sh
-# Sauvegarde (à planifier, par exemple avec cron)
-docker compose exec -T db pg_dump -U tunnel_owner -d tunnel | gzip > tunnel-$(date +%F).sql.gz
+# Sauvegarde (depuis n'importe quel répertoire ; à planifier, par exemple avec cron)
+./sauvegarder.sh [dossier]
+```
 
+`sauvegarder.sh` écrit `tunnel-AAAA-MM-JJ-HHMM.sql.gz` dans `~/sauvegardes-tunnel/` (ou
+dans le dossier donné, créé au besoin, accessible à vous seul), ne remplace jamais un
+fichier existant, contrôle l'archive et n'en laisse aucune si la sauvegarde échoue.
+Ne pas utiliser un simple `pg_dump | gzip` : sans contrôle, un échec laisse un fichier
+vide qui a l'air bon.
+
+```sh
 # Restauration dans une installation vide (api arrêtée)
 docker compose stop api
-gunzip -c tunnel-AAAA-MM-JJ.sql.gz | docker compose exec -T db psql -U tunnel_owner -d tunnel
+gunzip -c ~/sauvegardes-tunnel/tunnel-AAAA-MM-JJ-HHMM.sql.gz | docker compose exec -T db psql -U tunnel_owner -d tunnel
 docker compose start api
 ```
 
 Conserver les sauvegardes hors de la machine. Le fichier `.env` fait aussi partie de
-la sauvegarde : sans `JWT_SECRET_KEY` et les mots de passe, une restauration
-demande de les régénérer.
+la sauvegarde (le script ne le copie pas) : sans `JWT_SECRET_KEY` et les mots de passe,
+une restauration demande de les régénérer.
 
 ## Réglages
 

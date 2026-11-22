@@ -8,6 +8,16 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- Installation : `deploy/sauvegarder.sh` sauvegarde la base depuis n'importe quel
+  répertoire, contrôle l'archive et n'en laisse aucune si la sauvegarde échoue (la commande
+  `pg_dump | gzip` du README laissait un fichier vide qui avait l'air bon).
+- Installation : `deploy/repeter-mise-a-jour.sh` répète une mise à jour sur une copie de la
+  sauvegarde, dans une base jetable : il joue migrations et données de départ comme au
+  démarrage de l'API, affiche le résultat et le décompte des priorités, sans toucher à la
+  production. La mise à jour documentée devient : git pull, sauvegarde, répétition, puis
+  `docker compose up -d --build` si la répétition est verte.
+
 ### Modifié
 - Priorité des interventions : la priorité « normale » s'écrit partout `normal` (elle
   s'écrivait aussi `normale`). La migration 0025, jouée au démarrage de l'API, convertit
