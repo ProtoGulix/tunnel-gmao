@@ -7,7 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- **v5.13.0** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
+- **v5.13.0** (2026-11-22, PR #21, tag sur main) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
 - **v5.12.1** (2026-11-21, PR #18, tag sur main) : guide publié sous /docs/ (le workflow
   déposait le site à la racine du domaine). Aucun changement de l'application.
 - **v5.12.0** (2026-11-21, PR #17, tag sur main) :
@@ -192,7 +192,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; une version est à décider par l'utilisateur pour livrer scripts et chantier PRIO.
+0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; version 5.13.0 publiée le 2026-11-22.
 
 0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 
