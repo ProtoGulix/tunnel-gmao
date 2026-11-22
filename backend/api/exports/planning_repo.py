@@ -2,7 +2,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError
+from api.errors.exceptions import NotFoundError, raise_db_error
 
 _TYPE_MAP = {
     "PRE": "preventif",
@@ -48,7 +48,7 @@ class PlanningRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur DB (get_tech_info): {str(e)}")
+            raise_db_error(e, "Erreur DB (get_tech_info)")
         finally:
             release_connection(conn)
 
@@ -95,6 +95,6 @@ class PlanningRepository:
                 row["type"] = _infer_type(row.get("inter_code"))
             return rows
         except Exception as e:
-            raise DatabaseError(f"Erreur DB (get_tasks_for_week): {str(e)}")
+            raise_db_error(e, "Erreur DB (get_tasks_for_week)")
         finally:
             release_connection(conn)

@@ -16,7 +16,7 @@ from api.constants import (
     SUPPLIER_ORDER_STATUS_CONFIG,
 )
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
+from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 from api.utils.search import build_search_clause
 
 logger = logging.getLogger(__name__)
@@ -158,9 +158,7 @@ class PurchaseRequestRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(
-                f"Erreur lors de la création de la demande d'achat: {str(e)}"
-            ) from e
+            raise_db_error(e, "Erreur lors de la création de la demande d'achat")
         finally:
             release_connection(conn)
 
@@ -224,7 +222,7 @@ class PurchaseRequestRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 
@@ -247,7 +245,7 @@ class PurchaseRequestRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression")
         finally:
             release_connection(conn)
 

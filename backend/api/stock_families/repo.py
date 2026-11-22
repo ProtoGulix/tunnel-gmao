@@ -6,7 +6,7 @@ from typing import List
 from api.audits.entity_ids import stock_family_entity_id
 from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.stock_families.schemas import StockFamilyDetail, StockFamilyIn, StockFamilyListItem
 from api.stock_items.template_schemas import StockSubFamily
 from api.stock_items.template_service import TemplateService
@@ -55,7 +55,7 @@ class StockFamilyRepository:
 
         except Exception as e:
             logger.error("Erreur lors du chargement des familles: %s", str(e))
-            raise DatabaseError(f"Erreur lors du chargement des familles: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement des familles")
         finally:
             release_connection(conn)
 
@@ -154,7 +154,7 @@ class StockFamilyRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors du chargement de la famille %s: %s", family_code, str(e))
-            raise DatabaseError(f"Erreur lors du chargement de la famille: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement de la famille")
         finally:
             release_connection(conn)
 
@@ -225,7 +225,7 @@ class StockFamilyRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 
@@ -260,7 +260,7 @@ class StockFamilyRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la création: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la création")
         finally:
             release_connection(conn)
 

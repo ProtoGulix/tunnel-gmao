@@ -8,6 +8,11 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Corrigé
+- Erreurs métier (404, 400, 409) qui remontaient en 500 : tous les accès base passent désormais
+  par le même traitement d'erreur. Une violation d'unicité renvoie 409 et une violation de
+  référence 400, au lieu d'une erreur 500 générique.
+
 ## [5.13.1] — 2026-11-22
 
 ### Corrigé

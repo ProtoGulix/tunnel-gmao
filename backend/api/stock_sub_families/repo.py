@@ -4,7 +4,7 @@ from uuid import UUID
 
 from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError, raise_db_error
 from api.stock_items.template_schemas import PartTemplate, StockSubFamily
 from api.stock_items.template_service import TemplateService
 
@@ -56,7 +56,7 @@ class StockSubFamilyRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors de la récupération du template_id: %s", str(e))
-            raise DatabaseError(f"Erreur lors de la récupération du template_id: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la récupération du template_id")
         finally:
             release_connection(conn)
 
@@ -106,7 +106,7 @@ class StockSubFamilyRepository:
 
         except Exception as e:
             logger.error("Erreur lors du chargement des sous-familles: %s", str(e))
-            raise DatabaseError(f"Erreur lors du chargement des sous-familles: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement des sous-familles")
         finally:
             release_connection(conn)
 
@@ -161,7 +161,7 @@ class StockSubFamilyRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors du chargement de la sous-famille: %s", str(e))
-            raise DatabaseError(f"Erreur lors du chargement de la sous-famille: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement de la sous-famille")
         finally:
             release_connection(conn)
 
@@ -206,7 +206,7 @@ class StockSubFamilyRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la création: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la création")
         finally:
             release_connection(conn)
 
@@ -298,9 +298,7 @@ class StockSubFamilyRepository:
         except Exception as e:
             conn.rollback()
             logger.error("Erreur lors de la mise à jour de la sous-famille: %s", str(e))
-            raise DatabaseError(
-                f"Erreur lors de la mise à jour de la sous-famille: {str(e)}"
-            ) from e
+            raise_db_error(e, "Erreur lors de la mise à jour de la sous-famille")
         finally:
             release_connection(conn)
 
@@ -325,4 +323,4 @@ class StockSubFamilyRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors du chargement du template de sous-famille: %s", str(e))
-            raise DatabaseError(f"Erreur lors du chargement du template: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement du template")

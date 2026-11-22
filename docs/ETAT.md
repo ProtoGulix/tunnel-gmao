@@ -84,6 +84,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Erreurs métier transformées en 500 : `raise_db_error` relance les HTTPException (ERR-01), 94 `raise DatabaseError` des repo passés par `raise_db_error` (ERR-02), 11 tests repo (ERR-03) ; check.sh et 622 tests d'intégration verts | fix/erreurs-metier-en-500 | [ERR-01](taches/ERR-01-raise-db-error-relance-les-erreurs-metier.md) à [ERR-03](taches/ERR-03-tests-erreurs-metier-pas-en-500.md) |
 | fait (2026-11-22) | Guide et fronts alignés sur les libellés de la 5.13.0, premier contrôle de la règle CLAUDE.md 12.3 (documentation avant la version), version de Tunnel affichée dans le guide, reviewer APPROUVÉ | fusionnée dans develop | [GUIDE-06](taches/GUIDE-06-guide-aligne-sur-5-13.md) |
 | fait (2026-11-22) | Scripts de sauvegarde et de répétition d'une mise à jour (demande de l'utilisateur du 2026-11-22, après l'échec de la commande documentée en production) : SAUV-01, SAUV-02 ; essais réels sur la stack de dev, reviewer APPROUVÉ (réserves corrigées) | fusionnée dans develop | [SAUV-01](taches/SAUV-01-script-sauvegarde.md), [SAUV-02](taches/SAUV-02-script-repetition-mise-a-jour.md) |
 | fait (2026-11-22) | Priorité « normale » écrite d'une seule façon (`normal`), migration auditée et contrainte CHECK, codes de statut réels dans les fronts, libellés uniques (décisions de l'utilisateur du 2026-11-21) : PRIO-01 à PRIO-04 faites et intégrées dans la branche ; libellés complétés (« Annuler », « Annulée », « Terminée » partout) ; 621 tests d'intégration verts ; migration 0025 répétée sur une copie puis jouée en dev le 2026-11-21 avec 0024 (134 converties et auditées) ; libellés « À faire » ajoutés le 2026-11-22 ; reviewer APPROUVÉ (test de création atomique ajouté sur sa réserve), essai à l'écran validé le 2026-11-22 ; production : 0024 et 0025 à sa mise à jour | fusionnée dans develop | ADR 0039, [PRIO-01](taches/PRIO-01-migration-priorite-normal.md) à [PRIO-04](taches/PRIO-04-mobile-priorite-et-statuts.md) |
@@ -196,7 +197,7 @@ subagents, format de compte rendu imposé aux agents).
 
 0. Production mise à jour en 5.13.0 par l'utilisateur le 2026-11-22, sauvegarde faite avec `deploy/sauvegarder.sh` (migrations 0017 à 0025 jouées). Reste : passer en 5.13.1 (aucune migration : libellés et guide), sauvegarde avant comme d'habitude.
 
-0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
+0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Erreurs métier en 500 : chantier ERR fait le 2026-11-22 (branche fix/erreurs-metier-en-500, relecture puis fusion dans develop). Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par

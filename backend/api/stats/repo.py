@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError
+from api.errors.exceptions import raise_db_error
 from api.stats.schemas import (
     AnomaliesBySeverity,
     AnomaliesByType,
@@ -183,7 +183,7 @@ class StatsRepository:
             )
 
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_service_status)")
         finally:
             release_connection(conn)
 
@@ -661,7 +661,7 @@ class StatsRepository:
             )
 
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_compute_charge_technique_period)")
         finally:
             release_connection(conn)
 
@@ -1029,7 +1029,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_repetitive)")
         finally:
             release_connection(conn)
 
@@ -1088,7 +1088,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_fragmented)")
         finally:
             release_connection(conn)
 
@@ -1158,7 +1158,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_too_long)")
         finally:
             release_connection(conn)
 
@@ -1230,7 +1230,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_bad_classification)")
         finally:
             release_connection(conn)
 
@@ -1315,7 +1315,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_back_to_back)")
         finally:
             release_connection(conn)
 
@@ -1380,7 +1380,7 @@ class StatsRepository:
                 )
             return results
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_detect_low_value_high_load)")
         finally:
             release_connection(conn)
 
@@ -1531,7 +1531,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_time_null)")
         finally:
             release_connection(conn)
 
@@ -1562,7 +1562,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_complexity_sans_facteur)")
         finally:
             release_connection(conn)
 
@@ -1592,7 +1592,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_subcategory_null)")
         finally:
             release_connection(conn)
 
@@ -1622,7 +1622,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_tech_null)")
         finally:
             release_connection(conn)
 
@@ -1653,7 +1653,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_description_vide)")
         finally:
             release_connection(conn)
 
@@ -1683,7 +1683,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_time_suspect)")
         finally:
             release_connection(conn)
 
@@ -1720,7 +1720,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_action_sur_intervention_fermee)")
         finally:
             release_connection(conn)
 
@@ -1754,7 +1754,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_intervention_fermee_sans_action)")
         finally:
             release_connection(conn)
 
@@ -1782,7 +1782,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_intervention_sans_type)")
         finally:
             release_connection(conn)
 
@@ -1815,7 +1815,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_intervention_en_cours_inactive)")
         finally:
             release_connection(conn)
 
@@ -1845,7 +1845,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_stock_sans_seuil_min)")
         finally:
             release_connection(conn)
 
@@ -1876,7 +1876,7 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_stock_sans_fournisseur)")
         finally:
             release_connection(conn)
 
@@ -1910,6 +1910,6 @@ class StatsRepository:
                 for r in (dict(zip(cols, row)) for row in rows)
             ]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (_qd_demande_sans_stock_item)")
         finally:
             release_connection(conn)

@@ -109,7 +109,12 @@ def raise_db_error(e: Exception, context: str = "opération") -> None:
     - RAISE EXCEPTION de la base (P0001) → ValidationError 400, message connu ou générique
     - Tout le reste → DatabaseError 500 (message générique)
     Le détail brut de l'erreur est toujours journalisé côté serveur, jamais renvoyé.
+
+    Une HTTPException (erreur métier levée dans le bloc try : 404, 400, 409...) est
+    relancée telle quelle : sans cela, un `except Exception` en ferait une 500.
     """
+    if isinstance(e, HTTPException):
+        raise e
     logger.error("Erreur base de données (%s) : %s", context, e, exc_info=e)
     pgcode = getattr(e, "pgcode", None) or (getattr(getattr(e, "orig", None), "pgcode", None))
 

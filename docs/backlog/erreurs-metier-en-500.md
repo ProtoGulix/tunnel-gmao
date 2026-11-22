@@ -1,3 +1,5 @@
+TRAITÉ (2026-11-22, chantier ERR, fiches ERR-01 à ERR-03).
+
 # Erreurs métier transformées en 500 par des `except Exception`
 
 Réserve de l'étape 5, toujours vraie au tri du 2026-11-19. Gravité : bug.

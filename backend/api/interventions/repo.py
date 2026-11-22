@@ -779,7 +779,8 @@ class InterventionRepository:
                 intervention['task_progress'] = None
 
             return intervention
-        except NotFoundError:
+        except HTTPException:
+            # Toute erreur métier (404, 400...) passe avant le tri des messages de base.
             raise
         except Exception as e:
             error_msg = str(e)
@@ -968,7 +969,7 @@ class InterventionRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la création de l'intervention: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la création de l'intervention")
         finally:
             release_connection(conn)
 
@@ -1413,6 +1414,6 @@ class InterventionRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression")
         finally:
             release_connection(conn)

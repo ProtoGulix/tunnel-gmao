@@ -3,7 +3,7 @@ import re
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 from api.part_templates.repo import PartTemplateRepository
 from api.stock_items.template_schemas import (
     CharacteristicValue,
@@ -59,7 +59,7 @@ class TemplateService:
             raise
         except Exception as e:
             logger.error("Erreur lors du chargement du template: %s", str(e))
-            raise DatabaseError(f"Erreur lors du chargement du template: {str(e)}") from e
+            raise_db_error(e, "Erreur lors du chargement du template")
 
     def validate_characteristics(
         self, template: PartTemplate, characteristics: List[Dict[str, Any]]

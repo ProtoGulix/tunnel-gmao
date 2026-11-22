@@ -19,7 +19,6 @@ from api.equipements.validators import (
     validate_deletable,
 )
 from api.errors.exceptions import (
-    DatabaseError,
     NotFoundError,
     ValidationError,
     raise_db_error,
@@ -874,7 +873,7 @@ class EquipementRepository:
             raise_db_error(e, "création de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la creation de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la creation de l'equipement")
         finally:
             release_connection(conn)
 
@@ -934,7 +933,7 @@ class EquipementRepository:
             raise_db_error(e, "mise à jour de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise a jour de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise a jour de l'equipement")
         finally:
             release_connection(conn)
 
@@ -959,7 +958,7 @@ class EquipementRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression de l'equipement")
         finally:
             release_connection(conn)
 

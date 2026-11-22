@@ -282,7 +282,7 @@ class InterventionRequestRepository:
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, r)) for r in rows]
         except Exception as e:
-            raise DatabaseError("Erreur récupération statuts: %s" % str(e)) from e
+            raise_db_error(e, "Erreur récupération statuts")
         finally:
             release_connection(conn)
 
@@ -392,7 +392,7 @@ class InterventionRequestRepository:
                 result.append(r)
             return result
         except Exception as e:
-            raise DatabaseError("Erreur liste demandes: %s" % str(e)) from e
+            raise_db_error(e, "Erreur liste demandes")
         finally:
             release_connection(conn)
 
@@ -453,7 +453,7 @@ class InterventionRequestRepository:
             )
             return cur.fetchone()[0]
         except Exception as e:
-            raise DatabaseError("Erreur comptage demandes: %s" % str(e)) from e
+            raise_db_error(e, "Erreur comptage demandes")
         finally:
             release_connection(conn)
 
@@ -507,7 +507,7 @@ class InterventionRequestRepository:
             cols = [d[0] for d in cur.description]
             return [dict(zip(cols, r)) for r in rows]
         except Exception as e:
-            raise DatabaseError("Erreur facets demandes: %s" % str(e)) from e
+            raise_db_error(e, "Erreur facets demandes")
         finally:
             release_connection(conn)
 
@@ -578,7 +578,7 @@ class InterventionRequestRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError("Erreur récupération demande: %s" % str(e)) from e
+            raise_db_error(e, "Erreur récupération demande")
         finally:
             release_connection(conn)
 
@@ -635,7 +635,7 @@ class InterventionRequestRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError("Erreur création demande: %s" % str(e)) from e
+            raise_db_error(e, "Erreur création demande")
         finally:
             release_connection(conn)
 
@@ -834,7 +834,7 @@ class InterventionRequestRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError("Erreur transition statut: %s" % str(e)) from e
+            raise_db_error(e, "Erreur transition statut")
         finally:
             release_connection(conn)
 

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import NotFoundError, raise_db_error
 
 
 class StockItemSupplierRepository:
@@ -273,9 +273,7 @@ class StockItemSupplierRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(
-                f"Erreur lors de la création de la référence fournisseur: {str(e)}"
-            ) from e
+            raise_db_error(e, "Erreur lors de la création de la référence fournisseur")
         finally:
             release_connection(conn)
 
@@ -348,7 +346,7 @@ class StockItemSupplierRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 
@@ -384,7 +382,7 @@ class StockItemSupplierRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression")
         finally:
             release_connection(conn)
 
@@ -429,7 +427,7 @@ class StockItemSupplierRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour du préféré: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour du préféré")
         finally:
             release_connection(conn)
 

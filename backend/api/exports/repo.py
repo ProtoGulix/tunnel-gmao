@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from api.audits.events import record_column_changes
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import NotFoundError, raise_db_error
 from api.interventions.types import get_type_labels
 
 
@@ -26,7 +26,7 @@ class ExportRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur DB: {str(e)}")
+            raise_db_error(e, "accès base (get_intervention_code)")
         finally:
             release_connection(conn)
 
@@ -488,6 +488,6 @@ class ExportRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur lors de la récupération des données export: {str(e)}")
+            raise_db_error(e, "Erreur lors de la récupération des données export")
         finally:
             release_connection(conn)

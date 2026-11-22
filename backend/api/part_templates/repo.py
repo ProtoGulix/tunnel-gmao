@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from uuid import uuid4
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 from api.part_templates.schemas import PartTemplateIn, PartTemplateUpdate
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ class PartTemplateRepository:
             return templates
         except Exception as e:
             logger.error("Erreur lors de la récupération des templates: %s", str(e))
-            raise DatabaseError("Erreur lors de la récupération des templates: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la récupération des templates")
         finally:
             release_connection(conn)
 
@@ -179,7 +179,7 @@ class PartTemplateRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors de la récupération du template: %s", str(e))
-            raise DatabaseError("Erreur lors de la récupération du template: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la récupération du template")
         finally:
             release_connection(conn)
 
@@ -223,7 +223,7 @@ class PartTemplateRepository:
             raise
         except Exception as e:
             logger.error("Erreur lors de la récupération du template: %s", str(e))
-            raise DatabaseError("Erreur lors de la récupération du template: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la récupération du template")
         finally:
             release_connection(conn)
 
@@ -246,7 +246,7 @@ class PartTemplateRepository:
             return [dict(zip(cols, row)) for row in rows]
         except Exception as e:
             logger.error("Erreur lors de la récupération du template: %s", str(e))
-            raise DatabaseError("Erreur lors de la récupération du template: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la récupération du template")
         finally:
             release_connection(conn)
 
@@ -329,7 +329,7 @@ class PartTemplateRepository:
         except Exception as e:
             conn.rollback()
             logger.error("Erreur lors de la création du template: %s", str(e))
-            raise DatabaseError("Erreur lors de la création du template: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la création du template")
         finally:
             release_connection(conn)
 
@@ -427,7 +427,7 @@ class PartTemplateRepository:
         except Exception as e:
             conn.rollback()
             logger.error("Erreur lors de la création de la version: %s", str(e))
-            raise DatabaseError("Erreur lors de la création de la version: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la création de la version")
         finally:
             release_connection(conn)
 
@@ -477,6 +477,6 @@ class PartTemplateRepository:
         except Exception as e:
             conn.rollback()
             logger.error("Erreur lors de la suppression du template: %s", str(e))
-            raise DatabaseError("Erreur lors de la suppression du template: %s" % str(e)) from e
+            raise_db_error(e, "Erreur lors de la suppression du template")
         finally:
             release_connection(conn)

@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError
+from api.errors.exceptions import raise_db_error
 
 
 class InterventionStatusRepository:
@@ -28,7 +28,7 @@ class InterventionStatusRepository:
             return [dict(zip(cols, row)) for row in rows]
 
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_all)")
         finally:
             release_connection(conn)
 
@@ -51,6 +51,6 @@ class InterventionStatusRepository:
             return [row[0] for row in rows]
 
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_active_status_ids)")
         finally:
             release_connection(conn)

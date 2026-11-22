@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError
+from api.errors.exceptions import NotFoundError, raise_db_error
 
 
 class ActionSubcategoryRepository:
@@ -52,7 +52,7 @@ class ActionSubcategoryRepository:
 
             return result
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_all)")
         finally:
             release_connection(conn)
 
@@ -72,7 +72,7 @@ class ActionSubcategoryRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_by_id)")
         finally:
             release_connection(conn)
 
@@ -89,6 +89,6 @@ class ActionSubcategoryRepository:
             cols = [desc[0] for desc in cur.description]
             return [dict(zip(cols, row)) for row in rows]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_by_category)")
         finally:
             release_connection(conn)
