@@ -1,3 +1,7 @@
+TRAITÉ (2026-11-22) : les tests de retour arrière de 0021 et 0027 vérifient que les motifs
+déjà cités par le journal sont gardés et les autres retirés, quel que soit l'ordre des fichiers
+(prouvé en lançant d'abord les tests qui écrivent dans le journal).
+
 # Tests d'intégration dépendants de l'ordre des fichiers
 
 Constat du reviewer, chantier IRR (2026-11-22). Gravité : dette de tests.

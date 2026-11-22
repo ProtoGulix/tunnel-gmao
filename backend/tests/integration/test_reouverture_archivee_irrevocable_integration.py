@@ -1,9 +1,4 @@
-"""L'archivage d'une intervention est irrévocable, garanti par la base (IRR-01, ADR 0041).
-
-Nommé après test_motifs_reouverture_migration : les réouvertures de ce fichier écrivent des lignes
-d'audit qui référencent le motif INTERVENTION_REWORK, et le test de retour arrière de cette
-migration exige qu'aucune ne le référence encore. Même contrainte que test_reouverture_integration ;
-suivi : docs/backlog/tests-integration-dependants-de-l-ordre.md."""
+"""L'archivage d'une intervention est irrévocable, garanti par la base (IRR-01, ADR 0041)."""
 
 import psycopg2
 import pytest

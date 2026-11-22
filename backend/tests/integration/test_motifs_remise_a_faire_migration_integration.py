@@ -1,7 +1,4 @@
-"""Migration 0027 : motifs de remise à faire d'une tâche, base neuve et ancienne (REM-01).
-
-Le retour arrière suppose les nouveaux motifs non référencés : ce fichier doit passer avant
-test_taches_remise_a_faire (docs/backlog/tests-integration-dependants-de-l-ordre.md)."""
+"""Migration 0027 : motifs de remise à faire d'une tâche, base neuve et ancienne (REM-01)."""
 
 import importlib.util
 from pathlib import Path
@@ -16,6 +13,16 @@ _ETAT = (
     "SELECT code, label, category, entity_types, decision_types, is_active "
     "FROM audit_reason_code WHERE code = ANY(%s) OR code = 'OTHER' ORDER BY code"
 )
+
+
+def _references(instance):
+    """Motifs de la migration déjà cités par le journal : le retour arrière les garde (FK)."""
+    lignes = instance.sql(
+        "SELECT DISTINCT r.code FROM audit_log l JOIN audit_reason_code r "
+        "ON r.id = l.reason_code_id WHERE r.code = ANY(%s)",
+        (list(_CODES),),
+    )
+    return {code for (code,) in lignes}
 
 
 def _etat(instance):
@@ -55,11 +62,12 @@ def test_base_neuve_a_l_etat_attendu_et_rejouer_ne_change_rien(instance):
 def test_retour_arriere_puis_remontee(instance):
     module = _migration()
     reference = _etat(instance)
+    gardes = _references(instance)
     for statement in module.downgrade_statements():
         instance.sql(statement)
-    apres = instance.sql(_ETAT, (list(_CODES),))
-    assert [ligne[0] for ligne in apres] == ["OTHER"]
-    assert "task_reopened" not in apres[0][4]
+    apres = {ligne[0]: ligne for ligne in instance.sql(_ETAT, (list(_CODES),))}
+    assert set(apres) == {"OTHER"} | gardes
+    assert "task_reopened" not in apres["OTHER"][4]
     for statement in module.upgrade_statements():
         instance.sql(statement)
     assert _etat(instance) == reference
