@@ -36,7 +36,7 @@ def test_parcours_demande_puis_intervention_sur_une_installation_neuve(client, a
             "type_inter": "CUR",
             "tech_id": admin.id,
             "title": "Fuite hydraulique",
-            "priority": "normale",
+            "priority": "normal",
             "request_id": request_id,
             "reason_code": raison,
         },

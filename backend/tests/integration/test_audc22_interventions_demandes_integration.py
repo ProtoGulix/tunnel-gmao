@@ -90,7 +90,7 @@ def test_creer_une_intervention_sans_request_id_est_refuse_et_rien_n_est_ecrit(
             "type_inter": "CUR",
             "tech_id": admin.id,
             "title": titre,
-            "priority": "normale",
+            "priority": "normal",
             "reason_code": MOTIF,
         },
     )

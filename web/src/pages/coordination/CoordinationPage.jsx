@@ -545,7 +545,7 @@ export default function CoordinationPage() {
     setEquipeLoading(true);
     Promise.allSettled([
       fetchEquipements({ limit: 500 }),
-      fetchInterventions({ status: 'ouvert,en_cours', limit: 500 }),
+      fetchInterventions({ status: 'ouvert,attente_pieces,attente_prod', limit: 500 }),
       fetchInterventionRequests({ statut: 'nouvelle', limit: 200 }),
     ]).then(([eqRes, ivRes, diRes]) => {
       const eqItems = eqRes.status === 'fulfilled' ? (eqRes.value.items ?? []) : [];
@@ -590,7 +590,7 @@ export default function CoordinationPage() {
     setIvLoading(true);
     try {
       const [ivs, diRes] = await Promise.all([
-        fetchInterventions({ equipementId: equipId, status: 'ouvert,en_cours', include: 'stats', limit: 100 }),
+        fetchInterventions({ equipementId: equipId, status: 'ouvert,attente_pieces,attente_prod', include: 'stats', limit: 100 }),
         fetchInterventionRequests({ machineId: equipId, statut: 'nouvelle', limit: 100 }).catch(() => ({ items: [] })),
       ]);
 

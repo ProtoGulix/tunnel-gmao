@@ -34,7 +34,7 @@ def _intervention(client, admin, instance):
             "type_inter": "PRE",
             "tech_id": admin.id,
             "title": "Graissage",
-            "priority": "normale",
+            "priority": "normal",
             "request_id": request_id,
             "reason_code": raison,
         },

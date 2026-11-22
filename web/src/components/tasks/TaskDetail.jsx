@@ -335,7 +335,7 @@ export default function TaskDetail({ task, users, saving, onPatchTask, onRefresh
               Valider
             </Button>
             <Button color="orange" disabled={actionButtonsDisabled} onClick={() => { setValidateMode(false); handleSkip(); }}>
-              Ignorer
+              Annuler
             </Button>
           </Flex>
 

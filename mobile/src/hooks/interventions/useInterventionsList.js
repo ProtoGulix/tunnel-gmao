@@ -10,7 +10,7 @@ export function ageInDays(reported_date) {
 
 // Ordre priorité pour tri client (le backend trie déjà par -priority mais on
 // re-trie pour garantir l'ordre au sein de chaque segment)
-const PRIORITY_ORDER = { urgent: 0, important: 1, normale: 2, faible: 3 }
+const PRIORITY_ORDER = { urgent: 0, important: 1, normal: 2, faible: 3 }
 
 function sortSegment(items) {
   return [...items].sort((a, b) => {

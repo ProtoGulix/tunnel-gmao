@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from api.audits.schemas import AuditRules
-from api.constants import CLOSED_STATUS_CODE
+from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.db import get_connection, release_connection
 from api.errors.exceptions import AuditReasonRequiredError, ConflictError, ValidationError
 from api.interventions.types import check_allowed_for_machine, check_assignable
@@ -110,6 +110,19 @@ class InterventionValidator:
         check_assignable(type_inter, current)
 
     @staticmethod
+    def validate_priority(priority: Optional[str]) -> None:
+        """RÈGLE MÉTIER (ADR 0039) : la priorité est l'une de PRIORITY_TYPES ; absente = défaut.
+
+        Refuse notamment l'ancienne valeur `normale`, remplacée par `normal`."""
+        if priority is None:
+            return
+        allowed = [p["id"] for p in PRIORITY_TYPES]
+        if priority not in allowed:
+            raise ValidationError(
+                f"Priorité '{priority}' invalide : valeurs permises {', '.join(allowed)}"
+            )
+
+    @staticmethod
     def validate_request_required(data: Dict[str, Any], has_new_request: bool = False) -> None:
         """RÈGLE MÉTIER : Toute intervention est issue d'une demande : existante (request_id)
         ou créée dans le même geste (ADR 0025, has_new_request)."""
@@ -182,6 +195,7 @@ class InterventionValidator:
 
         `suggested_type` : type suggéré par la demande liée, accepté même désactivé.
         `from_plan` : intervention issue d'un plan préventif (type PRE toujours permis)."""
+        cls.validate_priority(data.get("priority"))
         if data.get("type_inter"):
             cls.validate_type_inter(data["type_inter"], suggested_type)
             # Le type de la classe de l'équipement l'emporte, même sur le type suggéré (ADR 0031).

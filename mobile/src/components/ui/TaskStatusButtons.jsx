@@ -8,7 +8,7 @@ import { PERM } from '../../auth/permissionCodes'
 /**
  * TaskStatusButtons — boutons de transition de statut d'une tâche.
  *
- * "Ignorer" envoie status=skipped sans motif : le backend répond 400 avec les
+ * "Annuler" envoie status=skipped sans motif : le backend répond 400 avec les
  * motifs d'audit autorisés, on les propose dans AuditReasonSheet puis on
  * renvoie avec le motif choisi (ADR 0016). Aucun motif ni saisie maison.
  * "Remettre à faire" reste une modification routinière.
@@ -70,7 +70,7 @@ export function TaskStatusButtons({ task, onChanged }) {
           <RotateCcw size={13} />
         </button>
       ) : (
-        <button type="button" title="Ignorer" onClick={() => applyStatus('skipped')}
+        <button type="button" title="Annuler" onClick={() => applyStatus('skipped')}
           className="p-1.5 rounded bg-amber-100 text-amber-700 active:bg-amber-200">
           <Ban size={13} />
         </button>

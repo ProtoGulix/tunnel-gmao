@@ -25,7 +25,7 @@ def _fiche(code):
     return {
         "code": code,
         "title": f"Fiche {code}",
-        "priority": "normale",
+        "priority": "normal",
         "status_actual": "ferme",
         "reported_date": "2026-01-02",
         "reported_by": "Test",

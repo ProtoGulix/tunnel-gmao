@@ -8,6 +8,26 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Modifié
+- Priorité des interventions : la priorité « normale » s'écrit partout `normal` (elle
+  s'écrivait aussi `normale`). La migration 0025, jouée au démarrage de l'API, convertit
+  les interventions existantes, avec une ligne d'audit système par intervention (motif
+  PRIORITY_NORMALIZED), et pose une contrainte sur les quatre valeurs permises (faible,
+  normal, important, urgent). L'API refuse toute autre valeur par une erreur 400 lisible
+  (ADR 0039).
+- Libellés identiques sur tous les écrans, web et mobile : statut d'intervention « Ouvert »,
+  « Fermé », « Attente production » ; tâche et étape de gamme « À faire », « Terminée »,
+  « Annulée » ; le bouton qui annule une tâche s'appelle « Annuler ».
+
+### Corrigé
+- Tri des interventions par priorité : les interventions en priorité normale ne sont plus
+  rangées après les priorités faibles ; le filtre par priorité normale et la fiche PDF les
+  reconnaissent.
+- Web : l'écran Coordination affiche aussi les interventions en attente de pièces ou de
+  production (il filtrait sur un statut qui n'existe pas).
+- Mobile : la recherche d'interventions et le choix de l'intervention d'une action trouvent
+  aussi les interventions en attente de pièces ou de production.
+
 ### [interne] Documentation
 - Guide utilisateur : page « Le stock et les pièces » dans « Comprendre Tunnel » (catalogue,
   références fabricant et fournisseur, lien avec les achats, limites) avec son schéma ;

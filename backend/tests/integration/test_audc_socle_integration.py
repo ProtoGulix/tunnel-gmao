@@ -155,7 +155,7 @@ def test_creation_dintervention_ecrit_une_ligne_created_avec_lid_cree(
             "type_inter": "CUR",
             "tech_id": admin.id,
             "title": "Créée par le test",
-            "priority": "normale",
+            "priority": "normal",
             "request_id": demande,
             "reason_code": "ROUTINE",
         },

@@ -45,7 +45,7 @@ def intervention_liee(client, admin, instance) -> tuple[str, str]:
             "type_inter": "CUR",
             "tech_id": admin.id,
             "title": "Intervention étape 2",
-            "priority": "normale",
+            "priority": "normal",
             "request_id": request_id,
             "reason_code": MOTIF,
         },

@@ -116,7 +116,7 @@ export function InterventionCard({ situation, onRefresh }: InterventionCardProps
         daysOpen={situation.daysOpen ?? 0}
         onSelectStatus={actions.handleStatusChange}
         statusSaving={actions.statusSaving}
-        currentPriority={situation.priority ?? 'normale'}
+        currentPriority={situation.priority ?? 'normal'}
         onSelectPriority={actions.handlePrioritySelect}
       />
       <IvBody

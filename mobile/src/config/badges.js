@@ -11,7 +11,6 @@ export const INTERVENTION_STATUSES = {
   // Alias API courants
   nouveau:        { label: 'Nouveau',         color: '#1F3A5F', variant: 'info' },
   new:            { label: 'Nouveau',         color: '#1F3A5F', variant: 'info' },
-  en_cours:       { label: 'En cours',        color: '#ED6C02', variant: 'warning' },
   in_progress:    { label: 'En cours',        color: '#ED6C02', variant: 'warning' },
   termine:        { label: 'Terminé',         color: '#2E7D32', variant: 'success' },
   done:           { label: 'Terminé',         color: '#2E7D32', variant: 'success' },
@@ -23,10 +22,10 @@ export const INTERVENTION_STATUSES = {
 // Harmonisé avec src/config/taskConfig.js côté tunnel-gmao (web) — mêmes
 // libellés et même sémantique de couleur pour rester cohérent entre clients.
 export const TASK_STATUSES = {
-  todo:        { label: 'En attente', color: '#616161', variant: 'secondary' },
+  todo:        { label: 'À faire',    color: '#616161', variant: 'secondary' },
   in_progress: { label: 'En cours',   color: '#1F3A5F', variant: 'info' },
-  done:        { label: 'Validée',    color: '#2E7D32', variant: 'success' },
-  skipped:     { label: 'Ignorée',    color: '#ED6C02', variant: 'warning' },
+  done:        { label: 'Terminée',   color: '#2E7D32', variant: 'success' },
+  skipped:     { label: 'Annulée',    color: '#ED6C02', variant: 'warning' },
 }
 
 // ─── Origine des tâches ────────────────────────────────────────────────────
@@ -41,7 +40,6 @@ export const PRIORITIES = {
   urgent:    { label: 'Urgent',    color: '#C62828', variant: 'danger' },
   haute:     { label: 'Haute',     color: '#ED6C02', variant: 'warning' },
   important: { label: 'Important', color: '#ED6C02', variant: 'warning' },
-  normale:   { label: 'Normale',   color: '#1F3A5F', variant: 'info' },
   normal:    { label: 'Normale',   color: '#1F3A5F', variant: 'info' },
   basse:     { label: 'Basse',     color: '#616161', variant: 'secondary' },
   faible:    { label: 'Faible',    color: '#616161', variant: 'secondary' },

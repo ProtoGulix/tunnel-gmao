@@ -21,7 +21,7 @@ const TASK_STATUS_CFG = {
   todo:        { color: 'var(--gray-7)',   label: 'À faire',  badge: 'gray' },
   in_progress: { color: 'var(--blue-9)',   label: 'En cours', badge: 'blue' },
   done:        { color: 'var(--green-9)',  label: 'Fait',     badge: 'green' },
-  skipped:     { color: 'var(--orange-9)', label: 'Ignoré',   badge: 'orange' },
+  skipped:     { color: 'var(--orange-9)', label: 'Annulée',  badge: 'orange' },
 };
 
 function TaskLine({ task }) {

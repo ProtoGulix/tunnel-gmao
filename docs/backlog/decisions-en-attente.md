@@ -10,3 +10,7 @@
   (`excluded_rows` existe, purchase_requests/routes.py:259-309.)
 - Données d'exemple d'usine (ADR 0006) : à relire avant livraison.
 - Journaux bruts de la base (détail des DatabaseError) : à garder privés, à documenter.
+- Écran Coordination du web : peu utilisé (utilisateur, 2026-11-21). Le garder, le
+  retirer ou le fondre dans un autre écran ? Restent ouverts s'il est gardé : changements
+  de statut et de priorité en ligne qui échouent sans message, « Créer inter » qui ne
+  présélectionne pas la demande (constats vérifiés le 2026-11-21, ADR 0039).

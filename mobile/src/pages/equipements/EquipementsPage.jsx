@@ -10,6 +10,7 @@ import { ListStatus } from '../../components/ui/ListStatus'
 import { ListRow } from '../../components/ui/ListRow'
 import { SectionTitle, InfoRow } from '../../components/ui/DetailRows'
 import { DynBadge } from '../../components/ui/DynBadge'
+import { PRIORITIES } from '../../config/badges'
 
 // ── Health ────────────────────────────────────────────────────────────────────
 const HEALTH_CONFIG = {
@@ -19,15 +20,13 @@ const HEALTH_CONFIG = {
 }
 
 const STATUS_COLOR = {
-  ouvert: '#1F3A5F', en_cours: '#ED6C02', en_attente: '#ED6C02',
+  ouvert: '#1F3A5F',
   attente_pieces: '#C62828', attente_prod: '#ED6C02', ferme: '#2E7D32',
 }
 const STATUS_LABEL = {
-  ouvert: 'Ouvert', en_cours: 'En cours', en_attente: 'En attente',
+  ouvert: 'Ouvert',
   attente_pieces: 'Attente pièces', attente_prod: 'Attente prod', ferme: 'Fermé',
 }
-const PRIORITY_COLOR = { urgent: '#C62828', important: '#ED6C02', normale: '#1F3A5F', faible: '#616161' }
-const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normale: 'Normale', faible: 'Faible' }
 
 // ── Carte équipement ──────────────────────────────────────────────────────────
 function EquipementCard({ item, onSelect }) {
@@ -85,7 +84,7 @@ function EquipementDetail({ uuid }) {
   const cfg = HEALTH_CONFIG[health?.level] ?? HEALTH_CONFIG.ok
   // Pas de is_locked dans la fiche équipement (NON couvert par REG-01) : filtre par statut
   const ARCHIVED = new Set(['ferme'])
-  const PRIORITY_ORDER = { urgent: 0, important: 1, normale: 2, faible: 3 }
+  const PRIORITY_ORDER = { urgent: 0, important: 1, normal: 2, faible: 3 }
 
   const activeInterventions = (item.interventions?.items ?? [])
     .filter(i => !ARCHIVED.has(i.status_actual))
@@ -186,7 +185,7 @@ function InterventionRow({ inter, faded = false, onNavigate }) {
   // Pas de is_locked dans la fiche équipement (NON couvert par REG-01) : filtre par statut
   const ARCHIVED = new Set(['ferme'])
   const sc = STATUS_COLOR[inter.status_actual] ?? '#616161'
-  const pc = PRIORITY_COLOR[inter.priority] ?? '#616161'
+  const pc = PRIORITIES[inter.priority]?.color ?? '#616161'
   const isUrgent = inter.priority === 'urgent' && !ARCHIVED.has(inter.status_actual)
 
   return (
@@ -202,7 +201,7 @@ function InterventionRow({ inter, faded = false, onNavigate }) {
         {inter.type_inter && <DynBadge color="#616161">{inter.type_inter.label ?? inter.type_inter.code}</DynBadge>}
         <DynBadge color={sc}>{STATUS_LABEL[inter.status_actual] ?? inter.status_actual}</DynBadge>
         {inter.priority && !ARCHIVED.has(inter.status_actual) && (
-          <DynBadge color={pc}>{PRIORITY_LABEL[inter.priority] ?? inter.priority}</DynBadge>
+          <DynBadge color={pc}>{PRIORITIES[inter.priority]?.label ?? inter.priority}</DynBadge>
         )}
         <ChevronRight size={14} className="text-[#909090] shrink-0 ml-auto" />
       </div>

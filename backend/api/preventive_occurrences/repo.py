@@ -897,7 +897,7 @@ class PreventiveOccurrenceRepository:
                 "machine_id": machine_id,
                 "type_inter": "PRE",
                 "tech_initials": "SYS",
-                "priority": "normale",
+                "priority": "normal",
                 "request_id": di_id,
                 "plan_id": plan_id,
             },

@@ -41,7 +41,7 @@ def _demande(client, admin, instance, machine_id):
     )
 
 
-def _intervention(client, admin, instance, machine_id, priority="normale"):
+def _intervention(client, admin, instance, machine_id, priority="normal"):
     demande = _demande(client, admin, instance, machine_id)
     return _data(
         client.post(

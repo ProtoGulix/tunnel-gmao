@@ -197,12 +197,12 @@ class InterventionRepository:
                 if key == 'reported_date':
                     order_sql_parts.append(f"i.reported_date {'DESC' if desc else 'ASC'}")
                 elif key == 'priority':
-                    # Tri de sévérité: urgent > important > normale > faible
+                    # Tri de sévérité: urgent > important > normal > faible
                     case_expr = (
                         "CASE i.priority "
                         "WHEN 'urgent' THEN 0 "
                         "WHEN 'important' THEN 1 "
-                        "WHEN 'normale' THEN 2 "
+                        "WHEN 'normal' THEN 2 "
                         "WHEN 'faible' THEN 3 "
                         "ELSE 4 END"
                     )
@@ -1101,6 +1101,10 @@ class InterventionRepository:
     def update(self, intervention_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Met à jour une intervention existante"""
         existing = self.get_by_id(intervention_id, include_actions=False)
+
+        from api.interventions.validators import InterventionValidator
+
+        InterventionValidator.validate_priority(data.get('priority'))
 
         # Un type n'est vérifié (existant, actif) que s'il change : un type désactivé depuis
         # reste valable sur une intervention qui le porte déjà.

@@ -180,8 +180,8 @@ TaskRow.propTypes = {
 
 /* ── Recherche d'intervention inline (mode machineId) ───────────────────── */
 
-const IV_STATUS_COLORS = { ouvert: 'blue', en_cours: 'green', attente_pieces: 'orange', attente_prod: 'orange' };
-const IV_STATUS_LABELS = { ouvert: 'Ouvert', en_cours: 'En cours', attente_pieces: 'Attente pièces', attente_prod: 'Attente prod' };
+const IV_STATUS_COLORS = { ouvert: 'blue', attente_pieces: 'orange', attente_prod: 'orange' };
+const IV_STATUS_LABELS = { ouvert: 'Ouvert', attente_pieces: 'Attente pièces', attente_prod: 'Attente production' };
 
 function InlineInterventionSearch({ machineId: mId, value, onChange }) {
   const [interventions, setInterventions] = useState([]);

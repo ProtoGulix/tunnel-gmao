@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-21
+Dernière mise à jour : 2026-11-22
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
@@ -82,6 +82,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Priorité « normale » écrite d'une seule façon (`normal`), migration auditée et contrainte CHECK, codes de statut réels dans les fronts, libellés uniques (décisions de l'utilisateur du 2026-11-21) : PRIO-01 à PRIO-04 faites et intégrées dans la branche ; libellés complétés (« Annuler », « Annulée », « Terminée » partout) ; 621 tests d'intégration verts ; migration 0025 répétée sur une copie puis jouée en dev le 2026-11-21 avec 0024 (134 converties et auditées) ; libellés « À faire » ajoutés le 2026-11-22 ; reviewer APPROUVÉ (test de création atomique ajouté sur sa réserve), essai à l'écran validé le 2026-11-22 ; production : 0024 et 0025 à sa mise à jour | fusionnée dans develop | ADR 0039, [PRIO-01](taches/PRIO-01-migration-priorite-normal.md) à [PRIO-04](taches/PRIO-04-mobile-priorite-et-statuts.md) |
 | fait (2026-11-21) | Guide : section « Comprendre Tunnel » (7 pages, 10 schémas SVG : chaîne du travail, codes, cycles de vie, actions, préventif, achats et paniers, audit), demande de l'utilisateur | fusionnée dans develop | [GUIDE-05](taches/GUIDE-05-comprendre-tunnel.md) |
 | fait (2026-11-21) | Mobile : « Annuler » du formulaire de demande de l'onglet Demandes (essai à l'écran par l'utilisateur à faire) | fusionnée dans develop | [MOB-01](taches/MOB-01-annuler-formulaire-demande.md) |
 | fait (2026-11-21) | Demandes d'achat liées à une pièce : « à qualifier » lu dans le statut dérivé de l'API (web), export PDF d'intervention qui joint les pièces (accord de l'utilisateur) | fusionnée dans develop | [DAP-01](taches/DAP-01-demandes-achat-liees-aux-pieces.md) |
@@ -143,7 +144,7 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Aucune fiche ouverte (vérifié le 2026-11-21). Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Aucune fiche ouverte. Closes aussi : PRIO-01 à PRIO-04. Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
@@ -188,6 +189,8 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
+
+0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par

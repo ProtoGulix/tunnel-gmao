@@ -1,8 +1,8 @@
 export const TASK_STATUS_LABEL = {
   todo: 'À faire',
   in_progress: 'En cours',
-  done: 'Terminé',
-  skipped: 'Ignoré',
+  done: 'Terminée',
+  skipped: 'Annulée',
 };
 
 export const TASK_STATUS_COLOR = {

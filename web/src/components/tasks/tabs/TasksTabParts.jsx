@@ -83,7 +83,7 @@ export function TasksFilters({ status, setStatus, origin, setOrigin, assignee, s
           <Select.Item value="todo">À faire</Select.Item>
           <Select.Item value="in_progress">En cours</Select.Item>
           <Select.Item value="done">Terminé</Select.Item>
-          <Select.Item value="skipped">Ignoré</Select.Item>
+          <Select.Item value="skipped">Annulée</Select.Item>
         </Select.Content>
       </Select.Root>
 

@@ -21,34 +21,32 @@ import GhostCreateRow, { useUsers } from '@/components/tasks/GhostCreateRow';
 
 const STATUS_LABELS = {
   ouvert: 'Ouvert',
-  en_cours: 'En cours',
   attente_pieces: 'Attente pièces',
   attente_prod: 'Attente production',
 };
 
 const STATUS_COLORS = {
   ouvert: 'blue',
-  en_cours: 'green',
   attente_pieces: 'orange',
   attente_prod: 'orange',
 };
 
 const PRIORITY_LABELS = {
   faible: 'Faible',
-  normale: 'Normale',
+  normal: 'Normal',
   important: 'Important',
   urgent: 'Urgent',
 };
 
 const PRIORITY_COLORS = {
   faible: 'gray',
-  normale: 'gray',
+  normal: 'gray',
   important: 'orange',
   urgent: 'red',
 };
 
-// Ordre de tri priorité ASC : urgent(0) → important(1) → normal/normale(2) → faible(3)
-const PRIORITY_SORT = { urgent: 0, important: 1, normal: 2, normale: 2, faible: 3 };
+// Ordre de tri priorité ASC : urgent(0) → important(1) → normal(2) → faible(3)
+const PRIORITY_SORT = { urgent: 0, important: 1, normal: 2, faible: 3 };
 
 function sortByPriority(items) {
   return [...items].sort(
@@ -58,7 +56,7 @@ function sortByPriority(items) {
 
 /* ── Liste avec groupement par priorité ──────────────────────────────────── */
 
-const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', normale: 'Normal', faible: 'Faible' };
+const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
 
 function GroupedInterventionList({ items, selectedId, onSelect }) {
   // Regrouper par priorité dans l'ordre de tri
@@ -140,7 +138,7 @@ function InterventionRow({ item, isSelected, onToggle }) {
           <Text size="2" weight="medium">{item.title}</Text>
         )}
         <Flex align="center" gap="1" wrap="wrap">
-          {priority && priority !== 'normale' && priority !== 'faible' && (
+          {priority && priority !== 'normal' && priority !== 'faible' && (
             <Badge size="1" color={PRIORITY_COLORS[priority] ?? 'gray'} variant="soft">
               {PRIORITY_LABELS[priority] ?? priority}
             </Badge>
@@ -196,7 +194,7 @@ InterventionCreatorLeft.propTypes = {
 /* ── Liste des tâches d'une intervention + ghost row ─────────────────────── */
 
 const TASK_STATUS_COLORS = { todo: 'gray', in_progress: 'orange', done: 'green', skipped: 'red' };
-const TASK_STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminé', skipped: 'Ignoré' };
+const TASK_STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminée', skipped: 'Annulée' };
 
 function InterventionTaskList({ interventionId }) {
   const [tasks, setTasks] = useState([]);

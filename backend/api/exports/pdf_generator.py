@@ -75,7 +75,7 @@ class PDFGenerator:
         mapping = {
             'urgent': 'Urgent',
             'important': 'Important',
-            'normale': 'Normal',
+            'normal': 'Normal',
             'faible': 'Faible',
         }
         return mapping.get(priority, priority) if priority else "N/A"

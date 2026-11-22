@@ -18,6 +18,7 @@ import { PERM } from "@/auth/permissionCodes";
 import { sanitizeDescription } from "@/lib/utils/interventionUtils";
 import { canDeleteAction } from "@/lib/utils/actionUtils";
 import { extractApiErrorMessage } from "@/lib/api/errorMessage";
+import { STEP_STATUS_LABELS } from "@/config/preventiveConfig";
 
 function GammeStepList({ steps }) {
   if (!steps || steps.length === 0) return null;
@@ -46,13 +47,7 @@ function GammeStepList({ steps }) {
               variant="soft"
               size="1"
             >
-              {v.status === 'done'
-                ? 'Validée'
-                : v.status === 'skipped'
-                  ? 'Ignorée'
-                  : v.status === 'in_progress'
-                    ? 'En cours'
-                    : 'En attente'}
+              {STEP_STATUS_LABELS[v.status] ?? STEP_STATUS_LABELS.todo}
             </Badge>
           </Flex>
         ))}

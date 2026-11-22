@@ -11,7 +11,7 @@ const labelCls = 'text-xs font-bold text-tunnel-text mb-1 block'
 
 const PRIORITY_OPTIONS = [
   { value: 'faible', label: 'Faible' },
-  { value: 'normale', label: 'Normale' },
+  { value: 'normal', label: 'Normale' },
   { value: 'important', label: 'Important' },
   { value: 'urgent', label: 'Urgent' },
 ]
@@ -39,7 +39,7 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
   const [reportedDate, setReportedDate] = useState(todayIso)
   const [typeInter, setTypeInter] = useState('')
   const { types: typeOptions, loaded: typesLoaded } = usePermittedTypes(equip.id)
-  const [priority, setPriority] = useState('normale')
+  const [priority, setPriority] = useState('normal')
   const [techId, setTechId] = useState(user?.id ?? '')
   const [users, setUsers] = useState([])
   const [services, setServices] = useState([])

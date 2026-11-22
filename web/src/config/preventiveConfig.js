@@ -8,7 +8,7 @@ export const OCCURRENCE_STATUS_COLORS = { pending: 'gray', generated: 'blue', in
 export const OCCURRENCE_STATUS_LABELS = { pending: 'En attente', generated: 'Générée', in_progress: 'En cours', completed: 'Clôturée', skipped: 'Ignorée' };
 
 export const STEP_STATUS_COLORS = { done: 'green', skipped: 'orange', todo: 'gray', in_progress: 'blue' };
-export const STEP_STATUS_LABELS = { done: 'Validée', skipped: 'Ignorée', todo: 'En attente', in_progress: 'En cours' };
+export const STEP_STATUS_LABELS = { done: 'Terminée', skipped: 'Annulée', todo: 'À faire', in_progress: 'En cours' };
 
 // États d'échéancier, tels que les calcule la route /preventive-occurrences/schedule.
 // Le front ne recalcule rien : il regroupe et libelle.

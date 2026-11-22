@@ -11,7 +11,7 @@ const labelCls = 'flex items-center gap-1.5 mb-1.5'
 
 const PRIORITY_OPTIONS = [
   { value: 'faible',    label: 'Faible' },
-  { value: 'normale',   label: 'Normale' },
+  { value: 'normal',   label: 'Normale' },
   { value: 'important', label: 'Important' },
   { value: 'urgent',    label: 'Urgent' },
 ]
@@ -40,7 +40,7 @@ export function InterventionForm({ di = null, machineId = null, onSubmit, onCanc
   const suggested = di?.suggested_type_inter
   const lockedType = !!(di?.is_system && suggested && typeOptions.some(t => t.id === suggested))
   const [localError, setLocalError] = useState(null)
-  const [priority, setPriority] = useState('normale')
+  const [priority, setPriority] = useState('normal')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
   const [title, setTitle] = useState(di?.description ?? '')
 

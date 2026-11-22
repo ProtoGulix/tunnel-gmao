@@ -42,7 +42,7 @@ def _intervention(client, admin, instance, plan_id=None):
             "type_inter": "PRE",
             "tech_id": admin.id,
             "title": "Révision",
-            "priority": "normale",
+            "priority": "normal",
             "request_id": request_id,
             "reason_code": raison,
         },
