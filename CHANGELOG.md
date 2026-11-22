@@ -8,6 +8,8 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+## [5.13.1] — 2026-11-22
+
 ### Corrigé
 - Libellés restés à l'ancienne après la 5.13.0 : une tâche annulée s'affiche « annulée » dans
   la tuile du briefing, l'onglet Tâches et la synthèse d'audit, et la fenêtre de motif du
