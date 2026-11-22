@@ -18,6 +18,17 @@ mobile/CHANGELOG.md.
   des critères) ; les actions sont grisées si la sélection est vide ou dépasse le plafond. Pendant
   l'export ou l'archivage, un indicateur de chargement s'affiche ; seul « Fermer » reste en pied.
 
+### Modifié
+- Archivage irrévocable (web et mobile) : une intervention fermée et archivée n'offre plus le
+  changement de statut et affiche « Archivée » ; la confirmation
+  d'archivage prévient que les fiches ne pourront plus être rouvertes. Une intervention fermée
+  non archivée se rouvre comme avant.
+- L'archivage d'une intervention est irrévocable, garanti par la base (ADR 0041) : un
+  déclencheur refuse de retirer le marquage d'une intervention archivée et de rouvrir une
+  intervention archivée fermée, pour toute écriture du rôle de l'application. L'API renvoie
+  400 avec un message lisible. Migration 0026 à jouer en production : les interventions déjà
+  archivées sont figées dès la montée de version ; aucune donnée n'est modifiée.
+
 ### Corrigé
 - Création d'une intervention liée à une demande : les refus (demande introuvable, déjà liée,
   statut qui n'autorise pas la liaison, intervention déjà liée) renvoient 404, 409 ou 400 avec

@@ -42,7 +42,10 @@ Pour archiver d'un coup les interventions fermées d'une période, sans les impr
 dans le bloc **Archiver**, cliquez sur **Archiver N fiches** et confirmez. Les limites sont
 celles de l'export : 100 fiches au maximum par période, réservé aux responsables et aux
 administrateurs. Chaque fiche archivée est tracée dans l'audit, avec son auteur et sa date.
-L'archivage ne se défait pas depuis l'écran : vérifiez la période avant de confirmer.
+L'archivage est irrévocable : une fiche archivée ne peut plus être désarchivée, et une
+intervention archivée ne peut plus être rouverte (la base de données le refuse). Pour
+reprendre le travail sur un équipement, créez une nouvelle intervention. Vérifiez la période
+avant de confirmer.
 
 ## Créer une intervention
 

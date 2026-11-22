@@ -15,7 +15,7 @@ export default function ArchiveConfirmation({ dateFrom, dateTo, equipement, coun
       <Callout.Icon><Archive size={16} /></Callout.Icon>
       <Callout.Text>
         Archiver {count > 1 ? `les ${count} fiches fermées` : count === 1 ? 'la fiche fermée' : 'les fiches fermées'} du {formatInterventionDate(dateFrom)} au {formatInterventionDate(dateTo)}{scope} sans les exporter ?
-        Ces fiches sortiront de la liste des interventions. L’archivage ne se défait pas depuis l’écran.
+        Ces fiches sortiront de la liste des interventions. L’archivage est irrévocable : ces fiches ne pourront plus être rouvertes.
         <Flex gap="2" mt="2" wrap="wrap">
           <Button size="1" color="orange" onClick={onConfirm}>Archiver</Button>
           <Button size="1" variant="soft" color="gray" onClick={onCancel}>Annuler</Button>

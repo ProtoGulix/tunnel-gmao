@@ -36,11 +36,14 @@ def _intervention(instance, machine, type_inter, reported, status, printed=False
     iid = str(
         instance.sql(
             "INSERT INTO intervention (title, machine_id, type_inter, tech_initials, "
-            "status_actual, reported_date, printed_fiche) VALUES ('TDB', %s, %s, %s, %s, %s, %s) "
-            "RETURNING id",
-            (machine, type_inter, secrets.token_hex(3).upper(), status, reported, printed),
+            "status_actual, reported_date) VALUES ('TDB', %s, %s, %s, %s, %s) RETURNING id",
+            (machine, type_inter, secrets.token_hex(3).upper(), status, reported),
         )[0][0]
     )
+    if printed:
+        # Archivée après coup : l'archive est irrévocable (ADR 0041), et l'insertion d'une ligne
+        # déjà archivée dont le statut n'est pas « ouvert » heurte le déclencheur d'initialisation.
+        instance.sql("UPDATE intervention SET printed_fiche = true WHERE id = %s", (iid,))
     if closed_on:
         instance.sql(
             "INSERT INTO intervention_status_log (id, status_from, status_to, intervention_id, date) "

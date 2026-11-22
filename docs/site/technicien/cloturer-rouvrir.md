@@ -33,6 +33,9 @@ Ouvrez l'intervention fermée, touchez **Statut**, puis choisissez un autre stat
 feuille « Pourquoi rouvrir cette intervention ? » demande le motif. Une fois confirmé,
 l'intervention reprend le statut choisi.
 
+Une intervention archivée (mention « Archivée ») ne se rouvre pas : le statut n'est plus
+proposé. Créez une nouvelle intervention pour reprendre le travail.
+
 ## Annuler une tâche
 
 Dans la liste des tâches d'une intervention, le bouton **Annuler** met la tâche de côté. La

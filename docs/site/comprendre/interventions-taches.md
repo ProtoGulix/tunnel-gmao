@@ -69,6 +69,10 @@ configuration de départ. La réouverture a ces effets, dans la même transactio
 - l'occurrence préventive liée, si elle était « clôturée », repasse « en cours » ;
 - le journal garde l'événement, avec l'auteur et le motif.
 
+Une intervention **archivée** (fiche marquée imprimée) ne peut pas être rouverte : l'archivage
+est irrévocable, la base de données refuse la réouverture. Pour reprendre le travail, créez
+une nouvelle intervention.
+
 Voir [Clore ou rouvrir](/technicien/cloturer-rouvrir) et
 [Interventions et tâches](/responsable/interventions-taches) pour les écrans.
 

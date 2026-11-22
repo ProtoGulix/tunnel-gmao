@@ -61,7 +61,7 @@ export function ArchiveBlock({
 }) {
   const label = count > 0 ? `Archiver ${count} ${count > 1 ? 'fiches' : 'fiche'}` : 'Archiver';
   return (
-    <Block title="Archiver" help="Sortir les fiches de la liste, sans les imprimer.">
+    <Block title="Archiver" help="Sortir les fiches de la liste, sans les imprimer. L'archivage est irrévocable.">
       <Button variant="soft" color="orange" disabled={disabled} loading={marking} onClick={onArchive}>
         <Archive size={16} />
         {label}

@@ -17,6 +17,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
 import InterventionPanelHeader from '@/components/interventions/InterventionPanelHeader';
+import { isArchivedClosed } from '@/components/interventions/archiveRules';
 import { getDeleteBlockReason } from '@/components/interventions/deleteInterventionRules';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
@@ -281,9 +282,10 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
         statusKey={mapDtoStatusToConfigKey(intervention.status)}
         priorityKey={mapPriorityToConfigKey(intervention.priority)}
         canEditProperties={!isLocked && can(PERM.interventions.update)}
-        // Le statut reste modifiable une fois fermée : rouvrir exige un motif, demandé par
-        // l'API et la fenêtre de motif globale (ADR 0028)
-        canChangeStatus={can(PERM.interventions.update)}
+        // Fermée, le statut reste modifiable (rouvrir exige un motif, ADR 0028), sauf si
+        // l'intervention est archivée : l'archivage est irrévocable (ADR 0041)
+        canChangeStatus={can(PERM.interventions.update) && !isArchivedClosed(intervention)}
+        archivedNotice={isArchivedClosed(intervention)}
         onStatusChange={handleStatusChange}
         onPriorityChange={handlePriorityChange}
         onRequestPointage={can(PERM.interventions.requestPointage) ? () => setPointageDialogOpen(true) : undefined}

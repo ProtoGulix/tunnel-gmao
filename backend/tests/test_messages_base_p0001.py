@@ -71,3 +71,17 @@ def test_raise_db_error_garde_le_refus_metier_et_masque_le_reste():
     with pytest.raises(ValidationError) as interne:
         raise_db_error(_ErreurP0001("La raison SYSTEM_X n'est pas une raison système"))
     assert interne.value.detail == GENERIC_DB_REFUSAL
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "L'archivage d'une intervention est irrévocable",
+        "Une intervention archivée ne peut pas être rouverte",
+    ],
+)
+def test_refus_d_archivage_irrevocable_lisible_par_l_utilisateur(message):
+    assert user_facing_db_message(message) == message
+    with pytest.raises(ValidationError) as refus:
+        raise_db_error(_ErreurP0001(message))
+    assert refus.value.detail == message

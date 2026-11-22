@@ -89,6 +89,8 @@ _USER_FACING_DB_MESSAGES = tuple(
         r"reason_text obligatoire quand reason_code = OTHER",
         r"Raison \S+ inconnue ou inactive",
         r"Machine \S+ inconnue",
+        r"L'archivage d'une intervention est irrévocable",
+        r"Une intervention archivée ne peut pas être rouverte",
     )
 )
 GENERIC_DB_REFUSAL = "Opération refusée par la base de données"
