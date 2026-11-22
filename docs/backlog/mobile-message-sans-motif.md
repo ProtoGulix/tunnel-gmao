@@ -1,3 +1,5 @@
+TRAITÉ (2026-11-22, MSG-01).
+
 # Mobile : message brut quand aucun motif n'est proposé
 
 Constat de l'essai du chantier REM (2026-11-22). Gravité : ergonomie.

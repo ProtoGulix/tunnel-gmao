@@ -6,7 +6,7 @@ import { useInterventionDetail } from '../../hooks/interventions/useIntervention
 import { changeInterventionStatus, getInterventionStatuses, reopenIntervention } from '../../api/interventions'
 import { CloseInterventionPrompt } from '../../components/interventions/CloseInterventionPrompt'
 import { AuditReasonSheet } from '../../components/ui/AuditReasonSheet'
-import { getErrorMessage } from '../../lib/api/errors'
+import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
@@ -202,8 +202,8 @@ export default function InterventionDetailPage() {
       setReopenAsk(null)
       reloadAll()
     } catch (err) {
-      const asked = err?.data?.audit?.reasons
-      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+      const asked = getAuditReasons(err)
+      if (asked) {
         setReopenAsk({ toCode, reasons: asked })
         return
       }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Ban, RotateCcw, Loader2 } from 'lucide-react'
 import { AuditReasonSheet } from './AuditReasonSheet'
+import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 import { updateTask } from '../../api/tasks'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
@@ -35,12 +36,12 @@ export function TaskStatusButtons({ task, onChanged }) {
       setPending(null)
       onChanged(updated)
     } catch (err) {
-      const asked = err?.data?.audit?.reasons
-      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+      const asked = getAuditReasons(err)
+      if (asked) {
         setReasons(asked)
       } else {
         setReasons(null)
-        setError(err?.data?.detail ?? err.message ?? 'Erreur lors de la mise à jour')
+        setError(getErrorMessage(err))
       }
     } finally {
       setSaving(false)
