@@ -33,13 +33,13 @@ demande d'intervention créée par le système, avec le type « préventif » su
 | --- | --- |
 | Générée | L'occurrence existe, sa demande attend d'être traitée. |
 | En cours | La demande a été acceptée : l'intervention existe. |
-| Terminée | L'intervention est fermée, la demande est clôturée. |
+| Clôturée | L'intervention est fermée, la demande est clôturée. |
 | Ignorée | L'occurrence est écartée, par la décision d'une personne. |
 
 L'occurrence suit sa demande et son intervention :
 
 - accepter la demande (ou la création automatique) la passe **en cours** ;
-- clore l'intervention la passe **terminée** ;
+- clore l'intervention la passe **clôturée** ;
 - **rouvrir** l'intervention la repasse **en cours** ;
 - **rejeter** la demande la passe **ignorée**.
 
@@ -56,7 +56,7 @@ L'échéance d'un plan sur une machine se calcule ainsi :
 **référence + périodicité en jours = prochaine échéance.**
 
 - La **référence** est la **date de clôture de la demande** de la dernière occurrence
-  terminée. Sans date de clôture, c'est la date prévue de cette occurrence.
+  clôturée. Sans date de clôture, c'est la date prévue de cette occurrence.
 - **Sans historique**, l'échéance est aujourd'hui.
 - Une occurrence ignorée parce que sa **demande a été rejetée** n'est pas une référence : le
   préventif n'a pas été fait, l'échéance reste celle d'avant.

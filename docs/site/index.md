@@ -26,6 +26,20 @@ features:
     details: Open source (AGPL-3.0), installé par Docker Compose ; aucune donnée ne sort de l'entreprise.
 ---
 
+<script setup>
+import { useData } from "vitepress";
+
+const { theme } = useData();
+</script>
+
+::: info Ce guide décrit Tunnel {{ theme.tunnelVersion }}
+Votre version s'affiche sur le web, en bas du menu latéral : le bouton
+`v{{ theme.tunnelVersion }}` ouvre les « Nouveautés ». Si votre installation n'est pas à jour,
+certains écrans peuvent différer : [mettez à jour](/installation/mise-a-jour), ou lisez le
+guide de votre version dans le dossier `docs/site` du
+[dépôt](https://github.com/ProtoGulix/tunnel-gmao/tags), au tag de votre version.
+:::
+
 ![Le Bilan du service de Tunnel : charge, fragmentation, temps de pilotage, part d'urgences et leurs tendances](/captures/web-direction-bilan-etat.webp)
 
 ## Essayer la démonstration

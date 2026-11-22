@@ -33,7 +33,7 @@ const STATUS_COLORS = {
 
 const PRIORITY_LABELS = {
   faible: 'Faible',
-  normal: 'Normal',
+  normal: 'Normale',
   important: 'Important',
   urgent: 'Urgent',
 };
@@ -56,7 +56,7 @@ function sortByPriority(items) {
 
 /* ── Liste avec groupement par priorité ──────────────────────────────────── */
 
-const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
+const GROUP_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normale', faible: 'Faible' };
 
 function GroupedInterventionList({ items, selectedId, onSelect }) {
   // Regrouper par priorité dans l'ordre de tri

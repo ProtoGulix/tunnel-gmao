@@ -37,7 +37,7 @@ humaine. Voir [Le préventif](/comprendre/preventif).
 ## Ce qui trace la chaîne
 
 **L'audit.** Le travail normal se raconte par les actions. Tout changement qui n'en vient pas
-(clôturer, rouvrir, ignorer, rejeter, supprimer) demande un **motif**, choisi dans une liste.
+(clôturer, rouvrir, annuler, ignorer, rejeter, supprimer) demande un **motif**, choisi dans une liste.
 L'auteur et la date sont toujours enregistrés. Voir [Audit et motifs](/comprendre/audit).
 
 **Les codes.** Chaque demande, intervention, demande d'achat et commande porte un code lisible.
@@ -59,7 +59,7 @@ d'habitude.
 Deux précisions, vérifiées dans le code :
 
 - seuls le responsable et l'administrateur peuvent déclarer une tâche faite sans action, ou
-  ignorer une étape obligatoire d'un plan préventif ;
+  annuler une étape obligatoire d'un plan préventif ;
 - une clé d'API de machine à machine (rôle MCP) ne fait que lire.
 
 ## Les pages de cette section

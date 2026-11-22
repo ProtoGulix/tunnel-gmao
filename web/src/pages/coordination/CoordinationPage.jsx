@@ -269,7 +269,7 @@ function EquipementLine({ eq, isSelected, onSelect, isLast }) {
 
 const IV_STATUS_ORDER = ['ouvert', 'attente_pieces', 'attente_prod', 'ferme'];
 const PRIORITY_ORDER  = ['urgent', 'important', 'normal', 'faible'];
-const PRIORITY_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
+const PRIORITY_LABELS = { urgent: 'Urgent', important: 'Important', normal: 'Normale', faible: 'Faible' };
 
 // ── Header intervention : statut + priorité inline ───────────────────────────
 

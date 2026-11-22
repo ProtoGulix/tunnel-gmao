@@ -57,7 +57,7 @@
   <rect class="grey" x="20" y="382" width="250" height="84" rx="8"/>
   <text x="32" y="402">Toujours un motif choisi :</text>
   <text x="32" y="419">rejet, réouverture, clôture de</text>
-  <text x="32" y="436">tâche sans action, tâche ignorée,</text>
+  <text x="32" y="436">tâche sans action, tâche annulée,</text>
   <text x="32" y="453">occurrence ignorée</text>
 
   <rect class="strong" x="620" y="160" width="160" height="112" rx="8"/>

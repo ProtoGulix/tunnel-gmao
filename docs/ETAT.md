@@ -7,7 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- **v5.13.0** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
+- **v5.13.1** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : libellés de la 5.13.0 achevés (tâche annulée, priorité « Normale », « Attente production ») ; guide aligné, page « Mise à jour et sauvegarde » réécrite avec les scripts, version de Tunnel affichée dans le guide. Documentation contrôlée avant la version (CLAUDE.md 12.3).
+- **v5.13.0** (2026-11-22, PR #21, tag sur main) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
 - **v5.12.1** (2026-11-21, PR #18, tag sur main) : guide publié sous /docs/ (le workflow
   déposait le site à la racine du domaine). Aucun changement de l'application.
 - **v5.12.0** (2026-11-21, PR #17, tag sur main) :
@@ -83,6 +84,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Guide et fronts alignés sur les libellés de la 5.13.0, premier contrôle de la règle CLAUDE.md 12.3 (documentation avant la version), version de Tunnel affichée dans le guide, reviewer APPROUVÉ | fusionnée dans develop | [GUIDE-06](taches/GUIDE-06-guide-aligne-sur-5-13.md) |
 | fait (2026-11-22) | Scripts de sauvegarde et de répétition d'une mise à jour (demande de l'utilisateur du 2026-11-22, après l'échec de la commande documentée en production) : SAUV-01, SAUV-02 ; essais réels sur la stack de dev, reviewer APPROUVÉ (réserves corrigées) | fusionnée dans develop | [SAUV-01](taches/SAUV-01-script-sauvegarde.md), [SAUV-02](taches/SAUV-02-script-repetition-mise-a-jour.md) |
 | fait (2026-11-22) | Priorité « normale » écrite d'une seule façon (`normal`), migration auditée et contrainte CHECK, codes de statut réels dans les fronts, libellés uniques (décisions de l'utilisateur du 2026-11-21) : PRIO-01 à PRIO-04 faites et intégrées dans la branche ; libellés complétés (« Annuler », « Annulée », « Terminée » partout) ; 621 tests d'intégration verts ; migration 0025 répétée sur une copie puis jouée en dev le 2026-11-21 avec 0024 (134 converties et auditées) ; libellés « À faire » ajoutés le 2026-11-22 ; reviewer APPROUVÉ (test de création atomique ajouté sur sa réserve), essai à l'écran validé le 2026-11-22 ; production : 0024 et 0025 à sa mise à jour | fusionnée dans develop | ADR 0039, [PRIO-01](taches/PRIO-01-migration-priorite-normal.md) à [PRIO-04](taches/PRIO-04-mobile-priorite-et-statuts.md) |
 | fait (2026-11-21) | Guide : section « Comprendre Tunnel » (7 pages, 10 schémas SVG : chaîne du travail, codes, cycles de vie, actions, préventif, achats et paniers, audit), demande de l'utilisateur | fusionnée dans develop | [GUIDE-05](taches/GUIDE-05-comprendre-tunnel.md) |
@@ -146,7 +148,7 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Aucune fiche ouverte. Closes aussi : SAUV-01, SAUV-02, PRIO-01 à PRIO-04. Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Aucune fiche ouverte. Closes aussi : GUIDE-06, SAUV-01, SAUV-02, PRIO-01 à PRIO-04. Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
 
@@ -192,7 +194,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; une version est à décider par l'utilisateur pour livrer scripts et chantier PRIO.
+0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; version 5.13.0 publiée le 2026-11-22.
 
 0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 

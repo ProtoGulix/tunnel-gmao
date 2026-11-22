@@ -15,8 +15,8 @@ Trois services tournent ensemble :
 
 1. [Prérequis et installation](./docker-compose) : installer, créer le premier
    administrateur, ouvrir Tunnel, protéger l'accès.
-2. [Mise à jour et sauvegarde](./mise-a-jour) : passer à une nouvelle version, sauvegarder
-   et restaurer la base.
+2. [Mise à jour et sauvegarde](./mise-a-jour) : sauvegarder la base, répéter une mise à jour
+   sur une copie avant de la faire, passer à une nouvelle version, restaurer.
 
 ## En bref
 

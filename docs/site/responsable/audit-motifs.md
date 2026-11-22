@@ -12,7 +12,7 @@ Dans le **travail normal**, les actions des techniciens racontent le travail : t
 nature, complexité. Rien de plus n'est demandé.
 
 Une **décision** est un changement qui ne vient pas d'une action : clôturer, rouvrir,
-ignorer une tâche, rejeter une demande, supprimer. Pour ces changements, Tunnel veut savoir
+annuler une tâche, rejeter une demande, supprimer. Pour ces changements, Tunnel veut savoir
 **pourquoi**. Le motif s'ajoute à l'auteur et à la date, toujours enregistrés.
 
 L'auteur est celui qui est connecté. Un champ « au nom de » (par exemple le technicien
@@ -48,7 +48,7 @@ Dans la configuration de départ :
 
 | Décision | Motif |
 | --- | --- |
-| Clore une tâche (Terminé) ou l'abandonner (Annuler, Ignorer) | Toujours demandé |
+| Clore une tâche (Terminé) ou l'abandonner (Annuler) | Toujours demandé |
 | Rouvrir une intervention fermée | Toujours demandé |
 | Ignorer une occurrence préventive | Toujours demandé |
 | Supprimer (tâche, intervention, demande), désactiver un plan | Toujours demandé |

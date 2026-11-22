@@ -25,7 +25,7 @@ const STATUS_COLOR = {
 }
 const STATUS_LABEL = {
   ouvert: 'Ouvert',
-  attente_pieces: 'Attente pièces', attente_prod: 'Attente prod', ferme: 'Fermé',
+  attente_pieces: 'Attente pièces', attente_prod: 'Attente production', ferme: 'Fermé',
 }
 
 // ── Carte équipement ──────────────────────────────────────────────────────────

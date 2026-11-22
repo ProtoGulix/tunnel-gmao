@@ -49,7 +49,7 @@ tous les types.
 
 L'onglet **Tâches** affiche une ligne par tâche :
 
-- le **statut** : À faire, En cours, Terminé ou Ignoré ;
+- le **statut** : À faire, En cours, Terminée ou Annulée ;
 - le libellé, avec le badge « Optionnelle » pour une tâche facultative ;
 - les boutons **Terminé** et **Annuler** (voir plus bas) ;
 - le **garant** : un rond avec les initiales de la personne, ou « + » si personne n'est
@@ -83,7 +83,7 @@ changer. Voir [Audit et motifs](/responsable/audit-motifs).
 
 ### Quand une tâche avance
 
-Une tâche passe « En cours » puis « Terminé » quand un technicien saisit une action et la
+Une tâche passe « En cours » puis « Terminée » quand un technicien saisit une action et la
 lie à la tâche. Le badge de statut ne se modifie pas à la main.
 
 ### Clore ou abandonner une tâche en coordination
@@ -105,14 +105,14 @@ Les raisons proposées dans la configuration de départ :
 | Terminé | Réalisée sans action saisie ; Traitée dans une autre intervention ; Autre raison |
 | Annuler | Plus nécessaire ; Doublon ; Traitée dans une autre intervention ; Autre raison |
 
-« Annuler » met la tâche au statut **Ignoré**. Avec « Autre raison », la **Précision** est
+« Annuler » met la tâche au statut **Annulée**. Avec « Autre raison », la **Précision** est
 obligatoire. Une tâche clôturée ainsi n'ajoute aucun temps : aucune action n'est créée
 à votre place. L'auteur de la clôture est enregistré.
 
-Une icône « Ignorer » apparaît aussi au survol d'une tâche : elle fait la même chose
-qu'« Annuler ». Ignorer une **étape obligatoire** d'un plan préventif est réservé au
+Une icône « Annuler » apparaît aussi au survol d'une tâche : elle fait la même chose que
+le bouton. Annuler une **étape obligatoire** d'un plan préventif est réservé au
 responsable et à l'administrateur. Des icônes permettent de « Remettre à faire » une tâche
-terminée ou d'« Annuler l'exclusion » d'une tâche ignorée.
+terminée ou d'« Annuler l'exclusion » d'une tâche annulée.
 
 ### Supprimer une tâche
 
@@ -122,8 +122,8 @@ motif est demandé.
 
 ## Clore une intervention
 
-Dans l'en-tête du détail, ouvrez la liste **Statut** et choisissez **Terminée**. Les
-statuts proposés sont : En cours, Attente pièces, Attente prod. et Terminée.
+Dans l'en-tête du détail, ouvrez la liste **Statut** et choisissez **Fermé**. Les
+statuts proposés sont : Ouvert, Attente pièces, Attente production et Fermé.
 
 - **Les tâches obligatoires doivent être réglées.** Tant qu'une tâche non facultative est
   « à faire » ou « en cours », l'API refuse : « Impossible de fermer : N tâche(s)

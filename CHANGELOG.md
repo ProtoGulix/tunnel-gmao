@@ -8,6 +8,27 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+## [5.13.1] — 2026-11-22
+
+### Corrigé
+- Libellés restés à l'ancienne après la 5.13.0 : une tâche annulée s'affiche « annulée » dans
+  la tuile du briefing, l'onglet Tâches et la synthèse d'audit, et la fenêtre de motif du
+  mobile demande « Pourquoi annuler cette tâche ? » ; la priorité normale s'appelle
+  « Normale » sur le web comme sur le mobile ; le mobile affiche « Attente production ».
+
+### [interne] Documentation
+- Guide utilisateur : la version de Tunnel décrite s'affiche en haut de chaque page, dans un
+  encadré de l'accueil (avec la façon de connaître sa propre version) et en pied de page ;
+  elle est lue dans la version du front web, donc toujours celle de la version publiée.
+- Guide utilisateur aligné sur la 5.13.0 : tâche annulée et bouton « Annuler », statuts
+  d'intervention identiques sur tous les écrans, Coordination avec les interventions en
+  attente, occurrence préventive « Clôturée » ; les occurrences préventives gardent
+  « Ignorer ».
+- Guide utilisateur : page « Mise à jour et sauvegarde » réécrite avec `sauvegarder.sh` et
+  `repeter-mise-a-jour.sh` (mise à jour en quatre étapes, lecture du résultat de la
+  répétition, sauvegarde nocturne par cron, restauration) ; elle ne donne plus la commande
+  `pg_dump | gzip` qui pouvait laisser un fichier vide.
+
 ## [5.13.0] — 2026-11-22
 
 ### Ajouté

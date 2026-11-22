@@ -16,7 +16,7 @@ export const DEFINITIONS = {
   sharedTasks:
     "Tâches partagées : tâches terminées avec au moins deux exécutants différents, signe de travail d'équipe. Part calculée sur les tâches terminées.",
   decisions:
-    "Décisions hors travail normal : choix faits avec un motif (clôture, réouverture, tâche ignorée…), comptés par type de décision et par motif. Les modifications sans motif n'en font pas partie.",
+    "Décisions hors travail normal : choix faits avec un motif (clôture, réouverture, tâche annulée…), comptés par type de décision et par motif. Les modifications sans motif n'en font pas partie.",
   system:
     "Part des modifications faites automatiquement par le système (cascades, calculs) parmi tous les événements du journal du mois.",
   incomplete:

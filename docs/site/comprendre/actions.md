@@ -63,9 +63,9 @@ tâche :
 
 - lier une action à une tâche « à faire » la passe **en cours** ;
 - cocher « cette action termine la tâche » la passe **terminée** ;
-- l'action peut aussi **ignorer** une tâche, avec la raison, sous réserve des droits.
+- l'action peut aussi **annuler** une tâche, avec la raison, sous réserve des droits.
 
-Une tâche déjà terminée ou ignorée n'accepte plus d'action. Voir
+Une tâche déjà terminée ou annulée n'accepte plus d'action. Voir
 [Interventions et tâches](/comprendre/interventions-taches).
 
 ## Quand le travail réel ne passe pas par une action

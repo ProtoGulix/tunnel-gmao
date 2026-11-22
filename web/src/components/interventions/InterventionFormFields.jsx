@@ -7,7 +7,7 @@ import DescribedSelect from '@/components/ui/DescribedSelect';
 const PRIORITY_OPTIONS = [
   { value: 'urgent',    label: 'Urgent',    color: 'red',    description: 'Arrêt de production ou risque pour la sécurité : à traiter tout de suite.' },
   { value: 'important', label: 'Important', color: 'orange', description: 'Production gênée ou dégradée : à traiter en priorité.' },
-  { value: 'normal',     label: 'Normal',    color: 'blue',   description: "Pas d'impact immédiat sur la production : à planifier." },
+  { value: 'normal',     label: 'Normale',   color: 'blue',   description: "Pas d'impact immédiat sur la production : à planifier." },
   { value: 'faible',    label: 'Faible',    color: 'gray',   description: 'Amélioration ou confort : quand le planning le permet.' },
 ];
 const PRIORITY_FIELD_WIDTH = 240;

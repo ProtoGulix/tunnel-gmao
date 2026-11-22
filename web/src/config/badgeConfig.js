@@ -32,7 +32,7 @@ import {
 export const PRIORITY_BADGES = {
   urgent: { color: 'red', icon: AlertCircle, label: 'Urgent' },
   haute: { color: 'amber', icon: AlertTriangle, label: 'Haute' },
-  normal: { color: 'blue', icon: ArrowRight, label: 'Normal' },
+  normal: { color: 'blue', icon: ArrowRight, label: 'Normale' },
   basse: { color: 'gray', icon: ArrowDown, label: 'Basse' },
 };
 

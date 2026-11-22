@@ -5,7 +5,7 @@
 export const INTERVENTION_STATUSES = {
   ouvert:         { label: 'Ouvert',          color: '#1F3A5F', variant: 'info' },
   attente_pieces: { label: 'Attente pièces',  color: '#C62828', variant: 'danger' },
-  attente_prod:   { label: 'Attente prod',    color: '#ED6C02', variant: 'warning' },
+  attente_prod:   { label: 'Attente production', color: '#ED6C02', variant: 'warning' },
   ferme:          { label: 'Fermé',           color: '#2E7D32', variant: 'success' },
 
   // Alias API courants

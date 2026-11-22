@@ -6,7 +6,7 @@ et **Raisons**.
 ## Pourquoi un motif
 
 Tunnel garde la trace de ce qui s'est réellement passé. Quand quelqu'un fait un changement
-hors du travail normal (clôturer, rouvrir, ignorer une tâche, rejeter une demande), il doit
+hors du travail normal (clôturer, rouvrir, annuler une tâche, rejeter une demande), il doit
 choisir un motif dans une liste. C'est vous, l'administrateur, qui tenez cette liste et
 décidez quand un motif est exigé.
 

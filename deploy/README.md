@@ -94,11 +94,17 @@ Ne pas utiliser un simple `pg_dump | gzip` : sans contrôle, un échec laisse un
 vide qui a l'air bon.
 
 ```sh
-# Restauration dans une installation vide (api arrêtée)
-docker compose stop api
-gunzip -c ~/sauvegardes-tunnel/tunnel-AAAA-MM-JJ-HHMM.sql.gz | docker compose exec -T db psql -U tunnel_owner -d tunnel
-docker compose start api
+# Restauration dans une installation neuve (install.sh fait, base jamais démarrée avec l'API)
+docker compose up -d db
+docker compose exec -T db psql -U tunnel_owner -d tunnel -c "CREATE ROLE tunnel_app LOGIN"
+gunzip -c ~/sauvegardes-tunnel/tunnel-AAAA-MM-JJ-HHMM.sql.gz | docker compose exec -T db psql -U tunnel_owner -d tunnel -v ON_ERROR_STOP=1 --single-transaction
+docker compose up -d --build
 ```
+
+Le rôle `tunnel_app` doit exister avant la restauration : la sauvegarde lui donne des droits.
+Au démarrage, l'API lui pose le mot de passe du `.env` et ses droits. `ON_ERROR_STOP` et
+`--single-transaction` arrêtent tout à la première erreur, sans restauration à moitié faite.
+C'est l'ordre que joue `repeter-mise-a-jour.sh` dans sa base jetable.
 
 Conserver les sauvegardes hors de la machine. Le fichier `.env` fait aussi partie de
 la sauvegarde (le script ne le copie pas) : sans `JWT_SECRET_KEY` et les mots de passe,

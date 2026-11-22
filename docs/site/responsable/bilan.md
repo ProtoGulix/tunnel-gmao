@@ -109,7 +109,7 @@ partage des tâches n'est pas une faute.
 | Faites sans action du garant | Tâches terminées dont le garant n'a saisi aucune action : le travail a été fait par d'autres. C'est un signe de travail d'équipe, pas une faute. Part calculée sur les tâches terminées qui ont un garant. |
 | Repérées sur le terrain | Tâche créée par son garant, qui y a lui-même fait une action. Part calculée sur les tâches terminées qui ont un garant. |
 | Tâches partagées | Tâches terminées avec au moins deux exécutants différents, signe de travail d'équipe. Part calculée sur les tâches terminées. |
-| Décisions hors travail normal | Choix faits avec un motif (clôture, réouverture, tâche ignorée…), comptés par type de décision et par motif. Les modifications sans motif n'en font pas partie. |
+| Décisions hors travail normal | Choix faits avec un motif (clôture, réouverture, tâche annulée…), comptés par type de décision et par motif. Les modifications sans motif n'en font pas partie. |
 | Modifications automatiques | Part des modifications faites automatiquement par le système (cascades, calculs) parmi tous les événements du journal du mois. |
 
 Les cartes n'ont **pas de badge** : ces chiffres n'ont pas de seuil. Elles montrent la

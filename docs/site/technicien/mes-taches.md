@@ -6,7 +6,7 @@
 
 L'accueil affiche la section **Mes tâches**, avec leur nombre entre parenthèses. Elle liste
 les tâches qui vous sont affectées et qui sont **à faire** ou **en cours**. Les tâches
-terminées ou ignorées n'y figurent pas.
+terminées ou annulées n'y figurent pas.
 
 Chaque ligne montre le libellé de la tâche, son statut, le code de l'intervention et le nom
 de l'équipement. Touchez une ligne : vous arrivez sur l'intervention qui porte la tâche.

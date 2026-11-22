@@ -61,7 +61,7 @@ inactifs.
 
 L'onglet **Échéancier** montre, pour chaque plan actif et chaque équipement, la prochaine
 échéance. Elle est **glissante** : elle part de la **clôture de la demande** de la dernière
-occurrence terminée, à laquelle on ajoute la périodicité. Sans historique, l'échéance est
+occurrence clôturée, à laquelle on ajoute la périodicité. Sans historique, l'échéance est
 aujourd'hui.
 
 Les lignes sont rangées en groupes :

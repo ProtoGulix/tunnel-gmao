@@ -29,7 +29,7 @@ Deux limites à connaître :
 4. [Demander une pièce](/technicien/demander-une-piece) : créer une demande d'achat
    depuis une action.
 5. [Clore ou rouvrir une intervention](/technicien/cloturer-rouvrir) : les motifs, les
-   tâches ignorées.
+   tâches annulées.
 6. [Notifications et compte](/technicien/notifications).
 
 ## La barre du bas

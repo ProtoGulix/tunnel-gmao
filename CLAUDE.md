@@ -124,6 +124,7 @@ Contrôle des subagents : ne crois jamais un compte rendu sur parole.
     docs/spikes      rapports de vérification
     docs/endpoints   documentation par domaine de l'API
     docs/ETAT.md     état d'avancement : chantier en cours, tâches, dernière décision, prochaine action
+    docs/site        guide utilisateur publié (ADR 0037), mis en ligne à chaque fusion dans main
     docs/taches      une fiche par tâche : périmètre, critère d'acceptation, compte rendu (format dans docs/taches/README.md)
 
 En cas de contradiction, l'ADR le plus récent l'emporte sur ce fichier et sur les guides ; signale l'écart pour qu'il soit corrigé.
@@ -149,6 +150,7 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 7. Tout chantier est découpé en tâches, une fiche par tâche dans docs/taches/ avant de déléguer. Une tâche sans critère d'acceptation vérifiable est mal définie : signale le.
 8. Toute décision structurante non couverte par ce fichier ou un ADR est posée comme question à l'utilisateur, jamais supposée.
 9. Après chaque tâche terminée : mets à jour sa fiche (compte rendu) et docs/ETAT.md, dans le même commit que le travail.
+10. Un chantier qui change ce que l'utilisateur voit ou fait (écran, libellé, règle, commande d'installation, de mise à jour ou de sauvegarde) met à jour dans sa branche la page concernée du guide (docs/site) et, pour l'exploitation, deploy/README.md.
 
 ## 12. Branches, intégration et versions (ADR 0008)
 
@@ -159,7 +161,11 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 
 1. Avant tout travail : `git switch develop && git pull`, puis `git switch -c <type>/<sujet>`. Un subagent travaille dans un worktree de cette branche, jamais sur develop ni main.
 2. Fusion dans develop par l'agent principal seulement, quand check.sh et test-integration.sh sont verts, que le reviewer a rendu APPROUVÉ et que CHANGELOG.md (section « Non publié ») est à jour : `git switch develop && git merge --squash <branche> && TUNNEL_INTEGRATION=1 git commit` (message Conventional Commits qui résume le chantier), puis push de develop et suppression de la branche.
-3. Une version est décidée par l'utilisateur : branche chore/release-X.Y.Z (API_VERSION, versions de web/ et mobile/ via npm version, version affichée dans README.md, section « Non publié » du CHANGELOG renommée `## [X.Y.Z] — AAAA-MM-JJ` : ce fichier racine alimente aussi « Nouveautés » ; une section `### [interne]` n'y est pas affichée) intégrée dans develop, pull request develop → main en merge commit (--no-ff), tag annoté vX.Y.Z sur main, main refusionnée dans develop. Le push vers main exige TUNNEL_RELEASE=1 ; un commit après conflit sur develop ou un cherry-pick exige TUNNEL_INTEGRATION=1 (ADR 0008 point 8).
+3. Une version est décidée par l'utilisateur.
+   - D'abord la documentation, obligatoire et avant tout numéro de version : le guide en ligne est republié depuis main à la fusion, une version sans sa documentation publie une documentation fausse.
+   - Chaque entrée de la section « Non publié » du CHANGELOG est confrontée au guide (docs/site) et à deploy/README.md ; toute page dépassée est corrigée.
+   - La construction du guide (npm run docs:build dans docs/site) passe sans lien mort. Ce contrôle est noté dans la description de la pull request.
+   - Puis branche chore/release-X.Y.Z (API_VERSION, versions de web/ et mobile/ via npm version, version affichée dans README.md, section « Non publié » du CHANGELOG renommée `## [X.Y.Z] — AAAA-MM-JJ` : ce fichier racine alimente aussi « Nouveautés » ; une section `### [interne]` n'y est pas affichée) intégrée dans develop, pull request develop → main en merge commit (--no-ff), tag annoté vX.Y.Z sur main, main refusionnée dans develop. Le push vers main exige TUNNEL_RELEASE=1 ; un commit après conflit sur develop ou un cherry-pick exige TUNNEL_INTEGRATION=1 (ADR 0008 point 8).
 4. ADR : premier commit de la branche du chantier qu'il décide ; ADR sans code : branche docs/adr-NNNN-<sujet>.
 5. Ne jamais réécrire l'historique de main ou develop (pas de force push).
 
