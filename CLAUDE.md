@@ -115,6 +115,7 @@ Contrôle des subagents : ne crois jamais un compte rendu sur parole.
 4. Un test avec chaque comportement nouveau, en priorité sur l'autorisation et les validators. scripts/check.sh (ruff format, ruff check, pytest) doit passer avant chaque commit ; le hook pre-commit le lance (ADR 0003). Installation : .venv/bin/pip install -r requirements-dev.txt. Les tests d'intégration (vrais middlewares, vraie base) se lancent à part avec scripts/test-integration.sh, qui exige Docker et reste hors de check.sh.
 5. Fonctions courtes qui font une chose, commentaires qui expliquent le pourquoi. Pas de print, pas de code commenté, pas de TODO sans fichier de backlog.
 6. Aucune dépendance ajoutée sans accord explicite de l'utilisateur, avec justification et alternative.
+7. Textes sobres, côté interface comme côté API : libellés, badges, aides, confirmations, messages d'erreur et documentation des routes disent l'essentiel, au plus court. Un mot plutôt qu'une phrase, une phrase plutôt que deux ; rien de ce que l'écran montre déjà. Même règle pour les commentaires et docstrings. Trop de texte tue le texte (demande de l'utilisateur du 2026-11-22).
 
 ## 9. Documentation
 
