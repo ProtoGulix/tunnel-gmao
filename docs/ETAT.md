@@ -7,7 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- **v5.13.1** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : libellés de la 5.13.0 achevés (tâche annulée, priorité « Normale », « Attente production ») ; guide aligné, page « Mise à jour et sauvegarde » réécrite avec les scripts, version de Tunnel affichée dans le guide. Documentation contrôlée avant la version (CLAUDE.md 12.3).
+- **v5.14.0** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : export et archivage en masse des fiches fermées, archivage irrévocable garanti par la base (ADR 0041, migration 0026), remise à faire d'une tâche avec motif (ADR 0042, migration 0027), erreurs métier qui ne remontent plus en 500, compteur d'achats ouverts corrigé. Documentation contrôlée avant la version (CLAUDE.md 12.3).
+- **v5.13.1** (2026-11-22, PR #22, tag sur main) : libellés de la 5.13.0 achevés (tâche annulée, priorité « Normale », « Attente production ») ; guide aligné, page « Mise à jour et sauvegarde » réécrite avec les scripts, version de Tunnel affichée dans le guide. Documentation contrôlée avant la version (CLAUDE.md 12.3).
 - **v5.13.0** (2026-11-22, PR #21, tag sur main) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
 - **v5.12.1** (2026-11-21, PR #18, tag sur main) : guide publié sous /docs/ (le workflow
   déposait le site à la racine du domaine). Aucun changement de l'application.
@@ -84,6 +85,13 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-22) | Santé d'un équipement : demandes d'achat reçues ou rejetées plus comptées comme ouvertes (statut dérivé) ; reviewer APPROUVÉ ; 644 tests d'intégration verts | fusionnée dans develop | [CPT-01](taches/CPT-01-compteur-achats-ouverts.md) |
+| fait (2026-11-22) | Mobile : « Aucun motif disponible » au lieu du message brut quand l'API exige un motif sans en proposer ; reviewer APPROUVÉ ; pas de test (le mobile n'a pas de lanceur de tests) | fusionnée dans develop | [MSG-01](taches/MSG-01-mobile-message-sans-motif.md) |
+| fait (2026-11-22) | Ménage du backlog : codes de statut d'intervention inexistants retirés ; tests de retour arrière des motifs indépendants de l'ordre (accord de l'utilisateur) ; compteur d'achats ouverts de l'équipement reporté au backlog ; 643 tests d'intégration verts | fusionnée dans develop | docs/backlog/statuts-intervention-code-mort.md, tests-integration-dependants-de-l-ordre.md |
+| fait (2026-11-22) | Remettre une tâche à faire exige un motif, décision nommée « Tâche remise à faire » (décisions de l'utilisateur du 2026-11-13 et du 2026-11-22) : motifs, migration 0027 (REM-01) ; API et journal (REM-02) ; fronts (REM-03) ; guide ; reviewer APPROUVÉ (remise à faire verrouillée contre une clôture concurrente : 409) ; 643 tests d'intégration verts ; migration 0027 jouée en dev le 2026-11-22 avec l'accord de l'utilisateur (2 motifs ajoutés, OTHER ouvert à task_reopened) ; essai à l'écran validé | fusionnée dans develop | ADR 0042, [REM-01](taches/REM-01-motifs-remise-a-faire.md) à [REM-03](taches/REM-03-fronts-motif-remise-a-faire.md) |
+| fait (2026-11-22) | Archivage irrévocable garanti par la base (décision de l'utilisateur du 2026-11-22) : déclencheur, migration 0026 (IRR-01) ; une intervention archivée ne se rouvre pas, fronts web et mobile (IRR-02) ; guide ; 631 tests d'intégration verts ; reviewer APPROUVÉ ; migration 0026 jouée en dev le 2026-11-22 avec l'accord de l'utilisateur (225 interventions archivées figées, aucune donnée modifiée) ; essai à l'écran validé (mention réduite à « Archivée ») | fusionnée dans develop | ADR 0041, [IRR-01](taches/IRR-01-declencheur-archivage-irrevocable.md), [IRR-02](taches/IRR-02-fronts-archivage-irrevocable.md) |
+| fait (2026-11-22) | Refus de liaison d'une demande en 404, 409 ou 400 au lieu de 500 (accord de l'utilisateur du 2026-11-22), reviewer APPROUVÉ, 622 tests d'intégration verts | fusionnée dans develop | [LIA-01](taches/LIA-01-refus-de-liaison-erreurs-metier.md) |
+| fait (2026-11-22) | Erreurs métier transformées en 500 : `raise_db_error` relance les HTTPException (ERR-01), 94 `raise DatabaseError` des repo passés par `raise_db_error` (ERR-02), 11 tests repo (ERR-03) ; check.sh et 622 tests d'intégration verts | fusionnée dans develop | [ERR-01](taches/ERR-01-raise-db-error-relance-les-erreurs-metier.md) à [ERR-03](taches/ERR-03-tests-erreurs-metier-pas-en-500.md) |
 | fait (2026-11-22) | Guide et fronts alignés sur les libellés de la 5.13.0, premier contrôle de la règle CLAUDE.md 12.3 (documentation avant la version), version de Tunnel affichée dans le guide, reviewer APPROUVÉ | fusionnée dans develop | [GUIDE-06](taches/GUIDE-06-guide-aligne-sur-5-13.md) |
 | fait (2026-11-22) | Scripts de sauvegarde et de répétition d'une mise à jour (demande de l'utilisateur du 2026-11-22, après l'échec de la commande documentée en production) : SAUV-01, SAUV-02 ; essais réels sur la stack de dev, reviewer APPROUVÉ (réserves corrigées) | fusionnée dans develop | [SAUV-01](taches/SAUV-01-script-sauvegarde.md), [SAUV-02](taches/SAUV-02-script-repetition-mise-a-jour.md) |
 | fait (2026-11-22) | Priorité « normale » écrite d'une seule façon (`normal`), migration auditée et contrainte CHECK, codes de statut réels dans les fronts, libellés uniques (décisions de l'utilisateur du 2026-11-21) : PRIO-01 à PRIO-04 faites et intégrées dans la branche ; libellés complétés (« Annuler », « Annulée », « Terminée » partout) ; 621 tests d'intégration verts ; migration 0025 répétée sur une copie puis jouée en dev le 2026-11-21 avec 0024 (134 converties et auditées) ; libellés « À faire » ajoutés le 2026-11-22 ; reviewer APPROUVÉ (test de création atomique ajouté sur sa réserve), essai à l'écran validé le 2026-11-22 ; production : 0024 et 0025 à sa mise à jour | fusionnée dans develop | ADR 0039, [PRIO-01](taches/PRIO-01-migration-priorite-normal.md) à [PRIO-04](taches/PRIO-04-mobile-priorite-et-statuts.md) |
@@ -130,7 +138,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 | fait | Audit centralisé dans le middleware (étapes 0 à 4), suivi dans [AUDC-plan.md](taches/AUDC-plan.md) ; étapes 0 à 4 fusionnées le 2026-11-14 | — | ADR 0018, 0019 |
 | à faire ensuite | Changements hors travail normal : restent la remise à faire d'une tâche avec motif (`task_reopened`) et le motif de clôture « Oubli de clôture à la saisie » (absents du code au 2026-11-21) ; occurrence ignorée (CONT-03) et nettoyage faits | à créer | CLAUDE.md section 2.4 |
 | à cadrer | Statuts d'intervention en base : libellés et couleurs en dur dans les fronts, écran Référentiel sans effet (types faits, ADR 0026), [backlog](backlog/referentiel-types-statuts-en-base.md) | à créer | aucune fiche encore |
-| à cadrer | Archivage en masse des interventions fermées | à créer | aucune fiche encore |
+| fait (2026-11-22) | Archivage en masse des interventions fermées (ADR 0040 : archivée = fiche imprimée) : cadrage ARCH-01 ; « Archiver sans exporter » (ARCH-02) ; route d'aperçu `GET /exports/interventions/closed/preview` (ARCH-03, accord du 2026-11-22) ; aperçu avec délai et chargement (ARCH-04) ; fenêtre en deux blocs Exporter et Archiver (ARCH-05, maquette choisie par l'utilisateur) ; guide mis à jour ; 622 tests d'intégration verts ; reviewer APPROUVÉ (deux relectures), essai à l'écran validé par l'utilisateur le 2026-11-22 | fusionnée dans develop | ADR 0040, [ARCH-01](taches/ARCH-01-cadrage-archivage-en-masse.md) à [ARCH-05](taches/ARCH-05-web-fenetre-deux-blocs.md) |
 
 Onglet Tâches (ADR 0015) : fusionné dans develop le 2026-11-13, après validation à
 l'écran par l'utilisateur, check.sh et test-integration.sh verts, reviewer APPROUVÉ.
@@ -194,9 +202,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; version 5.13.0 publiée le 2026-11-22.
+0. Production en 5.13.1. Version 5.14.0 en préparation : migrations 0026 et 0027 à jouer en production (appliquées au démarrage de l'API).
 
-0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
+0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Erreurs métier en 500 : chantier ERR fait le 2026-11-22 (reviewer APPROUVÉ, fusionné dans develop) ; suite au backlog : docs/backlog/liaison-demande-refus-en-500.md. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 
 0. Chantier DEMO : fait (DEMO-01 à DEMO-08) ; démonstration publique en service, rechargée
    chaque nuit à 3 h depuis le clone /home/tunnel/tunnel-demo (develop, mise à jour par
@@ -220,16 +228,13 @@ subagents, format de compte rendu imposé aux agents).
    classe d'équipement). Base de dev : migrations jusqu'à 0012. Production : 0006 à 0012 à jouer à sa prochaine mise à jour.
 1. Le bilan de sécurité interne (hors dépôt) est à compléter par l'utilisateur avec les
    correctifs de l'ADR 0017.
-2. Chantier changements hors travail normal (occurrence ignorée et nettoyage faits, CONT-03 ; le reste ouvert au 2026-11-21), décisions de l'utilisateur du 2026-11-13 :
+2. Chantier changements hors travail normal : CONT-03 fait ; remise à faire avec motif faite (chantier REM, ADR 0042) ; « Oubli de clôture à la saisie » abandonné (doublon de « Réalisée sans action saisie », décision du 2026-11-22). Historique, décisions de l'utilisateur du 2026-11-13 :
    remettre à faire exige un motif (task_reopened : « Clôturée par erreur », « Travail à
    reprendre », OTHER) ; nouveau motif de clôture task_done « Oubli de clôture à la
    saisie » ; occurrence préventive ignorée par motif d'audit ; nettoyage du ROUTINE en
    dur du mobile et de GammeProgressBlock ; une base de production existe (indisponible
    pour l'instant) : migration de données idempotente pour tous les motifs.
-3. Archivage en masse : ouvrir le chantier (code ARCH), écrire la fiche ARCH-01 de cadrage
-   (inventaire de l'existant : statut fermé, champs ou tables d'archive, routes, écrans,
-   besoin d'ADR, de migration ou d'écriture en base, ces deux dernières soumises à l'accord
-   de l'utilisateur), puis proposer le plan court avant tout code.
+3. Archivage en masse (chantier ARCH, ADR 0040) : fusionné dans develop le 2026-11-22, à publier dans la prochaine version (sans migration). Production : la route d'aperçu reçoit ses droits (ADMIN, RESP) par le bootstrap au démarrage de l'API. Question ouverte : retirer le marquage depuis l'onglet Fiche (aucun écran ne le permet).
 4. Recontrôler le critère de sortie de l'étape 5 (un test de rôle par endpoint) : à
    ouvrir comme tâche quand l'utilisateur le décide, pour lever le NON VÉRIFIÉ.
 

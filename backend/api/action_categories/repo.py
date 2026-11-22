@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError
+from api.errors.exceptions import NotFoundError, raise_db_error
 
 
 class ActionCategoryRepository:
@@ -45,7 +45,7 @@ class ActionCategoryRepository:
 
             return result
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_all)")
         finally:
             release_connection(conn)
 
@@ -65,6 +65,6 @@ class ActionCategoryRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}")
+            raise_db_error(e, "accès base (get_by_id)")
         finally:
             release_connection(conn)

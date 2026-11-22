@@ -1,6 +1,6 @@
 """Événements d'audit (ADR 0018, point 4) : garde-fous sans base, hors requête."""
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -8,6 +8,7 @@ from api.audits.events import (
     AuditUnit,
     bind_audit_unit,
     record_audit_event,
+    replaced_fields,
     unbind_audit_unit,
 )
 
@@ -48,3 +49,21 @@ def test_un_evenement_du_systeme_exige_un_motif():
             record_audit_event("intervention", uuid4(), "auto", is_system=True)
     finally:
         unbind_audit_unit(token)
+
+
+ENTITY = str(uuid4())
+
+
+def test_champs_remplaces_par_un_evenement_sont_connus_du_middleware():
+    unit = AuditUnit()
+    token = bind_audit_unit(unit)
+    try:
+        record_audit_event(
+            "task", UUID(ENTITY), "task_reopened", replaces_fields=("status", "closed_by")
+        )
+        assert replaced_fields("task", ENTITY) == {"status", "closed_by"}
+        assert replaced_fields("task", str(uuid4())) == frozenset()
+        assert replaced_fields("action", ENTITY) == frozenset()
+    finally:
+        unbind_audit_unit(token)
+    assert replaced_fields("task", ENTITY) == frozenset()

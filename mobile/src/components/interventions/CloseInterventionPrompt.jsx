@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { AuditReasonSheet } from '../ui/AuditReasonSheet'
 import { closeIntervention } from '../../api/interventions'
-import { getErrorMessage } from '../../lib/api/errors'
+import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 
 /**
  * CloseInterventionPrompt — confirme la clôture d'une intervention : proposée après la
@@ -28,8 +28,8 @@ export function CloseInterventionPrompt({ intervention, onClosed, onDismiss, tit
       setReasons(null)
       onClosed()
     } catch (err) {
-      const asked = err?.data?.audit?.reasons
-      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+      const asked = getAuditReasons(err)
+      if (asked) {
         setReasons(asked)
       } else {
         setReasons(null)

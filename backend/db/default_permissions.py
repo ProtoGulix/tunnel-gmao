@@ -62,6 +62,7 @@ AUDIT_HISTORY_READERS = ("RESP", "MCP")
 BULK_EXPORT_PATHS = (
     "/exports/interventions/closed",
     "/exports/interventions/closed/mark-printed",
+    "/exports/interventions/closed/preview",
 )
 
 # --- Zones fermées en lecture aux rôles non-ADMIN ------------------------------------

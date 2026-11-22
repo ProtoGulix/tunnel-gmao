@@ -8,7 +8,8 @@
 
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Flex, Text } from '@radix-ui/themes';
+import { Badge, Flex, Text } from '@radix-ui/themes';
+import { ARCHIVED_NOTICE } from './archiveRules';
 import { STATE_COLORS, PRIORITY_COLORS } from '@/config/interventionTypes';
 import DeleteInterventionDialog from './DeleteInterventionDialog';
 import {
@@ -39,6 +40,7 @@ export default function InterventionPanelHeader({
   priorityKey,
   canEditProperties,
   canChangeStatus,
+  archivedNotice,
   onStatusChange,
   onPriorityChange,
   onRequestPointage,
@@ -107,6 +109,9 @@ export default function InterventionPanelHeader({
           disabled={!canChangeStatus}
           onChange={onStatusChange}
         />
+        {archivedNotice && (
+          <Badge color="gray" variant="soft" size="1">{ARCHIVED_NOTICE}</Badge>
+        )}
         <PropertySelect
           ariaLabel="Priorité"
           value={priorityKey}
@@ -140,6 +145,7 @@ InterventionPanelHeader.propTypes = {
   priorityKey: PropTypes.string.isRequired,
   canEditProperties: PropTypes.bool,
   canChangeStatus: PropTypes.bool,
+  archivedNotice: PropTypes.bool,
   onStatusChange: PropTypes.func.isRequired,
   onPriorityChange: PropTypes.func.isRequired,
   onRequestPointage: PropTypes.func,

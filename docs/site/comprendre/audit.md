@@ -61,6 +61,7 @@ n'a pas choisi un motif explicite.
 | Rouvrir une intervention fermée | Les motifs de réouverture. |
 | Terminer une tâche sans action | Les motifs de clôture de tâche. |
 | Annuler une tâche | Les motifs d'abandon de tâche. |
+| Remettre une tâche à faire | « Clôturée par erreur », « Travail à reprendre », « Autre raison ». |
 | Ignorer une occurrence préventive | Les motifs d'occurrence ignorée. |
 
 Les motifs de départ sont décrits dans les pages par rôle : voir

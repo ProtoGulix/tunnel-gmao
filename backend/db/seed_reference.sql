@@ -501,3 +501,13 @@ SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(i
 
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'PRIORITY_NORMALIZED', 'Priorité normalisée', 'system', '{intervention}', '{priority_changed}', '#64748b', 'Écriture de la priorité corrigée par une migration (normale devenue normal, ADR 0039).', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;
+
+--
+-- Motifs de remise à faire d'une tâche (REM-01, ADR 0042), cohérents avec la migration
+-- 0027 : décision task_reopened. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'TASK_CLOSED_BY_MISTAKE', 'Clôturée par erreur', 'user', '{task}', '{task_reopened}', '#d97706', 'La tâche a été terminée ou annulée par erreur.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'TASK_CLOSED_BY_MISTAKE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'TASK_REWORK', 'Travail à reprendre', 'user', '{task}', '{task_reopened}', '#dc2626', 'Le travail de la tâche est à reprendre.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'TASK_REWORK') ON CONFLICT (code) DO NOTHING;
+UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'task_reopened') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('task_reopened' = ANY(decision_types));
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));

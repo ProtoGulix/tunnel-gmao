@@ -36,11 +36,14 @@ def _intervention(instance, machine, type_inter, reported, status, printed=False
     iid = str(
         instance.sql(
             "INSERT INTO intervention (title, machine_id, type_inter, tech_initials, "
-            "status_actual, reported_date, printed_fiche) VALUES ('TDB', %s, %s, %s, %s, %s, %s) "
-            "RETURNING id",
-            (machine, type_inter, secrets.token_hex(3).upper(), status, reported, printed),
+            "status_actual, reported_date) VALUES ('TDB', %s, %s, %s, %s, %s) RETURNING id",
+            (machine, type_inter, secrets.token_hex(3).upper(), status, reported),
         )[0][0]
     )
+    if printed:
+        # Archivée après coup : l'archive est irrévocable (ADR 0041), et l'insertion d'une ligne
+        # déjà archivée dont le statut n'est pas « ouvert » heurte le déclencheur d'initialisation.
+        instance.sql("UPDATE intervention SET printed_fiche = true WHERE id = %s", (iid,))
     if closed_on:
         instance.sql(
             "INSERT INTO intervention_status_log (id, status_from, status_to, intervention_id, date) "
@@ -281,3 +284,86 @@ def test_interventions_filtre_type_invalide_en_400(client, admin):
         headers=admin.headers,
     )
     assert r.status_code == 400
+
+
+def _demande_achat(instance, machine, article, commande_statut=None, selectionnee=False):
+    """Pose une demande d'achat liée à une action de l'équipement.
+
+    Sans commande_statut, la demande n'a aucune ligne de commande (statut dérivé ouvert).
+    Avec un statut, une ligne de commande portant la demande est créée.
+    """
+    iid = _intervention(instance, machine, "CUR", "2033-02-01", "ouvert")
+    action = instance.sql(
+        "INSERT INTO intervention_action (intervention_id, created_at, time_spent) "
+        "VALUES (%s, '2033-02-01 08:00:00+00', 1) RETURNING id",
+        (iid,),
+    )[0][0]
+    da = instance.sql(
+        "INSERT INTO purchase_request (item_label, quantity, stock_item_id, code) "
+        "VALUES ('Joint', 2, %s, %s) RETURNING id",
+        (article, f"DA-IT-{secrets.token_hex(4)}"),
+    )[0][0]
+    instance.sql(
+        "INSERT INTO intervention_action_purchase_request (intervention_action_id, "
+        "purchase_request_id) VALUES (%s, %s)",
+        (action, da),
+    )
+    if commande_statut:
+        fournisseur = instance.sql(
+            "SELECT supplier_id FROM stock_item_supplier WHERE stock_item_id = %s", (article,)
+        )[0][0]
+        commande = instance.sql(
+            "INSERT INTO supplier_order (order_number, supplier_id, status) "
+            "VALUES (%s, %s, %s) RETURNING id",
+            (f"CMD-CPT-{secrets.token_hex(3)}", fournisseur, commande_statut),
+        )[0][0]
+        ligne = instance.sql(
+            "INSERT INTO supplier_order_line (supplier_order_id, stock_item_id, quantity, "
+            "is_selected) VALUES (%s, %s, 2, %s) RETURNING id",
+            (commande, article, selectionnee),
+        )[0][0]
+        instance.sql(
+            "INSERT INTO supplier_order_line_purchase_request (supplier_order_line_id, "
+            "purchase_request_id, quantity) VALUES (%s, %s, 2)",
+            (ligne, da),
+        )
+
+
+def _sante(client, headers, machine):
+    r = client.get(f"/equipements/{machine}/health", headers=headers)
+    assert r.status_code == 200, r.text
+    return r.json()["data"]
+
+
+def test_sante_compte_les_demandes_d_achat_ouvertes_sur_le_statut_derive(client, admin, instance):
+    """Une demande reçue ou rejetée ne compte plus comme ouverte (CPT-01)."""
+    instance.sql(
+        "INSERT INTO stock_family (code, label) VALUES ('F', 'Famille IT') ON CONFLICT DO NOTHING"
+    )
+    instance.sql(
+        "INSERT INTO stock_sub_family (family_code, code, label) VALUES ('F', 'SF', 'Sous-famille IT') "
+        "ON CONFLICT DO NOTHING"
+    )
+    article = instance.sql(
+        "INSERT INTO stock_item (name, family_code, sub_family_code, dimension) "
+        "VALUES ('Joint CPT', 'F', 'SF', %s) RETURNING id",
+        (f"cpt-{secrets.token_hex(3)}",),
+    )[0][0]
+    # Une référence fournisseur est requise : sans elle le statut dérivé reste NO_SUPPLIER_REF.
+    fournisseur = instance.sql(
+        "INSERT INTO supplier (name) VALUES ('Fournisseur CPT') RETURNING id"
+    )[0][0]
+    instance.sql(
+        "INSERT INTO stock_item_supplier (stock_item_id, supplier_id, supplier_ref) "
+        "VALUES (%s, %s, 'REF-CPT')",
+        (article, fournisseur),
+    )
+    ouverte, recue, rejetee = (_machine(instance) for _ in range(3))
+    _demande_achat(instance, ouverte, article)
+    _demande_achat(instance, recue, article, "CLOSED", selectionnee=True)
+    _demande_achat(instance, rejetee, article, "CANCELLED")
+
+    regle = "OPEN_PURCHASE_REQUESTS > 0"
+    assert regle in _sante(client, admin.headers, ouverte)["rules_triggered"]
+    assert regle not in _sante(client, admin.headers, recue)["rules_triggered"]
+    assert regle not in _sante(client, admin.headers, rejetee)["rules_triggered"]

@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from api.audits.events import record_audit_event
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import NotFoundError, raise_db_error
 
 
 def _links_snapshot(cur, line_id: str) -> List[Dict[str, Any]]:
@@ -484,7 +484,7 @@ class SupplierOrderLineRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la création de la ligne: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la création de la ligne")
         finally:
             release_connection(conn)
 
@@ -583,7 +583,7 @@ class SupplierOrderLineRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 
@@ -602,7 +602,7 @@ class SupplierOrderLineRepository:
             return True
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression")
         finally:
             release_connection(conn)
 
@@ -631,7 +631,7 @@ class SupplierOrderLineRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la liaison: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la liaison")
         finally:
             release_connection(conn)
 
@@ -657,7 +657,7 @@ class SupplierOrderLineRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression du lien: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression du lien")
         finally:
             release_connection(conn)
 

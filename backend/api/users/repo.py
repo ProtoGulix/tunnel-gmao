@@ -4,7 +4,7 @@ import bcrypt
 
 from api.audits.events import record_audit_event, record_column_changes
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, ValidationError
+from api.errors.exceptions import NotFoundError, ValidationError, raise_db_error
 from api.utils.sanitizer import strip_html
 from api.utils.search import build_search_clause
 
@@ -62,7 +62,7 @@ class UserRepository:
                 cols = [desc[0] for desc in cur.description]
                 return [dict(zip(cols, row)) for row in rows]
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}") from e
+            raise_db_error(e, "accès base (get_all)")
         finally:
             if conn:
                 release_connection(conn)
@@ -89,7 +89,7 @@ class UserRepository:
         except NotFoundError:
             raise
         except Exception as e:
-            raise DatabaseError(f"Erreur base de données: {str(e)}") from e
+            raise_db_error(e, "accès base (get_by_id)")
         finally:
             if conn:
                 release_connection(conn)
@@ -128,7 +128,7 @@ class UserRepository:
         except Exception as e:
             if conn:
                 conn.rollback()
-            raise DatabaseError(f"Erreur mise à jour profil: {str(e)}") from e
+            raise_db_error(e, "Erreur mise à jour profil")
         finally:
             if conn:
                 release_connection(conn)
@@ -195,7 +195,7 @@ class UserRepository:
         except Exception as e:
             if conn:
                 conn.rollback()
-            raise DatabaseError(f"Erreur changement de mot de passe: {str(e)}") from e
+            raise_db_error(e, "Erreur changement de mot de passe")
         finally:
             if conn:
                 release_connection(conn)

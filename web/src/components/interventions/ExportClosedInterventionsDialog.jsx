@@ -8,11 +8,13 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Checkbox, Dialog, Flex, Text, TextField } from '@radix-ui/themes';
-import { CheckCheck, Download, Printer } from 'lucide-react';
 import EquipementSearch from '@/components/planning/EquipementSearch';
-import ExportFeedback from '@/components/interventions/ExportFeedback';
+import { ErrorCallout, ExportProgress } from '@/components/interventions/ExportFeedback';
+import { ArchiveBlock, ExportBlock, ExportBlocks } from '@/components/interventions/ExportBlocks';
+import ExportPreview from '@/components/interventions/ExportPreview';
 import { fetchClosedInterventionsExport } from '@/api/interventions';
 import { useMarkExportedPrinted } from '@/hooks/interventions/useMarkExportedPrinted';
+import { useClosedExportPreview } from '@/hooks/interventions/useClosedExportPreview';
 
 function triggerDownload(blob, filename) {
   const url = window.URL.createObjectURL(blob);
@@ -25,58 +27,71 @@ function triggerDownload(blob, filename) {
   window.setTimeout(() => window.URL.revokeObjectURL(url), 10000);
 }
 
-// Boutons du pied de fenêtre ; une fois les fiches marquées, fermer devient l'action principale
-function ExportDialogActions({ onClose, onExport, onMark, isBusy, canSubmit, busyFormat, canMark, marking, marked }) {
-  return (
-    <Flex justify="end" gap="2" mt="4" wrap="wrap">
-      <Button variant={marked ? 'solid' : 'soft'} color="gray" onClick={onClose} disabled={isBusy}>
-        Fermer
-      </Button>
-      {canMark && (
-        <Button variant="soft" color="green" loading={marking} onClick={onMark}>
-          <CheckCheck size={16} />
-          Marquer ces fiches comme imprimées
-        </Button>
-      )}
-      <Button variant="soft" disabled={!canSubmit} loading={busyFormat === 'pdf'} onClick={() => onExport('pdf')}>
-        <Printer size={16} />
-        Imprimer (PDF)
-      </Button>
-      <Button variant={marked ? 'soft' : 'solid'} disabled={!canSubmit} loading={busyFormat === 'zip'} onClick={() => onExport('zip')}>
-        <Download size={16} />
-        Télécharger (ZIP)
-      </Button>
-    </Flex>
-  );
+// Le résultat et l'indicateur d'un marquage vont dans le bloc qui l'a lancé
+function splitByOrigin(lastMark, marking, result) {
+  const pick = (origin) => ({
+    marking: marking && lastMark === origin,
+    result: lastMark === origin ? result : null,
+  });
+  return { mark: pick('mark'), archive: pick('archive') };
 }
 
-ExportDialogActions.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  onExport: PropTypes.func.isRequired,
-  onMark: PropTypes.func.isRequired,
-  isBusy: PropTypes.bool,
-  canSubmit: PropTypes.bool,
-  busyFormat: PropTypes.string,
-  canMark: PropTypes.bool,
-  marking: PropTypes.bool,
-  marked: PropTypes.bool,
-};
+async function runExport(params, tab) {
+  const blob = await fetchClosedInterventionsExport(params);
+  if (params.format === 'pdf') {
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+    if (tab) tab.location.href = url;
+    else window.location.assign(url);
+  } else {
+    triggerDownload(blob, `fiches-fermees_${params.dateFrom}_${params.dateTo}.zip`);
+  }
+}
 
 export default function ExportClosedInterventionsDialog({ open, onClose, onMarked }) {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [equipement, setEquipement] = useState(null);
   const [includePrinted, setIncludePrinted] = useState(false);
+  // Confirmation liée aux critères affichés : elle disparaît si la sélection change
+  const [confirmKey, setConfirmKey] = useState(null);
+  // Origine du dernier résultat (marquage après export ou archivage) : il s'affiche dans son bloc
+  const [lastMark, setLastMark] = useState(null);
   const [busyFormat, setBusyFormat] = useState(null);
   const [error, setError] = useState(null);
-  const currentKey = `${dateFrom}|${dateTo}|${equipement?.id ?? ''}|${includePrinted}`;
-  const { canMark, marking, markResult, markError, markPrinted, resetMark, setExportedKey } =
+  // Incrémenté après chaque marquage : l'aperçu est recalculé (les fiches marquées en sortent)
+  const [selectionVersion, setSelectionVersion] = useState(0);
+  const handleMarked = () => {
+    setSelectionVersion((v) => v + 1);
+    onMarked?.();
+  };
+  const equipementId = equipement?.id;
+  const currentKey = `${dateFrom}|${dateTo}|${equipementId ?? ''}|${includePrinted}`;
+  const confirmingArchive = confirmKey === currentKey;
+  const { canMark, marking, markResult, markError, markPrinted, archiveWithoutExport, resetMark, setExportedKey } =
     useMarkExportedPrinted({
-      currentKey, dateFrom, dateTo, equipementId: equipement?.id, includePrinted, onMarked,
+      currentKey, dateFrom, dateTo, equipementId, includePrinted, onMarked: handleMarked,
     });
 
+  const { preview, previewError, previewLoading, hasSelection } = useClosedExportPreview({
+    dateFrom, dateTo, equipementId, includePrinted, enabled: open, version: selectionVersion,
+  });
+
   const isBusy = !!busyFormat || marking;
-  const canSubmit = dateFrom && dateTo && !isBusy;
+  const canSubmit = hasSelection && !isBusy && !confirmingArchive;
+
+  const byOrigin = splitByOrigin(lastMark, marking, markResult);
+
+  const handleArchive = async () => {
+    setError(null);
+    setConfirmKey(null);
+    setLastMark('archive');
+    await archiveWithoutExport();
+  };
+
+  const handleMark = () => {
+    setLastMark('mark');
+    return markPrinted();
+  };
 
   const handleExport = async (format) => {
     setError(null);
@@ -85,20 +100,7 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
     const tab = format === 'pdf' ? window.open('', '_blank') : null;
     setBusyFormat(format);
     try {
-      const blob = await fetchClosedInterventionsExport({
-        dateFrom,
-        dateTo,
-        equipementId: equipement?.id,
-        includePrinted,
-        format,
-      });
-      if (format === 'pdf') {
-        const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-        if (tab) tab.location.href = url;
-        else window.location.assign(url);
-      } else {
-        triggerDownload(blob, `fiches-fermees_${dateFrom}_${dateTo}.zip`);
-      }
+      await runExport({ dateFrom, dateTo, equipementId, includePrinted, format }, tab);
       setExportedKey(currentKey);
     } catch (err) {
       tab?.close();
@@ -109,12 +111,11 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={(next) => !next && !busyFormat && onClose()}>
-      <Dialog.Content maxWidth="480px">
-        <Dialog.Title>Exporter les fiches fermées</Dialog.Title>
+    <Dialog.Root open={open} onOpenChange={(next) => !next && !isBusy && onClose()}>
+      <Dialog.Content maxWidth="640px">
+        <Dialog.Title>Fiches fermées : exporter ou archiver</Dialog.Title>
         <Dialog.Description size="2" mb="3">
-          Fiches des interventions fermées sur la période (date de fermeture), 100 au maximum,
-          rangées par équipement puis par date de fermeture.
+          Période de fermeture, 100 fiches au maximum.
         </Dialog.Description>
 
         <Flex direction="column" gap="3">
@@ -141,19 +142,33 @@ export default function ExportClosedInterventionsDialog({ open, onClose, onMarke
             </Flex>
           </Text>
 
-          <ExportFeedback error={error || markError} markResult={markResult} canMark={canMark} />
-          {busyFormat && (
-            <Text size="2" color="gray" aria-live="polite">
-              Génération en cours, cela peut prendre un moment…
-            </Text>
-          )}
+          <ExportPreview
+            preview={preview} loading={previewLoading} error={previewError} dateFrom={dateFrom} dateTo={dateTo}
+          />
+          <ErrorCallout error={error || markError} />
+          <ExportProgress busyFormat={busyFormat} marking={marking} />
+          <ExportBlocks>
+            <ExportBlock
+              onExport={handleExport} onMark={handleMark} disabled={!canSubmit} busyFormat={busyFormat}
+              canMark={canMark} marking={byOrigin.mark.marking}
+              markResult={byOrigin.mark.result}
+            />
+            <ArchiveBlock
+              onArchive={() => { resetMark(); setConfirmKey(currentKey); }}
+              onConfirm={handleArchive} onCancel={() => setConfirmKey(null)}
+              disabled={!canSubmit} marking={byOrigin.archive.marking} confirming={confirmingArchive}
+              count={preview ? preview.count : undefined}
+              archiveResult={byOrigin.archive.result}
+              scope={{ dateFrom, dateTo, equipement }}
+            />
+          </ExportBlocks>
         </Flex>
 
-        <ExportDialogActions
-          onClose={onClose} onExport={handleExport} onMark={markPrinted}
-          isBusy={isBusy} canSubmit={!!canSubmit} busyFormat={busyFormat}
-          canMark={canMark} marking={marking} marked={!!markResult}
-        />
+        <Flex justify="end" mt="4">
+          <Button variant={markResult ? 'solid' : 'soft'} color="gray" onClick={onClose} disabled={isBusy}>
+            Fermer
+          </Button>
+        </Flex>
       </Dialog.Content>
     </Dialog.Root>
   );

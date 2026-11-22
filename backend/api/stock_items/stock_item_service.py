@@ -3,7 +3,7 @@ from typing import Any, Dict
 from uuid import uuid4
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, ValidationError, raise_db_error
+from api.errors.exceptions import ValidationError, raise_db_error
 from api.stock_items.template_schemas import CharacteristicValue, StockItemWithCharacteristics
 from api.stock_items.template_service import TemplateService
 from api.stock_sub_families.repo import StockSubFamilyRepository
@@ -301,7 +301,7 @@ class StockItemService:
             return dict(zip(cols, row))
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 

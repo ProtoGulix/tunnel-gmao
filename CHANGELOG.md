@@ -8,6 +8,51 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+## [5.14.0] — 2026-11-22
+
+### Ajouté
+- API : `GET /exports/interventions/closed/preview` renvoie le nombre de fiches sélectionnées
+  (borné à 100, avec indicateur de dépassement), pour ADMIN et RESP, sans effet de bord.
+- Fenêtre « Fiches fermées : exporter ou archiver » : deux blocs d'action côte à côte (Exporter :
+  PDF, ZIP, marquage imprimé ; Archiver : « Archiver N fiches » sans exporter, après confirmation
+  qui rappelle le nombre de fiches et la période). Un encadré affiche le nombre de fiches
+  sélectionnées et la période en format français (calculé 500 ms après la dernière modification
+  des critères) ; les actions sont grisées si la sélection est vide ou dépasse le plafond. Pendant
+  l'export ou l'archivage, un indicateur de chargement s'affiche ; seul « Fermer » reste en pied.
+
+### Modifié
+- Remettre à faire une tâche terminée ou annulée exige un motif, pour tous les rôles (web,
+  mobile, API) ; l'auteur de la clôture est effacé ; le journal note « Tâche remise à faire »
+  (ADR 0042).
+- Archivage irrévocable (web et mobile) : une intervention fermée et archivée n'offre plus le
+  changement de statut et affiche « Archivée » ; la confirmation
+  d'archivage prévient que les fiches ne pourront plus être rouvertes. Une intervention fermée
+  non archivée se rouvre comme avant.
+- L'archivage d'une intervention est irrévocable, garanti par la base (ADR 0041) : un
+  déclencheur refuse de retirer le marquage d'une intervention archivée et de rouvrir une
+  intervention archivée fermée, pour toute écriture du rôle de l'application. L'API renvoie
+  400 avec un message lisible. Migration 0026 à jouer en production : les interventions déjà
+  archivées sont figées dès la montée de version ; aucune donnée n'est modifiée.
+
+### [interne] Base de données
+- Migration 0027 à jouer en production : ajoute les motifs « Clôturée par erreur » et « Travail à
+  reprendre » et la décision `task_reopened` (ajoutée aussi à « Autre raison »), pour la remise à
+  faire d'une tâche avec motif (ADR 0042). Aucune donnée existante modifiée.
+
+### Corrigé
+- Santé et tableau de bord d'un équipement : une demande d'achat reçue ou rejetée ne compte plus comme
+  ouverte (le compteur suit le statut dérivé de la demande).
+- Mobile : quand l'API exige un motif sans en proposer, l'écran affiche « Aucun motif disponible » au lieu du message brut.
+- Création d'une intervention liée à une demande : les refus (demande introuvable, déjà liée,
+  statut qui n'autorise pas la liaison, intervention déjà liée) renvoient 404, 409 ou 400 avec
+  un message lisible, au lieu d'une erreur 500.
+- Erreurs métier (404, 400, 409) qui remontaient en 500 : tous les accès base passent désormais
+  par le même traitement d'erreur. Une violation d'unicité renvoie 409 et une violation de
+  référence 400, au lieu d'une erreur 500 générique.
+
+### [interne] Code
+- Codes de statut d'intervention inexistants retirés (méthode sans appelant supprimée).
+
 ## [5.13.1] — 2026-11-22
 
 ### Corrigé

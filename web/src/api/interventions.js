@@ -181,6 +181,21 @@ export async function markClosedInterventionsPrinted({ dateFrom, dateTo, equipem
 }
 
 /**
+ * Aperçu de la sélection d'un export, d'un marquage ou d'un archivage de masse (lecture seule,
+ * ADMIN et RESP) : { count, max, over_limit }. Même sélection que l'export, jugée par le backend.
+ */
+export async function fetchClosedInterventionsPreview({ dateFrom, dateTo, equipementId, includePrinted }) {
+  const params = { date_from: dateFrom, date_to: dateTo, include_printed: !!includePrinted };
+  if (equipementId) params.equipement_id = equipementId;
+  try {
+    const response = await api.get('/exports/interventions/closed/preview', { params });
+    return response.data;
+  } catch (error) {
+    throw new Error(extractApiErrorMessage(error, "L'aperçu a échoué"));
+  }
+}
+
+/**
  * Export de masse des fiches fermées sur une période (ADMIN et RESP, plafond côté backend).
  * Retourne le Blob (zip ou pdf) ; en cas d'erreur, lève une Error portant le message du backend.
  */

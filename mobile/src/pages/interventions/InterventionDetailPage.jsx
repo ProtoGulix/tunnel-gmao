@@ -6,7 +6,7 @@ import { useInterventionDetail } from '../../hooks/interventions/useIntervention
 import { changeInterventionStatus, getInterventionStatuses, reopenIntervention } from '../../api/interventions'
 import { CloseInterventionPrompt } from '../../components/interventions/CloseInterventionPrompt'
 import { AuditReasonSheet } from '../../components/ui/AuditReasonSheet'
-import { getErrorMessage } from '../../lib/api/errors'
+import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 import { ActionCard } from '../planning/ActionCard'
 import { ActionForm } from '../../components/actions/ActionForm'
 import { InterventionTasksSection } from '../../components/interventions/InterventionTasksSection'
@@ -14,6 +14,7 @@ import { PurchaseRequestForm } from '../../components/purchases/PurchaseRequestF
 import { BottomBar, BottomBtn } from '../../components/ui/BottomBar'
 import { usePermissions } from '../../hooks/auth/usePermissions'
 import { PERM } from '../../auth/permissionCodes'
+import { isArchivedClosed, ARCHIVED_NOTICE } from './archiveRules'
 import { formatDateFr } from '../../utils/dateUtils'
 
 const CLOSED_STATUS = 'ferme'
@@ -171,6 +172,7 @@ export default function InterventionDetailPage() {
   const eq = intervention?.equipements ?? intervention?.machine
   const actions = intervention?.actions ?? []
   const stats = intervention?.stats
+  const archivedClosed = isArchivedClosed(intervention)
 
   async function handleStatusChange(toCode) {
     // Clôture : une seule porte (ADR 0027), la confirmation passe par la mise à jour
@@ -200,8 +202,8 @@ export default function InterventionDetailPage() {
       setReopenAsk(null)
       reloadAll()
     } catch (err) {
-      const asked = err?.data?.audit?.reasons
-      if (err?.status === 400 && Array.isArray(asked) && asked.length > 0) {
+      const asked = getAuditReasons(err)
+      if (asked) {
         setReopenAsk({ toCode, reasons: asked })
         return
       }
@@ -236,6 +238,9 @@ export default function InterventionDetailPage() {
                 </span>
               )}
             </div>
+            {archivedClosed && (
+              <p className="text-xs text-tunnel-muted mt-0.5">{ARCHIVED_NOTICE}</p>
+            )}
             {eq && (
               <p className="text-xs text-tunnel-muted truncate mt-0.5">
                 <span className="font-mono">{eq.code}</span>
@@ -243,7 +248,7 @@ export default function InterventionDetailPage() {
               </p>
             )}
           </div>
-          {statusCode && statuses.length > 0 && can(PERM.intervention.changeStatus) && (
+          {statusCode && statuses.length > 0 && !archivedClosed && can(PERM.intervention.changeStatus) && (
             <button
               onClick={() => setShowStatusSheet(true)}
               className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium bg-tunnel-bg border border-tunnel-border text-tunnel-text mr-2"

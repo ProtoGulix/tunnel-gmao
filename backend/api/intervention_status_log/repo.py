@@ -6,7 +6,7 @@ import psycopg2
 
 from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
-from api.errors.exceptions import ConflictError, DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import ConflictError, NotFoundError, raise_db_error
 from api.intervention_status_log.validators import InterventionStatusLogValidator
 
 
@@ -269,6 +269,6 @@ class InterventionStatusLogRepository:
             raise_db_error(e, "ajout du log de statut")
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de l'ajout du log: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de l'ajout du log")
         finally:
             release_connection(conn)

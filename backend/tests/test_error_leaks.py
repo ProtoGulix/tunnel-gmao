@@ -4,7 +4,13 @@ import logging
 
 import pytest
 
-from api.errors.exceptions import DatabaseError, ValidationError, raise_db_error
+from api.errors.exceptions import (
+    ConflictError,
+    DatabaseError,
+    NotFoundError,
+    ValidationError,
+    raise_db_error,
+)
 
 SECRET = 'relation "secret_table" does not exist LINE 1'
 
@@ -54,3 +60,20 @@ def test_database_error_journalise_son_detail_sans_le_renvoyer(caplog):
         exc = DatabaseError("relation secret_table does not exist")
     assert "secret_table" not in exc.detail
     assert "secret_table" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "erreur",
+    [
+        NotFoundError("Plan introuvable"),
+        ValidationError("Champ invalide"),
+        ConflictError("Doublon"),
+    ],
+)
+def test_raise_db_error_relance_une_erreur_metier_telle_quelle(erreur, caplog):
+    """Une erreur métier levée dans le try ne devient pas une 500 (ERR-01)."""
+    with caplog.at_level(logging.ERROR), pytest.raises(type(erreur)) as exc:
+        raise_db_error(erreur, "lecture du plan")
+    assert exc.value is erreur
+    assert exc.value.status_code == erreur.status_code
+    assert "Erreur base de données" not in caplog.text

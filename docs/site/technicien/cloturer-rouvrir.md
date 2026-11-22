@@ -33,14 +33,17 @@ Ouvrez l'intervention fermée, touchez **Statut**, puis choisissez un autre stat
 feuille « Pourquoi rouvrir cette intervention ? » demande le motif. Une fois confirmé,
 l'intervention reprend le statut choisi.
 
+Une intervention archivée (mention « Archivée ») ne se rouvre pas : le statut n'est plus
+proposé. Créez une nouvelle intervention pour reprendre le travail.
+
 ## Annuler une tâche
 
 Dans la liste des tâches d'une intervention, le bouton **Annuler** met la tâche de côté. La
 feuille « Pourquoi annuler cette tâche ? » demande un motif. Le motif s'affiche ensuite sous
 la tâche.
 
-Sur une tâche terminée ou annulée, le bouton **Remettre à faire** la rouvre. Ce geste ne
-demande pas de motif.
+Sur une tâche terminée ou annulée, le bouton **Remettre à faire** la rouvre, avec un motif
+(« Pourquoi remettre à faire ? »).
 
 Une tâche se termine par une action liée, pas par un bouton (voir
 [Saisir une action](/technicien/saisir-une-action)).

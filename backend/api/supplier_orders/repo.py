@@ -7,7 +7,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.db import get_connection, release_connection
-from api.errors.exceptions import DatabaseError, NotFoundError, raise_db_error
+from api.errors.exceptions import NotFoundError, raise_db_error
 from api.supplier_orders.validators import SupplierOrderValidator
 from api.utils.search import build_search_clause
 
@@ -452,7 +452,7 @@ class SupplierOrderRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la création de la commande: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la création de la commande")
         finally:
             release_connection(conn)
 
@@ -508,7 +508,7 @@ class SupplierOrderRepository:
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise à jour: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise à jour")
         finally:
             release_connection(conn)
 
@@ -527,7 +527,7 @@ class SupplierOrderRepository:
             return True
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression")
         finally:
             release_connection(conn)
 

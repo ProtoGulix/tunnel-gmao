@@ -19,7 +19,6 @@ from api.equipements.validators import (
     validate_deletable,
 )
 from api.errors.exceptions import (
-    DatabaseError,
     NotFoundError,
     ValidationError,
     raise_db_error,
@@ -874,7 +873,7 @@ class EquipementRepository:
             raise_db_error(e, "création de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la creation de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la creation de l'equipement")
         finally:
             release_connection(conn)
 
@@ -934,7 +933,7 @@ class EquipementRepository:
             raise_db_error(e, "mise à jour de l'équipement")  # 23503 -> 400, 23505 -> 409
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la mise a jour de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la mise a jour de l'equipement")
         finally:
             release_connection(conn)
 
@@ -959,7 +958,7 @@ class EquipementRepository:
             raise
         except Exception as e:
             conn.rollback()
-            raise DatabaseError(f"Erreur lors de la suppression de l'equipement: {str(e)}") from e
+            raise_db_error(e, "Erreur lors de la suppression de l'equipement")
         finally:
             release_connection(conn)
 
@@ -1576,8 +1575,10 @@ class EquipementRepository:
                 SELECT DISTINCT
                     pr.id AS purchase_request_id,
                     i.machine_id,
-                    pr.status
+                    pr.status,
+                    prds.derived_status
                 FROM purchase_request pr
+                JOIN purchase_request_derived_status prds ON prds.id = pr.id
                 JOIN intervention_action_purchase_request iapr ON iapr.purchase_request_id = pr.id
                 JOIN intervention_action ia ON ia.id = iapr.intervention_action_id
                 JOIN intervention i ON i.id = ia.intervention_id
@@ -1587,7 +1588,7 @@ class EquipementRepository:
                 SELECT
                     prm.machine_id,
                     COUNT(*) FILTER (
-                        WHERE LOWER(COALESCE(prm.status, '')) NOT IN ('closed', 'cloturee', 'cancelled', 'annulee')
+                        WHERE prm.derived_status NOT IN ('RECEIVED', 'REJECTED')
                     ) AS open_purchase_requests_count
                 FROM purchase_request_machine prm
                 GROUP BY prm.machine_id

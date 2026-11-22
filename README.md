@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-5.13.1-2563eb">
+  <img alt="Version" src="https://img.shields.io/badge/version-5.14.0-2563eb">
   <img alt="Licence" src="https://img.shields.io/badge/licence-AGPL--3.0-059669">
   <img alt="Auto-hébergé" src="https://img.shields.io/badge/auto--h%C3%A9berg%C3%A9-Docker%20Compose-475569">
 </p>

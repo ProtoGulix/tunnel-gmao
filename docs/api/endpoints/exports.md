@@ -50,6 +50,35 @@ troncature).
 
 ---
 
+## `GET /exports/interventions/closed/preview`
+
+Nombre de fiches que l'export ou l'archivage traiterait (lecture seule, sans audit).
+Réservé à ADMIN et RESP. Limite : 30 requêtes par minute.
+
+### Paramètres
+
+| Nom | Type | Obligatoire | Description |
+| --- | --- | --- | --- |
+| `date_from` | AAAA-MM-JJ | oui | Début de période (inclus) |
+| `date_to` | AAAA-MM-JJ | oui | Fin de période (incluse) |
+| `equipement_id` | UUID | non | Filtre sur un équipement |
+| `include_printed` | booléen | non | Inclure les fiches déjà imprimées (défaut : non) |
+
+### Réponse `200`
+
+```json
+{ "data": { "count": 12, "max": 100, "over_limit": false } }
+```
+
+`count` est borné à `max` (100) ; `over_limit` est vrai au-delà. Aucune fiche : `count` 0, pas de 404.
+
+### Erreurs
+
+- `400` : période ou UUID invalide
+- `403` : rôle sans droit (TECH, ACHETEUR, clé MCP)
+
+---
+
 ## `POST /exports/interventions/closed/mark-printed`
 
 Marque comme imprimées (`printed_fiche` à vrai) les fiches d'un export de masse. L'export
