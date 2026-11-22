@@ -8,6 +8,12 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### [interne] Documentation
+- Guide utilisateur : page « Mise à jour et sauvegarde » réécrite avec `sauvegarder.sh` et
+  `repeter-mise-a-jour.sh` (mise à jour en quatre étapes, lecture du résultat de la
+  répétition, sauvegarde nocturne par cron, restauration) ; elle ne donne plus la commande
+  `pg_dump | gzip` qui pouvait laisser un fichier vide.
+
 ## [5.13.0] — 2026-11-22
 
 ### Ajouté
