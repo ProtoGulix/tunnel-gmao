@@ -1575,8 +1575,10 @@ class EquipementRepository:
                 SELECT DISTINCT
                     pr.id AS purchase_request_id,
                     i.machine_id,
-                    pr.status
+                    pr.status,
+                    prds.derived_status
                 FROM purchase_request pr
+                JOIN purchase_request_derived_status prds ON prds.id = pr.id
                 JOIN intervention_action_purchase_request iapr ON iapr.purchase_request_id = pr.id
                 JOIN intervention_action ia ON ia.id = iapr.intervention_action_id
                 JOIN intervention i ON i.id = ia.intervention_id
@@ -1586,7 +1588,7 @@ class EquipementRepository:
                 SELECT
                     prm.machine_id,
                     COUNT(*) FILTER (
-                        WHERE LOWER(COALESCE(prm.status, '')) NOT IN ('closed', 'cloturee', 'cancelled', 'annulee')
+                        WHERE prm.derived_status NOT IN ('RECEIVED', 'REJECTED')
                     ) AS open_purchase_requests_count
                 FROM purchase_request_machine prm
                 GROUP BY prm.machine_id

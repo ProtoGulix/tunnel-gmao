@@ -38,6 +38,8 @@ mobile/CHANGELOG.md.
   faire d'une tâche avec motif (ADR 0042). Aucune donnée existante modifiée.
 
 ### Corrigé
+- Santé et tableau de bord d'un équipement : une demande d'achat reçue ou rejetée ne compte plus comme
+  ouverte (le compteur suit le statut dérivé de la demande).
 - Mobile : quand l'API exige un motif sans en proposer, l'écran affiche « Aucun motif disponible » au lieu du message brut.
 - Création d'une intervention liée à une demande : les refus (demande introuvable, déjà liée,
   statut qui n'autorise pas la liaison, intervention déjà liée) renvoient 404, 409 ou 400 avec

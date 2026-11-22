@@ -1,3 +1,5 @@
+TRAITÉ (2026-11-22, CPT-01).
+
 # Tableau de bord équipement : achats « ouverts » mal comptés
 
 Constat du 2026-11-22 (ménage des codes de statut inexistants). Gravité : bug d'affichage.
