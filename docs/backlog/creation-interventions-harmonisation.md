@@ -1,3 +1,5 @@
+**TRAITÉ (ADR 0025, INT-01 à INT-06, 2026-11-20) : création en une transaction, formulaire unique de l'accueil sur le web, mobile aligné.**
+
 # Harmoniser la création des interventions
 
 Demande de l'utilisateur du 2026-11-15 (à partir du point 1 des suites de l'audit centralisé, fiche retirée au tri du 2026-11-19) :

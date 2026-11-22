@@ -14,7 +14,7 @@ const TASK_STATUS_CFG = {
   todo:        { Icon: Circle,       color: 'var(--gray-7)',   label: 'À faire' },
   in_progress: { Icon: Clock,        color: 'var(--blue-9)',   label: 'En cours' },
   done:        { Icon: CheckCircle2, color: 'var(--green-9)',  label: 'Terminée' },
-  skipped:     { Icon: MinusCircle,  color: 'var(--orange-9)', label: 'Ignorée' },
+  skipped:     { Icon: MinusCircle,  color: 'var(--orange-9)', label: 'Annulée' },
 } as const;
 
 const ORIGIN_CFG = {

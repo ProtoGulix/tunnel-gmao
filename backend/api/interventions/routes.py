@@ -97,7 +97,7 @@ def list_interventions(
         None, description="CSV de codes statut (ex: open,in_progress,ferme)"
     ),
     priority: str | None = Query(
-        None, description="CSV de priorités (faible,normale,important,urgent)"
+        None, description="CSV de priorités (faible,normal,important,urgent)"
     ),
     sort: str | None = Query(None, description="Ex: -priority,-reported_date ou -reported_date"),
     include: str | None = Query(None, description="Ex: stats"),

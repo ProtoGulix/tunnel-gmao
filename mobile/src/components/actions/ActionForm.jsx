@@ -297,7 +297,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
     setShowInterForm(false)
 
     Promise.all([
-      searchInterventions({ equipement_id: equip.id, status: 'ouvert,en_cours,en_attente_pieces,en_attente_prod', limit: 30 }),
+      searchInterventions({ equipement_id: equip.id, status: 'ouvert,attente_pieces,attente_prod', limit: 30 }),
       searchDI({ machine_id: equip.id }),
     ]).then(([inters, diItems]) => {
       setInterventions(inters)

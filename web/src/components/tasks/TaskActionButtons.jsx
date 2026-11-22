@@ -14,11 +14,11 @@
  *
  * Visibilité : masqués par défaut, révélés au survol du parent via `visible`.
  * Quand un statut terminal est actif (done/skipped), le bouton actif reste visible.
- * Ignorer (live) : envoie seulement {status: 'skipped'} ; le motif vient de la fenêtre
+ * Annuler (live) : envoie seulement {status: 'skipped'} ; le motif vient de la fenêtre
  * d'audit (intercepteur auditGuard), skip_reason est rempli par le backend (ADR 0016).
  * Suppression : compte à rebours de COUNTDOWN secondes (5) avant envoi, annulable.
  * Erreurs : le message de l'API est remonté par `onError(message)` (ADR 0015).
- * `canSkip=false` masque « Ignorer » (étape de gamme obligatoire, voir canSkipTask).
+ * `canSkip=false` masque « Annuler » (étape de gamme obligatoire, voir canSkipTask).
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -133,7 +133,7 @@ export default function TaskActionButtons({
             </IconButton>
           )}
           {canSkip && (
-            <IconButton size="1" color="amber" variant="soft" type="button" title="Ignorer"
+            <IconButton size="1" color="amber" variant="soft" type="button" title="Annuler"
               onClick={() => handleStatusChange('skipped')}
             >
               <Ban size={12} strokeWidth={3} />

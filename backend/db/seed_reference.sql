@@ -493,3 +493,11 @@ INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, d
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'REJECT_INCOMPLETE', 'Demande incomplète ou incompréhensible', 'user', '{request}', '{request_rejected}', '#dc2626', 'La demande ne permet pas de savoir quoi faire : informations manquantes ou peu claires.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'REJECT_INCOMPLETE') ON CONFLICT (code) DO NOTHING;
 UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'request_rejected') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('request_rejected' = ANY(decision_types));
 SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));
+
+--
+-- Motif de la normalisation de la priorité (PRIO-01, ADR 0039), cohérent avec la migration
+-- 0025 : catégorie system, intervention, priority_changed. Idempotent.
+--
+
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT COALESCE(MAX(id), 0) + 1, 'PRIORITY_NORMALIZED', 'Priorité normalisée', 'system', '{intervention}', '{priority_changed}', '#64748b', 'Écriture de la priorité corrigée par une migration (normale devenue normal, ADR 0039).', true FROM public.audit_reason_code ON CONFLICT (code) DO NOTHING;
+SELECT setval(pg_get_serial_sequence('public.audit_reason_code','id'), COALESCE(MAX(id),0)+1, false) FROM public.audit_reason_code;

@@ -77,7 +77,7 @@ def equipe(instance, make_user):
     pro2 = _intervention(instance, m, "PRO", "2034-01-05")
     pro3 = _intervention(instance, m, "PRO", "2034-01-05")
     u1 = _intervention(instance, m, "CUR", "2034-01-15", priority="urgent")
-    c1 = _intervention(instance, m, "CUR", "2034-01-14", priority="normale")
+    c1 = _intervention(instance, m, "CUR", "2034-01-14", priority="normal")
     rea = _intervention(instance, m, "REA", "2034-01-03")
     pro4 = _intervention(instance, m, "PRO", "2034-03-29")
     _intervention(instance, m, "CUR", "2033-12-20", priority="urgent")  # hors période
@@ -115,7 +115,7 @@ def test_organisation_mois_totaux_et_projets(client, admin, equipe):
 
     jan = mois["2034-01"]
     assert (jan["interventions_reported"], jan["urgent_count"]) == (9, 1)
-    assert jan["urgent_share"] == 11.1  # 'normale' et 'normal' ne comptent pas ; U1 seule
+    assert jan["urgent_share"] == 11.1  # les interventions normal ne comptent pas ; U1 seule
     assert jan["hours"] == {"CUR": 1.5, "PRE": 6.0, "PRO": 6.0, "other": 2.25, "total": 15.75}
     assert (jan["chantiers_started"], jan["chantiers_interrupted"]) == (5, 2)
     assert jan["interrupted_share"] == 40.0

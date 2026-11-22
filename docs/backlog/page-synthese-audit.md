@@ -1,3 +1,5 @@
+**TRAITÉ (ADR 0032, SYN-01 et SYN-02, 2026-11-20).**
+
 # Page de synthèse de l'audit
 
 Traité (2026-11-20) : ADR 0032, SYN-01 (API) et SYN-02 (page web).

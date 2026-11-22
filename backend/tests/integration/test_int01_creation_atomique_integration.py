@@ -138,6 +138,22 @@ def test_une_tache_invalide_n_ecrit_rien(client, admin, instance, make_user):
     )
 
 
+def test_une_priorite_invalide_n_ecrit_rien(client, admin, instance):
+    """ADR 0039 : l'ancienne valeur `normale` est refusée avant toute écriture."""
+    machine_id = machine(instance)
+    label = f"Tâche {uuid.uuid4()}"
+    resp = _creer(
+        client,
+        admin,
+        _corps(machine_id, admin.id, priority="normale", tasks=[{"label": label}]),
+    )
+    assert resp.status_code == 400
+    assert "normale" in resp.text
+    assert _compte(instance, "intervention_request", machine_id) == 0
+    assert _compte(instance, "intervention", machine_id) == 0
+    assert _compte(instance, "intervention_task", label=label) == 0
+
+
 def test_request_et_request_id_sont_exclusifs(client, admin, instance):
     machine_id = machine(instance)
     existante = demande(client, admin, machine_id)

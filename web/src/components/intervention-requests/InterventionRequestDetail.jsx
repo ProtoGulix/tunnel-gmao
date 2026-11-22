@@ -68,8 +68,8 @@ StatusLogEntry.propTypes = {
   isFirst: PropTypes.bool,
 };
 
-const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normale: 'Normal', faible: 'Faible' };
-const PRIORITY_COLOR = { urgent: 'var(--red-11)', important: 'var(--orange-11)', normale: 'var(--gray-11)', faible: 'var(--gray-9)' };
+const PRIORITY_LABEL = { urgent: 'Urgent', important: 'Important', normal: 'Normal', faible: 'Faible' };
+const PRIORITY_COLOR = { urgent: 'var(--red-11)', important: 'var(--orange-11)', normal: 'var(--gray-11)', faible: 'var(--gray-9)' };
 
 function InterventionProgress({ iv, interventionId }) {
   if (!iv && !interventionId) return null;
@@ -108,7 +108,7 @@ function InterventionProgress({ iv, interventionId }) {
                 {iv.status_label}
               </Badge>
             )}
-            {iv.priority && iv.priority !== 'normale' && (
+            {iv.priority && iv.priority !== 'normal' && (
               <Text size="1" weight="medium" style={{ color: PRIORITY_COLOR[iv.priority] }}>
                 {PRIORITY_LABEL[iv.priority] ?? iv.priority}
               </Text>

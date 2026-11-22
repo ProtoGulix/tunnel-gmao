@@ -112,7 +112,7 @@ export async function createInterventionRequest(data) {
  * @param {string} [data.changedBy] - UUID utilisateur Directus
  * @param {string} [data.typeInter] - Type d'intervention (obligatoire si statusTo === 'acceptee')
  * @param {string} [data.techInitials] - Initiales du technicien (obligatoire si statusTo === 'acceptee')
- * @param {string} [data.priority] - Priorité : 'faible', 'normale', 'important', 'urgent'
+ * @param {string} [data.priority] - Priorité : 'faible', 'normal', 'important', 'urgent'
  * @param {string} [data.reportedDate] - Date de signalement (YYYY-MM-DD)
  * @returns {Promise<Object>} Demande mise à jour avec status_log actualisé
  */

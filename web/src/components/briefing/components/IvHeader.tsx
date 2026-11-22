@@ -65,9 +65,8 @@ function IvSelectors({ currentStatus, onSelectStatus, statusSaving, currentPrior
   currentStatus: string; onSelectStatus: (s: string) => void; statusSaving: boolean;
   currentPriority: string; onSelectPriority: (p: string) => void;
 }) {
-  const normalizedPriority = currentPriority === 'normale' ? 'normal' : currentPriority;
   const statusColor   = STATE_COLORS[currentStatus as keyof typeof STATE_COLORS]?.activeBg ?? 'var(--gray-9)';
-  const priorityColor = PRIORITY_COLORS[normalizedPriority as keyof typeof PRIORITY_COLORS]?.activeBg ?? 'var(--gray-9)';
+  const priorityColor = PRIORITY_COLORS[currentPriority as keyof typeof PRIORITY_COLORS]?.activeBg ?? 'var(--gray-9)';
 
   return (
     <div style={{ padding: '8px 0 12px' }}>
@@ -83,7 +82,7 @@ function IvSelectors({ currentStatus, onSelectStatus, statusSaving, currentPrior
           </Select.Content>
         </Select.Root>
         <Text size="2" color="gray" style={{ textAlign: 'right' }}>Priorité</Text>
-        <Select.Root value={normalizedPriority} onValueChange={onSelectPriority} size="2">
+        <Select.Root value={currentPriority} onValueChange={onSelectPriority} size="2">
           <Select.Trigger style={triggerStyle(priorityColor)} />
           <Select.Content>
             {PRIORITY_ORDER.map((p) => (

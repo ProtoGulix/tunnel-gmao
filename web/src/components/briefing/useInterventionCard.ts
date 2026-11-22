@@ -9,8 +9,7 @@ import type { BriefingSituation, InterventionDetail, InterventionTask } from '@/
 const PRIORITY_CFG: Record<string, { color: string; label: string }> = {
   urgent:    { color: 'red',    label: 'Urgent' },
   important: { color: 'orange', label: 'Important' },
-  normale:   { color: 'gray',   label: 'Normale' },
-  normal:    { color: 'gray',   label: 'Normale' },
+  normal:    { color: 'gray',   label: 'Normal' },
   faible:    { color: 'gray',   label: 'Faible' },
 };
 
@@ -33,7 +32,7 @@ export function useCardDisplay(situation: BriefingSituation | null, detail: Inte
   return {
     currentStatus: current,
     statusCfg:     STATUS_CFG_MAP[current] ?? STATUS_CFG_MAP[status],
-    priorityCfg:   PRIORITY_CFG[situation?.priority ?? ''] ?? PRIORITY_CFG.normale,
+    priorityCfg:   PRIORITY_CFG[situation?.priority ?? ''] ?? PRIORITY_CFG.normal,
     typeLabel:     labelOf(situation?.type ?? '') || '—',
     totalTime:     detail?.stats?.totalTime ?? situation?.stats?.totalTime ?? 0,
     actionCount:   detail?.stats?.actionCount ?? detail?.action?.length ?? situation?.stats?.actionCount ?? 0,

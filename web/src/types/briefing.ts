@@ -113,7 +113,7 @@ export interface BriefingSituation {
   title: string;
   status: string;
   type: string;
-  priority: 'urgent' | 'important' | 'normale' | 'normal' | 'faible';
+  priority: 'urgent' | 'important' | 'normal' | 'faible';
   reportedDate: string | null;
   techInitials: string;
   machine: InterventionMachine | null;

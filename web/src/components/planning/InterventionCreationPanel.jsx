@@ -92,7 +92,7 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
   const [formData, setFormData] = useState(() => ({
     // Champs intervention
     type: selectedRequest?.suggested_type_inter ?? '',
-    priority: 'normale',
+    priority: 'normal',
     equipementId,
     equipementLabel: equipementLabel ?? '',
     techId: '',

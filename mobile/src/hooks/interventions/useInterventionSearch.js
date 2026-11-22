@@ -13,7 +13,7 @@ export function useInterventionSearch() {
   useEffect(() => {
     setLoading(true)
     setError(null)
-    const params = { limit: 30, status: 'ouvert,en_cours,en_attente' }
+    const params = { limit: 30, status: 'ouvert,attente_pieces,attente_prod' }
     if (debouncedQuery.trim()) params.search = debouncedQuery.trim()
     searchInterventions(params)
       .then(setResults)

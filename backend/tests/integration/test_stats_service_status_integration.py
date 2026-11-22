@@ -41,7 +41,7 @@ def actions_2036(instance, make_user):
     )[0][0]
     iid = instance.sql(
         "INSERT INTO intervention (title, machine_id, type_inter, tech_initials, status_actual, "
-        "reported_date, priority) VALUES ('SVC', %s, 'CUR', %s, 'ouvert', '2036-01-05', 'normale') "
+        "reported_date, priority) VALUES ('SVC', %s, 'CUR', %s, 'ouvert', '2036-01-05', 'normal') "
         "RETURNING id",
         (machine, secrets.token_hex(3).upper()),
     )[0][0]

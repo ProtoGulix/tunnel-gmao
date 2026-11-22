@@ -37,7 +37,7 @@ export const statusColors = {
 export const priorityColors = {
   urgent:  '#C62828',
   haute:   '#ED6C02',
-  normale: '#1F3A5F',
+  normal:  '#1F3A5F',
   basse:   '#616161',
 }
 

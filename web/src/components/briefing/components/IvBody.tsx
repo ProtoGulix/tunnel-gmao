@@ -11,7 +11,7 @@ const STATUS_GROUP_CFG = [
   { key: 'in_progress', Icon: Clock,        color: 'var(--blue-9)',   label: 'En cours' },
   { key: 'todo',        Icon: Circle,        color: 'var(--gray-7)',   label: 'À faire' },
   { key: 'done',        Icon: CheckCircle2,  color: 'var(--green-9)',  label: 'Terminée' },
-  { key: 'skipped',     Icon: MinusCircle,   color: 'var(--orange-9)', label: 'Ignorée' },
+  { key: 'skipped',     Icon: MinusCircle,   color: 'var(--orange-9)', label: 'Annulée' },
 ] as const;
 
 const DECISION_LABELS: Record<string, string> = {

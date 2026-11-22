@@ -20,7 +20,7 @@ import EquipementSearch from '@/components/planning/EquipementSearch';
 /* ── Constantes ─────────────────────────────────────────────────────────── */
 
 const STATUS_COLORS = { todo: 'gray', in_progress: 'orange', done: 'green', skipped: 'red' };
-const STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminé', skipped: 'Ignoré' };
+const STATUS_LABELS = { todo: 'À faire', in_progress: 'En cours', done: 'Terminée', skipped: 'Annulée' };
 
 /* ── Hook recherche debounced ───────────────────────────────────────────── */
 
@@ -79,7 +79,7 @@ function useTaskSearch(query) {
               status_actual: iv.status_actual ?? iv.status ?? '',
               is_locked: iv.is_locked ?? null,
               type_inter: iv.type_inter ?? 'CUR',
-              priority: iv.priority ?? 'normale',
+              priority: iv.priority ?? 'normal',
               plan_id: iv.plan_id ?? null,
               equipement: iv.equipement ?? null,
               tasks: sortTasks(iv.tasks),

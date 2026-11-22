@@ -25,12 +25,12 @@ function agingColor(days) {
 const PRIORITY_COLOR = {
   urgent:    'var(--red-11)',
   important: 'var(--orange-11)',
-  normale:   'var(--gray-11)',
+  normal:    'var(--gray-11)',
   faible:    'var(--gray-9)',
 };
 
 const PRIORITY_LABEL = {
-  urgent: 'urgent', important: 'important', normale: 'normal', faible: 'faible',
+  urgent: 'urgent', important: 'important', normal: 'normal', faible: 'faible',
 };
 
 /* ── Bloc intervention liée (DI acceptée) ─────────────────────────────────── */
@@ -62,7 +62,7 @@ function InterventionRef({ iv }) {
             {iv.status_label}
           </Badge>
         )}
-        {iv.priority && iv.priority !== 'normale' && (
+        {iv.priority && iv.priority !== 'normal' && (
           <Text size="1" weight="medium" style={{ color: priorityColor }}>{priorityLabel}</Text>
         )}
       </Flex>

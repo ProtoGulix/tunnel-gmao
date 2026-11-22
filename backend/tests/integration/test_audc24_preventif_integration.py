@@ -141,6 +141,21 @@ def test_la_generation_ecrit_un_evenement_created_par_entite_creee(
         assert lignes == [(entite, "created", "SYSTEM_CASCADE", True, admin.id)], (entite, lignes)
 
 
+def test_l_intervention_preventive_est_creee_en_priorite_normal(
+    instance, client, admin, nouveau_plan
+):
+    """ADR 0039 : le préventif écrit `normal`, jamais l'ancienne valeur `normale`."""
+    (machine_id,), plan = nouveau_plan(n_machines=1, auto_accept=True)
+
+    resp = client.post("/preventive-occurrences/generate", headers=admin.headers)
+
+    assert resp.status_code == 200, resp.text
+    assert instance.sql(
+        "SELECT i.priority FROM intervention i WHERE i.plan_id = %s AND i.machine_id = %s",
+        (plan, machine_id),
+    ) == [("normal",)]
+
+
 # Ignorer une occurrence : motif choisi obligatoire (CONT-03), règle d'audit de la migration 0019.
 def _occurrence_pending(instance, nouveau_plan):
     (machine_id,), plan = nouveau_plan(n_machines=1)

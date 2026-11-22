@@ -30,7 +30,7 @@ function buildFormData(equipementId, equipementLabel, req = null) {
   return {
     title: req?.description ?? '',
     type: req?.suggested_type_inter ?? '',
-    priority: 'normale',
+    priority: 'normal',
     equipementId,
     equipementLabel: equipementLabel ?? '',
     techId: '',

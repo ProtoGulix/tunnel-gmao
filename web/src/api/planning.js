@@ -26,7 +26,7 @@ export async function fetchWeekActions(startDate, endDate, techId = null) {
 }
 
 /**
- * Interventions actives pour un équipement (ouvert, en_cours, attente_pieces, attente_prod)
+ * Interventions actives pour un équipement (ouvert, attente_pieces, attente_prod)
  * @param {string} equipementId - UUID de l'équipement
  * @returns {Promise<Array<{ id, code, title, status_actual, priority, reported_date }>>}
  */
@@ -34,7 +34,7 @@ export async function fetchOpenInterventionsByEquipement(equipementId) {
   const res = await api.get('/interventions', {
     params: {
       equipement_id: equipementId,
-      status: 'ouvert,en_cours,attente_pieces,attente_prod',
+      status: 'ouvert,attente_pieces,attente_prod',
     },
   });
   return res.data.items ?? [];
@@ -54,7 +54,7 @@ export async function fetchOpenInterventions({ techId = null, equipementId = nul
     return fetchOpenInterventionsByEquipement(equipementId);
   }
   // TODO: filtrer par technicien quand l'endpoint /interventions supportera tech_id
-  const params = { status: 'ouvert,en_cours,attente_pieces,attente_prod' };
+  const params = { status: 'ouvert,attente_pieces,attente_prod' };
   if (techId) params.tech_id = techId;
   const res = await api.get('/interventions', { params });
   return res.data.items ?? [];

@@ -17,7 +17,7 @@ function getDaysOpen(dateStr) {
   return Math.floor((today - new Date(dateStr)) / 86400000);
 }
 
-const PRIORITY_ORDER = { urgent: 0, important: 1, normale: 2, faible: 3 };
+const PRIORITY_ORDER = { urgent: 0, important: 1, normal: 2, faible: 3 };
 
 // Tri universel : date due (retard d'abord) → urgence → sans intervention en dernier
 function sortTileItems(a, b) {
@@ -32,8 +32,8 @@ function sortTileItems(a, b) {
   if (aDue) return -1;
   if (bDue) return 1;
 
-  const aPriority = PRIORITY_ORDER[a.intervention?.priority ?? a.priority ?? 'normale'] ?? 2;
-  const bPriority = PRIORITY_ORDER[b.intervention?.priority ?? b.priority ?? 'normale'] ?? 2;
+  const aPriority = PRIORITY_ORDER[a.intervention?.priority ?? a.priority ?? 'normal'] ?? 2;
+  const bPriority = PRIORITY_ORDER[b.intervention?.priority ?? b.priority ?? 'normal'] ?? 2;
   if (aPriority !== bPriority) return aPriority - bPriority;
 
   const aDate = a.intervention?.reported_date ?? a.reportedDate ?? a.created_at ?? null;
@@ -282,7 +282,7 @@ export function useBriefingData({ equipementId } = {}) {
           sort: '-priority,-reported_date',
           limit: 500,
           equipementId,
-          status: 'ouvert,en_cours,attente_pieces,attente_prod,ferme',
+          status: 'ouvert,attente_pieces,attente_prod,ferme',
         }),
         fetchInterventionRequests({ machineId: equipementId, excludeStatuses: 'rejetee,cloturee', limit: 200 }),
       ]);
@@ -322,7 +322,7 @@ export function useBriefingData({ equipementId } = {}) {
       fetchInterventions({
         include: 'stats,tasks',
         sort: '-priority,-reported_date',
-        status: 'ouvert,en_cours',
+        status: 'ouvert,attente_pieces,attente_prod',
         limit: 200,
       }),
     ]);

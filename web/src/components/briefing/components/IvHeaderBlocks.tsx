@@ -199,7 +199,7 @@ export function PriorityBar({ currentPriority, onSelectPriority }: { currentPrio
     <Flex gap="1" style={{ padding: '0 14px 8px', flexWrap: 'wrap' }}>
       {PRIORITY_ORDER.map((p) => {
         const pcfg = PRIORITY_COLORS[p];
-        const isActive = currentPriority === p || (p === 'normal' && currentPriority === 'normale');
+        const isActive = currentPriority === p;
         return (
           <button key={p} type="button" disabled={isActive} onClick={() => { if (!isActive) onSelectPriority(p); }} style={{
             flex: 1, padding: '5px 8px', fontSize: 13,

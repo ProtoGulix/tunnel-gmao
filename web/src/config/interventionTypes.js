@@ -9,7 +9,6 @@ export const STATUS_CONFIG = {
   },
   ferme: { color: 'green', label: 'Fermé', bg: 'var(--green-3)' }, // Vert = clôturé
   attente_pieces: { color: 'red', label: 'Attente pièces', bg: 'var(--red-3)' }, // Rouge = bloqué
-  cancelled: { color: 'gray', label: 'Annulé', bg: 'var(--gray-3)' },
 };
 
 export const PRIORITY_CONFIG = {
@@ -26,7 +25,7 @@ export const PRIORITY_CONFIG = {
  */
 export const STATE_COLORS = {
   ouvert: {
-    label: 'En cours',
+    label: STATUS_CONFIG.ouvert.label,
     activeBg: 'var(--blue-9)',
     bandBg: 'var(--blue-3)',
     hoverBg: 'var(--blue-7)',
@@ -35,7 +34,7 @@ export const STATE_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   attente_pieces: {
-    label: 'Attente pièces',
+    label: STATUS_CONFIG.attente_pieces.label,
     activeBg: 'var(--red-9)',
     bandBg: 'var(--red-3)',
     hoverBg: 'var(--red-7)',
@@ -44,7 +43,7 @@ export const STATE_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   attente_prod: {
-    label: 'Attente prod.',
+    label: STATUS_CONFIG.attente_prod.label,
     activeBg: 'var(--amber-9)',
     bandBg: 'var(--amber-3)',
     hoverBg: 'var(--amber-7)',
@@ -53,19 +52,10 @@ export const STATE_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   ferme: {
-    label: 'Terminée',
+    label: STATUS_CONFIG.ferme.label,
     activeBg: 'var(--green-9)',
     bandBg: 'var(--green-3)',
     hoverBg: 'var(--green-7)',
-    inactiveBg: 'var(--gray-3)',
-    textActive: 'white',
-    textInactive: 'var(--gray-10)',
-  },
-  cancelled: {
-    label: 'Annulée',
-    activeBg: 'var(--gray-9)',
-    bandBg: 'var(--gray-3)',
-    hoverBg: 'var(--gray-7)',
     inactiveBg: 'var(--gray-3)',
     textActive: 'white',
     textInactive: 'var(--gray-10)',
@@ -79,7 +69,7 @@ export const STATE_COLORS = {
  */
 export const PRIORITY_COLORS = {
   urgent: {
-    label: 'Urgent',
+    label: PRIORITY_CONFIG.urgent.label,
     activeBg: 'var(--red-9)', // Rouge bloqué
     hoverBg: 'var(--red-7)',
     inactiveBg: 'var(--gray-3)',
@@ -87,7 +77,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   important: {
-    label: 'Important',
+    label: PRIORITY_CONFIG.important.label,
     activeBg: 'var(--amber-9)', // Orange attente
     hoverBg: 'var(--amber-7)',
     inactiveBg: 'var(--gray-3)',
@@ -95,7 +85,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   normal: {
-    label: 'Normal',
+    label: PRIORITY_CONFIG.normal.label,
     activeBg: 'var(--blue-9)', // Bleu industriel
     hoverBg: 'var(--blue-7)',
     inactiveBg: 'var(--gray-3)',
@@ -103,7 +93,7 @@ export const PRIORITY_COLORS = {
     textInactive: 'var(--gray-10)',
   },
   faible: {
-    label: 'Faible',
+    label: PRIORITY_CONFIG.faible.label,
     activeBg: 'var(--gray-9)',
     hoverBg: 'var(--gray-7)',
     inactiveBg: 'var(--gray-2)',
@@ -116,7 +106,6 @@ export const PRIORITY_COLORS = {
 export const PRIORITY_BADGE_COLORS = {
   urgent: 'red',
   important: 'orange',
-  normale: 'blue',
   normal: 'blue',
   faible: 'gray',
 };

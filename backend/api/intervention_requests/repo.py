@@ -889,7 +889,7 @@ class InterventionRequestRepository:
                 "title": intervention_data.get("title") or request.get("description"),
                 "machine_id": machine_id,
                 "type_inter": intervention_data["type_inter"],
-                "priority": intervention_data.get("priority") or "normale",
+                "priority": intervention_data.get("priority") or "normal",
                 "reported_by": request.get("demandeur_nom"),
                 "tech_id": intervention_data.get("tech_id"),
                 "tech_initials": intervention_data.get("tech_initials"),

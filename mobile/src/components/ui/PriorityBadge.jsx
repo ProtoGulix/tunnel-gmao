@@ -7,6 +7,6 @@ import { PRIORITIES } from '../../config/badges'
  */
 export function PriorityBadge({ priority }) {
   const key = priority?.toLowerCase() ?? ''
-  const config = PRIORITIES[key] ?? PRIORITIES.normale
+  const config = PRIORITIES[key] ?? PRIORITIES.normal
   return <Badge variant={config.variant}>{config.label}</Badge>
 }
