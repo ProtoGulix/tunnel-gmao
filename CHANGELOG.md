@@ -8,6 +8,16 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- API : `GET /exports/interventions/closed/preview` renvoie le nombre de fiches sélectionnées
+  (borné à 100, avec indicateur de dépassement), pour ADMIN et RESP, sans effet de bord.
+- Fenêtre « Fiches fermées : exporter ou archiver » : deux blocs d'action côte à côte (Exporter :
+  PDF, ZIP, marquage imprimé ; Archiver : « Archiver N fiches » sans exporter, après confirmation
+  qui rappelle le nombre de fiches et la période). Un encadré affiche le nombre de fiches
+  sélectionnées et la période en format français (calculé 500 ms après la dernière modification
+  des critères) ; les actions sont grisées si la sélection est vide ou dépasse le plafond. Pendant
+  l'export ou l'archivage, un indicateur de chargement s'affiche ; seul « Fermer » reste en pied.
+
 ### Corrigé
 - Erreurs métier (404, 400, 409) qui remontaient en 500 : tous les accès base passent désormais
   par le même traitement d'erreur. Une violation d'unicité renvoie 409 et une violation de

@@ -323,3 +323,64 @@ def test_marquage_sans_fiche_ne_depose_rien(monkeypatch):
     finally:
         unbind_audit_unit(token)
     assert unit.events == []
+
+
+# --- Aperçu de la sélection (ARCH-03) ---
+
+PREVIEW_URL = "/exports/interventions/closed/preview"
+PREVIEW = Endpoint("exports:preview_closed_interventions", "GET", PREVIEW_URL, "exports")
+
+
+def test_apercu_ouvert_a_admin_et_resp_seulement():
+    assert default_allowed("ADMIN", PREVIEW)
+    assert default_allowed("RESP", PREVIEW)
+    for role in ("TECH", "ACHETEUR", "MCP"):
+        assert not default_allowed(role, PREVIEW), role
+
+
+def test_apercu_declare_avant_la_route_unitaire():
+    chemins = [getattr(r, "path", "") for r in export_routes.router.routes]
+    assert chemins.index(PREVIEW_URL) < chemins.index(
+        "/exports/interventions/{intervention_id}/pdf"
+    )
+
+
+def test_apercu_compte_les_fiches_avec_la_selection_de_l_export(client, depot):
+    r = client.get(PREVIEW_URL, params={**PERIODE, "include_printed": "true"})
+    assert r.status_code == 200, r.text
+    assert r.json() == {"data": {"count": 2, "max": 100, "over_limit": False}}
+    assert depot["appels"][0][3] == export_routes.MAX_BULK_SHEETS + 1
+    assert depot["include_printed"] == [True]
+
+
+def test_apercu_zero_fiche_donne_200_sans_404(client, depot):
+    depot["codes"] = []
+    r = client.get(PREVIEW_URL, params=PERIODE)
+    assert r.status_code == 200
+    assert r.json() == {"data": {"count": 0, "max": 100, "over_limit": False}}
+
+
+def test_apercu_au_dela_du_plafond_borne_le_compte(client, depot):
+    depot["codes"] = [f"INT-{i}" for i in range(export_routes.MAX_BULK_SHEETS + 1)]
+    r = client.get(PREVIEW_URL, params=PERIODE)
+    assert r.status_code == 200
+    assert r.json() == {"data": {"count": 100, "max": 100, "over_limit": True}}
+
+
+def test_apercu_plafond_exact_n_est_pas_un_depassement(client, depot):
+    depot["codes"] = [f"INT-{i}" for i in range(export_routes.MAX_BULK_SHEETS)]
+    data = client.get(PREVIEW_URL, params=PERIODE).json()["data"]
+    assert data == {"count": 100, "max": 100, "over_limit": False}
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"date_from": "2026-02-01", "date_to": "2026-01-01"},
+        {"date_from": "pas-une-date", "date_to": "2026-01-01"},
+        {"date_from": "2026-01-01", "date_to": "2026-01-31", "equipement_id": "x"},
+    ],
+)
+def test_apercu_valide_comme_l_export(client, depot, params):
+    assert client.get(PREVIEW_URL, params=params).status_code == 400
+    assert depot["appels"] == []

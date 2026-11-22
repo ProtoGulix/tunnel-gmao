@@ -7,9 +7,13 @@
 import { useState } from 'react';
 import { markClosedInterventionsPrinted } from '@/api/interventions';
 
-// « 3 fiches marquées imprimées », complété des fiches de l'export qui l'étaient déjà
-function formatMarkResult(marked, total) {
-  const main = `${marked} ${marked > 1 ? 'fiches marquées imprimées' : 'fiche marquée imprimée'}`;
+// « 3 fiches marquées imprimées » (ou « archivées »), complété des fiches qui l'étaient déjà
+function formatMarkResult(marked, total, archived = false) {
+  const plural = marked > 1;
+  const label = archived
+    ? (plural ? 'fiches archivées' : 'fiche archivée')
+    : (plural ? 'fiches marquées imprimées' : 'fiche marquée imprimée');
+  const main = `${marked} ${label}`;
   const already = (total ?? marked) - marked;
   if (already <= 0) return main;
   return `${main} ; ${already} ${already > 1 ? "l'étaient déjà" : "l'était déjà"}`;
@@ -23,14 +27,16 @@ export function useMarkExportedPrinted({
   const [markResult, setMarkResult] = useState(null);
   const [markError, setMarkError] = useState(null);
 
-  const markPrinted = async () => {
+  // Même route dans les deux cas (ADR 0040) ; archiver ne suppose aucun export préalable
+  const mark = async (archived) => {
     setMarkError(null);
+    setMarkResult(null);
     setMarking(true);
     try {
       const { marked, total } = await markClosedInterventionsPrinted({
         dateFrom, dateTo, equipementId, includePrinted,
       });
-      setMarkResult(formatMarkResult(marked, total));
+      setMarkResult(formatMarkResult(marked, total, archived));
       onMarked?.();
     } catch (err) {
       setMarkError(err.message);
@@ -38,6 +44,9 @@ export function useMarkExportedPrinted({
       setMarking(false);
     }
   };
+
+  const markPrinted = () => mark(false);
+  const archiveWithoutExport = () => mark(true);
 
   // Avant chaque nouvel export : rien n'est proposé tant qu'il n'a pas réussi
   const resetMark = () => {
@@ -52,6 +61,7 @@ export function useMarkExportedPrinted({
     markResult,
     markError,
     markPrinted,
+    archiveWithoutExport,
     resetMark,
     setExportedKey,
   };

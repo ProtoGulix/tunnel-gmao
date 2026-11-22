@@ -67,14 +67,11 @@ def _merge_pdf(htmls: List[str]) -> bytes:
         raise RenderError("Erreur génération PDF")
 
 
-def _select_closed(
-    date_from: str, date_to: str, equipement_id: Optional[str], include_printed: bool
-):
+def _read_closed(date_from: str, date_to: str, equipement_id: Optional[str], include_printed: bool):
     """
-    Valide la demande et renvoie (début, fin, interventions fermées sélectionnées).
+    Valide la demande et lit la sélection brute (au plus MAX_BULK_SHEETS + 1 lignes).
 
-    Sélection commune à l'export et au marquage : une seule requête (list_closed_interventions),
-    donc jamais deux sélections divergentes.
+    Seule requête de sélection : export, marquage et aperçu passent par ici.
     """
     start, end = _parse_period(date_from, date_to)
     if equipement_id:
@@ -86,6 +83,18 @@ def _select_closed(
     rows = ExportRepository().list_closed_interventions(
         start, end, equipement_id, MAX_BULK_SHEETS + 1, include_printed
     )
+    return start, end, rows
+
+
+def _select_closed(
+    date_from: str, date_to: str, equipement_id: Optional[str], include_printed: bool
+):
+    """
+    Renvoie (début, fin, interventions fermées sélectionnées) pour l'export et le marquage.
+
+    Refuse explicitement le dépassement du plafond (400) et l'absence de fiche (404).
+    """
+    start, end, rows = _read_closed(date_from, date_to, equipement_id, include_printed)
     if len(rows) > MAX_BULK_SHEETS:
         raise ValidationError(
             f"Plus de {MAX_BULK_SHEETS} fiches sur cette période : réduisez la période "
@@ -172,6 +181,32 @@ def mark_closed_interventions_printed(request: Request, body: MarkPrintedRequest
     )
     marked = ExportRepository().mark_interventions_printed([r["id"] for r in rows])
     return single({"marked": marked, "total": len(rows)})
+
+
+# Déclarée avant /interventions/{intervention_id}/pdf : aucun conflit de chemin.
+@router.get("/interventions/closed/preview")
+@limiter.limit("30/minute")
+def preview_closed_interventions(
+    request: Request,
+    date_from: str = Query(..., description="Début de période AAAA-MM-JJ (inclus)"),
+    date_to: str = Query(..., description="Fin de période AAAA-MM-JJ (incluse)"),
+    equipement_id: Optional[str] = Query(None, description="UUID de l'équipement (optionnel)"),
+    include_printed: bool = Query(False, description="Inclure les fiches déjà imprimées"),
+):
+    """
+    Aperçu du nombre de fiches que l'export ou l'archivage traiterait (lecture seule).
+
+    Même sélection que l'export ; ni 400 au-delà du plafond ni 404 à zéro : `count` est borné
+    à `max` et `over_limit` signale le dépassement. Réservé à ADMIN et RESP.
+    """
+    _, _, rows = _read_closed(date_from, date_to, equipement_id, include_printed)
+    return single(
+        {
+            "count": min(len(rows), MAX_BULK_SHEETS),
+            "max": MAX_BULK_SHEETS,
+            "over_limit": len(rows) > MAX_BULK_SHEETS,
+        }
+    )
 
 
 @router.get("/interventions/{intervention_id}/pdf")

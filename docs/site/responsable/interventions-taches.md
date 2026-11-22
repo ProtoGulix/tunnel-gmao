@@ -21,10 +21,28 @@ Ouvrez **Interventions**. L'onglet « Interventions » est en deux parties.
 Le menu « ⋯ » de l'en-tête propose « Demander le pointage », « Copier le code » et
 « Supprimer ».
 
-Le bouton **Exporter les fiches fermées** (en haut de la page) ouvre une fenêtre pour
-imprimer ou télécharger les fiches d'une période : 100 fiches au maximum, rangées par
-équipement puis par date de fermeture. Vous pouvez imprimer en PDF ou télécharger en ZIP,
-puis **marquer ces fiches comme imprimées**.
+Le bouton **Exporter les fiches fermées** (en haut de la page) ouvre la fenêtre « Fiches
+fermées : exporter ou archiver ». Choisissez la période de fermeture et, si besoin, un
+équipement : la fenêtre affiche aussitôt le nombre de fiches concernées (100 au maximum,
+rangées par équipement puis par date de fermeture). Deux blocs proposent ensuite d'agir sur
+ces fiches.
+
+- **Exporter** : imprimer en PDF ou télécharger en ZIP. Une fois les fiches imprimées,
+  **Marquer ces fiches comme imprimées** les archive.
+- **Archiver** : archiver les fiches sans les imprimer (voir ci-dessous).
+
+### Archiver des interventions fermées
+
+Une intervention fermée reste dans le groupe **À archiver** tant que sa fiche n'est pas
+marquée imprimée. Archiver une intervention, c'est marquer sa fiche imprimée : elle sort
+alors des listes, et l'historique de l'équipement la montre avec le badge « Archivée ».
+
+Pour archiver d'un coup les interventions fermées d'une période, sans les imprimer, ouvrez
+**Exporter les fiches fermées**, choisissez la période (et un équipement si besoin), puis,
+dans le bloc **Archiver**, cliquez sur **Archiver N fiches** et confirmez. Les limites sont
+celles de l'export : 100 fiches au maximum par période, réservé aux responsables et aux
+administrateurs. Chaque fiche archivée est tracée dans l'audit, avec son auteur et sa date.
+L'archivage ne se défait pas depuis l'écran : vérifiez la période avant de confirmer.
 
 ## Créer une intervention
 
