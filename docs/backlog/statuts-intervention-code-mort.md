@@ -1,3 +1,7 @@
+TRAITÉ (2026-11-22) : `get_active_status_ids`, sans appelant, supprimée ; le repli de
+intervention_requests/repo.py ne garde que `ferme`. Cas voisin des achats :
+compteur-achats-ouverts-equipement.md.
+
 # Codes de statut inexistants dans intervention_status/repo.py
 
 Constat du cadrage ARCH-01 (2026-11-22). Gravité : dette.

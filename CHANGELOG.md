@@ -45,6 +45,9 @@ mobile/CHANGELOG.md.
   par le même traitement d'erreur. Une violation d'unicité renvoie 409 et une violation de
   référence 400, au lieu d'une erreur 500 générique.
 
+### [interne] Code
+- Codes de statut d'intervention inexistants retirés (méthode sans appelant supprimée).
+
 ## [5.13.1] — 2026-11-22
 
 ### Corrigé

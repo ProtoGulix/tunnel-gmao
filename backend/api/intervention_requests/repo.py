@@ -867,7 +867,7 @@ class InterventionRequestRepository:
             cur.execute(
                 """
                 SELECT id FROM intervention_status_ref
-                WHERE code NOT IN (%s, 'closed', 'cancelled', 'archived')
+                WHERE code <> %s
                 ORDER BY id ASC
                 LIMIT 1
                 """,
