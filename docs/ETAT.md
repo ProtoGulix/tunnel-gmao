@@ -7,6 +7,7 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
+- **v5.14.0** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : export et archivage en masse des fiches fermées, archivage irrévocable garanti par la base (ADR 0041, migration 0026), remise à faire d'une tâche avec motif (ADR 0042, migration 0027), erreurs métier qui ne remontent plus en 500, compteur d'achats ouverts corrigé. Documentation contrôlée avant la version (CLAUDE.md 12.3).
 - **v5.13.1** (2026-11-22, PR #22, tag sur main) : libellés de la 5.13.0 achevés (tâche annulée, priorité « Normale », « Attente production ») ; guide aligné, page « Mise à jour et sauvegarde » réécrite avec les scripts, version de Tunnel affichée dans le guide. Documentation contrôlée avant la version (CLAUDE.md 12.3).
 - **v5.13.0** (2026-11-22, PR #21, tag sur main) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
 - **v5.12.1** (2026-11-21, PR #18, tag sur main) : guide publié sous /docs/ (le workflow
@@ -201,7 +202,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Production en 5.13.1 (mise à jour par l'utilisateur le 2026-11-22, migrations 0017 à 0025 jouées à la 5.13.0). Chantier ERR (develop) à publier dans la prochaine version, sans migration.
+0. Production en 5.13.1. Version 5.14.0 en préparation : migrations 0026 et 0027 à jouer en production (appliquées au démarrage de l'API).
 
 0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Erreurs métier en 500 : chantier ERR fait le 2026-11-22 (reviewer APPROUVÉ, fusionné dans develop) ; suite au backlog : docs/backlog/liaison-demande-refus-en-500.md. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 

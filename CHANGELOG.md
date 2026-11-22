@@ -8,6 +8,8 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+## [5.14.0] — 2026-11-22
+
 ### Ajouté
 - API : `GET /exports/interventions/closed/preview` renvoie le nombre de fiches sélectionnées
   (borné à 100, avec indicateur de dépassement), pour ADMIN et RESP, sans effet de bord.

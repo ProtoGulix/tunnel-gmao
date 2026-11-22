@@ -133,7 +133,7 @@ obligatoire. Une tâche clôturée ainsi n'ajoute aucun temps : aucune action n'
 Une icône « Annuler » apparaît aussi au survol d'une tâche : elle fait la même chose que
 le bouton. Annuler une **étape obligatoire** d'un plan préventif est réservé au
 responsable et à l'administrateur. Des icônes permettent de « Remettre à faire » une tâche
-terminée ou d'« Annuler l'exclusion » d'une tâche annulée.
+terminée ou d'« Annuler l'exclusion » d'une tâche annulée, avec un motif.
 
 ### Supprimer une tâche
 
