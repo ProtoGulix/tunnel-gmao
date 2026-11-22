@@ -8,6 +8,8 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+## [5.13.0] — 2026-11-22
+
 ### Ajouté
 - Installation : `deploy/sauvegarder.sh` sauvegarde la base depuis n'importe quel
   répertoire, contrôle l'archive et n'en laisse aucune si la sauvegarde échoue (la commande
