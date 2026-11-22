@@ -194,7 +194,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Mise à jour de la production (en 5.10.0) : avec les scripts SAUV, sauvegarder puis répéter la mise à jour sur le serveur avant `up -d --build` ; version 5.13.0 publiée le 2026-11-22.
+0. Production mise à jour en 5.13.0 par l'utilisateur le 2026-11-22, sauvegarde faite avec `deploy/sauvegarder.sh` (migrations 0017 à 0025 jouées). Reste : passer en 5.13.1 (aucune migration : libellés et guide), sauvegarde avant comme d'habitude.
 
 0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Suivant, ordre validé le 2026-11-21 : erreurs métier transformées en 500 (docs/backlog/erreurs-metier-en-500.md), plan à présenter. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 
