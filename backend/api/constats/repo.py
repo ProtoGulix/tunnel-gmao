@@ -29,12 +29,32 @@ _CONSTAT_SELECT = """
            c.created_by, u.first_name AS author_first_name, u.last_name AS author_last_name,
            c.created_at, c.supersedes_id, c.request_id, ir.code AS request_code,
            ir.statut AS request_status, ir.suggested_type_inter, c.linked_request_id,
-           lr.code AS linked_request_code
+           lr.code AS linked_request_code,
+           rs.label AS request_status_label, rs.color AS request_status_color,
+           ir.intervention_id AS request_intervention_id,
+           ri.code AS request_intervention_code, src.code AS source_intervention_code,
+           rj.label AS request_status_reason,
+           NULLIF(btrim(rj.reason_text), '') AS request_status_comment,
+           rj.author_name AS request_status_by, rj.logged_at AS request_status_at
     FROM constat c
     JOIN machine m ON m.id = c.machine_id
     JOIN tunnel_user u ON u.id = c.created_by
     JOIN intervention_request ir ON ir.id = c.request_id
     LEFT JOIN intervention_request lr ON lr.id = c.linked_request_id
+    LEFT JOIN request_status_ref rs ON rs.code = ir.statut
+    LEFT JOIN intervention ri ON ri.id = ir.intervention_id
+    LEFT JOIN intervention src ON src.id = c.intervention_id
+    LEFT JOIN LATERAL (
+        SELECT arc.label, al.reason_text, al.logged_at,
+               NULLIF(concat_ws(' ', au.first_name, au.last_name), '') AS author_name
+        FROM audit_log al
+        LEFT JOIN audit_reason_code arc ON arc.id = al.reason_code_id
+        LEFT JOIN tunnel_user au ON au.id = al.changed_by
+        WHERE al.entity_type = 'request' AND al.entity_id = ir.id
+          AND al.decision_type IN ('created', 'statut_changed')
+        ORDER BY al.logged_at DESC, al.decision_type = 'statut_changed' DESC
+        LIMIT 1
+    ) rj ON true
 """
 _NOT_SUPERSEDED = "NOT EXISTS (SELECT 1 FROM constat s WHERE s.supersedes_id = c.id)"
 _BY_INTERVENTION = f"WHERE c.intervention_id = %s AND {_NOT_SUPERSEDED} ORDER BY c.created_at"
@@ -116,7 +136,7 @@ class ConstatRepository:
             return []
         cur.execute(
             """
-            SELECT a.constat_id, q.code AS question_code, ch.code AS choice_code, ch.label
+            SELECT a.constat_id, q.code AS question_code, q.label AS question_label, ch.code AS choice_code, ch.label
             FROM constat_answer a
             JOIN constat_choice ch ON ch.code = a.choice_code
             JOIN constat_question q ON q.id = ch.question_id
@@ -128,7 +148,7 @@ class ConstatRepository:
         answers = _rows(cur)
         for c in constats:
             c["answers"] = [
-                {k: a[k] for k in ("question_code", "choice_code", "label")}
+                {k: a[k] for k in ("question_code", "question_label", "choice_code", "label")}
                 for a in answers
                 if a["constat_id"] == c["id"]
             ]

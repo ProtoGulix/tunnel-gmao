@@ -45,3 +45,33 @@ export function isConstatRequired(types, typeCode, constats) {
 export function choicesOf(constat) {
   return (constat?.answers ?? []).map((a) => a.choice_code);
 }
+
+/** Réponses groupées par question, dans l'ordre reçu ; sans `question_label`, un seul groupe. */
+export function groupAnswers(answers) {
+  const groups = [];
+  for (const a of answers ?? []) {
+    const question = a.question_label ?? null;
+    const group = groups.find((g) => g.question === question);
+    if (group) group.choices.push(a);
+    else groups.push({ question, choices: [a] });
+  }
+  return groups;
+}
+
+/** État en clair de la demande d'un constat selon son statut ; null sans statut. */
+export function requestState(constat) {
+  if (constat.linked_request_code) {
+    return { kind: 'linked', id: constat.linked_request_id, code: constat.linked_request_code };
+  }
+  switch (constat.request_status) {
+    case 'rejetee':
+      return { kind: 'rejected' };
+    case 'acceptee':
+      return { kind: 'accepted', id: constat.request_intervention_id, code: constat.request_intervention_code };
+    case 'nouvelle':
+    case 'en_attente':
+      return { kind: 'pending' };
+    default:
+      return null;
+  }
+}

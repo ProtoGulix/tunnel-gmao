@@ -1431,6 +1431,22 @@ class InterventionRepository:
             cur = conn.cursor()
             request_repo = InterventionRequestRepository()
             linked = request_repo.get_linked_to_intervention(cur, intervention_id)
+            # Un constat reste toujours visible : l'intervention qui le porte ne se supprime pas
+            cur.execute(
+                """
+                SELECT 1 FROM constat c
+                WHERE c.intervention_id = %s
+                   OR c.request_id = %s OR c.linked_request_id = %s
+                LIMIT 1
+                """,
+                (
+                    intervention_id,
+                    linked["id"] if linked else None,
+                    linked["id"] if linked else None,
+                ),
+            )
+            if cur.fetchone():
+                raise ValidationError("Intervention liée à un constat : suppression impossible.")
             if linked and request_outcome not in REQUEST_OUTCOMES:
                 raise ValidationError(
                     "Cette intervention est liée à une demande : précisez son issue avec "

@@ -23,6 +23,8 @@ Le middleware d'audit est le seul à écrire dans `audit_log` (ADR 0018) ; les r
 | `DELETE /{id}`                 | demande (id du chemin)    | `deleted` (motif obligatoire)   | `false` |
 | `POST /repair`                 | aucune (`events_only`) : les demandes réparées | `status_transitioned`, motif `SYSTEM_CASCADE` | `true` |
 
+`DELETE /{id}` est refusé (`400`) pour une demande citée par un constat (issue du constat ou idée rattachée) : à rejeter, pas à supprimer.
+
 La clôture automatique d'une demande (déclenchée par la fermeture de son intervention) écrit aussi un `status_transitioned` du système (`SYSTEM_CASCADE`), au nom de l'utilisateur du jeton. La réouverture d'une demande par la suppression de son intervention écrit un `status_transitioned` de l'utilisateur (voir `DELETE /interventions/{id}`).
 
 ### Validation `reason_code`
@@ -277,6 +279,7 @@ Liste paginée des demandes avec filtres.
 | `is_system`                 | `true` si la DI a été générée automatiquement (ex : occurrence préventive). `false` par défaut         |
 | `suggested_type_inter`      | Type d'intervention suggéré par le système (`CUR`, `PRE`, etc.). `null` pour les DI humaines           |
 | `source_intervention_id`    | Intervention dont la DI est issue (constat après intervention, voir [Constats](constats.md)). `null` sinon |
+| `source_intervention_code`  | Code de cette intervention (liste et détail) |
 | `allowed_transitions`       | Liste des statuts cibles que l'utilisateur courant peut demander maintenant (graphe des transitions, clôture exclue tant que l'intervention liée est ouverte, vide sans la permission de transition). Présent dans la liste, le détail et la réponse de `POST /{id}/transition` ; les clients l'utilisent sans recopier les règles |
 
 > `facets.statut` : tous les statuts avec leur compteur. Les filtres `machine_id` et `search` sont appliqués, mais pas `statut` — permet d'afficher tous les onglets même quand un est sélectionné.
@@ -356,7 +359,8 @@ Détail complet avec historique des transitions de statut.
       "status_from_label": null,
       "status_to_label": "Nouvelle",
       "status_to_color": "#6B7280",
-      "changed_by": null,
+      "changed_by": "uuid-user",
+      "changed_by_name": "Prénom Nom",
       "notes": null,
       "date": "2026-03-10T08:00:00"
     },
@@ -368,6 +372,7 @@ Détail complet avec historique des transitions de statut.
       "status_to_label": "Acceptée",
       "status_to_color": "#10B981",
       "changed_by": "uuid-user",
+      "changed_by_name": "Prénom Nom",
       "notes": "Prise en charge atelier maintenance",
       "date": "2026-03-10T09:15:00"
     }
@@ -385,7 +390,8 @@ Détail complet avec historique des transitions de statut.
 | `intervention.stats`        | `action_count` : nombre d'actions ; `total_time` : heures cumulées ; `avg_complexity` : complexité moyenne ; `purchase_count` : commandes liées |
 | `status_log`                | Historique complet trié par date ASC                                                                                      |
 | `status_log[].status_from`  | `null` pour la création initiale                                                                                          |
-| `status_log[].changed_by`   | UUID Directus de l'utilisateur (`null` si non renseigné ou clôture auto)                                                  |
+| `status_log[].changed_by`   | Auteur réel (jeton) du changement ; `null` pour une tâche système                                                         |
+| `status_log[].changed_by_name` | Prénom et nom de l'auteur (`null` si inconnu)                                                                          |
 
 ### Backward compatibility
 
@@ -467,7 +473,7 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
 | --------------- | ------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `status_to`     | string | **oui**               | Code du statut cible                                                                                                    |
 | `notes`         | string | conditionnel          | **Obligatoire** si `status_to = "rejetee"`                                                                              |
-| `changed_by`    | uuid   | non                   | UUID de l'utilisateur Directus                                                                                          |
+| `changed_by`    | uuid   | non                   | Ignoré : l'auteur est l'utilisateur du jeton (accepté pour compatibilité)                                               |
 | `type_inter`    | string | conditionnel          | Type d'intervention. **Obligatoire** si `acceptee` et DI humaine sans `suggested_type_inter`. Ignoré pour les DI système |
 | `title`         | string | non (si `acceptee`)   | Titre de l'intervention créée. Défaut : description de la demande                                                       |
 | `tech_id`       | uuid   | **un des deux** si `acceptee` | Technicien pilote, prioritaire sur `tech_initials`                                                       |

@@ -1,20 +1,20 @@
 /**
- * Demande issue d'un constat (ADR 0043) : lien vers l'intervention d'origine ; pour qui peut
- * rattacher (RESP, ADMIN), choix d'une idée d'amélioration ouverte de la machine.
+ * Demande issue d'un constat (ADR 0043), dans la mise en page commune des demandes : ligne
+ * d'origine sous le demandeur ; pour qui peut rattacher (RESP, ADMIN), choix d'une idée
+ * d'amélioration ouverte de la machine.
  * Le rattachement rejette la demande côté serveur ; les refus s'affichent tels quels.
  */
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { Badge, Box, Button, Callout, Flex, Select, Text } from '@radix-ui/themes';
+import { Box, Button, Callout, Flex, Select, Text } from '@radix-ui/themes';
+import { Flag } from 'lucide-react';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
-import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
+import { EntityCodeLink } from '@/components/shared/EntityCodeLink';
 import { fetchConstatByRequest, fetchImprovementIdeas, linkConstat } from '@/api/constats';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
-function IdeaLinker({ requestId, onLinked }) {
-  const [constat, setConstat] = useState(null);
+function IdeaLinker({ constat, onLinked }) {
   const [ideas, setIdeas] = useState([]);
   const [ideaId, setIdeaId] = useState('');
   const [error, setError] = useState('');
@@ -22,18 +22,13 @@ function IdeaLinker({ requestId, onLinked }) {
 
   useEffect(() => {
     let alive = true;
-    fetchConstatByRequest(requestId)
-      .then(async ([current]) => {
-        if (!alive || !current) return;
-        setConstat(current);
-        const list = current.linked_request_id ? [] : await fetchImprovementIdeas(current.id);
-        if (alive) setIdeas(list);
-      })
-      .catch(() => {});
+    if (!constat.linked_request_id) {
+      fetchImprovementIdeas(constat.id).then((list) => { if (alive) setIdeas(list); }).catch(() => {});
+    }
     return () => { alive = false; };
-  }, [requestId]);
+  }, [constat.id, constat.linked_request_id]);
 
-  if (!constat || constat.linked_request_id || ideas.length === 0) return null;
+  if (constat.linked_request_id || ideas.length === 0) return null;
 
   const link = async () => {
     setSaving(true);
@@ -66,21 +61,47 @@ function IdeaLinker({ requestId, onLinked }) {
   );
 }
 
-IdeaLinker.propTypes = { requestId: PropTypes.string.isRequired, onLinked: PropTypes.func };
+IdeaLinker.propTypes = { constat: PropTypes.object.isRequired, onLinked: PropTypes.func };
 
-export default function RequestConstatBlock({ detail, onLinked }) {
-  const { can } = usePermissions();
+/** Constat dont la demande est issue (null tant qu'il n'est pas lu, ou sans constat). */
+export function useRequestConstat(detail) {
+  const [constat, setConstat] = useState(null);
+  // `detail` est null tant que la demande n'est pas lue
+  const requestId = detail?.id;
+  const sourceId = detail?.source_intervention_id;
+  useEffect(() => {
+    setConstat(null);
+    if (!sourceId) return undefined;
+    let alive = true;
+    fetchConstatByRequest(requestId)
+      .then((current) => { if (alive) setConstat(current); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [requestId, sourceId]);
+  return constat;
+}
+
+/** Ligne d'origine sous le demandeur, comme « Générée automatiquement » du préventif. */
+export function ConstatOrigin({ detail, constat }) {
   if (!detail.source_intervention_id) return null;
-  const canLink = can(PERM.constats.link) && (detail.allowed_transitions ?? []).includes('rejetee');
+  const code = detail.source_intervention_code ?? constat?.source_intervention_code;
   return (
-    <Box mb="3">
-      <Flex align="center" gap="2">
-        <Badge variant="soft" color="orange">Constat</Badge>
-        <Link to={entityCodeUrl('intervention', detail.source_intervention_id)}>Intervention d&apos;origine</Link>
-      </Flex>
-      {canLink && <IdeaLinker requestId={detail.id} onLinked={onLinked} />}
-    </Box>
+    <Flex gap="2" align="center" mt="1" style={{ paddingLeft: 22 }}>
+      <Flag size={13} color="var(--gray-9)" />
+      <Text size="1" color="gray">Constat de</Text>
+      <EntityCodeLink type="intervention" id={detail.source_intervention_id} code={code} size={1} />
+    </Flex>
   );
 }
 
-RequestConstatBlock.propTypes = { detail: PropTypes.object.isRequired, onLinked: PropTypes.func };
+ConstatOrigin.propTypes = { detail: PropTypes.object.isRequired, constat: PropTypes.object };
+
+/** Rattachement à une idée d'amélioration, pour qui en a le droit et tant que la demande se rejette. */
+export function ConstatIdeaLink({ detail, constat, onLinked }) {
+  const { can } = usePermissions();
+  const canLink = can(PERM.constats.link) && (detail.allowed_transitions ?? []).includes('rejetee');
+  if (!canLink || !constat) return null;
+  return <Box mb="3"><IdeaLinker constat={constat} onLinked={onLinked} /></Box>;
+}
+
+ConstatIdeaLink.propTypes = { detail: PropTypes.object.isRequired, constat: PropTypes.object, onLinked: PropTypes.func };

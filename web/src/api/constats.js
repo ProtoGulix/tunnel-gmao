@@ -13,8 +13,9 @@ export async function fetchInterventionConstats(interventionId) {
   return asList(await api.get(`/interventions/${interventionId}/constats`));
 }
 
+/** Constat dont la demande est issue : un objet (l'API répond 404 s'il n'y en a pas). */
 export async function fetchConstatByRequest(requestId) {
-  return asList(await api.get(`/constats/by-request/${requestId}`));
+  return (await api.get(`/constats/by-request/${requestId}`)).data ?? null;
 }
 
 /** @param {{choices: string[], machine_id?: string|null}} payload */

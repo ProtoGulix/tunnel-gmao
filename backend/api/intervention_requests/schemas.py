@@ -45,6 +45,7 @@ class StatusLogEntry(BaseModel):
     status_to_label: Optional[str] = None
     status_to_color: Optional[str] = None
     changed_by: Optional[UUID] = None
+    changed_by_name: Optional[str] = None
     notes: Optional[str] = None
     date: datetime
 
@@ -71,6 +72,7 @@ class InterventionRequestListItem(BaseModel):
     suggested_type_inter: Optional[str] = None
     # Intervention dont la demande est issue (constat après intervention, ADR 0043)
     source_intervention_id: Optional[UUID] = None
+    source_intervention_code: Optional[str] = None
     # Transitions que l'utilisateur courant peut déclencher (calculées par le backend)
     allowed_transitions: List[str] = Field(default_factory=list)
     created_at: datetime
@@ -90,7 +92,7 @@ class StatusTransitionIn(BaseModel):
     notes: Optional[str] = Field(
         default=None, description="Motif ou commentaire (obligatoire pour rejetee)"
     )
-    changed_by: Optional[UUID] = Field(default=None, description="UUID de l'utilisateur Directus")
+    changed_by: Optional[UUID] = Field(default=None, description="Ignoré : l'auteur vient du jeton")
     # Champs pour la création d'intervention lors de l'acceptation (status_to = acceptee)
     type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention (obligatoire pour acceptee)"

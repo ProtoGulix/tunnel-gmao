@@ -242,7 +242,8 @@ def transition_request_status(request_id: UUID, body: StatusTransitionIn, reques
         request_id=str(request_id),
         status_to=body.status_to,
         notes=notes,
-        changed_by=str(body.changed_by) if body.changed_by else None,
+        # Auteur = jeton ; body.changed_by reste accepté mais ignoré (ADR 0005).
+        changed_by=str(request.state.user_id) if getattr(request.state, "user_id", None) else None,
         intervention_data=intervention_data,
         reason_code=getattr(request.state, REASON_CODE_ATTR, None),
     )

@@ -36,7 +36,7 @@ Règles (`400` sinon) : choix connu et actif ; un seul choix pour une question �
 
 Dans une même transaction : le constat, sa DI (origine signalée, notifiée comme toute DI, `created_by` = auteur, texte construit depuis les libellés des choix) et leur trace d'audit. Type préconisé de la DI : celui du premier choix coché, dans l'ordre de l'écran, qui porte un type (TASK : PRE, PROJECT : PRO) ; sinon `null`. Un type désactivé depuis est ignoré.
 
-Réponse : `id`, `intervention_id`, `machine_id`, `machine_code`, `machine_name`, `created_by`, `author_first_name`, `author_last_name`, `created_at`, `supersedes_id`, `request_id`, `request_code`, `request_status`, `suggested_type_inter`, `linked_request_id`, `linked_request_code`, `answers` (`question_code`, `choice_code`, `label`), `can_correct`.
+Réponse : `id`, `intervention_id`, `machine_id`, `machine_code`, `machine_name`, `created_by`, `author_first_name`, `author_last_name`, `created_at`, `supersedes_id`, `request_id`, `request_code`, `request_status`, `suggested_type_inter`, `linked_request_id`, `linked_request_code`, `request_status_label`, `request_status_color`, `request_intervention_id`, `request_intervention_code` (intervention créée à l'acceptation, sinon `null`), `request_status_reason` (libellé du motif d'audit du dernier événement de la demande, création ou changement de statut ; `null` sans motif), `request_status_comment` (commentaire saisi avec ce motif, sinon `null`), `request_status_by` (nom de l'auteur de cet événement), `request_status_at` (sa date), `source_intervention_code`, `answers` (`question_code`, `question_label`, `choice_code`, `label`), `can_correct`.
 
 **Audit** : routinier (`ROUTINE`).
 

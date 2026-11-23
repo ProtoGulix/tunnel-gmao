@@ -85,6 +85,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Constat : suivi et vues (état de la demande en clair, rejet visible, réponses par question, lien vers l'intervention d'origine, suppression refusée ; auteur réel dans l'historique de toute demande) ; retouches d'écran avec l'utilisateur ; reviewer APPROUVÉ (réserve : l'écran ne masque pas Supprimer sur une idée rattachée, le serveur refuse) ; fusionné dans develop le 2026-11-23 | — | [CSV-01](taches/CSV-01-backend-suivi-constat.md), [CSV-02](taches/CSV-02-web-vues-constat.md), [CSV-03](taches/CSV-03-auteur-historique-demande.md) |
 | fait | Constat après intervention : ADR 0043 accepté ; CST-01 faite (migration 0028, non jouée en dev) ; CST-02 faite (API : constats, clôture, rattachement) ; CST-03 (web) et CST-04 (mobile) faites ; guide à jour ; reviewer APPROUVÉ AVEC RÉSERVES, réserves traitées (CST-05 faite, libellé Équipement, backlog du rattachement) ; 673 tests d'intégration verts ; migration 0028 et bootstrap joués en dev le 2026-11-22 avec l'accord de l'utilisateur (droits ouverts : ADMIN 7, RESP 7, TECH 6, MCP 4 en lecture) ; essais à l'écran validés (web : saisie, correction, rattachement ; mobile : clôture) ; revue finale APPROUVÉ (réserves mineures : lecture des idées d'amélioration ouverte à tous les rôles, changement de type après clôture sans constat non testé) ; fusionné dans develop le 2026-11-23 ; migration 0028 à jouer en production à sa mise à jour | — | ADR 0043, [CST-01](taches/CST-01-base-constat.md) à [CST-05](taches/CST-05-tests-reserves-revue.md) |
 | fait (2026-11-22) | Santé d'un équipement : demandes d'achat reçues ou rejetées plus comptées comme ouvertes (statut dérivé) ; reviewer APPROUVÉ ; 644 tests d'intégration verts | fusionnée dans develop | [CPT-01](taches/CPT-01-compteur-achats-ouverts.md) |
 | fait (2026-11-22) | Mobile : « Aucun motif disponible » au lieu du message brut quand l'API exige un motif sans en proposer ; reviewer APPROUVÉ ; pas de test (le mobile n'a pas de lanceur de tests) | fusionnée dans develop | [MSG-01](taches/MSG-01-mobile-message-sans-motif.md) |
@@ -203,6 +204,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Suivi et vues du constat (CSV-01 à CSV-03) : fusionné dans develop le 2026-11-23. Prochain chantier : mobile, plusieurs tâches par action (docs/backlog/mobile-plusieurs-taches-par-action.md).
 0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour. Suite proposée : mobile, plusieurs tâches par action (docs/backlog/mobile-plusieurs-taches-par-action.md).
 
 0. Production en 5.13.1. Version 5.14.0 publiée (tag sur main) : en production, migrations 0026 et 0027 jouées au démarrage de l'API lors de la mise à jour.

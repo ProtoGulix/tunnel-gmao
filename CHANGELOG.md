@@ -37,6 +37,25 @@ mobile/CHANGELOG.md.
   `intervention_type.constat_required` (vrai pour CUR) et
   `intervention_request.source_intervention_id`, motif « Correction ». Aucune donnée existante
   modifiée ; retour arrière refusé tant qu'un constat existe.
+- Constat : cartes numérotées, réponses sous leur question puis, sous un trait, la demande
+  liée (cadre à la couleur de son statut) avec motif audité, auteur, date et commentaire,
+  l'intervention créée ou l'idée rattachée ; la demande issue d'un constat renvoie à son
+  intervention d'origine par son code.
+  API : champs `request_status_label`, `request_status_color`, `request_intervention_id`,
+  `request_intervention_code`, `request_status_reason`, `request_status_comment`,
+  `request_status_by`, `request_status_at`, `source_intervention_code` et `question_label` des
+  réponses ; `source_intervention_code` sur les demandes.
+- Historique d'une demande : chaque changement d'état porte son auteur réel (utilisateur
+  connecté), affiché sur toutes les demandes ; `changed_by` envoyé par l'écran est ignoré
+  (`changed_by_name` ajouté au détail). Les étapes passées sans auteur restent sans nom.
+- Une demande issue d'un constat, ou l'intervention qui porte un constat, ne se supprime plus :
+  refus clair (la demande se rejette).
+
+### Corrigé
+- Statut d'une demande affiché en bleu au lieu de sa couleur (« Rejetée » en rouge) sur le
+  constat et le plan préventif.
+- Demande issue d'un constat : les réponses du constat et le rattachement à une idée
+  d'amélioration ne s'affichaient jamais (réponse de l'API lue comme une liste).
 
 ## [5.14.0] — 2026-11-22
 

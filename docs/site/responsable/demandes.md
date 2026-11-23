@@ -83,7 +83,10 @@ Ce motif est obligatoire quelle que soit la règle d'audit de votre installation
 ## Demande issue d'un constat
 
 Un constat saisi à la clôture d'une intervention crée une demande sur la machine visée. Le
-détail porte le badge **Constat** et le lien **Intervention d'origine**.
+détail garde la présentation des autres demandes : sous le demandeur, **Constat de** et le code
+de l'intervention d'origine (lien) ; dans le cadre, les réponses par question à la place du
+texte brut. L'historique donne l'auteur de chaque changement. Une telle demande ne se supprime
+pas.
 
 Le **type d'intervention suggéré** vient du premier choix typé du constat : tâche régulière
 donne préventif, projet ou modification donne projet (une idée d'amélioration). Sans choix

@@ -598,7 +598,7 @@ Intervention complète mise à jour. La demande liée (`request`) est désormais
 
 ## `DELETE /interventions/{id}`
 
-Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions ou des demandes d'achat liées.
+Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions, des demandes d'achat ou des constats liés (`400`), ou si sa demande est citée par un constat.
 
 > **`reason_code` obligatoire** (toujours explicite pour une suppression) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 

@@ -87,8 +87,11 @@ Si le type exige un constat et qu'il manque, **Oui, clôturer** ouvre d'abord le
 de constat, puis clôt. Depuis l'en-tête, **Clôturer** ouvre le même formulaire dans la
 fenêtre « Constat avant clôture ». Si Tunnel refuse, le message s'affiche.
 
-L'onglet **Constats** de l'intervention liste les constats : machine, demande créée, choix
-cochés. **Ajouter** en crée un autre (hors intervention archivée).
+L'onglet **Constats** de l'intervention liste les constats, numérotés. Chacun montre ses
+réponses par question puis, sous un trait, sa **demande liée** (code et statut), le **motif** de
+son dernier changement (**motif du rejet** en rouge), avec qui l'a pris et quand, et son **commentaire**, l'**intervention créée** ou l'idée à
+laquelle il est **rattaché** ; le cadre prend la couleur du statut. **Ajouter** en crée un autre (hors
+intervention archivée).
 
 ### Corriger un constat
 
