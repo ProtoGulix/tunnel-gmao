@@ -58,6 +58,10 @@ mobile/CHANGELOG.md.
 - Demande issue d'un constat : les réponses du constat et le rattachement à une idée
   d'amélioration ne s'affichaient jamais (réponse de l'API lue comme une liste).
 
+### [interne] Tests
+- Rattachement d'un constat : un test prouve que lien et rejet de la demande sont annulés ensemble
+  en cas d'échec (transaction de la requête, ADR 0018) ; la réserve de la revue CST est close.
+
 ## [5.14.0] — 2026-11-22
 
 ### Ajouté

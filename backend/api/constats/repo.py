@@ -458,9 +458,8 @@ class ConstatRepository:
     def link_to_idea(self, constat_id: str, idea_id: str, user_id: Optional[str]) -> None:
         """Rattache le constat à une idée ouverte de sa machine et rejette sa demande (doublon).
 
-        Le rejet passe par la transition existante (ADR 0038, motif REJECT_DUPLICATE), qui a sa
-        propre transaction : le lien est posé d'abord et n'est validé qu'après le rejet, pour
-        qu'un rejet refusé n'en laisse aucune trace.
+        Le rejet passe par la transition existante (ADR 0038, motif REJECT_DUPLICATE). Lien et
+        rejet partagent la transaction de la requête (ADR 0018) : un échec annule les deux.
         """
         if not user_id:
             raise UnauthorizedError("Authentification requise")
