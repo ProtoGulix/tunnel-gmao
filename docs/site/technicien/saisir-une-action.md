@@ -16,9 +16,10 @@ l'**Intervention** parmi celles qui sont ouvertes, en cours ou en attente. Le bo
 
 ### Les champs
 
-1. **Tâche** (obligatoire). Choisissez une tâche ouverte de l'intervention. S'il n'y en a
-   pas, touchez **Nouvelle tâche**, saisissez un libellé et validez. Cochez **Cette action
-   termine la tâche** si c'est le cas.
+1. **Tâches** (au moins une). Touchez les tâches ouvertes que l'action concerne ; touchez à
+   nouveau pour retirer. S'il n'y en a pas, touchez **Nouvelle tâche**, saisissez un libellé
+   et validez. Pour chaque tâche choisie, indiquez son état après l'action : **En cours**
+   (par défaut, le temps est saisi et la tâche reste ouverte) ou **Terminée**.
 2. **Date.** Aujourd'hui par défaut.
 3. **Plage horaire** et **Durée.** Saisissez l'heure de début et l'heure de fin : la durée
    se calcule seule, arrondie au quart d'heure. Elle est en lecture seule (cadenas).
@@ -33,7 +34,7 @@ Touchez **Enregistrer**. L'écran confirme « Action enregistrée ! ».
 
 ### Ce que Tunnel vérifie
 
-- Il faut une intervention et une tâche liée.
+- Il faut une intervention et au moins une tâche liée.
 - La description est obligatoire.
 - La complexité doit être entre 1 et 10.
 - Au-delà de 5, un facteur est requis.

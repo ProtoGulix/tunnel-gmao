@@ -204,8 +204,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Suivi et vues du constat (CSV-01 à CSV-03) : fusionné dans develop le 2026-11-23. Prochain chantier : mobile, plusieurs tâches par action (docs/backlog/mobile-plusieurs-taches-par-action.md).
-0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour. Suite proposée : mobile, plusieurs tâches par action (docs/backlog/mobile-plusieurs-taches-par-action.md).
+0. Mobile, plusieurs tâches par action ([MOB-01](taches/MOB-01-plusieurs-taches-par-action.md)) : fusionné dans develop le 2026-11-23 après essai sur téléphone, reviewer APPROUVÉ. Sans migration.
+0. Suivi et vues du constat (CSV-01 à CSV-03) : fusionné dans develop le 2026-11-23.
+0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour.
 
 0. Production en 5.13.1. Version 5.14.0 publiée (tag sur main) : en production, migrations 0026 et 0027 jouées au démarrage de l'API lors de la mise à jour.
 

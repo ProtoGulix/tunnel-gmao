@@ -30,6 +30,7 @@ mobile/CHANGELOG.md.
   Interventions et tâches).
 
 ### Modifié
+- Mobile : une action se lie à plusieurs tâches, chacune « En cours » ou « Terminée », comme sur le web.
 - Clôturer une intervention dont le type exige un constat (CUR par défaut) est refusé sans
   constat, quel que soit le chemin, création déjà fermée comprise.
 - Base : migration 0028 à jouer en production (constat après intervention, ADR 0043) : tables
