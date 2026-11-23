@@ -10,18 +10,19 @@ from typing import Any, Dict, List, Optional
 from api.db import get_connection, release_connection
 from api.errors.exceptions import ValidationError
 
-_COLUMNS = "code, label, color, description, is_active"
+_COLUMNS = "code, label, color, description, is_active, constat_required"
 
 
 def _to_item(row) -> Dict[str, Any]:
     """Forme de l'API : id = code, title = libellé (contrat de GET /interventions/types)."""
-    code, label, color, description, is_active = row
+    code, label, color, description, is_active, constat_required = row
     return {
         "id": code,
         "title": label,
         "color": color,
         "description": description,
         "is_active": is_active,
+        "constat_required": constat_required,
     }
 
 

@@ -14,6 +14,7 @@ import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useI
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
+import RequestConstatBlock from './RequestConstatBlock';
 
 /**
  * Seul le rejet est piloté manuellement : l'acceptation résulte de la création d'une
@@ -339,7 +340,7 @@ RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired };
  */
 export default function InterventionRequestDetail({ requestId, onTransitionDone, onDeleted }) {
   const { can } = usePermissions();
-  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete } =
+  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete, refetch } =
     useInterventionRequestDetail(requestId);
 
   const handleTransition = async (statusTo, extraData = {}) => {
@@ -386,6 +387,8 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
       <Separator size="4" mb="3" />
 
       <RequestWhoWhat detail={detail} />
+
+      <RequestConstatBlock detail={detail} onLinked={async () => { await refetch(); onTransitionDone?.(); }} />
 
       <Separator size="4" mb="3" />
 

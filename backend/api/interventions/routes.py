@@ -76,8 +76,8 @@ def list_intervention_types(
     ),
 ):
     """Types d'intervention lus en base, triés par libellé (id = code, title, color,
-    description, is_active). Actifs seulement par défaut ; avec machine_id, seulement ceux
-    que la classe de l'équipement permet (tous si elle n'a pas de liste)."""
+    description, is_active, constat_required). Actifs seulement par défaut ; avec machine_id,
+    seulement ceux que la classe de l'équipement permet (tous si elle n'a pas de liste)."""
     if machine_id is not None:
         return referentiel(list_types_for_machine(machine_id, include_inactive))
     return referentiel(list_types(include_inactive))

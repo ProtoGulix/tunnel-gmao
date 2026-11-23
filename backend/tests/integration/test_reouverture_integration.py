@@ -4,7 +4,8 @@ import pytest
 
 from tests.integration.etape2_helpers import intervention_liee, lignes_audit
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 
 def _put(client, admin, intervention_id, status, **extra):

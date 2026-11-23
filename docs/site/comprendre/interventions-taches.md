@@ -59,6 +59,16 @@ On clôt une intervention en changeant son statut vers « Fermé ». C'est la se
 - La demande liée se clôt dans la même opération, et laisse un événement du système.
 - Un motif peut être demandé, selon les règles d'audit.
 
+### Le constat
+
+À la clôture, on répond à un court formulaire : qu'est-ce qui aurait réduit ou évité l'arrêt ?
+Réponses par choix, sans texte libre. Le constat est obligatoire pour les types qui
+l'exigent, et ajoutable après la clôture tant que l'intervention n'est pas archivée. Il crée
+une demande sur la machine visée, que le responsable arbitre. Un constat ne s'écrase pas : une
+correction crée une version nouvelle, avec le motif « Correction ». La donnée aide à décider
+(tâche préventive, idée d'amélioration) ; elle ne sert à aucun indicateur ni classement de
+personnes.
+
 ### Rouvrir
 
 Changer le statut d'une intervention fermée vers un autre statut la rouvre. Un **motif est

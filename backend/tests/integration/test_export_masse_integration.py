@@ -9,7 +9,8 @@ import pytest
 from api.limiter import limiter
 from tests.integration.etape2_helpers import intervention_liee
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 URL = "/exports/interventions/closed"
 

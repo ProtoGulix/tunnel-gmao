@@ -93,6 +93,10 @@ export const PERM = {
     importCsv: 'purchase-requests:import_purchase_requests_from_csv',
     dispatch: 'purchase-requests:dispatch_pending_requests',
   },
+  constats: {
+    create: 'constats:create_constat',
+    link: 'constats:link_constat',
+  },
   interventions: {
     exportClosed: 'exports:export_closed_interventions',
     create: 'interventions:create_intervention',

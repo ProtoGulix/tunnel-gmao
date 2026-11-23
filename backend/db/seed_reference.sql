@@ -511,3 +511,130 @@ INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, d
 INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'TASK_REWORK', 'Travail à reprendre', 'user', '{task}', '{task_reopened}', '#dc2626', 'Le travail de la tâche est à reprendre.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'TASK_REWORK') ON CONFLICT (code) DO NOTHING;
 UPDATE public.audit_reason_code SET decision_types = array_append(COALESCE(decision_types, '{}'), 'task_reopened') WHERE code = 'OTHER' AND decision_types IS NOT NULL AND NOT ('task_reopened' = ANY(decision_types));
 SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));
+
+--
+-- Constat après intervention (CST-01, ADR 0043), cohérent avec la migration 0028 : tables,
+-- colonnes, questions et choix, motif CONSTAT_CORRECTION, règles d'audit. Idempotent. Ce
+-- fichier s'exécute avant 0028 (migration 0002) : les instructions sont donc complètes.
+--
+
+CREATE TABLE IF NOT EXISTS public.constat_question (
+    id serial NOT NULL,
+    code character varying(50) NOT NULL,
+    label text NOT NULL,
+    is_multiple boolean NOT NULL DEFAULT false,
+    parent_choice_id integer,
+    sort_order integer NOT NULL DEFAULT 0,
+    is_active boolean NOT NULL DEFAULT true,
+    CONSTRAINT constat_question_pkey PRIMARY KEY (id),
+    CONSTRAINT constat_question_code_key UNIQUE (code)
+);
+CREATE TABLE IF NOT EXISTS public.constat_choice (
+    id serial NOT NULL,
+    question_id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    label text NOT NULL,
+    sort_order integer NOT NULL DEFAULT 0,
+    is_active boolean NOT NULL DEFAULT true,
+    suggested_type_inter character varying(10),
+    CONSTRAINT constat_choice_pkey PRIMARY KEY (id),
+    CONSTRAINT constat_choice_code_key UNIQUE (code),
+    CONSTRAINT constat_choice_question_fkey FOREIGN KEY (question_id)
+        REFERENCES public.constat_question (id),
+    CONSTRAINT constat_choice_suggested_type_fkey FOREIGN KEY (suggested_type_inter)
+        REFERENCES public.intervention_type (code) ON UPDATE CASCADE
+);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'constat_question_parent_choice_fkey' AND conrelid = 'public.constat_question'::regclass) THEN ALTER TABLE public.constat_question ADD CONSTRAINT constat_question_parent_choice_fkey FOREIGN KEY (parent_choice_id) REFERENCES public.constat_choice (id); END IF; END $$;
+CREATE TABLE IF NOT EXISTS public.constat (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    intervention_id uuid NOT NULL,
+    machine_id uuid NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    supersedes_id uuid,
+    request_id uuid NOT NULL,
+    linked_request_id uuid,
+    CONSTRAINT constat_pkey PRIMARY KEY (id),
+    CONSTRAINT constat_supersedes_id_key UNIQUE (supersedes_id),
+    CONSTRAINT constat_not_self_superseding CHECK (supersedes_id IS DISTINCT FROM id),
+    CONSTRAINT constat_intervention_fkey FOREIGN KEY (intervention_id)
+        REFERENCES public.intervention (id),
+    CONSTRAINT constat_machine_fkey FOREIGN KEY (machine_id) REFERENCES public.machine (id),
+    CONSTRAINT constat_created_by_fkey FOREIGN KEY (created_by)
+        REFERENCES public.tunnel_user (id),
+    CONSTRAINT constat_supersedes_fkey FOREIGN KEY (supersedes_id)
+        REFERENCES public.constat (id),
+    CONSTRAINT constat_request_fkey FOREIGN KEY (request_id)
+        REFERENCES public.intervention_request (id),
+    CONSTRAINT constat_linked_request_fkey FOREIGN KEY (linked_request_id)
+        REFERENCES public.intervention_request (id)
+);
+CREATE TABLE IF NOT EXISTS public.constat_answer (
+    constat_id uuid NOT NULL,
+    choice_code character varying(50) NOT NULL,
+    CONSTRAINT constat_answer_pkey PRIMARY KEY (constat_id, choice_code),
+    CONSTRAINT constat_answer_constat_fkey FOREIGN KEY (constat_id)
+        REFERENCES public.constat (id),
+    CONSTRAINT constat_answer_choice_fkey FOREIGN KEY (choice_code)
+        REFERENCES public.constat_choice (code) ON UPDATE CASCADE
+);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'intervention_type' AND column_name = 'constat_required') THEN ALTER TABLE public.intervention_type ADD COLUMN constat_required boolean NOT NULL DEFAULT false; UPDATE public.intervention_type SET constat_required = true WHERE code = 'CUR'; END IF; END $$;
+ALTER TABLE public.intervention_request ADD COLUMN IF NOT EXISTS source_intervention_id uuid;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'intervention_request_source_intervention_fkey' AND conrelid = 'public.intervention_request'::regclass) THEN ALTER TABLE public.intervention_request ADD CONSTRAINT intervention_request_source_intervention_fkey FOREIGN KEY (source_intervention_id) REFERENCES public.intervention (id); END IF; END $$;
+CREATE INDEX IF NOT EXISTS idx_constat_intervention ON public.constat (intervention_id);
+CREATE INDEX IF NOT EXISTS idx_constat_machine ON public.constat (machine_id);
+CREATE INDEX IF NOT EXISTS idx_constat_request ON public.constat (request_id);
+CREATE INDEX IF NOT EXISTS idx_constat_linked_request ON public.constat (linked_request_id);
+CREATE INDEX IF NOT EXISTS idx_constat_answer_choice ON public.constat_answer (choice_code);
+CREATE INDEX IF NOT EXISTS idx_constat_choice_question ON public.constat_choice (question_id);
+CREATE INDEX IF NOT EXISTS idx_intervention_request_source_intervention ON public.intervention_request (source_intervention_id);
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'LEVER', 'Qu''est-ce qui aurait réduit ou évité cet arrêt ?', true, NULL, 1, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'LEVER') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'TASK', 'Tâche de maintenance régulière', 1, true, 'PRE' WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'TASK') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'PROJECT', 'Projet ou modification', 2, true, 'PRO' WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PROJECT') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'TRAINING', 'Formation', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'TRAINING') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'MONITORING', 'Surveillance ou inspection', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'MONITORING') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'OTHER', 'Autre', 5, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'OTHER') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'FREQUENCY', 'À quelle fréquence ?', false, (SELECT id FROM public.constat_choice WHERE code = 'TASK'), 2, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'FREQUENCY') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'FREQUENCY'), 'FREQ_WEEKLY', 'Hebdomadaire', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'FREQ_WEEKLY') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'FREQUENCY'), 'FREQ_MONTHLY', 'Mensuelle', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'FREQ_MONTHLY') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'FREQUENCY'), 'FREQ_QUARTERLY', 'Trimestrielle', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'FREQ_QUARTERLY') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'FREQUENCY'), 'FREQ_YEARLY', 'Annuelle', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'FREQ_YEARLY') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'FREQUENCY'), 'FREQ_PLANNED_STOP', 'Lors d''un arrêt planifié', 5, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'FREQ_PLANNED_STOP') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'KNOWN_SINCE', 'Problème connu depuis ?', false, (SELECT id FROM public.constat_choice WHERE code = 'PROJECT'), 3, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'KNOWN_SINCE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'KNOWN_SINCE'), 'SINCE_NEVER', 'Jamais (apparu brutalement)', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SINCE_NEVER') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'KNOWN_SINCE'), 'SINCE_LT_1M', 'Moins d''un mois', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SINCE_LT_1M') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'KNOWN_SINCE'), 'SINCE_1_3M', '1 à 3 mois', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SINCE_1_3M') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'KNOWN_SINCE'), 'SINCE_GT_3M', 'Plus de 3 mois', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SINCE_GT_3M') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'DOMAIN', 'Quels domaines ?', true, (SELECT id FROM public.constat_choice WHERE code = 'TRAINING'), 4, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'DOMAIN') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_ELECTRICAL', 'Électrique', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_ELECTRICAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_AUTOMATION', 'Automatisme', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_AUTOMATION') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_MECHANICAL', 'Mécanique', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_MECHANICAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_PNEUMATIC', 'Pneumatique', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_PNEUMATIC') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_SOFTWARE', 'Logiciel', 5, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_SOFTWARE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'DOMAIN'), 'DOM_METHOD', 'Méthode ou procédure', 6, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'DOM_METHOD') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'PARAMETER', 'Quels paramètres ?', true, (SELECT id FROM public.constat_choice WHERE code = 'MONITORING'), 5, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'PARAMETER') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_VIBRATION', 'Vibration', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_VIBRATION') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_TEMPERATURE', 'Température', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_TEMPERATURE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_PRESSURE', 'Pression', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_PRESSURE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_LEVEL', 'Niveau', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_LEVEL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_VISUAL', 'État visuel', 5, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_VISUAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PARAMETER'), 'PARAM_COUNTER', 'Compteur', 6, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PARAM_COUNTER') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'SIGNAL', 'Signal visible avant la panne ?', false, NULL, 6, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'SIGNAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'SIGNAL'), 'SIGNAL_SEEN', 'Oui et je l''ai vu', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SIGNAL_SEEN') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'SIGNAL'), 'SIGNAL_NOT_REPORTED', 'Oui mais non remonté', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SIGNAL_NOT_REPORTED') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'SIGNAL'), 'SIGNAL_NONE', 'Non', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'SIGNAL_NONE') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_question (code, label, is_multiple, parent_choice_id, sort_order, is_active) SELECT 'PART', 'Parties concernées', true, NULL, 7, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_question WHERE code = 'PART') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PART'), 'PART_PLC', 'Automate', 1, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PART_PLC') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PART'), 'PART_ELECTRICAL', 'Électrique', 2, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PART_ELECTRICAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PART'), 'PART_PNEUMATIC', 'Pneumatique', 3, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PART_PNEUMATIC') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PART'), 'PART_MECHANICAL', 'Mécanique', 4, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PART_MECHANICAL') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter) SELECT (SELECT id FROM public.constat_question WHERE code = 'PART'), 'PART_BUILDING', 'Bâtiment', 5, true, NULL WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'PART_BUILDING') ON CONFLICT (code) DO NOTHING;
+INSERT INTO public.audit_reason_code (id, code, label, category, entity_types, decision_types, color, description, is_active) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_reason_code), 'CONSTAT_CORRECTION', 'Correction', 'user', '{constat}', '{constat_corrected}', '#d97706', 'Le constat est corrigé : une nouvelle version remplace la précédente.', true WHERE NOT EXISTS (SELECT 1 FROM public.audit_reason_code WHERE code = 'CONSTAT_CORRECTION') ON CONFLICT (code) DO NOTHING;
+SELECT setval('public.audit_reason_code_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_reason_code), (SELECT last_value FROM public.audit_reason_code_id_seq)));
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'constat') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('constat' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'constat', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'constat' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'constat_question') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('constat_question' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'constat_question', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'constat_question' AND field IS NULL);
+UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'constat_choice') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('constat_choice' = ANY(entity_types));
+INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'constat_choice', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'constat_choice' AND field IS NULL);
+SELECT setval('public.audit_rule_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_rule), (SELECT last_value FROM public.audit_rule_id_seq)));

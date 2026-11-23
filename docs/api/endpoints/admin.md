@@ -196,12 +196,12 @@ Tous les champs sont optionnels.
 ### PATCH `/admin/intervention-types/{id}` — corps
 
 ```json
-{ "label": "Nouveau libellé", "description": "Aide courte", "color": "red" }
+{ "label": "Nouveau libellé", "description": "Aide courte", "color": "red", "constat_required": true }
 ```
 
-Champs facultatifs, un au moins. Le code n'est pas modifiable (un `code` envoyé est ignoré) ;
+Champs facultatifs, un au moins. `constat_required` : la clôture d'une intervention de ce type exige un constat. Le code n'est pas modifiable (un `code` envoyé est ignoré) ;
 une description vide l'efface. Un type ne se supprime pas (aucune route) : il se désactive
-avec `/active`. `GET` renvoie `id`, `code`, `label`, `color`, `description`, `is_active`.
+avec `/active`. `GET` renvoie `id`, `code`, `label`, `color`, `description`, `is_active`, `constat_required`.
 
 ### PATCH `/admin/intervention-statuses/{code}` — corps
 

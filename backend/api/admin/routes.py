@@ -376,7 +376,9 @@ def patch_intervention_type(
     payload: InterventionTypePatch,
     repo: ReferentielRepository = Depends(_referentiel_repo),
 ):
-    repo.patch_intervention_type(type_id, payload.label, payload.description, payload.color)
+    repo.patch_intervention_type(
+        type_id, payload.label, payload.description, payload.color, payload.constat_required
+    )
     return {"message": "Type mis à jour"}
 
 

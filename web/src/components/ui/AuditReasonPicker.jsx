@@ -115,7 +115,7 @@ export default function AuditReasonPicker({ entityType, reasons: reasonsProp, de
 }
 
 AuditReasonPicker.propTypes = {
-  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action', 'supplier_order', 'equipement', 'preventive_occurrence']).isRequired,
+  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action', 'supplier_order', 'equipement', 'preventive_occurrence', 'constat']).isRequired,
   reasons: PropTypes.array,
   decisionType: PropTypes.string,
   value: PropTypes.shape({

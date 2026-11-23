@@ -8,6 +8,7 @@ const URL_ENTITY_MAP = {
   'intervention-requests': 'request',
   'intervention-tasks': 'task',
   'interventions': 'intervention',
+  'constats': 'constat',
   'purchase-requests': 'purchase_request',
   'supplier-orders': 'supplier_order',
   'equipements': 'equipement',
@@ -55,10 +56,11 @@ export function getAuditEntityType(error) {
 
 /**
  * Décision d'audit attendue par la requête : une suppression exige un motif « deleted »,
- * ignorer une occurrence préventive un motif « occurrence_skipped ».
+ * ignorer une occurrence préventive un motif « occurrence_skipped », corriger un constat « constat_corrected ».
  */
 export function getAuditDecisionType(error) {
   const url = String(error?.config?.url ?? '').split('?')[0];
+  if (/^\/?constats\/[^/]+\/corrections$/.test(url)) return 'constat_corrected';
   if (/^\/?preventive-occurrences\/[^/]+\/skip$/.test(url)) return 'occurrence_skipped';
   return String(error?.config?.method ?? '').toLowerCase() === 'delete' ? 'deleted' : undefined;
 }

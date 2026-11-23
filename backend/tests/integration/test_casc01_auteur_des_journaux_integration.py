@@ -8,7 +8,8 @@ import pytest
 from tests.integration.etape2_helpers import intervention_liee
 from tests.integration.test_audc_transaction_integration import monter  # noqa: F401
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 _MIGRATION = Path(__file__).resolve().parents[2] / "alembic/versions/0022_auteur_des_journaux.py"
 _COLONNE = (

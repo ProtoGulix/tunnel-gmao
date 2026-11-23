@@ -27,6 +27,30 @@ ceux que l'administrateur a paramétrés ; vous n'en saisissez pas de votre côt
 
 Si Tunnel refuse la clôture, le message du serveur s'affiche dans la fenêtre.
 
+### Le constat
+
+Pour certains types d'intervention (le curatif, par défaut), un **constat** est obligatoire
+avant de clore. Si aucun n'existe, le formulaire « Constat » s'ouvre avant la confirmation.
+
+Répondez en touchant des cases, sans rien écrire :
+
+- « Qu'est-ce qui aurait réduit ou évité cet arrêt ? » : un ou plusieurs choix. Chaque choix
+  peut ouvrir une question de détail (fréquence, domaines, paramètres…).
+- « Signal visible avant la panne ? ».
+- **Équipement** : celui de l'intervention, modifiable.
+
+Touchez **Envoyer**. La clôture se poursuit ensuite. Tunnel refuse de clore sans constat,
+par tous les chemins.
+
+Chaque constat crée une demande d'intervention sur la machine visée. Le responsable décide
+de la suite.
+
+### Ajouter un constat après la clôture
+
+Dans la fiche de l'intervention, le bouton **Constat** ouvre le même formulaire. Il est
+accepté après la clôture, et masqué si l'intervention est archivée. Plusieurs constats sont
+possibles ; chacun garde son auteur.
+
 ## Rouvrir
 
 Ouvrez l'intervention fermée, touchez **Statut**, puis choisissez un autre statut. La
@@ -56,3 +80,19 @@ une fenêtre de motif.
 
 Quand vous enregistrez une action sur une intervention ouverte, une fenêtre propose de clore
 l'intervention dans le même geste ; « Non, laisser ouverte » enregistre seulement l'action.
+
+### Le constat, sur le web
+
+Si le type exige un constat et qu'il manque, **Oui, clôturer** ouvre d'abord le formulaire
+de constat, puis clôt. Depuis l'en-tête, **Clôturer** ouvre le même formulaire dans la
+fenêtre « Constat avant clôture ». Si Tunnel refuse, le message s'affiche.
+
+L'onglet **Constats** de l'intervention liste les constats : machine, demande créée, choix
+cochés. **Ajouter** en crée un autre (hors intervention archivée).
+
+### Corriger un constat
+
+**Corriger** ouvre le formulaire pré-rempli. La fenêtre de motif propose « Correction ». La
+nouvelle version remplace la précédente, qui reste dans le journal d'audit. Seuls l'auteur,
+le responsable et l'administrateur corrigent, tant que la demande issue du constat est
+« nouvelle ».

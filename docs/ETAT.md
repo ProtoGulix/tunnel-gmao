@@ -85,6 +85,7 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait | Constat après intervention : ADR 0043 accepté ; CST-01 faite (migration 0028, non jouée en dev) ; CST-02 faite (API : constats, clôture, rattachement) ; CST-03 (web) et CST-04 (mobile) faites ; guide à jour ; reviewer APPROUVÉ AVEC RÉSERVES, réserves traitées (CST-05 faite, libellé Équipement, backlog du rattachement) ; 673 tests d'intégration verts ; migration 0028 et bootstrap joués en dev le 2026-11-22 avec l'accord de l'utilisateur (droits ouverts : ADMIN 7, RESP 7, TECH 6, MCP 4 en lecture) ; essais à l'écran validés (web : saisie, correction, rattachement ; mobile : clôture) ; revue finale APPROUVÉ (réserves mineures : lecture des idées d'amélioration ouverte à tous les rôles, changement de type après clôture sans constat non testé) ; fusionné dans develop le 2026-11-23 ; migration 0028 à jouer en production à sa mise à jour | — | ADR 0043, [CST-01](taches/CST-01-base-constat.md) à [CST-05](taches/CST-05-tests-reserves-revue.md) |
 | fait (2026-11-22) | Santé d'un équipement : demandes d'achat reçues ou rejetées plus comptées comme ouvertes (statut dérivé) ; reviewer APPROUVÉ ; 644 tests d'intégration verts | fusionnée dans develop | [CPT-01](taches/CPT-01-compteur-achats-ouverts.md) |
 | fait (2026-11-22) | Mobile : « Aucun motif disponible » au lieu du message brut quand l'API exige un motif sans en proposer ; reviewer APPROUVÉ ; pas de test (le mobile n'a pas de lanceur de tests) | fusionnée dans develop | [MSG-01](taches/MSG-01-mobile-message-sans-motif.md) |
 | fait (2026-11-22) | Ménage du backlog : codes de statut d'intervention inexistants retirés ; tests de retour arrière des motifs indépendants de l'ordre (accord de l'utilisateur) ; compteur d'achats ouverts de l'équipement reporté au backlog ; 643 tests d'intégration verts | fusionnée dans develop | docs/backlog/statuts-intervention-code-mort.md, tests-integration-dependants-de-l-ordre.md |
@@ -201,6 +202,8 @@ pantin et pétanque (protocole de reprise, docs/ETAT.md, docs/taches/, contrôle
 subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
+
+0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour. Suite proposée : mobile, plusieurs tâches par action (docs/backlog/mobile-plusieurs-taches-par-action.md).
 
 0. Production en 5.13.1. Version 5.14.0 publiée (tag sur main) : en production, migrations 0026 et 0027 jouées au démarrage de l'API lors de la mise à jour.
 

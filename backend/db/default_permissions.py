@@ -102,6 +102,9 @@ TECH_WRITES = (
     _w("intervention-actions"),
     _w("Intervention Tasks"),
     _w("intervention-status-log", "POST"),
+    # Constat : saisir et corriger ; le rattachement (/link) reste au référent (RESP)
+    _w("constats", "POST", path="/interventions/{intervention_id}/constats"),
+    _w("constats", "POST", path="/constats/{constat_id}/corrections"),
     _w("purchase-requests", "POST", path="/purchase-requests"),  # créer une demande d'achat
 )
 

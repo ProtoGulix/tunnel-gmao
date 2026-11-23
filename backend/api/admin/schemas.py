@@ -183,6 +183,7 @@ class InterventionTypePatch(BaseModel):
     label: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
+    constat_required: Optional[bool] = None
 
 
 class InterventionTypeActivePatch(BaseModel):

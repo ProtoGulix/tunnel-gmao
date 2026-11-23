@@ -176,6 +176,17 @@ def make_user(instance, client, admin):
 
 
 @pytest.fixture
+def cur_sans_constat(instance):
+    """Le temps du test, CUR n'exige pas de constat à la clôture (ADR 0043).
+
+    Pour les tests de clôture qui ne portent pas sur le constat ; l'état d'avant est rétabli."""
+    avant = instance.sql("SELECT constat_required FROM intervention_type WHERE code = 'CUR'")[0][0]
+    instance.sql("UPDATE intervention_type SET constat_required = false WHERE code = 'CUR'")
+    yield
+    instance.sql("UPDATE intervention_type SET constat_required = %s WHERE code = 'CUR'", (avant,))
+
+
+@pytest.fixture
 def grant(instance, client):
     """Accorde des permissions de la matrice (ADR 0007) en SQL propriétaire, le temps du test.
 

@@ -18,7 +18,8 @@ from tests.integration.etape2_helpers import (
     machine,
 )
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 # Événements de la demande à sa création puis à son acceptation par POST /interventions.
 _ACCEPTATION = ("created", "statut_changed", "intervention_id_changed")

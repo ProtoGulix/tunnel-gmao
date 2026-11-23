@@ -8,6 +8,36 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- API : constat après intervention (ADR 0043). `GET /constats/questions`, saisie
+  `POST /interventions/{id}/constats` (TECH, RESP, ADMIN ; accepté après la clôture, refusé si
+  l'intervention est archivée), lecture `GET /interventions/{id}/constats` et
+  `GET /constats/by-request/{id}`, correction par nouvelle version avec le motif « Correction »
+  (`POST /constats/{id}/corrections`, auteur ou RESP, ADMIN, tant que la demande est « nouvelle »),
+  rattachement à une idée d'amélioration (`GET /constats/{id}/improvement-ideas`,
+  `POST /constats/{id}/link`, RESP, ADMIN) qui rejette la demande en doublon.
+- Chaque constat crée une demande d'intervention sur la machine visée (`source_intervention_id`,
+  type préconisé tiré du premier choix typé), dans la même transaction.
+- Types d'intervention : `constat_required` lisible (`GET /interventions/types`,
+  `GET /admin/intervention-types`) et modifiable (`PATCH /admin/intervention-types/{id}`).
+- Web : formulaire de constat à la clôture (overlay et en-tête), onglet « Constats » de
+  l'intervention avec ajout et correction (motif « Correction »), case « Constat obligatoire »
+  du référentiel des types (modification), lien « Intervention d'origine » et rattachement à une
+  idée d'amélioration sur le détail d'une demande.
+- Mobile : formulaire de constat avant la confirmation de clôture, bouton « Constat » dans la
+  fiche d'intervention (hors archivée).
+- Guide : constat (clôture, correction, demande issue d'un constat, référentiel, page
+  Interventions et tâches).
+
+### Modifié
+- Clôturer une intervention dont le type exige un constat (CUR par défaut) est refusé sans
+  constat, quel que soit le chemin, création déjà fermée comprise.
+- Base : migration 0028 à jouer en production (constat après intervention, ADR 0043) : tables
+  `constat_question`, `constat_choice`, `constat`, `constat_answer`, colonnes
+  `intervention_type.constat_required` (vrai pour CUR) et
+  `intervention_request.source_intervention_id`, motif « Correction ». Aucune donnée existante
+  modifiée ; retour arrière refusé tant qu'un constat existe.
+
 ## [5.14.0] — 2026-11-22
 
 ### Ajouté

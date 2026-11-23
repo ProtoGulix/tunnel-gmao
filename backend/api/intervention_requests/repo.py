@@ -361,7 +361,7 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
                     {_SERVICE_COLS},
@@ -527,7 +527,7 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
                     {_SERVICE_COLS},
@@ -605,8 +605,9 @@ class InterventionRequestRepository:
             """
             INSERT INTO intervention_request
                 (machine_id, demandeur_nom, service_id, description,
-                 is_system, suggested_type_inter, code, statut, created_by, origine)
-            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s)
+                 is_system, suggested_type_inter, code, statut, created_by, origine,
+                 source_intervention_id)
+            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s, %s)
             RETURNING id
             """,
             (
@@ -618,6 +619,7 @@ class InterventionRequestRepository:
                 data.get("suggested_type_inter") or None,
                 created_by,
                 origine,
+                data.get("source_intervention_id"),
             ),
         )
         return str(cur.fetchone()[0])

@@ -1516,7 +1516,15 @@ Plan préventif → Génération → Occurrence → DI créée automatiquement
 | `PATCH`  | `/intervention-tasks/{id}`                | Met à jour une tâche                                  |
 | `DELETE` | `/intervention-tasks/{id}`                | Supprime une tâche (todo, sans action liée)           |
 
-> Documentation complète : [Preventive Plans](endpoints/preventive-plans.md) | [Preventive Occurrences](endpoints/preventive-occurrences.md) | [Intervention Tasks](endpoints/intervention-tasks.md)
+| `GET`    | `/constats/questions`                     | Questions et choix actifs du constat                  |
+| `GET`    | `/interventions/{id}/constats`            | Constats d'une intervention (versions courantes)      |
+| `POST`   | `/interventions/{id}/constats`            | Crée un constat et sa demande (tech, resp, admin)     |
+| `GET`    | `/constats/by-request/{request_id}`       | Constat dont une demande est issue                    |
+| `POST`   | `/constats/{id}/corrections`              | Corrige un constat (nouvelle version, motif)          |
+| `GET`    | `/constats/{id}/improvement-ideas`        | Idées d'amélioration ouvertes de la machine           |
+| `POST`   | `/constats/{id}/link`                     | Rattache à une idée, rejette la demande (resp, admin) |
+
+> Documentation complète : [Constats](endpoints/constats.md) | [Preventive Plans](endpoints/preventive-plans.md) | [Preventive Occurrences](endpoints/preventive-occurrences.md) | [Intervention Tasks](endpoints/intervention-tasks.md)
 
 ### Impact sur `GET /interventions/{id}`
 

@@ -31,7 +31,9 @@ Inactif).
 
 - **Nouveau type** demande un code (mis en majuscules, par exemple `CURATIF`), un libellé et
   une description facultative.
-- Le crayon change le libellé et la description. Le code ne change pas.
+- Le crayon change le libellé et la description. Le code ne change pas. À la modification
+  seulement, la case **Constat obligatoire** exige un constat pour clore une intervention de
+  ce type (cochée par défaut pour le curatif).
 - **Désactiver** retire le type des choix proposés ; **Activer** le remet.
 
 **Statuts d'intervention.** La liste est fixe : vous pouvez seulement changer le libellé et
