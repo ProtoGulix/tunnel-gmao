@@ -14,8 +14,8 @@ export function parseMonths(raw) {
   return BILAN_PERIODS.includes(months) ? months : DEFAULT_MONTHS;
 }
 
-/** Onglets de la page : état du service, synthèse de l'audit, qualité des données */
-export const BILAN_TABS = ['service', 'audit', 'qualite'];
+/** Onglets de la page : état du service, constats, synthèse de l'audit, qualité des données */
+export const BILAN_TABS = ['service', 'constats', 'audit', 'qualite'];
 
 /** Onglet affiché : « audit » seulement avec le droit ; inconnu ou sans droit : « service » */
 export function resolveTab(raw, canAudit) {

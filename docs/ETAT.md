@@ -204,8 +204,9 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Indicateurs des constats (ADR 0044) : onglet Constats du Bilan, [DIR-01](taches/DIR-01-backend-stats-constats.md) et [DIR-02](taches/DIR-02-web-indicateurs-constats.md) faites, reviewer APPROUVÉ (réserves traitées) ; page Direction puis bloc d'accueil essayés et retirés à la demande de l'utilisateur ; onglet validé, fusionné dans develop le 2026-11-23. Sans migration ; droit `stats:get_constats` créé au démarrage de l'API.
 0. Mobile, plusieurs tâches par action ([MOB-01](taches/MOB-01-plusieurs-taches-par-action.md)) : fusionné dans develop le 2026-11-23 après essai sur téléphone, reviewer APPROUVÉ. Sans migration.
-0. Rattachement d'un constat atomique ([CRA-01](taches/CRA-01-rattachement-atomique.md)) : déjà garanti par la transaction de la requête, prouvé par un test ; réserve close le 2026-11-23. Prochain : vue direction, visuel des constats (plan à valider).
+0. Rattachement d'un constat atomique ([CRA-01](taches/CRA-01-rattachement-atomique.md)) : déjà garanti par la transaction de la requête, prouvé par un test ; réserve close le 2026-11-23.
 0. Suivi et vues du constat (CSV-01 à CSV-03) : fusionné dans develop le 2026-11-23.
 0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour.
 

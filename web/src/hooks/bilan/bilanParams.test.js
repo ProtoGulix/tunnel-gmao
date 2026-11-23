@@ -14,6 +14,7 @@ test('onglet : inconnu ou sans droit, retombe sur service', () => {
   assert.equal(resolveTab('audit', true), 'audit');
   assert.equal(resolveTab('audit', false), 'service');
   assert.equal(resolveTab('qualite', true), 'qualite');
+  assert.equal(resolveTab('constats', false), 'constats');
   assert.equal(resolveTab('qualite', false), 'qualite');
   assert.equal(resolveTab('service', true), 'service');
   assert.equal(resolveTab('autre', true), 'service');

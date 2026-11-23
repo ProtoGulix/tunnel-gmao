@@ -133,7 +133,7 @@ def test_seeds_default_matrix_and_home_views(first_run):
     )
     # Matrice par défaut (db/default_permissions.py) ; détail dans
     # tests/integration/test_default_permissions_integration.py.
-    assert dict(allowed) == {"ADMIN": 272, "RESP": 236, "TECH": 132, "ACHETEUR": 166, "MCP": 119}
+    assert dict(allowed) == {"ADMIN": 273, "RESP": 237, "TECH": 133, "ACHETEUR": 167, "MCP": 120}
     assert _query(OWNER_URL, "SELECT count(*) FROM role_home_view")[0][0] == 4
 
 

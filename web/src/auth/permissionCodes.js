@@ -42,6 +42,8 @@ export const PERM = {
     organisation: 'stats:get_organisation',
     // Page Synthèse de l'audit (ADR 0032)
     auditSynthese: 'stats:get_audit_synthese',
+    // Indicateurs des constats (ADR 0044)
+    constats: 'stats:get_constats',
   },
   stock: {
     createItem: 'stock-items:create_stock_item',

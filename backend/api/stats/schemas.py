@@ -555,3 +555,37 @@ class AuditSyntheseResponse(BaseModel):
     trends: AuditSyntheseTrends = AuditSyntheseTrends()
     totals: AuditSyntheseCounters
     decisions: List[AuditSyntheseDecision]
+
+
+class ConstatsPeriod(BaseModel):
+    start_date: date
+    end_date: date
+
+
+class ConstatsMonth(BaseModel):
+    month: str
+    count: int
+
+
+class ConstatsChoiceCount(BaseModel):
+    code: str
+    label: str
+    suggested_type_inter: Optional[str] = None
+    count: int
+
+
+class ConstatsOutcome(BaseModel):
+    code: str
+    label: str
+    color: Optional[str] = None
+    count: int
+
+
+class ConstatsResponse(BaseModel):
+    period: ConstatsPeriod
+    total: int
+    by_month: List[ConstatsMonth]
+    levers: List[ConstatsChoiceCount]
+    signals: List[ConstatsChoiceCount]
+    known_since: List[ConstatsChoiceCount]
+    outcomes: List[ConstatsOutcome]

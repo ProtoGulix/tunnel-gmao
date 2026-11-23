@@ -9,6 +9,11 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Indicateurs des constats (ADR 0044) : onglet « Constats » du Bilan, ouvert à tous les
+  connectés. Chiffres clés (constats par mois, signal visible, signal non remonté, suggestions
+  retenues) et barres « Où agir » (leviers, signal précurseur, ancienneté du problème, devenir
+  des demandes). API `GET /stats/constats` (`start_date`, `end_date`), droit
+  `stats:get_constats` créé au démarrage, sans migration.
 - API : constat après intervention (ADR 0043). `GET /constats/questions`, saisie
   `POST /interventions/{id}/constats` (TECH, RESP, ADMIN ; accepté après la clôture, refusé si
   l'intervention est archivée), lecture `GET /interventions/{id}/constats` et

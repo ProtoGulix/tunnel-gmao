@@ -91,6 +91,23 @@ Trois chiffres courts sur l'**état actuel** du préventif, hors période :
 | Préventifs en retard | État actuel : plans préventifs actifs, par équipement, dont l'échéance est dépassée (périodicité glissante, calculée par l'échéancier). Les plans par heures ne sont pas comptés. |
 | Dernière génération | Date de la dernière occurrence générée. La génération est automatique quand la tâche quotidienne est activée : au-delà de 35 jours, un oubli ou une tâche quotidienne désactivée est probable. |
 
+## L'onglet Constats
+
+Les constats saisis après intervention, sur la période choisie. Un bandeau de quatre
+chiffres clés, comme l'onglet État :
+
+| Chiffre | Ce qu'il mesure |
+| --- | --- |
+| Constats | Nombre de constats, avec leur courbe par mois. Une correction ne compte pas en plus. |
+| Signal visible avant | Part des constats où un signe annonçait l'arrêt, vu ou non remonté. |
+| Signal non remonté | Part des constats où le signe a été vu sans être signalé. |
+| Suggestions retenues | Demandes issues des constats acceptées ou clôturées, et nombre en attente. |
+
+Puis, sous « Où agir », une barre par question : **leviers** (un constat peut en citer
+plusieurs), **signal précurseur**, **problème connu depuis**, **devenir des demandes**
+(« rattachée » : doublon d'une idée d'amélioration). Aucun chiffre par personne. Sans
+constat : « Aucun constat sur la période ».
+
 ## L'onglet Audit
 
 ![Onglet Audit du Bilan : six chiffres sur les tâches et les décisions](/captures/web-direction-bilan-audit.webp)
