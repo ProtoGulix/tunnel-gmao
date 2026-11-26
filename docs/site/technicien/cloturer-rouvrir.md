@@ -29,6 +29,8 @@ Si Tunnel refuse la clôture, le message du serveur s'affiche dans la fenêtre.
 
 ### Le constat
 
+Le principe, en un schéma : [Le constat](/comprendre/constats).
+
 Pour certains types d'intervention (le curatif, par défaut), un **constat** est obligatoire
 avant de clore. Si aucun n'existe, le formulaire « Constat » s'ouvre avant la confirmation.
 

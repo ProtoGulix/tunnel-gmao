@@ -8,6 +8,9 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Ajouté
+- Guide : page « Le constat » dans « Comprendre Tunnel », avec un schéma de principe (de la clôture à la demande ou au Bilan), liée depuis les pages des demandes et de la clôture.
+
 ### [interne]
 - Démonstration : le cron de 3 h récupère `main` avant la réinitialisation (deploy/demo/README.md).
 

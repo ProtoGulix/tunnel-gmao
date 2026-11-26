@@ -82,6 +82,8 @@ Ce motif est obligatoire quelle que soit la règle d'audit de votre installation
 
 ## Demande issue d'un constat
 
+Le principe, en un schéma : [Le constat](/comprendre/constats).
+
 Un constat saisi à la clôture d'une intervention crée une demande sur la machine visée, si
 un levier choisi la génère (réglage du référentiel ; **Rien ne l'aurait évité** n'en crée pas,
 le constat s'affiche alors **Sans demande**). Le

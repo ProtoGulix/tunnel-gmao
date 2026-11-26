@@ -24,6 +24,7 @@ const roleSidebar = [
     ["Vue d'ensemble", ""],
     ["Les codes", "codes"],
     ["Interventions et tâches", "interventions-taches"],
+    ["Le constat", "constats"],
     ["Les actions", "actions"],
     ["Le préventif", "preventif"],
     ["Achats", "achats"],
