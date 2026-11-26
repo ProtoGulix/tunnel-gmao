@@ -6,7 +6,80 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.15.0] — 2026-11-26
+
+### Ajouté
+- Administration > Référentiel > Constats (ADR 0045) : réglage des choix de chaque question
+  (libellé, ordre, actif, type préconisé, génère une demande, exclusif), ajout d'un choix,
+  libellé des questions.
+- API : administration du référentiel des constats (ADR 0045). `GET /admin/constat-questions`,
+  `PATCH /admin/constat-questions/{id}` (libellé), `POST /admin/constat-choices` et
+  `PATCH /admin/constat-choices/{id}` (libellé, ordre, actif, type préconisé, génère une
+  demande, exclusif), RESP et ADMIN, changements audités.
+- Constat : une demande n'est créée que si un levier coché la génère (ADR 0045) ; au départ,
+  tâche régulière et projet. Nouveau levier « Rien ne l'aurait évité », seul choix possible
+  quand il est coché. Un constat sans demande se corrige par son auteur ou un responsable tant
+  que l'intervention n'est pas archivée ; une correction qui exige une demande la crée. Les
+  indicateurs datent un constat par sa première version. Migration 0029 (colonnes
+  `creates_request` et `is_exclusive`, choix NOTHING, `constat.request_id` facultatif) jouée au
+  démarrage de l'API ; retour arrière refusé dès qu'un constat n'a pas de demande.
+- Indicateurs des constats (ADR 0044) : onglet « Constats » du Bilan, ouvert à tous les
+  connectés. Chiffres clés (constats par mois, signal visible, signal non remonté, suggestions
+  retenues) et barres « Où agir » (leviers, signal précurseur, ancienneté du problème, devenir
+  des demandes). API `GET /stats/constats` (`start_date`, `end_date`), droit
+  `stats:get_constats` créé au démarrage, sans migration.
+- API : constat après intervention (ADR 0043). `GET /constats/questions`, saisie
+  `POST /interventions/{id}/constats` (TECH, RESP, ADMIN ; accepté après la clôture, refusé si
+  l'intervention est archivée), lecture `GET /interventions/{id}/constats` et
+  `GET /constats/by-request/{id}`, correction par nouvelle version avec le motif « Correction »
+  (`POST /constats/{id}/corrections`, auteur ou RESP, ADMIN, tant que la demande est « nouvelle »),
+  rattachement à une idée d'amélioration (`GET /constats/{id}/improvement-ideas`,
+  `POST /constats/{id}/link`, RESP, ADMIN) qui rejette la demande en doublon.
+- Un constat crée une demande d'intervention (selon son levier, voir ADR 0045) sur la machine visée (`source_intervention_id`,
+  type préconisé tiré du premier choix typé), dans la même transaction.
+- Types d'intervention : `constat_required` lisible (`GET /interventions/types`,
+  `GET /admin/intervention-types`) et modifiable (`PATCH /admin/intervention-types/{id}`).
+- Web : formulaire de constat à la clôture (overlay et en-tête), onglet « Constats » de
+  l'intervention avec ajout et correction (motif « Correction »), case « Constat obligatoire »
+  du référentiel des types (modification), lien « Intervention d'origine » et rattachement à une
+  idée d'amélioration sur le détail d'une demande.
+- Mobile : formulaire de constat avant la confirmation de clôture, bouton « Constat » dans la
+  fiche d'intervention (hors archivée).
+- Guide : constat (clôture, correction, demande issue d'un constat, référentiel, page
+  Interventions et tâches).
+
+### Modifié
+- Mobile : une action se lie à plusieurs tâches, chacune « En cours » ou « Terminée », comme sur le web.
+- Clôturer une intervention dont le type exige un constat (CUR par défaut) est refusé sans
+  constat, quel que soit le chemin, création déjà fermée comprise.
+- Base : migration 0028 à jouer en production (constat après intervention, ADR 0043) : tables
+  `constat_question`, `constat_choice`, `constat`, `constat_answer`, colonnes
+  `intervention_type.constat_required` (vrai pour CUR) et
+  `intervention_request.source_intervention_id`, motif « Correction ». Aucune donnée existante
+  modifiée ; retour arrière refusé tant qu'un constat existe.
+- Constat : cartes numérotées, réponses sous leur question puis, sous un trait, la demande
+  liée (cadre à la couleur de son statut) avec motif audité, auteur, date et commentaire,
+  l'intervention créée ou l'idée rattachée ; la demande issue d'un constat renvoie à son
+  intervention d'origine par son code.
+  API : champs `request_status_label`, `request_status_color`, `request_intervention_id`,
+  `request_intervention_code`, `request_status_reason`, `request_status_comment`,
+  `request_status_by`, `request_status_at`, `source_intervention_code` et `question_label` des
+  réponses ; `source_intervention_code` sur les demandes.
+- Historique d'une demande : chaque changement d'état porte son auteur réel (utilisateur
+  connecté), affiché sur toutes les demandes ; `changed_by` envoyé par l'écran est ignoré
+  (`changed_by_name` ajouté au détail). Les étapes passées sans auteur restent sans nom.
+- Une demande issue d'un constat, ou l'intervention qui porte un constat, ne se supprime plus :
+  refus clair (la demande se rejette).
+
+### Corrigé
+- Statut d'une demande affiché en bleu au lieu de sa couleur (« Rejetée » en rouge) sur le
+  constat et le plan préventif.
+- Demande issue d'un constat : les réponses du constat et le rattachement à une idée
+  d'amélioration ne s'affichaient jamais (réponse de l'API lue comme une liste).
+
+### [interne] Tests
+- Rattachement d'un constat : un test prouve que lien et rejet de la demande sont annulés ensemble
+  en cas d'échec (transaction de la requête, ADR 0018) ; la réserve de la revue CST est close.
 
 ## [5.14.0] — 2026-11-22
 

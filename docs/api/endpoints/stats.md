@@ -436,3 +436,27 @@ Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 req
   ]
 }
 ```
+
+## `GET /stats/constats`
+
+Indicateurs des constats (ADR 0044). Lecture seule, 10 requêtes par minute. Droit : `stats:get_constats`, ouvert par défaut aux rôles qui lisent (créé par le bootstrap). Chiffres d'équipe : aucun auteur ni technicien.
+
+Paramètres : `start_date`, `end_date` (AAAA-MM-JJ), mêmes règles et mêmes erreurs 400 que `/stats/organisation` (défaut : 12 mois calendaires jusqu'à aujourd'hui).
+
+Seule la version courante d'un constat compte, datée de la première version de sa chaîne de corrections : une correction ne le change pas de mois. Les constats sans demande comptent partout sauf dans `outcomes`.
+
+- `by_month` : tous les mois de la période, à 0 compris.
+- `levers`, `signals`, `known_since` : choix des questions LEVER, SIGNAL, KNOWN_SINCE, dans l'ordre du référentiel. Choix actifs même à 0 ; un choix inactif seulement s'il a des réponses. Un constat à plusieurs leviers compte dans chacun.
+- `outcomes` : statut de la demande issue du constat (constats avec demande seulement), ordre fixe `nouvelle`, `en_attente`, `acceptee`, `cloturee`, `rejetee`, `rattachee` (constat rattaché à une idée, couleur de `rejetee`).
+
+```json
+{
+  "period": { "start_date": "2026-01-01", "end_date": "2026-11-30" },
+  "total": 4,
+  "by_month": [{ "month": "2026-11", "count": 4 }],
+  "levers": [{ "code": "TASK", "label": "Tâche de maintenance régulière", "suggested_type_inter": "PRE", "count": 1 }],
+  "signals": [{ "code": "SIGNAL_SEEN", "label": "Oui et je l'ai vu", "count": 1 }],
+  "known_since": [{ "code": "SINCE_GT_3M", "label": "Plus de 3 mois", "count": 2 }],
+  "outcomes": [{ "code": "nouvelle", "label": "Nouvelle", "color": "#3b82f6", "count": 2 }]
+}
+```

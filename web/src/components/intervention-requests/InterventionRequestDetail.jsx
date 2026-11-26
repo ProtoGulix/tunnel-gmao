@@ -14,6 +14,9 @@ import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useI
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
+import RequestStatusBadge from '@/components/shared/RequestStatusBadge';
+import { ConstatIdeaLink, ConstatOrigin, useRequestConstat } from './RequestConstatBlock';
+import ConstatAnswers from '@/components/constats/ConstatAnswers';
 
 /**
  * Seul le rejet est piloté manuellement : l'acceptation résulte de la création d'une
@@ -32,19 +35,6 @@ function formatDate(iso) {
   });
 }
 
-function StatusBadge({ label, color }) {
-  return (
-    <Badge style={{ backgroundColor: color + '22', color }} variant="soft" radius="full">
-      {label}
-    </Badge>
-  );
-}
-
-StatusBadge.propTypes = {
-  label: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-};
-
 function StatusLogEntry({ entry, isFirst }) {
   return (
     <Flex gap="3" align="start">
@@ -57,14 +47,14 @@ function StatusLogEntry({ entry, isFirst }) {
           {entry.status_from_label && <><Text size="1" color="gray">{entry.status_from_label}</Text><Text size="1" color="gray">→</Text></>}
           <Text size="1" weight="medium" style={{ color: entry.status_to_color || 'var(--gray-12)' }}>{entry.status_to_label}</Text>
         </Flex>
-        <Flex gap="2" align="center"><Clock size={10} color="var(--gray-9)" /><Text size="1" color="gray">{formatDate(entry.date)}</Text></Flex>
+        <Flex gap="2" align="center"><Clock size={10} color="var(--gray-9)" /><Text size="1" color="gray">{[formatDate(entry.date), entry.changed_by_name].filter(Boolean).join(' — ')}</Text></Flex>
         {entry.notes && <Text size="1" color="gray" style={{ fontStyle: 'italic' }}>{entry.notes}</Text>}
       </Flex>
     </Flex>
   );
 }
 StatusLogEntry.propTypes = {
-  entry: PropTypes.shape({ status_from_label: PropTypes.string, status_to_label: PropTypes.string.isRequired, status_to_color: PropTypes.string, date: PropTypes.string.isRequired, notes: PropTypes.string }).isRequired,
+  entry: PropTypes.shape({ status_from_label: PropTypes.string, status_to_label: PropTypes.string.isRequired, status_to_color: PropTypes.string, date: PropTypes.string.isRequired, notes: PropTypes.string, changed_by_name: PropTypes.string }).isRequired,
   isFirst: PropTypes.bool,
 };
 
@@ -290,7 +280,7 @@ RequestHeaderActions.propTypes = {
 };
 
 // Bloc Qui (demandeur) / Quoi (description) côte à côte
-function RequestWhoWhat({ detail }) {
+function RequestWhoWhat({ detail, constat }) {
   return (
     <Flex gap="4" mb="3" wrap="wrap">
       <Box style={{ flex: '1 1 200px', minWidth: 180 }}>
@@ -309,11 +299,13 @@ function RequestWhoWhat({ detail }) {
             <Text size="1" color="gray">Générée automatiquement — moteur préventif</Text>
           </Flex>
         )}
+        <ConstatOrigin detail={detail} constat={constat} />
       </Box>
 
       <Box style={{ flex: '2 1 280px', minWidth: 220 }}>
         <Box p="3" style={{ backgroundColor: 'var(--gray-2)', borderRadius: 'var(--radius-2)', border: '1px solid var(--gray-4)' }}>
-          <Text size="2">{detail.description}</Text>
+          {/* Demande issue d'un constat : ses réponses à la place du texte brut */}
+          {constat ? <ConstatAnswers answers={constat.answers} /> : <Text size="2">{detail.description}</Text>}
         </Box>
         {detail.suggested_type_inter && (
           <Flex gap="2" align="center" mt="2">
@@ -327,7 +319,7 @@ function RequestWhoWhat({ detail }) {
     </Flex>
   );
 }
-RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired };
+RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired, constat: PropTypes.object };
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 
@@ -339,8 +331,9 @@ RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired };
  */
 export default function InterventionRequestDetail({ requestId, onTransitionDone, onDeleted }) {
   const { can } = usePermissions();
-  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete } =
+  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete, refetch } =
     useInterventionRequestDetail(requestId);
+  const constat = useRequestConstat(detail);
 
   const handleTransition = async (statusTo, extraData = {}) => {
     await doTransition(statusTo, extraData);
@@ -356,14 +349,14 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
   if (error) return <ErrorState error={error} />;
   if (!detail) return null;
 
-  const canDelete = !detail.intervention_id && can(PERM.interventionRequests.remove);
+  const canDelete = !detail.intervention_id && !detail.source_intervention_id && can(PERM.interventionRequests.remove);
 
   return (
     <Box p="3">
       <Flex justify="between" align="start" mb="3">
         <Flex align="center" gap="2">
           <Text size="3" weight="bold">{detail.code}</Text>
-          <StatusBadge label={detail.statut_label} color={detail.statut_color} />
+          <RequestStatusBadge label={detail.statut_label} color={detail.statut_color} />
           <EquipementLabel equipement={detail.equipement} />
         </Flex>
         <Flex align="center" gap="3" wrap="wrap" justify="end">
@@ -385,7 +378,9 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
 
       <Separator size="4" mb="3" />
 
-      <RequestWhoWhat detail={detail} />
+      <RequestWhoWhat detail={detail} constat={constat} />
+
+      <ConstatIdeaLink detail={detail} constat={constat} onLinked={async () => { await refetch(); onTransitionDone?.(); }} />
 
       <Separator size="4" mb="3" />
 

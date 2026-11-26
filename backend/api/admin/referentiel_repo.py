@@ -15,7 +15,7 @@ from api.errors.exceptions import ValidationError, raise_db_error
 # Colonnes tracées par entité (états avant/après de l'audit, sérialisables en JSON).
 _CATEGORY_COLS = "id, name, code, color"
 _SUBCATEGORY_COLS = "id, name, code, category_id"
-_TYPE_COLS = "id, code, label, color, description, is_active"
+_TYPE_COLS = "id, code, label, color, description, is_active, constat_required"
 _STATUS_COLS = "code, label, color"
 
 
@@ -186,10 +186,10 @@ class ReferentielRepository:
         label: Optional[str],
         description: Optional[str] = None,
         color: Optional[str] = None,
+        constat_required: Optional[bool] = None,
     ) -> None:
-        """Libellé, description et couleur ; le code n'est jamais modifiable (ADR 0026).
-
-        Une description vide efface la description."""
+        """Libellé, description, couleur et exigence de constat ; le code n'est jamais
+        modifiable (ADR 0026). Une description vide efface la description."""
         sets = []
         if label is not None:
             if not label.strip():
@@ -201,6 +201,8 @@ class ReferentielRepository:
             if not color.strip():
                 raise ValidationError("La couleur du type ne peut pas être vide")
             sets.append(("color", color.strip()))
+        if constat_required is not None:
+            sets.append(("constat_required", constat_required))
         if not sets:
             raise ValidationError("Rien à mettre à jour")
         self._update("intervention_type", "intervention_type", "id", type_id, sets, _TYPE_COLS)

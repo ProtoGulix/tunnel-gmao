@@ -7,7 +7,8 @@ en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
 
 ## Versions
 
-- **v5.14.0** (2026-11-22, en préparation : PR develop → main à ouvrir par l'utilisateur) : export et archivage en masse des fiches fermées, archivage irrévocable garanti par la base (ADR 0041, migration 0026), remise à faire d'une tâche avec motif (ADR 0042, migration 0027), erreurs métier qui ne remontent plus en 500, compteur d'achats ouverts corrigé. Documentation contrôlée avant la version (CLAUDE.md 12.3).
+- **v5.15.0** (2026-11-26, PR develop → main, tag sur main) : constat après intervention (ADR 0043) avec suivi de sa demande, demande créée seulement si un levier la génère et référentiel des constats administrable (ADR 0045, migrations 0028 et 0029), indicateurs dans l'onglet Constats du Bilan (ADR 0044), plusieurs tâches par action sur le mobile. Documentation contrôlée avant la version (CLAUDE.md 12.3). Production : migrations 0028 et 0029 et nouveaux droits au démarrage de l'API, sauvegarde avant (pas de retour arrière une fois des constats saisis).
+- **v5.14.0** (2026-11-22, PR #23, tag sur main) : export et archivage en masse des fiches fermées, archivage irrévocable garanti par la base (ADR 0041, migration 0026), remise à faire d'une tâche avec motif (ADR 0042, migration 0027), erreurs métier qui ne remontent plus en 500, compteur d'achats ouverts corrigé. Documentation contrôlée avant la version (CLAUDE.md 12.3).
 - **v5.13.1** (2026-11-22, PR #22, tag sur main) : libellés de la 5.13.0 achevés (tâche annulée, priorité « Normale », « Attente production ») ; guide aligné, page « Mise à jour et sauvegarde » réécrite avec les scripts, version de Tunnel affichée dans le guide. Documentation contrôlée avant la version (CLAUDE.md 12.3).
 - **v5.13.0** (2026-11-22, PR #21, tag sur main) : priorité « normale » écrite `normal` seule, migration 0025 auditée et contrainte (ADR 0039), statuts réels et libellés uniques dans les fronts (PRIO-01 à PRIO-04) ; scripts `deploy/sauvegarder.sh` et `deploy/repeter-mise-a-jour.sh` (SAUV-01, SAUV-02). Production (en 5.10.0) : à mettre à jour par l'utilisateur avec sauvegarde puis répétition, migrations 0017 à 0025 au démarrage de l'API.
 - **v5.12.1** (2026-11-21, PR #18, tag sur main) : guide publié sous /docs/ (le workflow
@@ -85,6 +86,9 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-26) | Constat : demande créée selon le levier (case « génère une demande » et « exclusif » par choix, levier « Rien ne l'aurait évité »), section « Constats » du référentiel en administration ; décisions de l'utilisateur du 2026-11-26 ; CDL-01 faite (migration 0029, non jouée en dev) | fusionnée dans develop | ADR 0045, [CDL-01](taches/CDL-01-migration-reglages-des-choix.md) à [CDL-05](taches/CDL-05-web-administration-referentiel.md) |
+| fait | Constat : suivi et vues (état de la demande en clair, rejet visible, réponses par question, lien vers l'intervention d'origine, suppression refusée ; auteur réel dans l'historique de toute demande) ; retouches d'écran avec l'utilisateur ; reviewer APPROUVÉ (réserve : l'écran ne masque pas Supprimer sur une idée rattachée, le serveur refuse) ; fusionné dans develop le 2026-11-23 | — | [CSV-01](taches/CSV-01-backend-suivi-constat.md), [CSV-02](taches/CSV-02-web-vues-constat.md), [CSV-03](taches/CSV-03-auteur-historique-demande.md) |
+| fait | Constat après intervention : ADR 0043 accepté ; CST-01 faite (migration 0028, non jouée en dev) ; CST-02 faite (API : constats, clôture, rattachement) ; CST-03 (web) et CST-04 (mobile) faites ; guide à jour ; reviewer APPROUVÉ AVEC RÉSERVES, réserves traitées (CST-05 faite, libellé Équipement, backlog du rattachement) ; 673 tests d'intégration verts ; migration 0028 et bootstrap joués en dev le 2026-11-22 avec l'accord de l'utilisateur (droits ouverts : ADMIN 7, RESP 7, TECH 6, MCP 4 en lecture) ; essais à l'écran validés (web : saisie, correction, rattachement ; mobile : clôture) ; revue finale APPROUVÉ (réserves mineures : lecture des idées d'amélioration ouverte à tous les rôles, changement de type après clôture sans constat non testé) ; fusionné dans develop le 2026-11-23 ; migration 0028 à jouer en production à sa mise à jour | — | ADR 0043, [CST-01](taches/CST-01-base-constat.md) à [CST-05](taches/CST-05-tests-reserves-revue.md) |
 | fait (2026-11-22) | Santé d'un équipement : demandes d'achat reçues ou rejetées plus comptées comme ouvertes (statut dérivé) ; reviewer APPROUVÉ ; 644 tests d'intégration verts | fusionnée dans develop | [CPT-01](taches/CPT-01-compteur-achats-ouverts.md) |
 | fait (2026-11-22) | Mobile : « Aucun motif disponible » au lieu du message brut quand l'API exige un motif sans en proposer ; reviewer APPROUVÉ ; pas de test (le mobile n'a pas de lanceur de tests) | fusionnée dans develop | [MSG-01](taches/MSG-01-mobile-message-sans-motif.md) |
 | fait (2026-11-22) | Ménage du backlog : codes de statut d'intervention inexistants retirés ; tests de retour arrière des motifs indépendants de l'ordre (accord de l'utilisateur) ; compteur d'achats ouverts de l'équipement reporté au backlog ; 643 tests d'intégration verts | fusionnée dans develop | docs/backlog/statuts-intervention-code-mort.md, tests-integration-dependants-de-l-ordre.md |
@@ -156,9 +160,11 @@ et la base de dev ; autres bases : migration 0013 (BASC-03).
 
 ## Tâches
 
-Aucune fiche ouverte. Closes aussi : GUIDE-06, SAUV-01, SAUV-02, PRIO-01 à PRIO-04. Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
+Aucune fiche ouverte. Closes aussi : CDL-01 à CDL-05 (ADR 0045). Closes aussi : GUIDE-06, SAUV-01, SAUV-02, PRIO-01 à PRIO-04. Closes aussi : TYP-01 à TYP-04, INT-01 à INT-06, CONT-01 à CONT-03, TRI-01, TRI-02, TRI-03, TRI-04, SEC-01, EXPM-03. Closes aussi : PREV-15, PREV-13, PREV-14, PREV-16, PREV-10, PREV-11, PREV-12. Closes aussi : ORG-01, ORG-02. Closes aussi : TDB-01 à TDB-03. Closes aussi : EXPM-01, EXPM-02. Closes aussi : BASC-01 à BASC-04, SANTE-01. Closes aussi : SUIT-01 à SUIT-03. Fiches closes : AUDC-21 à AUDC-30 (étape 2), CLO-01 à CLO-06, AUD-01 à AUD-05, AUDC-00 et AUDC-10 à AUDC-15.
 
 ## Dernière décision
+
+2026-11-26 : le constat ne crée une demande que si un levier coché la génère (réglage par choix du référentiel), levier « Rien ne l'aurait évité » exclusif, référentiel des constats modifiable en administration (ADR 0045). Au backlog : une demande par intervention, notification des techniciens, plan préventif depuis « tâche régulière ».
 
 2026-11-21 : backlog repris ; fiches périmées closes (création des interventions, synthèse de l'audit, hors travail normal pour l'occurrence, types en base) ; ordre validé par l'utilisateur : chantier « Coordination et priorités » (cadrage en lecture seule), puis erreurs métier en 500.
 
@@ -202,7 +208,14 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
-0. Production en 5.13.1. Version 5.14.0 en préparation : migrations 0026 et 0027 à jouer en production (appliquées au démarrage de l'API).
+0. Constat, demande selon le levier (ADR 0045) : CDL-01 à CDL-05 faites, reviewer APPROUVÉ (réserves traitées), fusionné dans develop le 2026-11-26. Migration 0029 jouée en base de dev le 2026-11-26 avec l'accord de l'utilisateur (sauvegarde préalable) ; à jouer en production à la mise à jour (démarrage de l'API). Essai à l'écran réussi le 2026-11-26 (formulaire, administration > Référentiel > Constats), droits par défaut des nouvelles routes ouverts en dev avec accord.
+0. Indicateurs des constats (ADR 0044) : onglet Constats du Bilan, [DIR-01](taches/DIR-01-backend-stats-constats.md) et [DIR-02](taches/DIR-02-web-indicateurs-constats.md) faites, reviewer APPROUVÉ (réserves traitées) ; page Direction puis bloc d'accueil essayés et retirés à la demande de l'utilisateur ; onglet validé, fusionné dans develop le 2026-11-23. Sans migration ; droit `stats:get_constats` créé au démarrage de l'API.
+0. Mobile, plusieurs tâches par action ([MOB-01](taches/MOB-01-plusieurs-taches-par-action.md)) : fusionné dans develop le 2026-11-23 après essai sur téléphone, reviewer APPROUVÉ. Sans migration.
+0. Rattachement d'un constat atomique ([CRA-01](taches/CRA-01-rattachement-atomique.md)) : déjà garanti par la transaction de la requête, prouvé par un test ; réserve close le 2026-11-23.
+0. Suivi et vues du constat (CSV-01 à CSV-03) : fusionné dans develop le 2026-11-23.
+0. Constat après intervention (ADR 0043) : fusionné dans develop le 2026-11-23. En production : migration 0028 puis bootstrap à sa mise à jour.
+
+0. Production en 5.13.1. Version 5.14.0 publiée (tag sur main) : en production, migrations 0026 et 0027 jouées au démarrage de l'API lors de la mise à jour.
 
 0. Chantier PRIO (ADR 0039) fusionné le 2026-11-22. Erreurs métier en 500 : chantier ERR fait le 2026-11-22 (reviewer APPROUVÉ, fusionné dans develop) ; suite au backlog : docs/backlog/liaison-demande-refus-en-500.md. Production : migrations 0017 à 0025 à sa mise à jour (0025 convertit les priorités `normale`).
 

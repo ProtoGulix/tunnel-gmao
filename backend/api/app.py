@@ -22,6 +22,7 @@ from api.auth.permissions import enforce_permission_matrix
 from api.auth.routes import router as auth_router
 from api.changelog.routes import router as changelog_router
 from api.complexity_factors.routes import router as complexity_factor_router
+from api.constats.routes import router as constat_router
 from api.dashboard.routes import router as dashboard_router
 from api.db import close_pool, init_pool
 from api.equipement_class.routes import router as equipement_class_router
@@ -184,6 +185,7 @@ app.include_router(service_router)
 app.include_router(preventive_plans_router)
 app.include_router(preventive_occurrences_router)
 app.include_router(intervention_tasks_router)
+app.include_router(constat_router)
 app.include_router(dashboard_router)
 app.include_router(auth_router)
 app.include_router(admin_router)

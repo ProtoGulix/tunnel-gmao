@@ -8,12 +8,14 @@ from api.equipements.validators import resolve_dashboard_period
 from api.errors.exceptions import ValidationError
 from api.limiter import limiter
 from api.stats.audit_synthese_repo import AuditSyntheseRepository
+from api.stats.constats_repo import ConstatsStatsRepository
 from api.stats.organisation_repo import OrganisationRepository
 from api.stats.repo import StatsRepository
 from api.stats.schemas import (
     AnomaliesSaisieResponse,
     AuditSyntheseResponse,
     ChargeTechniqueResponse,
+    ConstatsResponse,
     OrganisationResponse,
     QualiteDonneesResponse,
     ServiceStatusResponse,
@@ -114,6 +116,22 @@ def get_organisation(
     """Indicateurs d'organisation de l'équipe (ADR 0021) : chiffres d'équipe, jamais par technicien."""
     start, end = resolve_dashboard_period(start_date, end_date)
     return OrganisationRepository().get_organisation(start, end)
+
+
+@router.get("/constats", response_model=ConstatsResponse)
+@limiter.limit("10/minute")
+def get_constats(
+    request: Request,
+    start_date: Optional[date] = Query(
+        None, description="Début de période (AAAA-MM-JJ). Défaut : 12 mois calendaires"
+    ),
+    end_date: Optional[date] = Query(
+        None, description="Fin de période (AAAA-MM-JJ). Défaut : aujourd'hui"
+    ),
+):
+    """Indicateurs des constats (ADR 0044) : chiffres d'équipe, jamais par personne."""
+    start, end = resolve_dashboard_period(start_date, end_date)
+    return ConstatsStatsRepository().get_constats(start, end)
 
 
 AUDIT_SYNTHESE_MAX_MONTHS = 120  # 10 ans, comme la borne de la période d'Organisation

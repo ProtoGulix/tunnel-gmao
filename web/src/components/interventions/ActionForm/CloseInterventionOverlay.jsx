@@ -6,12 +6,16 @@
  * après validation, avant soumission effective.
  * Séquence : enregistre l'action → demande si l'intervention est terminée →
  * clôture optionnellement via updateInterventionStatus.
+ * Si le type exige un constat (ADR 0043), « Oui » ouvre d'abord le formulaire de constat.
  */
 import { useState, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Wrench } from 'lucide-react';
 import { updateInterventionStatus } from '@/api/interventions';
+import { createConstat } from '@/api/constats';
+import ConstatForm from '@/components/constats/ConstatForm';
+import { useConstatQuestions, useClosureConstatGate } from '@/hooks/constats/useConstats';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 /**
@@ -36,6 +40,17 @@ export default function CloseInterventionOverlay({
   const [gammeBlocked, setGammeBlocked] = useState(false);
   const actionSubmittedRef = useRef(false);
   const actionResultRef = useRef(null);
+  const constatCreatedRef = useRef(false);
+  const gate = useClosureConstatGate(interventionId);
+  const [step, setStep] = useState('ask');
+  const [choices, setChoices] = useState([]);
+  const [machine, setMachine] = useState(null);
+  const { questions } = useConstatQuestions(step === 'constat');
+
+  const openConstat = () => {
+    setMachine((m) => m ?? gate.machine);
+    setStep('constat');
+  };
 
   const tryClose = useCallback(async () => {
     try {
@@ -47,6 +62,17 @@ export default function CloseInterventionOverlay({
       return extractApiErrorMessage(err, "Impossible de clôturer l'intervention");
     }
   }, [interventionId]);
+
+  const saveConstat = useCallback(async () => {
+    if (constatCreatedRef.current) return null;
+    try {
+      await createConstat(String(interventionId), { choices, machine_id: machine?.id ?? null });
+      constatCreatedRef.current = true;
+      return null;
+    } catch (err) {
+      return extractApiErrorMessage(err, 'Constat refusé');
+    }
+  }, [interventionId, choices, machine]);
 
   const handleChoice = async (choice) => {
     setSubmitting(true);
@@ -61,6 +87,15 @@ export default function CloseInterventionOverlay({
         actionResultRef.current = result;
       } catch (err) {
         setError(extractApiErrorMessage(err, 'Erreur lors de la soumission'));
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    if (choice === 'close' && step === 'constat') {
+      const constatError = await saveConstat();
+      if (constatError) {
+        setError(constatError);
         setSubmitting(false);
         return;
       }
@@ -88,11 +123,12 @@ export default function CloseInterventionOverlay({
     <Flex
       direction="column"
       align="center"
-      justify="center"
+      justify={step === 'constat' ? 'start' : 'center'}
       gap="4"
       style={{
         position: 'absolute',
         inset: 0,
+        overflowY: 'auto',
         zIndex: 10,
         borderRadius: 'var(--radius-3)',
         background: 'var(--color-panel-solid)',
@@ -103,7 +139,7 @@ export default function CloseInterventionOverlay({
 
       <Flex direction="column" align="center" gap="1">
         <Text size="4" weight="bold" align="center">
-          L&apos;intervention est-elle terminée ?
+          {step === 'constat' ? 'Constat avant clôture' : "L'intervention est-elle terminée ?"}
         </Text>
         <Text size="2" color="gray" align="center">
           {[interventionCode, interventionTitle].filter(Boolean).join(' - ')}
@@ -124,26 +160,51 @@ export default function CloseInterventionOverlay({
 
       <Box style={{ width: '100%', height: 1, background: 'var(--gray-4)' }} />
 
+      {step === 'constat' && (
+        <Box style={{ width: '100%' }}>
+          <ConstatForm
+            questions={questions}
+            choices={choices}
+            machine={machine}
+            onChoicesChange={setChoices}
+            onMachineChange={setMachine}
+          />
+        </Box>
+      )}
+
       <Flex gap="3" justify="center" wrap="wrap">
-        {!gammeBlocked && (
-          <Button
-            size="3"
-            color="green"
-            disabled={submitting}
-            onClick={() => handleChoice('close')}
-          >
-            Oui, clôturer
-          </Button>
+        {step === 'constat' ? (
+          <>
+            <Button size="3" color="green" disabled={submitting || !questions || choices.length === 0} onClick={() => handleChoice('close')}>
+              Clôturer
+            </Button>
+            <Button size="3" color="gray" variant="soft" disabled={submitting} onClick={() => setStep('ask')}>
+              Retour
+            </Button>
+          </>
+        ) : (
+          <>
+            {!gammeBlocked && (
+              <Button
+                size="3"
+                color="green"
+                disabled={submitting || !gate.ready}
+                onClick={() => (gate.required && !constatCreatedRef.current ? openConstat() : handleChoice('close'))}
+              >
+                Oui, clôturer
+              </Button>
+            )}
+            <Button
+              size="3"
+              color="gray"
+              variant="soft"
+              disabled={submitting}
+              onClick={() => handleChoice('keep')}
+            >
+              Non, laisser ouverte
+            </Button>
+          </>
         )}
-        <Button
-          size="3"
-          color="gray"
-          variant="soft"
-          disabled={submitting}
-          onClick={() => handleChoice('keep')}
-        >
-          Non, laisser ouverte
-        </Button>
       </Flex>
 
       <Box style={{ width: '100%', height: 1, background: 'var(--gray-4)' }} />

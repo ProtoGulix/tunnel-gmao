@@ -5,7 +5,8 @@ import pytest
 
 from tests.integration.etape2_helpers import intervention_liee
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 IRREVOCABLE = "L'archivage d'une intervention est irrévocable"
 PAS_ROUVRABLE = "Une intervention archivée ne peut pas être rouverte"

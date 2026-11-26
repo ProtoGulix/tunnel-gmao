@@ -30,6 +30,8 @@ ENTITY_NAMESPACES: Dict[str, UUID] = {
     "intervention_status": UUID("32c840d7-036a-4aec-8717-876eb5602a53"),
     "audit_reason": UUID("57947ba6-a1bb-474a-8282-d671d1d45ad7"),
     "audit_rule": UUID("77af7d2f-2acf-4adf-8484-0fd84e322c0e"),
+    "constat_question": UUID("0b7c1f0e-5a43-4c52-9d0e-3f6a8e2b7d11"),
+    "constat_choice": UUID("c4e9a2d6-81b7-4f3a-a5c0-6d1e9b3f2a78"),
 }
 
 

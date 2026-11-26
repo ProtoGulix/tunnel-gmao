@@ -69,7 +69,9 @@ docker compose up -d --build                              # 3. seulement si la r
 ```
 
 Les migrations s'appliquent au démarrage de l'API. Une migration qui échoue empêche l'API
-de démarrer : d'où la répétition. `repeter-mise-a-jour.sh` restaure la sauvegarde dans un
+de démarrer : d'où la répétition. Les migrations 0028 et 0029 (constats) n'ont pas de retour
+arrière tant qu'un constat existe, ou qu'un constat n'a pas de demande : restaurer la
+sauvegarde. `repeter-mise-a-jour.sh` restaure la sauvegarde dans un
 PostgreSQL jetable (réseau jetable, aucun port publié, mot de passe aléatoire), construit
 l'image de l'API depuis le code récupéré (`docker compose build api`, sans rien lancer ni
 recréer) et y joue la commande de démarrage de l'API, `python -m scripts.bootstrap` :

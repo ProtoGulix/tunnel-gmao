@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Plus, Loader2, Check, Unlink } from 'lucide-react'
+import { ChevronLeft, Plus, Loader2, Check, Unlink, ClipboardList } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import { useInterventionDetail } from '../../hooks/interventions/useInterventionDetail'
 import { changeInterventionStatus, getInterventionStatuses, reopenIntervention } from '../../api/interventions'
 import { CloseInterventionPrompt } from '../../components/interventions/CloseInterventionPrompt'
+import { ConstatForm } from '../../components/interventions/ConstatForm'
 import { AuditReasonSheet } from '../../components/ui/AuditReasonSheet'
 import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 import { ActionCard } from '../planning/ActionCard'
@@ -149,6 +150,8 @@ export default function InterventionDetailPage() {
   const [statuses, setStatuses] = useState([])
   const [showStatusSheet, setShowStatusSheet] = useState(false)
   const [showClosePrompt, setShowClosePrompt] = useState(false)
+  const [showConstat, setShowConstat] = useState(false)
+  const [constatSent, setConstatSent] = useState(false)
   // Réouverture en attente de motif : { toCode, reasons } (ADR 0028)
   const [reopenAsk, setReopenAsk] = useState(null)
   const [statusError, setStatusError] = useState(null)
@@ -173,6 +176,7 @@ export default function InterventionDetailPage() {
   const actions = intervention?.actions ?? []
   const stats = intervention?.stats
   const archivedClosed = isArchivedClosed(intervention)
+  const canAddConstat = !archivedClosed && can(PERM.constat.create)
 
   async function handleStatusChange(toCode) {
     // Clôture : une seule porte (ADR 0027), la confirmation passe par la mise à jour
@@ -275,6 +279,9 @@ export default function InterventionDetailPage() {
         )}
       </header>
 
+      {constatSent && (
+        <div className="mx-4 mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">Constat envoyé</div>
+      )}
       {statusError && (
         <div className="mx-4 mt-3 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{statusError}</div>
       )}
@@ -338,12 +345,28 @@ export default function InterventionDetailPage() {
       </div>
 
       {/* FAB bottom bar */}
-      {!loading && intervention && can(PERM.intervention.addAction) && (
+      {!loading && intervention && (can(PERM.intervention.addAction) || canAddConstat) && (
         <BottomBar>
-          <BottomBtn variant="primary" onClick={() => setShowActionForm(true)} icon={<Plus size={16} />}>
-            Ajouter une action
-          </BottomBtn>
+          {canAddConstat && (
+            <BottomBtn variant="secondary" onClick={() => setShowConstat(true)} icon={<ClipboardList size={16} />}>
+              Constat
+            </BottomBtn>
+          )}
+          {can(PERM.intervention.addAction) && (
+            <BottomBtn variant="primary" onClick={() => setShowActionForm(true)} icon={<Plus size={16} />}>
+              Ajouter une action
+            </BottomBtn>
+          )}
         </BottomBar>
+      )}
+
+      {showConstat && (
+        <ConstatForm
+          intervention={intervention}
+          machine={eq ?? null}
+          onDone={() => { setShowConstat(false); setConstatSent(true) }}
+          onClose={() => setShowConstat(false)}
+        />
       )}
 
       {showStatusSheet && (

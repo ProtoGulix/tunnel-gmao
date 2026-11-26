@@ -42,6 +42,8 @@ export const PERM = {
     organisation: 'stats:get_organisation',
     // Page Synthèse de l'audit (ADR 0032)
     auditSynthese: 'stats:get_audit_synthese',
+    // Indicateurs des constats (ADR 0044)
+    constats: 'stats:get_constats',
   },
   stock: {
     createItem: 'stock-items:create_stock_item',
@@ -93,6 +95,10 @@ export const PERM = {
     importCsv: 'purchase-requests:import_purchase_requests_from_csv',
     dispatch: 'purchase-requests:dispatch_pending_requests',
   },
+  constats: {
+    create: 'constats:create_constat',
+    link: 'constats:link_constat',
+  },
   interventions: {
     exportClosed: 'exports:export_closed_interventions',
     create: 'interventions:create_intervention',
@@ -134,6 +140,10 @@ export const PERM = {
     patchInterventionType: 'admin:patch_intervention_type',
     setInterventionTypeActive: 'admin:patch_intervention_type_active',
     patchInterventionStatus: 'admin:patch_intervention_status',
+    listConstatQuestions: 'admin:list_constat_questions',
+    patchConstatQuestion: 'admin:patch_constat_question',
+    createConstatChoice: 'admin:create_constat_choice',
+    patchConstatChoice: 'admin:patch_constat_choice',
     createEquipementClass: 'equipement-class:create_equipement_class',
     updateEquipementClass: 'equipement-class:update_equipement_class',
     removeEquipementClass: 'equipement-class:delete_equipement_class',

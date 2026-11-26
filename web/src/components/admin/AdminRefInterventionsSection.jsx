@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Badge, Box, Button, Flex, Text, TextField, Dialog } from '@radix-ui/themes';
+import { Badge, Box, Button, Checkbox, Flex, Text, TextField, Dialog } from '@radix-ui/themes';
 import { Lock, Plus, Pencil } from 'lucide-react';
 import DataTable from '@/components/ui/DataTable';
 import { usePermissions } from '@/auth/usePermissions';
@@ -36,29 +36,30 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [form, setForm] = useState({ code: '', label: '', description: '' });
+  const [form, setForm] = useState({ code: '', label: '', description: '', constat_required: false });
   const [isEditMode, setIsEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleCreate = useCallback(async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try { await onCreate({ code: form.code.trim().toUpperCase(), label: form.label.trim(), description: form.description.trim() }); setCreateOpen(false); setForm({ code: '', label: '', description: '' }); }
+    try { await onCreate({ code: form.code.trim().toUpperCase(), label: form.label.trim(), description: form.description.trim() }); setCreateOpen(false); setForm({ code: '', label: '', description: '', constat_required: false }); }
     finally { setSubmitting(false); }
   }, [form, onCreate]);
 
   const handleEdit = useCallback(async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    try { await onUpdate(selected.id, { label: form.label.trim(), description: form.description.trim() }); setEditOpen(false); }
+    try { await onUpdate(selected.id, { label: form.label.trim(), description: form.description.trim(), constat_required: form.constat_required }); setEditOpen(false); }
     finally { setSubmitting(false); }
   }, [form, selected, onUpdate]);
 
-  const openEdit = (item) => { setSelected(item); setForm({ code: item.code || '', label: item.label || '', description: item.description || '' }); setIsEditMode(true); setEditOpen(true); };
+  const openEdit = (item) => { setSelected(item); setForm({ code: item.code || '', label: item.label || '', description: item.description || '', constat_required: Boolean(item.constat_required) }); setIsEditMode(true); setEditOpen(true); };
 
   const columns = useMemo(() => [
     { key: 'label', header: 'Libellé', render: (i) => <Text size="2" weight="medium">{i.label}</Text> },
     { key: 'description', header: 'Description', render: (i) => <Text size="2" color="gray">{i.description || '—'}</Text> },
+    { key: 'constat', header: 'Constat', width: 90, render: (i) => (i.constat_required ? <Badge variant="soft" color="orange">Obligatoire</Badge> : null) },
     {
       key: 'status', header: 'Statut', width: 90,
       render: (i) => <Badge variant="soft" color={i.is_active ? 'green' : 'red'}>{i.is_active ? 'Actif' : 'Inactif'}</Badge>,
@@ -95,6 +96,14 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
           <Text size="2" weight="bold" mb="1" as="div">Description (affichée sous le libellé à la création)</Text>
           <TextField.Root value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} maxLength={200} />
         </label>
+        {isEditMode && (
+        <Text as="label" size="2">
+          <Flex gap="2" align="center">
+            <Checkbox checked={form.constat_required} onCheckedChange={(v) => setForm((p) => ({ ...p, constat_required: v === true }))} />
+            Constat obligatoire
+          </Flex>
+        </Text>
+        )}
       </Flex>
       <Flex gap="3" mt="4" justify="end">
         <Dialog.Close><Button variant="soft" color="gray" type="button">Annuler</Button></Dialog.Close>
@@ -125,7 +134,7 @@ export function InterventionTypesSection({ items, loading, onCreate, onUpdate, o
           count: items.length,
           showSearchInput: false,
           actions: can(PERM.adminRef.createInterventionType)
-            ? <Button size="2" onClick={() => { setForm({ code: '', label: '', description: '' }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>
+            ? <Button size="2" onClick={() => { setForm({ code: '', label: '', description: '', constat_required: false }); setIsEditMode(false); setCreateOpen(true); }}><Plus size={14} /> Nouveau type</Button>
             : null,
         }}
         columns={columns}

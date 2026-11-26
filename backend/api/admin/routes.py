@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 
+from api.admin.constat_referentiel_repo import ConstatReferentielRepository
 from api.admin.referentiel_repo import ReferentielRepository
 from api.admin.repo import (
     AdminEndpointRepository,
@@ -22,6 +23,9 @@ from api.admin.schemas import (
     AdminUserRolePatch,
     AdminUserUpdate,
     AuditLogOut,
+    ConstatChoiceCreate,
+    ConstatChoicePatch,
+    ConstatQuestionPatch,
     EmailDomainRuleCreate,
     EmailDomainRuleOut,
     EndpointOut,
@@ -376,7 +380,9 @@ def patch_intervention_type(
     payload: InterventionTypePatch,
     repo: ReferentielRepository = Depends(_referentiel_repo),
 ):
-    repo.patch_intervention_type(type_id, payload.label, payload.description, payload.color)
+    repo.patch_intervention_type(
+        type_id, payload.label, payload.description, payload.color, payload.constat_required
+    )
     return {"message": "Type mis à jour"}
 
 
@@ -391,6 +397,67 @@ def patch_intervention_type_active(
 ):
     repo.set_intervention_type_active(type_id, payload.is_active)
     return {"message": "Statut mis à jour"}
+
+
+# ------------------------------------------------------------------ #
+# Référentiel des constats (ADR 0045)                                 #
+# ------------------------------------------------------------------ #
+
+
+def _constat_repo() -> ConstatReferentielRepository:
+    return ConstatReferentielRepository()
+
+
+@router.get("/constat-questions", dependencies=[_resp_admin])
+def list_constat_questions(repo: ConstatReferentielRepository = Depends(_constat_repo)):
+    return repo.list_questions()
+
+
+@router.patch(
+    "/constat-questions/{question_id}",
+    dependencies=[_resp_admin, audit("constat_question", events_only=True)],
+)
+def patch_constat_question(
+    question_id: int,
+    payload: ConstatQuestionPatch,
+    repo: ConstatReferentielRepository = Depends(_constat_repo),
+):
+    repo.patch_question(question_id, payload.label)
+    return {"message": "Question mise à jour"}
+
+
+@router.post(
+    "/constat-choices",
+    status_code=201,
+    dependencies=[_resp_admin, audit("constat_choice", events_only=True)],
+)
+def create_constat_choice(
+    payload: ConstatChoiceCreate, repo: ConstatReferentielRepository = Depends(_constat_repo)
+):
+    new_id = repo.create_choice(
+        payload.question_id,
+        payload.code,
+        payload.label,
+        payload.suggested_type_inter,
+        payload.creates_request,
+        payload.is_exclusive,
+    )
+    return {"id": new_id, "message": "Choix créé"}
+
+
+@router.patch(
+    "/constat-choices/{choice_id}",
+    dependencies=[_resp_admin, audit("constat_choice", events_only=True)],
+)
+def patch_constat_choice(
+    choice_id: int,
+    payload: ConstatChoicePatch,
+    repo: ConstatReferentielRepository = Depends(_constat_repo),
+):
+    # model_fields_set distingue un champ absent d'un champ à null (effacement du type).
+    changes = {name: getattr(payload, name) for name in payload.model_fields_set}
+    repo.patch_choice(choice_id, changes)
+    return {"message": "Choix mis à jour"}
 
 
 # ------------------------------------------------------------------ #

@@ -183,6 +183,7 @@ class InterventionTypePatch(BaseModel):
     label: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
+    constat_required: Optional[bool] = None
 
 
 class InterventionTypeActivePatch(BaseModel):
@@ -192,6 +193,35 @@ class InterventionTypeActivePatch(BaseModel):
 class InterventionStatusPatch(BaseModel):
     label: Optional[str] = None
     color: Optional[str] = None
+
+
+# --- Référentiel des constats (ADR 0045) ---
+
+
+class ConstatQuestionPatch(BaseModel):
+    """Libellé seul : code, parent et ordre des questions sont figés."""
+
+    label: str
+
+
+class ConstatChoiceCreate(BaseModel):
+    question_id: int
+    code: str
+    label: str
+    suggested_type_inter: Optional[str] = None
+    creates_request: bool = False
+    is_exclusive: bool = False
+
+
+class ConstatChoicePatch(BaseModel):
+    """Champ absent : inchangé. `suggested_type_inter` à null : efface le type préconisé."""
+
+    label: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+    suggested_type_inter: Optional[str] = None
+    creates_request: Optional[bool] = None
+    is_exclusive: Optional[bool] = None
 
 
 # --- Sécurité ---

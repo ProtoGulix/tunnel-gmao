@@ -7,3 +7,6 @@
   et échéance, côté backend d'abord (schéma, API, droits), puis front.
 - Besoin à définir avec l'utilisateur avant tout chantier : qui propose, qui arbitre, lien
   éventuel avec les interventions, volume attendu.
+- 2026-11-22 : le socle est posé par le chantier CST (ADR 0043) : une idée d'amélioration est
+  une DI de type préconisé PRO, proposée par le constat, arbitrée par RESP ou ADMIN. Restent :
+  kanban, catégories, sous-statuts, porteur, échéance.

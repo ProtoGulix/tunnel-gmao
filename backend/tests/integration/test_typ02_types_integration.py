@@ -66,7 +66,7 @@ def test_liste_des_types_actifs_avec_description_triee_par_libelle(client, admin
     assert r.status_code == 200, r.text
     items = _data(r)
     assert {"CUR", "PRE", "PRO"} <= {t["id"] for t in items}
-    assert set(items[0]) == {"id", "title", "color", "description", "is_active"}
+    assert set(items[0]) == {"id", "title", "color", "description", "is_active", "constat_required"}
     titres = [t["title"] for t in items]
     assert titres.index("Batiment") < titres.index("Curatif") < titres.index("Projet")
     assert all(t["is_active"] for t in items)

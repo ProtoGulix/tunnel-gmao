@@ -33,6 +33,9 @@ ROUTES_AUDC_44 = [
     ("PATCH", "/admin/intervention-types/{type_id}", "intervention_type"),
     ("PATCH", "/admin/intervention-types/{type_id}/active", "intervention_type"),
     ("PATCH", "/admin/intervention-statuses/{status_code}", "intervention_status"),
+    ("PATCH", "/admin/constat-questions/{question_id}", "constat_question"),
+    ("POST", "/admin/constat-choices", "constat_choice"),
+    ("PATCH", "/admin/constat-choices/{choice_id}", "constat_choice"),
     ("POST", "/admin/audit-reasons", "audit_reason"),
     ("PATCH", "/admin/audit-reasons/{reason_id}", "audit_reason"),
     ("PATCH", "/admin/audit-reasons/{reason_id}/active", "audit_reason"),
@@ -180,6 +183,8 @@ ENTITES_CLE_NON_UUID = [
     "intervention_status",
     "audit_reason",
     "audit_rule",
+    "constat_question",
+    "constat_choice",
 ]
 
 

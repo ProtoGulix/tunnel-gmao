@@ -88,3 +88,21 @@ export async function deleteEquipementClass(id) {
   const r = await api.delete(`/equipement-class/${id}`);
   return r.data;
 }
+
+// --- Constats : questions et choix (ADR 0045) ---
+export async function fetchConstatQuestions() {
+  const r = await api.get('/admin/constat-questions');
+  return r.data;
+}
+export async function updateConstatQuestion(id, data) {
+  const r = await api.patch(`/admin/constat-questions/${id}`, data);
+  return r.data;
+}
+export async function createConstatChoice(data) {
+  const r = await api.post('/admin/constat-choices', data);
+  return r.data;
+}
+export async function updateConstatChoice(id, data) {
+  const r = await api.patch(`/admin/constat-choices/${id}`, data);
+  return r.data;
+}

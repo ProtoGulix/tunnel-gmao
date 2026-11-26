@@ -46,6 +46,11 @@ test('auditGuard : une requête DELETE attend un motif de suppression', () => {
     getAuditDecisionType({ config: { method: 'patch', url: '/preventive-occurrences/abc/skip' } }),
     'occurrence_skipped'
   );
+  assert.equal(
+    getAuditDecisionType({ config: { method: 'post', url: '/constats/abc/corrections' } }),
+    'constat_corrected'
+  );
+  assert.equal(getAuditEntityType({ config: { url: '/constats/abc/corrections' } }), 'constat');
 });
 
 test('filtre deleted : seuls les motifs de suppression sont gardés', () => {

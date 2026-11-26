@@ -17,6 +17,7 @@ import { usePreventiveOccurrences } from '@/hooks/preventive/usePreventiveOccurr
 import { triggerLabel, OCCURRENCE_STATUS_COLORS, OCCURRENCE_STATUS_LABELS } from '@/config/preventiveConfig';
 import { useInterventionRequestStatuses } from '@/hooks/shared/useInterventionRequestStatuses';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
+import RequestStatusBadge from '@/components/shared/RequestStatusBadge';
 import { entityCodeUrl } from '@/components/shared/entityCodeUrl';
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR') : '—');
@@ -64,9 +65,7 @@ export default function PreventivePlanDetail({ plan, onEdit, onDeactivate, onRea
             </Button>
           ) : null}
           {r.di_statut && (
-            <Badge color={diColorMap[r.di_statut] ?? 'gray'} variant="soft" size="1">
-              {diLabelMap[r.di_statut] ?? r.di_statut}
-            </Badge>
+            <RequestStatusBadge label={diLabelMap[r.di_statut] ?? r.di_statut} color={diColorMap[r.di_statut]} />
           )}
           {r.intervention_id && (
             <Button size="1" variant="soft" color="gray" asChild>

@@ -76,6 +76,8 @@ RESP_ADMIN_READ_PREFIXES = (
     "/admin/action-subcategories",
     "/admin/complexity-factors",
     "/admin/intervention-types",
+    "/admin/constat-questions",
+    "/admin/constat-choices",
     "/admin/intervention-statuses",
     "/admin/audit-rules",
     "/admin/audit-reasons",
@@ -90,6 +92,8 @@ RESP_ADMIN_WRITE_PREFIXES = (
     "/admin/action-subcategories",
     "/admin/complexity-factors",
     "/admin/intervention-types",
+    "/admin/constat-questions",
+    "/admin/constat-choices",
     "/admin/intervention-statuses",
 )
 
@@ -102,6 +106,9 @@ TECH_WRITES = (
     _w("intervention-actions"),
     _w("Intervention Tasks"),
     _w("intervention-status-log", "POST"),
+    # Constat : saisir et corriger ; le rattachement (/link) reste au référent (RESP)
+    _w("constats", "POST", path="/interventions/{intervention_id}/constats"),
+    _w("constats", "POST", path="/constats/{constat_id}/corrections"),
     _w("purchase-requests", "POST", path="/purchase-requests"),  # créer une demande d'achat
 )
 

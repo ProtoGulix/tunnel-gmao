@@ -105,8 +105,27 @@ function CollapsibleSection({ icon: Icon, iconColor = '#64748b', title, badge, o
   )
 }
 
-// ─── Section Tâche (lien obligatoire action↔tâche) ────────────────────────────
-function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCloseTaskChange }) {
+// État de la tâche après l'action : en cours (temps saisi) ou terminée (close_task)
+const OUTCOMES = [
+  { done: false, label: 'En cours', on: 'bg-tunnel-accent text-white' },
+  { done: true, label: 'Terminée', on: 'bg-green-600 text-white' },
+]
+
+function TaskOutcome({ done, onChange }) {
+  return (
+    <div className="flex gap-2 px-4 pb-3">
+      {OUTCOMES.map(o => (
+        <button key={o.label} type="button" onClick={() => onChange(o.done)}
+          className={`flex-1 py-2 rounded-lg text-xs font-semibold border ${done === o.done ? `${o.on} border-transparent` : 'bg-white text-tunnel-muted border-tunnel-border'}`}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Section Tâches (au moins une liée, chacune terminée ou non) ──────────────
+function TaskSection({ interventionId, selected, onChange }) {
   const { can } = usePermissions()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
@@ -115,9 +134,15 @@ function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCl
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState(null)
 
+  const pick = (taskId) => selected.find(t => t.task_id === taskId)
+  const toggle = (taskId) => onChange(pick(taskId)
+    ? selected.filter(t => t.task_id !== taskId)
+    : [...selected, { task_id: taskId, close_task: false }])
+  const setClose = (taskId, close) => onChange(selected.map(t => t.task_id === taskId ? { ...t, close_task: close } : t))
+
   useEffect(() => {
     setTasks([])
-    onSelect(null)
+    onChange([])
     if (!interventionId) return
     setLoading(true)
     getOpenTasksByIntervention(interventionId)
@@ -134,7 +159,7 @@ function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCl
     try {
       const task = await createTask({ interventionId, label: newLabel.trim() })
       setTasks(prev => [...prev, task])
-      onSelect(task.id)
+      onChange(prev => [...prev, { task_id: task.id, close_task: false }])
       setNewLabel('')
       setShowCreate(false)
     } catch (err) {
@@ -148,7 +173,7 @@ function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCl
     <div>
       <div className={labelCls}>
         <CheckSquare size={14} className="text-tunnel-muted" />
-        <span className="text-xs font-bold text-tunnel-text">Tâche</span>
+        <span className="text-xs font-bold text-tunnel-text">Tâches</span>
         <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">Obligatoire</span>
       </div>
 
@@ -158,31 +183,26 @@ function TaskSection({ interventionId, selectedTaskId, onSelect, closeTask, onCl
         </div>
       ) : tasks.length > 0 ? (
         <div className="rounded-lg border border-tunnel-border overflow-hidden">
-          {tasks.map((task, i) => (
-            <button key={task.id} type="button" onClick={() => onSelect(task.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left active:bg-tunnel-bg ${i > 0 ? 'border-t border-tunnel-border' : ''} ${selectedTaskId === task.id ? 'bg-blue-50' : ''}`}>
-              <span className="flex-1 text-sm text-tunnel-text line-clamp-1">{task.label}</span>
-              <TaskStatusBadge status={task.status} />
-              {selectedTaskId === task.id && <Check size={14} className="text-tunnel-accent shrink-0" />}
-            </button>
-          ))}
+          {tasks.map((task, i) => {
+            const link = pick(task.id)
+            const tone = !link ? '' : link.close_task ? 'bg-green-50 border-l-4 border-l-green-600' : 'bg-blue-50 border-l-4 border-l-tunnel-accent'
+            return (
+              <div key={task.id} className={`${i > 0 ? 'border-t border-tunnel-border' : ''} ${tone}`}>
+                <button type="button" onClick={() => toggle(task.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left active:bg-tunnel-bg">
+                  <span className="flex-1 text-sm text-tunnel-text line-clamp-1">{task.label}</span>
+                  <TaskStatusBadge status={task.status} />
+                  {link && <Check size={14} className="text-tunnel-accent shrink-0" />}
+                </button>
+                {link && <TaskOutcome done={link.close_task} onChange={done => setClose(task.id, done)} />}
+              </div>
+            )
+          })}
         </div>
       ) : (
         <p className="text-xs text-tunnel-muted px-3 py-2.5 rounded-lg border border-dashed border-tunnel-border bg-tunnel-bg">
           Aucune tâche ouverte sur cette intervention
         </p>
-      )}
-
-      {selectedTaskId && (
-        <label className="flex items-center gap-2 mt-2 px-1">
-          <input
-            type="checkbox"
-            checked={closeTask}
-            onChange={e => onCloseTaskChange(e.target.checked)}
-            className="w-4 h-4 accent-tunnel-accent"
-          />
-          <span className="text-xs text-tunnel-text">Cette action termine la tâche</span>
-        </label>
       )}
 
       {error && <p className="text-xs text-red-700 mt-2">{error}</p>}
@@ -251,14 +271,8 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   const [interventions, setInterventions] = useState([])
   const [loadingInter, setLoadingInter] = useState(false)
 
-  // Tâche liée (obligatoire)
-  const [selectedTaskId, setSelectedTaskId] = useState(null)
-  const [closeTask, setCloseTask] = useState(false)
-
-  function handleSelectTask(taskId) {
-    setSelectedTaskId(taskId)
-    setCloseTask(false)
-  }
+  // Tâches liées (au moins une) : [{ task_id, close_task }]
+  const [selectedTasks, setSelectedTasks] = useState([])
 
   // Catégories / facteurs
   const [categories, setCategories] = useState([])
@@ -331,11 +345,11 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
     setShowInterForm(false)
   }
 
-  // Après une action qui clôt sa tâche : plus aucune tâche ouverte et droit de
+  // Après une action qui clôt une de ses tâches : plus aucune tâche ouverte et droit de
   // clore ? Alors on propose de clore l'intervention (ADR 0025 point 5). Un
   // échec de lecture n'empêche pas la fin normale de l'envoi.
   async function isLastTaskClosed() {
-    if (!closeTask || !can(PERM.intervention.update)) return false
+    if (!selectedTasks.some(t => t.close_task) || !can(PERM.intervention.update)) return false
     try {
       return (await getOpenTasksByIntervention(intervention.id)).length === 0
     } catch {
@@ -351,7 +365,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
   async function handleSubmit(e) {
     e.preventDefault()
     if (!intervention) { setSubmitError('Sélectionner une intervention'); return }
-    if (!selectedTaskId) { setSubmitError('Sélectionner ou créer une tâche liée à cette action'); return }
+    if (selectedTasks.length === 0) { setSubmitError('Sélectionner ou créer une tâche liée à cette action'); return }
     if (!handlers.handleValidate()) return
     setSubmitting(true)
     setSubmitError(null)
@@ -367,7 +381,7 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
       complexity_score: Number(formState.complexity),
       complexity_factor: Number(formState.complexity) > 5 ? formState.complexityFactors[0] : undefined,
       created_at: `${formState.date}T${ts}`,
-      tasks: [{ task_id: selectedTaskId, close_task: closeTask }],
+      tasks: selectedTasks,
     }
 
     if (timeStart && timeEnd && calcDuration(timeStart, timeEnd)) {
@@ -568,10 +582,8 @@ export function ActionForm({ actionDate, onClose, onDone, defaultEquip = null, d
             {intervention && (
               <TaskSection
                 interventionId={intervention.id}
-                selectedTaskId={selectedTaskId}
-                onSelect={handleSelectTask}
-                closeTask={closeTask}
-                onCloseTaskChange={setCloseTask}
+                selected={selectedTasks}
+                onChange={setSelectedTasks}
               />
             )}
 

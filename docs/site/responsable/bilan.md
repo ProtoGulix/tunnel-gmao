@@ -8,11 +8,11 @@ Le Bilan ne montre **aucun chiffre par technicien**, par choix. Les indicateurs 
 service, jamais une personne.
 :::
 
-La page a trois onglets : **État**, **Audit** et **Qualité**.
+La page a quatre onglets : **État**, **Constats**, **Audit** et **Qualité**.
 
 ## La période
 
-Deux onglets, **État** et **Audit**, partagent une période choisie en haut à droite :
+Trois onglets, **État**, **Constats** et **Audit**, partagent une période choisie en haut à droite :
 **3 mois**, **6 mois**, **12 mois** ou **24 mois**. La période par défaut est de 3 mois.
 Ce sont des mois calendaires, **mois en cours compris** : l'écran affiche la plage, par
 exemple « 1 septembre – 21 novembre 2026 ».
@@ -90,6 +90,23 @@ Trois chiffres courts sur l'**état actuel** du préventif, hors période :
 | Préventif en attente | État actuel : occurrences générées dont la demande liée est encore « nouvelle », avec l'âge de la plus ancienne. |
 | Préventifs en retard | État actuel : plans préventifs actifs, par équipement, dont l'échéance est dépassée (périodicité glissante, calculée par l'échéancier). Les plans par heures ne sont pas comptés. |
 | Dernière génération | Date de la dernière occurrence générée. La génération est automatique quand la tâche quotidienne est activée : au-delà de 35 jours, un oubli ou une tâche quotidienne désactivée est probable. |
+
+## L'onglet Constats
+
+Les constats saisis après intervention, sur la période choisie ; onglet ouvert à tous. Un bandeau de quatre
+chiffres clés, comme l'onglet État :
+
+| Chiffre | Ce qu'il mesure |
+| --- | --- |
+| Constats | Nombre de constats, avec leur courbe par mois. Une correction ne compte pas en plus. |
+| Signal visible avant | Part des constats où un signe annonçait l'arrêt, vu ou non remonté. |
+| Signal non remonté | Part des constats où le signe a été vu sans être signalé. |
+| Suggestions retenues | Demandes issues des constats acceptées ou clôturées, et nombre en attente. |
+
+Puis, sous « Où agir », une barre par question : **leviers** (un constat peut en citer
+plusieurs), **signal précurseur**, **problème connu depuis**, **devenir des demandes**
+(« rattachée » : doublon d'une idée d'amélioration). Aucun chiffre par personne. Sans
+constat : « Aucun constat sur la période ».
 
 ## L'onglet Audit
 

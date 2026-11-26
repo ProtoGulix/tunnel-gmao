@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle2 } from 'lucide-react'
 import { AuditReasonSheet } from '../ui/AuditReasonSheet'
-import { closeIntervention } from '../../api/interventions'
+import { ConstatForm } from './ConstatForm'
+import { closeIntervention, getIntervention } from '../../api/interventions'
+import { getInterventionTypes } from '../../api/planning'
+import { getInterventionConstats } from '../../api/constats'
 import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
 
 /**
@@ -13,12 +16,35 @@ import { getAuditReasons, getErrorMessage } from '../../lib/api/errors'
  * d'audit (400 avec `audit.reasons`), les motifs de l'API sont proposés dans
  * AuditReasonSheet puis la requête est rejouée : aucun motif en dur.
  *
+ * Si le type de l'intervention exige un constat (ADR 0043) et qu'il n'y en a pas encore,
+ * le formulaire de constat passe avant la confirmation. Un échec de lecture n'empêche
+ * pas la confirmation : le backend refuse la clôture si le constat manque.
+ *
  * @param {{ intervention: { id: string, code?: string }, onClosed: () => void, onDismiss: () => void, title?: string }} props
  */
 export function CloseInterventionPrompt({ intervention, onClosed, onDismiss, title = 'Dernière tâche terminée' }) {
   const [saving, setSaving] = useState(false)
   const [reasons, setReasons] = useState(null)
   const [error, setError] = useState(null)
+  // Contexte du constat : null tant que la lecture n'est pas finie
+  const [gate, setGate] = useState(null)
+
+  useEffect(() => {
+    let alive = true
+    async function check() {
+      const [detail, types, constats] = await Promise.all([
+        getIntervention(intervention.id),
+        getInterventionTypes({ includeInactive: true }),
+        getInterventionConstats(intervention.id),
+      ])
+      const required = types.find((t) => t.id === detail?.type_inter)?.constat_required === true
+      return { needed: required && constats.length === 0, machine: detail?.equipements ?? null }
+    }
+    check()
+      .catch(() => ({ needed: false, machine: null }))
+      .then((res) => { if (alive) setGate(res) })
+    return () => { alive = false }
+  }, [intervention.id])
 
   async function submit(audit) {
     setSaving(true)
@@ -50,6 +76,17 @@ export function CloseInterventionPrompt({ intervention, onClosed, onDismiss, tit
     )
   }
 
+  if (gate?.needed) {
+    return (
+      <ConstatForm
+        intervention={intervention}
+        machine={gate.machine}
+        onDone={() => setGate({ ...gate, needed: false })}
+        onClose={onDismiss}
+      />
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[70] flex flex-col justify-end" style={{ background: 'rgba(0,0,0,0.35)' }}>
       <div className="bg-white rounded-t-2xl safe-bottom px-4 pt-5 pb-3">
@@ -61,11 +98,11 @@ export function CloseInterventionPrompt({ intervention, onClosed, onDismiss, tit
           </p>
         </div>
         {error && (
-          <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-100 text-sm text-red-700">{error}</div>
+          <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
         )}
         <button
           type="button"
-          disabled={saving}
+          disabled={saving || !gate}
           onClick={() => submit()}
           className="w-full py-3 rounded-lg bg-tunnel-accent text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
         >

@@ -361,7 +361,8 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
+                    src.code AS source_intervention_code,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
                     {_SERVICE_COLS},
@@ -369,9 +370,10 @@ class InterventionRequestRepository:
                     {_DI_TASKS_COLS}
                 FROM intervention_request ir
                 LEFT JOIN request_status_ref rs ON ir.statut = rs.code
+                LEFT JOIN intervention src ON src.id = ir.source_intervention_id
                 {_EQUIPEMENT_JOINS}
                 {where_sql}
-                GROUP BY ir.id, rs.label, rs.color, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
+                GROUP BY ir.id, rs.label, rs.color, src.code, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
                          iv.id, ivs.label, ivs.color,
                          iv_stats.action_count, iv_stats.total_time, iv_stats.avg_complexity, iv_stats.purchase_count,
                          di_tasks.tasks_json::text
@@ -527,7 +529,8 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
+                    src.code AS source_intervention_code,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
                     {_SERVICE_COLS},
@@ -535,9 +538,10 @@ class InterventionRequestRepository:
                     {_DI_TASKS_COLS}
                 FROM intervention_request ir
                 LEFT JOIN request_status_ref rs ON ir.statut = rs.code
+                LEFT JOIN intervention src ON src.id = ir.source_intervention_id
                 {_EQUIPEMENT_JOINS}
                 WHERE ir.id = %s
-                GROUP BY ir.id, rs.label, rs.color, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
+                GROUP BY ir.id, rs.label, rs.color, src.code, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
                          iv.id, ivs.label, ivs.color,
                          iv_stats.action_count, iv_stats.total_time, iv_stats.avg_complexity, iv_stats.purchase_count,
                          di_tasks.tasks_json::text
@@ -561,8 +565,11 @@ class InterventionRequestRepository:
                     l.id, l.status_from, l.status_to,
                     sf.label AS status_from_label,
                     st.label AS status_to_label, st.color AS status_to_color,
-                    l.changed_by, l.notes, l.date
+                    l.changed_by,
+                    NULLIF(concat_ws(' ', u.first_name, u.last_name), '') AS changed_by_name,
+                    l.notes, l.date
                 FROM request_status_log l
+                LEFT JOIN tunnel_user u ON u.id = l.changed_by
                 LEFT JOIN request_status_ref sf ON l.status_from = sf.code
                 LEFT JOIN request_status_ref st ON l.status_to = st.code
                 WHERE l.request_id = %s
@@ -605,8 +612,9 @@ class InterventionRequestRepository:
             """
             INSERT INTO intervention_request
                 (machine_id, demandeur_nom, service_id, description,
-                 is_system, suggested_type_inter, code, statut, created_by, origine)
-            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s)
+                 is_system, suggested_type_inter, code, statut, created_by, origine,
+                 source_intervention_id)
+            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s, %s)
             RETURNING id
             """,
             (
@@ -618,6 +626,7 @@ class InterventionRequestRepository:
                 data.get("suggested_type_inter") or None,
                 created_by,
                 origine,
+                data.get("source_intervention_id"),
             ),
         )
         return str(cur.fetchone()[0])
@@ -645,6 +654,16 @@ class InterventionRequestRepository:
     # Suppression (erreur de saisie, doublon)
     # ──────────────────────────────────────────────────────────────
 
+    @staticmethod
+    def ensure_not_cited_by_constat(cur: Any, request_id: str) -> None:
+        """Refuse si un constat cite la demande (issue du constat ou idée rattachée)."""
+        cur.execute(
+            "SELECT 1 FROM constat WHERE request_id = %s OR linked_request_id = %s LIMIT 1",
+            (request_id, request_id),
+        )
+        if cur.fetchone():
+            raise ValidationError("Demande issue d'un constat : à rejeter, pas à supprimer.")
+
     def delete(self, request_id: str) -> None:
         """
         Supprime définitivement une demande d'intervention.
@@ -663,6 +682,7 @@ class InterventionRequestRepository:
         conn = self._get_connection()
         try:
             cur = conn.cursor()
+            self.ensure_not_cited_by_constat(cur, request_id)
             cur.execute("DELETE FROM request_status_log WHERE request_id = %s", (request_id,))
             cur.execute("DELETE FROM intervention_request WHERE id = %s", (request_id,))
             if cur.rowcount == 0:

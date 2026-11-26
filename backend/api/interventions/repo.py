@@ -850,6 +850,10 @@ class InterventionRepository:
             from_plan=is_preventive_origin(cur, request_id, data.get('plan_id')),
         )
 
+        # Créée déjà fermée : aucun constat ne peut exister, la porte de clôture s'applique
+        if str(data.get('status_actual') or '') == CLOSED_STATUS_CODE:
+            self._ensure_constat_given(cur, intervention_id, data.get('type_inter'))
+
         # Résoudre plan_id depuis l'occurrence préventive liée à la DI si non fourni
         # (cas acceptation d'une DI système préventive)
         plan_id = data.get('plan_id')
@@ -1130,7 +1134,12 @@ class InterventionRepository:
 
         # Bloquer la fermeture si des tâches non-optionnelles sont en attente
         if 'status_actual' in data:
-            self._check_closable(intervention_id, data['status_actual'])
+            # Le constat n'est exigé qu'au passage à « fermé » : une intervention déjà fermée
+            # (avant ADR 0043) reste modifiable sans lui.
+            needs_constat = existing.get('status_actual') != CLOSED_STATUS_CODE
+            self._check_closable(
+                intervention_id, data['status_actual'], new_type if needs_constat else False
+            )
 
         # La demande liée est clôturée par le trigger de la base pendant l'écriture : sa trace
         # système (SYSTEM_CASCADE) est déposée ici, comme pour toute clôture (ADR 0027).
@@ -1222,8 +1231,29 @@ class InterventionRepository:
         finally:
             release_connection(conn)
 
-    def _check_closable(self, intervention_id: str, status_actual: Any) -> None:
-        """Lève ValidationError si des tâches non-optionnelles bloquent la fermeture."""
+    @staticmethod
+    def _ensure_constat_given(cur: Any, intervention_id: str, type_inter: Any) -> None:
+        """Lève ValidationError si le type exige un constat (ADR 0043) et qu'il n'y en a aucun.
+
+        Un constat remplacé par une correction laisse sa version courante : l'existence d'une
+        ligne suffit. Règle de la porte unique de clôture, aussi posée à la création.
+        """
+        cur.execute("SELECT constat_required FROM intervention_type WHERE code = %s", (type_inter,))
+        row = cur.fetchone()
+        if not (row and row[0]):
+            return
+        cur.execute("SELECT 1 FROM constat WHERE intervention_id = %s LIMIT 1", (intervention_id,))
+        if cur.fetchone() is None:
+            raise ValidationError(
+                "Impossible de fermer : un constat est obligatoire pour ce type d'intervention."
+            )
+
+    def _check_closable(
+        self, intervention_id: str, status_actual: Any, type_inter: Any = None
+    ) -> None:
+        """Lève ValidationError si des tâches non-optionnelles ou un constat manquant bloquent
+        la fermeture. `type_inter` : type après la mise à jour (celui de la base si absent),
+        False pour ne pas contrôler le constat."""
         if not status_actual:
             return
         # intervention.status_actual stocke directement le code texte (ex: 'ferme')
@@ -1243,6 +1273,14 @@ class InterventionRepository:
                     (intervention_id,),
                 )
                 blocking = cur.fetchone()[0]
+                if blocking == 0 and type_inter is not False:
+                    if type_inter is None:
+                        cur.execute(
+                            "SELECT type_inter FROM intervention WHERE id = %s", (intervention_id,)
+                        )
+                        row = cur.fetchone()
+                        type_inter = row[0] if row else None
+                    self._ensure_constat_given(cur, intervention_id, type_inter)
         finally:
             release_connection(conn)
 
@@ -1393,6 +1431,22 @@ class InterventionRepository:
             cur = conn.cursor()
             request_repo = InterventionRequestRepository()
             linked = request_repo.get_linked_to_intervention(cur, intervention_id)
+            # Un constat reste toujours visible : l'intervention qui le porte ne se supprime pas
+            cur.execute(
+                """
+                SELECT 1 FROM constat c
+                WHERE c.intervention_id = %s
+                   OR c.request_id = %s OR c.linked_request_id = %s
+                LIMIT 1
+                """,
+                (
+                    intervention_id,
+                    linked["id"] if linked else None,
+                    linked["id"] if linked else None,
+                ),
+            )
+            if cur.fetchone():
+                raise ValidationError("Intervention liée à un constat : suppression impossible.")
             if linked and request_outcome not in REQUEST_OUTCOMES:
                 raise ValidationError(
                     "Cette intervention est liée à une demande : précisez son issue avec "

@@ -64,7 +64,7 @@ export function EntityCodeLink({ type, id, code, size = 2 }) {
 }
 
 EntityCodeLink.propTypes = {
-  type: PropTypes.oneOf(['intervention', 'purchase_request']).isRequired,
+  type: PropTypes.oneOf(['intervention', 'intervention_request', 'purchase_request']).isRequired,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   code: PropTypes.string,
   size: PropTypes.oneOf([1, 2, 3]),

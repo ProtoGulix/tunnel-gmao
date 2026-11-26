@@ -11,8 +11,14 @@ import { lazy, Suspense, useState, useEffect, useCallback, useMemo } from 'react
 import { useSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Tabs, Box, Badge, Flex, Text, Callout } from '@radix-ui/themes';
-import { Activity, FileText, History, TrendingUp, ShoppingCart, ListTodo, ClipboardList } from 'lucide-react';
+import { Activity, FileText, Flag, History, TrendingUp, ShoppingCart, ListTodo, ClipboardList } from 'lucide-react';
 import { useInterventionDetail } from '@/hooks/interventions/useInterventionDetail';
+import { useInterventionConstats } from '@/hooks/constats/useConstats';
+import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
+import { createConstat } from '@/api/constats';
+import ConstatDialog from '@/components/constats/ConstatDialog';
+import ConstatsList from '@/components/constats/ConstatsList';
+import { isConstatRequired } from '@/components/constats/constatRules';
 import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
@@ -38,6 +44,7 @@ const BASE_TABS = [
   { id: 'taches', label: 'Tâches', icon: ListTodo, badgeCount: null },
   { id: 'achats', label: 'Achats', icon: ShoppingCart },
   { id: 'demande', label: 'Demande', icon: ClipboardList },
+  { id: 'constats', label: 'Constats', icon: Flag },
   { id: 'summary', label: 'Résumé', icon: TrendingUp },
   { id: 'fiche', label: 'Fiche', icon: FileText },
   { id: 'history', label: 'Historique', icon: History },
@@ -73,6 +80,7 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
   const [activeTab, setActiveTab] = useState(() => searchParams.get(tabParamKey) ?? 'actions');
   const [mutationError, setMutationError] = useState('');
   const [pointageDialogOpen, setPointageDialogOpen] = useState(false);
+  const [closureConstatOpen, setClosureConstatOpen] = useState(false);
   const { notification, notify } = useNotification();
 
   const handleTabChange = useCallback((tab) => {
@@ -98,6 +106,11 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
     ficheFileName,
   } = useInterventionDetail(id);
 
+  const { types: typeRefs } = useInterventionTypeRefs();
+  const { constats, reload: reloadConstats } = useInterventionConstats(id);
+  // Aide à l'écran seulement : la porte de clôture est celle du backend
+  const constatRequired = isConstatRequired(typeRefs, intervention?.type, constats);
+
   const tabs = useMemo(
     () => (intervention?.request ? BASE_TABS : BASE_TABS.filter((tab) => tab.id !== 'demande')),
     [intervention?.request]
@@ -112,6 +125,10 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
 
   const handleStatusChange = useCallback(
     async (newStatus) => {
+      if (newStatus === 'ferme' && constatRequired) {
+        setClosureConstatOpen(true);
+        return;
+      }
       try {
         setMutationError('');
         await updateStatus(newStatus);
@@ -119,7 +136,7 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
         setMutationError(extractApiErrorMessage(err, 'Erreur lors de la modification'));
       }
     },
-    [updateStatus]
+    [updateStatus, constatRequired]
   );
 
   const handlePriorityChange = useCallback(
@@ -133,6 +150,13 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
     },
     [updateIntervention]
   );
+
+  const handleClosureConstat = useCallback(async (payload) => {
+    await createConstat(id, payload);
+    await reloadConstats();
+    await updateStatus('ferme');
+    onRefreshList?.();
+  }, [id, reloadConstats, updateStatus, onRefreshList]);
 
   const handleMarkPrinted = useCallback(async () => {
     try {
@@ -233,6 +257,15 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
               <InterventionRequestDetail requestId={intervention.request.id} onTransitionDone={refetch} />
             </Tabs.Content>
           )}
+          <Tabs.Content value="constats">
+            <ConstatsList
+              interventionId={id}
+              constats={constats}
+              machine={intervention.machine ? { id: intervention.machine.id, name: intervention.machine.name } : null}
+              canAdd={!isArchivedClosed(intervention) && can(PERM.constats.create)}
+              onChanged={reloadConstats}
+            />
+          </Tabs.Content>
           <Tabs.Content value="summary">
             <SummaryTab intervention={intervention} loading={loading} />
           </Tabs.Content>
@@ -299,6 +332,15 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
 
       {tabsContent}
       {pointageDialog}
+      {closureConstatOpen && (
+        <ConstatDialog
+          title="Constat avant clôture"
+          submitLabel="Clôturer"
+          initialMachine={intervention.machine ? { id: intervention.machine.id, name: intervention.machine.name } : null}
+          onSubmit={handleClosureConstat}
+          onClose={() => setClosureConstatOpen(false)}
+        />
+      )}
     </div>
   );
 }

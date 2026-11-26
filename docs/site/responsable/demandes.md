@@ -80,6 +80,25 @@ préventive rejetée marque son occurrence comme « Ignorée ».
 Ce motif est obligatoire quelle que soit la règle d'audit de votre installation. Voir
 [Audit et motifs](/responsable/audit-motifs).
 
+## Demande issue d'un constat
+
+Un constat saisi à la clôture d'une intervention crée une demande sur la machine visée, si
+un levier choisi la génère (réglage du référentiel ; **Rien ne l'aurait évité** n'en crée pas,
+le constat s'affiche alors **Sans demande**). Le
+détail garde la présentation des autres demandes : sous le demandeur, **Constat de** et le code
+de l'intervention d'origine (lien) ; dans le cadre, les réponses par question à la place du
+texte brut. L'historique donne l'auteur de chaque changement. Une telle demande ne se supprime
+pas.
+
+Le **type d'intervention suggéré** vient du premier choix typé du constat : tâche régulière
+donne préventif, projet ou modification donne projet (une idée d'amélioration). Sans choix
+typé, la demande n'a pas de type et attend votre tri. Acceptez ou rejetez comme toute demande.
+
+Si la machine a des idées d'amélioration ouvertes, la demande propose **Idée d'amélioration
+ouverte**. Choisissez-en une, puis **Rattacher** : le constat garde le lien, et la demande
+est rejetée avec le motif « Doublon d'une demande existante ». Rattachement : responsable et
+administrateur, tant que la demande peut être rejetée.
+
 ## Supprimer une demande
 
 Le bouton **Supprimer** est réservé aux erreurs de saisie et aux doublons. Il n'apparaît

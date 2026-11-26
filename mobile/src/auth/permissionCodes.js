@@ -17,6 +17,10 @@ export const PERM = {
     updateTask: 'intervention_tasks:patch_task',
     createPurchaseRequest: 'purchase-requests:create_purchase_request',
   },
+  // Constat après intervention
+  constat: {
+    create: 'constats:create_constat',
+  },
   // Planning et formulaire d'action
   actions: {
     add: 'intervention-actions:add_action',

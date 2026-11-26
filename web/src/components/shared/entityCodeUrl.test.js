@@ -6,6 +6,7 @@ import { entityCodeLabel, entityCodeTitle, entityCodeUrl } from './entityCodeUrl
 test('URL par type', () => {
   assert.equal(entityCodeUrl('intervention', 'abc'), '/interventions?id=abc');
   assert.equal(entityCodeUrl('purchase_request', 'xyz'), '/achats?tab=requests&requestId=xyz');
+  assert.equal(entityCodeUrl('intervention_request', 'r1'), '/interventions?tab=demandes&id=r1');
   assert.equal(entityCodeUrl('autre', 'x'), null);
 });
 

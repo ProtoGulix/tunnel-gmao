@@ -10,6 +10,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import BilanPeriodControls from '@/components/bilan/BilanPeriodControls';
 import ServiceTab from '@/components/bilan/tabs/ServiceTab';
 import AuditTab from '@/components/bilan/tabs/AuditTab';
+import ConstatInsights from '@/components/bilan/ConstatInsights';
 import DataQualityTab from '@/components/bilan/tabs/DataQualityTab';
 import { PERM } from '@/auth/permissionCodes';
 import { usePermissions } from '@/auth/usePermissions';
@@ -33,11 +34,15 @@ export default function BilanPage() {
         <Tabs.Root value={tab} onValueChange={setTab}>
           <Tabs.List mb="3">
             <Tabs.Trigger value="service">État</Tabs.Trigger>
+            <Tabs.Trigger value="constats">Constats</Tabs.Trigger>
             {canAudit && <Tabs.Trigger value="audit">Audit</Tabs.Trigger>}
             <Tabs.Trigger value="qualite">Qualité</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="service">
             <ServiceTab startDate={periodStart(months)} endDate={toDateString(new Date())} />
+          </Tabs.Content>
+          <Tabs.Content value="constats">
+            <ConstatInsights startDate={periodStart(months)} endDate={toDateString(new Date())} />
           </Tabs.Content>
           {canAudit && <Tabs.Content value="audit"><AuditTab months={months} /></Tabs.Content>}
           <Tabs.Content value="qualite"><DataQualityTab /></Tabs.Content>

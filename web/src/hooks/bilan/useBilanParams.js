@@ -1,6 +1,6 @@
 /**
  * @fileoverview Onglet et période de la page Bilan du service, gardés dans l'URL
- * (?tab=service|audit|qualite, ?months=3|6|12|24)
+ * (?tab=service|constats|audit|qualite, ?months=3|6|12|24)
  * @module hooks/bilan/useBilanParams
  */
 

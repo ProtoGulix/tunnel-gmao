@@ -70,7 +70,7 @@ export default function AuditReasonDialog({ open, entityType, reasons, decisionT
 
 AuditReasonDialog.propTypes = {
   open: PropTypes.bool.isRequired,
-  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action', 'supplier_order', 'equipement', 'preventive_occurrence']).isRequired,
+  entityType: PropTypes.oneOf(['intervention', 'request', 'purchase_request', 'task', 'action', 'supplier_order', 'equipement', 'preventive_occurrence', 'constat']).isRequired,
   reasons: PropTypes.array,
   decisionType: PropTypes.string,
   title: PropTypes.string.isRequired,

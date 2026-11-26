@@ -185,6 +185,27 @@ Tous les champs sont optionnels.
 | GET     | `/admin/intervention-statuses`          | RESP, ADMIN |
 | PATCH   | `/admin/intervention-statuses/{code}`   | RESP, ADMIN |
 
+## Référentiel des constats (ADR 0045)
+
+| Méthode | Endpoint                             | Rôles       |
+| ------- | ------------------------------------ | ----------- |
+| GET     | `/admin/constat-questions`           | RESP, ADMIN |
+| PATCH   | `/admin/constat-questions/{id}`      | RESP, ADMIN |
+| POST    | `/admin/constat-choices`             | RESP, ADMIN |
+| PATCH   | `/admin/constat-choices/{id}`        | RESP, ADMIN |
+
+`GET` : questions dans l'ordre, avec `parent_choice_code` et tous leurs `choices` (actifs et
+inactifs : `code`, `label`, `sort_order`, `is_active`, `suggested_type_inter`, `creates_request`,
+`is_exclusive`). Aucune suppression : désactivation.
+
+- PATCH question : `{ "label": "..." }` (libellé seul).
+- POST choix : `{ "question_id", "code", "label", "suggested_type_inter"?, "creates_request"?,
+  "is_exclusive"? }`. Code `^[A-Z][A-Z0-9_]{1,49}$`, unique sur toute la table, figé ; ordre =
+  dernier de la question. `422` code invalide, `400` code déjà utilisé, type inconnu ou inactif.
+- PATCH choix : `label`, `sort_order`, `is_active`, `suggested_type_inter` (`null` l'efface),
+  `creates_request`, `is_exclusive` ; un champ absent reste inchangé. `400` si c'est le dernier
+  choix actif de la question qu'on désactive.
+
 ### POST `/admin/intervention-types` — corps
 
 ```json
@@ -196,12 +217,12 @@ Tous les champs sont optionnels.
 ### PATCH `/admin/intervention-types/{id}` — corps
 
 ```json
-{ "label": "Nouveau libellé", "description": "Aide courte", "color": "red" }
+{ "label": "Nouveau libellé", "description": "Aide courte", "color": "red", "constat_required": true }
 ```
 
-Champs facultatifs, un au moins. Le code n'est pas modifiable (un `code` envoyé est ignoré) ;
+Champs facultatifs, un au moins. `constat_required` : la clôture d'une intervention de ce type exige un constat. Le code n'est pas modifiable (un `code` envoyé est ignoré) ;
 une description vide l'efface. Un type ne se supprime pas (aucune route) : il se désactive
-avec `/active`. `GET` renvoie `id`, `code`, `label`, `color`, `description`, `is_active`.
+avec `/active`. `GET` renvoie `id`, `code`, `label`, `color`, `description`, `is_active`, `constat_required`.
 
 ### PATCH `/admin/intervention-statuses/{code}` — corps
 

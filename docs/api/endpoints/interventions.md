@@ -197,6 +197,7 @@ Seuls les types actifs sont renvoyés ; `?include_inactive=true` ajoute les type
 `?machine_id=<uuid>` (équipement) ne renvoie que les types permis par la classe de
 l'équipement (ADR 0031) : une classe sans liste, un équipement sans classe ou inconnu donnent
 tous les types. Sans `machine_id`, la liste est inchangée. `machine_id` invalide : `422`.
+Chaque type porte `constat_required` (clôture refusée sans constat, voir [Constats](constats.md)).
 
 ### Réponse `200`
 
@@ -562,6 +563,8 @@ Met à jour une intervention. Même body que POST, tous les champs sont optionne
 
 > **Réouverture** (ADR 0028) : un `status_actual` qui fait sortir l'intervention de `ferme` exige un `reason_code` explicite (catégorie manual ou user, décision `intervention_reopened` : `INTERVENTION_CLOSED_BY_MISTAKE`, `INTERVENTION_REWORK`, `OTHER` avec `reason_text`). Sans lui, `400` « reason_code obligatoire » avec ces motifs dans `audit`. La demande liée `cloturee` repasse `acceptee` dans la même transaction, avec un événement du système (`SYSTEM_CASCADE`) au nom du jeton ; elle se reclôt avec l'intervention. Un changement de statut qui ne sort pas de `ferme` reste routinier.
 
+> **Constat obligatoire** (ADR 0043) : si le type de l'intervention a `constat_required` (CUR par défaut), le passage à `ferme` sans constat est refusé (`400` « Impossible de fermer : un constat est obligatoire… ») : par `PUT`/`PATCH`, y compris avec un changement de type dans la même requête, et à la création (`status_actual: ferme`). Une intervention déjà fermée reste modifiable. Voir [Constats](constats.md).
+
 > **Tâches incomplètes** : si l'intervention a des tâches non-optionnelles en `todo` ou `in_progress`, la mise à jour vers le statut `ferme` est bloquée et retourne `400` avec `"Impossible de fermer : X tâche(s) non-optionnelle(s) en attente."`. Utiliser `PATCH /intervention-tasks/{id}` pour traiter les tâches avant de clôturer.
 
 ### Réponse `200`
@@ -595,7 +598,7 @@ Intervention complète mise à jour. La demande liée (`request`) est désormais
 
 ## `DELETE /interventions/{id}`
 
-Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions ou des demandes d'achat liées.
+Supprime une intervention. La suppression est **interdite** si l'intervention possède des actions, des demandes d'achat ou des constats liés (`400`), ou si sa demande est citée par un constat.
 
 > **`reason_code` obligatoire** (toujours explicite pour une suppression) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
 

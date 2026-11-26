@@ -9,7 +9,8 @@ import pytest
 from tests.integration.etape2_helpers import MOTIF, intervention_liee, tache
 from tests.integration.test_cont02_repair_integration import _orpheline
 
-pytestmark = pytest.mark.integration
+# Ces tests portent sur la clôture, pas sur le constat (ADR 0043) : CUR n'en exige pas ici.
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("cur_sans_constat")]
 
 
 def _sans_auteur(instance, ids_demandes, ids_interventions):
