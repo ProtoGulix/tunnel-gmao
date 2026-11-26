@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.15.0] — 2026-11-26
 
 ### Ajouté
 - Administration > Référentiel > Constats (ADR 0045) : réglage des choix de chaque question
