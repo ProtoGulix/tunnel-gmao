@@ -9,6 +9,20 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Administration > Référentiel > Constats (ADR 0045) : réglage des choix de chaque question
+  (libellé, ordre, actif, type préconisé, génère une demande, exclusif), ajout d'un choix,
+  libellé des questions.
+- API : administration du référentiel des constats (ADR 0045). `GET /admin/constat-questions`,
+  `PATCH /admin/constat-questions/{id}` (libellé), `POST /admin/constat-choices` et
+  `PATCH /admin/constat-choices/{id}` (libellé, ordre, actif, type préconisé, génère une
+  demande, exclusif), RESP et ADMIN, changements audités.
+- Constat : une demande n'est créée que si un levier coché la génère (ADR 0045) ; au départ,
+  tâche régulière et projet. Nouveau levier « Rien ne l'aurait évité », seul choix possible
+  quand il est coché. Un constat sans demande se corrige par son auteur ou un responsable tant
+  que l'intervention n'est pas archivée ; une correction qui exige une demande la crée. Les
+  indicateurs datent un constat par sa première version. Migration 0029 (colonnes
+  `creates_request` et `is_exclusive`, choix NOTHING, `constat.request_id` facultatif) jouée au
+  démarrage de l'API ; retour arrière refusé dès qu'un constat n'a pas de demande.
 - Indicateurs des constats (ADR 0044) : onglet « Constats » du Bilan, ouvert à tous les
   connectés. Chiffres clés (constats par mois, signal visible, signal non remonté, suggestions
   retenues) et barres « Où agir » (leviers, signal précurseur, ancienneté du problème, devenir
@@ -21,7 +35,7 @@ mobile/CHANGELOG.md.
   (`POST /constats/{id}/corrections`, auteur ou RESP, ADMIN, tant que la demande est « nouvelle »),
   rattachement à une idée d'amélioration (`GET /constats/{id}/improvement-ideas`,
   `POST /constats/{id}/link`, RESP, ADMIN) qui rejette la demande en doublon.
-- Chaque constat crée une demande d'intervention sur la machine visée (`source_intervention_id`,
+- Un constat crée une demande d'intervention (selon son levier, voir ADR 0045) sur la machine visée (`source_intervention_id`,
   type préconisé tiré du premier choix typé), dans la même transaction.
 - Types d'intervention : `constat_required` lisible (`GET /interventions/types`,
   `GET /admin/intervention-types`) et modifiable (`PATCH /admin/intervention-types/{id}`).

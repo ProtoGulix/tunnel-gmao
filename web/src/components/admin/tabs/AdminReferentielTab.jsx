@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { Box, Callout, Flex, Tabs, Text } from '@radix-ui/themes';
-import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench, Cpu } from 'lucide-react';
+import { CheckCircle, XCircle, Layers, Package, Shapes, Wrench, Cpu, ListChecks } from 'lucide-react';
 import { reloadInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import {
   ActionCategoriesSection,
@@ -15,6 +15,7 @@ import {
   InterventionTypesSection,
   InterventionStatusesSection,
 } from '@/components/admin/AdminRefInterventionsSection';
+import { ConstatsSection } from '@/components/admin/AdminRefConstatsSection';
 import { EquipementClassesSection } from '@/components/admin/AdminRefEquipementClassesSection';
 import {
   useActionCategories,
@@ -23,6 +24,7 @@ import {
   useInterventionStatuses,
   useEquipementClasses,
 } from '@/hooks/admin/useAdminReferentiel';
+import { useConstatReferentiel } from '@/hooks/admin/useConstatReferentiel';
 import * as refApi from '@/api/adminReferentiel';
 import { useNotification } from '@/hooks/shared/useNotification';
 import { useTabNavigation } from '@/hooks/shared/useTabNavigation';
@@ -39,6 +41,7 @@ export default function AdminReferentielTab() {
   const intTypes = useInterventionTypes();
   const intStatuses = useInterventionStatuses();
   const equipClasses = useEquipementClasses();
+  const activeTypes = intTypes.items.filter((t) => t.is_active);
 
   const wrap = useCallback(async (fn, successMsg) => {
     try {
@@ -112,6 +115,8 @@ export default function AdminReferentielTab() {
       equipClasses.setItems((prev) => prev.filter((i) => i.id !== id));
     }, 'Classe supprimée'), [equipClasses, wrap]);
 
+  const constatAdmin = useConstatReferentiel(wrap);
+
   return (
     <Box pt="4">
       {notification && (
@@ -130,6 +135,9 @@ export default function AdminReferentielTab() {
           </Tabs.Trigger>
           <Tabs.Trigger value="interventions">
             <Flex align="center" gap="2"><Wrench size={13} /><Text>Interventions</Text></Flex>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="constats">
+            <Flex align="center" gap="2"><ListChecks size={13} /><Text>Constats</Text></Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="equipement-classes">
             <Flex align="center" gap="2"><Cpu size={13} /><Text>Classes d&apos;équipement</Text></Flex>
@@ -177,6 +185,19 @@ export default function AdminReferentielTab() {
                 onUpdate={handleUpdateIntStatus}
               />
             </>
+          )}
+        </Tabs.Content>
+
+        <Tabs.Content value="constats">
+          {activeTab === 'constats' && (
+            <ConstatsSection
+              items={constatAdmin.constats.items}
+              types={activeTypes}
+              loading={constatAdmin.constats.loading}
+              onUpdateQuestion={constatAdmin.onUpdateQuestion}
+              onCreateChoice={constatAdmin.onCreateChoice}
+              onUpdateChoice={constatAdmin.onUpdateChoice}
+            />
           )}
         </Tabs.Content>
 

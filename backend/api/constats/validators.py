@@ -27,10 +27,12 @@ class ConstatValidator:
 
         `form` : questions (code, label, is_multiple, is_active, parent_choice_code,
         sort_order) portant chacune leurs `choices` (code, label, is_active, sort_order,
-        suggested_type_inter). Règles : choix connu et actif, un seul choix pour une question
-        unique, question racine obligatoire, sous-question exigée si et seulement si son
-        choix parent est coché. `selected` : paires (question, choix) dans l'ordre de l'écran.
-        Le type préconisé est celui du premier choix coché qui en porte un.
+        suggested_type_inter, creates_request, is_exclusive). Règles : choix connu et actif,
+        un seul choix pour une question unique, question racine obligatoire, sous-question
+        exigée si et seulement si son choix parent est coché, un choix exclusif ne se combine
+        avec aucun autre de sa question. `selected` : paires (question, choix) dans l'ordre de
+        l'écran. Le type préconisé est celui du premier choix coché qui en porte un ;
+        `creates_request` est vrai si au moins un choix coché génère une demande.
         """
         by_code = {c["code"]: (q, c) for q in form for c in q["choices"]}
         codes = set(choice_codes)
@@ -69,6 +71,9 @@ class ConstatValidator:
                 continue
             if not chosen:
                 raise ValidationError(f"Réponse obligatoire : {question['label']}")
+            exclusive = next((c for c in chosen if c.get("is_exclusive")), None)
+            if exclusive and len(chosen) > 1:
+                raise ValidationError(f"Choix exclusif : {exclusive['label']}")
             if not question["is_multiple"] and len(chosen) > 1:
                 raise ValidationError(f"Un seul choix permis : {question['label']}")
             selected.extend({"question": question, "choice": c} for c in chosen)
@@ -81,7 +86,12 @@ class ConstatValidator:
             ),
             None,
         )
-        return {"selected": selected, "suggested_type_inter": suggested}
+        creates_request = any(s["choice"].get("creates_request") for s in selected)
+        return {
+            "selected": selected,
+            "suggested_type_inter": suggested,
+            "creates_request": creates_request,
+        }
 
     @staticmethod
     def build_description(intervention_code: str, selected: List[Dict[str, Any]]) -> str:
@@ -101,20 +111,30 @@ class ConstatValidator:
 
     @staticmethod
     def ensure_can_correct(
-        author_id: Any, user_id: Any, role: Optional[str], request_status: str
+        author_id: Any, user_id: Any, role: Optional[str], request_status: Optional[str]
     ) -> None:
-        """Correction : auteur du constat ou référent, tant que la demande est « nouvelle »."""
-        if request_status != EDITABLE_REQUEST_STATUS:
+        """Correction : auteur du constat ou référent.
+
+        Avec demande, tant qu'elle est « nouvelle » ; sans demande (`request_status` None),
+        sans autre condition (l'archivage de l'intervention est contrôlé à part).
+        """
+        if request_status is not None and request_status != EDITABLE_REQUEST_STATUS:
             raise ValidationError("Constat déjà traité : correction impossible")
         if str(author_id) != str(user_id) and role not in REFERENT_ROLES:
             raise ForbiddenError("Seul l'auteur ou un responsable peut corriger ce constat")
 
     @staticmethod
-    def can_correct(author_id: Any, user_id: Any, role: Optional[str], request_status: str) -> bool:
-        """Même règle que `ensure_can_correct`, en booléen pour les fronts."""
-        return request_status == EDITABLE_REQUEST_STATUS and (
-            str(author_id) == str(user_id) or role in REFERENT_ROLES
-        )
+    def can_correct(
+        author_id: Any,
+        user_id: Any,
+        role: Optional[str],
+        request_status: Optional[str],
+        archived: bool = False,
+    ) -> bool:
+        """Même règle que `ensure_can_correct` (et intervention non archivée), en booléen."""
+        if archived or request_status not in (None, EDITABLE_REQUEST_STATUS):
+            return False
+        return str(author_id) == str(user_id) or role in REFERENT_ROLES
 
 
 def ensure_correction_reason(

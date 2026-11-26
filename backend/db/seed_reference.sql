@@ -638,3 +638,13 @@ INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reaso
 UPDATE public.audit_reason_code SET entity_types = array_append(COALESCE(entity_types, '{}'), 'constat_choice') WHERE code = 'ROUTINE' AND entity_types IS NOT NULL AND NOT ('constat_choice' = ANY(entity_types));
 INSERT INTO public.audit_rule (id, entity_type, field, is_routine, default_reason_code) SELECT (SELECT COALESCE(MAX(id), 0) + 1 FROM public.audit_rule), 'constat_choice', NULL, true, 'ROUTINE' WHERE NOT EXISTS (SELECT 1 FROM public.audit_rule WHERE entity_type = 'constat_choice' AND field IS NULL);
 SELECT setval('public.audit_rule_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM public.audit_rule), (SELECT last_value FROM public.audit_rule_id_seq)));
+
+--
+-- Réglages des choix du constat (CDL-01, ADR 0045), cohérent avec la migration 0029 :
+-- creates_request, is_exclusive, choix NOTHING, constat.request_id facultatif. Idempotent.
+--
+
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'constat_choice' AND column_name = 'creates_request') THEN ALTER TABLE public.constat_choice ADD COLUMN creates_request boolean NOT NULL DEFAULT false; UPDATE public.constat_choice SET creates_request = true WHERE code IN ('TASK', 'PROJECT'); END IF; END $$;
+ALTER TABLE public.constat_choice ADD COLUMN IF NOT EXISTS is_exclusive boolean NOT NULL DEFAULT false;
+INSERT INTO public.constat_choice (question_id, code, label, sort_order, is_active, suggested_type_inter, creates_request, is_exclusive) SELECT (SELECT id FROM public.constat_question WHERE code = 'LEVER'), 'NOTHING', 'Rien ne l''aurait évité', (SELECT COALESCE(MAX(c.sort_order), 0) + 1 FROM public.constat_choice c WHERE c.question_id = (SELECT id FROM public.constat_question WHERE code = 'LEVER')), true, NULL, false, true WHERE NOT EXISTS (SELECT 1 FROM public.constat_choice WHERE code = 'NOTHING') ON CONFLICT (code) DO NOTHING;
+ALTER TABLE public.constat ALTER COLUMN request_id DROP NOT NULL;

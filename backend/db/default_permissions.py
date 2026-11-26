@@ -76,6 +76,8 @@ RESP_ADMIN_READ_PREFIXES = (
     "/admin/action-subcategories",
     "/admin/complexity-factors",
     "/admin/intervention-types",
+    "/admin/constat-questions",
+    "/admin/constat-choices",
     "/admin/intervention-statuses",
     "/admin/audit-rules",
     "/admin/audit-reasons",
@@ -90,6 +92,8 @@ RESP_ADMIN_WRITE_PREFIXES = (
     "/admin/action-subcategories",
     "/admin/complexity-factors",
     "/admin/intervention-types",
+    "/admin/constat-questions",
+    "/admin/constat-choices",
     "/admin/intervention-statuses",
 )
 

@@ -12,8 +12,10 @@ from db.default_permissions import Endpoint, default_allowed
 from tests.helpers import make_client
 
 
-def _choice(code, order, active=True, type_code=None):
+def _choice(code, order, active=True, type_code=None, creates=False, exclusive=False):
     return {
+        "creates_request": creates,
+        "is_exclusive": exclusive,
         "code": code,
         "label": code.title(),
         "sort_order": order,
@@ -41,10 +43,11 @@ def form():
             "LEVER",
             1,
             [
-                _choice("TASK", 1, type_code="PRE"),
-                _choice("PROJECT", 2, type_code="PRO"),
+                _choice("TASK", 1, type_code="PRE", creates=True),
+                _choice("PROJECT", 2, type_code="PRO", creates=True),
                 _choice("TRAINING", 3),
                 _choice("OLD", 4, active=False),
+                _choice("NOTHING", 5, exclusive=True),
             ],
             multiple=True,
         ),
@@ -70,6 +73,28 @@ def test_constat_valide_et_type_du_premier_levier_type(form):
         "SIGNAL_NONE",
         "PART_PLC",
     ]
+
+
+def test_demande_generee_si_un_choix_coche_la_genere(form):
+    assert _prepare(["TASK", "FREQ_W", "SIGNAL_NONE", "PART_PLC"], form)["creates_request"]
+    assert _prepare(["TRAINING", "TASK", "FREQ_W", "DOM_E", "SIGNAL_NONE", "PART_PLC"], form)[
+        "creates_request"
+    ]
+
+
+def test_aucune_demande_si_aucun_choix_ne_la_genere(form):
+    assert not _prepare(["TRAINING", "DOM_E", "SIGNAL_NONE", "PART_PLC"], form)["creates_request"]
+
+
+def test_choix_exclusif_seul_accepte(form):
+    result = _prepare(["NOTHING", "SIGNAL_NONE", "PART_PLC"], form)
+    assert result["creates_request"] is False and result["suggested_type_inter"] is None
+
+
+def test_choix_exclusif_combine_refuse(form):
+    with pytest.raises(ValidationError) as e:
+        _prepare(["NOTHING", "TRAINING", "DOM_E", "SIGNAL_NONE", "PART_PLC"], form)
+    assert "Choix exclusif : Nothing" in str(e.value.detail)
 
 
 def test_sans_levier_type_pas_de_type_preconise(form):
@@ -150,6 +175,20 @@ def test_correction_par_l_auteur_ou_le_referent(author, user, role, ok):
     else:
         with pytest.raises(ForbiddenError):
             ConstatValidator.ensure_can_correct(author, user, role, "nouvelle")
+
+
+def test_correction_sans_demande_par_l_auteur_ou_le_referent():
+    assert ConstatValidator.can_correct("u1", "u1", "TECH", None) is True
+    assert ConstatValidator.can_correct("u1", "u2", "RESP", None) is True
+    assert ConstatValidator.can_correct("u1", "u2", "TECH", None) is False
+    ConstatValidator.ensure_can_correct("u1", "u1", "TECH", None)
+    with pytest.raises(ForbiddenError):
+        ConstatValidator.ensure_can_correct("u1", "u2", "TECH", None)
+
+
+def test_correction_refusee_si_l_intervention_est_archivee():
+    assert ConstatValidator.can_correct("u1", "u1", "ADMIN", None, archived=True) is False
+    assert ConstatValidator.can_correct("u1", "u1", "ADMIN", "nouvelle", archived=True) is False
 
 
 @pytest.mark.parametrize("statut", ["en_attente", "acceptee", "rejetee", "cloturee"])

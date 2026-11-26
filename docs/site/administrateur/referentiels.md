@@ -1,8 +1,8 @@
 # Référentiels
 
 Écran : **Administration**, onglet **Référentiel**. Les référentiels sont les listes de
-choix que les équipes retrouvent dans les formulaires. Cet onglet a cinq sous-onglets :
-Actions, Interventions, Classes d'équipement, Familles de pièces et Trames de référence.
+choix que les équipes retrouvent dans les formulaires. Cet onglet a six sous-onglets :
+Actions, Interventions, Constats, Classes d'équipement, Familles de pièces et Trames de référence.
 
 Chaque code (par exemple celui d'une catégorie) est marqué d'un cadenas : il ne se modifie
 pas. On change le libellé, pas le code.
@@ -38,6 +38,21 @@ Inactif).
 
 **Statuts d'intervention.** La liste est fixe : vous pouvez seulement changer le libellé et
 la couleur d'un statut avec le crayon. L'écran ne propose pas d'en ajouter.
+
+## Constats
+
+Une question par bloc, ses choix en tableau : libellé, type préconisé, demande, exclusif,
+ordre et statut. Une sous-question suit sa question, avec le choix qui la déclenche. Un
+réglage ne vaut que pour les constats saisis ensuite : rien n'est recalculé.
+
+- Le crayon d'un choix change son libellé, son ordre, son type préconisé (parmi les types
+  d'intervention actifs), **Génère une demande** et **Exclusif** (un choix exclusif ne se
+  combine avec aucun autre).
+- **Choix** ajoute un choix à la question. Son code (majuscules, chiffres, `_`) ne change
+  plus ensuite.
+- **Désactiver** retire un choix du formulaire ; **Activer** le remet. Le dernier choix actif
+  d'une question ne se désactive pas. Rien ne se supprime.
+- Le crayon d'une question change son libellé ; les questions elles-mêmes sont fixes.
 
 ## Classes d'équipement
 

@@ -13,14 +13,20 @@ from api.errors.exceptions import raise_db_error
 # Version courante d'un constat : aucune autre ligne ne la remplace.
 _CURRENT = "NOT EXISTS (SELECT 1 FROM constat s WHERE s.supersedes_id = c.id)"
 
-# Constats de la période : version courante, datée de la première version de la demande
-# (une correction garde le même request_id et ne déplace donc pas le constat de mois).
+# Constats de la période : version courante, datée de la première version de sa chaîne de
+# corrections (supersedes_id), car un constat n'a pas toujours de demande (ADR 0045).
+# À utiliser avec `WITH RECURSIVE`.
 _PERIOD_CTE = f"""
+    chain AS (
+        SELECT id, created_at AS first_at FROM constat WHERE supersedes_id IS NULL
+        UNION ALL
+        SELECT c.id, ch.first_at FROM constat c JOIN chain ch ON c.supersedes_id = ch.id
+    ),
     cur_constat AS (
-        SELECT c.id, c.linked_request_id, ir.statut,
-               (SELECT MIN(f.created_at)::date FROM constat f
-                WHERE f.request_id = c.request_id) AS d
-        FROM constat c JOIN intervention_request ir ON ir.id = c.request_id
+        SELECT c.id, c.linked_request_id, c.request_id, ir.statut, ch.first_at::date AS d
+        FROM constat c
+        JOIN chain ch ON ch.id = c.id
+        LEFT JOIN intervention_request ir ON ir.id = c.request_id
         WHERE {_CURRENT}
     ),
     in_period AS (SELECT * FROM cur_constat WHERE d BETWEEN %s AND %s)
@@ -38,7 +44,7 @@ class ConstatsStatsRepository:
     def _total_by_month(self, cur, start: date, end: date):
         cur.execute(
             f"""
-            WITH {_PERIOD_CTE}
+            WITH RECURSIVE {_PERIOD_CTE}
             SELECT to_char(d, 'YYYY-MM'), COUNT(*) FROM in_period GROUP BY 1
             """,
             (start, end),
@@ -51,7 +57,7 @@ class ConstatsStatsRepository:
         """Choix d'une question dans l'ordre sort_order ; inactif seulement s'il a des réponses."""
         cur.execute(
             f"""
-            WITH {_PERIOD_CTE}
+            WITH RECURSIVE {_PERIOD_CTE}
             SELECT ch.code, ch.label, ch.suggested_type_inter,
                    COUNT(p.id) AS n, ch.is_active
             FROM constat_choice ch
@@ -74,9 +80,9 @@ class ConstatsStatsRepository:
         refs = {code: (label, color) for code, label, color in cur.fetchall()}
         cur.execute(
             f"""
-            WITH {_PERIOD_CTE}
+            WITH RECURSIVE {_PERIOD_CTE}
             SELECT CASE WHEN linked_request_id IS NOT NULL THEN %s ELSE statut END, COUNT(*)
-            FROM in_period GROUP BY 1
+            FROM in_period WHERE request_id IS NOT NULL GROUP BY 1
             """,
             (start, end, _LINKED_CODE),
         )

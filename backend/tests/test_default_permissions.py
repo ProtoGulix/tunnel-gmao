@@ -71,6 +71,8 @@ def test_resp_ecrit_tout_le_metier():
 def test_resp_ecrit_les_referentiels_d_admin_ouverts_dans_le_code():
     assert default_allowed("RESP", ep("POST", "/admin/intervention-types", "admin"))
     assert default_allowed("RESP", ep("PATCH", "/admin/action-categories/{category_id}", "admin"))
+    assert default_allowed("RESP", ep("POST", "/admin/constat-choices", "admin"))
+    assert default_allowed("RESP", ep("PATCH", "/admin/constat-choices/{choice_id}", "admin"))
 
 
 def test_resp_ne_peut_pas_ecrire_users_roles_securite_cles():

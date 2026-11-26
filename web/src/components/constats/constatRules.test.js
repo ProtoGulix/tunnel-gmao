@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { visibleQuestions, toggleChoice, choicesOf, isConstatRequired, groupAnswers, requestState } from './constatRules.js';
+import { visibleQuestions, toggleChoice, choicesOf, isConstatRequired, groupAnswers, requestState, hasNoRequest } from './constatRules.js';
 
 const Q = [
   { code: 'LEVER', is_multiple: false, parent_choice_code: null, choices: [{ code: 'TASK' }, { code: 'TRAIN' }] },
@@ -63,4 +63,30 @@ test('requestState : les quatre cas', () => {
     { kind: 'linked', id: 'u9', code: 'DI-9' },
   );
   assert.equal(requestState({}), null);
+});
+
+const QX = {
+  code: 'LEVER', is_multiple: true, parent_choice_code: null,
+  choices: [{ code: 'A' }, { code: 'B' }, { code: 'NONE', is_exclusive: true }],
+};
+
+test('choix exclusif : coché, il décoche les autres de sa question', () => {
+  assert.deepEqual(toggleChoice([QX], ['A', 'B'], QX, 'NONE'), ['NONE']);
+});
+
+test('choix exclusif : un autre choix coché décoche l\'exclusif', () => {
+  assert.deepEqual(toggleChoice([QX], ['NONE'], QX, 'A'), ['A']);
+  assert.deepEqual(toggleChoice([QX], ['A'], QX, 'B'), ['A', 'B']);
+});
+
+test('choix exclusif : les autres questions restent intactes', () => {
+  const other = { code: 'S', is_multiple: true, parent_choice_code: null, choices: [{ code: 'S1' }] };
+  assert.deepEqual(toggleChoice([QX, other], ['A', 'S1'], QX, 'NONE'), ['S1', 'NONE']);
+});
+
+test('hasNoRequest : constat sans demande, sans plantage sur null', () => {
+  assert.equal(hasNoRequest({ request_id: null, request_status: null }), true);
+  assert.equal(hasNoRequest({ request_id: 'r1' }), false);
+  assert.equal(requestState({ request_id: null, request_status: null }), null);
+  assert.equal(hasNoRequest(null), true);
 });

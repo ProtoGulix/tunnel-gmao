@@ -8,19 +8,24 @@ export function visibleQuestions(questions, selected) {
   return questions.filter((q) => !q.parent_choice_code || selected.includes(q.parent_choice_code));
 }
 
+/**
+ * Choix de la question après un clic : un choix exclusif (is_exclusive, lu de l'API) retire
+ * les autres, et tout autre choix retire l'exclusif.
+ */
+function ownAfterToggle(question, own, choiceCode) {
+  if (own.includes(choiceCode)) return own.filter((c) => c !== choiceCode);
+  if (!question.is_multiple) return [choiceCode];
+  const exclusive = new Set(question.choices.filter((c) => c.is_exclusive).map((c) => c.code));
+  if (exclusive.has(choiceCode)) return [choiceCode];
+  return [...own.filter((c) => !exclusive.has(c)), choiceCode];
+}
+
 /** Coche ou décoche un choix ; retire les réponses des sous-questions qui disparaissent. */
 export function toggleChoice(questions, selected, question, choiceCode) {
   const codes = question.choices.map((c) => c.code);
   const others = selected.filter((c) => !codes.includes(c));
-  const wasChecked = selected.includes(choiceCode);
   const own = selected.filter((c) => codes.includes(c));
-  let next;
-  if (question.is_multiple) {
-    next = [...others, ...(wasChecked ? own.filter((c) => c !== choiceCode) : [...own, choiceCode])];
-  } else {
-    next = wasChecked ? others : [...others, choiceCode];
-  }
-  return pruneHidden(questions, next);
+  return pruneHidden(questions, [...others, ...ownAfterToggle(question, own, choiceCode)]);
 }
 
 function pruneHidden(questions, selected) {
@@ -74,4 +79,9 @@ export function requestState(constat) {
     default:
       return null;
   }
+}
+
+/** Constat sans demande : aucune demande n'est liée (request_id absent). */
+export function hasNoRequest(constat) {
+  return !constat?.request_id;
 }

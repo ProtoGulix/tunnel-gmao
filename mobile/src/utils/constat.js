@@ -8,14 +8,22 @@ export function visibleQuestions(questions, selected) {
   return questions.filter((q) => !q.parent_choice_code || selected.includes(q.parent_choice_code))
 }
 
-// Coche ou décoche un choix ; un choix unique remplace les autres de sa question.
+// Choix de la question après un clic : un choix exclusif (is_exclusive, lu de l'API) retire
+// les autres, et tout autre choix retire l'exclusif.
+function ownAfterToggle(question, own, code) {
+  if (own.includes(code)) return own.filter((c) => c !== code)
+  if (!question.is_multiple) return [code]
+  const exclusive = new Set(question.choices.filter((c) => c.is_exclusive).map((c) => c.code))
+  if (exclusive.has(code)) return [code]
+  return [...own.filter((c) => !exclusive.has(c)), code]
+}
+
+// Coche ou décoche un choix ; retire les réponses des sous-questions qui disparaissent.
 export function toggleChoice(questions, selected, question, code) {
-  const own = question.choices.map((c) => c.code)
-  let next
-  if (selected.includes(code)) next = selected.filter((c) => c !== code)
-  else if (question.is_multiple) next = [...selected, code]
-  else next = [...selected.filter((c) => !own.includes(c)), code]
-  return pruneHidden(questions, next)
+  const codes = question.choices.map((c) => c.code)
+  const others = selected.filter((c) => !codes.includes(c))
+  const own = selected.filter((c) => codes.includes(c))
+  return pruneHidden(questions, [...others, ...ownAfterToggle(question, own, code)])
 }
 
 // Retire les choix des sous-questions dont le parent n'est plus coché (boucle jusqu'à stabilité).

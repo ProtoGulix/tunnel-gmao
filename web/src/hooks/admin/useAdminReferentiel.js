@@ -35,3 +35,8 @@ export const useEquipementClasses = make(
   refApi.fetchEquipementClasses,
   "Erreur chargement classes d'équipement"
 );
+
+export const useConstatQuestions = make(
+  refApi.fetchConstatQuestions,
+  'Erreur chargement constats'
+);

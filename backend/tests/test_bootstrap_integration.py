@@ -101,7 +101,7 @@ def test_schema_roles_and_status_codes(first_run):
     assert len(statuses) == 4
     assert all(i == c and c for i, c in statuses)
     version = _query(OWNER_URL, "SELECT version_num FROM alembic_version_backend")
-    assert version == [("0028_constat_intervention",)]
+    assert version == [("0029_constat_reglages_des_choix",)]
 
 
 def test_app_role_is_not_superuser_and_can_read_write(first_run):
@@ -133,7 +133,7 @@ def test_seeds_default_matrix_and_home_views(first_run):
     )
     # Matrice par défaut (db/default_permissions.py) ; détail dans
     # tests/integration/test_default_permissions_integration.py.
-    assert dict(allowed) == {"ADMIN": 273, "RESP": 237, "TECH": 133, "ACHETEUR": 167, "MCP": 120}
+    assert dict(allowed) == {"ADMIN": 277, "RESP": 241, "TECH": 133, "ACHETEUR": 167, "MCP": 120}
     assert _query(OWNER_URL, "SELECT count(*) FROM role_home_view")[0][0] == 4
 
 

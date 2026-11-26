@@ -8,7 +8,7 @@ import { Button, Card, Flex, Text } from '@radix-ui/themes';
 import { Plus } from 'lucide-react';
 import ConstatDialog from './ConstatDialog';
 import ConstatAnswers from './ConstatAnswers';
-import { choicesOf, requestState } from './constatRules';
+import { choicesOf, requestState, hasNoRequest } from './constatRules';
 import RequestStatusBadge from '@/components/shared/RequestStatusBadge';
 import { EntityCodeLink } from '@/components/shared/EntityCodeLink';
 import { createConstat, correctConstat } from '@/api/constats';
@@ -71,6 +71,9 @@ function nextRow(state) {
 
 /** Lignes « demande liée » de la carte : demande, motif audité, commentaire, suite donnée. */
 function requestRows(constat, statusLabel, statusColor) {
+  if (hasNoRequest(constat)) {
+    return [{ key: 'request', label: 'Demande', value: <Text size="2" color="gray">Sans demande</Text> }];
+  }
   const state = requestState(constat);
   const kind = state?.kind;
   const refused = kind === 'rejected' || kind === 'linked';

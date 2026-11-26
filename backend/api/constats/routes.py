@@ -54,11 +54,13 @@ def create_constat(
     request: Request,
 ):
     """
-    Crée un constat et sa demande d'intervention (même transaction).
+    Crée un constat, et sa demande d'intervention (même transaction) si un choix coché la
+    génère (`creates_request`) ; sinon `request_id` est `null`.
 
-    Accepté après la clôture, refusé si l'intervention est archivée. La demande est
-    notifiée comme toute demande signalée ; son type préconisé vient du premier choix coché
-    qui en porte un. **Audit** : routinier.
+    Accepté après la clôture, refusé si l'intervention est archivée, ou si un choix exclusif
+    est combiné à un autre de sa question. La demande est notifiée comme toute demande
+    signalée ; son type préconisé vient du premier choix coché qui en porte un.
+    **Audit** : routinier.
     """
     user_id, role = _identity(request)
     constat_id = repo.create(
@@ -69,7 +71,8 @@ def create_constat(
     )
     declare_created_id(request, constat_id)
     created = repo.get_by_id(constat_id, user_id, role)
-    background_tasks.add_task(send_di_a_traiter_mails, str(created["request_id"]))
+    if created["request_id"]:
+        background_tasks.add_task(send_di_a_traiter_mails, str(created["request_id"]))
     return single(created)
 
 
@@ -92,14 +95,19 @@ def list_improvement_ideas(constat_id: UUID):
     dependencies=[_writers, audit("constat", id_from_path="constat_id", table="constat")],
 )
 def correct_constat(
-    constat_id: UUID, data: ConstatCorrectionIn, request: Request
+    constat_id: UUID,
+    data: ConstatCorrectionIn,
+    background_tasks: BackgroundTasks,
+    request: Request,
 ) -> Dict[str, Any]:
     """
     Corrige un constat : une nouvelle version remplace la précédente.
 
-    Réservé à l'auteur, ou à RESP et ADMIN, tant que la demande est « nouvelle » (sinon 400).
+    Réservé à l'auteur, ou à RESP et ADMIN. Avec demande, tant qu'elle est « nouvelle » (sinon
+    400) : elle est mise à jour, sans jamais être retirée. Sans demande, tant que l'intervention
+    n'est pas archivée : si la nouvelle version génère une demande, elle est créée.
     **Audit** : motif explicite de décision `constat_corrected` (sans motif, 400 avec la
-    liste dans `audit`) ; la demande est mise à jour, type préconisé recalculé.
+    liste dans `audit`).
     """
     user_id, role = _identity(request)
     ensure_correction_reason(
@@ -107,6 +115,7 @@ def correct_constat(
         getattr(request.state, REASON_TEXT_ATTR, None),
         list_entity_reasons("constat"),
     )
+    had_request = repo.get_by_id(str(constat_id), user_id, role)["request_id"] is not None
     new_id = repo.correct(
         str(constat_id),
         str(data.machine_id) if data.machine_id else None,
@@ -114,7 +123,10 @@ def correct_constat(
         user_id,
         role,
     )
-    return single(repo.get_by_id(new_id, user_id, role))
+    corrected = repo.get_by_id(new_id, user_id, role)
+    if corrected["request_id"] and not had_request:
+        background_tasks.add_task(send_di_a_traiter_mails, str(corrected["request_id"]))
+    return single(corrected)
 
 
 @router.post(
@@ -126,7 +138,8 @@ def link_constat(constat_id: UUID, data: ConstatLinkIn, request: Request):
     Rattache le constat à une idée d'amélioration ouverte de sa machine (RESP, ADMIN).
 
     La demande du constat est rejetée en doublon (REJECT_DUPLICATE, ADR 0038). Refusé si
-    la demande n'est plus « nouvelle » ou « en_attente », ou si le constat est déjà rattaché.
+    le constat n'a pas de demande, si elle n'est plus « nouvelle » ou « en_attente », ou si
+    le constat est déjà rattaché.
     """
     user_id, role = _identity(request)
     repo.link_to_idea(str(constat_id), str(data.request_id), user_id)

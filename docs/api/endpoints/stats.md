@@ -443,11 +443,11 @@ Indicateurs des constats (ADR 0044). Lecture seule, 10 requêtes par minute. Dro
 
 Paramètres : `start_date`, `end_date` (AAAA-MM-JJ), mêmes règles et mêmes erreurs 400 que `/stats/organisation` (défaut : 12 mois calendaires jusqu'à aujourd'hui).
 
-Seule la version courante d'un constat compte, datée de sa première version : une correction ne le change pas de mois.
+Seule la version courante d'un constat compte, datée de la première version de sa chaîne de corrections : une correction ne le change pas de mois. Les constats sans demande comptent partout sauf dans `outcomes`.
 
 - `by_month` : tous les mois de la période, à 0 compris.
 - `levers`, `signals`, `known_since` : choix des questions LEVER, SIGNAL, KNOWN_SINCE, dans l'ordre du référentiel. Choix actifs même à 0 ; un choix inactif seulement s'il a des réponses. Un constat à plusieurs leviers compte dans chacun.
-- `outcomes` : statut de la demande issue du constat, ordre fixe `nouvelle`, `en_attente`, `acceptee`, `cloturee`, `rejetee`, `rattachee` (constat rattaché à une idée, couleur de `rejetee`).
+- `outcomes` : statut de la demande issue du constat (constats avec demande seulement), ordre fixe `nouvelle`, `en_attente`, `acceptee`, `cloturee`, `rejetee`, `rattachee` (constat rattaché à une idée, couleur de `rejetee`).
 
 ```json
 {

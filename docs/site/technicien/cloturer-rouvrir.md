@@ -35,15 +35,17 @@ avant de clore. Si aucun n'existe, le formulaire « Constat » s'ouvre avant la 
 Répondez en touchant des cases, sans rien écrire :
 
 - « Qu'est-ce qui aurait réduit ou évité cet arrêt ? » : un ou plusieurs choix. Chaque choix
-  peut ouvrir une question de détail (fréquence, domaines, paramètres…).
+  peut ouvrir une question de détail (fréquence, domaines, paramètres…). **Rien ne l'aurait
+  évité** se coche seul : le cocher décoche les autres choix, et inversement.
 - « Signal visible avant la panne ? ».
 - **Équipement** : celui de l'intervention, modifiable.
 
 Touchez **Envoyer**. La clôture se poursuit ensuite. Tunnel refuse de clore sans constat,
 par tous les chemins.
 
-Chaque constat crée une demande d'intervention sur la machine visée. Le responsable décide
-de la suite.
+Seuls certains leviers créent une demande d'intervention sur la machine visée (réglage du
+référentiel) ; le responsable décide de la suite. Sans levier concerné, le constat reste
+enregistré **Sans demande**.
 
 ### Ajouter un constat après la clôture
 
@@ -98,4 +100,5 @@ intervention archivée).
 **Corriger** ouvre le formulaire pré-rempli. La fenêtre de motif propose « Correction ». La
 nouvelle version remplace la précédente, qui reste dans le journal d'audit. Seuls l'auteur,
 le responsable et l'administrateur corrigent, tant que la demande issue du constat est
-« nouvelle ».
+« nouvelle ». Un constat sans demande se corrige tant que l'intervention n'est pas archivée ;
+si la nouvelle version l'exige, la demande est alors créée.

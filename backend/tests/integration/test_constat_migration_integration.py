@@ -34,6 +34,15 @@ def _migration():
     return module
 
 
+def _reglages():
+    """Migration 0029 : la base neuve la porte déjà, les rejeux de 0028 la reposent."""
+    path = _BACKEND / "alembic/versions/0029_constat_reglages_des_choix.py"
+    spec = importlib.util.spec_from_file_location("migration_0029", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _tables(instance):
     return [
         t
@@ -104,9 +113,10 @@ def test_base_neuve_a_l_etat_attendu(instance):
         "TRAINING",
         "MONITORING",
         "OTHER",
+        "NOTHING",
     ]
     assert {c[1]: c[5] for c in choix if c[5]} == {"TASK": "PRE", "PROJECT": "PRO"}
-    assert len(choix) == 34 and all(c[4] for c in choix)
+    assert len(choix) == 35 and all(c[4] for c in choix)
     types = dict(instance.sql("SELECT code, constat_required FROM intervention_type"))
     assert types["CUR"] is True
     assert all(v is False for k, v in types.items() if k != "CUR")
@@ -198,7 +208,7 @@ def test_retour_arriere_puis_remontee_sans_constat(instance):
     assert instance.sql("SELECT 1 FROM audit_reason_code WHERE code = 'CONSTAT_CORRECTION'") == []
     routine = instance.sql("SELECT entity_types FROM audit_reason_code WHERE code = 'ROUTINE'")
     assert not {"constat", "constat_question", "constat_choice"} & set(routine[0][0])
-    for statement in module.upgrade_statements():
+    for statement in [*module.upgrade_statements(), *_reglages().upgrade_statements()]:
         instance.sql(statement)
     assert (instance.sql(_QUESTIONS), instance.sql(_CHOIX), instance.sql(_REGLES)) == reference
     assert instance.sql("SELECT constat_required FROM intervention_type WHERE code = 'CUR'") == [
