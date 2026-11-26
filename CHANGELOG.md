@@ -12,6 +12,7 @@ mobile/CHANGELOG.md.
 - Guide : page « Le constat » dans « Comprendre Tunnel », avec un schéma de principe (de la clôture à la demande ou au Bilan), liée depuis les pages des demandes et de la clôture.
 
 ### [interne]
+- Pile de dev : guide utilisateur servi en direct sous `/docs/` (service `docs-vite`), pour relire la documentation avant publication.
 - Démonstration : le cron de 3 h récupère `main` avant la réinitialisation (deploy/demo/README.md).
 
 ## [5.15.0] — 2026-11-26

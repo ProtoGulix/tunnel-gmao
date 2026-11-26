@@ -60,6 +60,25 @@ services:
       - no-new-privileges:true
     networks: [tunnel]
 
+  # Guide utilisateur (docs/site) en direct, servi sous /docs/ par le proxy de dev.
+  docs-vite:
+    image: node:24-slim
+    restart: unless-stopped
+    working_dir: /src/docs/site
+    command: ["sh", "/src/deploy/dev/vite-start.sh"]
+    environment:
+      VITE_START_SCRIPT: docs:dev
+      DOCS_DEV_HOST: 0.0.0.0
+      VITE_ALLOWED_HOSTS: ${DEV_ALLOWED_HOSTS:-localhost}
+      VITE_HMR_CLIENT_PORT: ${DEV_HMR_CLIENT_PORT:-}
+    volumes:
+      - ..:/src
+      - docs-node-modules:/src/docs/site/node_modules
+      - /dev/null:/src/deploy/.env:ro
+    security_opt:
+      - no-new-privileges:true
+    networks: [tunnel]
+
   web:
     build: !reset null
     image: nginxinc/nginx-unprivileged:1.28-alpine
@@ -74,6 +93,7 @@ services:
       API_UPSTREAM: http://api:8000
       WEB_UPSTREAM: http://web-vite:5173
       MOBILE_UPSTREAM: http://mobile-vite:5174
+      DOCS_UPSTREAM: http://docs-vite:5175
       DNS_RESOLVER: 127.0.0.11
     volumes:
       - ./nginx/tunnel.dev.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -92,3 +112,4 @@ services:
 volumes:
   web-node-modules:
   mobile-node-modules:
+  docs-node-modules:

@@ -1,6 +1,7 @@
 #!/bin/sh
 # Démarrage d'un serveur Vite de la stack de dev (ADR 0010), lancé en root depuis
-# le dossier du front (web/ ou mobile/).
+# le dossier du front (web/, mobile/ ou docs/site/). VITE_START_SCRIPT : script npm lancé
+# (dev par défaut).
 # node_modules vit dans un volume nommé : réinstallé seulement si package-lock.json
 # a changé depuis la dernière installation.
 set -eu
@@ -16,5 +17,5 @@ exec su node -s /bin/sh -c '
         npm ci --no-audit --no-fund
         echo "$lock_hash" > node_modules/.lock-sha1
     fi
-    exec npm run dev
+    exec npm run "${VITE_START_SCRIPT:-dev}"
 '

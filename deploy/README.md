@@ -130,7 +130,8 @@ Après modification de `.env` : `docker compose up -d`.
 
 Pour travailler sur le code, `docker-compose.dev.yml` remplace les images figées par
 du rechargement à chaud : API en `uvicorn --reload` sur `backend/` monté, fronts web
-et mobile servis par Vite (ADR 0010). Depuis la racine du dépôt :
+et mobile servis par Vite (ADR 0010), guide utilisateur en direct sous `/docs/` (service
+`docs-vite`). Depuis la racine du dépôt :
 
 ```
 docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d
