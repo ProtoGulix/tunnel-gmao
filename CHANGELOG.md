@@ -6,6 +6,11 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### [interne]
+- Démonstration : le cron de 3 h récupère `main` avant la réinitialisation (deploy/demo/README.md).
+
 ## [5.15.0] — 2026-11-26
 
 ### Ajouté

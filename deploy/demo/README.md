@@ -63,11 +63,17 @@ Comptes publics : `technicien@demo.frezille.fr`, `acheteur@demo.frezille.fr`,
 
 ## Réinitialisation nocturne
 
-Cron (utilisateur qui lance Docker), par exemple à 3 h, avant la tâche quotidienne de l'API :
+Cron (utilisateur qui lance Docker), par exemple à 3 h, avant la tâche quotidienne de l'API.
+La démonstration suit `main` : le cron récupère d'abord la dernière version publiée (clone
+en HTTPS anonyme, sans clé), puis réinitialise. Si la récupération échoue, la
+réinitialisation tourne sur le code actuel et le journal le signale.
 
 ```cron
-0 3 * * * /chemin/tunnel-gmao/deploy/demo/reset-demo.sh >> /var/log/tunnel-demo-reset.log 2>&1
+0 3 * * * { date; cd /chemin/tunnel-gmao && git pull -q --ff-only origin main || echo "reset-demo : code non mis à jour, code actuel conservé"; /chemin/tunnel-gmao/deploy/demo/reset-demo.sh; } >> /var/log/tunnel-demo-reset.log 2>&1
 ```
+
+Le clone est sur `main`, sans modification locale (`.env.demo` est ignoré par git) :
+`git clone -b main https://github.com/ProtoGulix/tunnel-gmao.git`.
 
 Ou un timer systemd : un service `Type=oneshot` dont `ExecStart` est le script, et un timer
 `OnCalendar=*-*-* 03:00:00` avec `Persistent=true`.
