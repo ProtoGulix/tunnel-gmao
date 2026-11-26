@@ -8,11 +8,11 @@ Le Bilan ne montre **aucun chiffre par technicien**, par choix. Les indicateurs 
 service, jamais une personne.
 :::
 
-La page a trois onglets : **État**, **Audit** et **Qualité**.
+La page a quatre onglets : **État**, **Constats**, **Audit** et **Qualité**.
 
 ## La période
 
-Deux onglets, **État** et **Audit**, partagent une période choisie en haut à droite :
+Trois onglets, **État**, **Constats** et **Audit**, partagent une période choisie en haut à droite :
 **3 mois**, **6 mois**, **12 mois** ou **24 mois**. La période par défaut est de 3 mois.
 Ce sont des mois calendaires, **mois en cours compris** : l'écran affiche la plage, par
 exemple « 1 septembre – 21 novembre 2026 ».
@@ -93,7 +93,7 @@ Trois chiffres courts sur l'**état actuel** du préventif, hors période :
 
 ## L'onglet Constats
 
-Les constats saisis après intervention, sur la période choisie. Un bandeau de quatre
+Les constats saisis après intervention, sur la période choisie ; onglet ouvert à tous. Un bandeau de quatre
 chiffres clés, comme l'onglet État :
 
 | Chiffre | Ce qu'il mesure |

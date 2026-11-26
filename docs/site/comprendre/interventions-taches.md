@@ -64,10 +64,11 @@ On clôt une intervention en changeant son statut vers « Fermé ». C'est la se
 À la clôture, on répond à un court formulaire : qu'est-ce qui aurait réduit ou évité l'arrêt ?
 Réponses par choix, sans texte libre. Le constat est obligatoire pour les types qui
 l'exigent, et ajoutable après la clôture tant que l'intervention n'est pas archivée. Il crée
-une demande sur la machine visée, que le responsable arbitre. Un constat ne s'écrase pas : une
+une demande sur la machine visée, que le responsable arbitre, seulement si un levier coché la
+génère (« Rien ne l'aurait évité » n'en crée pas). Un constat ne s'écrase pas : une
 correction crée une version nouvelle, avec le motif « Correction ». La donnée aide à décider
-(tâche préventive, idée d'amélioration) ; elle ne sert à aucun indicateur ni classement de
-personnes.
+(tâche préventive, idée d'amélioration) et alimente des indicateurs agrégés dans l'onglet
+Constats du Bilan ; aucun classement de personnes.
 
 ### Rouvrir
 
