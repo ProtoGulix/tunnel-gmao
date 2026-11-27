@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.15.2] — 2026-11-27
 
 ### Corrigé
 - Onglet Fiche : le PDF s'affiche de nouveau (la politique de sécurité du proxy le bloquait).
