@@ -589,3 +589,40 @@ class ConstatsResponse(BaseModel):
     signals: List[ConstatsChoiceCount]
     known_since: List[ConstatsChoiceCount]
     outcomes: List[ConstatsOutcome]
+
+
+class DemandesWeek(BaseModel):
+    week_start: date  # lundi
+    created: int
+    accepted: int
+    rejected: int
+    stock_end: int
+
+
+class DemandesAgeBucket(BaseModel):
+    code: str
+    label: str
+    from_days: int  # incluse
+    to_days: Optional[int] = None  # exclue ; None : sans limite
+    count: int
+    min_days: Optional[int] = None
+    max_days: Optional[int] = None
+
+
+class DemandesEquipment(BaseModel):
+    id: str
+    code: str
+    name: str
+    count: int
+    oldest_days: int
+
+
+class DemandesResponse(BaseModel):
+    weeks: int
+    flow: List[DemandesWeek]
+    trend: int
+    stock: int
+    age_buckets: List[DemandesAgeBucket]
+    sites: List[DemandesEquipment]
+    equipments: List[DemandesEquipment]
+    journal_gaps: int

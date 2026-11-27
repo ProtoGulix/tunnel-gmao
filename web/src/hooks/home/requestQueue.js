@@ -64,6 +64,15 @@ export function preventiveAction(row, canAnticipate) {
   return { type: canAnticipate ? 'launch' : 'none' };
 }
 
+/** Titres des sections de la file (aussi ceux des tuiles) */
+export const SECTION_TITLES = {
+  'to-qualify': 'Demandes à qualifier',
+  urgent: 'Urgentes',
+  waiting: 'En attente',
+  idle: 'Sans action',
+  preventive: 'Préventif',
+};
+
 /**
  * Sections de la file, dans l'ordre d'affichage ; une section vide est écartée.
  * Une section : { id, kind, title, items }. Les interventions ne sont listées qu'une fois.
@@ -76,11 +85,11 @@ export function buildQueueSections({ requests, urgent, waiting, idle, preventive
   const qualifyIds = new Set(toQualify.map((r) => r.id));
   const dueRows = (preventive ?? []).filter((row) => !qualifyIds.has(row.di_id));
   const sections = [
-    { id: 'to-qualify', kind: 'request', title: 'Demandes à qualifier', items: toQualify },
-    { id: 'urgent', kind: 'intervention', title: 'Urgentes', items: dedupeInterventions(urgent, seen) },
-    { id: 'waiting', kind: 'intervention', title: 'En attente', items: dedupeInterventions(waiting, seen) },
-    { id: 'idle', kind: 'intervention', title: 'Sans action', items: dedupeInterventions(sortByIdleDays(idle), seen) },
-    { id: 'preventive', kind: 'preventive', title: 'Préventif', items: dueRows },
+    { id: 'to-qualify', kind: 'request', title: SECTION_TITLES['to-qualify'], items: toQualify },
+    { id: 'urgent', kind: 'intervention', title: SECTION_TITLES['urgent'], items: dedupeInterventions(urgent, seen) },
+    { id: 'waiting', kind: 'intervention', title: SECTION_TITLES['waiting'], items: dedupeInterventions(waiting, seen) },
+    { id: 'idle', kind: 'intervention', title: SECTION_TITLES['idle'], items: dedupeInterventions(sortByIdleDays(idle), seen) },
+    { id: 'preventive', kind: 'preventive', title: SECTION_TITLES['preventive'], items: dueRows },
   ];
   return sections.filter((s) => s.items.length > 0);
 }

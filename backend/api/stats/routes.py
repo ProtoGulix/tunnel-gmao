@@ -9,6 +9,7 @@ from api.errors.exceptions import ValidationError
 from api.limiter import limiter
 from api.stats.audit_synthese_repo import AuditSyntheseRepository
 from api.stats.constats_repo import ConstatsStatsRepository
+from api.stats.demandes_repo import DemandesStatsRepository
 from api.stats.organisation_repo import OrganisationRepository
 from api.stats.repo import StatsRepository
 from api.stats.schemas import (
@@ -16,6 +17,7 @@ from api.stats.schemas import (
     AuditSyntheseResponse,
     ChargeTechniqueResponse,
     ConstatsResponse,
+    DemandesResponse,
     OrganisationResponse,
     QualiteDonneesResponse,
     ServiceStatusResponse,
@@ -132,6 +134,27 @@ def get_constats(
     """Indicateurs des constats (ADR 0044) : chiffres d'équipe, jamais par personne."""
     start, end = resolve_dashboard_period(start_date, end_date)
     return ConstatsStatsRepository().get_constats(start, end)
+
+
+DEMANDES_DEFAULT_WEEKS = 8
+DEMANDES_MAX_WEEKS = 52
+
+
+@router.get("/demandes", response_model=DemandesResponse)
+@limiter.limit("10/minute")
+def get_demandes(
+    request: Request,
+    weeks: int = Query(
+        DEMANDES_DEFAULT_WEEKS, description="Semaines ISO, semaine courante comprise"
+    ),
+    site_id: Optional[str] = Query(
+        None, description="Site : équipement racine, descendants compris"
+    ),
+):
+    """Bilan des demandes à qualifier (ADR 0046) : flux, âge, répartition. Jamais par personne."""
+    if not 1 <= weeks <= DEMANDES_MAX_WEEKS:
+        raise ValidationError(f"weeks doit être compris entre 1 et {DEMANDES_MAX_WEEKS}")
+    return DemandesStatsRepository().get_demandes(weeks, site_id)
 
 
 AUDIT_SYNTHESE_MAX_MONTHS = 120  # 10 ans, comme la borne de la période d'Organisation

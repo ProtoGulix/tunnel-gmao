@@ -437,6 +437,21 @@ Synthèse de l'audit et du partage des tâches (ADR 0032). Lecture seule, 10 req
 }
 ```
 
+## `GET /stats/demandes`
+
+Bilan des demandes à qualifier (ADR 0046). Lecture seule, 10 requêtes par minute. Droit : `stats:get_demandes`, ouvert par défaut aux rôles qui lisent. Aucune donnée par personne.
+
+Paramètres : `weeks` (1 à 52, défaut 8 ; semaines ISO, courante comprise), `site_id` (équipement racine, descendants compris ; UUID invalide : 400).
+
+Stock = demandes `nouvelle` ou `en_attente`. Sortie = première transition vers `acceptee` ou `rejetee` du journal des statuts ; une demande supprimée n'est plus comptée.
+
+- `flow` : une ligne par lundi (`week_start`) : `created`, `accepted`, `rejected`, `stock_end`. Le `stock_end` de la semaine courante égale `stock`.
+- `trend` : `stock_end` de la dernière semaine moins le stock au début de la première.
+- `age_buckets` : `lt_7`, `7_30`, `30_90`, `gt_90` ; `from_days` incluse, `to_days` exclue (`null` : sans limite), `count`, `min_days`, `max_days` (`null` si vide). Somme des `count` = `stock`.
+- `sites` : équipements racines, `id`, `code`, `name`, `count`, `oldest_days`. Somme = `stock`.
+- `equipments` : les 10 équipements les plus chargés, mêmes champs.
+- `journal_gaps` : demandes dont le statut ne s'accorde pas au journal (sortie sans ligne de journal, ou ligne de sortie sur une demande encore à qualifier). Le statut fait foi pour le stock ; sans ligne de sortie, la date de sortie est celle de la dernière mise à jour de la demande.
+
 ## `GET /stats/constats`
 
 Indicateurs des constats (ADR 0044). Lecture seule, 10 requêtes par minute. Droit : `stats:get_constats`, ouvert par défaut aux rôles qui lisent (créé par le bootstrap). Chiffres d'équipe : aucun auteur ni technicien.

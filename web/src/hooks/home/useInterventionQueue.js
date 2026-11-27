@@ -15,6 +15,7 @@ const LIMIT = 200;
 /** Libellés des sources, pour signaler un échec */
 export const SOURCE_LABELS = {
   requests: 'Demandes à qualifier',
+  stats: 'Bilan',
   urgent: 'Urgentes',
   waiting: 'En attente',
   idle: 'Sans action',

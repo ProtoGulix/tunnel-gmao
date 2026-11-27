@@ -1,6 +1,6 @@
 /**
  * @fileoverview Données de la vue "direction technique" : demandes à qualifier,
- * filtrables par site (équipement racine).
+ * selon une portée : site (descendants compris) ou équipement exact (voir requestScope).
  * @module hooks/home/useTechnicalDirectionRequests
  */
 
@@ -11,20 +11,21 @@ import { TO_QUALIFY_STATUSES } from '@/hooks/home/requestQueue';
 // Maximum de l'API : seules les demandes à qualifier sont chargées, la file reste complète.
 const PAGE_SIZE = 500;
 
-export function useTechnicalDirectionRequests({ siteId } = {}) {
+export function useTechnicalDirectionRequests({ machineId, includeDescendants, enabled = true } = {}) {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
+    if (!enabled) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetchInterventionRequests({
         limit: PAGE_SIZE,
         statut: TO_QUALIFY_STATUSES.join(','),
-        machineId: siteId || undefined,
-        includeDescendants: siteId ? true : undefined,
+        machineId: machineId || undefined,
+        includeDescendants,
       });
       setItems(res.items);
     } catch (err) {
@@ -32,7 +33,7 @@ export function useTechnicalDirectionRequests({ siteId } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [siteId]);
+  }, [machineId, includeDescendants, enabled]);
 
   useEffect(() => { load(); }, [load]);
 
