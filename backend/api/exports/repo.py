@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
 from api.audits.events import record_column_changes
+from api.constants import CLOSED_STATUS_CODE
 from api.db import get_connection, release_connection
 from api.errors.exceptions import NotFoundError, raise_db_error
 from api.interventions.types import get_type_labels
@@ -97,7 +98,8 @@ class ExportRepository:
         """
         Passe printed_fiche à vrai pour les interventions données, en une requête.
 
-        Ne touche qu'aux fiches pas encore imprimées (idempotent) et renvoie leur nombre.
+        Ne touche qu'aux fiches fermées pas encore imprimées (idempotent) et renvoie leur nombre :
+        le statut est relu sous verrou, une réouverture concurrente n'est pas archivée.
         Aucune colonne de statut modifiée : ni trigger de clôture ni journal des statuts.
         Chaque fiche réellement marquée dépose un événement d'audit `printed_fiche_changed`
         (entité intervention, comme le PUT unitaire) : le middleware l'écrit dans la même
@@ -115,12 +117,13 @@ class ExportRepository:
                 FROM (
                     SELECT id, printed_fiche FROM intervention
                     WHERE id = ANY(%s::uuid[]) AND printed_fiche IS NOT TRUE
+                      AND status_actual = %s
                     FOR UPDATE
                 ) old
                 WHERE i.id = old.id
                 RETURNING i.id, old.printed_fiche
                 """,
-                (intervention_ids,),
+                (intervention_ids, CLOSED_STATUS_CODE),
             )
             marked_rows = cur.fetchall()
             for intervention_id, old_value in marked_rows:

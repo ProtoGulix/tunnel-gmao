@@ -23,7 +23,8 @@ import LoadingState from '@/components/ui/LoadingState';
 import ErrorState from '@/components/ui/ErrorState';
 import RequestPointageDialog from '@/components/interventions/RequestPointageDialog';
 import InterventionPanelHeader from '@/components/interventions/InterventionPanelHeader';
-import { isArchivedClosed } from '@/components/interventions/archiveRules';
+import { canMarkPrinted, isArchivedClosed } from '@/components/interventions/archiveRules';
+import { markInterventionPrinted } from '@/api/interventions';
 import { getDeleteBlockReason } from '@/components/interventions/deleteInterventionRules';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 import { useNotification } from '@/hooks/shared/useNotification';
@@ -161,12 +162,13 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
   const handleMarkPrinted = useCallback(async () => {
     try {
       setMutationError('');
-      await updateIntervention({ printedFiche: true });
+      await markInterventionPrinted(id);
+      await refetch();
       onRefreshList?.();
     } catch (err) {
       setMutationError(extractApiErrorMessage(err, 'Erreur marquage imprimé'));
     }
-  }, [updateIntervention, onRefreshList]);
+  }, [id, refetch, onRefreshList]);
 
   const handlePointageRequested = useCallback(() => {
     notify('Demande de pointage envoyée');
@@ -278,7 +280,7 @@ export default function InterventionDetailPanel({ id, onDeleted, onRefreshList }
               pdfLoading={pdfLoading}
               printedFiche={intervention.printedFiche}
               fileName={ficheFileName}
-              onMarkPrinted={isLocked ? null : handleMarkPrinted}
+              onMarkPrinted={canMarkPrinted(intervention, can(PERM.interventions.markPrinted)) ? handleMarkPrinted : null}
               fillHeight
             />
           </Tabs.Content>

@@ -1,6 +1,7 @@
 # Configuration nginx de la stack de dev (ADR 0010), rendue par envsubst au démarrage.
 # Fronts servis par les serveurs Vite (rechargement à chaud par websocket), API comme
-# en production. Pas de CSP : Vite injecte des scripts en ligne qu'elle bloquerait.
+# en production. CSP partielle : la complète bloquerait les scripts en ligne de Vite ;
+# on garde les directives de production que Vite ne touche pas (object-src et frame-src : PDF de la fiche).
 # Pas de blocage des chemins en /. : Vite sert ses dépendances sous /node_modules/.vite/
 # et refuse lui-même les fichiers .env (server.fs.deny).
 # Ne sert jamais à une installation PME : la production utilise tunnel.conf.template.
@@ -24,6 +25,7 @@ server {
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(self), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "object-src blob:; frame-src blob:; base-uri 'self'; frame-ancestors 'none'" always;
 
     # Noms résolus à chaque requête : recréer un conteneur ne laisse pas nginx sur
     # une ancienne adresse.

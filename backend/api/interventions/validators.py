@@ -140,6 +140,21 @@ class InterventionValidator:
             raise ValidationError("La date de signalement ne peut pas être vide")
 
     @staticmethod
+    def reject_printed_fiche(fields_set: set) -> None:
+        """Refuse printed_fiche en création et mise à jour : l'archivage passe par
+        POST /interventions/{id}/mark-printed (réservé ADMIN et RESP, intervention fermée)."""
+        if "printed_fiche" in fields_set:
+            raise ValidationError(
+                "printed_fiche n'est plus modifiable ici : utiliser /interventions/{id}/mark-printed"
+            )
+
+    @staticmethod
+    def validate_closed_for_archive(status_actual: Optional[str]) -> None:
+        """Règle unique d'archivage (unitaire et masse) : seule une intervention fermée."""
+        if not is_intervention_locked(status_actual):
+            raise ValidationError("Seule une intervention fermée peut être archivée")
+
+    @staticmethod
     def validate_deletable(intervention_id: str) -> None:
         """
         RÈGLE MÉTIER : Une intervention ne peut être supprimée que si elle

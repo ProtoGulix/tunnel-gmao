@@ -6,6 +6,17 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.15.2] — 2026-11-27
+
+### Corrigé
+- Onglet Fiche : le PDF s'affiche de nouveau (la politique de sécurité du proxy le bloquait).
+- Onglet Fiche : **Marquer comme imprimée** revient sur une intervention fermée, avec confirmation, pour l'archiver.
+- Archivage à l'unité soumis aux règles de l'archivage en masse : intervention fermée seulement, responsables et administrateurs seulement. Une intervention ouverte ne peut plus être marquée imprimée.
+- API : `POST /interventions/{id}/mark-printed` archive une intervention fermée ; `printed_fiche` est refusé à la création et à la modification d'une intervention.
+
+### [interne]
+- Pile de dev : politique de sécurité partielle (`object-src`, `frame-src`, `base-uri`, `frame-ancestors`), pour voir en dev ce que la production bloque.
+
 ## [5.15.1] — 2026-11-27
 
 ### Ajouté

@@ -103,6 +103,7 @@ export const PERM = {
     exportClosed: 'exports:export_closed_interventions',
     create: 'interventions:create_intervention',
     update: 'interventions:update_intervention',
+    markPrinted: 'interventions:mark_intervention_printed',
     remove: 'interventions:delete_intervention',
     requestPointage: 'interventions:request_pointage',
     createAction: 'intervention-actions:add_action',

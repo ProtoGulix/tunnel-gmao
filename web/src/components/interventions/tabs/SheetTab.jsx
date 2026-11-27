@@ -4,8 +4,9 @@
  * Affiche la fiche d'intervention en PDF dans un iframe.
  */
 
-import { Box, Flex, Button } from '@radix-ui/themes';
-import { FileText, Download, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Box, Flex, Button, Callout } from '@radix-ui/themes';
+import { FileText, Download, CheckCircle, Archive } from 'lucide-react';
 import PropTypes from 'prop-types';
 import LoadingState from '@/components/ui/LoadingState';
 
@@ -23,6 +24,62 @@ function getViewerStyles(fillHeight) {
     viewer: flexFill,
   };
 }
+
+/**
+ * Bouton « Marquer comme imprimée », ou mention « Fiche imprimée ».
+ * Le marquage archive l'intervention fermée (ADR 0041) : confirmation d'abord.
+ */
+function MarkPrinted({ printedFiche, onMarkPrinted, disabled }) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (printedFiche) {
+    return (
+      <Flex align="center" gap="1" style={{ color: 'var(--green-11)', fontSize: '14px' }}>
+        <CheckCircle size={16} />
+        <span>Fiche imprimée</span>
+      </Flex>
+    );
+  }
+  if (!onMarkPrinted) return null;
+
+  const confirm = () => {
+    setConfirming(false);
+    onMarkPrinted();
+  };
+
+  return (
+    <>
+      <Button
+        size="2"
+        variant="soft"
+        color="green"
+        onClick={() => setConfirming(true)}
+        disabled={disabled || confirming}
+      >
+        <CheckCircle size={16} />
+        Marquer comme imprimée
+      </Button>
+      {confirming && (
+        <Callout.Root color="orange" size="1" role="alertdialog" style={{ flexBasis: '100%' }}>
+          <Callout.Icon><Archive size={16} /></Callout.Icon>
+          <Callout.Text>
+            L’intervention sera archivée et ne pourra plus être rouverte.
+            <Flex gap="2" mt="2">
+              <Button size="1" color="orange" onClick={confirm}>Confirmer</Button>
+              <Button size="1" variant="soft" color="gray" onClick={() => setConfirming(false)}>Annuler</Button>
+            </Flex>
+          </Callout.Text>
+        </Callout.Root>
+      )}
+    </>
+  );
+}
+
+MarkPrinted.propTypes = {
+  printedFiche: PropTypes.bool,
+  onMarkPrinted: PropTypes.func,
+  disabled: PropTypes.bool,
+};
 
 /**
  * Composant SheetTab
@@ -60,7 +117,7 @@ export default function SheetTab({
     <Box pt="4" style={viewerStyles.root}>
       <Flex direction="column" gap="3" style={viewerStyles.list}>
         {/* Actions */}
-        <Flex gap="2" align="center">
+        <Flex gap="2" align="center" wrap="wrap">
           <Button
             size="2"
             variant="soft"
@@ -71,29 +128,11 @@ export default function SheetTab({
             Télécharger
           </Button>
 
-          {!printedFiche && onMarkPrinted && (
-            <Button
-              size="2"
-              variant="soft"
-              color="green"
-              onClick={onMarkPrinted}
-              disabled={pdfLoading}
-            >
-              <CheckCircle size={16} />
-              Marquer comme imprimée
-            </Button>
-          )}
-
-          {printedFiche && (
-            <Flex
-              align="center"
-              gap="1"
-              style={{ color: 'var(--green-11)', fontSize: '14px' }}
-            >
-              <CheckCircle size={16} />
-              <span>Fiche imprimée</span>
-            </Flex>
-          )}
+          <MarkPrinted
+            printedFiche={printedFiche}
+            onMarkPrinted={onMarkPrinted}
+            disabled={pdfLoading}
+          />
         </Flex>
 
         {/* Visualiseur PDF */}
