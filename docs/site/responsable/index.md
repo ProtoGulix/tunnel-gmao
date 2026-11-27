@@ -4,7 +4,7 @@ Ce guide s'adresse au responsable de la maintenance. Il décrit comment piloter 
 avec Tunnel : traiter les demandes, confier le travail, suivre le préventif, lire le bilan
 et garder une trace fiable des décisions.
 
-![Accueil direction technique : demandes d'intervention par statut](/captures/web-direction-accueil.webp)
+![Accueil direction technique : la file à traiter](/captures/web-direction-accueil.webp)
 
 ## Ce que votre rôle permet
 
@@ -27,8 +27,8 @@ l'utiliser, mais ces pages décrivent les écrans web.
 
 ## Les pages
 
-1. [Accueil direction technique](/responsable/accueil) : l'état des demandes en un coup
-   d'œil.
+1. [Accueil direction technique](/responsable/accueil) : ce qui attend une décision,
+   avec l'action sur chaque ligne.
 2. [Traiter les demandes](/responsable/demandes) : accepter, rejeter, supprimer.
 3. [Interventions et tâches](/responsable/interventions-taches) : créer, affecter un
    garant, clore, rouvrir.

@@ -280,6 +280,7 @@ Liste paginée des demandes avec filtres.
 | `suggested_type_inter`      | Type d'intervention suggéré par le système (`CUR`, `PRE`, etc.). `null` pour les DI humaines           |
 | `source_intervention_id`    | Intervention dont la DI est issue (constat après intervention, voir [Constats](constats.md)). `null` sinon |
 | `source_intervention_code`  | Code de cette intervention (liste et détail) |
+| `constat_id`                | Constat dont la DI est issue (le plus récent si plusieurs, liste seulement). `null` sinon |
 | `allowed_transitions`       | Liste des statuts cibles que l'utilisateur courant peut demander maintenant (graphe des transitions, clôture exclue tant que l'intervention liée est ouverte, vide sans la permission de transition). Présent dans la liste, le détail et la réponse de `POST /{id}/transition` ; les clients l'utilisent sans recopier les règles |
 
 > `facets.statut` : tous les statuts avec leur compteur. Les filtres `machine_id` et `search` sont appliqués, mais pas `statut` — permet d'afficher tous les onglets même quand un est sélectionné.

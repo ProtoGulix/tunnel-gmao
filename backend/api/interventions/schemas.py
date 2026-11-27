@@ -174,6 +174,8 @@ class InterventionOut(BaseModel):
     request: Optional[InterventionRequestListItem] = None  # type: ignore[name-defined]
     next_due_date: Optional[date] = None
     overdue: bool = False
+    last_activity_date: Optional[date] = None
+    days_without_action: Optional[int] = None
     plan_id: Optional[UUID] = None
     task_progress: Optional[TaskProgressOut] = None
     tasks: List[InterventionTaskOut] = []

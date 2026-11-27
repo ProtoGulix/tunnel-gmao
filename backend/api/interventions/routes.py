@@ -126,6 +126,11 @@ def list_interventions(
     reported_to: date | None = Query(
         None, description="Déclarées jusqu'à cette date (AAAA-MM-JJ, incluse)"
     ),
+    idle: bool = Query(
+        False,
+        description="true : non fermées, sans action depuis REMINDER_INTERVAL_DAYS jours "
+        "(même règle que la relance)",
+    ),
 ) -> Dict[str, Any]:
     """Liste interventions avec filtres/sort et stats optionnelles (sans actions)"""
     intervention_repo = InterventionRepository()
@@ -155,6 +160,7 @@ def list_interventions(
         types=types,
         reported_from=reported_from,
         reported_to=reported_to,
+        idle=idle,
     )
     total = intervention_repo.count_all(
         search=search,
@@ -167,6 +173,7 @@ def list_interventions(
         types=types,
         reported_from=reported_from,
         reported_to=reported_to,
+        idle=idle,
     )
     return paginated(items, total=total, offset=skip, limit=limit, audit_entity="intervention")
 

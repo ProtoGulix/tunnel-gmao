@@ -1,20 +1,18 @@
 /**
- * @fileoverview Données de la vue "direction technique" : demandes
- * d'intervention filtrables par site (équipement racine).
+ * @fileoverview Données de la vue "direction technique" : demandes à qualifier,
+ * filtrables par site (équipement racine).
  * @module hooks/home/useTechnicalDirectionRequests
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  fetchInterventionRequests,
-  fetchInterventionRequestStatuses,
-} from '@/api/intervention-requests';
+import { fetchInterventionRequests } from '@/api/intervention-requests';
+import { TO_QUALIFY_STATUSES } from '@/hooks/home/requestQueue';
 
-const PAGE_SIZE = 100;
+// Maximum de l'API : seules les demandes à qualifier sont chargées, la file reste complète.
+const PAGE_SIZE = 500;
 
 export function useTechnicalDirectionRequests({ siteId } = {}) {
   const [items, setItems] = useState([]);
-  const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,17 +20,13 @@ export function useTechnicalDirectionRequests({ siteId } = {}) {
     setLoading(true);
     setError(null);
     try {
-      const [reqRes, statutList] = await Promise.all([
-        fetchInterventionRequests({
-          limit: PAGE_SIZE,
-          excludeStatuses: 'rejetee',
-          machineId: siteId || undefined,
-          includeDescendants: siteId ? true : undefined,
-        }),
-        fetchInterventionRequestStatuses(),
-      ]);
-      setItems(reqRes.items);
-      setStatuses(statutList.filter((s) => s.code !== 'rejetee'));
+      const res = await fetchInterventionRequests({
+        limit: PAGE_SIZE,
+        statut: TO_QUALIFY_STATUSES.join(','),
+        machineId: siteId || undefined,
+        includeDescendants: siteId ? true : undefined,
+      });
+      setItems(res.items);
     } catch (err) {
       setError(err);
     } finally {
@@ -42,5 +36,5 @@ export function useTechnicalDirectionRequests({ siteId } = {}) {
 
   useEffect(() => { load(); }, [load]);
 
-  return { items, statuses, loading, error, reload: load };
+  return { items, loading, error, reload: load };
 }

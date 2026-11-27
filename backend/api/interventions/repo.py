@@ -1,6 +1,6 @@
 import logging
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
@@ -22,7 +22,9 @@ from api.intervention_status_log.repo import InterventionStatusLogRepository
 from api.intervention_tasks.validators import task_delete_blocker
 from api.interventions.types import check_allowed_for_machine, check_assignable, check_known
 from api.interventions.validators import is_intervention_locked, is_reopening
+from api.jobs.repo import LAST_ACTIVITY_SQL, OPEN_INTERVENTION_SQL
 from api.preventive_occurrences.cascade import attach_occurrence
+from api.settings import settings
 from api.utils.search import build_search_clause
 from api.utils.status_log import skip_request_status_log
 
@@ -121,6 +123,25 @@ class InterventionRepository:
             params.append(reported_to)
         return clauses, params
 
+    @staticmethod
+    def _add_idle_filter(where_clauses: List[str], params: List[Any], idle: bool) -> None:
+        """Filtre `idle` : non fermée, sans activité depuis REMINDER_INTERVAL_DAYS jours
+        (définition partagée avec le job de relance, api/jobs/repo.py)."""
+        if not idle:
+            return
+        where_clauses.append(f"{OPEN_INTERVENTION_SQL} AND {LAST_ACTIVITY_SQL} <= %s")
+        params.append(date.today() - timedelta(days=settings.REMINDER_INTERVAL_DAYS))
+
+    @staticmethod
+    def _set_inactivity(row: Dict[str, Any]) -> None:
+        """Dernière activité et jours sans action ; null pour une intervention fermée."""
+        last = row.get('last_activity_date')
+        if row.get('status_actual') == 'ferme' or last is None:
+            row['last_activity_date'] = None
+            row['days_without_action'] = None
+        else:
+            row['days_without_action'] = (date.today() - last).days
+
     def get_all(
         self,
         limit: int = 100,
@@ -138,6 +159,7 @@ class InterventionRepository:
         types: List[str] | None = None,
         reported_from: date | None = None,
         reported_to: date | None = None,
+        idle: bool = False,
     ) -> List[Dict[str, Any]]:
         """Récupère interventions avec filtres/sort et stats calculées en SQL (sans actions)"""
         # Garde-fou: limit max 1000
@@ -191,6 +213,7 @@ class InterventionRepository:
         extra_clauses, extra_params = self._type_and_date_filters(types, reported_from, reported_to)
         where_clauses.extend(extra_clauses)
         params.extend(extra_params)
+        self._add_idle_filter(where_clauses, params, idle)
 
         where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 
@@ -228,6 +251,7 @@ class InterventionRepository:
             query = f"""
                 SELECT
                     i.*,
+                    {LAST_ACTIVITY_SQL} AS last_activity_date,
                     ir.id        AS req_id,
                     ir.code      AS req_code,
                     ir.demandeur_nom, ir.demandeur_service_legacy AS demandeur_service, ir.description AS req_description,
@@ -306,7 +330,7 @@ class InterventionRepository:
                 {_TASKS_JSON_LATERAL if include_tasks else ''}
                 {" ".join(joins)}
                 {where_sql}
-                GROUP BY i.id, ir.id, ir.code, ir.demandeur_nom, ir.demandeur_service_legacy, ir.description, ir.statut, rs2.label, rs2.color, ir.intervention_id, ir.created_at, ir.updated_at, m.id, pm.id, pm.code, pm.name, ec.id, task_agg.task_total, task_agg.task_todo, task_agg.task_in_progress, task_agg.task_done, task_agg.task_skipped, task_agg.task_blocking_pending, task_agg.next_due_date, pr_agg.pr_total, pr_agg.pr_received, pr_agg.pr_to_qualify, pr_agg.pr_no_supplier_ref, pr_agg.pr_pending_dispatch, pr_agg.pr_rejected, pr_agg.pr_consultation, pr_agg.pr_partial, pr_agg.pr_ordered, pr_agg.pr_quoted, pr_agg.pr_open
+                GROUP BY i.id, last_activity_date, ir.id, ir.code, ir.demandeur_nom, ir.demandeur_service_legacy, ir.description, ir.statut, rs2.label, rs2.color, ir.intervention_id, ir.created_at, ir.updated_at, m.id, pm.id, pm.code, pm.name, ec.id, task_agg.task_total, task_agg.task_todo, task_agg.task_in_progress, task_agg.task_done, task_agg.task_skipped, task_agg.task_blocking_pending, task_agg.next_due_date, pr_agg.pr_total, pr_agg.pr_received, pr_agg.pr_to_qualify, pr_agg.pr_no_supplier_ref, pr_agg.pr_pending_dispatch, pr_agg.pr_rejected, pr_agg.pr_consultation, pr_agg.pr_partial, pr_agg.pr_ordered, pr_agg.pr_quoted, pr_agg.pr_open
                 {',' + 'it_agg.tasks_json::text' if include_tasks else ''}
                 {order_sql}
                 LIMIT %s OFFSET %s
@@ -470,6 +494,7 @@ class InterventionRepository:
                     ]:
                         row_dict.pop(key, None)
 
+                self._set_inactivity(row_dict)
                 row_dict['is_locked'] = is_intervention_locked(row_dict.get('status_actual'))
                 row_dict['actions'] = []  # Vide pour get_all
                 row_dict['status_logs'] = []  # Vide pour get_all
@@ -516,6 +541,7 @@ class InterventionRepository:
         types: List[str] | None = None,
         reported_from: date | None = None,
         reported_to: date | None = None,
+        idle: bool = False,
     ) -> int:
         """Compte le nombre total d'interventions correspondant aux filtres de get_all()"""
         priorities_norm = None
@@ -563,6 +589,7 @@ class InterventionRepository:
         extra_clauses, extra_params = self._type_and_date_filters(types, reported_from, reported_to)
         where_clauses.extend(extra_clauses)
         params.extend(extra_params)
+        self._add_idle_filter(where_clauses, params, idle)
 
         where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 

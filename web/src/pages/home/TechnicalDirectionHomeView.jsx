@@ -1,37 +1,66 @@
 /**
- * @fileoverview Vue d'accueil "direction technique" : résumé compact des demandes
- * d'intervention (compteurs par statut générique, DI non traitées depuis longtemps), sans
- * kanban : à ce volume (105+ DI, 31 "Nouvelle") les colonnes deviennent illisibles et
- * dupliquent la liste de /interventions?tab=demandes.
+ * @fileoverview Vue d'accueil "direction technique" : file « à traiter », une section par
+ * sujet (voir buildQueueSections), section vide masquée. Liste à gauche, détail de la ligne choisie à droite.
  * @module pages/home/TechnicalDirectionHomeView
  */
 
-import { useState } from 'react';
-import { Container, Flex, Select, Text, Box, Heading } from '@radix-ui/themes';
-import { ClipboardList } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { ClipboardList, ListChecks } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
-import ErrorState from '@/components/ui/ErrorState';
+import MasterDetailLayout from '@/components/ui/MasterDetailLayout';
 import SpontaneousInterventionRequestModal from '@/components/home/SpontaneousInterventionRequestModal';
-import StandardRequestsSummary from '@/pages/home/StandardRequestsSummary';
+import AcceptRequestDialog from '@/components/home/AcceptRequestDialog';
+import SiteFilter from '@/components/home/SiteFilter';
+import QueueSections from '@/components/home/QueueSections';
+import QueueNotices from '@/components/home/QueueNotices';
+import QueueDetail from '@/components/home/QueueDetail';
+import { PERM } from '@/auth/permissionCodes';
+import { usePermissions } from '@/auth/usePermissions';
 import { useSiteOptions } from '@/hooks/home/useSiteOptions';
 import { useTechnicalDirectionRequests } from '@/hooks/home/useTechnicalDirectionRequests';
+import { useInterventionQueue, failedLabels } from '@/hooks/home/useInterventionQueue';
+import { useQueueAnticipate } from '@/hooks/home/useQueueAnticipate';
+import { useRequestQueueActions } from '@/hooks/home/useRequestQueueActions';
+import { useQueueSelection } from '@/hooks/home/useQueueSelection';
+import { buildQueueSections, flattenQueue, parseRowKey } from '@/hooks/home/requestQueue';
 
 export default function TechnicalDirectionHomeView() {
   const [site, setSite] = useState('');
   const siteOptions = useSiteOptions();
-  const { items, statuses, loading, error, reload } =
-    useTechnicalDirectionRequests({ siteId: site });
+  const requests = useTechnicalDirectionRequests({ siteId: site });
+  const queue = useInterventionQueue({ siteId: site });
+  const { can } = usePermissions();
+  const reload = useCallback(
+    () => Promise.all([requests.reload(), queue.reload()]),
+    // Les deux reload sont stables (useCallback) ; la règle réclamerait les objets entiers
+    [requests.reload, queue.reload], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const [createModal, setCreateModal] = useState(false);
+  const [accepting, setAccepting] = useState(null);
+  const actions = useRequestQueueActions({ onDone: reload });
+  const anticipate = useQueueAnticipate({ onDone: reload });
+  const sections = useMemo(
+    () => buildQueueSections({ ...queue, requests: requests.items }),
+    [queue.urgent, queue.waiting, queue.idle, queue.preventive, requests.items], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const lines = useMemo(() => flattenQueue(sections), [sections]);
+  const keys = useMemo(() => lines.map((l) => l.key), [lines]);
+  const failed = failedLabels({ ...queue.errors, ...(requests.error && { requests: requests.error }) });
+  const [selectedKey, select] = useQueueSelection(keys, failed.length > 0);
+  const target = parseRowKey(selectedKey);
 
-  if (loading && items.length === 0) return <LoadingState fullscreen message="Chargement des demandes…" />;
-  if (error) return <ErrorState error={error} />;
+  if ((requests.loading || queue.loading) && sections.length === 0) {
+    return <LoadingState fullscreen message="Chargement de la file…" />;
+  }
 
   return (
-    <>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0 }}>
       <PageHeader
         title="Direction technique"
-        subtitle="Demandes d'intervention par statut"
+        subtitle="À traiter"
         actions={[
           {
             label: "Demande d'inter",
@@ -47,30 +76,47 @@ export default function TechnicalDirectionHomeView() {
         onSuccess={reload}
       />
 
-      <Container size="4">
-        {siteOptions.length > 0 && (
-        <Flex justify="end" mb="4">
-          <Select.Root value={site || '__all__'} onValueChange={(v) => setSite(v === '__all__' ? '' : v)}>
-            <Select.Trigger />
-            <Select.Content>
-              <Select.Item value="__all__">Tous les sites</Select.Item>
-              {siteOptions.map((o) => (
-                <Select.Item key={o.value} value={o.value}>{o.label}</Select.Item>
-              ))}
-            </Select.Content>
-          </Select.Root>
-        </Flex>
-        )}
+      <AcceptRequestDialog
+        request={accepting}
+        onClose={() => setAccepting(null)}
+        onAccept={async (request, data) => {
+          if (await actions.accept(request, data)) setAccepting(null);
+        }}
+      />
 
-        <Box mb="6">
-          <Heading size="4" mb="3">Demandes d&rsquo;intervention</Heading>
-          <StandardRequestsSummary items={items} statuses={statuses} />
-        </Box>
+      <QueueNotices anticipateError={anticipate.error} failed={failed} />
 
-        {items.length === 0 && (
-          <Text color="gray">Aucune demande.</Text>
-        )}
-      </Container>
-    </>
+      <Box px="4" pt="3" style={{ flex: 1, minHeight: 500, overflow: 'hidden' }}>
+        <MasterDetailLayout
+          freeDetail
+          ratio="40% 1fr"
+          masterProps={{
+            icon: ListChecks,
+            title: 'À traiter',
+            count: lines.length,
+            headerExtra: <SiteFilter options={siteOptions} value={site} onChange={setSite} />,
+            children: lines.length === 0 && failed.length === 0
+              ? <Text as="p" color="gray" m="3">Rien à traiter.</Text>
+              : <QueueSections sections={sections} selectedKey={selectedKey} onSelect={select} />,
+          }}
+          detailChildren={target ? (
+            <QueueDetail
+              target={target}
+              row={lines.find((l) => l.key === selectedKey)?.row}
+              requests={requests.items}
+              canAnticipate={can(PERM.preventive.anticipate)}
+              anticipate={anticipate}
+              onAccept={setAccepting}
+              onChanged={reload}
+            />
+          ) : null}
+          emptyLabel="Sélectionnez une ligne pour voir son détail"
+        />
+      </Box>
+
+      <Flex justify="end" px="4" py="2">
+        <Link to="/interventions?tab=demandes">Toutes les demandes</Link>
+      </Flex>
+    </Flex>
   );
 }

@@ -363,6 +363,7 @@ class InterventionRequestRepository:
                     ir.intervention_id,
                     ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
                     src.code AS source_intervention_code,
+                    ct.constat_id,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
                     {_SERVICE_COLS},
@@ -370,10 +371,16 @@ class InterventionRequestRepository:
                     {_DI_TASKS_COLS}
                 FROM intervention_request ir
                 LEFT JOIN request_status_ref rs ON ir.statut = rs.code
+                -- Constat dont la demande est issue : un seul par demande (le plus récent)
+                LEFT JOIN LATERAL (
+                    SELECT c.id AS constat_id FROM constat c
+                    WHERE c.request_id = ir.id
+                    ORDER BY c.created_at DESC, c.id LIMIT 1
+                ) ct ON TRUE
                 LEFT JOIN intervention src ON src.id = ir.source_intervention_id
                 {_EQUIPEMENT_JOINS}
                 {where_sql}
-                GROUP BY ir.id, rs.label, rs.color, src.code, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
+                GROUP BY ir.id, rs.label, rs.color, src.code, ct.constat_id, m.id, pm.id, pm.code, pm.name, ec.id, s.id,
                          iv.id, ivs.label, ivs.color,
                          iv_stats.action_count, iv_stats.total_time, iv_stats.avg_complexity, iv_stats.purchase_count,
                          di_tasks.tasks_json::text

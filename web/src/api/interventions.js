@@ -8,6 +8,7 @@ function buildTypeAndDateParams(filters) {
   if (filters.typeInter) params.type_inter = filters.typeInter;
   if (filters.reportedFrom) params.reported_from = filters.reportedFrom;
   if (filters.reportedTo) params.reported_to = filters.reportedTo;
+  if (filters.idle) params.idle = true; // non fermées sans action depuis le seuil de relance
   return params;
 }
 

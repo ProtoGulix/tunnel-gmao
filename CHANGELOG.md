@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## Non publié
+
+### Ajouté
+- API : `GET /interventions?idle=true` liste les interventions sans action depuis `REMINDER_INTERVAL_DAYS` jours (même règle que la relance) ; chaque ligne porte `last_activity_date` et `days_without_action`.
+- API : `GET /intervention-requests` porte `constat_id` (constat dont la demande est issue).
+- Web : l'accueil direction devient une file « à traiter » ; première section « Demandes à qualifier » (anciennes d'abord, avec la description), puis urgentes, en attente (avec les achats non reçus), sans action (avec le nombre de jours) et préventif en retard ou proche (ouvrir l'intervention ou la demande liée, sinon lancer). La file est à gauche, le détail de la ligne choisie à droite, sans changer de page : accepter ou rejeter une demande, ouvrir une intervention, lancer une échéance en avance ; la ligne suivante est ensuite sélectionnée, et la sélection figure dans l'adresse. Une échéance dont la demande est à qualifier n'est pas répétée en « Préventif ». Le filtre de site s'applique à toutes les sections. Les compteurs par statut sont retirés.
+
 ## [5.15.2] — 2026-11-27
 
 ### Corrigé

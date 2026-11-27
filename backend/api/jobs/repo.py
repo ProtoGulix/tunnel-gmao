@@ -6,6 +6,15 @@ from typing import Any, Dict, List
 from api.db import get_connection, release_connection
 from api.errors.exceptions import raise_db_error
 
+# Définition unique de « sans action » : partagée par le job de relance et les listes
+# d'interventions (alias SQL `i` = intervention). Dernière activité = dernière action
+# (created_at::date, ADR 0021), à défaut la date de signalement.
+OPEN_INTERVENTION_SQL = "i.status_actual IS DISTINCT FROM 'ferme'"
+LAST_ACTIVITY_SQL = (
+    "COALESCE((SELECT MAX(ia_last.created_at::date) FROM intervention_action ia_last "
+    "WHERE ia_last.intervention_id = i.id), i.reported_date)"
+)
+
 
 class JobsRepository:
     """Lectures des étapes de la tâche quotidienne."""
@@ -46,15 +55,13 @@ class JobsRepository:
         try:
             cur = conn.cursor()
             cur.execute(
-                """
+                f"""
                 SELECT i.id, i.code, m.code AS machine_code,
-                       COALESCE(MAX(ia.created_at::date), i.reported_date) AS last_activity
+                       {LAST_ACTIVITY_SQL} AS last_activity
                 FROM intervention i
                 LEFT JOIN machine m ON m.id = i.machine_id
-                LEFT JOIN intervention_action ia ON ia.intervention_id = i.id
-                WHERE i.status_actual IS DISTINCT FROM 'ferme'
-                GROUP BY i.id, i.code, m.code, i.reported_date
-                HAVING COALESCE(MAX(ia.created_at::date), i.reported_date) IS NOT NULL
+                WHERE {OPEN_INTERVENTION_SQL}
+                  AND {LAST_ACTIVITY_SQL} IS NOT NULL
                 ORDER BY last_activity
                 """
             )

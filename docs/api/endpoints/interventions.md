@@ -55,6 +55,7 @@ Liste les interventions avec filtres, tri et pagination.
 | `type_inter`    | csv    | —      | Filtrer par type (`CUR,PRE`…, codes de `GET /interventions/types`). Code inconnu : `400` |
 | `reported_from` | date   | —      | Déclarées à partir de cette date (`AAAA-MM-JJ`, incluse, sur `reported_date`) |
 | `reported_to`   | date   | —      | Déclarées jusqu'à cette date (incluse). `reported_from` > `reported_to` : `400` |
+| `idle`          | bool   | `false` | `true` : non fermées, sans action depuis `REMINDER_INTERVAL_DAYS` jours (même règle que la relance) |
 | `sort`          | csv    | —      | Tri avec `-` pour DESC (ex: `-priority,-reported_date,-next_due_date`)  |
 | `include`       | csv    | —      | Données optionnelles (`stats`). Stats incluses par défaut               |
 
@@ -459,6 +460,8 @@ Détail complet d'une intervention. **La structure est différente de la liste**
 | `task_progress`        | Absent (non retourné en liste)                                                 | Objet [TaskProgressOut](intervention-tasks.md#get-intervention-tasksprogress) (`total`, `todo`, `in_progress`, `done`, `skipped`, `is_complete`). `null` si `plan_id` est null                                                     |
 | `tasks`                | Absent (non retourné en liste)                                                 | Tableau de [InterventionTaskOut](intervention-tasks.md) — tâches de l'intervention. `[]` si `plan_id` est null                                                                                                                     |
 | `next_due_date`        | `date\|null` — MIN des `due_date` des tâches. `null` si aucune tâche avec due_date | Idem                                                                                                                                                                                                                          |
+| `last_activity_date`   | `date\|null` — dernière action, à défaut date de signalement. `null` si fermée | Idem |
+| `days_without_action`  | `int\|null` — jours depuis `last_activity_date`. `null` si fermée | Idem |
 | `overdue`              | `bool` — `true` si `next_due_date < aujourd'hui`                               | Idem                                                                                                                                                                                                                               |
 | `stats.purchase_count` | Égal à `stats.purchase_requests.total` (même source)                          | Égal à `stats.purchase_requests.total` (même source)                                                                                                                                                                              |
 | `stats.tasks`          | Calculé en SQL (LATERAL subquery)                                              | Calculé en SQL (query dédiée). Champs : `total`, `todo`, `in_progress`, `done`, `skipped`, `blocking_pending` (non-optionnelles en todo/in_progress — bloque la clôture)                                                          |
