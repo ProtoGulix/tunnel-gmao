@@ -14,7 +14,7 @@ pytestmark = pytest.mark.integration
 
 # Comptes attendus sur 277 endpoints : à mettre à jour avec les règles de
 # db/default_permissions.py quand une route est ajoutée.
-EXPECTED_ALLOWED = {"ADMIN": 277, "RESP": 241, "TECH": 133, "ACHETEUR": 167, "MCP": 120}
+EXPECTED_ALLOWED = {"ADMIN": 278, "RESP": 242, "TECH": 133, "ACHETEUR": 167, "MCP": 120}
 
 
 def _allowed_by_role(instance):

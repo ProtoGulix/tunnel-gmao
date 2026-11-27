@@ -115,7 +115,6 @@ export async function createIntervention(data) {
 export async function updateIntervention(id, updates) {
   const payload = {};
   if (updates.priority !== undefined) payload.priority = updates.priority;
-  if (updates.printedFiche !== undefined) payload.printed_fiche = updates.printedFiche;
   if (updates.title !== undefined) payload.title = updates.title;
   if (updates.status !== undefined) payload.status_actual = updates.status;
   if (updates.reason_code !== undefined) payload.reason_code = updates.reason_code;
@@ -163,6 +162,12 @@ async function readBlobErrorMessage(error) {
   return error?.response?.status === 429
     ? 'Trop de demandes : réessayez dans une minute'
     : "L'export a échoué";
+}
+
+/** Archive une intervention fermée (fiche marquée imprimée). Retourne { marked }. */
+export async function markInterventionPrinted(id) {
+  const response = await api.post(`/interventions/${id}/mark-printed`);
+  return response.data;
 }
 
 /**

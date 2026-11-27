@@ -9,6 +9,7 @@ from api.audits.middleware import REASON_CODE_ATTR, REASON_TEXT_ATTR
 from api.auth.permissions import check_matrix, require_authenticated
 from api.equipements.schemas import EquipementDetail
 from api.errors.exceptions import ForbiddenError, UnauthorizedError
+from api.exports.repo import ExportRepository
 from api.intervention_actions.repo import InterventionActionRepository
 from api.intervention_actions.schemas import InterventionActionOut
 
@@ -227,6 +228,7 @@ def create_intervention(data: InterventionCreate, request: Request):
     **Audit** : routinier (règle d'audit `intervention`), aucun motif demandé : le middleware
     injecte `ROUTINE`. Un `reason_code` envoyé reste validé (`OTHER` exige `reason_text`).
     """
+    InterventionValidator.reject_printed_fiche(data.model_fields_set)
     _require_secondary_permissions(request, data)
     payload = data.model_dump(exclude_none=True, exclude={"request", "tasks"})
     InterventionValidator.validate_request_required(payload, has_new_request=bool(data.request))
@@ -258,6 +260,7 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
     sinon 400 « reason_code obligatoire » avec les motifs dans `audit`. La demande liée
     clôturée repasse `acceptee` dans la même transaction, avec un événement du système.
     """
+    InterventionValidator.reject_printed_fiche(data.model_fields_set)
     InterventionValidator.validate_reported_date_not_null(data.model_fields_set, data.model_dump())
     repo = InterventionRepository()
     if data.status_actual is not None:
@@ -269,6 +272,24 @@ def update_intervention(intervention_id: str, data: InterventionIn, request: Req
                 list_entity_reasons("intervention"),
             )
     return single(repo.update(intervention_id, data.model_dump(exclude_none=True)))
+
+
+# events_only : le repo d'export dépose l'événement `printed_fiche_changed` (même audit que la masse).
+@router.post(
+    "/{intervention_id}/mark-printed",
+    dependencies=[audit("intervention", events_only=True)],
+)
+def mark_intervention_printed(intervention_id: str, request: Request):
+    """
+    Archive une intervention fermée (marque sa fiche imprimée), irrévocable.
+
+    Même règle et même audit que l'archivage en masse. Idempotent : `marked` vaut 1 si la
+    fiche vient d'être marquée, 0 si elle l'était déjà. 400 si l'intervention n'est pas
+    fermée. Réservé à ADMIN et RESP (matrice des droits).
+    """
+    current = InterventionRepository().get_by_id(intervention_id, include_actions=False)
+    InterventionValidator.validate_closed_for_archive(current.get("status_actual"))
+    return single({"marked": ExportRepository().mark_interventions_printed([intervention_id])})
 
 
 @router.post(

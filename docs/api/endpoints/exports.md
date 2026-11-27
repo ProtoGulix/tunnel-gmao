@@ -110,8 +110,8 @@ des statuts.
 ### Audit
 
 Chaque fiche réellement marquée (passée de faux à vrai) écrit une ligne `audit_log`
-`printed_fiche_changed` sur l'entité `intervention`, comme le `PUT /interventions/{id}`
-unitaire : motif routinier de l'entité, sans saisie de motif par l'utilisateur, auteur pris
+`printed_fiche_changed` sur l'entité `intervention`, comme `POST /interventions/{id}/mark-printed`
+(archivage à l'unité) : motif routinier de l'entité, sans saisie de motif par l'utilisateur, auteur pris
 du jeton (`changed_by`). L'écriture se fait dans la même transaction : si elle échoue,
 aucune fiche n'est marquée. Rien n'est tracé pour une fiche déjà imprimée.
 

@@ -518,7 +518,6 @@ Crée une nouvelle intervention, avec au besoin sa demande et ses tâches, **en 
 | `priority`      | string | non     | null     | `faible`, `normale`, `important`, `urgent`                                                                                                                                                                                                                  |
 | `reported_by`   | string | non     | null     | Nom du signaleur                                                                                                                                                                                                                                            |
 | `status_actual` | string | non     | `ouvert` | Code statut initial (géré par trigger)                                                                                                                                                                                                                      |
-| `printed_fiche` | bool   | non     | `false`  | Fiche imprimée ?                                                                                                                                                                                                                                            |
 | `reported_date` | date   | non     | date du jour | Date de signalement ; absente ou null, le serveur pose la date du jour (idem à la création depuis une demande) |
 | `request_id`    | uuid   | **un des deux** | —        | UUID de la demande dont l'intervention est issue (ADR 0019 : une intervention vient toujours d'une demande ; statuts `nouvelle` ou `en_attente`). La demande passe automatiquement à `acceptee`. La liaison est **verrouillée** : la demande et l'intervention ne peuvent ensuite plus être liées à d'autres entités (`400` sinon). |
 | `request`       | objet  | **un des deux** | —        | Nouvelle demande créée dans la même transaction (voir ci-dessous). Exclusif avec `request_id` : les deux, ou aucun, donnent `422`. |
@@ -555,6 +554,8 @@ Intervention complète avec equipement, `request` (objet demande, qu'elle ait é
 
 Met à jour une intervention. Même body que POST, tous les champs sont optionnels.
 
+> **Archivage** : `printed_fiche` est refusé (`400`) en création comme en mise à jour ; utiliser `POST /interventions/{id}/mark-printed`.
+
 > **Date de signalement** : `reported_date` absente du corps = inchangée ; explicitement `null` = `400` ("La date de signalement ne peut pas être vide").
 
 > **Motif** : routinier, aucun `reason_code` requis (`ROUTINE` injecté) — voir [Audit Log](audit-log.md#règle-commune--motif-selon-la-règle-daudit).
@@ -570,6 +571,24 @@ Met à jour une intervention. Même body que POST, tous les champs sont optionne
 ### Réponse `200`
 
 Intervention complète mise à jour.
+
+---
+
+## `POST /interventions/{id}/mark-printed`
+
+Archive une intervention fermée : `printed_fiche` passe à vrai, irrévocablement (ADR 0041). Même règle et même audit (`printed_fiche_changed`, routinier) que `POST /exports/interventions/closed/mark-printed`. Réservé à ADMIN et RESP. Pas de corps.
+
+### Réponse `200`
+
+`{"marked": 1}` si la fiche vient d'être marquée, `{"marked": 0}` si elle l'était déjà.
+
+### Erreurs
+
+| Code | Cas |
+| --- | --- |
+| `400` | Intervention non fermée |
+| `403` | Rôle autre qu'ADMIN ou RESP |
+| `404` | Intervention introuvable |
 
 ---
 

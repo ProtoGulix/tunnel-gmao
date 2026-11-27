@@ -63,6 +63,8 @@ BULK_EXPORT_PATHS = (
     "/exports/interventions/closed",
     "/exports/interventions/closed/mark-printed",
     "/exports/interventions/closed/preview",
+    # Archivage à l'unité : même réserve que la masse (écriture irrévocable)
+    "/interventions/{intervention_id}/mark-printed",
 )
 
 # --- Zones fermées en lecture aux rôles non-ADMIN ------------------------------------

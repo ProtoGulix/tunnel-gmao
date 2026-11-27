@@ -41,6 +41,10 @@ Une intervention fermée reste dans le groupe **À archiver** tant que sa fiche 
 marquée imprimée. Archiver une intervention, c'est marquer sa fiche imprimée : elle sort
 alors des listes, et l'historique de l'équipement la montre avec le badge « Archivée ».
 
+Pour une seule intervention fermée : onglet **Fiche**, **Marquer comme imprimée**, puis
+**Confirmer**. Mêmes règles que l'archivage en masse : intervention fermée seulement,
+réservé aux responsables et aux administrateurs.
+
 Pour archiver d'un coup les interventions fermées d'une période, sans les imprimer, ouvrez
 **Exporter les fiches fermées**, choisissez la période (et un équipement si besoin), puis,
 dans le bloc **Archiver**, cliquez sur **Archiver N fiches** et confirmez. Les limites sont

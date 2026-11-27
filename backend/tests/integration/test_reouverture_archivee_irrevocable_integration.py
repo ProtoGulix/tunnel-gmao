@@ -44,7 +44,7 @@ def test_defaire_l_archive_par_l_api_est_refuse(client, admin, instance):
     intervention_id = _archivee(client, admin, instance)
     resp = _put(client, admin, intervention_id, printed_fiche=False)
     assert resp.status_code == 400, resp.text
-    assert IRREVOCABLE in resp.text
+    assert "mark-printed" in resp.text  # refus du champ ; l'irrévocabilité reste garantie en SQL
     assert _etat(instance, intervention_id)[0] is True
 
 
@@ -85,9 +85,10 @@ def test_rouvrir_en_sql_avec_le_role_applicatif_est_refuse(client, admin, instan
     assert _etat(instance, intervention_id) == (True, "ferme")
 
 
-def test_marquer_archivee_reste_permis(client, admin, instance):
+def test_marquer_archivee_par_la_route_dediee(client, admin, instance):
     intervention_id, _ = intervention_liee(client, admin, instance)
-    resp = _put(client, admin, intervention_id, printed_fiche=True)
+    assert _put(client, admin, intervention_id, status_actual="ferme").status_code == 200
+    resp = client.post(f"/interventions/{intervention_id}/mark-printed", headers=admin.headers)
     assert resp.status_code == 200, resp.text
     assert _etat(instance, intervention_id)[0] is True
 
@@ -96,7 +97,7 @@ def test_modifier_une_intervention_archivee_sans_toucher_aux_champs_reste_permis
     client, admin, instance
 ):
     intervention_id = _archivee(client, admin, instance, fermee=True)
-    resp = _put(client, admin, intervention_id, title="Titre modifié", printed_fiche=True)
+    resp = _put(client, admin, intervention_id, title="Titre modifié")
     assert resp.status_code == 200, resp.text
     assert _etat(instance, intervention_id) == (True, "ferme")
 
