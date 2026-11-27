@@ -2,6 +2,8 @@
 
 Écran : **Administration**, onglet **Rôles & Permissions**.
 
+![Administration, onglet Rôles & Permissions : matrice des droits, une colonne par rôle et un interrupteur par permission](/captures/web-admin-roles.webp)
+
 La matrice liste, ligne par ligne, chaque action que l'application permet (une méthode
 comme GET ou POST et son chemin, avec une description). Chaque colonne est un rôle. Un
 interrupteur actif signifie que le rôle a le droit.
@@ -52,6 +54,8 @@ Trois vues existent :
 
 Sans réglage, un rôle garde la vue technicien. Choisissez la vue dans la liste de la
 colonne du rôle.
+
+![Haut de la matrice : colonnes des rôles, ligne Vue d'accueil avec une liste par rôle, puis les premières permissions](/captures/web-admin-roles-vue-accueil.webp)
 
 ## Les clés d'API (MCP)
 

@@ -21,15 +21,19 @@ Ouvrez **Interventions**. L'onglet « Interventions » est en deux parties.
 Le menu « ⋯ » de l'en-tête propose « Demander le pointage », « Copier le code » et
 « Supprimer ».
 
+![Menu ⋯ de l'en-tête : Demander le pointage, Copier le code, Supprimer](/captures/web-direction-intervention-menu.webp)
+
 Le bouton **Exporter les fiches fermées** (en haut de la page) ouvre la fenêtre « Fiches
 fermées : exporter ou archiver ». Choisissez la période de fermeture et, si besoin, un
-équipement : la fenêtre affiche aussitôt le nombre de fiches concernées (100 au maximum,
+équipement (la case **Inclure les fiches déjà imprimées** ajoute celles déjà archivées) : la fenêtre affiche aussitôt le nombre de fiches concernées (100 au maximum,
 rangées par équipement puis par date de fermeture). Deux blocs proposent ensuite d'agir sur
 ces fiches.
 
 - **Exporter** : imprimer en PDF ou télécharger en ZIP. Une fois les fiches imprimées,
   **Marquer ces fiches comme imprimées** les archive.
 - **Archiver** : archiver les fiches sans les imprimer (voir ci-dessous).
+
+![Fenêtre Fiches fermées : période d'octobre, 15 fiches trouvées, blocs Exporter et Archiver](/captures/web-direction-export-fiches.webp)
 
 ### Archiver des interventions fermées
 
@@ -47,6 +51,8 @@ intervention archivée ne peut plus être rouverte (la base de données le refus
 reprendre le travail sur un équipement, créez une nouvelle intervention. Vérifiez la période
 avant de confirmer.
 
+![Confirmation d'archivage de 15 fiches, avec le rappel que l'archivage est irrévocable](/captures/web-direction-export-archiver.webp)
+
 ## Créer une intervention
 
 Cliquez sur **Nouvelle intervention**. La fenêtre est la même depuis la page
@@ -59,6 +65,8 @@ Interventions et depuis la [Coordination](/responsable/coordination).
    **priorité**. Le type, le technicien et la date sont obligatoires.
 4. Cliquez sur **Enregistrer**.
 
+![Fenêtre Nouvelle intervention : l'équipement choisi, sa demande ouverte sélectionnée à gauche, puis date, technicien pilote, type et priorité](/captures/web-direction-intervention-creation.webp)
+
 Si vous avez saisi une nouvelle demande, la demande et l'intervention sont créées ensemble :
 si l'une échoue, rien n'est écrit. Cette demande est « directe » et **ne notifie
 personne**. Les tâches s'ajoutent ensuite, dans l'onglet **Tâches**.
@@ -67,6 +75,8 @@ Les types proposés dépendent de la classe de l'équipement : une classe sans r
 tous les types.
 
 ## Les tâches
+
+![Cycle de vie d'une tâche : à faire, en cours, terminée ou annulée, avec ce qui déclenche chaque passage](/schemas/cycle-tache.svg)
 
 L'onglet **Tâches** affiche une ligne par tâche :
 
@@ -81,16 +91,22 @@ Une tâche vient d'un responsable, d'un technicien ou d'une étape de gamme pré
 une intervention préventive, une barre « Gamme : X / Y terminée(s) » montre l'avancement et
 signale les étapes obligatoires en attente.
 
+![Onglet Tâches d'une intervention préventive : barre de gamme, tâches à faire avec Terminé, Annuler, garant et échéance](/captures/web-direction-intervention-taches.webp)
+
 ### Ajouter une tâche
 
 Cliquez sur la ligne « Ajouter une tâche… », saisissez le libellé, choisissez
 éventuellement la personne affectée et la date, puis cliquez sur **Créer**.
+
+![Ligne Ajouter une tâche remplie : libellé, personne affectée, date et Créer](/captures/web-direction-tache-creation.webp)
 
 ### Affecter un garant
 
 Le **garant** est la personne affectée à la tâche : elle répond de sa finalisation. Cliquez
 sur son rond d'initiales (ou sur « + »), puis choisissez une personne dans la liste, ou
 « Non assigné ».
+
+![Choix du garant sur la première tâche ; au survol, les icônes Annuler et corbeille](/captures/web-direction-tache-garant.webp)
 
 Un garant n'est pas forcément celui qui fait le travail. Les **exécutants** sont ceux qui
 saisissent des actions sur la tâche. Le [Bilan](/responsable/bilan) mesure l'écart, sans
@@ -119,6 +135,8 @@ faire » ou « en cours ».
 3. Cliquez sur **Confirmer**. Si vous fermez la fenêtre sans choisir, la tâche reste telle
    quelle.
 
+![Fenêtre de motif ouverte par Terminé, avec la liste des raisons](/captures/web-direction-tache-motif.webp)
+
 Les raisons proposées dans la configuration de départ :
 
 | Bouton | Raisons |
@@ -146,6 +164,8 @@ motif est demandé.
 Dans l'en-tête du détail, ouvrez la liste **Statut** et choisissez **Fermé**. Les
 statuts proposés sont : Ouvert, Attente pièces, Attente production et Fermé.
 
+![Liste Statut ouverte dans l'en-tête d'une intervention](/captures/web-direction-intervention-statut.webp)
+
 - **Les tâches obligatoires doivent être réglées.** Tant qu'une tâche non facultative est
   « à faire » ou « en cours », l'API refuse : « Impossible de fermer : N tâche(s)
   non-optionnelle(s) en attente. ». Réglez-les, ou clôturez-les en coordination (voir
@@ -167,6 +187,8 @@ motif s'ouvre **toujours**, avec trois raisons dans la configuration de départ 
 - Clôturée par erreur ;
 - Travail à reprendre ;
 - Autre raison (la **Précision** est alors obligatoire).
+
+![Fenêtre de motif à la réouverture, avec ses trois raisons](/captures/web-direction-intervention-rouvrir.webp)
 
 La réouverture a trois effets, dans la même opération :
 

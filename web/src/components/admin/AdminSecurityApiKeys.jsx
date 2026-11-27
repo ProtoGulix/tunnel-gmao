@@ -37,7 +37,7 @@ function CreateApiKeyModal({ open, onOpenChange, onSubmit, submitting }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 460 }}>
-        <Dialog.Title>Nouvelle cle API</Dialog.Title>
+        <Dialog.Title>Nouvelle clé API</Dialog.Title>
         <form onSubmit={handleSubmit}>
           <Flex direction="column" gap="3" mt="4">
             <label>
@@ -55,7 +55,7 @@ function CreateApiKeyModal({ open, onOpenChange, onSubmit, submitting }) {
               <Button variant="soft" color="gray" type="button">Annuler</Button>
             </Dialog.Close>
             <Button type="submit" disabled={submitting || !name.trim()}>
-              {submitting ? 'Creation...' : 'Creer'}
+              {submitting ? 'Création…' : 'Créer'}
             </Button>
           </Flex>
         </form>
@@ -77,16 +77,16 @@ function ConfirmRevokeModal({ open, onOpenChange, item, onConfirm, submitting })
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content style={{ maxWidth: 420 }}>
-        <Dialog.Title>Revoquer la cle API</Dialog.Title>
+        <Dialog.Title>Révoquer la clé API</Dialog.Title>
         <Text size="2" mt="3" as="p">
-          Revoquer definitivement <Text weight="bold">{item.name}</Text> ({item.key_prefix}) ?
+          Révoquer définitivement <Text weight="bold">{item.name}</Text> ({item.key_prefix}) ?
         </Text>
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
             <Button variant="soft" color="gray" type="button">Annuler</Button>
           </Dialog.Close>
           <Button color="red" disabled={submitting} onClick={onConfirm}>
-            {submitting ? 'Revoke...' : 'Revoquer'}
+            {submitting ? 'Révocation…' : 'Révoquer'}
           </Button>
         </Flex>
       </Dialog.Content>
@@ -158,7 +158,7 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
     },
     {
       key: 'role',
-      header: 'Role',
+      header: 'Rôle',
       width: 90,
       render: (i) => (
         <Badge size="1" variant="soft" color="gray">{i.role_code || 'MCP'}</Badge>
@@ -182,7 +182,7 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
     },
     {
       key: 'last_used_at',
-      header: 'Derniere utilisation',
+      header: 'Dernière utilisation',
       width: 170,
       render: (i) => <Text size="1">{formatDate(i.last_used_at)}</Text>,
     },
@@ -200,7 +200,7 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
             disabled={submitting}
             onClick={() => handleToggleActive(i)}
           >
-            <Power size={12} /> {i.is_active ? 'Desactiver' : 'Activer'}
+            <Power size={12} /> {i.is_active ? 'Désactiver' : 'Activer'}
           </Button>
           <Button
             size="1"
@@ -212,7 +212,7 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
               setRevokeOpen(true);
             }}
           >
-            <Trash2 size={12} /> Revoquer
+            <Trash2 size={12} /> Révoquer
           </Button>
         </Flex>
       ),
@@ -239,7 +239,7 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
         <Callout.Root color="amber" mb="3">
           <Callout.Icon><AlertTriangle size={14} /></Callout.Icon>
           <Callout.Text>
-            Secret genere une seule fois. Copiez-le maintenant puis stockez-le dans un coffre.
+            Secret affiché une seule fois : copiez-le et rangez-le dans un coffre.
           </Callout.Text>
           <Flex mt="2" gap="2" align="center" wrap="wrap">
             <Text size="1" style={{ fontFamily: 'monospace' }}>{createdSecret}</Text>
@@ -252,12 +252,12 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
       <DataTable
         headerProps={{
           icon: KeyRound,
-          title: 'Cles API',
+          title: 'Clés API',
           count: items.length,
           showSearchInput: false,
           actions: (
             <Button size="2" onClick={() => setCreateOpen(true)}>
-              <Plus size={14} /> Nouvelle cle API
+              <Plus size={14} /> Nouvelle clé API
             </Button>
           ),
         }}
@@ -266,8 +266,8 @@ export default function AdminSecurityApiKeys({ items, loading, onCreate, onPatch
         loading={loading}
         emptyState={{
           icon: KeyRound,
-          title: 'Aucune cle API',
-          description: 'Creez une cle pour les integrations machine-to-machine.',
+          title: 'Aucune clé API',
+          description: 'Créez une clé pour une intégration de machine à machine.',
         }}
       />
     </Box>

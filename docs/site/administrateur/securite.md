@@ -4,6 +4,8 @@
 Bloquées**, **Domaines** et **Clés API**. Cet onglet est réservé à l'administrateur par
 défaut.
 
+![Administration, onglet Sécurité, sous-onglet Logs : connexions réussies avec utilisateur, adresse IP et détail](/captures/web-admin-securite.webp)
+
 ## Logs de sécurité
 
 Le tableau liste les événements de sécurité avec la date, le type d'événement, l'utilisateur,
@@ -30,6 +32,8 @@ Une IP bloquée ne peut plus se connecter : sa tentative de connexion est refus�
 4. Choisissez la durée : permanent, 1 heure, 24 heures, 7 jours ou 30 jours.
 5. Cliquez sur **Bloquer**.
 
+![Fenêtre Bloquer une IP : adresse, raison et durée](/captures/web-admin-securite-ip-bloquer.webp)
+
 Le tableau montre la raison, la date de fin du blocage (ou « Permanent ») et l'auteur du
 blocage. **Débloquer** lève le blocage après confirmation.
 
@@ -51,21 +55,17 @@ Tunnel peut aussi la refuser pour la même raison.
 Une clé d'API permet à une application externe de lire les données de Tunnel. Elle porte
 le rôle MCP, qui est en lecture seule.
 
-1. Cliquez sur **Nouvelle cle API** (libellé affiché sans accent) et donnez-lui un nom (par exemple « Serveur MCP
+![Sous-onglet Clés API : une clé avec son nom, son préfixe, le rôle MCP, son statut et sa dernière utilisation](/captures/web-admin-securite-cles.webp)
+
+1. Cliquez sur **Nouvelle clé API** et donnez-lui un nom (par exemple « Serveur MCP
    production »).
 2. Tunnel affiche le secret **une seule fois**. Copiez-le tout de suite et rangez-le dans
    un coffre à secrets. Il n'est pas possible de le revoir.
 3. Dans le tableau, vous voyez le nom, le début de la clé, le rôle, le statut, la date
    d'expiration et la dernière utilisation.
 
-Pour arrêter une clé, utilisez **Desactiver** (réversible avec **Activer**) ou **Revoquer** (libellés affichés sans accent)
+Pour arrêter une clé, utilisez **Désactiver** (réversible avec **Activer**) ou **Révoquer**
 (définitif, après confirmation).
 
 Ne partagez jamais une clé par courriel ou dans un document. Si elle a pu fuiter, révoquez-la
 et créez-en une nouvelle.
-
-## Mode démonstration
-
-Sur une instance publique de démonstration, ces réglages sont verrouillés (mots de passe,
-comptes, droits, clés d'API, règles de sécurité) et aucun courriel n'est envoyé. Cela ne
-concerne pas une installation normale.

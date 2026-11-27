@@ -38,6 +38,8 @@ demande d'intervention créée par le système, avec le type « préventif » su
 
 L'occurrence suit sa demande et son intervention :
 
+![Statuts d'une occurrence : Générée avec sa demande, En cours quand la demande est acceptée ou en plan Auto, Clôturée à la clôture de l'intervention, de nouveau En cours à la réouverture, Ignorée si la demande est rejetée](/schemas/statuts-occurrence.svg)
+
 - accepter la demande (ou la création automatique) la passe **en cours** ;
 - clore l'intervention la passe **clôturée** ;
 - **rouvrir** l'intervention la repasse **en cours** ;
@@ -117,6 +119,8 @@ donc un **motif est obligatoire**, choisi dans la liste (voir
   « ignorée ».
 
 ## Les notifications
+
+![Haut du menu : la cloche Notifications avec son compteur de non lues](/captures/web-direction-notifications-zone.webp)
 
 La tâche quotidienne prévient tous les utilisateurs actifs, dans la cloche du menu :
 

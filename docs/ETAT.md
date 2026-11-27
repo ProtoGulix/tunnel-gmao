@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-11-22
+Dernière mise à jour : 2026-11-27
 
 À relire au début de chaque session et après chaque compaction (protocole de reprise,
 en tête de CLAUDE.md). Mis à jour après chaque tâche terminée.
@@ -86,6 +86,8 @@ v5.1.0 avec ses réserves triées le 2026-11-19 (docs/backlog/README.md) ; son c
 
 | Statut | Chantier | Branche | Référence |
 | --- | --- | --- | --- |
+| fait (2026-11-27) | Guide : captures par zone, formulaires et fenêtres (33 → 106), contrôle de couverture dans check.sh, trois schémas du préventif, schémas de Comprendre repris dans les pages pratiques ; démonstration : plan désactivé, demande à rattacher, demande d'achat à qualifier, clé d'API inutilisable ; accents de l'écran Clés API ; section « mode démonstration » retirée du guide ; demandes de l'utilisateur | docs/captures-guide | [GUIDE-08](taches/GUIDE-08-formulaires-et-zones.md) |
+| fait (2026-11-26) | Guide : captures manquantes (16 → 33 : administrateur, coordination, constat web et mobile, Bilan Constats, import CSV), constats dans le scénario de démonstration, compte administrateur du script de captures sur l'instance jetable seulement ; demande de l'utilisateur | docs/captures-guide | [GUIDE-07](taches/GUIDE-07-captures-manquantes.md) |
 | fait (2026-11-26) | Constat : demande créée selon le levier (case « génère une demande » et « exclusif » par choix, levier « Rien ne l'aurait évité »), section « Constats » du référentiel en administration ; décisions de l'utilisateur du 2026-11-26 ; CDL-01 faite (migration 0029, non jouée en dev) | fusionnée dans develop | ADR 0045, [CDL-01](taches/CDL-01-migration-reglages-des-choix.md) à [CDL-05](taches/CDL-05-web-administration-referentiel.md) |
 | fait | Constat : suivi et vues (état de la demande en clair, rejet visible, réponses par question, lien vers l'intervention d'origine, suppression refusée ; auteur réel dans l'historique de toute demande) ; retouches d'écran avec l'utilisateur ; reviewer APPROUVÉ (réserve : l'écran ne masque pas Supprimer sur une idée rattachée, le serveur refuse) ; fusionné dans develop le 2026-11-23 | — | [CSV-01](taches/CSV-01-backend-suivi-constat.md), [CSV-02](taches/CSV-02-web-vues-constat.md), [CSV-03](taches/CSV-03-auteur-historique-demande.md) |
 | fait | Constat après intervention : ADR 0043 accepté ; CST-01 faite (migration 0028, non jouée en dev) ; CST-02 faite (API : constats, clôture, rattachement) ; CST-03 (web) et CST-04 (mobile) faites ; guide à jour ; reviewer APPROUVÉ AVEC RÉSERVES, réserves traitées (CST-05 faite, libellé Équipement, backlog du rattachement) ; 673 tests d'intégration verts ; migration 0028 et bootstrap joués en dev le 2026-11-22 avec l'accord de l'utilisateur (droits ouverts : ADMIN 7, RESP 7, TECH 6, MCP 4 en lecture) ; essais à l'écran validés (web : saisie, correction, rattachement ; mobile : clôture) ; revue finale APPROUVÉ (réserves mineures : lecture des idées d'amélioration ouverte à tous les rôles, changement de type après clôture sans constat non testé) ; fusionné dans develop le 2026-11-23 ; migration 0028 à jouer en production à sa mise à jour | — | ADR 0043, [CST-01](taches/CST-01-base-constat.md) à [CST-05](taches/CST-05-tests-reserves-revue.md) |
@@ -208,6 +210,7 @@ subagents, format de compte rendu imposé aux agents).
 
 ## Prochaine action
 
+0. Guide (GUIDE-07, GUIDE-08) : fusionné dans develop le 2026-11-27 après relecture point par point par l'utilisateur sur l'aperçu ; prochaine étape, version 5.15.1 (documentation, scénario de démonstration, accents des clés d'API). L'aperçu /docs/ suit `DOCS_SRC` (deploy/README.md). Constat produit à trier : une occurrence préventive « en attente » ne dure qu'un instant, le bouton Ignorer ne s'affiche pratiquement jamais.
 0. Constat, demande selon le levier (ADR 0045) : CDL-01 à CDL-05 faites, reviewer APPROUVÉ (réserves traitées), fusionné dans develop le 2026-11-26. Migration 0029 jouée en base de dev le 2026-11-26 avec l'accord de l'utilisateur (sauvegarde préalable) ; à jouer en production à la mise à jour (démarrage de l'API). Essai à l'écran réussi le 2026-11-26 (formulaire, administration > Référentiel > Constats), droits par défaut des nouvelles routes ouverts en dev avec accord.
 0. Indicateurs des constats (ADR 0044) : onglet Constats du Bilan, [DIR-01](taches/DIR-01-backend-stats-constats.md) et [DIR-02](taches/DIR-02-web-indicateurs-constats.md) faites, reviewer APPROUVÉ (réserves traitées) ; page Direction puis bloc d'accueil essayés et retirés à la demande de l'utilisateur ; onglet validé, fusionné dans develop le 2026-11-23. Sans migration ; droit `stats:get_constats` créé au démarrage de l'API.
 0. Mobile, plusieurs tâches par action ([MOB-01](taches/MOB-01-plusieurs-taches-par-action.md)) : fusionné dans develop le 2026-11-23 après essai sur téléphone, reviewer APPROUVÉ. Sans migration.

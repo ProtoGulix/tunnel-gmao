@@ -18,6 +18,8 @@ proposition n'apparaît que si votre rôle a le droit de modifier une interventi
 **À la main.** Dans le détail de l'intervention, touchez **Statut**, puis le statut de
 clôture dans la feuille « Changer le statut ». La même confirmation s'affiche.
 
+![Feuille Changer le statut sur le mobile : Attente pièces, Attente production, Fermé](/captures/mobile-technicien-cloture.webp)
+
 ### Le motif
 
 Si les règles d'audit exigent un motif, la feuille « Pourquoi clore cette intervention ? »
@@ -28,6 +30,10 @@ ceux que l'administrateur a paramétrés ; vous n'en saisissez pas de votre côt
 Si Tunnel refuse la clôture, le message du serveur s'affiche dans la fenêtre.
 
 ### Le constat
+
+Le principe, en un schéma : [Le constat](/comprendre/constats).
+
+![Formulaire Constat sur le mobile : choix cochés (Surveillance ou inspection, Vibration, Oui mais non remonté, Mécanique), bouton Envoyer](/captures/mobile-technicien-constat.webp)
 
 Pour certains types d'intervention (le curatif, par défaut), un **constat** est obligatoire
 avant de clore. Si aucun n'existe, le formulaire « Constat » s'ouvre avant la confirmation.
@@ -89,11 +95,15 @@ Si le type exige un constat et qu'il manque, **Oui, clôturer** ouvre d'abord le
 de constat, puis clôt. Depuis l'en-tête, **Clôturer** ouvre le même formulaire dans la
 fenêtre « Constat avant clôture ». Si Tunnel refuse, le message s'affiche.
 
+![Fenêtre Nouveau constat sur le web : leviers, signal visible, parties concernées et équipement](/captures/web-direction-constat-formulaire.webp)
+
 L'onglet **Constats** de l'intervention liste les constats, numérotés. Chacun montre ses
 réponses par question puis, sous un trait, sa **demande liée** (code et statut), le **motif** de
 son dernier changement (**motif du rejet** en rouge), avec qui l'a pris et quand, et son **commentaire**, l'**intervention créée** ou l'idée à
 laquelle il est **rattaché** ; le cadre prend la couleur du statut. **Ajouter** en crée un autre (hors
 intervention archivée).
+
+![Onglet Constats d'une intervention : un constat avec ses réponses, sa demande liée (code et statut) et son bouton Corriger](/captures/web-direction-intervention-constats.webp)
 
 ### Corriger un constat
 

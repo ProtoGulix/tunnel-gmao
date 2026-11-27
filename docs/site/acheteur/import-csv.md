@@ -10,6 +10,8 @@ Ouvrez-le par le bouton **Import CSV** en haut de l'écran Demandes d'achat, ou 
 
 ## Les quatre étapes
 
+![Fenêtre Import CSV, étape Fichier : dépôt du fichier, intervention cible et urgence globale](/captures/web-acheteur-import-csv.webp)
+
 **1. Fichier.**
 
 - Déposez le fichier ou cliquez pour le choisir. Seuls les fichiers `.csv` sont acceptés. Le séparateur (`,` ou `;`) est reconnu automatiquement.

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Le constat : à la clôture d'une intervention, le constat dit ce qui aurait évité l'arrêt ; si un levier coché génère une demande, une demande d'intervention est créée et le responsable l'accepte, la rejette ou la rattache à une idée ; sinon le constat reste une donnée d'analyse ; tous les constats alimentent l'onglet Constats du Bilan</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .title { font-size: 15px; font-weight: 600; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .label { font-size: 13px; font-weight: 600; fill: #475569; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .green { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.5; }
+    .red { fill: #fef2f2; stroke: #dc2626; stroke-width: 1.5; }
+    .gray { fill: #f8fafc; stroke: #64748b; stroke-width: 1.5; }
+    .amber { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 6 4; fill: none; marker-end: url(#head); }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="469" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Ligne du haut : intervention, clôture, constat -->
+  <rect class="blue" x="30" y="40" width="180" height="62" rx="8"/>
+  <text class="title" x="120" y="66" text-anchor="middle">Intervention</text>
+  <text class="note" x="120" y="86" text-anchor="middle">curative, par exemple</text>
+
+  <rect class="blue" x="245" y="40" width="190" height="62" rx="8"/>
+  <text class="title" x="340" y="66" text-anchor="middle">Clôture</text>
+  <text class="note" x="340" y="86" text-anchor="middle">constat exigé selon le type</text>
+
+  <rect class="amber" x="470" y="40" width="200" height="62" rx="8"/>
+  <text class="title" x="570" y="66" text-anchor="middle">Constat</text>
+  <text class="note" x="570" y="86" text-anchor="middle">leviers, signal, machine</text>
+
+  <path class="arrow" d="M210 71 L243 71"/>
+  <path class="arrow" d="M435 71 L468 71"/>
+
+  <!-- Question -->
+  <path class="gray" d="M570 140 L690 190 L570 240 L450 190 Z"/>
+  <text x="570" y="186" text-anchor="middle">Un levier coché</text>
+  <text x="570" y="204" text-anchor="middle">génère une demande ?</text>
+  <path class="arrow" d="M570 102 L570 138"/>
+
+  <!-- Non : donnée d'analyse -->
+  <rect class="gray" x="120" y="160" width="250" height="62" rx="8"/>
+  <text class="title" x="245" y="186" text-anchor="middle">Aucune demande</text>
+  <text class="note" x="245" y="206" text-anchor="middle">formation, surveillance, autre, rien</text>
+  <path class="arrow" d="M450 190 L372 190"/>
+  <text class="label halo" x="411" y="181" text-anchor="middle">Non</text>
+
+  <!-- Oui : demande -->
+  <rect class="blue" x="450" y="280" width="240" height="62" rx="8"/>
+  <text class="title" x="570" y="306" text-anchor="middle">Demande d'intervention</text>
+  <text class="note" x="570" y="326" text-anchor="middle">type préconisé : PRE ou PRO</text>
+  <path class="arrow" d="M570 240 L570 278"/>
+  <text class="label halo" x="586" y="264">Oui</text>
+
+  <!-- Décision du responsable -->
+  <text class="label" x="800" y="150" text-anchor="middle">Le responsable tranche</text>
+  <rect class="green" x="720" y="162" width="160" height="56" rx="8"/>
+  <text class="title" x="800" y="186" text-anchor="middle">Acceptée</text>
+  <text class="note" x="800" y="205" text-anchor="middle">crée l'intervention</text>
+  <rect class="red" x="720" y="283" width="160" height="56" rx="8"/>
+  <text class="title" x="800" y="307" text-anchor="middle">Rejetée</text>
+  <text class="note" x="800" y="326" text-anchor="middle">avec un motif</text>
+  <rect class="gray" x="720" y="404" width="160" height="56" rx="8"/>
+  <text class="title" x="800" y="428" text-anchor="middle">Rattachée</text>
+  <text class="note" x="800" y="447" text-anchor="middle">à une idée existante</text>
+  <path class="arrow" d="M690 311 L718 190"/>
+  <path class="arrow" d="M690 311 L718 311"/>
+  <path class="arrow" d="M690 311 L718 432"/>
+
+  <!-- Bilan -->
+  <rect class="amber" x="120" y="390" width="440" height="56" rx="8"/>
+  <text class="title" x="340" y="414" text-anchor="middle">Bilan, onglet Constats</text>
+  <text class="note" x="340" y="433" text-anchor="middle">tous les constats, aucun chiffre par personne</text>
+  <path class="dash" d="M245 222 L245 388"/>
+  <path class="dash" d="M520 342 L520 388"/>
+</svg>

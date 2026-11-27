@@ -211,6 +211,18 @@ def test_comptes_publics_connectables_et_collegues_sans_connexion(demo_db):
         assert not bcrypt.checkpw(PASSWORD.encode(), password_hash.encode())
 
 
+def test_cles_api_du_role_mcp_creees_par_l_admin(demo_db):
+    rows = _query(
+        demo_db["owner"],
+        "SELECT r.code, u.email, k.key_prefix, k.key_hash FROM api_key k "
+        "JOIN tunnel_role r ON r.id = k.role_id JOIN tunnel_user u ON u.id = k.created_by",
+    )
+    assert rows
+    for role, email, prefix, key_hash in rows:
+        assert (role, email) == ("MCP", "admin@example.org")
+        assert prefix.startswith("gmao_") and len(key_hash) == 64
+
+
 def test_vue_d_accueil_de_resp(demo_db):
     rows = _query(
         demo_db["owner"],

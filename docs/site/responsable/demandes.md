@@ -19,7 +19,13 @@ cliquer sur « Voir toutes les demandes » depuis l'[accueil](/responsable/accue
 - Une demande créée par le préventif porte la mention « Générée automatiquement — moteur
   préventif ».
 
+![Détail d'une demande créée par le préventif : Système préventif, Générée automatiquement, type suggéré Préventif, boutons Rejeter et Supprimer, historique](/captures/web-direction-demande-preventive.webp)
+
+![Onglet Demandes d'intervention : la liste des demandes avec leur statut, et la zone de détail à droite](/captures/web-direction-demandes.webp)
+
 ## Les statuts
+
+![Cycle de vie d'une demande d'intervention et de l'intervention liée : la création de l'intervention accepte la demande, la clôture de l'intervention clôt la demande, la réouverture la remet à acceptée](/schemas/cycle-demande-intervention.svg)
 
 | Statut | Sens |
 | --- | --- |
@@ -53,6 +59,8 @@ la trace.
    **type** (obligatoire) et la **priorité**.
 5. Cliquez sur **Enregistrer**.
 
+![Fenêtre Nouvelle intervention : la demande choisie à gauche, son résumé à droite, puis date, technicien pilote, type et priorité](/captures/web-direction-intervention-creation.webp)
+
 Le type ne peut pas être changé quand la demande vient du préventif et en impose un : le
 champ indique « Type imposé par la demande ».
 
@@ -74,6 +82,8 @@ détail.
    **Précision** devient obligatoire.
 3. Cliquez sur **Confirmer**.
 
+![Fenêtre de motif du rejet, avec la liste des motifs de rejet](/captures/web-direction-demande-rejet.webp)
+
 Le texte de la précision est copié dans l'**Historique** de la demande. Une demande
 préventive rejetée marque son occurrence comme « Ignorée ».
 
@@ -82,6 +92,8 @@ Ce motif est obligatoire quelle que soit la règle d'audit de votre installation
 
 ## Demande issue d'un constat
 
+Le principe, en un schéma : [Le constat](/comprendre/constats).
+
 Un constat saisi à la clôture d'une intervention crée une demande sur la machine visée, si
 un levier choisi la génère (réglage du référentiel ; **Rien ne l'aurait évité** n'en crée pas,
 le constat s'affiche alors **Sans demande**). Le
@@ -89,6 +101,8 @@ détail garde la présentation des autres demandes : sous le demandeur, **Consta
 de l'intervention d'origine (lien) ; dans le cadre, les réponses par question à la place du
 texte brut. L'historique donne l'auteur de chaque changement. Une telle demande ne se supprime
 pas.
+
+![Demande issue d'un constat : lien vers l'intervention d'origine, réponses du constat par question, type suggéré Préventif, bouton Rejeter](/captures/web-direction-demande-constat.webp)
 
 Le **type d'intervention suggéré** vient du premier choix typé du constat : tâche régulière
 donne préventif, projet ou modification donne projet (une idée d'amélioration). Sans choix
@@ -99,11 +113,15 @@ ouverte**. Choisissez-en une, puis **Rattacher** : le constat garde le lien, et 
 est rejetée avec le motif « Doublon d'une demande existante ». Rattachement : responsable et
 administrateur, tant que la demande peut être rejetée.
 
+![Demande issue d'un constat sur MO-02, avec l'idée d'amélioration ouverte choisie et le bouton Rattacher](/captures/web-direction-demande-rattacher.webp)
+
 ## Supprimer une demande
 
 Le bouton **Supprimer** est réservé aux erreurs de saisie et aux doublons. Il n'apparaît
 que si la demande n'a pas d'intervention liée. La suppression est **définitive**, et un
 motif est toujours demandé.
+
+![Confirmation Supprimer la demande](/captures/web-direction-demande-supprimer.webp)
 
 ## Clôturer : pas de bouton
 

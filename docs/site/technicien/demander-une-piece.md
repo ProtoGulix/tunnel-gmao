@@ -13,6 +13,8 @@ concernée. L'acheteur la traite ensuite.
 3. Le formulaire **Nouvelle demande d'achat** s'ouvre, avec la mention « Liée à une
    action ».
 
+![Formulaire Nouvelle demande d'achat liée à une action](/captures/mobile-technicien-piece-formulaire.webp)
+
 ### Les champs
 
 - **Article** (obligatoire). Recherchez un article du catalogue. S'il n'y est pas, touchez

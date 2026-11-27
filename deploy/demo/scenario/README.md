@@ -13,7 +13,8 @@ comptes, `.example` pour tout le reste.
 | `usine.json` | responsable | référentiel de départ |
 | `interventions.json` | technicien | `usine.json` |
 | `achats.json` | acheteur | `usine.json`, `interventions.json` |
-| `RELECTURE.md` | direction | les trois fichiers |
+| `constats.json` | technicien | `interventions.json` |
+| `RELECTURE.md` | direction | les quatre fichiers |
 
 ## Conventions
 
@@ -52,10 +53,14 @@ comptes, `.example` pour tout le reste.
                   "role": "TECH", "login": "technicien@demo.frezille.fr"}],
       "plans": [{"code": "PRE-PRESSE-TRIM", "label": "...", "classe": "PRESSE",
                  "periodicity_days": 90, "auto_accept": false,
-                 "steps": [{"label": "...", "optional": false}]}]
+                 "steps": [{"label": "...", "optional": false}]}],
+      "cles_api": [{"key": "K1", "name": "...", "creee_le": -40, "utilisee_le": -1}]
     }
 
 - `types` d'une classe : facultatif (absent = tous les types permis, ADR 0031).
+- `active` d'un plan : facultatif, `true` par défaut ; `false` charge un plan désactivé.
+- `cles_api` : facultatif. Clé du rôle MCP créée par le compte administrateur ; le secret
+  est tiré puis jeté, la clé ne permet aucun accès. `utilisee_le` est facultatif.
 - `equipe` : `login` vaut l'une des trois adresses publiques (`technicien@`, `acheteur@`,
   `direction@demo.frezille.fr`, rôles TECH, ACHETEUR, RESP) ou `null` pour un collègue
   fictif sans connexion.
@@ -94,6 +99,34 @@ comptes, `.example` pour tout le reste.
 - Le dernier statut donne l'état actuel ; une intervention encore ouverte n'a pas de `ferme`.
 - `demandes_achat` : besoin exprimé par le technicien, traité ensuite par l'acheteur.
 
+## `constats.json` (technicien)
+
+    {"constats": [
+      {"key": "K1", "intervention": "I131", "auteur": "T1", "demande": "I200",
+       "reponses": ["TASK", "FREQ_QUARTERLY", "SIGNAL_NOT_REPORTED", "PART_MECHANICAL"]},
+      {"key": "K5b", "remplace": "K5a", "apres_jours": 2, "auteur": "T4", "reponses": ["..."]},
+      {"key": "K7", "intervention": "I154", "auteur": "T1", "demande": "I205",
+       "rattache_a": "K3", "reponses": ["..."]}
+    ]}
+
+- Un constat porte les codes des choix cochés (référentiel de départ, ADR 0043 et 0045) ; le
+  chargeur applique les règles du formulaire (question racine obligatoire, sous-question
+  seulement si son choix est coché, un seul choix si la question est unique, choix exclusif)
+  et refuse le fichier sinon.
+- Le constat est créé à la clôture de l'intervention fermée `intervention`. Un constat qui
+  génère une demande (choix `creates_request`) a `demande` : la clé d'un élément de
+  `interventions.json` qui porte `constat` (clé du constat, dernière version), `source`
+  (intervention d'origine) et `signalee_le` (jour de la clôture). Le chargeur en fixe l'auteur,
+  le texte, le type préconisé et la date ; son statut dit son sort (acceptée avec son
+  intervention, rejetée, en attente, nouvelle).
+- `remplace` : correction, nouvelle version qui remplace le constat de cette clé, `apres_jours`
+  plus tard (motif « Correction » au journal d'audit).
+- `rattache_a` : le constat est rattaché à une idée d'amélioration ouverte de la même machine
+  (clé d'un autre constat, ou d'une demande de projet de `interventions.json`) ; sa demande est rejetée en doublon.
+- Tout curatif fermé sans constat ci-dessus reçoit un constat sans demande (la clôture d'un
+  curatif l'exige), dont les réponses sont tirées de la clé de l'intervention : mêmes
+  réponses à chaque chargement.
+
 ## `achats.json` (acheteur)
 
     {
@@ -120,7 +153,7 @@ comptes, `.example` pour tout le reste.
 
 - `demandes` reprend chaque `demandes_achat` du technicien (même clé, rattachée à son
   action par le chargeur) et ajoute des demandes autonomes (réapprovisionnement) avec de
-  nouvelles clés.
+  nouvelles clés. `"article": null` donne une demande « À qualifier ».
 - Statuts de commande : `OPEN`, `SENT`, `ACK`, `RECEIVED`, `CLOSED`, `CANCELLED`.
 
 ## `RELECTURE.md` (direction)

@@ -24,6 +24,7 @@ const roleSidebar = [
     ["Vue d'ensemble", ""],
     ["Les codes", "codes"],
     ["Interventions et tâches", "interventions-taches"],
+    ["Le constat", "constats"],
     ["Les actions", "actions"],
     ["Le préventif", "preventif"],
     ["Achats", "achats"],
@@ -77,6 +78,20 @@ export default defineConfig({
   base: "/docs/",
   lastUpdated: false,
   cleanUrls: true,
+  // Pile de dev (deploy/docker-compose.dev.yml, service docs-vite) : servi derrière le proxy
+  // de dev sous /docs/. Sans DOCS_DEV_HOST, `docs:dev` reste sur localhost.
+  vite: {
+    server: {
+      host: process.env.DOCS_DEV_HOST,
+      port: 5175,
+      strictPort: true,
+      allowedHosts: process.env.VITE_ALLOWED_HOSTS?.split(",") ?? [],
+      watch: { usePolling: true, interval: 300 },
+      hmr: {
+        clientPort: process.env.VITE_HMR_CLIENT_PORT ? Number(process.env.VITE_HMR_CLIENT_PORT) : undefined,
+      },
+    },
+  },
   themeConfig: {
     nav: [
       { text: "Accueil", link: "/" },

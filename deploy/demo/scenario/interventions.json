@@ -14236,5 +14236,233 @@
     "statut_demande": "nouvelle",
     "motif_rejet": null,
     "intervention": null
+  },
+  {
+    "key": "I200",
+    "equipement": "PR-05",
+    "constat": "K1",
+    "source": "I147",
+    "service": null,
+    "signalee_le": -73,
+    "origine": "signalee",
+    "statut_demande": "cloturee",
+    "motif_rejet": null,
+    "intervention": {
+      "title": "PR-05 : contrôle trimestriel des vérins et flexibles",
+      "type": "PRE",
+      "priority": "normal",
+      "tech": "T1",
+      "plan": null,
+      "ouverte_le": -72,
+      "statuts": [
+        {
+          "to": "ferme",
+          "le": -65,
+          "par": "T1"
+        }
+      ],
+      "taches": [
+        {
+          "key": "t1",
+          "label": "Contrôler l'état des vérins d'éjection et des flexibles",
+          "origin": "tech",
+          "assigned_to": "T1",
+          "status": "done",
+          "optional": false,
+          "gamme_step": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "a1",
+          "le": -72,
+          "debut": "08:00",
+          "tech": "T1",
+          "heures": 1.0,
+          "sous_categorie": "PREV_FLD",
+          "complexite": 1,
+          "facteur": null,
+          "description": "Vérins et flexibles contrôlés, aucune fuite. Joints du vérin d'éjection en bon état.",
+          "taches": [
+            "t1"
+          ],
+          "demandes_achat": []
+        }
+      ]
+    }
+  },
+  {
+    "key": "I201",
+    "equipement": "CU-02",
+    "constat": "K2",
+    "source": "I150",
+    "service": null,
+    "signalee_le": -73,
+    "origine": "signalee",
+    "statut_demande": "acceptee",
+    "motif_rejet": null,
+    "intervention": {
+      "title": "CU-02 : relevé mensuel du liquide de coupe",
+      "type": "PRE",
+      "priority": "normal",
+      "tech": "T2",
+      "plan": null,
+      "ouverte_le": -72,
+      "statuts": [],
+      "taches": [
+        {
+          "key": "t1",
+          "label": "Relever le niveau et le pH du liquide de coupe",
+          "origin": "tech",
+          "assigned_to": "T2",
+          "status": "todo",
+          "optional": false,
+          "gamme_step": null
+        },
+        {
+          "key": "t2",
+          "label": "Comparer aux relevés précédents",
+          "origin": "tech",
+          "assigned_to": "T2",
+          "status": "todo",
+          "optional": false,
+          "gamme_step": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "a1",
+          "le": -60,
+          "debut": "09:00",
+          "tech": "T2",
+          "heures": 0.5,
+          "sous_categorie": "PREV_FLD",
+          "complexite": 1,
+          "facteur": null,
+          "description": "Premier relevé : niveau correct, pH dans la plage, pas de mousse. Valeurs de référence notées.",
+          "taches": [
+            "t1"
+          ],
+          "demandes_achat": []
+        }
+      ]
+    }
+  },
+  {
+    "key": "I202",
+    "equipement": "CP-01",
+    "constat": "K3",
+    "source": "I154",
+    "service": null,
+    "signalee_le": -62,
+    "origine": "signalee",
+    "statut_demande": "acceptee",
+    "motif_rejet": null,
+    "intervention": {
+      "title": "CP-01 : reprise de la ventilation du compresseur",
+      "type": "PRO",
+      "priority": "important",
+      "tech": "T1",
+      "plan": null,
+      "ouverte_le": -61,
+      "statuts": [],
+      "taches": [
+        {
+          "key": "t1",
+          "label": "Relever la ventilation et chiffrer la reprise",
+          "origin": "tech",
+          "assigned_to": "T1",
+          "status": "done",
+          "optional": false,
+          "gamme_step": null
+        },
+        {
+          "key": "t2",
+          "label": "Remplacer le ventilateur et nettoyer les grilles",
+          "origin": "tech",
+          "assigned_to": "T1",
+          "status": "todo",
+          "optional": false,
+          "gamme_step": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "a1",
+          "le": -55,
+          "debut": "07:30",
+          "tech": "T1",
+          "heures": 2.5,
+          "sous_categorie": "FAB_ETU",
+          "complexite": 3,
+          "facteur": null,
+          "description": "Relevé du circuit de refroidissement : grilles encrassées, ventilateur fatigué. Liste des pièces établie.",
+          "taches": [
+            "t1"
+          ],
+          "demandes_achat": []
+        }
+      ]
+    }
+  },
+  {
+    "key": "I203",
+    "equipement": "SE-01",
+    "constat": "K4",
+    "source": "I167",
+    "service": null,
+    "signalee_le": -37,
+    "origine": "signalee",
+    "statut_demande": "rejetee",
+    "motif_rejet": "Remplacement du sécheur déjà prévu au budget de l'an prochain",
+    "intervention": null
+  },
+  {
+    "key": "I204",
+    "equipement": "CV-03",
+    "constat": "K5b",
+    "source": "I172",
+    "service": null,
+    "signalee_le": -29,
+    "origine": "signalee",
+    "statut_demande": "nouvelle",
+    "motif_rejet": null,
+    "intervention": null
+  },
+  {
+    "key": "I205",
+    "equipement": "MO-02",
+    "constat": "K7",
+    "source": "I159",
+    "service": null,
+    "signalee_le": -52,
+    "origine": "signalee",
+    "statut_demande": "rejetee",
+    "motif_rejet": null,
+    "intervention": null
+  },
+  {
+    "key": "I206",
+    "equipement": "BT-03",
+    "constat": "K8",
+    "source": "I148",
+    "service": null,
+    "signalee_le": -77,
+    "origine": "signalee",
+    "statut_demande": "en_attente",
+    "motif_rejet": null,
+    "intervention": null
+  },
+  {
+    "key": "I207",
+    "equipement": "MO-02",
+    "constat": "K9",
+    "source": "I159",
+    "service": null,
+    "signalee_le": -52,
+    "origine": "signalee",
+    "statut_demande": "nouvelle",
+    "motif_rejet": null,
+    "intervention": null
   }
 ]

@@ -88,3 +88,33 @@ Globalement oui.
 - Souhaitables non traités, laissés en l'état : mix des catégories, occurrences
   préventives ouvertes (créées par la tâche quotidienne au premier démarrage), jours de
   semaine qui glissent avec les dates relatives.
+
+## 4. Constats (GUIDE-07)
+
+Ajout après la relecture ci-dessus : 95 constats (`constats.json`), 8 demandes et 3 interventions
+de plus (`I200` à `I207`), donc 195 demandes et 176 interventions.
+
+- Un constat sur chacun des 92 curatifs fermés, comme l'exige la clôture : 84 sans demande
+  (réponses tirées de la clé, dont environ un tiers « Rien ne l'aurait évité »), 9 écrits à
+  la main (11 versions avec les deux corrections). Le curatif I159 en porte deux, de deux
+  techniciens.
+- Demandes issues des constats : acceptée avec intervention (2 préventives dont une fermée,
+  1 projet ouvert), rejetée (projet), rattachée à l'idée du projet ouvert MO-02 du scénario (rejetée en
+  doublon), en attente, nouvelle ; une seconde demande « nouvelle » sur MO-02 (I207) peut être
+  rattachée à cette idée, pour le guide. Deux constats corrigés (un avec demande « nouvelle », un
+  sans demande).
+- Les constats avec demande datent tous des trois derniers mois : l'onglet Constats du Bilan
+  montre des suggestions retenues.
+- Aucun nom, aucune machine réels : mêmes personnages et mêmes machines que le scénario.
+
+## 5. Plan désactivé (GUIDE-08)
+
+`PRE-PORTES-MENS`, contrôle mensuel des portes de quai, est inactif (`"active": false`) : repris
+par l'étape portes de quai du contrôle annuel du bâtiment. Il n'a aucune occurrence ; il sert
+au guide (badge Inactif, bouton Réactiver).
+
+## 6. Demande à qualifier et clé d'API (GUIDE-08)
+
+`DA326`, joint de porte d'armoire demandé la veille par un technicien, n'a pas d'article :
+elle est « À qualifier » (53 demandes d'achat). `K1`, clé d'API du rôle MCP créée par
+l'administrateur, montre l'onglet Clés API ; son secret n'est conservé nulle part.

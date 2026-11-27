@@ -8,11 +8,16 @@ fournisseur.
 
 ## Dispatcher
 
+![Le dispatch : une demande d'achat entre dans un panier par fournisseur référencé, en réutilisant le panier ouvert de ce fournisseur s'il existe](/schemas/dispatch-paniers.svg)
+
 Le bouton **Dispatcher (n)** apparaît en haut de l'écran Demandes d'achat, dans l'onglet
 *Demandes d'achat*, quand n demandes sont « À dispatcher » et que vos droits le permettent.
 Il se rafraîchit toutes les 30 secondes.
 
 1. Cliquez sur **Dispatcher (n)**. Une fenêtre **Aperçu du dispatch** s'ouvre.
+
+![Fenêtre Aperçu du dispatch : trois demandes cochées, chacune avec les paniers qu'elle rejoindra, et Confirmer le dispatch](/captures/web-acheteur-dispatch-apercu.webp)
+
 2. Pour chaque demande, vous voyez le ou les paniers qu'elle rejoindra. Un panier marqué « nouveau panier » sera créé.
 3. Décochez les demandes à écarter. Elles restent « À dispatcher ».
 4. Une demande qui ne peut pas être répartie (par exemple : aucun fournisseur référencé) est signalée en rouge et ne peut pas être cochée.

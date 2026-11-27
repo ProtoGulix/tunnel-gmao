@@ -5,8 +5,8 @@ l'URL du rôle propriétaire, sur une base dédiée dont le nom contient « demo
 
     DATABASE_URL_OWNER=... DEMO_PASSWORD=... python load_demo.py [--today AAAA-MM-JJ]
 
-Il insère l'usine fictive du dossier scenario/ (usine.json, interventions.json et, s'il
-existe, achats.json) en calant les dates relatives (J-n) sur le jour du chargement. Tout se
+Il insère l'usine fictive du dossier scenario/ (usine.json, interventions.json et, s'ils
+existent, achats.json et constats.json) en calant les dates relatives (J-n) sur le jour du chargement. Tout se
 passe dans une seule transaction : une erreur n'écrit rien.
 
 Choix sur les triggers : les triggers de la base fabriquent un résultat « maintenant »
@@ -25,6 +25,7 @@ rôle applicatif (le chargeur écrit avec le rôle propriétaire).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -153,6 +154,13 @@ class Loader:
         self.action_ids: dict[str, str] = {}
         self.reasons: dict[str, int] = {}
         self.audit_rows: list[tuple] = []
+        self.di_seq: dict[int, int] = defaultdict(int)
+        self.closed_at: dict[str, datetime] = {}
+        self.request_created: dict[str, datetime] = {}
+        self.request_codes: dict[str, str] = {}
+        self.items_by_key: dict[str, dict] = {}
+        self.constat_defs: dict[str, dict] = {}
+        self._constat_form: Optional[dict] = None
         self.counts: dict[str, int] = defaultdict(int)
 
     # ── Garde-fous ────────────────────────────────────────────────────────────
@@ -357,7 +365,7 @@ class Loader:
             cur.execute(
                 "INSERT INTO preventive_plan (id, code, label, equipement_class_id, trigger_type, "
                 "periodicity_days, auto_accept, active, created_at, updated_at) "
-                "VALUES (%s,%s,%s,%s,'periodicity',%s,%s,true,%s,%s)",
+                "VALUES (%s,%s,%s,%s,'periodicity',%s,%s,%s,%s,%s)",
                 (
                     pid,
                     plan["code"],
@@ -365,6 +373,7 @@ class Loader:
                     self.lookup(self.classes, plan["classe"], "classe"),
                     plan["periodicity_days"],
                     plan["auto_accept"],
+                    plan.get("active", True),
                     clock.at(-365, "07:00"),
                     clock.at(-365, "07:00"),
                 ),
@@ -386,6 +395,50 @@ class Loader:
                 "periodicity_days": plan["periodicity_days"],
             }
         say(f"préventif : {len(self.plans)} plans")
+        self.load_api_keys(factory.get("cles_api", []), roles["MCP"])
+
+    def load_api_keys(self, keys: list[dict], mcp_role: str) -> None:
+        """Clés d'API pour l'écran Sécurité : le secret est tiré puis jeté, la clé ne sert à
+        rien. Créées par le compte administrateur de l'installation."""
+        if not keys:
+            return
+        cur, clock = self.cur, self.clock
+        cur.execute(
+            "SELECT u.id FROM tunnel_user u JOIN tunnel_role r ON r.id = u.role_id "
+            "WHERE r.code = 'ADMIN' ORDER BY u.created_at LIMIT 1"
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise LoaderError("clés d'API : aucun compte administrateur")
+        admin_id = str(row[0])
+        for key in keys:
+            secret = "gmao_" + secrets.token_urlsafe(24)
+            key_id = uid("api_key", key["key"])
+            created = clock.at(key["creee_le"], "09:00")
+            cur.execute(
+                "INSERT INTO api_key (id, name, key_prefix, key_hash, role_id, created_by, "
+                "created_at, last_used_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (
+                    key_id,
+                    key["name"],
+                    secret[:10],
+                    hashlib.sha256(secret.encode()).hexdigest(),
+                    mcp_role,
+                    admin_id,
+                    created,
+                    clock.at(key["utilisee_le"], "06:00") if "utilisee_le" in key else None,
+                ),
+            )
+            self.audit(
+                "api_key",
+                key_id,
+                "created",
+                created,
+                admin_id,
+                "ROUTINE",
+                new={"name": key["name"]},
+            )
+        say(f"clés d'API : {len(keys)}")
 
     # ── Demandes, interventions, tâches, actions ─────────────────────────────
 
@@ -406,10 +459,9 @@ class Loader:
     def load_interventions(self, items: list[dict]) -> None:
         resp_key = self.first_of_role("RESP")
         techs = [k for k, u in self.users.items() if u["role"] == "TECH"]
-        di_seq: dict[int, int] = defaultdict(int)
         ordered = sorted(enumerate(items), key=lambda p: (p[1]["signalee_le"], p[1]["key"]))
         for index, item in ordered:
-            self.load_one(item, index, di_seq, resp_key, techs)
+            self.load_one(item, index, self.di_seq, resp_key, techs)
         say(
             f"{self.counts['request']} demandes, {self.counts['intervention']} interventions "
             f"({self.counts['occurrence']} préventives), {self.counts['task']} tâches, "
@@ -423,12 +475,15 @@ class Loader:
         is_system = item["demandeur"] == "Système"
         plan = self.plans[iv["plan"]] if iv and iv.get("plan") else None
         created_at = clock.at(item["signalee_le"], "05:00", minutes=(index * 7) % 30)
+        if item.get("source"):
+            # Demande issue d'un constat : créée avec lui, à la clôture de l'intervention.
+            created_at = self.closed_at_of(item["source"]) + timedelta(minutes=1)
         tech_key = iv["tech"] if iv else None
         # Auteur de la saisie de la demande : le technicien qui l'a reçue (ou à défaut un tour
         # de rôle) ; le préventif est créé par le système, sans auteur.
         creator = None
         if not is_system:
-            creator = self.user(tech_key or techs[index % len(techs)])["id"]
+            creator = self.user(item.get("auteur") or tech_key or techs[index % len(techs)])["id"]
         request_id = uid("request", key)
         machine_id = self.lookup(self.machines, item["equipement"], "équipement")
         year = created_at.year
@@ -443,12 +498,14 @@ class Loader:
             self.insert_intervention(item, iv, intervention_id, machine_id, plan, creator)
             self.counts["intervention"] += 1
 
-        mtype = iv["type"] if iv else None
+        mtype = item.get("type_suggere") or (iv["type"] if iv else None)
+        self.request_created[key] = created_at
+        self.request_codes[key] = code
         cur.execute(
             "INSERT INTO intervention_request (id, code, machine_id, demandeur_nom, description, "
             "statut, intervention_id, created_at, updated_at, service_id, is_system, "
-            "suggested_type_inter, origine, created_by, deadline) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "suggested_type_inter, origine, created_by, deadline, source_intervention_id) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 request_id,
                 code,
@@ -465,6 +522,7 @@ class Loader:
                 item["origine"],
                 creator,
                 clock.day(item["signalee_le"]) if is_system else None,
+                uid("intervention", item["source"]) if item.get("source") else None,
             ),
         )
         self.counts["request"] += 1
@@ -493,7 +551,7 @@ class Loader:
         statut_logs.append((None, "nouvelle", creator, created_at, "Création demande"))
 
         if iv:
-            self.load_intervention_life(
+            close_at = self.load_intervention_life(
                 item,
                 iv,
                 index,
@@ -507,6 +565,8 @@ class Loader:
                 statut_logs,
                 resp_key,
             )
+            if close_at:
+                self.closed_at[key] = close_at
         else:
             self.request_decision(item, request_id, created_at, creator, statut_logs, resp_key)
 
@@ -549,6 +609,13 @@ class Loader:
         elif status == "rejetee":
             by = self.user(resp_key)["id"]
             reason = item.get("motif_rejet") or "Hors périmètre de la maintenance"
+            reason_code = "OTHER"
+            idea = self.linked_idea_request(item)
+            if idea:
+                reason, reason_code = (
+                    f"Doublon : rattaché à {self.request_codes[idea]}",
+                    "REJECT_DUPLICATE",
+                )
             logs.append(("nouvelle", "rejetee", by, at, reason))
             self.audit(
                 "request",
@@ -556,7 +623,7 @@ class Loader:
                 "statut_changed",
                 at,
                 by,
-                "OTHER",
+                reason_code,
                 old={"statut": "nouvelle"},
                 new={"statut": "rejetee"},
                 text=reason,
@@ -564,20 +631,25 @@ class Loader:
         else:
             raise LoaderError(f"demande {item['key']} : statut {status} sans intervention")
 
+    def intervention_code(self, item: dict) -> str:
+        """Code de l'intervention (celui que fabrique trg_interv_code, désactivé ici)."""
+        iv = item["intervention"]
+        opened = self.clock.day(iv["ouverte_le"])
+        initial = self.user(iv["tech"])["initial"]
+        return f"{item['equipement']}-{iv['type']}-{opened:%Y%m%d}-{initial}"
+
     def insert_intervention(self, item, iv, intervention_id, machine_id, plan, creator) -> None:
         clock = self.clock
         tech = self.user(iv["tech"])
-        opened = clock.day(iv["ouverte_le"])
         status = iv["statuts"][-1]["to"] if iv["statuts"] else "ouvert"
         last_by = self.user(iv["statuts"][-1]["par"])["id"] if iv["statuts"] else None
-        machine_code = item["equipement"]
         self.cur.execute(
             "INSERT INTO intervention (id, code, title, machine_id, type_inter, priority, "
             "reported_by, tech_initials, status_actual, updated_by, printed_fiche, "
             "reported_date, plan_id, tech_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,false,%s,%s,%s)",
             (
                 intervention_id,
-                f"{machine_code}-{iv['type']}-{opened:%Y%m%d}-{tech['initial']}",
+                self.intervention_code(item),
                 iv["title"],
                 machine_id,
                 iv["type"],
@@ -953,6 +1025,260 @@ class Loader:
         for need in action.get("demandes_achat", []):
             self.purchase_need(need, action, action_id, tech)
 
+    # ── Constats ──────────────────────────────────────────────────────────────
+
+    def closed_at_of(self, key: str) -> datetime:
+        return self.lookup(self.closed_at, key, "intervention fermée (source du constat)")
+
+    def constat_form(self) -> dict:
+        """Questions actives (ordre de l'écran) avec leurs choix, lues dans la base."""
+        if self._constat_form is None:
+            self.cur.execute(
+                "SELECT q.code, q.label, q.is_multiple, pc.code, c.code, c.label, "
+                "c.suggested_type_inter, c.creates_request, c.is_exclusive "
+                "FROM constat_choice c JOIN constat_question q ON q.id = c.question_id "
+                "LEFT JOIN constat_choice pc ON pc.id = q.parent_choice_id "
+                "WHERE q.is_active AND c.is_active ORDER BY q.sort_order, c.sort_order"
+            )
+            form: dict[str, dict] = {}
+            for (
+                q_code,
+                q_label,
+                multiple,
+                parent,
+                c_code,
+                c_label,
+                type_code,
+                creates,
+                excl,
+            ) in self.cur.fetchall():
+                question = form.setdefault(
+                    q_code,
+                    {"label": q_label, "multiple": multiple, "parent": parent, "choices": {}},
+                )
+                question["choices"][c_code] = {
+                    "label": c_label,
+                    "type": type_code,
+                    "creates": creates,
+                    "exclusive": excl,
+                }
+            self._constat_form = form
+        return self._constat_form
+
+    def prepare_answers(self, codes: list[str], where: str) -> dict:
+        """Mêmes contrôles que ConstatValidator : renvoie les choix cochés, le type préconisé
+        (premier choix typé) et si une demande est générée."""
+        form = self.constat_form()
+        known = {c for q in form.values() for c in q["choices"]}
+        for code in codes:
+            if code not in known:
+                raise LoaderError(f"constat {where} : choix inconnu {code}")
+        selected = []
+        for q_code, question in form.items():
+            chosen = [c for c in question["choices"] if c in codes]
+            if question["parent"] is not None and question["parent"] not in codes:
+                if chosen:
+                    raise LoaderError(f"constat {where} : réponse non attendue ({q_code})")
+                continue
+            if not chosen:
+                raise LoaderError(f"constat {where} : réponse obligatoire ({q_code})")
+            if (len(chosen) > 1 and not question["multiple"]) or (
+                len(chosen) > 1 and any(question["choices"][c]["exclusive"] for c in chosen)
+            ):
+                raise LoaderError(f"constat {where} : trop de choix ({q_code})")
+            selected += [(question["label"], question["choices"][c]) for c in chosen]
+        return {
+            "selected": selected,
+            "type": next((c["type"] for _, c in selected if c["type"]), None),
+            "creates": any(c["creates"] for _, c in selected),
+        }
+
+    @staticmethod
+    def constat_description(intervention_code: str, selected: list) -> str:
+        """Texte de la demande issue du constat (ConstatValidator.build_description)."""
+        grouped: dict[str, list[str]] = {}
+        for label, choice in selected:
+            grouped.setdefault(label, []).append(choice["label"])
+        lines = [f"Constat après l'intervention {intervention_code}"]
+        return "\n".join(lines + [f"{k} : {', '.join(v)}" for k, v in grouped.items()])
+
+    def prepare_constats(self, defs: list[dict], items: list[dict]) -> None:
+        """Contrôle le fichier des constats et complète les demandes qui en sont issues
+        (auteur, texte, type préconisé) : à faire avant le chargement des demandes."""
+        self.items_by_key = {i["key"]: i for i in items}
+        self.constat_defs = {d["key"]: d for d in defs}
+        for d in defs:
+            root = self.constat_root(d)
+            d["prepared"] = self.prepare_answers(d["reponses"], d["key"])
+            if root is not d and root["intervention"] not in self.items_by_key:
+                raise LoaderError(f"constat {d['key']} : intervention inconnue")
+            if "demande" in d and d["prepared"]["creates"] is False:
+                raise LoaderError(f"constat {d['key']} : aucune demande générée par ces choix")
+            if "demande" not in root and d["prepared"]["creates"]:
+                raise LoaderError(f"constat {d['key']} : une demande serait générée")
+        for item in items:
+            if not item.get("constat"):
+                continue
+            final = self.lookup(self.constat_defs, item["constat"], "constat")
+            root = self.constat_root(final)
+            if root.get("demande") != item["key"] or root["intervention"] != item["source"]:
+                raise LoaderError(
+                    f"demande {item['key']} : incohérente avec le constat {final['key']}"
+                )
+            source = self.lookup(self.items_by_key, item["source"], "intervention source")
+            author = self.user(final["auteur"])
+            item["auteur"] = final["auteur"]
+            item["demandeur"] = author["name"]
+            item["type_suggere"] = final["prepared"]["type"]
+            item["description"] = self.constat_description(
+                self.intervention_code(source), final["prepared"]["selected"]
+            )
+
+    def constat_root(self, d: dict) -> dict:
+        while d.get("remplace"):
+            d = self.lookup(self.constat_defs, d["remplace"], "constat remplacé")
+        return d
+
+    def linked_idea_request(self, item: dict) -> Optional[str]:
+        """Clé de la demande (idée) à laquelle le constat de cette demande est rattaché."""
+        if not item.get("constat"):
+            return None
+        target = self.constat_root(self.constat_defs[item["constat"]]).get("rattache_a")
+        if not target:
+            return None
+        return self.idea_request_key(target)
+
+    def idea_request_key(self, target: str) -> str:
+        """Clé de la demande visée par `rattache_a` : un constat, ou directement une demande."""
+        if target in self.constat_defs:
+            return self.constat_root(self.constat_defs[target])["demande"]
+        return self.lookup(self.items_by_key, target, "idée d'amélioration")["key"]
+
+    def insert_constat(self, key, ikey, author, at, request_key, linked_key, supersedes, answers):
+        cur = self.cur
+        item = self.items_by_key[ikey]
+        constat_id = uid("constat", key)
+        cur.execute(
+            "INSERT INTO constat (id, intervention_id, machine_id, created_by, created_at, "
+            "supersedes_id, request_id, linked_request_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+            (
+                constat_id,
+                uid("intervention", ikey),
+                self.lookup(self.machines, item["equipement"], "équipement"),
+                self.user(author)["id"],
+                at,
+                supersedes,
+                uid("request", request_key) if request_key else None,
+                uid("request", linked_key) if linked_key else None,
+            ),
+        )
+        cur.executemany(
+            "INSERT INTO constat_answer (constat_id, choice_code) VALUES (%s, %s)",
+            [(constat_id, code) for code in answers],
+        )
+        self.counts["constat"] += 1
+        return constat_id
+
+    def load_constats(self, defs: list[dict], items: list[dict]) -> None:
+        """Constats du scénario (constats.json) puis, pour chaque autre curatif fermé, un
+        constat sans demande : la clôture d'un curatif l'exige."""
+        made: dict[str, tuple[str, datetime]] = {}  # clé -> (id, date)
+        covered = set()
+        for d in defs:
+            root = self.constat_root(d)
+            ikey = root["intervention"]
+            covered.add(ikey)
+            request_key = root.get("demande")
+            linked = None
+            if root.get("rattache_a"):
+                linked = self.idea_request_key(root["rattache_a"])
+            if d.get("remplace"):
+                old_id, old_at = made[d["remplace"]]
+                at = old_at + timedelta(days=d.get("apres_jours", 0), hours=1)
+            else:
+                old_id, at = None, self.closed_at_of(ikey) + timedelta(minutes=1)
+            made[d["key"]] = (
+                self.insert_constat(
+                    d["key"], ikey, d["auteur"], at, request_key, linked, old_id, d["reponses"]
+                ),
+                at,
+            )
+            if old_id:
+                self.audit(
+                    "constat",
+                    old_id,
+                    "constat_corrected",
+                    at,
+                    self.user(d["auteur"])["id"],
+                    "CONSTAT_CORRECTION",
+                    old={"constat_id": old_id},
+                    new={"constat_id": made[d["key"]][0]},
+                )
+        for item in items:
+            iv = item["intervention"]
+            if (
+                item["key"] in covered
+                or not iv
+                or iv["type"] != "CUR"
+                or item["key"] not in self.closed_at
+            ):
+                continue
+            answers = self.auto_answers(item)
+            if self.prepare_answers(answers, item["key"])["creates"]:
+                raise LoaderError(f"constat automatique de {item['key']} : demande générée")
+            at = self.closed_at[item["key"]] + timedelta(minutes=1)
+            self.insert_constat(
+                f"auto:{item['key']}", item["key"], iv["tech"], at, None, None, None, answers
+            )
+        say(f"constats : {self.counts['constat']}")
+
+    # Parties, paramètres et domaines selon la sous-catégorie de la première action
+    PART_BY_SUBCATEGORY = {
+        "DEP_MEC": "PART_MECHANICAL",
+        "DEP_ELC": "PART_ELECTRICAL",
+        "DEP_FLD": "PART_PNEUMATIC",
+        "DEP_AUT": "PART_PLC",
+        "DEP_BAT": "PART_BUILDING",
+    }
+    PARAM_BY_SUBCATEGORY = {
+        "DEP_MEC": "PARAM_VIBRATION",
+        "DEP_ELC": "PARAM_TEMPERATURE",
+        "DEP_FLD": "PARAM_PRESSURE",
+        "DEP_AUT": "PARAM_COUNTER",
+        "DEP_BAT": "PARAM_VISUAL",
+    }
+    DOMAIN_BY_SUBCATEGORY = {
+        "DEP_MEC": "DOM_MECHANICAL",
+        "DEP_ELC": "DOM_ELECTRICAL",
+        "DEP_FLD": "DOM_PNEUMATIC",
+        "DEP_AUT": "DOM_AUTOMATION",
+        "DEP_BAT": "DOM_METHOD",
+    }
+
+    def auto_answers(self, item: dict) -> list[str]:
+        """Constat sans demande d'un curatif fermé : réponses réparties par une empreinte de la
+        clé (identiques à chaque chargement), cohérentes avec la nature de l'intervention."""
+        sub = item["intervention"]["actions"][0]["sous_categorie"]
+        digest = hashlib.sha256(item["key"].encode()).digest()
+        lever, signal = digest[0] % 20, digest[1] % 20
+        param = self.PARAM_BY_SUBCATEGORY.get(sub, "PARAM_VISUAL")
+        domain = self.DOMAIN_BY_SUBCATEGORY.get(sub, "DOM_METHOD")
+        if lever < 7:
+            answers = ["NOTHING"]
+        elif lever < 12:
+            answers = ["MONITORING", param]
+        elif lever < 16:
+            answers = ["TRAINING", domain]
+        elif lever < 18:
+            answers = ["OTHER"]
+        else:
+            answers = ["MONITORING", param, "TRAINING", domain]
+        answers.append(
+            "SIGNAL_NONE" if signal < 9 else "SIGNAL_NOT_REPORTED" if signal < 14 else "SIGNAL_SEEN"
+        )
+        answers.append(self.PART_BY_SUBCATEGORY.get(sub, "PART_MECHANICAL"))
+        return answers
+
     # ── Achats ────────────────────────────────────────────────────────────────
 
     def purchase_need(self, need, action, action_id, tech) -> None:
@@ -1230,10 +1556,14 @@ class Loader:
         interventions = read_json(self.dir / "interventions.json")
         shop_path = self.dir / "achats.json"
         shop = read_json(shop_path) if shop_path.exists() else None
+        constats_path = self.dir / "constats.json"
+        constats = read_json(constats_path)["constats"] if constats_path.exists() else []
         self.guard()
         self.set_triggers(False)
         self.load_factory(factory)
+        self.prepare_constats(constats, interventions)
         self.load_interventions(interventions)
+        self.load_constats(constats, interventions)
         if shop:
             self.load_purchases(shop)
         else:

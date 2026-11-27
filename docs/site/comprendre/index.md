@@ -31,6 +31,10 @@ par l'intervention. Voir [Les actions](/comprendre/actions).
 demande créée par le système. Cette demande suit ensuite le même chemin qu'une demande
 humaine. Voir [Le préventif](/comprendre/preventif).
 
+**Le constat.** À la clôture d'une intervention, le technicien dit ce qui aurait évité l'arrêt.
+Selon le levier, le constat crée une nouvelle demande, qui suit le même chemin. Voir
+[Le constat](/comprendre/constats).
+
 **Les équipements.** Chaque demande et chaque intervention porte sur un équipement. La fiche
 équipement rassemble son historique : demandes, interventions, préventif.
 
@@ -67,6 +71,7 @@ Deux précisions, vérifiées dans le code :
 - [Les codes](/comprendre/codes) : à quoi ressemble chaque code et d'où vient chaque morceau.
 - [Interventions et tâches](/comprendre/interventions-taches) : les statuts, la clôture, la
   réouverture.
+- [Le constat](/comprendre/constats) : du retour terrain à la demande, ou au Bilan.
 - [Les actions](/comprendre/actions) : l'unité de travail réel.
 - [Le préventif](/comprendre/preventif) : l'échéancier glissant.
 - [Achats](/comprendre/achats) : de la demande d'achat à la réception.

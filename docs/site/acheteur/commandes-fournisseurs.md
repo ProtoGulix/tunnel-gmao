@@ -14,6 +14,8 @@ fournisseur, ou chercher par numéro ou nom de fournisseur.
 
 ## Les statuts
 
+![Statuts d'un panier fournisseur et passages permis : En mutualisation, Devis envoyé, En négociation, En cours de livraison, Clôturé, Annulé](/schemas/statuts-panier.svg)
+
 | Statut | Signification |
 | --- | --- |
 | En mutualisation | Panier ouvert : de nouvelles demandes peuvent y entrer. |
@@ -26,6 +28,8 @@ fournisseur, ou chercher par numéro ou nom de fournisseur.
 ## Les transitions
 
 Le bouton **Changer le statut** propose uniquement les passages permis.
+
+![Panier En mutualisation : le menu Changer le statut propose Devis envoyé ou Annulé](/captures/web-acheteur-commande-statut.webp)
 
 - En mutualisation vers Devis envoyé ou Annulé.
 - Devis envoyé vers En négociation, En cours de livraison, En mutualisation (réouverture : les lignes sont conservées) ou Annulé.
@@ -47,6 +51,8 @@ fournisseur configuré pour cette commande. ». Ce bouton n'envoie rien tout seu
 pas le statut : vous envoyez le courriel depuis votre messagerie, puis vous passez le
 panier en « Devis envoyé ». Le bouton **CSV** exporte les lignes retenues en fichier.
 
+![Panier Devis envoyé : bouton Envoyer la demande de devis, lignes modifiables](/captures/web-acheteur-commande-devis.webp)
+
 ## Négocier
 
 Dans les statuts « Devis envoyé » et « En négociation », les lignes deviennent modifiables :
@@ -58,10 +64,14 @@ Dans les statuts « Devis envoyé » et « En négociation », les lignes devien
 Le total de chaque ligne et le montant du panier sont calculés par Tunnel. La colonne
 « Consultation » montre les autres paniers en concurrence et ouvre le comparateur.
 
+![Panier En négociation : case de sélection, quantité et prix unitaire modifiables, livraison prévue](/captures/web-acheteur-commande-negociation.webp)
+
 ## Réception et clôture
 
 Quand la commande est livrée, passez le panier de « En cours de livraison » à
 « Clôturé ». Les demandes d'achat liées passent alors à « Reçu ».
+
+![Panier En cours de livraison : le menu Changer le statut ne propose que Clôturer](/captures/web-acheteur-commande-livraison.webp)
 
 Limites à connaître :
 

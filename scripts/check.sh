@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Vérification unique du monorepo (ADR 0003) : backend (format, lint, tests),
-# build des deux fronts, noms non définis des fronts, format du CHANGELOG. Lancée par le hook pre-commit et par la CI.
+# build des deux fronts, noms non définis des fronts, captures du guide, format du CHANGELOG. Lancée par le hook pre-commit et par la CI.
 # Les fronts sont construits l'un après l'autre : pas de charge parallèle sur la VM.
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,6 +22,8 @@ echo "== fronts (noms non définis)"
 (cd "$ROOT/mobile" && "$ROOT/web/node_modules/.bin/eslint" --no-config-lookup -c "$ROOT/web/eslint.undef.config.mjs" src)
 echo "== changelog"
 (cd "$ROOT/web" && node scripts/validate-changelog.cjs)
+echo "== guide (captures)"
+node "$ROOT/docs/site/scripts/verifier-captures.mjs"
 echo "== web (tests)"
 (cd "$ROOT/web" && npm test --silent)
 echo "check.sh : tout est vert"

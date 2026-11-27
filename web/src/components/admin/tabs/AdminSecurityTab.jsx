@@ -74,10 +74,10 @@ export default function AdminSecurityTab() {
   const handleCreateApiKey = useCallback(async (payload) => {
     try {
       const created = await apiKeysHook.createKey(payload);
-      notify('Cle API creee');
+      notify('Clé API créée');
       return created;
     } catch (err) {
-      notify(extractApiErrorMessage(err, 'Erreur lors de la creation de cle'), 'error');
+      notify(extractApiErrorMessage(err, 'Erreur lors de la création de la clé'), 'error');
       throw err;
     }
   }, [apiKeysHook, notify]);
@@ -85,9 +85,9 @@ export default function AdminSecurityTab() {
   const handlePatchApiKey = useCallback(async (id, payload) => {
     try {
       await apiKeysHook.patchKey(id, payload);
-      notify('Cle API mise a jour');
+      notify('Clé API mise à jour');
     } catch (err) {
-      notify(extractApiErrorMessage(err, 'Erreur lors de la mise a jour'), 'error');
+      notify(extractApiErrorMessage(err, 'Erreur lors de la mise à jour'), 'error');
       throw err;
     }
   }, [apiKeysHook, notify]);
@@ -95,7 +95,7 @@ export default function AdminSecurityTab() {
   const handleRevokeApiKey = useCallback(async (id) => {
     try {
       await apiKeysHook.revokeKey(id);
-      notify('Cle API revoquee');
+      notify('Clé API révoquée');
     } catch (err) {
       if (err?.isAuditCancelled) return; // fenêtre de motif fermée : rien n'a été supprimé
       notify(extractApiErrorMessage(err, 'Erreur lors de la revocation'), 'error');
@@ -126,7 +126,7 @@ export default function AdminSecurityTab() {
             <Flex align="center" gap="2"><Globe size={13} /><Text>Domaines</Text></Flex>
           </Tabs.Trigger>
           <Tabs.Trigger value="api-keys">
-            <Flex align="center" gap="2"><KeyRound size={13} /><Text>Cles API</Text></Flex>
+            <Flex align="center" gap="2"><KeyRound size={13} /><Text>Clés API</Text></Flex>
           </Tabs.Trigger>
         </Tabs.List>
 
