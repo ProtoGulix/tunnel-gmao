@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from api.db import get_connection, release_connection
 from api.errors.exceptions import raise_db_error
+from api.stats.trends import compute_request_stock_trend
 
 # Statuts du stock : les autres statuts sont des sorties.
 STOCK_STATUSES = ("nouvelle", "en_attente")
@@ -120,6 +121,7 @@ class DemandesStatsRepository:
                 "weeks": weeks,
                 "flow": flow,
                 "trend": flow[-1]["stock_end"] - stock_start,
+                "trend_direction": compute_request_stock_trend([w["stock_end"] for w in flow]),
                 "stock": len(ages),
                 "age_buckets": bucket_ages(ages),
                 "sites": sites,

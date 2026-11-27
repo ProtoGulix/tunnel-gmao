@@ -63,12 +63,6 @@ export function findBucket(buckets, code) {
   return (buckets ?? []).find((b) => b.code === code) ?? null;
 }
 
-/** Sens de la tendance (nombre signé de l'API) pour l'affichage */
-export function trendDirection(trend) {
-  if (!Number.isFinite(trend) || trend === 0) return 'stable';
-  return trend > 0 ? 'up' : 'down';
-}
-
 /** Une valeur de la série par semaine, dans l'ordre de l'API */
 export function flowSeries(flow, key) {
   return (flow ?? []).map((w) => w[key]);

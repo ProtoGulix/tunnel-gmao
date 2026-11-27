@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseFilter, formatFilter, requestScope, hasOwnScope, inBucket, filterByBucket, findBucket,
-  trendDirection, flowSeries, flowTotal, tileCounts } from './bilanFilter.js';
-import { sectionsForFilter, filterLabel } from './bilanView.js';
+  flowSeries, flowTotal, tileCounts } from './bilanFilter.js';
+import { sectionsForFilter, filterLabel, placeLabel, limitItems, isCollapsed, oldestBucketCode, PLACE_LIMIT } from './bilanView.js';
 
 const NOW = new Date('2026-11-27T12:00:00Z').getTime();
 const daysAgo = (n) => new Date(NOW - n * 86400000).toISOString();
@@ -49,11 +49,7 @@ test('tranche : filtrage et recherche par code', () => {
   assert.deepEqual(filterByBucket(reqs, findBucket(buckets, 'x'), NOW), []);
 });
 
-test('tendance et séries', () => {
-  assert.equal(trendDirection(3), 'up');
-  assert.equal(trendDirection(-1), 'down');
-  assert.equal(trendDirection(0), 'stable');
-  assert.equal(trendDirection(null), 'stable');
+test('séries du flux', () => {
   const flow = [{ created: 2, accepted: 1, rejected: 0, stock_end: 5 }, { created: 4, accepted: 1, rejected: 2, stock_end: 6 }];
   assert.deepEqual(flowSeries(flow, 'stock_end'), [5, 6]);
   assert.equal(flowTotal(flow, 'created'), 6);
@@ -90,9 +86,39 @@ test('libellé du filtre', () => {
   const stats = { age_buckets: [{ code: 'lt_7', label: '< 7 j' }], sites: [{ id: 's', name: 'Nord' }] };
   assert.equal(filterLabel({ kind: 'age', value: 'lt_7' }, stats), '< 7 j');
   assert.equal(filterLabel({ kind: 'site', value: 's' }, stats), 'Nord');
+  assert.equal(filterLabel({ kind: 'site', value: 's' }, { sites: [{ id: 's', code: 'N', name: 'Nord' }] }), 'N – Nord');
   assert.equal(filterLabel({ kind: 'equipment', value: 'x' }, stats), 'Équipement');
   assert.equal(filterLabel({ kind: 'site', value: 'absent' }, stats), 'Site');
   assert.equal(filterLabel({ kind: 'age', value: 'absente' }, stats), 'Âge');
   assert.equal(filterLabel({ kind: 'tile', value: 'idle' }, stats), 'Sans action');
   assert.equal(filterLabel(null, stats), '');
+});
+
+test('libellé code – nom, tel que renvoyé par l\'API', () => {
+  assert.equal(placeLabel({ code: 'VLT', name: 'Villettes' }), 'VLT – Villettes');
+  assert.equal(placeLabel({ code: null, name: 'Presse' }), 'Presse');
+  assert.equal(placeLabel({ code: 'PRS', name: '' }), 'PRS');
+  assert.equal(placeLabel({ code: 'PRS', name: '0' }), 'PRS – 0');
+  assert.equal(placeLabel({}), '');
+});
+
+test('troncature des listes du bilan', () => {
+  const list = [1, 2, 3, 4, 5, 6, 7];
+  assert.equal(PLACE_LIMIT, 5);
+  assert.deepEqual(limitItems(list, false), [1, 2, 3, 4, 5]);
+  assert.deepEqual(limitItems(list, true), list);
+  assert.deepEqual(limitItems([1, 2], false), [1, 2]);
+  assert.deepEqual(limitItems(undefined, false), []);
+});
+
+test('bilan replié dès qu\'un filtre est actif', () => {
+  assert.equal(isCollapsed(null), false);
+  assert.equal(isCollapsed({ kind: 'stock' }), true);
+});
+
+test('tranche la plus ancienne : dernier code de l\'API', () => {
+  assert.equal(oldestBucketCode([{ code: 'lt_7', count: 2 }, { code: 'gt_90', count: 50 }]), 'gt_90');
+  assert.equal(oldestBucketCode([{ code: 'lt_7', count: 2 }, { code: 'gt_90', count: 0 }]), undefined);
+  assert.equal(oldestBucketCode([]), undefined);
+  assert.equal(oldestBucketCode(undefined), undefined);
 });

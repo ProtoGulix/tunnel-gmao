@@ -17,14 +17,14 @@ import FilteredQueue from '@/components/home/FilteredQueue';
 import QueueNotices from '@/components/home/QueueNotices';
 import DemandBilan from '@/components/home/DemandBilan';
 import QueueTiles from '@/components/home/QueueTiles';
-import ActiveFilterBar from '@/components/home/ActiveFilterBar';
+import BilanRecap from '@/components/home/BilanRecap';
 import { PERM } from '@/auth/permissionCodes';
 import { usePermissions } from '@/auth/usePermissions';
 import { useSiteOptions } from '@/hooks/home/useSiteOptions';
 import { useDirectionHome } from '@/hooks/home/useDirectionHome';
 import { SECTION_TITLES } from '@/hooks/home/requestQueue';
 import { tileCounts } from '@/hooks/home/bilanFilter';
-import { filterLabel } from '@/hooks/home/bilanView';
+import { filterLabel, isCollapsed } from '@/hooks/home/bilanView';
 import { useHomeFilter } from '@/hooks/home/useHomeFilter';
 import { useQueueAnticipate } from '@/hooks/home/useQueueAnticipate';
 import { useRequestQueueActions } from '@/hooks/home/useRequestQueueActions';
@@ -39,12 +39,13 @@ export default function TechnicalDirectionHomeView() {
   const [accepting, setAccepting] = useState(null);
   const actions = useRequestQueueActions({ onDone: reload });
   const anticipate = useQueueAnticipate({ onDone: reload });
+  const collapsed = isCollapsed(filter) && !!stats.data;
   if (home.loading) {
     return <LoadingState fullscreen message="Chargement du bilan…" />;
   }
 
   return (
-    <Flex direction="column" style={{ height: '100%', minHeight: 0, overflowY: 'auto' }}>
+    <Flex direction="column" style={{ height: '100%', minHeight: 0, overflowY: collapsed ? 'hidden' : 'auto' }}>
       <PageHeader
         title="Direction technique"
         subtitle="Demandes à qualifier"
@@ -60,26 +61,30 @@ export default function TechnicalDirectionHomeView() {
       />
       <QueueNotices anticipateError={anticipate.error} failed={failed} />
 
-      <Flex px="4" pt="2" justify="end"><SiteFilter options={siteOptions} value={site} onChange={setSite} /></Flex>
-      {stats.data && <DemandBilan stats={stats.data} filter={filter} onSelect={setFilter} />}
-      <QueueTiles
-        titles={SECTION_TITLES} counts={tileCounts(all)}
-        activeId={filter?.kind === 'tile' ? filter.value : undefined} onSelect={setFilter}
-      />
-
-      {filter && (
+      <Flex px="4" pt="2" gap="4" align="center" justify="end" style={{ flexShrink: 0 }}>
+        <Link to="/interventions?tab=demandes">Toutes les demandes</Link>
+        <SiteFilter options={siteOptions} value={site} onChange={setSite} />
+      </Flex>
+      {collapsed ? (
         <>
-          <ActiveFilterBar label={filterLabel(filter, stats.data)} onClear={() => setFilter(null)} />
+          <BilanRecap
+            stats={stats.data} titles={SECTION_TITLES} counts={tileCounts(all)}
+            label={filterLabel(filter, stats.data)} onReopen={() => setFilter(null)}
+          />
           <FilteredQueue
             title={filterLabel(filter, stats.data)} home={home} anticipate={anticipate}
             canAnticipate={can(PERM.preventive.anticipate)} onAccept={setAccepting}
           />
         </>
+      ) : (
+        <>
+          {stats.data && <DemandBilan stats={stats.data} filter={filter} onSelect={setFilter} />}
+          <QueueTiles
+            titles={SECTION_TITLES} counts={tileCounts(all)}
+            activeId={filter?.kind === 'tile' ? filter.value : undefined} onSelect={setFilter}
+          />
+        </>
       )}
-
-      <Flex justify="end" px="4" py="2" style={{ flexShrink: 0 }}>
-        <Link to="/interventions?tab=demandes">Toutes les demandes</Link>
-      </Flex>
     </Flex>
   );
 }

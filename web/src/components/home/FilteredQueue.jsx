@@ -1,5 +1,5 @@
 /**
- * @fileoverview Liste filtrée à gauche, détail de la ligne choisie à droite (sous le bilan).
+ * @fileoverview Liste filtrée à gauche, détail de la ligne choisie à droite (sous le rappel du bilan, sur la hauteur restante).
  * @module components/home/FilteredQueue
  */
 import PropTypes from 'prop-types';
@@ -12,7 +12,7 @@ import QueueDetail from '@/components/home/QueueDetail';
 export default function FilteredQueue({ title, home, canAnticipate, anticipate, onAccept }) {
   const { sections, lines, failed, selectedKey, select, target } = home;
   return (
-    <Box px="4" pt="3" style={{ height: 560, flexShrink: 0 }}>
+    <Box px="4" pt="2" pb="2" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <MasterDetailLayout
         freeDetail
         ratio="40% 1fr"

@@ -621,6 +621,7 @@ class DemandesResponse(BaseModel):
     weeks: int
     flow: List[DemandesWeek]
     trend: int
+    trend_direction: Optional[Literal["up", "down", "stable"]] = None
     stock: int
     age_buckets: List[DemandesAgeBucket]
     sites: List[DemandesEquipment]

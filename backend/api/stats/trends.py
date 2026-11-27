@@ -79,3 +79,12 @@ def compute_audit_trends(monthly: List[Dict]) -> Dict[str, Optional[str]]:
         field: compute_trend([m.get(field) for m in monthly], threshold)
         for field, threshold in AUDIT_TREND_FIELDS.items()
     }
+
+
+# Stock de demandes à qualifier (ADR 0046) : « stable » sous 3 demandes d'écart estimé.
+REQUEST_STOCK_STABLE_BELOW = 3.0
+
+
+def compute_request_stock_trend(stock_by_week: List[Optional[float]]) -> Optional[str]:
+    """Tendance du stock de demandes à qualifier sur ses fins de semaine."""
+    return compute_trend(stock_by_week, REQUEST_STOCK_STABLE_BELOW)

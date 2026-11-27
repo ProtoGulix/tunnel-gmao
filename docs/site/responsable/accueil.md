@@ -19,11 +19,14 @@ est acceptée ou rejetée.
 
 - **Flux** : le stock actuel, sa courbe sur 8 semaines et sa tendance (en hausse, stable,
   en baisse) ; les entrées et les sorties (acceptées, rejetées) sur la période.
-- **Âge** : le stock par tranches d'ancienneté, de moins de 7 jours à plus de 90 jours.
-- **Où** : le stock par site, puis les équipements les plus chargés, avec l'âge de la plus
-  ancienne demande.
+- **Âge** : le stock par tranches d'ancienneté, de moins de 7 jours à plus de 90 jours. La
+  tranche la plus ancienne passe en rouge dès qu'elle contient une demande.
+- **Où** : le stock par site, puis par équipement (code et nom), avec l'âge de la plus
+  ancienne demande. Cinq lignes par liste ; **Voir tout** déplie le reste.
 
-Sous le bilan, une tuile par sujet : **Urgentes** (interventions non fermées de priorité
+La tendance est « stable » tant que le stock varie de moins de 3 demandes sur la période.
+
+Sous le bilan, un bandeau d'une tuile par sujet : **Urgentes** (interventions non fermées de priorité
 urgente), **En attente** (pièces ou production), **Sans action** (depuis le seuil de relance,
 7 jours par défaut, voir les notifications plus bas), **Préventif** (échéances en retard ou
 proches). Une intervention n'est comptée qu'une fois, dans la première tuile qui la cite.
@@ -33,10 +36,11 @@ sites » restreint le bilan et les tuiles à un site.
 
 ## Ouvrir une liste
 
-Cliquez le stock, une tranche d'âge, un site, un équipement ou une tuile : la liste
-correspondante s'affiche dessous, avec le filtre actif et **Effacer** pour la refermer. La
-liste est à gauche, le détail de la ligne choisie à droite : on décide sans quitter
-l'accueil, puis la ligne suivante s'affiche. Le filtre et la ligne choisie figurent dans
+Cliquez le stock, une tranche d'âge, un site, un équipement ou une tuile : le bilan se
+replie en une ligne de rappel (stock, tranche la plus ancienne, tuiles, filtre actif) et la
+liste prend la hauteur de l'écran. La liste est à gauche, le détail de la ligne choisie à
+droite : on décide sans quitter l'accueil, puis la ligne suivante s'affiche. Un clic sur la
+ligne de rappel ou sur le filtre actif rouvre le bilan. Le filtre et la ligne choisie figurent dans
 l'adresse de la page : un lien copié rouvre la même vue.
 
 ![Liste des demandes de 7 à 30 jours, demande choisie à droite](/captures/web-direction-accueil-liste.webp)

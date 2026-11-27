@@ -112,3 +112,13 @@ def test_code_de_droit_au_catalogue_et_matrice_par_defaut():
     assert CODE in codes
     for role in ("ADMIN", "RESP", "TECH", "ACHETEUR", "MCP"):
         assert default_allowed(role, ENDPOINT), role
+
+
+def test_tendance_du_stock_stable_sous_trois_demandes():
+    from api.stats.trends import compute_request_stock_trend
+
+    # Données de dev du 2026-11-27 : 56 → 58 en 8 semaines, écart estimé sous 1
+    assert compute_request_stock_trend([56, 56, 56, 55, 55, 55, 56, 58]) == "stable"
+    assert compute_request_stock_trend([10, 12, 14, 16]) == "up"
+    assert compute_request_stock_trend([20, 16, 12, 8]) == "down"
+    assert compute_request_stock_trend([5, 6]) is None

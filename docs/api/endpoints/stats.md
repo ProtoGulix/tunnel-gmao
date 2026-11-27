@@ -447,6 +447,7 @@ Stock = demandes `nouvelle` ou `en_attente`. Sortie = première transition vers 
 
 - `flow` : une ligne par lundi (`week_start`) : `created`, `accepted`, `rejected`, `stock_end`. Le `stock_end` de la semaine courante égale `stock`.
 - `trend` : `stock_end` de la dernière semaine moins le stock au début de la première.
+- `trend_direction` : `"up"`, `"down"`, `"stable"` ou `null`, sur les `stock_end` hebdomadaires, même calcul que `/stats/organisation` (moindres carrés, au moins 3 semaines) ; `stable` sous 3 demandes d'écart estimé.
 - `age_buckets` : `lt_7`, `7_30`, `30_90`, `gt_90` ; `from_days` incluse, `to_days` exclue (`null` : sans limite), `count`, `min_days`, `max_days` (`null` si vide). Somme des `count` = `stock`.
 - `sites` : équipements racines, `id`, `code`, `name`, `count`, `oldest_days`. Somme = `stock`.
 - `equipments` : les 10 équipements les plus chargés, mêmes champs.
