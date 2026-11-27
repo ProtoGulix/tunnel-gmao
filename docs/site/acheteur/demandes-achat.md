@@ -57,6 +57,8 @@ répartie.
 4. Vérifiez les champs de la demande : désignation, quantité (1 au minimum), unité, urgence, demandeur, atelier, motif, notes. La désignation, la quantité et le demandeur sont obligatoires.
 5. Cliquez sur **Enregistrer**.
 
+![Qualifier la demande : informations à gauche, carte Pièce catalogue à droite pour lier ou créer la pièce](/captures/web-acheteur-qualifier.webp)
+
 Le même formulaire, appelé **Modifier**, sert aux demandes déjà qualifiées. On peut aussi
 y délier la pièce.
 
@@ -70,6 +72,8 @@ fournisseur à la pièce : voir [Pièces et fournisseurs](./pieces-fournisseurs)
 
 Le bouton **Nouvelle demande**, en haut de l'écran, ouvre un formulaire. Vous pouvez en
 enchaîner plusieurs. L'onglet **Import CSV** de cette fenêtre mène à l'[import CSV](./import-csv).
+
+![Fenêtre Nouvelle demande d'achat : recherche de l'article, quantité, unité, urgence et demandeur](/captures/web-acheteur-demande-achat-creation.webp)
 
 ## Supprimer
 

@@ -165,7 +165,8 @@ Ordre validé par l'utilisateur le 2026-10-06. Ne passe à l'étape suivante que
 3. Une version est décidée par l'utilisateur.
    - D'abord la documentation, obligatoire et avant tout numéro de version : le guide en ligne est republié depuis main à la fusion, une version sans sa documentation publie une documentation fausse.
    - Chaque entrée de la section « Non publié » du CHANGELOG est confrontée au guide (docs/site) et à deploy/README.md ; toute page dépassée est corrigée.
-   - La construction du guide (npm run docs:build dans docs/site) passe sans lien mort. Ce contrôle est noté dans la description de la pull request.
+   - Les captures sont reprises (npm run docs:screenshots dans docs/site, démonstration jetable) puis relues ; check.sh vérifie que chaque image du guide a son entrée dans scripts/captures.json.
+   - La construction du guide (npm run docs:build dans docs/site) passe sans lien mort. Ces deux contrôles sont notés dans la description de la pull request.
    - Puis branche chore/release-X.Y.Z (API_VERSION, versions de web/ et mobile/ via npm version, version affichée dans README.md, section « Non publié » du CHANGELOG renommée `## [X.Y.Z] — AAAA-MM-JJ` : ce fichier racine alimente aussi « Nouveautés » ; une section `### [interne]` n'y est pas affichée) intégrée dans develop, pull request develop → main en merge commit (--no-ff), tag annoté vX.Y.Z sur main, main refusionnée dans develop. Le push vers main exige TUNNEL_RELEASE=1 ; un commit après conflit sur develop ou un cherry-pick exige TUNNEL_INTEGRATION=1 (ADR 0008 point 8).
 4. ADR : premier commit de la branche du chantier qu'il décide ; ADR sans code : branche docs/adr-NNNN-<sujet>.
 5. Ne jamais réécrire l'historique de main ou develop (pas de force push).

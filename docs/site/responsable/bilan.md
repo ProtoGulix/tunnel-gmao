@@ -93,6 +93,8 @@ Trois chiffres courts sur l'**état actuel** du préventif, hors période :
 
 ## L'onglet Constats
 
+![Onglet Constats du Bilan : quatre chiffres clés, puis des barres par question (leviers, signal précurseur, ancienneté du problème, devenir des demandes)](/captures/web-direction-bilan-constats.webp)
+
 Les constats saisis après intervention, sur la période choisie ; onglet ouvert à tous. Un bandeau de quatre
 chiffres clés, comme l'onglet État :
 

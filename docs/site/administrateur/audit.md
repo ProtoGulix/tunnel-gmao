@@ -3,6 +3,8 @@
 Écran : **Administration**, onglet **Audit**. Trois sous-onglets : **Journal**, **Règles**
 et **Raisons**.
 
+![Administration, onglet Audit, sous-onglet Journal : filtres, puis date, entité, décision, modification, raison et auteur de chaque entrée](/captures/web-admin-audit.webp)
+
 ## Pourquoi un motif
 
 Tunnel garde la trace de ce qui s'est réellement passé. Quand quelqu'un fait un changement
@@ -44,6 +46,10 @@ Pour ajouter une règle :
    défaut (obligatoire pour une règle routine). Décochez pour une règle sensible.
 5. Cliquez sur **Enregistrer**.
 
+![Sous-onglet Règles : entité, champ, nature et raison par défaut de chaque règle](/captures/web-admin-audit-regles.webp)
+
+![Fenêtre Nouvelle règle d'audit : entité, champ, case Routine et raison par défaut](/captures/web-admin-audit-regle-nouvelle.webp)
+
 Le crayon d'une règle existante change sa nature et sa raison par défaut. L'entité et le
 champ ne se modifient pas.
 
@@ -58,6 +64,10 @@ entités où elle est proposée, une couleur et un statut (Active ou Inactive).
 - Le crayon change le libellé, la catégorie, les entités, la couleur et la description. Le
   code ne change pas.
 - **Désactiver** retire la raison des listes de choix ; **Activer** la remet.
+
+![Sous-onglet Raisons : code, libellé, catégorie, entités, couleur et statut](/captures/web-admin-audit-raisons.webp)
+
+![Fenêtre Nouvelle raison d'audit : code, libellé, catégorie, entités compatibles, couleur et description](/captures/web-admin-audit-raison-nouvelle.webp)
 
 Si une équipe a besoin d'un motif qui n'existe pas, ajoutez-le ici. Les écrans de saisie
 utilisent tous cette même liste.

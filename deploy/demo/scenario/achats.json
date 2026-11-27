@@ -2763,6 +2763,17 @@
       "demandeur": "A1",
       "le": -16,
       "reason": "Réapprovisionnement : stock sous le seuil minimal"
+    },
+    {
+      "key": "DA326",
+      "article": null,
+      "item_label": "Joint de porte d'armoire électrique, profil en U",
+      "quantity": 2,
+      "unit": "m",
+      "urgency": "normal",
+      "demandeur": "T2",
+      "le": -1,
+      "reason": "Joint déchiré, porte de l'armoire du convoyeur CV-01"
     }
   ],
   "commandes": [

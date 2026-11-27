@@ -8,6 +8,8 @@ falsifier ne vaut rien. C'est pourquoi une décision qui sort du travail normal 
 
 ## Travail normal et décision
 
+![Une modification passe par une règle d'audit : si elle est routinière, elle s'enregistre avec un motif par défaut ; si elle est sensible, la fenêtre de motif s'ouvre et la modification est refusée sans motif ; dans les deux cas elle entre dans le journal](/schemas/regle-audit.svg)
+
 Dans le **travail normal**, les actions des techniciens racontent le travail : temps passé,
 nature, complexité. Rien de plus n'est demandé.
 
@@ -28,6 +30,8 @@ action nécessite une raison d'audit. »
 2. Ajoutez une **Précision**. Elle est facultative, sauf avec « Autre raison » : le texte
    est alors obligatoire.
 3. Cliquez sur **Confirmer**.
+
+![Fenêtre « Raison de la modification » avec Autre raison choisie : le champ Précision devient obligatoire](/captures/web-direction-motif-autre.webp)
 
 Si vous fermez la fenêtre ou cliquez sur **Annuler**, rien n'est modifié.
 
@@ -72,6 +76,8 @@ l'administrateur de l'ajouter.
 
 Le **Journal d'audit** se trouve dans **Administration**, onglet **Audit**, sous-onglet
 **Journal**. Il est en lecture seule et se met à jour avec le bouton **Actualiser**.
+
+![Journal d'audit : filtres, puis date, entité, décision, modification, raison et auteur de chaque entrée](/captures/web-admin-audit.webp)
 
 Chaque ligne donne :
 

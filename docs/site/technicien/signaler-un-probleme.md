@@ -18,6 +18,8 @@ Touchez **Nouvelle demande**. Le formulaire **Nouvelle demande d'intervention** 
 3. **Service** : facultatif, à choisir dans la liste.
 4. **Description** (obligatoire) : décrivez le problème ou l'intervention souhaitée.
 
+![Demande d'intervention remplie : équipement CV-02, nom et description](/captures/mobile-technicien-demande-remplie.webp)
+
 Touchez **Créer la DI**. Le formulaire ne s'envoie pas sans nom ni description.
 
 ## Suivre une demande

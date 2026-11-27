@@ -45,6 +45,8 @@ Vous, qui l'avez créée, n'êtes pas notifié de votre propre demande.
 
 ## Les notifications
 
+![Haut du menu : la cloche Notifications avec son compteur de non lues](/captures/web-direction-notifications-zone.webp)
+
 La cloche **Notifications** se trouve en haut du menu de gauche, avec le nombre de
 notifications non lues. Vous y recevez :
 
@@ -56,3 +58,5 @@ Un préventif en retard ou une intervention sans action est rappelé chaque sema
 le panneau, vous pouvez « Tout marquer comme lu », « Supprimer les lues » ou « Tout
 supprimer ». Un courriel part seulement pour une nouvelle demande, et seulement si
 l'envoi de courriels est configuré sur votre installation.
+
+![Panneau des notifications ouvert, avec Tout marquer comme lu et Tout supprimer](/captures/web-direction-notifications-panneau.webp)

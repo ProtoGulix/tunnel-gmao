@@ -1,8 +1,8 @@
 # Notifications et compte
 
-![Accueil du mobile : la cloche des notifications est en haut à droite](/captures/mobile-technicien-accueil.webp)
-
 ## Notifications sur le mobile
+
+![En-tête de l'accueil mobile, avec la cloche des notifications à droite](/captures/mobile-technicien-notifications-cloche.webp)
 
 La cloche en haut à droite de l'accueil ouvre l'écran **Notifications**. Chaque notification
 indique son type, son message et sa date. Les notifications non lues sont en gras, avec un
@@ -26,6 +26,10 @@ longue, **Charger plus** affiche la suite.
 
 ## Notifications sur le web
 
+![Haut du menu : la cloche Notifications avec son compteur de non lues](/captures/web-direction-notifications-zone.webp)
+
+![Panneau des notifications ouvert, avec Tout marquer comme lu et Tout supprimer](/captures/web-direction-notifications-panneau.webp)
+
 Le web a aussi une cloche **Notifications**, avec **Supprimer les lues** et la suppression
 d'une notification.
 
@@ -38,6 +42,8 @@ d'une notification.
 3. Choisissez l'onglet **Mot de passe**.
 4. Saisissez le **mot de passe actuel**, le **nouveau mot de passe**, sa confirmation, puis
    touchez **Changer le mot de passe**.
+
+![Mon profil, onglet Mot de passe](/captures/web-technicien-profil-mot-de-passe.webp)
 
 Si vous avez oublié votre mot de passe, un administrateur peut le réinitialiser : un mot de
 passe temporaire est alors généré.

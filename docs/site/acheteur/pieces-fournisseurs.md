@@ -28,6 +28,8 @@ Avec les droits nécessaires :
 - **Nouvelle pièce** (en haut de l'écran) crée une pièce ;
 - **Modifier** change ses informations, dont l'emplacement.
 
+![Fenêtre Nouvelle pièce : famille, quantité, unité, emplacement et référence fabricant](/captures/web-acheteur-piece-creation.webp)
+
 Le bouton « Créer une demande d'achat » de la fiche est grisé : créez la demande depuis
 l'écran Demandes d'achat.
 
@@ -55,7 +57,19 @@ fournisseur référencé** (voir [Répartir et comparer](./repartition)).
 
 L'onglet **Fournisseurs** liste toutes les références fournisseur : fournisseur, référence
 interne, fabricant, référence fournisseur. Vous pouvez chercher, filtrer par fournisseur et
-ouvrir le détail d'une ligne. **Nouveau fournisseur** (en haut de l'écran) crée un
-fournisseur.
+ouvrir le détail d'une ligne : pièce liée, conditions d'achat, historique des prix.
+
+![Onglet Fournisseurs : la liste des références fournisseur, et le détail de la ligne choisie à droite](/captures/web-acheteur-stock-fournisseurs.webp)
+
+Dans le détail, **Gérer ce fournisseur** ouvre sa fiche. **Modifier** y change ses
+informations : nom, code, contact, adresse, notes, fournisseur actif ou non.
+
+![Fiche du fournisseur ouverte par Gérer ce fournisseur, avec le bouton Modifier](/captures/web-acheteur-fournisseur-gerer.webp)
+
+![Fenêtre Modifier le fournisseur](/captures/web-acheteur-fournisseur-modifier.webp)
+
+**Nouveau fournisseur** (en haut de l'écran) crée un fournisseur.
+
+![Fenêtre Nouveau fournisseur : nom, code, contact, adresse et notes](/captures/web-acheteur-fournisseur-creation.webp)
 
 L'onglet **Fabricants** tient la liste des fabricants.

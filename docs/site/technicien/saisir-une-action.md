@@ -30,6 +30,8 @@ l'**Intervention** parmi celles qui sont ouvertes, en cours ou en attente. Le bo
 7. **Facteurs de complexité.** Ce champ apparaît quand la complexité dépasse 5. Il devient
    alors obligatoire : choisissez le facteur qui explique la difficulté.
 
+![Formulaire Nouvelle action : tâche en cours et description saisie](/captures/mobile-technicien-action-champs.webp)
+
 Touchez **Enregistrer**. L'écran confirme « Action enregistrée ! ».
 
 ### Ce que Tunnel vérifie
@@ -43,6 +45,8 @@ Touchez **Enregistrer**. L'écran confirme « Action enregistrée ! ».
 
 Si un contrôle échoue, un cadre rouge **Erreur** liste ce qu'il faut corriger. Rien n'est
 enregistré tant que ce n'est pas corrigé.
+
+![Cadre Erreur : sélectionner ou créer une tâche liée à cette action](/captures/mobile-technicien-action-refus.webp)
 
 Si vous quittez le formulaire après avoir commencé à le remplir, l'application demande
 confirmation.

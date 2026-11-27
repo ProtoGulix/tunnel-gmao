@@ -11,6 +11,8 @@ Le parc se découpe avec la **hiérarchie mère et fille** : une ligne de produc
 atelier ou un site est un équipement mère, et ses machines sont ses filles. Une machine
 peut elle-même avoir des filles (sous-ensembles).
 
+![Page Équipements : la liste à plat des équipements avec leur état de santé, à gauche de la zone de fiche](/captures/web-direction-equipements.webp)
+
 Règles de l'arbre, contrôlées par l'API :
 
 - **4 niveaux au plus** ;
@@ -33,9 +35,13 @@ Une recherche, ou un filtre de classe, passe la liste « À plat » automatiquem
 ligne montre une pastille de santé, le code et le nom, et le badge de statut (par exemple
 « En service »). À plat, le chemin de rattachement s'ajoute en gris.
 
+![Liste en arbre : recherche, Arbre ou À plat, tri et filtre de classe, puis le site déplié jusqu'aux machines](/captures/web-direction-equipements-filtres.webp)
+
 Le bouton **Nouvel équipement** ouvre un formulaire : nom, classe, statut, équipement
 parent (facultatif), n° de machine, emplacement, fabricant, n° de série, mise en service,
 notes. Le code est généré automatiquement.
+
+![Fenêtre Nouvel équipement remplie : le code se calcule à partir de la classe et du n° de machine](/captures/web-direction-equipement-creation.webp)
 
 ## La fiche
 
@@ -57,12 +63,16 @@ partir de ce qui est ouvert sur l'équipement :
 La santé d'une **mère** reflète sa fille la plus dégradée. L'en-tête le dit : « via » suivi
 du code de la fille, cliquable.
 
+![En-tête d'un atelier : santé Critique, avec la cause et « via PR-05 »](/captures/web-direction-equipement-sante.webp)
+
 ### La section « Fiche »
 
 Les propriétés se modifient **sur place**, une à la fois, si votre rôle l'autorise :
 **Classe**, **Statut**, **Rattachement**, **N° machine**, **Emplacement**, **Fabricant**,
 **N° série**, **Mise en service**, **Nœud de regroupement** et **Notes**. Le code ne change
 pas : il est cité partout.
+
+![Section Fiche d'un équipement : classe, statut, rattachement et autres propriétés modifiables sur place](/captures/web-direction-equipement-fiche.webp)
 
 Le **Rattachement** (la mère) se choisit dans une recherche qui évite les boucles. Le
 chemin complet s'affiche, par exemple « MRV › ATL-INJ – Atelier injection », avec un lien
@@ -78,6 +88,10 @@ bloquées » l'indique.
 - **Activité** : les « Demandes ouvertes » et les « Interventions » de l'équipement.
 - La case **Inclure les sous-équipements** (pour une mère) étend l'activité et l'état et
   évolution à toutes ses filles.
+
+![Sous-équipements d'un atelier, avec leur santé et leur statut](/captures/web-direction-equipement-sous-equipements.webp)
+
+![Activité d'un atelier : demandes ouvertes, puis interventions paginées](/captures/web-direction-equipement-activite.webp)
 
 ## Le suivi du préventif
 
@@ -97,6 +111,8 @@ Le bouton **Détail** ouvre « Maintenance préventive — code » :
 - la courbe **Écart par rapport à l'échéance** : au-dessus de la ligne, en retard ; en
   dessous, en avance. Chaque réalisation est notée « −5 j » (en avance), « +12 j » (en
   retard) ou « à l'heure ».
+
+![Fenêtre Maintenance préventive d'une presse : plan en retard, interventions préventives passées et courbe d'écart](/captures/web-direction-equipement-preventif-detail.webp)
 
 Un équipement sans classe affiche « Pas de classe assignée » : sans classe, pas de plan.
 
@@ -121,6 +137,10 @@ Viennent ensuite des graphiques : interventions signalées par mois et par type,
 passées par mois, puis la répartition par **type d'intervention**, par **catégorie
 d'action** (heures) et par **facteur de complexité**. Le tableau « Valeurs par mois » donne
 les chiffres. Un clic sur un type ou un mois ouvre la liste des interventions concernées.
+
+![État et évolution sur 12 mois : chiffres clés, interventions et heures par mois, répartition par type, par catégorie d'action et par facteur de complexité](/captures/web-direction-equipement-evolution.webp)
+
+![Liste des interventions d'un mois, ouverte par un clic sur le graphique](/captures/web-direction-equipement-interventions.webp)
 
 Ces chiffres décrivent l'équipement. Ils ne décrivent jamais un technicien.
 

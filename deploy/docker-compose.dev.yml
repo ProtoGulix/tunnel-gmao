@@ -72,7 +72,8 @@ services:
       VITE_ALLOWED_HOSTS: ${DEV_ALLOWED_HOSTS:-localhost}
       VITE_HMR_CLIENT_PORT: ${DEV_HMR_CLIENT_PORT:-}
     volumes:
-      - ..:/src
+      # DOCS_SRC : chemin absolu d'un autre worktree, pour relire une branche de travail.
+      - ${DOCS_SRC:-..}:/src
       - docs-node-modules:/src/docs/site/node_modules
       - /dev/null:/src/deploy/.env:ro
     security_opt:

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title>Statuts d'une occurrence préventive : Générée à sa création avec sa demande ; En cours quand la demande est acceptée ou en création automatique ; Clôturée à la clôture de l'intervention, ce qui fixe la référence de l'échéance suivante ; une réouverture la repasse En cours ; le rejet de la demande la passe Ignorée, sans changer l'échéance</title>
+  <style>
+    text { font-size: 14px; fill: #1f2937; }
+    .title { font-size: 16px; font-weight: 600; }
+    .note { font-size: 12px; fill: #6b7280; }
+    .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 4px; stroke-linejoin: round; }
+    .blue { fill: #eff6ff; stroke: #2563eb; stroke-width: 1.5; }
+    .orange { fill: #fffbeb; stroke: #d97706; stroke-width: 1.5; }
+    .green { fill: #ecfdf5; stroke: #059669; stroke-width: 1.5; }
+    .neutral { fill: #f3f4f6; stroke: #9ca3af; stroke-width: 1.5; }
+    .transient { fill: #ffffff; stroke: #9ca3af; stroke-width: 1; stroke-dasharray: 4 3; }
+    .arrow { stroke: #475569; stroke-width: 1.8; fill: none; marker-end: url(#head); }
+    .dash { stroke: #9ca3af; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; marker-end: url(#head); }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect x="0.5" y="0.5" width="899" height="329" rx="12" fill="#ffffff" stroke="#e2e2e3"/>
+
+  <!-- Création -->
+  <rect class="transient" x="30" y="70" width="130" height="60" rx="10"/>
+  <text x="95" y="96" text-anchor="middle" fill="#6b7280" style="fill:#6b7280">En attente</text>
+  <text class="note" x="95" y="114" text-anchor="middle">un instant</text>
+  <path class="dash" d="M160 100 H208"/>
+
+  <rect class="blue" x="210" y="60" width="180" height="80" rx="10"/>
+  <text class="title" x="300" y="94" text-anchor="middle">Générée</text>
+  <text class="note" x="300" y="114" text-anchor="middle">demande « nouvelle »</text>
+
+  <rect class="orange" x="470" y="60" width="180" height="80" rx="10"/>
+  <text class="title" x="560" y="94" text-anchor="middle">En cours</text>
+  <text class="note" x="560" y="114" text-anchor="middle">intervention ouverte</text>
+
+  <rect class="green" x="720" y="60" width="150" height="80" rx="10"/>
+  <text class="title" x="795" y="94" text-anchor="middle">Clôturée</text>
+  <text class="note" x="795" y="114" text-anchor="middle">référence suivante</text>
+
+  <rect class="neutral" x="210" y="220" width="180" height="80" rx="10"/>
+  <text class="title" x="300" y="254" text-anchor="middle">Ignorée</text>
+  <text class="note" x="300" y="274" text-anchor="middle">l'échéance ne bouge pas</text>
+
+  <!-- Passages -->
+  <path class="arrow" d="M390 90 H468"/>
+  <text class="note halo" x="430" y="38" text-anchor="middle">demande acceptée</text>
+  <text class="note halo" x="430" y="54" text-anchor="middle">ou plan Auto</text>
+
+  <path class="arrow" d="M650 90 H718"/>
+  <text class="note halo" x="684" y="54" text-anchor="middle">clôture</text>
+
+  <path class="arrow" d="M795 140 C 795 190, 600 190, 575 142"/>
+  <text class="note halo" x="690" y="200" text-anchor="middle">réouverture de l'intervention</text>
+
+  <path class="arrow" d="M300 140 V218"/>
+  <text class="note halo" x="312" y="174">demande rejetée</text>
+  <text class="note halo" x="312" y="190">(motif)</text>
+
+  <text class="note" x="470" y="250">L'échéance suivante part de la clôture de la demande</text>
+  <text class="note" x="470" y="268">de la dernière occurrence clôturée. Une occurrence</text>
+  <text class="note" x="470" y="286">ignorée n'est pas une référence.</text>
+</svg>

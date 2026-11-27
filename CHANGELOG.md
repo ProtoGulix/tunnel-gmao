@@ -10,10 +10,19 @@ mobile/CHANGELOG.md.
 
 ### Ajouté
 - Guide : page « Le constat » dans « Comprendre Tunnel », avec un schéma de principe (de la clôture à la demande ou au Bilan), liée depuis les pages des demandes et de la clôture.
+- Guide : captures ajoutées (administration, coordination, constats, demandes, plans du préventif, équipements, achats, mobile).
+- Guide : schémas du préventif (plan, statuts d'une occurrence, déclenchement).
+
+### Corrigé
+- Administration, clés d'API : libellés et messages accentués (« Clés API », « Révoquer », « Dernière utilisation »…).
 
 ### [interne]
-- Pile de dev : guide utilisateur servi en direct sous `/docs/` (service `docs-vite`), pour relire la documentation avant publication.
+- Pile de dev : guide utilisateur servi en direct sous `/docs/` (service `docs-vite`), pour relire la documentation avant publication ; `DOCS_SRC` y sert le worktree d'une autre branche.
 - Démonstration : le cron de 3 h récupère `main` avant la réinitialisation (deploy/demo/README.md).
+- Démonstration : le scénario contient des constats (`constats.json`) : un constat sans demande sur chaque curatif fermé, et des constats avec demande acceptée, rejetée, rattachée ou en attente, dont deux corrigés (deploy/demo/scenario/README.md).
+- Captures du guide : le script prend aussi des captures avec un compte administrateur, sur l'instance jetable seulement (docs/site/README.md).
+- Démonstration : un plan préventif désactivé, une demande issue d'un constat à rattacher à une idée d'amélioration ouverte, une demande d'achat à qualifier et une clé d'API inutilisable (deploy/demo/scenario/RELECTURE.md).
+- Captures du guide : une capture peut se limiter à une zone (formulaire, carte) et remplir des champs ; `check.sh` vérifie que chaque image du guide a son entrée dans `captures.json`. Les captures sont reprises avant chaque version.
 
 ## [5.15.0] — 2026-11-26
 

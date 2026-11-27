@@ -7,6 +7,8 @@ Actions, Interventions, Constats, Classes d'équipement, Familles de pièces et 
 Chaque code (par exemple celui d'une catégorie) est marqué d'un cadenas : il ne se modifie
 pas. On change le libellé, pas le code.
 
+![Administration, onglet Référentiel, sous-onglet Actions : catégories d'actions et facteurs de complexité](/captures/web-admin-referentiel-actions.webp)
+
 Par défaut, l'administrateur et le responsable peuvent modifier les référentiels d'actions
 et d'interventions. Les droits se règlent dans la [matrice](./roles-permissions).
 
@@ -26,6 +28,8 @@ L'écran ne permet pas de la modifier.
 
 ## Interventions
 
+![Sous-onglet Interventions : les huit types avec description, constat obligatoire et statut, puis les statuts](/captures/web-admin-referentiel-interventions.webp)
+
 **Types d'intervention.** Pour chaque type : libellé, description et statut (Actif ou
 Inactif).
 
@@ -36,6 +40,8 @@ Inactif).
   ce type (cochée par défaut pour le curatif).
 - **Désactiver** retire le type des choix proposés ; **Activer** le remet.
 
+![Fenêtre Nouveau type d'intervention : code, libellé et description](/captures/web-admin-referentiel-type-nouveau.webp)
+
 **Statuts d'intervention.** La liste est fixe : vous pouvez seulement changer le libellé et
 la couleur d'un statut avec le crayon. L'écran ne propose pas d'en ajouter.
 
@@ -44,6 +50,8 @@ la couleur d'un statut avec le crayon. L'écran ne propose pas d'en ajouter.
 Une question par bloc, ses choix en tableau : libellé, type préconisé, demande, exclusif,
 ordre et statut. Une sous-question suit sa question, avec le choix qui la déclenche. Un
 réglage ne vaut que pour les constats saisis ensuite : rien n'est recalculé.
+
+![Sous-onglet Constats : la question des leviers et ses choix, avec type préconisé, demande, exclusif, ordre et statut](/captures/web-admin-referentiel-constats.webp)
 
 - Le crayon d'un choix change son libellé, son ordre, son type préconisé (parmi les types
   d'intervention actifs), **Génère une demande** et **Exclusif** (un choix exclusif ne se

@@ -137,6 +137,10 @@ et mobile servis par Vite (ADR 0010), guide utilisateur en direct sous `/docs/` 
 docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d
 ```
 
+Pour relire le guide d'une autre branche, servir son worktree (chemin absolu) :
+`DOCS_SRC=/chemin/du/worktree docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up -d --no-deps docs-vite`.
+Relancer sans `DOCS_SRC` pour revenir au dépôt.
+
 Derrière un proxy HTTPS, renseigner `DEV_ALLOWED_HOSTS` et `DEV_HMR_CLIENT_PORT=443`
 dans `deploy/.env`, et faire transmettre les websockets par le proxy (en-têtes
 `Upgrade` et `Connection`). Sans `DEV_ALLOWED_HOSTS`, Vite n'accepte que localhost.

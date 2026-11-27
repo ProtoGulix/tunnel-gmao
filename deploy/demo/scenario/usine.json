@@ -581,6 +581,27 @@
           "optional": true
         }
       ]
+    },
+    {
+      "code": "PRE-PORTES-MENS",
+      "label": "Contrôle mensuel des portes de quai",
+      "classe": "BATIMENT",
+      "periodicity_days": 30,
+      "auto_accept": false,
+      "active": false,
+      "steps": [
+        {
+          "label": "Contrôler les fins de course et la cellule de sécurité",
+          "optional": false
+        },
+        {
+          "label": "Graisser les rails et les charnières",
+          "optional": false
+        }
+      ]
     }
+  ],
+  "cles_api": [
+    {"key": "K1", "name": "Tableau de bord de l'atelier", "creee_le": -40, "utilisee_le": -1}
   ]
 }
