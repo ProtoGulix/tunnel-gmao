@@ -6,7 +6,7 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
-## Non publié
+## [5.15.1] — 2026-11-27
 
 ### Ajouté
 - Guide : page « Le constat » dans « Comprendre Tunnel », avec un schéma de principe (de la clôture à la demande ou au Bilan), liée depuis les pages des demandes et de la clôture.
