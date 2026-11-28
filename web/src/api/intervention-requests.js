@@ -25,6 +25,7 @@ const _LIST_OPTIONAL_FILTERS = [
   ['includeDescendants', 'include_descendants', (v) => v !== undefined && v !== null],
   ['isSystem', 'is_system', (v) => v !== undefined && v !== null],
   ['search', 'search', (v) => !!v?.trim()],
+  ['sort', 'sort', (v) => !!v],
 ];
 
 function buildListQueryParams(params) {
@@ -51,6 +52,7 @@ function buildListQueryParams(params) {
  * @param {string} [params.machineId] - Filtrer par UUID équipement
  * @param {boolean} [params.includeDescendants] - Avec machineId : inclut les équipements descendants
  * @param {string} [params.search] - Recherche libre (code, demandeur_nom, description)
+ * @param {string} [params.sort] - 'recent' (défaut API) ou 'urgence'
  * @returns {Promise<{items: Array, pagination: Object, facets: Object}>}
  */
 export async function fetchInterventionRequests(params = {}) {
@@ -82,6 +84,7 @@ export async function fetchInterventionRequest(id) {
  * @param {string} [data.origine] - Origine de la demande, ex: 'directe' (créée en même temps
  *   qu'une intervention, sans passer par le workflow de signalement). Omis = défaut backend
  *   ('signalee').
+ * @param {string} [data.priorite] - Urgence : 'faible', 'normal', 'important', 'urgent'. Omis = aucune.
  * @returns {Promise<Object>} Demande créée avec code et statut initial
  */
 export async function createInterventionRequest(data) {
@@ -98,7 +101,23 @@ export async function createInterventionRequest(data) {
     payload.origine = data.origine;
   }
 
+  if (data.priorite) {
+    payload.priorite = data.priorite;
+  }
+
   const response = await api.post('/intervention-requests', payload);
+  return response.data;
+}
+
+/**
+ * Change l'urgence d'une demande nouvelle ou en attente.
+ *
+ * @param {string} id - UUID de la demande
+ * @param {string} priorite - 'faible', 'normal', 'important' ou 'urgent'
+ * @returns {Promise<Object>} Détail de la demande mis à jour
+ */
+export async function setInterventionRequestPriority(id, priorite) {
+  const response = await api.patch(`/intervention-requests/${id}/priority`, { priorite });
   return response.data;
 }
 

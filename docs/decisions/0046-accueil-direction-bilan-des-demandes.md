@@ -1,6 +1,6 @@
 # 0046. Accueil direction : bilan des demandes avant la liste
 
-- Statut : accepté (2026-11-27)
+- Statut : remplacé par 0047 (2026-11-28)
 - Date : 2026-11-27
 - Affine : ADR 0044 (vue direction), chantier ACD (file « à traiter » en liste et détail)
 

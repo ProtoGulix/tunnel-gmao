@@ -627,3 +627,41 @@ class DemandesResponse(BaseModel):
     sites: List[DemandesEquipment]
     equipments: List[DemandesEquipment]
     journal_gaps: int
+
+
+class BlocageEquipment(BaseModel):
+    id: str
+    code: Optional[str] = None
+    name: str
+
+
+class BlocagePurchaseRequests(BaseModel):
+    total: int
+    received: int
+    to_qualify: int
+    no_supplier_ref: int
+    pending_dispatch: int
+    rejected: int
+    consultation: int
+    partial: int
+    ordered: int
+    quoted: int
+    open: int
+
+
+class BlocageItem(BaseModel):
+    id: str
+    code: Optional[str] = None
+    title: str
+    equipement: Optional[BlocageEquipment] = None
+    priority: Optional[str] = None
+    status_since: datetime
+    days_in_status: int
+    purchase_requests: Optional[BlocagePurchaseRequests] = None  # groupe parts
+    note: Optional[str] = None  # groupe production
+
+
+class BlocagesResponse(BaseModel):
+    threshold_days: int
+    parts: List[BlocageItem]
+    production: List[BlocageItem]

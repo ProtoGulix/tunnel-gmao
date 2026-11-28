@@ -282,3 +282,10 @@ def test_equipements_ecriture_fermee_a_acheteur_et_mcp_ouverte_a_resp():
         ("DELETE", "/equipements/{equipement_id}"),
     ):
         assert default_allowed("RESP", ep(method, path, "equipements")), method
+
+
+def test_urgence_d_une_demande_reservee_a_resp_et_admin():
+    priority = ep("PATCH", "/intervention-requests/{request_id}/priority", "intervention-requests")
+    assert default_allowed("ADMIN", priority) and default_allowed("RESP", priority)
+    for role in ("TECH", "ACHETEUR", "MCP"):
+        assert not default_allowed(role, priority), role

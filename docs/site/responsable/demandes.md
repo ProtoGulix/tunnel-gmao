@@ -4,7 +4,7 @@ Toute intervention part d'une demande d'intervention (DI) : un demandeur, un éq
 une description. Votre rôle est de décider de la suite : l'accepter en créant
 l'intervention, ou la rejeter.
 
-![Accueil direction technique : les demandes comptées par statut](/captures/web-direction-accueil.webp)
+![Accueil direction technique : demandes à trancher, urgentes en tête](/captures/web-direction-accueil.webp)
 
 ## Où les trouver
 
@@ -40,9 +40,24 @@ acceptée ou rejetée ; acceptée vers clôturée. Une demande rejetée ou clôt
 plus.
 
 ::: warning Mettre en attente
-Le statut « En attente » existe et l'API l'autorise, mais l'écran web ne propose pas de
-bouton pour y passer une demande. Pour l'instant, vous pouvez accepter ou rejeter.
+Le bouton **En attente** n'est proposé que sur l'[accueil](/responsable/accueil), dans la
+liste « À trancher ». Le détail d'une demande permet d'accepter (par une intervention) ou
+de rejeter.
 :::
+
+## Urgence d'une demande
+
+Une demande peut porter une urgence : **Faible**, **Normale**, **Importante** ou
+**Urgente**. Le champ est facultatif ; sans choix, elle reste « Non précisée ».
+
+- À la création, le demandeur la choisit dans le champ **Urgence** (web et mobile).
+- Dans le détail d'une demande **nouvelle** ou **en attente**, le sélecteur **Urgence**
+  la change, si votre rôle en a le droit ; le changement est tracé dans l'audit. Ensuite
+  elle s'affiche en lecture seule.
+- Les urgentes passent en tête de « À trancher » sur l'accueil. À l'acceptation, l'urgence
+  préremplit la priorité de l'intervention, que vous pouvez modifier.
+
+![Détail d'une demande urgente : sélecteur Urgence](/captures/web-direction-demande-urgence.webp)
 
 ## Accepter : créer l'intervention
 

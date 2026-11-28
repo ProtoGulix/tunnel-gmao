@@ -17,6 +17,7 @@ Touchez **Nouvelle demande**. Le formulaire **Nouvelle demande d'intervention** 
 2. **Votre nom** (obligatoire).
 3. **Service** : facultatif, à choisir dans la liste.
 4. **Description** (obligatoire) : décrivez le problème ou l'intervention souhaitée.
+5. **Urgence** : facultative, de faible à urgent. Une demande urgente passe en tête de la liste de la direction.
 
 ![Demande d'intervention remplie : équipement CV-02, nom et description](/captures/mobile-technicien-demande-remplie.webp)
 

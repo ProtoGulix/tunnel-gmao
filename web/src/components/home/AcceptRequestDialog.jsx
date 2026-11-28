@@ -11,11 +11,9 @@ import { fetchActiveUsers } from '@/api/planning';
 import { useInterventionTypeRefs } from '@/hooks/shared/useInterventionTypeRefs';
 import { usePermittedInterventionTypes } from '@/hooks/shared/usePermittedInterventionTypes';
 import { selectableTypes, TYPE_REQUIRED_MESSAGE } from '@/lib/interventionTypesStore';
-import { PRIORITY_CONFIG } from '@/config/interventionTypes';
+import { REQUEST_PRIORITIES } from '@/lib/requestPriority';
 
 const NONE = '__none__';
-// Libellés uniques des priorités (PRIO-03), du plus faible au plus urgent
-const PRIORITIES = ['faible', 'normal', 'important', 'urgent'].map((code) => [code, PRIORITY_CONFIG[code].label]);
 
 function Field({ label, children }) {
   return (
@@ -44,7 +42,7 @@ export default function AcceptRequestDialog({ request, onClose, onAccept }) {
     if (!request) return;
     setType(request.suggested_type_inter ?? '');
     setTech('');
-    setPriority('');
+    setPriority(request.priorite ?? '');
     setError(null);
   }, [request]);
 
@@ -97,7 +95,7 @@ export default function AcceptRequestDialog({ request, onClose, onAccept }) {
               <Select.Trigger style={{ width: '100%' }} />
               <Select.Content>
                 <Select.Item value={NONE}>Par défaut</Select.Item>
-                {PRIORITIES.map(([v, l]) => <Select.Item key={v} value={v}>{l}</Select.Item>)}
+                {REQUEST_PRIORITIES.map((p) => <Select.Item key={p.code} value={p.code}>{p.label}</Select.Item>)}
               </Select.Content>
             </Select.Root>
           </Field>

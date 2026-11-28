@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     SCHEDULED_JOBS_HOUR: int = int(os.getenv("SCHEDULED_JOBS_HOUR", "5"))
     # Relance des retards : un palier tous les N jours (échéance + 1, + 8, + 15...) (ADR 0023).
     REMINDER_INTERVAL_DAYS: int = int(os.getenv("REMINDER_INTERVAL_DAYS", "7"))
+    # Accueil direction (ADR 0047) : une intervention en attente de pièces ou de production
+    # est signalée à partir de N jours dans ce statut.
+    BLOCKED_ALERT_DAYS: int = int(os.getenv("BLOCKED_ALERT_DAYS", "7"))
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "")
 
@@ -134,6 +137,13 @@ if not 0 <= settings.SCHEDULED_JOBS_HOUR <= 23:
 if settings.REMINDER_INTERVAL_DAYS < 1:
     logger.critical(
         "ERREUR DE CONFIGURATION CRITIQUE : REMINDER_INTERVAL_DAYS doit valoir au moins 1. "
+        "L'API refuse de démarrer."
+    )
+    sys.exit(1)
+
+if settings.BLOCKED_ALERT_DAYS < 1:
+    logger.critical(
+        "ERREUR DE CONFIGURATION CRITIQUE : BLOCKED_ALERT_DAYS doit valoir au moins 1. "
         "L'API refuse de démarrer."
     )
     sys.exit(1)

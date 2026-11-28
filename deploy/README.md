@@ -114,8 +114,14 @@ une restauration demande de les régénérer.
 
 ## Réglages
 
-Tous les réglages sont commentés dans `.env.example` : adresse et port d'écoute,
-taille maximale d'un envoi (`CLIENT_MAX_BODY_SIZE`), envoi de mails (`SMTP_*`).
+Tous les réglages sont commentés dans `.env.example`, entre autres :
+
+- adresse et port d'écoute ;
+- taille maximale d'un envoi (`CLIENT_MAX_BODY_SIZE`) ;
+- envoi de mails (`SMTP_*`) ;
+- seuil des interventions bloquées de l'accueil direction (`BLOCKED_ALERT_DAYS`, 7 jours
+  par défaut, au moins 1).
+
 Après modification de `.env` : `docker compose up -d`.
 
 ## Architecture

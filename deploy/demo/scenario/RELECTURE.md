@@ -94,6 +94,8 @@ Globalement oui.
 Ajout après la relecture ci-dessus : 95 constats (`constats.json`), 8 demandes et 3 interventions
 de plus (`I200` à `I207`), donc 195 demandes et 176 interventions.
 
+Ajout pour l'accueil direction (ADT-06) : urgence (`priorite`) sur dix demandes ouvertes, trois demandes ouvertes de plus de 90 jours (`I208` à `I210`) et une intervention en attente de la production avec sa note (`I211`), donc 199 demandes et 177 interventions.
+
 - Un constat sur chacun des 92 curatifs fermés, comme l'exige la clôture : 84 sans demande
   (réponses tirées de la clé, dont environ un tiers « Rien ne l'aurait évité »), 9 écrits à
   la main (11 versions avec les deux corrections). Le curatif I159 en porte deux, de deux

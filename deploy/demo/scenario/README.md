@@ -97,6 +97,9 @@ comptes, `.example` pour tout le reste.
 - Intervention préventive : `"type": "PRE"`, `"plan": "<code>"` ; ses tâches reprennent les
   étapes du plan, `gamme_step` = rang de l'étape (1, 2…), `origin` `"plan"`.
 - Le dernier statut donne l'état actuel ; une intervention encore ouverte n'a pas de `ferme`.
+  Un statut peut porter une `note` courte, enregistrée dans le journal de statut.
+- `priorite` (facultatif, au niveau de la demande) : `faible`, `normal`, `important` ou
+  `urgent` ; absent = non renseignée.
 - `demandes_achat` : besoin exprimé par le technicien, traité ensuite par l'acheteur.
 
 ## `constats.json` (technicien)

@@ -1,50 +1,38 @@
 /**
- * @fileoverview Données de l'accueil direction : bilan, demandes, file, sections affichées sous le
- * filtre actif, et sélection de la liste (ADR 0046).
+ * @fileoverview Données de l'accueil direction (ADR 0047) : bilan, demandes à trancher, blocages,
+ * côté maintenance. Chaque source se charge seule : l'échec de l'une n'efface pas les autres.
  * @module hooks/home/useDirectionHome
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useTechnicalDirectionRequests } from '@/hooks/home/useTechnicalDirectionRequests';
 import { useDemandeStats } from '@/hooks/home/useDemandeStats';
-import { useInterventionQueue, failedLabels } from '@/hooks/home/useInterventionQueue';
-import { useQueueSelection } from '@/hooks/home/useQueueSelection';
-import { buildQueueSections, flattenQueue, parseRowKey } from '@/hooks/home/requestQueue';
-import { requestScope, hasOwnScope } from '@/hooks/home/bilanFilter';
-import { sectionsForFilter } from '@/hooks/home/bilanView';
+import { useBlocages } from '@/hooks/home/useBlocages';
+import { useMaintenanceSide } from '@/hooks/home/useMaintenanceSide';
 
-export function useDirectionHome({ site, filter }) {
+/** Libellés des sources, pour signaler un échec */
+const SOURCE_LABELS = {
+  requests: 'Demandes à trancher',
+  stats: 'Bilan',
+  blocages: 'Blocages',
+  maintenance: 'Côté maintenance',
+};
+
+export function useDirectionHome({ site }) {
   const stats = useDemandeStats({ siteId: site });
-  const requests = useTechnicalDirectionRequests(requestScope(null, site));
-  // Liste d'un site ou d'un équipement du bilan : sa propre portée, chargée au clic seulement
-  const scoped = useTechnicalDirectionRequests({ ...requestScope(filter, site), enabled: hasOwnScope(filter) });
-  const queue = useInterventionQueue({ siteId: site });
+  const requests = useTechnicalDirectionRequests({ machineId: site || undefined, includeDescendants: site ? true : undefined });
+  const blocages = useBlocages({ siteId: site });
+  const maintenance = useMaintenanceSide({ siteId: site });
   const reload = useCallback(
-    () => Promise.all([requests.reload(), scoped.reload(), queue.reload(), stats.reload()]),
+    () => Promise.all([requests.reload(), blocages.reload(), maintenance.reload(), stats.reload()]),
     // Les reload sont stables (useCallback) ; la règle réclamerait les objets entiers
-    [requests.reload, scoped.reload, queue.reload, stats.reload], // eslint-disable-line react-hooks/exhaustive-deps
+    [requests.reload, blocages.reload, maintenance.reload, stats.reload], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const all = useMemo(
-    () => buildQueueSections({ ...queue, requests: requests.items }),
-    [queue.urgent, queue.waiting, queue.idle, queue.preventive, requests.items], // eslint-disable-line react-hooks/exhaustive-deps
-  );
-  const sections = useMemo(
-    () => sectionsForFilter(filter, { sections: all, requests: requests.items, scoped: scoped.items }, stats.data),
-    [filter, all, requests.items, scoped.items, stats.data],
-  );
-  const lines = useMemo(() => flattenQueue(sections), [sections]);
-  const keys = useMemo(() => lines.map((l) => l.key), [lines]);
-  const failed = failedLabels({
-    ...queue.errors,
-    ...(requests.error && { requests: requests.error }),
-    ...(scoped.error && { requests: scoped.error }),
-    ...(stats.error && { stats: stats.error }),
-  });
-  const [selectedKey, select] = useQueueSelection(keys, failed.length > 0);
+  const failed = Object.entries({ requests, stats, blocages, maintenance })
+    .filter(([, source]) => source.error)
+    .map(([key]) => SOURCE_LABELS[key]);
   return {
-    stats, queue, all, sections, lines, failed, reload, selectedKey, select,
-    target: filter ? parseRowKey(selectedKey) : null,
-    requestItems: [...requests.items, ...scoped.items],
-    loading: (requests.loading || queue.loading || stats.loading) && !stats.data,
+    stats, requests, blocages, maintenance, failed, reload,
+    loading: (requests.loading || stats.loading || blocages.loading) && !stats.data,
   };
 }

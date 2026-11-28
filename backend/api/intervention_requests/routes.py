@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
@@ -13,6 +13,7 @@ from api.intervention_requests.schemas import (
     InterventionRequestDetail,
     InterventionRequestIn,
     InterventionRequestListItem,
+    PriorityIn,
     RequestStatusRef,
     StatusTransitionIn,
 )
@@ -97,6 +98,9 @@ def list_requests(
     is_system: Optional[bool] = Query(
         None, description="Filtrer les DI système (true) ou humaines (false)"
     ),
+    sort: Literal["recent", "urgence"] = Query(
+        "recent", description="recent : plus récentes d'abord ; urgence : urgentes, puis anciennes"
+    ),
 ) -> Dict[str, Any]:
     """
     Liste les demandes d'intervention avec filtres.
@@ -116,6 +120,7 @@ def list_requests(
         search=search,
         is_system=is_system,
         include_descendants=include_descendants,
+        sort=sort,
     )
     total = repo.count_list(
         statut=statut_list,
@@ -180,6 +185,20 @@ def create_request(
     declare_created_id(request, created["id"])
     background_tasks.add_task(send_di_a_traiter_mails, str(created["id"]))
     return single(created)
+
+
+@router.patch(
+    "/{request_id}/priority",
+    dependencies=[audit("request", id_from_path="request_id", table="intervention_request")],
+)
+def set_request_priority(request_id: UUID, body: PriorityIn, request: Request):
+    """
+    Change l'urgence d'une demande `nouvelle` ou `en_attente` (400 sinon).
+
+    Droit par défaut : ADMIN et RESP. **Audit** : règle `request`, auteur = jeton.
+    """
+    updated = repo.set_priorite(str(request_id), body.priorite)
+    return single(_with_allowed_transitions(updated, _can_transition(request)))
 
 
 @router.post(

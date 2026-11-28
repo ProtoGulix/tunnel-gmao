@@ -32,6 +32,9 @@ class InterventionRequestIn(BaseModel):
     suggested_type_inter: Optional[str] = Field(
         default=None, description="Type d'intervention suggéré (pré-remplit l'acceptation)"
     )
+    priorite: Optional[str] = Field(
+        default=None, description="Urgence : faible, normal, important ou urgent (facultative)"
+    )
 
     class Config:
         from_attributes = True
@@ -70,6 +73,7 @@ class InterventionRequestListItem(BaseModel):
     tasks: List[InterventionTaskOut] = []
     is_system: bool = False
     suggested_type_inter: Optional[str] = None
+    priorite: Optional[str] = None
     # Intervention dont la demande est issue (constat après intervention, ADR 0043)
     source_intervention_id: Optional[UUID] = None
     constat_id: Optional[UUID] = None
@@ -86,6 +90,10 @@ class InterventionRequestListItem(BaseModel):
 
 class InterventionRequestDetail(InterventionRequestListItem):
     status_log: List[StatusLogEntry] = Field(default_factory=list)
+
+
+class PriorityIn(BaseModel):
+    priorite: str = Field(..., description="Urgence : faible, normal, important ou urgent")
 
 
 class StatusTransitionIn(BaseModel):

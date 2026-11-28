@@ -504,8 +504,8 @@ class Loader:
         cur.execute(
             "INSERT INTO intervention_request (id, code, machine_id, demandeur_nom, description, "
             "statut, intervention_id, created_at, updated_at, service_id, is_system, "
-            "suggested_type_inter, origine, created_by, deadline, source_intervention_id) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            "suggested_type_inter, origine, created_by, deadline, source_intervention_id, "
+            "priorite) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (
                 request_id,
                 code,
@@ -523,6 +523,7 @@ class Loader:
                 creator,
                 clock.day(item["signalee_le"]) if is_system else None,
                 uid("intervention", item["source"]) if item.get("source") else None,
+                item.get("priorite"),
             ),
         )
         self.counts["request"] += 1
@@ -697,7 +698,7 @@ class Loader:
             base = clock.at(step["le"], "17:00", minutes=step_no)
             at = max(base, day_end.get(step["le"], base) + timedelta(minutes=10 + step_no))
             by = self.user(step["par"])["id"]
-            log_rows.append((previous, step["to"], by, by, at, None))
+            log_rows.append((previous, step["to"], by, by, at, step.get("note")))
             previous = step["to"]
         for old, new, technician, by, at, notes in log_rows:
             cur.execute(

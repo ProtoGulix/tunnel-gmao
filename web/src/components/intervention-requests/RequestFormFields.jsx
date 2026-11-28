@@ -7,6 +7,9 @@
 import PropTypes from 'prop-types';
 import { Box, Button, Flex, Select, Spinner, Text, TextArea, TextField } from '@radix-ui/themes';
 import EquipmentPickerField from '@/components/intervention-requests/EquipmentPickerField';
+import { REQUEST_PRIORITIES } from '@/lib/requestPriority';
+
+const NONE = '__none__';
 
 export default function RequestFormFields({
   form, set, services, machineLocked, onMachineSelect, onMachineClear,
@@ -46,6 +49,20 @@ export default function RequestFormFields({
             {services.map((s) => (
               <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
             ))}
+          </Select.Content>
+        </Select.Root>
+      </Box>
+
+      {/* Urgence */}
+      <Box>
+        <Text as="label" size="2" weight="bold" style={{ display: 'block', marginBottom: '0.5rem' }}>
+          Urgence <Text color="gray" size="1">(optionnel)</Text>
+        </Text>
+        <Select.Root value={form.priorite || NONE} onValueChange={(v) => set('priorite', v === NONE ? '' : v)}>
+          <Select.Trigger style={{ width: '100%' }} />
+          <Select.Content>
+            <Select.Item value={NONE}>Non précisée</Select.Item>
+            {REQUEST_PRIORITIES.map((p) => <Select.Item key={p.code} value={p.code}>{p.label}</Select.Item>)}
           </Select.Content>
         </Select.Root>
       </Box>

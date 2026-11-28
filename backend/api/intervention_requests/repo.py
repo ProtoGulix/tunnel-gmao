@@ -40,6 +40,16 @@ _EQUIPEMENT_COLS = f"""
     COUNT(CASE WHEN i_h.status_actual != {_CLOSED_SQ} AND i_h.priority = 'urgent' THEN i_h.id END) AS eq_urgent_count
 """
 
+# Tris de la liste (liste blanche). « urgence » : urgent d'abord, sans urgence en dernier,
+# puis la plus ancienne (celle qui attend depuis le plus longtemps).
+_ORDER_BY = {
+    "recent": "ir.created_at DESC",
+    "urgence": (
+        "CASE ir.priorite WHEN 'urgent' THEN 0 WHEN 'important' THEN 1 "
+        "WHEN 'normal' THEN 2 WHEN 'faible' THEN 3 ELSE 4 END, ir.created_at ASC"
+    ),
+}
+
 # Colonnes service
 _SERVICE_COLS = """
     s.id        AS service_id,
@@ -314,8 +324,11 @@ class InterventionRequestRepository:
         search: Optional[str] = None,
         is_system: Optional[bool] = None,
         include_descendants: bool = False,
+        sort: str = "recent",
     ) -> List[Dict[str, Any]]:
         limit = min(limit, 500)
+        # Clé hors liste blanche : KeyError, jamais de SQL libre
+        order_sql = _ORDER_BY[sort]
         machine_sql, machine_params = self._machine_scope(machine_id, include_descendants)
         conn = self._get_connection()
         try:
@@ -361,7 +374,7 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id, ir.priorite,
                     src.code AS source_intervention_code,
                     ct.constat_id,
                     ir.created_at, ir.updated_at,
@@ -384,7 +397,7 @@ class InterventionRequestRepository:
                          iv.id, ivs.label, ivs.color,
                          iv_stats.action_count, iv_stats.total_time, iv_stats.avg_complexity, iv_stats.purchase_count,
                          di_tasks.tasks_json::text
-                ORDER BY ir.created_at DESC
+                ORDER BY {order_sql}
                 LIMIT %s OFFSET %s
                 """,
                 (CLOSED_STATUS_CODE, CLOSED_STATUS_CODE, *params, limit, offset),
@@ -536,7 +549,7 @@ class InterventionRequestRepository:
                     ir.statut,
                     rs.label AS statut_label, rs.color AS statut_color,
                     ir.intervention_id,
-                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id,
+                    ir.is_system, ir.suggested_type_inter, ir.source_intervention_id, ir.priorite,
                     src.code AS source_intervention_code,
                     ir.created_at, ir.updated_at,
                     {_EQUIPEMENT_COLS},
@@ -620,8 +633,8 @@ class InterventionRequestRepository:
             INSERT INTO intervention_request
                 (machine_id, demandeur_nom, service_id, description,
                  is_system, suggested_type_inter, code, statut, created_by, origine,
-                 source_intervention_id)
-            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s, %s)
+                 source_intervention_id, priorite)
+            VALUES (%s, %s, %s, %s, %s, %s, 'PLACEHOLDER', 'nouvelle', %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -634,9 +647,38 @@ class InterventionRequestRepository:
                 created_by,
                 origine,
                 data.get("source_intervention_id"),
+                data.get("priorite") or None,
             ),
         )
         return str(cur.fetchone()[0])
+
+    def set_priorite(self, request_id: str, priorite: str) -> Dict[str, Any]:
+        """Change l'urgence d'une demande ouverte (nouvelle ou en_attente)."""
+        InterventionRequestValidator.validate_priorite(priorite)
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT statut FROM intervention_request WHERE id = %s FOR UPDATE", (request_id,)
+            )
+            row = cur.fetchone()
+            if not row:
+                raise NotFoundError(f"Demande {request_id} non trouvée")
+            InterventionRequestValidator.validate_priorite_change(row[0])
+            cur.execute(
+                "UPDATE intervention_request SET priorite = %s, updated_at = now() WHERE id = %s",
+                (priorite, request_id),
+            )
+            conn.commit()
+        except (NotFoundError, ValidationError):
+            conn.rollback()
+            raise
+        except Exception as e:
+            conn.rollback()
+            raise_db_error(e, "Erreur changement d'urgence")
+        finally:
+            release_connection(conn)
+        return self.get_by_id(request_id)
 
     def create(self, data: Dict[str, Any], created_by: Optional[str] = None) -> Dict[str, Any]:
         conn = self._get_connection()

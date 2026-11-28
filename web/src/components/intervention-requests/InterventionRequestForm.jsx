@@ -12,6 +12,7 @@ const INITIAL_FORM = {
   demandeurNom: '',
   serviceId: '',
   description: '',
+  priorite: '',
 };
 
 function validate(form) {
@@ -27,6 +28,7 @@ function buildSubmitPayload(form) {
     demandeurNom: form.demandeurNom.trim(),
     serviceId: form.serviceId || null,
     description: form.description.trim(),
+    priorite: form.priorite || null,
   };
 }
 

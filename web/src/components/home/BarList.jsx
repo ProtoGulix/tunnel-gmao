@@ -1,5 +1,5 @@
 /**
- * @fileoverview Lignes à barre cliquables du bilan (tranches d'âge, sites, équipements) :
+ * @fileoverview Lignes à barre du bilan (tranches d'âge, sites, équipements), cliquables si `onSelect` :
  * libellé, barre proportionnelle au plus grand compte, nombre. Une ligne peut être en alerte (`alertKey`).
  * @module components/home/BarList
  */
@@ -12,14 +12,8 @@ export default function BarList({ items, activeKey, alertKey, onSelect }) {
     <Flex direction="column" gap="1">
       {items.map((item) => {
         const alert = item.key === alertKey;
-        return (
-          <button
-            key={item.key} type="button" title={item.title} onClick={() => onSelect(item.key)} aria-pressed={item.key === activeKey}
-            style={{
-              all: 'unset', cursor: 'pointer', display: 'block', borderRadius: 'var(--radius-2)', padding: '3px 6px',
-              background: item.key === activeKey ? 'var(--accent-a4)' : undefined,
-            }}
-          >
+        const content = (
+          <>
             <Flex justify="between" gap="2">
               <Text size="1" color={alert ? 'red' : undefined} weight={alert ? 'bold' : undefined} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</Text>
               <Text size="1" color="gray" style={{ whiteSpace: 'nowrap' }}>
@@ -29,6 +23,16 @@ export default function BarList({ items, activeKey, alertKey, onSelect }) {
             <div style={{ height: 5, borderRadius: 3, background: 'var(--gray-a2)', marginTop: 2 }}>
               <div style={{ height: '100%', width: `${(item.count / max) * 100}%`, borderRadius: 3, background: alert ? 'var(--red-9)' : 'var(--accent-9)' }} />
             </div>
+          </>
+        );
+        const style = { display: 'block', borderRadius: 'var(--radius-2)', padding: '3px 6px' };
+        if (!onSelect) return <div key={item.key} title={item.title} style={style}>{content}</div>;
+        return (
+          <button
+            key={item.key} type="button" title={item.title} onClick={() => onSelect(item.key)}
+            style={{ all: 'unset', cursor: 'pointer', ...style, background: item.key === activeKey ? 'var(--accent-a4)' : undefined }}
+          >
+            {content}
           </button>
         );
       })}
@@ -43,5 +47,5 @@ BarList.propTypes = {
   })).isRequired,
   activeKey: PropTypes.string,
   alertKey: PropTypes.string,
-  onSelect: PropTypes.func.isRequired,
+  onSelect: PropTypes.func,
 };

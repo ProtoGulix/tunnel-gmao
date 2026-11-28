@@ -118,6 +118,7 @@ export const PERM = {
     create: 'intervention-requests:create_request',
     transition: 'intervention-requests:transition_request_status',
     remove: 'intervention-requests:delete_request',
+    setPriority: 'intervention-requests:set_request_priority',
   },
   preventive: {
     createPlan: 'preventive_plans:create_preventive_plan',

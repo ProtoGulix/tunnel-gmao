@@ -453,6 +453,37 @@ Stock = demandes `nouvelle` ou `en_attente`. Sortie = première transition vers 
 - `equipments` : les 10 équipements les plus chargés, mêmes champs.
 - `journal_gaps` : demandes dont le statut ne s'accorde pas au journal (sortie sans ligne de journal, ou ligne de sortie sur une demande encore à qualifier). Le statut fait foi pour le stock ; sans ligne de sortie, la date de sortie est celle de la dernière mise à jour de la demande.
 
+## `GET /stats/blocages`
+
+Interventions bloquées (ADR 0047). Lecture seule, 10 requêtes par minute. Droit : `stats:get_blocages`, ouvert par défaut aux rôles qui lisent. Aucune donnée par personne.
+
+Paramètre : `site_id` (équipement racine, descendants compris ; UUID invalide : 400).
+
+Seuil : `BLOCKED_ALERT_DAYS` (7 par défaut, au moins 1), renvoyé dans `threshold_days`. Une intervention est listée si elle est `attente_pieces` (`parts`) ou `attente_prod` (`production`) depuis au moins ce nombre de jours révolus (seuil inclus). Entrée dans le statut (`status_since`) : dernière ligne de `intervention_status_log` vers le statut courant, à défaut `reported_date` à minuit.
+
+Tri : `urgent` d'abord, puis `days_in_status` décroissant, puis code.
+
+- `parts` : `purchase_requests` = `total` et un compteur par statut dérivé (mêmes que `stats.purchase_requests` de `GET /interventions`).
+- `production` : `note` = note du passage dans le statut ; `null` si absente ou écrite par la base (« Changement statut automatique », « Création intervention »).
+
+```json
+{
+  "threshold_days": 7,
+  "parts": [{
+    "id": "…", "code": "…", "title": "Fuite hydraulique",
+    "equipement": { "id": "…", "code": "PRESSE-1", "name": "Presse 1" },
+    "priority": "urgent", "status_since": "2026-11-10T08:30:00", "days_in_status": 18,
+    "purchase_requests": { "total": 2, "received": 0, "to_qualify": 1, "no_supplier_ref": 0, "pending_dispatch": 0, "rejected": 0, "consultation": 0, "partial": 0, "ordered": 1, "quoted": 0, "open": 0 }
+  }],
+  "production": [{
+    "id": "…", "code": "…", "title": "Réglage",
+    "equipement": { "id": "…", "code": "LIGNE-2", "name": "Ligne 2" },
+    "priority": "normal", "status_since": "2026-11-15T14:00:00", "days_in_status": 13,
+    "note": "Ligne en production jusqu'à vendredi"
+  }]
+}
+```
+
 ## `GET /stats/constats`
 
 Indicateurs des constats (ADR 0044). Lecture seule, 10 requêtes par minute. Droit : `stats:get_constats`, ouvert par défaut aux rôles qui lisent (créé par le bootstrap). Chiffres d'équipe : aucun auteur ni technicien.

@@ -8,6 +8,7 @@ from api.equipements.validators import resolve_dashboard_period
 from api.errors.exceptions import ValidationError
 from api.limiter import limiter
 from api.stats.audit_synthese_repo import AuditSyntheseRepository
+from api.stats.blocages_repo import BlocagesStatsRepository
 from api.stats.constats_repo import ConstatsStatsRepository
 from api.stats.demandes_repo import DemandesStatsRepository
 from api.stats.organisation_repo import OrganisationRepository
@@ -15,6 +16,7 @@ from api.stats.repo import StatsRepository
 from api.stats.schemas import (
     AnomaliesSaisieResponse,
     AuditSyntheseResponse,
+    BlocagesResponse,
     ChargeTechniqueResponse,
     ConstatsResponse,
     DemandesResponse,
@@ -155,6 +157,18 @@ def get_demandes(
     if not 1 <= weeks <= DEMANDES_MAX_WEEKS:
         raise ValidationError(f"weeks doit être compris entre 1 et {DEMANDES_MAX_WEEKS}")
     return DemandesStatsRepository().get_demandes(weeks, site_id)
+
+
+@router.get("/blocages", response_model=BlocagesResponse)
+@limiter.limit("10/minute")
+def get_blocages(
+    request: Request,
+    site_id: Optional[str] = Query(
+        None, description="Site : équipement racine, descendants compris"
+    ),
+):
+    """Interventions en attente de pièces ou de production depuis le seuil (ADR 0047)."""
+    return BlocagesStatsRepository().get_blocages(site_id)
 
 
 AUDIT_SYNTHESE_MAX_MONTHS = 120  # 10 ans, comme la borne de la période d'Organisation

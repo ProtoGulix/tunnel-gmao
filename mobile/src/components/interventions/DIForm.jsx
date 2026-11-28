@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Wrench, Monitor, User, Briefcase, AlignLeft } from 'lucide-react'
+import { X, Check, Wrench, Monitor, User, Briefcase, AlignLeft, Flag } from 'lucide-react'
 import { getEquipements, getServices } from '../../api/interventions'
 import { AsyncSearchSelect, SelectionChip } from '../ui/AsyncSearchSelect'
 import { SheetPicker } from '../ui/SheetPicker'
 import { BottomBar, BottomBtn } from '../ui/BottomBar'
+import { PRIORITIES } from '../../config/badges'
 import { useFormGuard } from '../../hooks/shared/useFormGuard.jsx'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const inputCls = 'w-full border border-tunnel-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-tunnel-accent/30 focus:border-tunnel-accent'
+// Urgences proposées (libellés de config/badges.js), valeur par défaut vide
+const PRIORITY_OPTIONS = [
+  { value: '', label: '— Non précisée —' },
+  ...['faible', 'normal', 'important', 'urgent'].map(code => ({ value: code, label: PRIORITIES[code].label })),
+]
 const labelCls = 'flex items-center gap-1.5 mb-1.5'
 
 export function DIForm({ onSubmit, onClose, status, error }) {
-  const [form, setForm] = useState({ demandeur_nom: '', machine_id: '', service_id: '', description: '' })
+  const [form, setForm] = useState({ demandeur_nom: '', machine_id: '', service_id: '', description: '', priorite: '' })
   const [selectedEquip, setSelectedEquip] = useState(null)
   const [services, setServices] = useState([])
 
@@ -41,6 +47,7 @@ export function DIForm({ onSubmit, onClose, status, error }) {
       demandeur_nom: form.demandeur_nom,
       service_id: form.service_id || undefined,
       description: form.description,
+      priorite: form.priorite || undefined,
     })
   }
 
@@ -131,6 +138,22 @@ export function DIForm({ onSubmit, onClose, status, error }) {
               value={form.service_id}
               onChange={v => set('service_id', v)}
               placeholder="Sélectionner un service…"
+              zIndex={70}
+            />
+          </div>
+
+          {/* Urgence */}
+          <div>
+            <div className={labelCls}>
+              <Flag size={14} className="text-tunnel-muted" />
+              <span className="text-xs font-bold text-tunnel-text">Urgence</span>
+            </div>
+            <SheetPicker
+              title="Urgence"
+              options={PRIORITY_OPTIONS}
+              value={form.priorite}
+              onChange={v => set('priorite', v)}
+              placeholder="Non précisée"
               zIndex={70}
             />
           </div>

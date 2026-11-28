@@ -3,11 +3,14 @@
  * @module components/intervention-requests/InterventionRequestDetail
  */
 
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import { AlertDialog, Badge, Box, Button, Callout, Flex, Separator, Spinner, Text } from '@radix-ui/themes';
+import { AlertDialog, Badge, Box, Button, Callout, Flex, Select, Separator, Spinner, Text } from '@radix-ui/themes';
 import { usePermissions } from '@/auth/usePermissions';
 import { PERM } from '@/auth/permissionCodes';
+import { REQUEST_PRIORITIES, isPriorityEditable } from '@/lib/requestPriority';
+import { PRIORITY_CONFIG } from '@/config/interventionTypes';
 import { AlertCircle, Ban, Bot, Clock, Trash2, User, Wrench, Zap, ShoppingCart, ArrowUpRight } from 'lucide-react';
 import InterventionTypeLabel from '@/components/shared/InterventionTypeLabel';
 import { useInterventionRequestDetail } from '@/hooks/intervention-requests/useInterventionRequestDetail';
@@ -321,6 +324,35 @@ function RequestWhoWhat({ detail, constat }) {
 }
 RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired, constat: PropTypes.object };
 
+/** Urgence de la demande ; sélecteur si elle est encore modifiable et le droit accordé. */
+function RequestPriority({ detail, editable, onChange }) {
+  const [error, setError] = useState(null);
+  const current = REQUEST_PRIORITIES.find((p) => p.code === detail.priorite);
+  if (!editable && !current) return null;
+  const change = async (code) => setError(await onChange(code));
+  return (
+    <Flex align="center" gap="2" mb="3" wrap="wrap">
+      <Text size="1" color="gray">Urgence</Text>
+      {editable ? (
+        <Select.Root size="1" value={detail.priorite ?? ''} onValueChange={change}>
+          <Select.Trigger placeholder="Non précisée" />
+          <Select.Content>
+            {REQUEST_PRIORITIES.map((p) => <Select.Item key={p.code} value={p.code}>{p.label}</Select.Item>)}
+          </Select.Content>
+        </Select.Root>
+      ) : (
+        <Badge color={PRIORITY_CONFIG[current.code].color} variant="soft" size="1">{current.label}</Badge>
+      )}
+      {error && <Text size="1" color="red">{error}</Text>}
+    </Flex>
+  );
+}
+RequestPriority.propTypes = {
+  detail: PropTypes.object.isRequired,
+  editable: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 /**
@@ -331,7 +363,7 @@ RequestWhoWhat.propTypes = { detail: PropTypes.object.isRequired, constat: PropT
  */
 export default function InterventionRequestDetail({ requestId, onTransitionDone, onDeleted }) {
   const { can } = usePermissions();
-  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete, refetch } =
+  const { detail, loading, error, transitioning, transitionError, doTransition, deleting, deleteError, doDelete, refetch, changePriority } =
     useInterventionRequestDetail(requestId);
   const constat = useRequestConstat(detail);
 
@@ -377,6 +409,12 @@ export default function InterventionRequestDetail({ requestId, onTransitionDone,
       </Flex>
 
       <Separator size="4" mb="3" />
+
+      <RequestPriority
+        detail={detail}
+        editable={isPriorityEditable(detail.statut) && can(PERM.interventionRequests.setPriority)}
+        onChange={changePriority}
+      />
 
       <RequestWhoWhat detail={detail} constat={constat} />
 

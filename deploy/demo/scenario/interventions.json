@@ -13836,7 +13836,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "normal"
   },
   {
     "key": "I182",
@@ -13922,7 +13923,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "normal"
   },
   {
     "key": "I185",
@@ -13946,7 +13948,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "important"
   },
   {
     "key": "I187",
@@ -14020,7 +14023,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "normal"
   },
   {
     "key": "I189",
@@ -14032,7 +14036,8 @@
     "origine": "signalee",
     "statut_demande": "en_attente",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "faible"
   },
   {
     "key": "I190",
@@ -14169,7 +14174,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "urgent"
   },
   {
     "key": "I194",
@@ -14235,7 +14241,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "urgent"
   },
   {
     "key": "I200",
@@ -14427,7 +14434,8 @@
     "origine": "signalee",
     "statut_demande": "nouvelle",
     "motif_rejet": null,
-    "intervention": null
+    "intervention": null,
+    "priorite": "important"
   },
   {
     "key": "I205",
@@ -14464,5 +14472,99 @@
     "statut_demande": "nouvelle",
     "motif_rejet": null,
     "intervention": null
+  },
+  {
+    "key": "I208",
+    "equipement": "MO-01",
+    "demandeur": "Mathieu",
+    "service": "PROD",
+    "description": "Le moule du couvercle de la PR-02 marque une rayure sur la pièce, à regarder au prochain changement de série.",
+    "signalee_le": -134,
+    "origine": "signalee",
+    "statut_demande": "nouvelle",
+    "motif_rejet": null,
+    "priorite": "normal",
+    "intervention": null
+  },
+  {
+    "key": "I209",
+    "equipement": "OU-01",
+    "demandeur": "Fatima",
+    "service": "PROD",
+    "description": "Poignée de la porte de l'armoire de l'outillage cassée, la porte reste ouverte.",
+    "signalee_le": -118,
+    "origine": "signalee",
+    "statut_demande": "en_attente",
+    "motif_rejet": null,
+    "priorite": "faible",
+    "intervention": null
+  },
+  {
+    "key": "I210",
+    "equipement": "RB-02",
+    "demandeur": "Aurélie",
+    "service": "PROD",
+    "description": "Le robot RB-02 se met en défaut de temps en temps à la prise de pièce, sans cause trouvée.",
+    "signalee_le": -96,
+    "origine": "signalee",
+    "statut_demande": "nouvelle",
+    "motif_rejet": null,
+    "priorite": "important",
+    "intervention": null
+  },
+  {
+    "key": "I211",
+    "equipement": "PR-03",
+    "demandeur": "Karim",
+    "service": "PROD",
+    "description": "Presse 3 : le guidage du coulisseau a du jeu, des traces de grippage.",
+    "signalee_le": -16,
+    "origine": "signalee",
+    "statut_demande": "acceptee",
+    "motif_rejet": null,
+    "priorite": "important",
+    "intervention": {
+      "title": "Reprise du guidage du coulisseau PR-03",
+      "type": "CUR",
+      "priority": "important",
+      "tech": "T2",
+      "plan": null,
+      "ouverte_le": -16,
+      "statuts": [
+        {
+          "to": "attente_prod",
+          "le": -10,
+          "par": "T2",
+          "note": "Arrêt de 2 jours à caler avec la production"
+        }
+      ],
+      "taches": [
+        {
+          "key": "t1",
+          "label": "Reprendre le guidage du coulisseau",
+          "origin": "tech",
+          "assigned_to": "T2",
+          "status": "todo",
+          "optional": false,
+          "gamme_step": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "a1",
+          "le": -10,
+          "debut": "08:00",
+          "tech": "T2",
+          "heures": 1.5,
+          "sous_categorie": "DEP_MEC",
+          "complexite": 4,
+          "facteur": "DIAG",
+          "description": "Jeu mesuré au comparateur, plaquettes de guidage usées. Réglage impossible sans arrêter la presse deux jours.",
+          "taches": [
+            "t1"
+          ]
+        }
+      ]
+    }
   }
 ]

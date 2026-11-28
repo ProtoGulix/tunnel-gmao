@@ -59,6 +59,8 @@ services:
       # interventions sans action notifiés. Activée par défaut à l'installation.
       SCHEDULED_JOBS_ENABLED: ${SCHEDULED_JOBS_ENABLED:-true}
       SCHEDULED_JOBS_HOUR: ${SCHEDULED_JOBS_HOUR:-5}
+      # Accueil direction (ADR 0047) : seuil, en jours, des interventions bloquées.
+      BLOCKED_ALERT_DAYS: ${BLOCKED_ALERT_DAYS:-7}
       # Durée de session : jeton d'accès (minutes), renouvelé seul par le web et le mobile
       # tant que le jeton de rafraîchissement (heures, une journée de poste) est valide.
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}

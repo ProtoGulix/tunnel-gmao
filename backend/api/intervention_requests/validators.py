@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from api.audits.schemas import AuditRules
-from api.constants import CLOSED_STATUS_CODE
+from api.constants import CLOSED_STATUS_CODE, PRIORITY_TYPES
 from api.errors.exceptions import AuditReasonRequiredError, ValidationError
 from api.interventions.types import check_assignable
 
@@ -147,6 +147,25 @@ class InterventionRequestValidator:
                 )
 
     @staticmethod
+    def validate_priorite(priorite: Optional[str]) -> None:
+        """L'urgence est l'un des codes de PRIORITY_TYPES ; absente = non triée."""
+        if priorite is None:
+            return
+        allowed = [p["id"] for p in PRIORITY_TYPES]
+        if priorite not in allowed:
+            raise ValidationError(
+                f"Urgence '{priorite}' invalide : valeurs permises {', '.join(allowed)}"
+            )
+
+    @staticmethod
+    def validate_priorite_change(statut: str) -> None:
+        """L'urgence ne change que tant que la demande attend une décision."""
+        if statut not in ("nouvelle", "en_attente"):
+            raise ValidationError(
+                "L'urgence ne change que pour une demande nouvelle ou en attente."
+            )
+
+    @staticmethod
     def validate_create(data: Dict[str, Any]) -> None:
         """Valide les règles métier avant création d'une demande d'intervention."""
         demandeur_nom = (data.get("demandeur_nom") or "").strip()
@@ -158,6 +177,7 @@ class InterventionRequestValidator:
             raise ValidationError("description est obligatoire")
         if not data.get("machine_id"):
             raise ValidationError("machine_id est obligatoire")
+        InterventionRequestValidator.validate_priorite(data.get("priorite"))
         if data.get("suggested_type_inter"):
             # Nouvelle demande : le type suggéré doit exister en base et être actif.
             check_assignable(data["suggested_type_inter"])

@@ -1,10 +1,10 @@
 # Accueil direction technique
 
-L'accueil de Tunnel dépend du rôle. La vue « Direction technique » fait d'abord le bilan des
-demandes d'intervention à qualifier : est-ce que le stock monte, depuis quand il attend, où
-il s'entasse. Un clic ouvre la liste concernée pour décider sur place.
+L'accueil de Tunnel dépend du rôle. La vue « Direction technique », intitulée **Ce qui attend
+votre décision**, montre ce qui demande un choix : les demandes à qualifier, les
+interventions bloquées, ce qui s'entasse. On décide sur place, sans ouvrir d'autre page.
 
-![Accueil direction technique : flux, âge et lieux des demandes, puis les tuiles](/captures/web-direction-accueil.webp)
+![Accueil direction technique : bilan, demandes à trancher, cartes acheteur et production](/captures/web-direction-accueil.webp)
 
 ::: info Qui voit cette vue ?
 L'administrateur choisit la vue d'accueil de chaque rôle. Elle s'applique à tous les
@@ -12,64 +12,80 @@ utilisateurs du rôle, pas à une personne seule. Si votre accueil est différen
 l'administrateur de vous affecter la vue « Direction technique ».
 :::
 
-## Le bilan des demandes
+Si votre installation a au moins deux sites (équipements racines), une liste « Tous les
+sites » restreint tout l'écran à un site.
 
-Le stock, ce sont les demandes « nouvelle » et « en attente ». Une demande en sort quand elle
-est acceptée ou rejetée.
+## Le bilan en une ligne
 
-- **Flux** : le stock actuel, sa courbe sur 8 semaines et sa tendance (en hausse, stable,
-  en baisse) ; les entrées et les sorties (acceptées, rejetées) sur la période.
-- **Âge** : le stock par tranches d'ancienneté, de moins de 7 jours à plus de 90 jours. La
-  tranche la plus ancienne passe en rouge dès qu'elle contient une demande.
-- **Où** : le stock par site, puis par équipement (code et nom), avec l'âge de la plus
-  ancienne demande. Cinq lignes par liste ; **Voir tout** déplie le reste.
+Une ligne résume les demandes à qualifier (statuts « nouvelle » et « en attente ») :
+
+- leur nombre ;
+- celles de plus de 90 jours, en rouge, quand il y en a ;
+- les entrées et les sorties (acceptées ou rejetées) sur les dernières semaines ;
+- la tendance du stock : en hausse, stable ou en baisse.
+
+**Voir le bilan détaillé** déplie le flux (stock, entrées, sorties, courbe par semaine) et
+l'âge du stock par tranches, de moins de 7 jours à plus de 90 jours.
+
+![Bilan détaillé déplié : flux des demandes et âge du stock](/captures/web-direction-accueil-bilan.webp)
 
 La tendance est « stable » tant que le stock varie de moins de 3 demandes sur la période.
+Aucun chiffre n'est donné par personne.
 
-Sous le bilan, un bandeau d'une tuile par sujet : **Urgentes** (interventions non fermées de priorité
-urgente), **En attente** (pièces ou production), **Sans action** (depuis le seuil de relance,
-7 jours par défaut, voir les notifications plus bas), **Préventif** (échéances en retard ou
-proches). Une intervention n'est comptée qu'une fois, dans la première tuile qui la cite.
+## À trancher
 
-Si votre installation a au moins deux sites (équipements racines), une liste « Tous les
-sites » restreint le bilan et les tuiles à un site.
+La liste des demandes à qualifier, dans cet ordre :
 
-## Ouvrir une liste
+1. **Urgentes** : les demandes d'urgence « urgent », quel que soit leur âge ;
+2. **> 90 j** (la tranche d'âge la plus ancienne) : cinq lignes, **Voir les N
+   autres** déplie le reste ;
+3. **Autres** : le reste.
 
-Cliquez le stock, une tranche d'âge, un site, un équipement ou une tuile : le bilan se
-replie en une ligne de rappel (stock, tranche la plus ancienne, tuiles, filtre actif) et la
-liste prend la hauteur de l'écran. La liste est à gauche, le détail de la ligne choisie à
-droite : on décide sans quitter l'accueil, puis la ligne suivante s'affiche. Un clic sur la
-ligne de rappel ou sur le filtre actif rouvre le bilan. Le filtre et la ligne choisie figurent dans
-l'adresse de la page : un lien copié rouvre la même vue.
-
-![Liste des demandes de 7 à 30 jours, demande choisie à droite](/captures/web-direction-accueil-liste.webp)
-
-Le lien « Toutes les demandes » ouvre la liste complète dans Interventions (voir
-[Traiter les demandes](/responsable/demandes)).
-
-## Qualifier une demande
-
-Chaque demande affiche son code, l'équipement, sa description et son âge en jours. Le badge
-**Constat** signale une demande issue d'un constat après intervention.
+Chaque ligne donne la description (le titre ouvre la demande), le code, l'équipement et
+l'âge en jours. Les boutons dépendent de votre rôle et du statut de la demande :
 
 - **Accepter** ouvre une fenêtre courte : type d'intervention, technicien, priorité
-  (facultative). La validation crée l'intervention. Pour une demande du préventif, le type
-  est imposé.
+  (reprise de l'urgence de la demande, modifiable). La validation crée l'intervention. Pour
+  une demande du préventif, le type est imposé.
+- **En attente** met la demande de côté ; elle reste dans la liste.
 - **Rejeter** demande un motif, dans la fenêtre de motif habituelle. Fermer la fenêtre
   annule le rejet.
 
-Accepter et Rejeter n'apparaissent que si votre rôle a le droit de changer le statut d'une
-demande. Une intervention choisie s'affiche dans le même panneau que dans Interventions.
+Une demande acceptée ou rejetée quitte la liste. Si la décision est refusée, le message
+s'affiche en haut de l'écran et la ligne reste.
 
-## Le préventif
+## À voir avec l'acheteur, à voir avec la production
 
-Une échéance qui a déjà sa demande ou son intervention ouvre celle-ci dans le détail. Si sa
-demande attend d'être qualifiée, elle n'est comptée que dans les demandes. Sinon, le détail
-montre le plan, l'équipement et l'échéance, avec **Lancer en avance** : la demande du
-préventif est créée après confirmation, comme sur la fiche équipement (voir
-[Lancer en avance](/responsable/preventif#lancer-en-avance)). Le bouton n'apparaît qu'avec
-le droit correspondant.
+Deux cartes listent les interventions bloquées depuis au moins N jours, les urgentes
+d'abord, puis les plus anciennes. Un clic ouvre l'intervention.
+
+- **À voir avec l'acheteur** : interventions en attente de pièces. Des pastilles disent où
+  en sont les demandes d'achat (à qualifier, sans référence fournisseur…).
+- **À voir avec la production** : interventions en attente de la production. La pastille
+  reprend la note saisie au passage dans ce statut, ou « Aucun motif saisi ».
+
+![Carte « À voir avec la production » : une intervention en attente, avec la note du passage](/captures/web-direction-accueil-blocages.webp)
+
+Le seuil N vaut 7 jours par défaut. Il se règle à l'installation (variable
+`BLOCKED_ALERT_DAYS`, voir `deploy/README.md`) ; chaque carte rappelle sa valeur. Une carte
+sans intervention le dit : rien ne bloque de ce côté.
+
+## Côté maintenance
+
+Deux liens : les interventions **sans action** depuis le seuil de relance (voir les
+notifications plus bas) et les **préventifs en retard**. Ils mènent à la liste concernée.
+
+## Où ça s'entasse
+
+Les demandes à qualifier par site, puis par équipement (code et nom), avec l'âge de la
+plus ancienne. Un clic ouvre l'équipement.
+
+## Urgence d'une demande
+
+Chaque demande peut porter une urgence : faible, normale, importante ou urgente. Elle est
+facultative. Le demandeur la choisit à la création. Sur une demande nouvelle ou en attente,
+la direction peut la changer depuis le détail de la demande ; le changement est tracé dans
+l'audit. Voir [Traiter les demandes](/responsable/demandes#urgence-d-une-demande).
 
 ## Créer une demande depuis l'accueil
 
@@ -79,7 +95,8 @@ d'intervention ». Renseignez :
 1. l'équipement concerné ;
 2. le demandeur ;
 3. le service (facultatif) ;
-4. la description.
+4. la description ;
+5. l'urgence (facultatif).
 
 La demande est créée au statut « nouvelle » et signale une notification « à traiter ».
 Vous, qui l'avez créée, n'êtes pas notifié de votre propre demande.

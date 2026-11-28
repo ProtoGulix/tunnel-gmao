@@ -1,6 +1,6 @@
 /**
- * @fileoverview Acceptation d'une demande depuis la file. Le rejet reste celui du panneau de
- * demande, dont le motif vient de la fenêtre d'audit commune.
+ * @fileoverview Décisions sur une demande depuis « À trancher » : accepter, mettre en attente,
+ * rejeter. Le motif vient de la fenêtre d'audit commune (auditGuard), jamais d'une saisie ici.
  * @module hooks/home/useRequestQueueActions
  */
 
@@ -9,9 +9,9 @@ import { transitionInterventionRequest } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
 export function useRequestQueueActions({ onDone }) {
-  const accept = useCallback(async (request, data) => {
+  const decide = useCallback(async (request, statusTo, data = {}) => {
     try {
-      await transitionInterventionRequest(request.id, { statusTo: 'acceptee', ...data });
+      await transitionInterventionRequest(request.id, { statusTo, ...data });
       await onDone();
       return true;
     } catch (err) {
@@ -21,5 +21,9 @@ export function useRequestQueueActions({ onDone }) {
     }
   }, [onDone]);
 
-  return { accept };
+  const accept = useCallback((request, data) => decide(request, 'acceptee', data), [decide]);
+  const hold = useCallback((request) => decide(request, 'en_attente'), [decide]);
+  const reject = useCallback((request) => decide(request, 'rejetee'), [decide]);
+
+  return { accept, hold, reject };
 }

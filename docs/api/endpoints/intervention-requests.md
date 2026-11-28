@@ -19,6 +19,7 @@ Le middleware d'audit est le seul à écrire dans `audit_log` (ADR 0018) ; les r
 | Endpoint                       | Entité auditée            | `decision_type` écrits          | `is_system` |
 | ------------------------------ | ------------------------- | ------------------------------- | ----------- |
 | `POST /intervention-requests`  | demande (id créé)         | `created`                       | `false` |
+| `PATCH /{id}/priority`         | demande (id du chemin)    | modification du champ `priorite` | `false` |
 | `POST /{id}/transition`        | demande (id du chemin)    | `statut_changed`, et `intervention_id_changed` à l'acceptation ; à l'acceptation, ligne `created` de l'intervention créée (motif de la règle d'audit de l'entité intervention) | `false` |
 | `DELETE /{id}`                 | demande (id du chemin)    | `deleted` (motif obligatoire)   | `false` |
 | `POST /repair`                 | aucune (`events_only`) : les demandes réparées | `status_transitioned`, motif `SYSTEM_CASCADE` | `true` |
@@ -147,6 +148,7 @@ Liste paginée des demandes avec filtres.
 | `include_descendants` | bool | false  | Avec `machine_id` : inclut les demandes des équipements descendants (liste et `total`). Ignoré sans `machine_id`. Les `facets` ignorent `machine_id` et ses descendants (limite connue : `docs/backlog/facettes-demandes-ignorent-filtres.md`) |
 | `search`           | string  | —      | Recherche sur `code`, `demandeur_nom`, `description` (ILIKE)   |
 | `is_system`        | boolean | —      | `true` : DI générées automatiquement. `false` : DI humaines    |
+| `sort`             | string  | `recent` | `recent` : plus récentes d'abord. `urgence` : `urgent`, `important`, `normal`, `faible`, sans urgence, puis la plus ancienne d'abord. Autre valeur : `422` |
 
 ### Réponse `200`
 
@@ -431,6 +433,7 @@ Crée une nouvelle demande d'intervention, d'origine `signalee` (elle notifie le
 | `service_id`           | uuid    | non          | UUID du service/département du demandeur                               |
 | `is_system`            | boolean | non          | `true` si DI générée par le système. Défaut : `false`                  |
 | `suggested_type_inter` | string  | non          | Type suggéré parmi `CUR`, `PRE`, `REA`, `BAT`, `PRO`, `COF`, `PIL`, `MES`. `null` par défaut |
+| `priorite`             | string  | non          | Urgence : `faible`, `normal`, `important`, `urgent`. Autre valeur : `400`. `null` par défaut |
 | `reason_code`          | string  | non          | Facultatif (routinier : `ROUTINE` injecté si absent). Voir `GET /audit/reasons` |
 | `reason_text`          | string  | conditionnel | Texte libre obligatoire si `reason_code = "OTHER"`                     |
 
@@ -445,6 +448,20 @@ Retourne la demande créée avec son code et son statut initial. Le champ `inter
 | Code | Cas                                                     |
 | ---- | ------------------------------------------------------- |
 | 422  | `machine_id`, `demandeur_nom` ou `description` manquant |
+
+---
+
+## `PATCH /intervention-requests/{id}/priority`
+
+Change l'urgence d'une demande `nouvelle` ou `en_attente`. Droit par défaut : ADMIN et RESP. Audit : entité demande, auteur = jeton.
+
+Entrée : `{ "priorite": "faible" | "normal" | "important" | "urgent" }`. Réponse `200` : `InterventionRequestDetail` (champ `priorite` présent dans la liste et le détail).
+
+| Code | Cas |
+| ---- | --- |
+| 400  | Valeur hors liste, ou demande acceptée, rejetée ou clôturée |
+| 403  | Rôle sans droit (TECH, ACHETEUR, clé MCP) |
+| 404  | Demande inconnue |
 
 ---
 

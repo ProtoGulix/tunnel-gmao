@@ -1,23 +1,23 @@
 /**
- * @fileoverview Erreurs de la file : lancement en avance refusé, sources non chargées.
+ * @fileoverview Erreurs de l'accueil direction : sources non chargées, décision refusée.
  * @module components/home/QueueNotices
  */
 import PropTypes from 'prop-types';
 import { Box } from '@radix-ui/themes';
 import StatusCallout from '@/components/ui/StatusCallout';
 
-export default function QueueNotices({ anticipateError, failed }) {
+export default function QueueNotices({ actionError, failed }) {
   return (
     <>
-      {anticipateError && <Box px="4"><StatusCallout type="error">{anticipateError}</StatusCallout></Box>}
+      {actionError && <Box><StatusCallout type="error">{actionError}</StatusCallout></Box>}
       {failed.length > 0 && (
-        <Box px="4"><StatusCallout type="error">Chargement impossible : {failed.join(', ')}.</StatusCallout></Box>
+        <Box><StatusCallout type="error">Chargement impossible : {failed.join(', ')}.</StatusCallout></Box>
       )}
     </>
   );
 }
 
 QueueNotices.propTypes = {
-  anticipateError: PropTypes.string,
+  actionError: PropTypes.string,
   failed: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

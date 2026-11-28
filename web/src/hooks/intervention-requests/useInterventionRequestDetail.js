@@ -8,6 +8,7 @@ import {
   fetchInterventionRequest,
   transitionInterventionRequest,
   deleteInterventionRequest,
+  setInterventionRequestPriority,
 } from '@/api/intervention-requests';
 import { extractApiErrorMessage } from '@/lib/api/errorMessage';
 
@@ -105,7 +106,22 @@ export function useInterventionRequestDetail(requestId) {
     }
   }, [requestId]);
 
+  /** Change l'urgence ; l'erreur est renvoyée à l'appelant pour affichage local. */
+  const changePriority = useCallback(
+    async (priorite) => {
+      try {
+        setDetail(await setInterventionRequestPriority(requestId, priorite));
+        return null;
+      } catch (err) {
+        if (err?.isAuditCancelled) return null;
+        return extractApiErrorMessage(err, "Changement d'urgence impossible");
+      }
+    },
+    [requestId]
+  );
+
   return {
+    changePriority,
     detail, loading, error, transitioning, transitionError, doTransition,
     deleting, deleteError, doDelete, refetch: load,
   };

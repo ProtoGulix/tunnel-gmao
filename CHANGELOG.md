@@ -9,11 +9,17 @@ mobile/CHANGELOG.md.
 ## Non publié
 
 ### Ajouté
+- Web et mobile : urgence facultative à la création d'une demande ; sur le détail d'une demande nouvelle ou en attente, elle se change si le droit est accordé ; l'acceptation la reprend.
+- API : urgence d'une demande. `priorite` (`faible`, `normal`, `important`, `urgent`) facultative à la création, présente dans la liste et le détail ; `GET /intervention-requests?sort=urgence` trie par urgence puis ancienneté ; `PATCH /intervention-requests/{id}/priority` la change tant que la demande est nouvelle ou en attente (ADMIN et RESP, tracé dans l'audit).
+- Base : migration 0030, la priorité d'une demande est `faible`, `normal`, `important`, `urgent` ou vide (contrainte CHECK, aucune donnée modifiée).
 - API : `GET /stats/demandes` donne `trend_direction` (`up`, `down`, `stable`), stable sous 3 demandes d'écart estimé.
+- API : `GET /stats/blocages?site_id=` liste les interventions en attente de pièces (avec les compteurs de demandes d'achat) ou de production (avec la note du passage) depuis au moins `BLOCKED_ALERT_DAYS` jours (7 par défaut, au moins 1), les urgentes d'abord puis les plus anciennes. Aucune donnée par personne.
 - API : `GET /interventions?idle=true` liste les interventions sans action depuis `REMINDER_INTERVAL_DAYS` jours (même règle que la relance) ; chaque ligne porte `last_activity_date` et `days_without_action`.
 - API : `GET /intervention-requests` porte `constat_id` (constat dont la demande est issue).
 - API : `GET /stats/demandes?weeks=&site_id=` donne le bilan des demandes à qualifier : flux par semaine (créées, acceptées, rejetées, stock en fin de semaine), tendance, âge du stock par tranches, répartition par site puis par équipement. Chiffres d'équipe, jamais par personne.
-- Web : l'accueil direction ouvre sur le bilan des demandes à qualifier : flux (entrées, sorties, stock en fin de semaine, tendance), âge du stock par tranches, sites et équipements les plus chargés ; dessous, tuiles urgentes, en attente, sans action, préventif. Sans clic, pas de liste ; un clic sur le stock, une tranche, un site, un équipement ou une tuile affiche la liste filtrée à gauche et le détail à droite (accepter ou rejeter une demande, ouvrir une intervention, lancer une échéance en avance). Filtre actif affiché et effaçable, dans l'adresse avec le site ; le filtre de site s'applique au bilan et aux tuiles. Une échéance dont la demande est à qualifier n'est pas répétée en « Préventif ». Après un clic, le bilan se replie en une ligne de rappel (stock, tranche la plus ancienne, tuiles, filtre actif) et la liste et le détail prennent la hauteur restante de la fenêtre ; effacer le filtre ou cliquer le rappel rouvre le bilan. Sites et équipements en « code – nom », cinq lignes par liste avec « Voir tout », tranche la plus ancienne en rouge, tuiles en bandeau fin, tendance lue dans `trend_direction`.
+- Web : l'accueil direction devient « Ce qui attend votre décision » (ADR 0047) : ligne de bilan (à qualifier, plus de 90 jours, entrées et sorties, tendance) avec bilan détaillé dépliable ; « À trancher » (urgentes, puis tranche la plus ancienne tronquée, puis les autres) avec Accepter, En attente et Rejeter selon les transitions permises ; cartes « À voir avec l'acheteur » et « À voir avec la production » (seuil et causes lus dans l'API) ; côté maintenance ; où ça s'entasse. Remplace les tuiles et le repli du bilan.
+- Guide : page d'accueil direction réécrite (ADR 0047), urgence d'une demande décrite côté responsable et technicien, captures reprises.
+- Démonstration : scénario complété pour l'accueil direction (urgences des demandes, demandes de plus de 90 jours, intervention en attente de la production avec sa note).
 
 ## [5.15.2] — 2026-11-27
 
