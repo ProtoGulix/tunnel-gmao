@@ -1,6 +1,6 @@
 /**
- * @fileoverview Décisions sur une demande depuis « À trancher » : accepter, mettre en attente,
- * rejeter. Le motif vient de la fenêtre d'audit commune (auditGuard), jamais d'une saisie ici.
+ * @fileoverview Décisions sur une demande depuis « À trancher » : mettre en attente, rejeter
+ * (l'acceptation passe par la création d'intervention). Le motif vient de la fenêtre d'audit commune (auditGuard), jamais d'une saisie ici.
  * @module hooks/home/useRequestQueueActions
  */
 
@@ -21,9 +21,8 @@ export function useRequestQueueActions({ onDone }) {
     }
   }, [onDone]);
 
-  const accept = useCallback((request, data) => decide(request, 'acceptee', data), [decide]);
   const hold = useCallback((request) => decide(request, 'en_attente'), [decide]);
   const reject = useCallback((request) => decide(request, 'rejetee'), [decide]);
 
-  return { accept, hold, reject };
+  return { hold, reject };
 }

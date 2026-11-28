@@ -13,6 +13,7 @@ import { fetchServices } from '@/api/services';
 import { fetchActiveUsers } from '@/api/planning';
 import { createIntervention } from '@/api/interventions';
 import { TYPE_REQUIRED_MESSAGE } from '@/lib/interventionTypesStore';
+import { initialPriority } from '@/lib/acceptRequest';
 import InterventionCreateForm from '@/components/interventions/InterventionCreateForm';
 import { TimelineIcon } from '@/components/interventions/InterventionFormFields';
 import { DiSummaryBlock } from '@/components/interventions/DiSummaryBlock';
@@ -92,7 +93,7 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
   const [formData, setFormData] = useState(() => ({
     // Champs intervention
     type: selectedRequest?.suggested_type_inter ?? '',
-    priority: 'normal',
+    priority: initialPriority(selectedRequest),
     equipementId,
     equipementLabel: equipementLabel ?? '',
     techId: '',
@@ -125,6 +126,7 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
         diDemandeurNom: selectedRequest.demandeur_nom ?? fd.diDemandeurNom,
         diDescription: selectedRequest.description ?? fd.diDescription,
         ...(selectedRequest.suggested_type_inter && { type: selectedRequest.suggested_type_inter }),
+        priority: initialPriority(selectedRequest),
       }));
     }
   }, [selectedRequest]);
@@ -153,7 +155,6 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
         equipementId,
         type: formData.type,
         techId: formData.techId,
-        title: selectedRequest?.description ?? formData.diDescription,
         priority: formData.priority,
         reportedDate: formData.reportedDate
           ? new Date(formData.reportedDate).toISOString()
@@ -170,15 +171,9 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
     }
   }, [formData, selectedRequest, equipementId, onCreated]);
 
-  // formData adapté pour InterventionCreateForm (title = diDescription quand pas de DI)
-  const formDataForForm = {
-    ...formData,
-    title: selectedRequest?.description ?? formData.diDescription,
-  };
-
   return (
     <InterventionCreateForm
-      formData={formDataForForm}
+      formData={formData}
       set={set}
       lockedType={!!(selectedRequest?.is_system && selectedRequest?.suggested_type_inter)}
       diSection={

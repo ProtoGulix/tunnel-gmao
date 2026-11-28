@@ -855,19 +855,21 @@ class InterventionRepository:
         # Résoudre tech_initials depuis l'UUID avant validation (le trigger en a besoin)
         self._resolve_tech_initials(cur, data)
 
-        from api.interventions.validators import InterventionValidator
+        from api.interventions.validators import InterventionValidator, title_from_description
 
         request_id = str(data['request_id']) if data.get('request_id') else None
         # Le type suggéré par la demande reste utilisable même désactivé depuis (ADR 0026,
         # décision de l'utilisateur du 2026-11-20) : une demande ne devient pas inacceptable.
         suggested_type = None
+        request_description = None
         if request_id:
             cur.execute(
-                "SELECT suggested_type_inter FROM intervention_request WHERE id = %s",
+                "SELECT suggested_type_inter, description FROM intervention_request WHERE id = %s",
                 (request_id,),
             )
             req_row = cur.fetchone()
             suggested_type = req_row[0] if req_row else None
+            request_description = req_row[1] if req_row else None
 
         from api.interventions.types import is_preventive_origin
 
@@ -876,6 +878,11 @@ class InterventionRepository:
             suggested_type=suggested_type,
             from_plan=is_preventive_origin(cur, request_id, data.get('plan_id')),
         )
+
+        # Sans titre fourni, celui de la demande liée : sa description, coupée à la longueur permise
+        title = data.get('title') or title_from_description(request_description)
+        if not title:
+            raise ValidationError("Titre requis : aucune description de demande à reprendre")
 
         # Créée déjà fermée : aucun constat ne peut exister, la porte de clôture s'applique
         if str(data.get('status_actual') or '') == CLOSED_STATUS_CODE:
@@ -902,7 +909,7 @@ class InterventionRepository:
             """,
             (
                 intervention_id,
-                data.get('title'),
+                title,
                 data.get('machine_id'),
                 data.get('type_inter'),
                 data.get('priority'),
@@ -1138,9 +1145,11 @@ class InterventionRepository:
 
     def update(self, intervention_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Met à jour une intervention existante"""
-        existing = self.get_by_id(intervention_id, include_actions=False)
-
         from api.interventions.validators import InterventionValidator
+
+        # Avant toute lecture : un titre trop long est un 400, pas une erreur base
+        InterventionValidator.validate_title(data.get('title'))
+        existing = self.get_by_id(intervention_id, include_actions=False)
 
         InterventionValidator.validate_priority(data.get('priority'))
 

@@ -61,9 +61,12 @@ Une demande peut porter une urgence : **Faible**, **Normale**, **Importante** ou
 
 ## Accepter : créer l'intervention
 
-Dans Tunnel, on n'accepte pas une demande avec un bouton « Accepter ». **Accepter, c'est
-créer l'intervention liée.** La demande passe alors « acceptée », et son historique garde
-la trace.
+**Accepter, c'est créer l'intervention liée.** La demande passe alors « acceptée », et son
+historique garde la trace. Le bouton **Accepter** de l'accueil ouvre ce même formulaire,
+demande déjà choisie.
+
+Le titre de l'intervention reprend la description de la demande, coupée à 200 caractères
+au besoin ; le texte complet reste sur la demande.
 
 1. Cliquez sur **Nouvelle intervention** (page Interventions) ou sur **Créer inter** dans
    la [Coordination](/responsable/coordination).

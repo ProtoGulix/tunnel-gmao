@@ -8,6 +8,9 @@ mobile/CHANGELOG.md.
 
 ## Non publié
 
+### Modifié
+- Web : sur l'accueil direction, Accepter ouvre le formulaire standard de création d'intervention, demande déjà choisie, priorité préremplie avec son urgence ; le titre n'est plus envoyé, l'API le déduit de la description.
+
 ### Ajouté
 - Web et mobile : urgence facultative à la création d'une demande ; sur le détail d'une demande nouvelle ou en attente, elle se change si le droit est accordé ; l'acceptation la reprend.
 - API : urgence d'une demande. `priorite` (`faible`, `normal`, `important`, `urgent`) facultative à la création, présente dans la liste et le détail ; `GET /intervention-requests?sort=urgence` trie par urgence puis ancienneté ; `PATCH /intervention-requests/{id}/priority` la change tant que la demande est nouvelle ou en attente (ADMIN et RESP, tracé dans l'audit).
@@ -20,6 +23,10 @@ mobile/CHANGELOG.md.
 - Web : l'accueil direction devient « Ce qui attend votre décision » (ADR 0047) : ligne de bilan (à qualifier, plus de 90 jours, entrées et sorties, tendance) avec bilan détaillé dépliable ; « À trancher » (urgentes, puis tranche la plus ancienne tronquée, puis les autres) avec Accepter, En attente et Rejeter selon les transitions permises ; cartes « À voir avec l'acheteur » et « À voir avec la production » (seuil et causes lus dans l'API) ; côté maintenance ; où ça s'entasse. Remplace les tuiles et le repli du bilan.
 - Guide : page d'accueil direction réécrite (ADR 0047), urgence d'une demande décrite côté responsable et technicien, captures reprises.
 - Démonstration : scénario complété pour l'accueil direction (urgences des demandes, demandes de plus de 90 jours, intervention en attente de la production avec sa note).
+
+### Corrigé
+- API : accepter une demande de plus de 200 caractères (issue d'un constat) ne renvoie plus 500. Sans titre fourni, celui de l'intervention est la description de la demande, coupée à 200 caractères sur une frontière de mot et finie par « … » ; un titre fourni de plus de 200 caractères est refusé (400). Vaut pour l'acceptation et `POST /interventions` (`request_id`, `request`). Un titre de plus de 200 caractères est refusé avec un message clair, aussi à la modification d'une intervention.
+- Mobile : la description d'une demande n'est plus envoyée comme titre à la création ni à l'acceptation d'une intervention (l'API le déduit) ; le titre saisi est limité à 200 caractères.
 
 ## [5.15.2] — 2026-11-27
 

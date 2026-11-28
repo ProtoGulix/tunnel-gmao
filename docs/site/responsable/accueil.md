@@ -44,12 +44,15 @@ La liste des demandes à qualifier, dans cet ordre :
 Chaque ligne donne la description (le titre ouvre la demande), le code, l'équipement et
 l'âge en jours. Les boutons dépendent de votre rôle et du statut de la demande :
 
-- **Accepter** ouvre une fenêtre courte : type d'intervention, technicien, priorité
-  (reprise de l'urgence de la demande, modifiable). La validation crée l'intervention. Pour
-  une demande du préventif, le type est imposé.
+- **Accepter** ouvre le formulaire de création d'intervention, demande déjà choisie :
+  date de prise en charge, technicien pilote, type et priorité (reprise de l'urgence de la
+  demande, modifiable). L'enregistrement crée l'intervention et accepte la demande (voir
+  [Accepter : créer l'intervention](/responsable/demandes#accepter-creer-l-intervention)).
 - **En attente** met la demande de côté ; elle reste dans la liste.
 - **Rejeter** demande un motif, dans la fenêtre de motif habituelle. Fermer la fenêtre
   annule le rejet.
+
+![Accepter depuis l'accueil : formulaire de création d'intervention, demande déjà choisie](/captures/web-direction-accueil-accepter.webp)
 
 Une demande acceptée ou rejetée quitte la liste. Si la décision est refusée, le message
 s'affiche en haut de l'écran et la ligne reste.

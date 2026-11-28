@@ -469,7 +469,7 @@ Entrée : `{ "priorite": "faible" | "normal" | "important" | "urgent" }`. Répon
 
 Effectue une transition de statut sur une demande. Chaque transition est tracée dans `status_log`.
 
-Pour la transition vers `acceptee`, une intervention GMAO est automatiquement créée et liée à la demande. `type_inter` et le technicien (`tech_id` ou `tech_initials`) sont alors obligatoires ; le `title` et le `tech_id` reçus sont conservés sur l'intervention (titre par défaut : description de la demande).
+Pour la transition vers `acceptee`, une intervention GMAO est automatiquement créée et liée à la demande. `type_inter` et le technicien (`tech_id` ou `tech_initials`) sont alors obligatoires ; le `title` et le `tech_id` reçus sont conservés sur l'intervention (titre par défaut : description de la demande, coupée à 200 caractères sur une frontière de mot, finie par « … »).
 
 ### Entrée
 
@@ -493,7 +493,7 @@ Pour la transition vers `acceptee`, une intervention GMAO est automatiquement cr
 | `notes`         | string | conditionnel          | **Obligatoire** si `status_to = "rejetee"`                                                                              |
 | `changed_by`    | uuid   | non                   | Ignoré : l'auteur est l'utilisateur du jeton (accepté pour compatibilité)                                               |
 | `type_inter`    | string | conditionnel          | Type d'intervention. **Obligatoire** si `acceptee` et DI humaine sans `suggested_type_inter`. Ignoré pour les DI système |
-| `title`         | string | non (si `acceptee`)   | Titre de l'intervention créée. Défaut : description de la demande                                                       |
+| `title`         | string | non (si `acceptee`)   | Titre de l'intervention créée, 200 caractères au plus (sinon 400). Défaut : description de la demande, coupée à 200 caractères avec « … » |
 | `tech_id`       | uuid   | **un des deux** si `acceptee` | Technicien pilote, prioritaire sur `tech_initials`                                                       |
 | `tech_initials` | string | **un des deux** si `acceptee` | Initiales du technicien (héritage). Intégrées dans le code de l'intervention                                      |
 | `priority`      | string | non (si `acceptee`)   | `faible`, `normale`, `important`, `urgent`. Défaut : `normale`                                                          |

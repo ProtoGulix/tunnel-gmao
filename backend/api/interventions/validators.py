@@ -6,6 +6,31 @@ from api.db import get_connection, release_connection
 from api.errors.exceptions import AuditReasonRequiredError, ConflictError, ValidationError
 from api.interventions.types import check_allowed_for_machine, check_assignable
 
+# Longueur maximale du titre (colonne intervention.title, varchar(200))
+TITLE_MAX_LENGTH = 200
+
+
+def title_from_description(description: Optional[str]) -> Optional[str]:
+    """Titre tiré d'une description : 200 caractères au plus, coupé sur une frontière de mot.
+
+    Une description plus longue finit par « … » (comprise dans les 200 caractères). Sans
+    espace où couper, la coupe est franche. Vide ou absente : None.
+    """
+    text = (description or "").strip()
+    if not text:
+        return None
+    if len(text) <= TITLE_MAX_LENGTH:
+        return text
+    keep = TITLE_MAX_LENGTH - 1
+    head = text[:keep]
+    # Coupe au milieu d'un mot : on recule jusqu'au dernier espace, s'il y en a un
+    if not text[keep].isspace():
+        gaps = [i for i, c in enumerate(head) if c.isspace()]
+        if gaps:
+            head = head[: gaps[-1]]
+    return head.rstrip() + "…"
+
+
 # Décision d'audit (decision_types) d'une réouverture (ADR 0028)
 REOPEN_DECISION = "intervention_reopened"
 
@@ -202,6 +227,12 @@ class InterventionValidator:
         finally:
             release_connection(conn)
 
+    @staticmethod
+    def validate_title(title: Optional[str]) -> None:
+        """Un titre fourni ne dépasse pas la colonne (400 plutôt qu'une erreur base)."""
+        if title is not None and len(title) > TITLE_MAX_LENGTH:
+            raise ValidationError(f"Titre trop long : {TITLE_MAX_LENGTH} caractères au plus")
+
     @classmethod
     def validate_create(
         cls, data: Dict[str, Any], suggested_type: str | None = None, from_plan: bool = False
@@ -211,6 +242,7 @@ class InterventionValidator:
         `suggested_type` : type suggéré par la demande liée, accepté même désactivé.
         `from_plan` : intervention issue d'un plan préventif (type PRE toujours permis)."""
         cls.validate_priority(data.get("priority"))
+        cls.validate_title(data.get("title"))
         if data.get("type_inter"):
             cls.validate_type_inter(data["type_inter"], suggested_type)
             # Le type de la classe de l'équipement l'emporte, même sur le type suggéré (ADR 0031).

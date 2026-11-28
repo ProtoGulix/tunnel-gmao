@@ -11,7 +11,7 @@ import { ClipboardList } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
 import SpontaneousInterventionRequestModal from '@/components/home/SpontaneousInterventionRequestModal';
-import AcceptRequestDialog from '@/components/home/AcceptRequestDialog';
+import AcceptRequestModal from '@/components/home/AcceptRequestModal';
 import SiteFilter from '@/components/home/SiteFilter';
 import QueueNotices from '@/components/home/QueueNotices';
 import BilanLine from '@/components/home/BilanLine';
@@ -60,14 +60,7 @@ export default function TechnicalDirectionHomeView() {
         actions={[{ label: "Demande d'inter", icon: ClipboardList, onClick: () => setCreateModal(true) }]}
       />
       <SpontaneousInterventionRequestModal open={createModal} onOpenChange={setCreateModal} onSuccess={reload} />
-      <AcceptRequestDialog
-        request={accepting}
-        onClose={() => setAccepting(null)}
-        onAccept={async (request, data) => {
-          setActionError(null);
-          if (await actions.accept(request, data)) setAccepting(null);
-        }}
-      />
+      <AcceptRequestModal request={accepting} onClose={() => setAccepting(null)} onCreated={reload} />
       <Flex direction="column" gap="4" px="4" pb="6">
         <QueueNotices actionError={actionError} failed={failed} />
         <SiteFilter options={siteOptions} value={site} onChange={setSite} />

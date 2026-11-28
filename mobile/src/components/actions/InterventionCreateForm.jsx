@@ -84,11 +84,9 @@ export function InterventionCreateForm({ equip, availableDIs, user, canCreateReq
       reported_date: reportedDate || todayIso(),
     }
     if (mode === 'existante') {
-      payload.title = selectedDI.description
       payload.request_id = selectedDI.id
       if (selectedDI.demandeur_nom) payload.reported_by = selectedDI.demandeur_nom
     } else {
-      payload.title = description.trim()
       payload.reported_by = demandeurNom.trim()
       payload.request = {
         demandeur_nom: demandeurNom.trim(),

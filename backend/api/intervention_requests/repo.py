@@ -955,7 +955,7 @@ class InterventionRequestRepository:
             cur,
             {
                 "request_id": str(request["id"]),
-                "title": intervention_data.get("title") or request.get("description"),
+                "title": intervention_data.get("title"),
                 "machine_id": machine_id,
                 "type_inter": intervention_data["type_inter"],
                 "priority": intervention_data.get("priority") or "normal",
