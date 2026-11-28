@@ -28,7 +28,6 @@ const getDefaultDateTimeLocal = () => {
 
 function buildFormData(equipementId, equipementLabel, req = null) {
   return {
-    title: req?.description ?? '',
     type: req?.suggested_type_inter ?? '',
     priority: 'normal',
     equipementId,
@@ -88,7 +87,6 @@ export function ContextSection({
   const handleCreate = useCallback(async (e) => {
     e?.preventDefault?.();
     setCreateError(null);
-    if (!formData?.title?.trim()) { setCreateError('Le titre est obligatoire'); return; }
     if (!formData?.requestId) { setCreateError("Sélectionnez la demande d'intervention à l'origine"); return; }
     if (!formData?.techId) { setCreateError('Veuillez sélectionner un technicien'); return; } if (!formData?.type) { setCreateError(TYPE_REQUIRED_MESSAGE); return; }
     setSaving(true);

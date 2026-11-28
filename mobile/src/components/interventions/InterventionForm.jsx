@@ -42,7 +42,7 @@ export function InterventionForm({ di = null, machineId = null, onSubmit, onCanc
   const [localError, setLocalError] = useState(null)
   const [priority, setPriority] = useState('normal')
   const [reportedDate, setReportedDate] = useState(new Date().toISOString().split('T')[0])
-  const [title, setTitle] = useState(di?.description ?? '')
+  const [title, setTitle] = useState('')
 
   const techInitials = user?.initial
     ?? (user ? `${(user.first_name ?? '')[0] ?? ''}${(user.last_name ?? '')[0] ?? ''}`.toUpperCase() : '')
@@ -113,7 +113,8 @@ export function InterventionForm({ di = null, machineId = null, onSubmit, onCanc
               className={inputCls}
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Titre de l'intervention"
+              maxLength={200}
+              placeholder={di ? 'Repris de la demande' : "Titre de l'intervention"}
             />
           </div>
 

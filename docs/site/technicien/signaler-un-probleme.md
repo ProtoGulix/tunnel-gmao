@@ -29,7 +29,8 @@ service, dates, équipement et historique des changements de statut. Quand la de
 donné lieu à une intervention, **Voir l'intervention** vous y emmène.
 
 Le bouton **Créer l'intervention** n'apparaît que si votre rôle a le droit d'accepter une
-demande. Il ouvre alors le formulaire de l'intervention à créer.
+demande. Il ouvre alors le formulaire de l'intervention à créer. Le titre est facultatif :
+vide, il reprend la description de la demande.
 
 ## Sur le web
 

@@ -6,6 +6,13 @@ une section `### [interne] ...` n'est pas affichée aux utilisateurs. Les histor
 des versions 1 à 4 restent dans backend/CHANGELOG.md, web/CHANGELOG.md et
 mobile/CHANGELOG.md.
 
+## [5.15.3] — 2026-11-28
+
+### Corrigé
+- Accepter une demande dont la description dépasse 200 caractères (par exemple issue d'un constat) n'échoue plus en « Erreur base de données ». Sans titre saisi, le titre de l'intervention reprend la description, coupée à 200 caractères ; le texte complet reste sur la demande.
+- Un titre d'intervention de plus de 200 caractères est refusé avec un message clair, à la création comme à la modification.
+- Web et mobile : la description d'une demande n'est plus envoyée comme titre ; sur le mobile, le titre saisi à l'acceptation est facultatif et limité à 200 caractères.
+
 ## [5.15.2] — 2026-11-27
 
 ### Corrigé

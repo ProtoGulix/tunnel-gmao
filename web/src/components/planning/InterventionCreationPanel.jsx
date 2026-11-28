@@ -153,7 +153,6 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
         equipementId,
         type: formData.type,
         techId: formData.techId,
-        title: selectedRequest?.description ?? formData.diDescription,
         priority: formData.priority,
         reportedDate: formData.reportedDate
           ? new Date(formData.reportedDate).toISOString()
@@ -170,15 +169,9 @@ export default function InterventionCreationPanel({ ivCreationCtx }) {
     }
   }, [formData, selectedRequest, equipementId, onCreated]);
 
-  // formData adapté pour InterventionCreateForm (title = diDescription quand pas de DI)
-  const formDataForForm = {
-    ...formData,
-    title: selectedRequest?.description ?? formData.diDescription,
-  };
-
   return (
     <InterventionCreateForm
-      formData={formDataForForm}
+      formData={formData}
       set={set}
       lockedType={!!(selectedRequest?.is_system && selectedRequest?.suggested_type_inter)}
       diSection={

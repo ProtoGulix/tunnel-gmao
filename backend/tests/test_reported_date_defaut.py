@@ -17,7 +17,7 @@ FIXE = date(2026, 3, 4)
 
 
 class _FauxCurseur:
-    """Enregistre les INSERT ; toute lecture renvoie une ligne générique."""
+    """Enregistre les INSERT ; toute lecture renvoie une ligne générique (clé, description de demande)."""
 
     def __init__(self):
         self.inserts = []
@@ -27,7 +27,7 @@ class _FauxCurseur:
             self.inserts.append(params)
 
     def fetchone(self):
-        return (1,)
+        return (1, "d")
 
 
 class _FausseConnexion:

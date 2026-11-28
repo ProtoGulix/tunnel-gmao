@@ -50,6 +50,9 @@ Dans Tunnel, on n'accepte pas une demande avec un bouton « Accepter ». **Accep
 créer l'intervention liée.** La demande passe alors « acceptée », et son historique garde
 la trace.
 
+Le titre de l'intervention reprend la description de la demande, coupée à 200 caractères
+au besoin ; le texte complet reste sur la demande.
+
 1. Cliquez sur **Nouvelle intervention** (page Interventions) ou sur **Créer inter** dans
    la [Coordination](/responsable/coordination).
 2. Cherchez l'équipement. La colonne de gauche liste ses **Demandes ouvertes**.
